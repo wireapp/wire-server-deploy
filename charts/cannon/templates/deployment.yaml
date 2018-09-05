@@ -1,0 +1,81 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: cannon
+  labels:
+    wireService: cannon
+    chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 0
+      maxSurge: {{ .Values.replicaCount | mul 2 }} # as old cannons stick around for a day, allow up to 2 new clusters of 3 pods
+  template:
+    metadata:
+      labels:
+        wireService: cannon
+        release: {{ .Release.Name }}
+      annotations:
+        checksum/configmap: {{ include (print .Template.BasePath "/configmap.yaml") . | sha256sum }}
+    spec:
+      terminationGracePeriodSeconds: {{ .Values.drainTimeout }} # should be higher than the sleep duration of preStop
+      containers:
+      - name: cannon
+        image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+        lifecycle:
+          preStop:
+            # kubernetes by default immediately sends a SIGTERM to the container,
+            # which would cause cannon to exit, breaking existing websocket connections.
+            # Instead we sleep for a day. (SIGTERM is still sent, but after the preStop completes)
+            exec:
+              command: ["sleep", {{ .Values.drainTimeout | quote }} ]
+        volumeMounts:
+        - name: empty
+          mountPath: /etc/wire/cannon/ip
+        - name: cannon-config
+          mountPath: /etc/wire/cannon/conf
+        ports:
+        - name: http
+          containerPort: {{ .Values.service.internalPort }}
+        readinessProbe:
+          httpGet:
+            path: /i/status
+            port: {{ .Values.service.internalPort }}
+            scheme: HTTP
+        livenessProbe:
+          initialDelaySeconds: 30
+          timeoutSeconds: 1
+          httpGet:
+            path: /i/status
+            port: {{ .Values.service.internalPort }}
+            scheme: HTTP
+        resources:
+{{ toYaml .Values.resources | indent 12 }}
+      initContainers:
+      - name: cannon-configurator
+        image: alpine
+        command:
+        - /bin/sh
+        args:
+        - -c
+        - echo ${MY_POD_IP} > /etc/wire/cannon/ip/ip.txt
+        env:
+        - name: MY_POD_IP
+          valueFrom:
+            fieldRef:
+              fieldPath: status.podIP
+        volumeMounts:
+        - name: empty
+          mountPath: /etc/wire/cannon/ip
+      dnsPolicy: ClusterFirst
+      restartPolicy: Always
+      volumes:
+      - name: cannon-config
+        configMap:
+          name: cannon
+      - name: empty
+        emptyDir: {}

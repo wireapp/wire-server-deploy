@@ -1,0 +1,25 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: "cargohold"
+data:
+  cargohold.yaml: |
+    cargohold:
+      host: 0.0.0.0
+      port: {{ .Values.service.internalPort }}
+
+    aws:
+      {{- with .Values.config.aws }}
+      s3Bucket: {{ .s3Bucket }}
+      s3Endpoint: {{ .s3Endpoint }}
+      {{ if .cloudFront }}
+      cloudFront:
+        domain: {{ .cloudFront.domain }}
+        keyPairId: {{ .cloudFront.keyPairId }}
+        privateKey: {{ .cloudFront.privateKeyPath }}
+      {{ end }}
+      {{- end }}
+
+    settings:
+      maxTotalBytes: 5368709120
+      downloadLinkTTL: 300      # Seconds

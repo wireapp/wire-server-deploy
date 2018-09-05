@@ -1,0 +1,28 @@
+# Default values for proxy.
+
+replicaCount: 3
+image:
+  repository: quay.io/wire/proxy
+  tag: 2.50.154
+service:
+  externalPort: 8080
+  internalPort: 8080
+
+resources:
+  requests:
+    memory: 128Mi
+    cpu: 100m
+  limits:
+    memory: 512Mi
+    cpu: 500m
+
+# The following has to be set:
+# secrets:
+#   proxy_config: |-
+#       secrets {
+#               youtube    = "..."
+#               googlemaps = "..."
+#               soundcloud = "..."
+#               giphy      = "..."
+#               spotify    = "Basic ..."
+#        }

@@ -1,0 +1,93 @@
+# Default values for brig.
+
+replicaCount: 3
+image:
+  repository: quay.io/wire/brig
+  tag: 2.50.154
+service:
+  externalPort: 8080
+  internalPort: 8080
+
+resources:
+  requests:
+    memory: 256Mi
+    cpu: 250m
+  limits:
+    memory: 512Mi
+    cpu: 500m
+
+config:
+  logLevel: Info
+  cassandra:
+    host: aws-cassandra
+  elasticsearch:
+    host: elasticsearch-client
+    port: 9200
+    index: directory
+  aws:
+    sesEndpoint: "https://email.eu-west-1.amazonaws.com"
+    sqsEndpoint: "https://sqs.eu-west-1.amazonaws.com"
+    dynamoDBEndpoint: "https://dynamodb.eu-west-1.amazonaws.com"
+  useSES: true # if true, use aws.sesQueue/sesEndpoint, otherwise use smtp settings
+  authSettings:
+    keyIndex: 1
+    userTokenTimeout: 4838400    # 56 days
+    sessionTokenTimeout: 604800  # 7 days
+    accessTokenTimeout: 900      # 15 minutes
+    providerTokenTimeout: 604800 # 7 days
+  optSettings:
+    setActivationTimeout: 1209600     # 1 day
+    setTeamInvitationTimeout: 1814400 # 21 days
+    setUserMaxConnections: 1000
+    setCookieInsecure: false
+    setUserCookieRenewAge: 1209600 # 14 days
+    setUserCookieLimit: 32
+    setUserCookieThrottle:
+      stdDev: 3000      # 50 minutes
+      retryAfter: 86400 # 1 day
+    setDefaultLocale: en
+    setMaxConvAndTeamSize: 128  # for old brig; TODO remove
+    setMaxTeamSize: 128
+    setMaxConvSize: 128
+
+## The following has to be provided to deploy this chart:
+
+#config:
+#  externalUrls:
+#    nginz: "<nginz-subdomain.your.domain>"
+#    teamCreatorWelcome: "<team admin login page url>"
+#    teamMemberWelcome: "<app download page url>"
+#  optSettings:
+#    setCookieDomain: "<your.domain>"
+#  emailSMS:
+#    general:
+#      # TODO: This emailSender is relevant due to the SQS/SNS setup, i.e.,
+#      # it's dependent on the actual AWS setup for SQS and SNS
+#      emailSender: email@example.com
+#      smsSender: "<insert twilio sms sender ID here>" # TODO: should become part of twilioconfig?
+#  smtp: #optional, only relevant if useSES==false
+#    endpoint: demo-smtp
+#    username: dummy
+#    passwordFile: "/etc/wire/brig/secrets/smtp-password.txt"
+#    connType: plain
+
+#secrets:
+#  zauth:
+#    # fresh zauth keys not used anywhere else, generated with
+#    #    wire-server/dist/zauth -m gen-keypair -i 1
+#    privateKeys: "<private key>"
+#    publicKeys: "<public key>"
+#  turn:
+#    # random value, length=42 characters, generated e.g. with
+#    #    openssl rand -base64 64 | env LC_CTYPE=C tr -dc a-zA-Z0-9 | head -c 42
+#    secret: "<turn secret>"
+#  # AWS credentials can be dummy when talking to fake AWS dependencies
+#  awsKeyId: dummykey
+#  awsSecretKey: dummysecret
+#  setTwilio: |
+#    sid: "dummy"
+#    token: "dummy"
+#  setNexmo: |
+#    key: "dummy"
+#    secret: "dummy"
+#  smtpPassword: dummy-smtp-password # optional, only required if useSES==false

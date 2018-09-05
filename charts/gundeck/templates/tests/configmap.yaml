@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: "gundeck-integration"
+data:
+  integration.yaml: |
+    gundeck:
+      host: gundeck
+      port: {{ .Values.service.internalPort }}
+
+    cannon:
+      host: cannon
+      port: 8080
+
+    brig:
+      host: brig
+      port: 8080

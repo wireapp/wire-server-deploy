@@ -1,0 +1,31 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: "{{ .Release.Name }}-galley-integration"
+  annotations:
+    "helm.sh/hook": test-success
+spec:
+  volumes:
+    - name: "galley-integration"
+      configMap:
+        name: "galley-integration"
+    - name: "galley"
+      configMap:
+        name: "galley"
+  containers:
+  - name: integration
+    image: "{{ .Values.image.repository }}-integration:{{ .Values.image.tag }}"
+    volumeMounts:
+    - name: "galley-integration"
+      mountPath: "/etc/wire/integration"
+    - name: "galley"
+      mountPath: "/etc/wire/galley/conf"
+    env:
+    # these dummy values are necessary for Amazonka's "Discover"
+    - name: AWS_ACCESS_KEY_ID
+      value: "dummy"
+    - name: AWS_SECRET_ACCESS_KEY
+      value: "dummy"
+    - name: AWS_REGION
+      value: "eu-west-1"
+  restartPolicy: Never
