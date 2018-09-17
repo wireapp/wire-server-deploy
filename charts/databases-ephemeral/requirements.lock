@@ -1,0 +1,12 @@
+dependencies:
+- name: redis-ephemeral
+  repository: file://../redis-ephemeral
+  version: 0.1.0
+- name: elasticsearch-ephemeral
+  repository: file://../elasticsearch-ephemeral
+  version: 0.1.0
+- name: cassandra-ephemeral
+  repository: file://../cassandra-ephemeral
+  version: 0.1.0
+digest: sha256:f3d996427896d321aebec51ced7310ffd6467e641f85b5397962bf7519ae274f
+generated: 2018-08-07T18:28:40.095559091+02:00

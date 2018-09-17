@@ -1,0 +1,47 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: {{ template "fullname" . }}
+  labels:
+    wireService: {{ template "fullname" . }}
+    app: {{ template "fullname" . }}
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    release: "{{ .Release.Name }}"
+    heritage: "{{ .Release.Service }}"
+    component: {{ template "fullname" . }}
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        component: {{ template "fullname" . }}
+    spec:
+      containers:
+      - name: es
+        image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+        env:
+        - name: MAX_HEAP_SIZE
+          value: "2048"
+        - name: HEAP_NEWSIZE
+          value: "800M"
+        ports:
+        - containerPort: 9200
+          name: http
+          protocol: TCP
+        - containerPort: 9300
+          name: transport
+          protocol: TCP
+        volumeMounts:
+        - name: storage
+          mountPath: /data
+        resources:
+           limits:
+            cpu: "2000m"
+            memory: 4Gi
+           requests:
+            cpu: "500m"
+            memory: 500Mi
+      volumes:
+        - emptyDir:
+            medium: ""
+          name: "storage"

@@ -1,0 +1,7 @@
+image:
+  repository: elasticsearch
+  tag: 5.2
+
+service:
+  httpPort: 9200
+  transportPort: 9300
