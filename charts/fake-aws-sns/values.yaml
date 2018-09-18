@@ -1,0 +1,9 @@
+image:
+  repository: localstack/localstack
+  tag: 0.8.5
+
+
+
+service:
+  internalPort: 4575
+  externalPort: 4575

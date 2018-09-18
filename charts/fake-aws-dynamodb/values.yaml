@@ -1,0 +1,7 @@
+image:
+  repository: cnadiminti/dynamodb-local
+  tag: 2017-02-16
+
+service:
+  internalPort: 8000
+  externalPort: 4567

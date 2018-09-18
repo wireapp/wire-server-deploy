@@ -1,0 +1,67 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: {{ template "fullname" . }}
+  labels:
+    app: {{ template "fullname" . }}
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    release: "{{ .Release.Name }}"
+    heritage: "{{ .Release.Service }}"
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: {{ template "fullname" . }}
+    spec:
+      containers:
+      - name: fake-aws-sns
+        image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+        env:
+          - name: DEBUG
+            value: "1"
+          - name: DEFAULT_REGION
+            value: "eu-west-1"
+          - name: SERVICES
+            value: "sns"
+        ports:
+        - containerPort: {{ .Values.service.internalPort }}
+          name: http
+          protocol: TCP
+        volumeMounts:
+        - name: storage
+          mountPath: /data
+        resources:
+           limits:
+            cpu: "200m"
+            memory: 500Mi
+           requests:
+            cpu: "100m"
+            memory: 100Mi
+      - name: initiate-fake-aws-sns
+        image: mesosphere/aws-cli:1.14.5
+        command: [/bin/sh]
+        args:
+        - -c
+        - |
+          exec_until_ready() {
+              until $1; do echo 'service not ready yet'; sleep 1; done
+          }
+
+          echo 'Creating AWS resources'
+          aws configure set aws_access_key_id dummy
+          aws configure set aws_secret_access_key dummy
+          aws configure set region eu-west-1
+
+          exec_until_ready "aws --endpoint-url=http://localhost:{{ .Values.service.internalPort }} sns create-platform-application --name integration-test --platform GCM --attributes PlatformCredential=testkey"
+          exec_until_ready "aws --endpoint-url=http://localhost:{{ .Values.service.internalPort }} sns create-platform-application --name integration-test --platform APNS_SANDBOX --attributes PlatformCredential=testprivatekey"
+          exec_until_ready "aws --endpoint-url=http://localhost:{{ .Values.service.internalPort }} sns create-platform-application --name integration-com.wire.ent --platform APNS_SANDBOX --attributes PlatformCredential=testprivatekey"
+
+          while true
+          do
+              echo "Resources created, sleeping for 30, to keep this container (and thus the pod) alive"
+              sleep 30
+          done
+      volumes:
+        - emptyDir: {}
+          name: "storage"

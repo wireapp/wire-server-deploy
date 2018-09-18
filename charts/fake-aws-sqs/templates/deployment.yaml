@@ -1,0 +1,61 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: {{ template "fullname" . }}
+  labels:
+    app: {{ template "fullname" . }}
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    release: "{{ .Release.Name }}"
+    heritage: "{{ .Release.Service }}"
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: {{ template "fullname" . }}
+    spec:
+      containers:
+      - name: fake-aws-sqs
+        image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+        ports:
+        - containerPort: {{ .Values.service.httpPort }}
+          name: http
+          protocol: TCP
+        volumeMounts:
+        - name: storage
+          mountPath: /data
+        resources:
+           limits:
+            cpu: "1000m"
+            memory: 1000Mi
+           requests:
+            cpu: "500m"
+            memory: 500Mi
+      - name: initiate-fake-aws-sqs
+        image: mesosphere/aws-cli:1.14.5
+        command: [/bin/sh]
+        args:
+        - -c
+        - |
+          exec_until_ready() {
+              until $1; do echo 'service not ready yet'; sleep 1; done
+          }
+
+          echo 'Creating AWS resources'
+          aws configure set aws_access_key_id dummy
+          aws configure set aws_secret_access_key dummy
+          aws configure set region eu-west-1
+
+          # Create queues
+          {{ range $i, $queueName := .Values.queueNames }}
+              exec_until_ready "aws --endpoint-url=http://localhost:{{ $.Values.service.httpPort }} sqs create-queue --queue-name {{ $queueName }}"
+          {{ end }}
+
+          while true
+          do
+              echo "Resources created, sleeping for 30, to keep this container (and thus the pod) alive"
+              sleep 30
+          done
+      volumes:
+        - emptyDir: {}
+          name: "storage"
