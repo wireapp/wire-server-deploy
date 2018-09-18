@@ -1,0 +1,10 @@
+# Default values for elasticsearch-index
+elasticsearch:
+  #host:  # elasticsearch-client|elasticsearch-ephemeral
+  port: 9200
+  index: directory
+hook:
+# when hook.enabled=true (default), this chart does not work standalone, but is intended as
+# either a 'post'-subchart to an elasticsearch chart or a 'pre'-subchart to wire-server
+  enabled: true
+  type: pre # possible values: 'pre' or 'post'

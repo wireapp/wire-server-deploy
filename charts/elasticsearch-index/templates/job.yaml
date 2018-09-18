@@ -1,0 +1,46 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ template "fullname" . }}
+  labels:
+    wireService: {{ template "fullname" . }}
+    app: {{ template "fullname" . }}
+    heritage: {{.Release.Service | quote }}
+    release: {{.Release.Name | quote }}
+    chart: "{{.Chart.Name}}-{{.Chart.Version}}"
+{{- if .Values.hook.enabled }}
+  annotations:
+    # when hook.enabled=true (default), this chart does not work standalone, but is intended as
+    # either a 'post'-subchart to an elasticsearch chart or a 'pre'-subchart to wire-server
+    # For the meaning of hooks, see https://docs.helm.sh/developing_charts/#hooks
+    "helm.sh/hook": {{ .Values.hook.type }}-install,{{ .Values.hook.type }}-upgrade
+    "helm.sh/hook-weight": "0"
+    "helm.sh/hook-delete-policy": "before-hook-creation"
+{{- end }}
+spec:
+  template:
+    metadata:
+      name: "{{.Release.Name}}"
+      labels:
+        wireService: {{ template "fullname" . }}
+        app: {{ template "fullname" . }}
+        heritage: {{.Release.Service | quote }}
+        release: {{.Release.Name | quote }}
+        chart: "{{.Chart.Name}}-{{.Chart.Version}}"
+    spec:
+      restartPolicy: OnFailure
+      containers:
+        - name: curl
+          image: appropriate/curl
+          command:
+            - /bin/sh
+            - -c
+            - source /tmp/templates/init.sh
+          volumeMounts:
+            - mountPath: /tmp/templates
+              name: es-init-volume
+
+      volumes:
+        - name: es-init-volume
+          configMap:
+            name: es-init-config
