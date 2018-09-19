@@ -1,0 +1,119 @@
+tags:
+  proxy: false # disable if you don't want/need giphy/youtube/etc proxying
+  spar: false # disable if you don't want/need Single-Sign-On (SSO)
+
+cassandra-migrations:
+  images:
+    tag: 2.50.155
+  cassandra:
+    host: cassandra-ephemeral
+    replicaCount: 1
+
+elasticsearch-index:
+  elasticsearch:
+    host: elasticsearch-ephemeral
+
+brig:
+  replicaCount: 1
+  image:
+    tag: 2.50.156
+  config:
+    cassandra:
+      host: cassandra-ephemeral
+      replicaCount: 1
+    elasticsearch:
+      host: elasticsearch-ephemeral
+    useSES: false
+    aws:
+      # change if using real AWS
+      sqsEndpoint: http://fake-aws-sqs:4568
+      dynamoDBEndpoint: http://fake-aws-dynamodb:4567
+      # these must match the table names created on fake or real AWS services
+      internalQueue: integration-brig-events-internal
+      blacklistTable: integration-brig-userkey-blacklist
+      prekeyTable: integration-brig-prekeys
+    externalUrls:
+      nginz: https://api.example.com # change this
+      teamCreatorWelcome: https://teams.example.com/login # change this
+      teamMemberWelcome: https://wire.example.com/download # change this
+    optSettings:
+      setCookieDomain: example.com # change this
+    emailSMS:
+      general:
+        emailSender: email@example.com # change this
+        smsSender: "insert-sms-sender-for-twilio" # change this if SMS support is desired
+    smtp:
+      endpoint: smtp.example.com # change this
+      username: demo # change this
+      connType: plain # change this. Possible values: plain|ssl|tls
+
+proxy:
+  replicaCount: 1
+  image:
+    tag: 2.50.156
+
+cannon:
+  replicaCount: 1
+  image:
+    tag: 2.50.156
+  drainTimeout: 10 # we don't need higher-availability in demo-mode
+
+cargohold:
+  replicaCount: 1
+  image:
+    tag: 2.50.156
+  config:
+    aws:
+      # change if using real AWS
+      s3Bucket: dummy-bucket
+      s3Endpoint: http://fake-aws-s3:9000
+
+galley:
+  replicaCount: 1
+  image:
+    tag: 2.50.156
+  config:
+    cassandra:
+      host: cassandra-ephemeral
+      replicaCount: 1
+    settings:
+      # prefix URI used when inviting users to a conversation by link
+      conversationCodeURI: https://api.example.com/join/ # change this
+
+gundeck:
+  replicaCount: 1
+  image:
+    tag: 2.50.156
+  config:
+    cassandra:
+      host: cassandra-ephemeral
+      replicaCount: 1
+    aws:
+      # change if using real AWS
+      account: "123456789012"
+      region: eu-west-1
+      arnEnv: integration
+      queueName: integration-gundeck-events
+      sqsEndpoint: http://fake-aws-sqs:4568
+      snsEndpoint: http://fake-aws-sns:4575
+
+# nginz:
+#  replicaCount: 1
+#   images:
+#     nginz:
+#       tag: 2.15.1
+#   services:
+#     https:
+#       # change account number and domain to match certificate
+#       sslCert: arn:aws:iam::00000-accountnumber-00000:server-certificate/example.com
+#       hostname: wire-demo-nginz-https.example.com
+#     wss:
+#       # change account number and domain to match certificate
+#       sslCert: arn:aws:iam::00000-accountnumber-00000:server-certificate/example.com
+#       hostname: wire-demo-nginz-ssl.example.com
+#   DNSConfig:
+#     domainFilter: example.com # change this
+#     provider: aws
+#   nginx_conf:
+#     env: staging
+#     external_env_domain: example.com # change this

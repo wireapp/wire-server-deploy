@@ -110,6 +110,9 @@ These need to be adapted:
 
 * demo-values.yaml
     * replace `example.com` with your domain
+    * TODO
+* demo-secrets.yaml
+    * 
 
 
 Update the chart dependencies:

@@ -49,6 +49,8 @@ config:
     setMaxConvAndTeamSize: 128  # for old brig; TODO remove
     setMaxTeamSize: 128
     setMaxConvSize: 128
+  smtp:
+    passwordFile: "/etc/wire/brig/secrets/smtp-password.txt"
 
 ## The following has to be provided to deploy this chart:
 
@@ -68,7 +70,6 @@ config:
 #  smtp: #optional, only relevant if useSES==false
 #    endpoint: demo-smtp
 #    username: dummy
-#    passwordFile: "/etc/wire/brig/secrets/smtp-password.txt"
 #    connType: plain
 
 #secrets:
