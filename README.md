@@ -10,17 +10,17 @@ For licensing information, see the attached [LICENSE](LICENSE) file and the list
 
 No license is granted to the Wire trademark and its associated logos, all of which will continue to be owned exclusively by Wire Swiss GmbH. Any use of the Wire trademark and/or its associated logos is expressly prohibited without the express prior written consent of Wire Swiss GmbH.
 
-## Wire server deployment
+## Introduction
 
 This repository contains code and documentation on how to deploy [wire-server](https://github.com/wireapp/wire-server). To allow a maximum of flexibility with respect to where wire-server can be deployed (e.g. with cloud providers like AWS, on bare-metal servers, etc), we chose kubernetes as the target platform.
 
 This means you first need to install a kubernetes cluster, and then deploy wire-server onto that kubernetes cluster.
 
-### Status, support, contributing
+## Status, support, contributing
 
 TODO
 
-### Prerequisites
+## Prerequisites
 
 You need:
 
@@ -36,11 +36,11 @@ You need:
 * an email server (SMTP) to send out registration emails
 * depending on your required functionality, you may or may not need an [**AWS account**](https://aws.amazon.com/). See details about limitations without an AWS account in the following sections.
 
-#### Required resources
+### Required resources
 
 TODO
 
-### Development setup
+## Development setup
 
 TODO
 
@@ -50,37 +50,85 @@ TODO
 * 
 
 
-### Installing wire-server
+## Installing wire-server
 
 TODO
 
 Supported features
 
-#### Demo
+### Demo (any environment, AWS not required, but limited functionality)
 
 The demo setup is the easiest way to install a functional wire-server with limitations (such as no persistent storage). Try this first before trying to configure persistence.
 
-(For all the following `helm upgrade` commands, it can be useful to run a second terminal with `kubectl --namespace demo get pods -w` to see what's happening.)
+*For all the following `helm upgrade` commands, it can be useful to run a second terminal with `kubectl --namespace demo get pods -w` to see what's happening.*
 
-##### Install non-persistent, non-highly-available databases
-
-| cassandra-ephemeral | elasticsearch-ephemeral | redis-ephemeral |
+#### Install non-persistent, non-highly-available databases
 
 The following will install (or upgrade) 3 database pods and 3 ClusterIP services to reach them:
+
+| (non-persistent) databases  |
+|:---------------------------:|
+| cassandra-ephemeral         |
+| elasticsearch-ephemeral     |
+| redis-ephemeral             |
 
 ```shell
 ./bin/update.sh databases-ephemeral # a recursive wrapper around 'helm dep update'
 helm upgrade --install --namespace demo demo-databases-ephemeral charts/databases-ephemeral --wait
 ```
 
-##### Install AWS service mocks
+To delete: `helm delete --purge demo-databases-ephemeral`
+
+#### Install AWS service mocks
 
 The code in wire-server still depends on some AWS services for some of its functionality. To ensure wire-server services can correctly start up, install the following "fake" aws services:
+
+| (limited-functionality, non-HA) AWS services |
+|:--------------------------------------------:|
+| fake-aws-sqs                                 |
+| fake-aws-sns                                 |
+| fake-aws-s3                                  |
+| fake-aws-dynamodb                            |
 
 ```shell
 ./bin/update.sh fake-aws
 helm upgrade --install --namespace demo demo-fake-aws charts/fake-aws --wait
 ```
 
+To delete: `helm delete --purge demo-fake-aws`
 
-#### Using AWS
+#### Install wire-server
+
+Start by copying the necessary configuration files:
+
+```
+cp values/demo-values.example.yaml values/demo-values.yaml
+cp values/demo-secrets.example.yaml values/demo-secrets.yaml
+```
+
+These need to be adapted:
+
+* demo-values.yaml
+    * replace `example.com` with your domain
+
+
+Update the chart dependencies:
+
+```sh
+./bin/update.sh wire-server
+```
+
+Try linting your chart, are any configuration values missing?
+
+```sh
+helm lint -f values/demo-values.yaml -f values/demo-secrets.yaml charts/wire-server
+```
+
+If you're confident in your configuration, try installing it:
+
+```sh
+helm upgrade --install --namespace demo demo-wire-server charts/wire-server \
+    -f values/demo-values.yaml \
+    -f values/demo-secrets.yaml \
+    --wait
+```
