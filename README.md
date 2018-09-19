@@ -58,15 +58,28 @@ Supported features
 
 #### Demo
 
-The demo setup is the easiest way to install a functional wire-server with limitations (such as no persistent storage). Try this first before trying to configure persistence 
+The demo setup is the easiest way to install a functional wire-server with limitations (such as no persistent storage). Try this first before trying to configure persistence.
+
+(For all the following `helm upgrade` commands, it can be useful to run a second terminal with `kubectl --namespace demo get pods -w` to see what's happening.)
 
 ##### Install non-persistent, non-highly-available databases
+
+| cassandra-ephemeral | elasticsearch-ephemeral | redis-ephemeral |
 
 The following will install (or upgrade) 3 database pods and 3 ClusterIP services to reach them:
 
 ```shell
 ./bin/update.sh databases-ephemeral # a recursive wrapper around 'helm dep update'
 helm upgrade --install --namespace demo demo-databases-ephemeral charts/databases-ephemeral --wait
+```
+
+##### Install AWS service mocks
+
+The code in wire-server still depends on some AWS services for some of its functionality. To ensure wire-server services can correctly start up, install the following "fake" aws services:
+
+```shell
+./bin/update.sh fake-aws
+helm upgrade --install --namespace demo demo-fake-aws charts/fake-aws --wait
 ```
 
 
