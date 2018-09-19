@@ -1,1 +1,4 @@
 *.tgz
+*secrets.yaml
+demo-values.yaml
+requirements.lock

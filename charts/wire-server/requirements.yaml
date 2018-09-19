@@ -1,0 +1,66 @@
+dependencies:
+########################
+## wire-servers/database cassandra-migrations
+########################
+- name: cassandra-migrations
+  version: "0.1.0"
+  repository: "file://../cassandra-migrations"
+  tags:
+    - cassandra-migrations
+- name: elasticsearch-index
+  version: "0.1.0"
+  repository: "file://../elasticsearch-index"
+  tags:
+    - elasticsearch-index
+########################
+## wire-servers/services
+########################
+- name: cannon
+  version: "0.1.0"
+  repository: "file://../cannon"
+  tags:
+    - cannon
+    - haskellServices
+    - services
+- name: proxy
+  version: "0.1.0"
+  repository: "file://../proxy"
+  tags:
+    - proxy
+    - haskellServices
+    - services
+- name: cargohold
+  version: "0.1.0"
+  repository: "file://../cargohold"
+  tags:
+    - cargohold
+    - haskellServices
+    - services
+- name: gundeck
+  version: "0.1.0"
+  repository: "file://../gundeck"
+  tags:
+    - gundeck
+    - haskellServices
+    - services
+- name: spar
+  version: "0.1.0"
+  repository: "file://../spar"
+  tags:
+    - spar
+    - haskellServices
+    - services
+- name: galley
+  version: "0.1.0"
+  repository: "file://../galley"
+  tags:
+    - galley
+    - haskellServices
+    - services
+- name: brig
+  version: "0.1.0"
+  repository: "file://../brig"
+  tags:
+    - brig
+    - haskellServices
+    - services

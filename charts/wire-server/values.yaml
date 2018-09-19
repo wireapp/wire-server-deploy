@@ -1,0 +1,7 @@
+# Default values for wire-server.
+
+# Tags allow to enable/disable certain components of wire-server as defined in requirements.yaml
+# https://docs.helm.sh/developing_charts/#tags-and-condition-fields-in-requirements-yaml
+tags:
+  spar: false
+  nginz: false
