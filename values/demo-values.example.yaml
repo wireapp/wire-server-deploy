@@ -1,6 +1,6 @@
 tags:
-  proxy: false # disable if you don't want/need giphy/youtube/etc proxying
-  spar: false # disable if you don't want/need Single-Sign-On (SSO)
+  proxy: false # enable if you want/need giphy/youtube/etc proxying
+  spar: false # enable if you want/need Single-Sign-On (SSO)
 
 cassandra-migrations:
   images:
@@ -44,7 +44,7 @@ brig:
         smsSender: "insert-sms-sender-for-twilio" # change this if SMS support is desired
     smtp:
       endpoint: smtp.example.com # change this
-      username: demo # change this
+      username: demo@example.com # change this
       connType: plain # change this. Possible values: plain|ssl|tls
 
 proxy:
