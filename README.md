@@ -78,13 +78,15 @@ Supported features
 * limited functionality
 * Requires only a kubernetes cluster
 
-The demo setup is the easiest way to install a functional wire-server with limitations (such as no persistent storage, no high-availability, missing features). For the purposes of this demo, we assume you **do not have an AWS account**. Try this demo first before trying to configure a more complicated setup.
+The demo setup is the easiest way to install a functional wire-server with limitations (such as no persistent storage, no high-availability, missing features). For the purposes of this demo, we assume you **do not have an AWS account**. Try this demo first before trying to configure a more complicated setup involving persistence and higher availability.
 
 *For all the following `helm upgrade` commands, it can be useful to run a second terminal with `kubectl --namespace demo get pods -w` to see what's happening.*
 
 #### Install non-persistent, non-highly-available databases
 
-The following will install (or upgrade) 3 database pods and 3 ClusterIP services to reach them:
+*Please note that this setup is for demonstration purposes; expect it to be unstable: you may experience total service unavailability and/or total data loss after a few hours/days due to the way e.g. kubernetes and cassandra interact. For more information on this see the production installation section.*
+
+The following will install (or upgrade) 3 single-pod databases and 3 ClusterIP services to reach them:
 
 - **databases-ephemeral**
     - cassandra-ephemeral
