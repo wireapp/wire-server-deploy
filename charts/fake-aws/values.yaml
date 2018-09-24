@@ -10,3 +10,5 @@ fake-aws-s3:
   enabled: true
 fake-aws-dynamodb:
   enabled: true
+fake-aws-ses:
+  enabled: false

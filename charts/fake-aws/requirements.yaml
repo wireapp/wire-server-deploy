@@ -34,3 +34,11 @@ dependencies:
     - fake-aws-dynamodb
     - aws-mocks
     - demo
+- name: fake-aws-ses
+  version: "0.1.0"
+  repository: "file://../fake-aws-ses"
+  condition: fake-aws-ses.enabled,global.fake-aws-ses.enabled
+  tags:
+    - fake-aws-ses
+    - aws-mocks
+    - demo

@@ -1,0 +1,10 @@
+image:
+  repository: localstack/localstack
+  tag: 0.8.5
+
+service:
+  internalPort: 4579
+  externalPort: 4569
+
+## The following needs to be provided (and consistent with the config in brig)
+#sesSender: "sender@example.com"
