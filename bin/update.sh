@@ -8,7 +8,6 @@ CHARTS_DIR="$BASE_DIR/charts"
 
 set -e
 
-
 # nothing serves on localhost, remove that repo
 helm repo remove local 2&> /dev/null || true
 
@@ -17,13 +16,13 @@ helm repo remove local 2&> /dev/null || true
 helmDepUp () {
     local path
     path=$1
-    cd $path
+    cd "$path"
     # remove previous bundled versions of helm charts, if any
-    find . | grep ".tgz$" > /tmp/helm-old-files && cat /tmp/helm-old-files | xargs -n 1 rm
+    find . -name "*\.tgz" -delete
     if [ -f requirements.yaml ]; then
       echo "Updating dependencies in $path ..."
       # very hacky bash, I'm sorry
-      for subpath in $(cat requirements.yaml | grep "file://" | awk '{ print $2 }' | xargs -n 1 | cut -c 8-)
+      for subpath in $(grep "file://" requirements.yaml | awk '{ print $2 }' | xargs -n 1 | cut -c 8-)
       do
         ( helmDepUp "$subpath" )
       done
@@ -31,6 +30,5 @@ helmDepUp () {
       echo "... updating in $path done."
     fi
 }
-
 
 helmDepUp "${CHARTS_DIR}/${chart}"

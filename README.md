@@ -192,3 +192,10 @@ Differences to the [Demo installation](#demo-installation) are:
 ### Production on-premise installation
 
 For the time being, get in touch. See [this page](https://wire.com/pricing/).
+
+## Referencing helm charts from this repo
+
+```
+helm repo add wire https://s3-eu-west-1.amazonaws.com/public.wire.com/charts
+helm search wire
+```
