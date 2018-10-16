@@ -12,29 +12,29 @@ No license is granted to the Wire trademark and its associated logos, all of whi
 
 ## Introduction
 
-This repository contains code and documentation on how to deploy [wire-server](https://github.com/wireapp/wire-server). To allow a maximum of flexibility with respect to where wire-server can be deployed (e.g. with cloud providers like AWS, on bare-metal servers, etc), we chose kubernetes as the target platform.
+This repository contains code and documentation on how to deploy [wire-server](https://github.com/wireapp/wire-server). To allow a maximum of flexibility with respect to where wire-server can be deployed (e.g. with cloud providers like AWS, on bare-metal servers, etc), we chose [kubernetes](https://kubernetes.io/) as the target platform.
 
 This means you first need to install a kubernetes cluster, and then deploy wire-server onto that kubernetes cluster.
 
 <!-- vim-markdown-toc GFM -->
 
-* [Status, support, contributing](#status-support-contributing)
+* [Status](#status)
 * [Prerequisites](#prerequisites)
-    * [Required resources](#required-resources)
+    * [Required server resources](#required-server-resources)
 * [Development setup](#development-setup)
 * [Installing wire-server](#installing-wire-server)
     * [Demo installation](#demo-installation)
         * [Install non-persistent, non-highly-available databases](#install-non-persistent-non-highly-available-databases)
         * [Install AWS service mocks](#install-aws-service-mocks)
         * [Install wire-server](#install-wire-server)
-    * [Demo-AWS](#demo-aws)
+    * [Demo installation with real AWS](#demo-installation-with-real-aws)
     * [Production on-premise installation](#production-on-premise-installation)
 
 <!-- vim-markdown-toc -->
 
-## Status, support, contributing
+## Status
 
-TODO
+Code in this repository should be considered **alpha**. We do not (yet) run our production infrastructure on kubernetes.
 
 ## Prerequisites
 
@@ -52,25 +52,40 @@ You need:
 * an email server (allowing SMTP) to send out registration emails
 * depending on your required functionality, you may or may not need an [**AWS account**](https://aws.amazon.com/). See details about limitations without an AWS account in the following sections.
 
-### Required resources
+### Required server resources
 
-TODO
+* For an ephemeral in-memory demo-setup
+    * a single server with 8 CPU cores, 32GB of memory, and 20GB of disk space is sufficient.
+* For a production setup, you need at least 3 servers. For an optimal setup, more servers are required, it depends on your environment.
 
 ## Development setup
 
-TODO
+You need to install
 
-* kubectl
-* helm
-* make
-* 
+* [GNU make](https://www.gnu.org/software/make/)
+* [helm](https://docs.helm.sh/using_helm/#installing-helm)
+* [kubectl](https://kubernetes.io/docs/tasks/tools/install-kubectl/)
 
+and you need to configure access to a kubernetes cluster.
+
+Optionally, if working in a team and you'd like to share `secrets.yaml` files between developers using a private git repo and encrypted files, you may wish to install
+
+* [sops](https://github.com/mozilla/sops)
+* [helm-secrets plugin](https://github.com/futuresimple/helm-secrets)
 
 ## Installing wire-server
 
-TODO
+Supported features:
 
-Supported features
+- wire-server (API)
+    - [x] user accounts, authentication, conversations
+    - [x] assets handling (images, files, ...)
+    - [x] (disabled by default) 3rd party proxying
+    - [x] notifications over websocket
+    - [ ] notifications over FCM/APNS push notifications
+    - [ ] audio/video calling
+- wire-webapp
+    - [ ] ...
 
 ### Demo installation
 
@@ -84,7 +99,7 @@ The demo setup is the easiest way to install a functional wire-server with limit
 
 #### Install non-persistent, non-highly-available databases
 
-*Please note that this setup is for demonstration purposes; expect it to be unstable: you may experience total service unavailability and/or total data loss after a few hours/days due to the way e.g. kubernetes and cassandra interact. For more information on this see the production installation section.*
+*Please note that this setup is for demonstration purposes; no data is ever written to disk, so a restart will wipe data. Even without restarts expect it to be unstable: you may experience total service unavailability and/or **total data loss after a few hours/days** due to the way kubernetes and cassandra [interact](https://github.com/kubernetes/kubernetes/issues/28969). For more information on this see the production installation section.*
 
 The following will install (or upgrade) 3 single-pod databases and 3 ClusterIP services to reach them:
 
@@ -111,7 +126,7 @@ The code in wire-server still depends on some AWS services for some of its funct
     - fake-aws-dynamodb
 
 ```shell
-./bin/update.sh fake-aws
+./bin/update.sh fake-aws # a recursive wrapper around 'helm dep update'
 helm upgrade --install --namespace demo demo-fake-aws charts/fake-aws --wait
 ```
 
@@ -174,28 +189,11 @@ helm upgrade --install --namespace demo demo-wire-server charts/wire-server \
     --wait
 ```
 
-### Demo-AWS
+### Demo installation with real AWS
 
-* AWS account required
-* Similar limited functionality to Demo except:
-    * Allows using ELBs for incoming traffic
-    * Potentially better availability of some parts
-
-Differences to the [Demo installation](#demo-installation) are:
-
-* instead of using fake-aws charts, you need to set up the respective services in your account, create queues,tables etc. Have a look at the fake-aws-* charts; you'll need to replicate a similar setup.
-    * Once real AWS resources are created, adapt the configuration in the values and secrets files to use real endpoints and real AWS keys.
-* instead of using a mail server and connect with SMTP, you may use SES. See configuration of brig and the `useSES` toggle.
-* You can use ELBs in front of nginz for higher availability.
-* SQS/dynamo have better availability gurantees.
+see [docs/demo-AWS.md](docs/demo-AWS.md)
 
 ### Production on-premise installation
 
 For the time being, get in touch. See [this page](https://wire.com/pricing/).
 
-## Referencing helm charts from this repo
-
-```
-helm repo add wire https://s3-eu-west-1.amazonaws.com/public.wire.com/charts
-helm search wire
-```
