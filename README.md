@@ -163,7 +163,7 @@ In `values/demo-values.yaml` (referred to as `values` file below) and `values/de
     * Add value to secrets/`brig.secrets.turn.secret`
     * (this will eventually need to be shared with a turn server, not part of this demo yet)
 * zauth private/public keys (For authentication; `access tokens` and `user tokens` (cookies) are signed and validated with these)
-    * Generate from within [wire-server](github.com/wireapp/wire-server) with `./dist/zauth -m gen-keypair -i 1` if you have everything compiled; or alternatively with docker using `docker run --rm quay.io/wire/alpine-intermediate /dist/zauth -m gen-keypair -i 1`
+    * Generate from within [wire-server](https://github.com/wireapp/wire-server) with `./dist/zauth -m gen-keypair -i 1` if you have everything compiled; or alternatively with docker using `docker run --rm quay.io/wire/alpine-intermediate /dist/zauth -m gen-keypair -i 1`
     * add both to secrets/`brig.zauth` and the public one to secrets/`nginz.secrets.zauth`
 * domain names and urls
     * in `values`, replace `example.com` and other domains and subdomains with domains of your choosing. Look for the `# change this` comments.
