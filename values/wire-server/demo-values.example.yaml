@@ -4,7 +4,7 @@ tags:
 
 cassandra-migrations:
   images:
-    tag: 2.50.155
+    tag: 2.50.169
   cassandra:
     host: cassandra-ephemeral
     replicaCount: 1
@@ -16,7 +16,7 @@ elasticsearch-index:
 brig:
   replicaCount: 1
   image:
-    tag: 2.50.156
+    tag: 2.50.169
   config:
     cassandra:
       host: cassandra-ephemeral
@@ -34,6 +34,7 @@ brig:
       prekeyTable: integration-brig-prekeys
     externalUrls:
       nginz: https://api.example.com # change this
+      teamSettings: https://teams.example.com # change this (on unset if team settings are not used)
       teamCreatorWelcome: https://teams.example.com/login # change this
       teamMemberWelcome: https://wire.example.com/download # change this
     optSettings:
@@ -43,47 +44,48 @@ brig:
         emailSender: email@example.com # change this
         smsSender: "insert-sms-sender-for-twilio" # change this if SMS support is desired
     smtp:
-      endpoint: smtp.example.com # change this
-      username: demo@example.com # change this
+      host: demo-smtp # change this if you want to use your own SMTP server
+      port: 25        # change this
       connType: plain # change this. Possible values: plain|ssl|tls
 
 proxy:
   replicaCount: 1
   image:
-    tag: 2.50.156
+    tag: 2.50.169
 
 cannon:
   replicaCount: 1
   image:
-    tag: 2.50.156
+    tag: 2.50.169
   drainTimeout: 10 # we don't need higher-availability in demo-mode
 
 cargohold:
   replicaCount: 1
   image:
-    tag: 2.50.156
+    tag: 2.50.169
   config:
     aws:
       # change if using real AWS
       s3Bucket: dummy-bucket
       s3Endpoint: http://fake-aws-s3:9000
+      s3DownloadEndpoint: https://bare-s3.example.com
 
 galley:
   replicaCount: 1
   image:
-    tag: 2.50.156
+    tag: 2.50.169
   config:
     cassandra:
       host: cassandra-ephemeral
       replicaCount: 1
     settings:
       # prefix URI used when inviting users to a conversation by link
-      conversationCodeURI: https://api.example.com/join/ # change this
+      conversationCodeURI: https://example.com/join/ # change this
 
 gundeck:
   replicaCount: 1
   image:
-    tag: 2.50.156
+    tag: 2.50.169
   config:
     cassandra:
       host: cassandra-ephemeral
@@ -97,23 +99,36 @@ gundeck:
       sqsEndpoint: http://fake-aws-sqs:4568
       snsEndpoint: http://fake-aws-sns:4575
 
-# nginz:
-#  replicaCount: 1
-#   images:
-#     nginz:
-#       tag: 2.15.1
-#   services:
-#     https:
-#       # change account number and domain to match certificate
-#       sslCert: arn:aws:iam::00000-accountnumber-00000:server-certificate/example.com
-#       hostname: wire-demo-nginz-https.example.com
-#     wss:
-#       # change account number and domain to match certificate
-#       sslCert: arn:aws:iam::00000-accountnumber-00000:server-certificate/example.com
-#       hostname: wire-demo-nginz-ssl.example.com
-#   DNSConfig:
-#     domainFilter: example.com # change this
-#     provider: aws
-#   nginx_conf:
-#     env: staging
-#     external_env_domain: example.com # change this
+nginz:
+  replicaCount: 1
+  config:
+    ws:
+      useProxyProtocol: false
+  images:
+    nginz:
+      tag: 2.15.1
+  nginx_conf:
+    # using prod means mostly that some internal endpoints are not exposed
+    env: prod
+    external_env_domain: example.com
+
+webapp:
+  replicaCount: 1
+  image:
+    tag: bed0076358685ef2f591b8c05f185cf4607dd32f
+  config:
+    externalUrls:
+      backendRest: bare-https.example.com
+      backendWebsocket: bare-ssl.example.com
+      backendDomain: example.com
+
+team-settings:
+  replicaCount: 1
+  image:
+    tag: 4e4467c29197aa85e63eaa644d080704b80bc14b
+  config:
+    externalUrls:
+      backendRest: bare-https.example.com
+      backendWebsocket: bare-ssl.example.com
+      backendDomain: example.com
+      webappHost: bare-webapp.example.com

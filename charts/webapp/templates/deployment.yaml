@@ -1,0 +1,57 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: webapp
+  labels:
+    wireService: webapp
+    chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 0
+      maxSurge: {{ .Values.replicaCount | mul 2 }}
+  selector:
+    matchLabels:
+      wireService: webapp
+      app: webapp
+  template:
+    metadata:
+      labels:
+        wireService: webapp
+        app: webapp
+        release: {{ .Release.Name }}
+    spec:
+      containers:
+      - name: webapp
+        image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+        env:
+          - name: HOSTHTTPS
+            value: {{ .Values.config.externalUrls.backendRest }}
+          - name: HOSTSSL
+            value: {{ .Values.config.externalUrls.backendWebsocket }}
+          - name: HOSTDOMAIN
+            value: {{ .Values.config.externalUrls.backendDomain }}
+        ports:
+        - name: http
+          containerPort: {{ .Values.service.http.webappPort }}
+        # NOTE: /test/ returns an HTML document a 200 response code
+        readinessProbe:
+          httpGet:
+            path: /test/
+            port: {{ .Values.service.http.webappPort }}
+            scheme: HTTP
+        livenessProbe:
+          initialDelaySeconds: 30
+          timeoutSeconds: 3
+          httpGet:
+            path: /test/
+            port: {{ .Values.service.http.webappPort }}
+            scheme: HTTP
+        resources:
+{{ toYaml .Values.resources | indent 12 }}
+      dnsPolicy: ClusterFirst
+      restartPolicy: Always

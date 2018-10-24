@@ -1,0 +1,25 @@
+# Default values for the webapp.
+replicaCount: 1
+resources:
+  requests:
+    memory: 256Mi
+    cpu: "0.5"
+  limits:
+    memory: 512Mi
+    cpu: "1"
+image:
+  repository: quay.io/wire/webapp
+  tag: bed0076358685ef2f591b8c05f185cf4607dd32f
+service:
+  https:
+    externalPort: 443
+  http:
+    webappPort: 5000
+
+## The following has to be provided to deploy this chart
+
+#config:
+#  externalUrls:
+#   backendRest: <nginz-subdomain-https.your.domain>
+#   backendWebsocket: <nginz-subdomain-ssl.your.domain>
+#   backendDomain: <your.domain>

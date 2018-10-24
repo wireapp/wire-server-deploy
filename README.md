@@ -85,7 +85,9 @@ Supported features:
     - [ ] notifications over FCM/APNS push notifications
     - [ ] audio/video calling
 - wire-webapp
-    - [ ] ...
+    - [x] functional web client
+- wire-team-settings
+    - [x] team management (including invitations, requires access to a private app)
 
 ### Demo installation
 
@@ -144,6 +146,8 @@ To delete: `helm delete --purge demo-fake-aws`
     - nginz
     - proxy (optional, disabled by default)
     - spar (optional, disabled by default)
+    - webapp (optional, enabled by default)
+    - team-settings (optional, disabled by default - requires access to a private repo)
 
 Start by copying the necessary configuration files:
 
@@ -193,7 +197,10 @@ helm upgrade --install --namespace demo demo-wire-server charts/wire-server \
 
 see [docs/demo-AWS.md](docs/demo-AWS.md)
 
+#### Demo On premise installation
+
+If you are installing this on an environment without the possibly of using an external Load Balancer for things like SSL termination, load balancing and ingress, then have a look at [docs/demo-OnPrem.md](docs/demo-OnPrem.md)
+
 ### Production on-premise installation
 
 For the time being, get in touch. See [this page](https://wire.com/pricing/).
-

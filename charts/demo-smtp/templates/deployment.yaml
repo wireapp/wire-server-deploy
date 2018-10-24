@@ -1,0 +1,30 @@
+apiVersion: apps/v1beta2
+kind: Deployment
+metadata:
+  name: {{ template "demo-smtp.fullname" . }}
+  labels:
+    app: {{ template "demo-smtp.name" . }}
+    chart: {{ template "demo-smtp.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ template "demo-smtp.name" . }}
+      release: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        app: {{ template "demo-smtp.name" . }}
+        release: {{ .Release.Name }}
+    spec:
+      containers:
+        - name: {{ .Chart.Name }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          ports:
+            - name: smtp
+              containerPort: 25
+              protocol: TCP
+          resources:
+{{ toYaml .Values.resources | indent 12 }}

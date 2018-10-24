@@ -4,4 +4,4 @@
 # https://docs.helm.sh/developing_charts/#tags-and-condition-fields-in-requirements-yaml
 tags:
   spar: false
-  nginz: false
+  team-settings: false

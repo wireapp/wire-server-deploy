@@ -1,0 +1,61 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: team-settings
+  labels:
+    wireService: team-settings
+    chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 0
+      maxSurge: {{ .Values.replicaCount | mul 2 }}
+  selector:
+    matchLabels:
+      wireService: team-settings
+      app: team-settings
+  template:
+    metadata:
+      labels:
+        wireService: team-settings
+        app: team-settings
+        release: {{ .Release.Name }}
+    spec:
+      # Check the README to find out more about this secret
+      imagePullSecrets:
+      - name: wire-teamsettings-readonly-pull-secret
+      containers:
+      - name: team-settings
+        image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+        env:
+          - name: HOSTHTTPS
+            value: {{ .Values.config.externalUrls.backendRest }}
+          - name: HOSTSSL
+            value: {{ .Values.config.externalUrls.backendWebsocket }}
+          - name: HOSTDOMAIN
+            value: {{ .Values.config.externalUrls.backendDomain }}
+          - name: WEBAPPHTTPS
+            value: {{ .Values.config.externalUrls.webappHost }}
+        ports:
+        - name: http
+          containerPort: {{ .Values.service.http.servicePort }}
+        readinessProbe:
+          httpGet:
+            path: /_health/
+            port: {{ .Values.service.http.servicePort }}
+            scheme: HTTP
+        livenessProbe:
+          initialDelaySeconds: 30
+          timeoutSeconds: 3
+          httpGet:
+            path: /_health/
+            port: {{ .Values.service.http.servicePort }}
+            scheme: HTTP
+        resources:
+{{ toYaml .Values.resources | indent 12 }}
+      dnsPolicy: ClusterFirst
+      restartPolicy: Always

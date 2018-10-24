@@ -1,0 +1,4 @@
+# NOTE: Adjust these values to your list of available cidr addresses.
+#       Intentionally left blank, to avoid booting up metallb without
+#       IP addresses
+cidrAddresses:

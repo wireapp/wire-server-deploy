@@ -3,7 +3,7 @@
 replicaCount: 3
 image:
   repository: quay.io/wire/brig
-  tag: 2.50.154
+  tag: 2.50.169
 service:
   externalPort: 8080
   internalPort: 8080
@@ -57,6 +57,8 @@ config:
 #config:
 #  externalUrls:
 #    nginz: "<nginz-subdomain.your.domain>"
+#    teamSettings: "<teamsettings-subdomain.your.domain>"
+#    ^ If team settings are used / provided
 #    teamCreatorWelcome: "<team admin login page url>"
 #    teamMemberWelcome: "<app download page url>"
 #  optSettings:

@@ -1,0 +1,14 @@
+teamSettings:
+  enabled: false
+tls:
+  enabled: true
+
+# NOTE: These values are suggested for deployments on bare metal and
+#       should be adjusted on a per installation basis
+config:
+  dns:
+    https: bare-https.self-hosted.com
+    ssl: bare-ssl.self-hosted.com
+    webapp: bare-webapp.self-hosted.com
+    fakeS3: bare-s3.self-hosted.com
+    teamSettings: bare-team.self-hosted.com

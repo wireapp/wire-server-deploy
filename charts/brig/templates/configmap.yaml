@@ -54,10 +54,15 @@ data:
         sesQueue: {{ .aws.sesQueue }}
         sesEndpoint: {{ .aws.sesEndpoint | quote }}
       {{- else }}
-        smtpEndpoint: {{ .smtp.endpoint }}
-        smtpUsername: {{ .smtp.username }}
-        smtpPassword: {{ .smtp.passwordFile }}
+        smtpEndpoint:
+          host: {{ .smtp.host }}
+          port: {{ .smtp.port }}
         smtpConnType: {{ .smtp.connType }}
+        {{- if .smtp.username }}
+        smtpCredentials:
+          username: {{ .smtp.username }}
+          password: {{ .smtp.passwordFile }}
+        {{- end }}
       {{- end }}
       general:
         templateDir: /usr/share/wire/templates
@@ -79,7 +84,11 @@ data:
         providerPwResetUrl: {{ .externalUrls.nginz }}/provider/password-reset?key=\${key}\&code=\${code}
 
       team:
+      {{- if .externalUrls.teamSettings }}
+        tInvitationUrl: {{ .externalUrls.teamSettings }}/join/?team-code=${code}
+      {{- else }}
         tInvitationUrl: {{ .externalUrls.nginz }}/register?team=${team}&team_code=${code}
+      {{- end }}
         tActivationUrl: {{ .externalUrls.nginz }}/register?team=${team}&team_code=${code}
         tCreatorWelcomeUrl: {{ .externalUrls.teamCreatorWelcome }}
         tMemberWelcomeUrl: {{ .externalUrls.teamMemberWelcome }}

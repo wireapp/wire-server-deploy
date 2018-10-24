@@ -4,7 +4,7 @@ replicaCount: 3
 
 image:
   repository: quay.io/wire/galley
-  tag: 2.50.154
+  tag: 2.50.169
   schemaRepository: quay.io/wire/galley-schema
 
 service:
@@ -31,7 +31,7 @@ config:
 
 # These values must be set:
 # settings:
-#   conversationCodeURI: "https://url-to-webapp/join/" 
+#   conversationCodeURI: "https://url-to-webapp/join/"
 
 # Optional
 # journal:

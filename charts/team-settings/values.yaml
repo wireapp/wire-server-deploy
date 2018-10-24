@@ -1,0 +1,30 @@
+# Default values for the team-settings.
+replicaCount: 1
+resources:
+  requests:
+    memory: 256Mi
+    cpu: "0.5"
+  limits:
+    memory: 512Mi
+    cpu: "1"
+image:
+  repository: quay.io/wire/team-settings
+  tag: 4e4467c29197aa85e63eaa644d080704b80bc14b
+service:
+  https:
+    externalPort: 443
+  http:
+    servicePort: 8080
+
+## The following has to be provided to deploy this chart
+
+#config:
+#  externalUrls:
+#   backendRest: <nginz-subdomain-https.your.domain>
+#   backendWebsocket: <nginz-subdomain-ssl.your.domain>
+#   backendDomain: <your.domain>
+#   webappHost: <webapp-subdomain-webapp.your.domain>
+
+#secrets:
+#   configJson: <secret-to-be-asked-from-wire>
+#

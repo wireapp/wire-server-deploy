@@ -1,4 +1,4 @@
 dependencies:
-- name: minio
-  version: 1.8.1
+- name: metallb
+  version: 0.8.0
   repository: https://kubernetes-charts.storage.googleapis.com

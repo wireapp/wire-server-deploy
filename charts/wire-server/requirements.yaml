@@ -64,3 +64,21 @@ dependencies:
     - brig
     - haskellServices
     - services
+- name: nginz
+  version: "0.1.0"
+  repository: "file://../nginz"
+  tags:
+    - nginz
+    - services
+- name: webapp
+  version: "0.1.0"
+  repository: "file://../webapp"
+  tags:
+    - web
+    - webapp
+- name: team-settings
+  version: "0.1.0"
+  repository: "file://../team-settings"
+  tags:
+    - web
+    - team-settings
