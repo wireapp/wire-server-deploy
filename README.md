@@ -26,9 +26,11 @@ This means you first need to install a kubernetes cluster, and then deploy wire-
     * [Demo installation](#demo-installation)
         * [Install non-persistent, non-highly-available databases](#install-non-persistent-non-highly-available-databases)
         * [Install AWS service mocks](#install-aws-service-mocks)
+        * [Install a demo SMTP server](#install-a-demo-smtp-server)
         * [Install wire-server](#install-wire-server)
-    * [Demo installation with real AWS](#demo-installation-with-real-aws)
-    * [Production on-premise installation](#production-on-premise-installation)
+        * [Adding a load balancer, DNS, and SSL termination](#adding-a-load-balancer-dns-and-ssl-termination)
+        * [Beyond the demo](#beyond-the-demo)
+    * [Support with a production on-premise (self-hosted) installation](#support-with-a-production-on-premise-self-hosted-installation)
 
 <!-- vim-markdown-toc -->
 
@@ -36,9 +38,23 @@ This means you first need to install a kubernetes cluster, and then deploy wire-
 
 Code in this repository should be considered **alpha**. We do not (yet) run our production infrastructure on kubernetes.
 
+Supported features:
+
+- wire-server (API)
+    - [x] user accounts, authentication, conversations
+    - [x] assets handling (images, files, ...)
+    - [x] (disabled by default) 3rd party proxying
+    - [x] notifications over websocket
+    - [ ] notifications over FCM/APNS push notifications
+    - [ ] audio/video calling (TURN servers)
+- wire-webapp
+    - [x] functional web client
+- wire-team-settings
+    - [x] team management (including invitations, requires access to a private app)
+
 ## Prerequisites
 
-You need:
+As a minimum for a demo installation, you need:
 
 * a **Kubernetes cluster** with enough resources. There are [many different options](https://kubernetes.io/docs/setup/pick-right-solution/). A tiny subset of those solutions we tried include:
     * if using AWS, you may want to look at:
@@ -49,8 +65,6 @@ You need:
 * a **Domain Name** under your control and the ability to set DNS entries
 * the ability to generate **SSL certificates** for that domain name
     * you could use e.g. [Let's Encrypt](https://letsencrypt.org/)
-* an email server (allowing SMTP) to send out registration emails
-* depending on your required functionality, you may or may not need an [**AWS account**](https://aws.amazon.com/). See details about limitations without an AWS account in the following sections.
 
 ### Required server resources
 
@@ -68,31 +82,16 @@ You need to install
 
 and you need to configure access to a kubernetes cluster.
 
-Optionally, if working in a team and you'd like to share `secrets.yaml` files between developers using a private git repo and encrypted files, you may wish to install
+Optionally, if working in a team and you'd like to share `secrets.yaml` files between developers using a private git repository and encrypted files, you may wish to install
 
 * [sops](https://github.com/mozilla/sops)
 * [helm-secrets plugin](https://github.com/futuresimple/helm-secrets)
 
 ## Installing wire-server
 
-Supported features:
-
-- wire-server (API)
-    - [x] user accounts, authentication, conversations
-    - [x] assets handling (images, files, ...)
-    - [x] (disabled by default) 3rd party proxying
-    - [x] notifications over websocket
-    - [ ] notifications over FCM/APNS push notifications
-    - [ ] audio/video calling
-- wire-webapp
-    - [x] functional web client
-- wire-team-settings
-    - [x] team management (including invitations, requires access to a private app)
-
 ### Demo installation
 
 * AWS account not required
-* limited functionality
 * Requires only a kubernetes cluster
 
 The demo setup is the easiest way to install a functional wire-server with limitations (such as no persistent storage, no high-availability, missing features). For the purposes of this demo, we assume you **do not have an AWS account**. Try this demo first before trying to configure a more complicated setup involving persistence and higher availability.
@@ -134,6 +133,14 @@ helm upgrade --install --namespace demo demo-fake-aws charts/fake-aws --wait
 
 To delete: `helm delete --purge demo-fake-aws`
 
+#### Install a demo SMTP server
+
+You can either install this very basic SMTP server, or configure your own (see SMTP options in [this section](docs/configuration.md#smtp-server))
+
+```shell
+helm upgrade --install --namespace demo demo-smtp charts/demo-smtp --wait
+```
+
 #### Install wire-server
 
 - **wire-server**
@@ -147,30 +154,26 @@ To delete: `helm delete --purge demo-fake-aws`
     - proxy (optional, disabled by default)
     - spar (optional, disabled by default)
     - webapp (optional, enabled by default)
-    - team-settings (optional, disabled by default - requires access to a private repo)
+    - team-settings (optional, disabled by default - requires access to a private repository)
 
-Start by copying the necessary configuration files:
+Start by copying the necessary `values` and `secrets` configuration files:
 
 ```
-cp values/demo-values.example.yaml values/demo-values.yaml
-cp values/demo-secrets.example.yaml values/demo-secrets.yaml
+cp values/wire-server/demo-values.example.yaml values/wire-server/demo-values.yaml
+cp values/wire-server/demo-secrets.example.yaml values/wire-server/demo-secrets.yaml
 ```
 
-In `values/demo-values.yaml` (referred to as `values` file below) and `values/demo-secrets.yaml` (referred to as `secrets` file), the following has to be adapted:
+In `values/wire-server/demo-values.yaml` (referred to as `values-file` below) and `values/wire-server/demo-secrets.yaml` (referred to as `secrets-file`), the following has to be adapted:
 
-* smtp credentials (to allow for email sending; prerequisite for registering users and running the smoketest)
-    * *if using a gmail account, ensure to enable ['less secure apps'](https://support.google.com/accounts/answer/6010255?hl=en)*
-    * Add user, smtp server, connection type in values/`brig.config.smtp`
-    * Add password in secrets/`brig.secrets.smtpPassword`
 * turn server shared key (needed for audio/video calling)
     * Generate with e.g. `openssl rand -base64 64 | env LC_CTYPE=C tr -dc a-zA-Z0-9 | head -c 42` or similar
-    * Add value to secrets/`brig.secrets.turn.secret`
+    * Add key to secrets-file under `brig.secrets.turn.secret`
     * (this will eventually need to be shared with a turn server, not part of this demo yet)
 * zauth private/public keys (For authentication; `access tokens` and `user tokens` (cookies) are signed and validated with these)
     * Generate from within [wire-server](https://github.com/wireapp/wire-server) with `./dist/zauth -m gen-keypair -i 1` if you have everything compiled; or alternatively with docker using `docker run --rm quay.io/wire/alpine-intermediate /dist/zauth -m gen-keypair -i 1`
-    * add both to secrets/`brig.zauth` and the public one to secrets/`nginz.secrets.zauth`
+    * add both to secrets-file under `brig.zauth` and the public one to secrets-file under `nginz.secrets.zAuth.publicKeys`
 * domain names and urls
-    * in `values`, replace `example.com` and other domains and subdomains with domains of your choosing. Look for the `# change this` comments.
+    * in your values-file, replace `example.com` and other domains and subdomains with domains of your choosing. Look for the `# change this` comments. You can try using `sed -i 's/example.com/<your-domain>/g' <values-file>`.
 
 Update the chart dependencies:
 
@@ -181,7 +184,7 @@ Update the chart dependencies:
 Try linting your chart, are any configuration values missing?
 
 ```sh
-helm lint -f values/demo-values.yaml -f values/demo-secrets.yaml charts/wire-server
+helm lint -f values/wire-server/demo-values.yaml -f values/wire-server/demo-secrets.yaml charts/wire-server
 ```
 
 If you're confident in your configuration, try installing it:
@@ -193,14 +196,15 @@ helm upgrade --install --namespace demo demo-wire-server charts/wire-server \
     --wait
 ```
 
-### Demo installation with real AWS
+#### Adding a load balancer, DNS, and SSL termination
 
-see [docs/demo-AWS.md](docs/demo-AWS.md)
+* If you're on bare metal or on a cloud provider without external load balancer support, see [configuring a load balancer on bare metal servers](docs/configuration.md#load-balancer-on-bare-metal-servers)
+* If you're on AWS or another cloud provider, see [configuring a load balancer on cloud provider](docs/configuration.md#load-balancer-on-cloud-provider)
 
-#### Demo On premise installation
+#### Beyond the demo
 
-If you are installing this on an environment without the possibly of using an external Load Balancer for things like SSL termination, load balancing and ingress, then have a look at [docs/demo-OnPrem.md](docs/demo-OnPrem.md)
+For further configuration options (some have specific requirements about your environment), see [docs/configuration.md](docs/configuration.md).
 
-### Production on-premise installation
+### Support with a production on-premise (self-hosted) installation
 
-For the time being, get in touch. See [this page](https://wire.com/pricing/).
+[Get in touch](https://wire.com/pricing/).

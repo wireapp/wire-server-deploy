@@ -17,7 +17,7 @@ teamSettings:
 # encrypt them with sops and use helm-wrapper, check README.md
 # for an example)
 tls:
-  enabled: false
+  enabled: true
 
 nginx-ingress:
   controller:

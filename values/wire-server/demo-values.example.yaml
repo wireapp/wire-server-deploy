@@ -57,7 +57,8 @@ cannon:
   replicaCount: 1
   image:
     tag: 2.50.169
-  drainTimeout: 10 # we don't need higher-availability in demo-mode
+  # For demo mode only, we don't need to keep websocket connections open on chart upgrades
+  drainTimeout: 10
 
 cargohold:
   replicaCount: 1
@@ -111,6 +112,9 @@ nginz:
     # using prod means mostly that some internal endpoints are not exposed
     env: prod
     external_env_domain: example.com
+  # For demo mode only, we don't need to keep websocket connections open on upgrade:
+  drainTimeout: 10
+  terminationGracePeriodSeconds: 30
 
 webapp:
   replicaCount: 1

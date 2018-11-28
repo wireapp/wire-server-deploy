@@ -1,5 +1,7 @@
 *.tgz
 *secrets.yaml
+*.key
+*.cert
 demo-values.yaml
 requirements.lock
 values/*/demo-values.override.yaml
