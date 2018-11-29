@@ -1,4 +1,7 @@
 # NOTE: Adjust these values to your list of available cidr addresses.
 #       Intentionally left blank, to avoid booting up metallb without
 #       IP addresses
+# Example with a 1-node kubernetes cluster with a single ip 1.2.3.4:
+# cidrAddresses:
+#   - "1.2.3.4/32"
 cidrAddresses:

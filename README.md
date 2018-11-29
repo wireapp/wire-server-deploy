@@ -21,6 +21,7 @@ This means you first need to install a kubernetes cluster, and then deploy wire-
 * [Status](#status)
 * [Prerequisites](#prerequisites)
     * [Required server resources](#required-server-resources)
+* [Contents of this repository](#contents-of-this-repository)
 * [Development setup](#development-setup)
 * [Installing wire-server](#installing-wire-server)
     * [Demo installation](#demo-installation)
@@ -45,12 +46,13 @@ Supported features:
     - [x] assets handling (images, files, ...)
     - [x] (disabled by default) 3rd party proxying
     - [x] notifications over websocket
-    - [ ] notifications over FCM/APNS push notifications
-    - [ ] audio/video calling (TURN servers)
+    - [ ] notifications over [FCM](https://firebase.google.com/docs/cloud-messaging/)/[APNS](https://developer.apple.com/notifications/) push notifications
+    - [ ] audio/video calling ([TURN](https://en.wikipedia.org/wiki/Traversal_Using_Relays_around_NAT)/[STUN](https://en.wikipedia.org/wiki/STUN) servers using [restund](https://github.com/wireapp/restund))
 - wire-webapp
-    - [x] functional web client
+    - [x] fully functioning web client (like `https://app.wire.com`)
 - wire-team-settings
-    - [x] team management (including invitations, requires access to a private app)
+    - [x] team management (including invitations, requires access to a private repository)
+
 
 ## Prerequisites
 
@@ -72,11 +74,17 @@ As a minimum for a demo installation, you need:
     * a single server with 8 CPU cores, 32GB of memory, and 20GB of disk space is sufficient.
 * For a production setup, you need at least 3 servers. For an optimal setup, more servers are required, it depends on your environment.
 
+## Contents of this repository
+
+* `bin/` - some helper bash scripts
+* `charts/` - so-called "[helm](https://www.helm.sh/) charts" - templated kubernetes configuration in YAML
+* `docs/` - further documentation
+* `values/` - example override values to helm charts
+
 ## Development setup
 
 You need to install
 
-* [GNU make](https://www.gnu.org/software/make/)
 * [helm](https://docs.helm.sh/using_helm/#installing-helm)
 * [kubectl](https://kubernetes.io/docs/tasks/tools/install-kubectl/)
 

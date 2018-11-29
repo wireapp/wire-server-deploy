@@ -74,12 +74,12 @@ In case you're unfamiliar with the [helm documentation](https://docs.helm.sh/)
 
 * A kubernetes node with a _public_ IP address (or internal, if you do not plan to expose the Wire backend over the Internet but we will assume you are using a public IP address)
 * DNS records for the different exposed addresses (the ingress depends on the usage of virtual hosts), namely:
-  * bare-https.<domain>
-  * bare-ssl.<domain>
-  * bare-s3.<domain>
-  * bare-webapp.<domain>
-  * bare-team.<domain> (optional)
-* A wildcard certificate for the different hosts (*.<domain>) - we assume you want to do SSL termination on the ingress controller
+  * bare-https.your-domain
+  * bare-ssl.your-domain
+  * bare-s3.your-domain
+  * bare-webapp.your-domain
+  * bare-team.your-domain (optional)
+* A wildcard certificate for the different hosts (*.your-domain) - we assume you want to do SSL termination on the ingress controller
 
 **Caveats**:
 
@@ -93,7 +93,7 @@ cp values/nginx-lb-ingress/demo-values.example.yaml values/nginx-lb-ingress/demo
 cp values/nginx-lb-ingress/demo-secrets.example.yaml values/nginx-lb-ingress/demo-secrets.yaml
 ```
 
-* Adapt `values/metallb/demo-values.yaml` to provide a list of public IP addresses that your kubernetes nodes can bind to.
+* Adapt `values/metallb/demo-values.yaml` to provide a list of public IP address CIDRs that your kubernetes nodes can bind to.
 * Adapt `values/nginx-lb-ingress/demo-values.yaml` with correct URLs
 * Put your TLS cert and key into `values/nginx-lb-ingress/demo-secrets.yaml`.
 
@@ -113,7 +113,7 @@ Install `nginx-lb-ingress`:
 helm upgrade --install --namespace demo nginx-lb-ingress charts/nginx-lb-ingress \
     -f values/nginx-lb-ingress/demo-values.yaml \
     -f values/nginx-lb-ingress/demo-secrets.yaml \
-    --wait --timeout 1800
+    --wait
 ```
 
 Now, create DNS records for the URLs configured above.
