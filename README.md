@@ -85,10 +85,10 @@ As a minimum for a demo installation, you need:
 
 You need to install
 
-* [helm](https://docs.helm.sh/using_helm/#installing-helm)
-* [kubectl](https://kubernetes.io/docs/tasks/tools/install-kubectl/)
+* [helm](https://docs.helm.sh/using_helm/#installing-helm) (v2.11.x is known to work)
+* [kubectl](https://kubernetes.io/docs/tasks/tools/install-kubectl/) (v1.12.x is known to work)
 
-and you need to configure access to a kubernetes cluster.
+and you need to configure access to a kubernetes cluster (minimum v1.9+, 1.12+ recommended).
 
 Optionally, if working in a team and you'd like to share `secrets.yaml` files between developers using a private git repository and encrypted files, you may wish to install
 
