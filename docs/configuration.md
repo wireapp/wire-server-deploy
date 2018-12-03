@@ -13,6 +13,10 @@ This contains instructions towards a more production-ready setup. Depending on y
     * [Real AWS services](#real-aws-services)
     * [Persistence and high-availability](#persistence-and-high-availability)
     * [Security](#security)
+    * [Sign up with a phone number (Sending SMS)](#sign-up-with-a-phone-number-sending-sms)
+    * [3rd-party proxying](#3rd-party-proxying)
+    * [TURN servers (Audio/Video calls)](#turn-servers-audiovideo-calls)
+    * [Metrics/logging](#metricslogging)
 
 <!-- vim-markdown-toc -->
 
@@ -163,3 +167,32 @@ The bare minimum:
 * Restrict ssh access / harden sshd configuration
 * Ensure no other pods with public access than the main ingress are deployed on your cluster, since, in the current setup, pods have access to etcd values (and thus any secrets stored there, including secrets from other pods)
 * Ensure developers encrypt any secrets.yaml files
+
+## Sign up with a phone number (Sending SMS)
+
+**Provides**:
+
+* Registering accounts with a phone number
+
+**You need**:
+
+* a [Nexmo](https://www.nexmo.com/) account
+* a [Twilio](https://www.twilio.com/) account
+
+**How to configure**:
+
+See the `brig` chart for configuration.
+
+## 3rd-party proxying
+
+You need Giphy/Google/Spotify/Soundcloud API keys (if you want to support previews by proxying these services)
+
+See the `proxy` chart for configuration.
+
+## TURN servers (Audio/Video calls)
+
+Not yet supported.
+
+## Metrics/logging
+
+Not yet supported
