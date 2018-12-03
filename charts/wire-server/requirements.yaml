@@ -83,3 +83,10 @@ dependencies:
     - web
     - team-settings
     - private
+- name: account-pages
+  version: "0.1.0"
+  repository: "file://../account-pages"
+  tags:
+    - web
+    - account-pages
+    - private

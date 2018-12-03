@@ -17,6 +17,9 @@ spec:
 {{- if .Values.teamSettings.enabled }}
       - {{ .Values.config.dns.teamSettings }}
 {{- end }}
+{{- if .Values.accountPages.enabled }}
+      - {{ .Values.config.dns.accountPages }}
+{{- end }}
     secretName: nginx-ingress-wildcard-tls-certificate
 {{- end }}
   rules:
@@ -56,4 +59,13 @@ spec:
             backend:
               serviceName: team-settings-http
               servicePort: {{ .Values.service.teamSettings.externalPort }}
+{{- end }}
+{{- if .Values.accountPages.enabled }}
+    - host: {{ .Values.config.dns.accountPages }}
+      http:
+        paths:
+          - path: /
+            backend:
+              serviceName: account-pages-http
+              servicePort: {{ .Values.service.accountPages.externalPort }}
 {{- end }}

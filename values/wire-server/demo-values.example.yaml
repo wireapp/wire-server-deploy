@@ -136,3 +136,12 @@ team-settings:
       backendWebsocket: bare-ssl.example.com
       backendDomain: example.com
       webappHost: bare-webapp.example.com
+account-pages:
+  replicaCount: 1
+  image:
+    tag: 8209687ee8c81970db1474905b2c0cd8818398e0
+  config:
+    externalUrls:
+      backendRest: bare-https.example.com
+      backendDomain: example.com
+      webappHost: bare-webapp.example.com
