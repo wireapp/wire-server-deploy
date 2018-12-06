@@ -21,6 +21,7 @@ config:
     host: aws-cassandra
   redis:
     host: redis-ephemeral
+  bulkPush: false
 
 # These values must be set:
 # config:
