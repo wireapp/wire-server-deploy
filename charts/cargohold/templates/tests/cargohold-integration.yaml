@@ -11,7 +11,7 @@ spec:
         name: "cargohold-integration"
   containers:
     # NOTE: the bucket for these tests must be created.
-    # If using the wire-server/minio chart, `dummy-bucket` will already be created.
+    # If using the wire-server/fake-aws-s3 chart, `dummy-bucket` will already be created.
   - name: integration
     image: "{{ .Values.image.repository }}-integration:{{ .Values.image.tag }}"
     volumeMounts:

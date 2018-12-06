@@ -14,7 +14,7 @@ service:
   https:
     externalPort: 443
   http:
-    webappPort: 5000
+    webappPort: 8080
 
 ## The following has to be provided to deploy this chart
 

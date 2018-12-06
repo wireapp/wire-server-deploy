@@ -38,7 +38,7 @@ spec:
           emptyDir: {}
       initContainers:
         # TODO: Proper TURN/calling config;
-        # this just creates a file to allow brig to start, but 
+        # this just creates a file to allow brig to start, but
         # audio/video/TURN will not work
         - name: fake-turn
           image: alpine:3.6

@@ -11,6 +11,10 @@ data:
       host: brig
       port: 8080
 
+    galley:
+      host: galley
+      port: 8080
+
     cassandra:
       endpoint:
         host: {{ .Values.config.cassandra.host }}
@@ -19,6 +23,8 @@ data:
 
     maxttlAuthreq: {{ .Values.config.maxttlAuthreq }}
     maxttlAuthresp: {{ .Values.config.maxttlAuthresp }}
+
+    maxScimTokens: {{ .Values.config.maxScimTokens }}
 
     saml:
       version:     SAML2.0
@@ -31,6 +37,3 @@ data:
 
       contacts:
 {{ toYaml .Values.config.contacts | indent 12 }}
-
-    spInfo:
-{{ toYaml .Values.config.spInfo | indent 8 }}

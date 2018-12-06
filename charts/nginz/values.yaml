@@ -291,6 +291,9 @@ nginx_conf:
       - path: /identity-providers
         envs:
           - all
+      - path: /sso-initiate-bind
+        envs:
+          - all
       - path: /sso
         envs:
           - all

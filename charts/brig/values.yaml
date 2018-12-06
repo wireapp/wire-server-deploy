@@ -3,7 +3,7 @@
 replicaCount: 3
 image:
   repository: quay.io/wire/brig
-  tag: 2.50.169
+  tag: 2.50.216
 service:
   externalPort: 8080
   internalPort: 8080
@@ -70,7 +70,8 @@ config:
 #      emailSender: email@example.com
 #      smsSender: "<insert twilio sms sender ID here>" # TODO: should become part of twilioconfig?
 #  smtp: #optional, only relevant if useSES==false
-#    endpoint: demo-smtp
+#    host: demo-smtp
+#    port: 2500
 #    username: dummy
 #    connType: plain
 
