@@ -4,7 +4,7 @@ tags:
 
 cassandra-migrations:
   images:
-    tag: 2.50.169
+  #   tag: some-tag (only override if you want a newer/different version than what is in the chart)
   cassandra:
     host: cassandra-ephemeral
     replicaCount: 1
@@ -16,7 +16,7 @@ elasticsearch-index:
 brig:
   replicaCount: 1
   image:
-    tag: 2.50.169
+  #   tag: some-tag (only override if you want a newer/different version than what is in the chart)
   config:
     cassandra:
       host: cassandra-ephemeral
@@ -51,19 +51,19 @@ brig:
 proxy:
   replicaCount: 1
   image:
-    tag: 2.50.169
+  #   tag: some-tag (only override if you want a newer/different version than what is in the chart)
 
 cannon:
   replicaCount: 1
   image:
-    tag: 2.50.169
+  #   tag: some-tag (only override if you want a newer/different version than what is in the chart)
   # For demo mode only, we don't need to keep websocket connections open on chart upgrades
   drainTimeout: 10
 
 cargohold:
   replicaCount: 1
   image:
-    tag: 2.50.169
+  #   tag: some-tag (only override if you want a newer/different version than what is in the chart)
   config:
     aws:
       # change if using real AWS
@@ -74,7 +74,7 @@ cargohold:
 galley:
   replicaCount: 1
   image:
-    tag: 2.50.169
+  #   tag: some-tag (only override if you want a newer/different version than what is in the chart)
   config:
     cassandra:
       host: cassandra-ephemeral
@@ -86,7 +86,7 @@ galley:
 gundeck:
   replicaCount: 1
   image:
-    tag: 2.50.169
+  #   tag: some-tag (only override if you want a newer/different version than what is in the chart)
   config:
     cassandra:
       host: cassandra-ephemeral
@@ -107,7 +107,7 @@ nginz:
       useProxyProtocol: false
   images:
     nginz:
-      tag: 2.15.1
+  #   tag: some-tag (only override if you want a newer/different version than what is in the chart)
   nginx_conf:
     # using prod means mostly that some internal endpoints are not exposed
     env: prod
@@ -118,8 +118,8 @@ nginz:
 
 webapp:
   replicaCount: 1
-  image:
-    tag: bed0076358685ef2f591b8c05f185cf4607dd32f
+  # image:
+  #   tag: some-tag (only override if you want a newer/different version than what is in the chart)
   config:
     externalUrls:
       backendRest: bare-https.example.com
@@ -128,8 +128,8 @@ webapp:
 
 team-settings:
   replicaCount: 1
-  image:
-    tag: 4e4467c29197aa85e63eaa644d080704b80bc14b
+  # image:
+  #   tag: some-tag (only override if you want a newer/different version than what is in the chart)
   config:
     externalUrls:
       backendRest: bare-https.example.com
