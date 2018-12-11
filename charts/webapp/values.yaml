@@ -9,12 +9,12 @@ resources:
     cpu: "1"
 image:
   repository: quay.io/wire/webapp
-  tag: bed0076358685ef2f591b8c05f185cf4607dd32f
+  tag: b17b78a626f0317e5259c10d973c9933e9205813
 service:
   https:
     externalPort: 443
   http:
-    webappPort: 5000
+    webappPort: 8080
 
 ## The following has to be provided to deploy this chart
 
@@ -23,3 +23,4 @@ service:
 #   backendRest: <nginz-subdomain-https.your.domain>
 #   backendWebsocket: <nginz-subdomain-ssl.your.domain>
 #   backendDomain: <your.domain>
+#   webappHost: <nginz-subdomain-webapp.your.domain>

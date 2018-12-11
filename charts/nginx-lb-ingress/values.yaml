@@ -44,3 +44,12 @@ service:
 #     fakeS3: bare-s3.<domain>
 #     teamSettings: bare-team.<domain>
 #     ^ teamSettings is ignored unless teamSettings.enabled == true
+# For TLS
+# secrets:
+#     tlsWildcardCert: |
+#         -----BEGIN CERTIFICATE-----
+#         -----END CERTIFICATE-----
+#     tlsWildcardKey: |
+#         -----BEGIN PRIVATE KEY-----
+#         -----END PRIVATE KEY-----
+#

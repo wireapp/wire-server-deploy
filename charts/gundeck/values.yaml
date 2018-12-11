@@ -3,7 +3,7 @@
 replicaCount: 3
 image:
   repository: quay.io/wire/gundeck
-  tag: 2.50.169
+  tag: 2.50.216
 service:
   externalPort: 8080
   internalPort: 8080
@@ -21,6 +21,7 @@ config:
     host: aws-cassandra
   redis:
     host: redis-ephemeral
+  bulkPush: false
 
 # These values must be set:
 # config:

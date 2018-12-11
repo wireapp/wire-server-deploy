@@ -30,7 +30,7 @@ spec:
   type: ClusterIP
   ports:
     - port: {{ .Values.service.webapp.externalPort }}
-      targetPort: 5000
+      targetPort: 8080
   selector:
     wireService: webapp
 ---

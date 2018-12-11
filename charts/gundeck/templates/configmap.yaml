@@ -43,5 +43,5 @@ data:
     settings:
       httpPoolSize: 1024
       notificationTTL: 2419200
-      bulkPush: false
+      bulkPush: {{ .bulkPush }}
   {{- end }}

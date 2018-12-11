@@ -10,6 +10,10 @@ metadata:
 data:
   {{- with .Values.config }}
   brig.yaml: |
+    logNetStrings: True # log using netstrings encoding:
+                        # http://cr.yp.to/proto/netstrings.txt
+    logLevel: {{ .logLevel }}
+
     brig:
       host: 0.0.0.0
       port: 8080

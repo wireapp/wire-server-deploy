@@ -4,7 +4,7 @@ replicaCount: 3
 
 image:
   repository: quay.io/wire/galley
-  tag: 2.50.169
+  tag: 2.50.216
   schemaRepository: quay.io/wire/galley-schema
 
 service:
@@ -20,6 +20,8 @@ resources:
     cpu: 500m
 
 config:
+  logLevel: Info
+
   cassandra:
     host: aws-cassandra
     replicaCount: 3
