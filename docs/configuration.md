@@ -159,14 +159,16 @@ For further higher-availability:
 
 ## Security
 
-The bare minimum:
+For a production deployment, you should, as a minimum:
 
 * Ensure traffic between kubernetes nodes, etcd and databases are confined to a private network
-* Ensure kubernetes API is unreachable from the public internet (put behind VPN/bastion host)
+* Ensure kubernetes API is unreachable from the public internet (e.g. put behind VPN/bastion host or restrict IP range) to prevent [kubernetes vulnerabilities](https://www.cvedetails.com/vulnerability-list/vendor_id-15867/product_id-34016/Kubernetes-Kubernetes.html) from affecting you
 * Ensure your operating systems get security updates automatically
 * Restrict ssh access / harden sshd configuration
 * Ensure no other pods with public access than the main ingress are deployed on your cluster, since, in the current setup, pods have access to etcd values (and thus any secrets stored there, including secrets from other pods)
 * Ensure developers encrypt any secrets.yaml files
+
+Additionally, you may wish to build, sign, and host your own docker images to have increased confidence in those images. We haved "signed container images" on our roadmap.
 
 ## Sign up with a phone number (Sending SMS)
 
