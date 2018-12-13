@@ -33,13 +33,6 @@ data:
       snsEndpoint: {{ .snsEndpoint | quote }}
     {{- end }}
 
-    fallback:
-      skipFallbacks: true
-      preferNotice: true
-      queueDelay: 300
-      queueLimit: 30000
-      queueBurst: 100
-
     settings:
       httpPoolSize: 1024
       notificationTTL: 2419200
