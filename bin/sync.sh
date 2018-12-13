@@ -52,9 +52,11 @@ workaround_issue_helm_s3_56() {
 
 # index/sync charts to S3
 
-helm s3 init s3://public.wire.com/$INDEX_S3_DIR
+export AWS_REGION=eu-west-1
 
-helm repo add wire-tmp s3://public.wire.com/$INDEX_S3_DIR
+helm s3 init "s3://public.wire.com/$INDEX_S3_DIR"
+
+helm repo add "$INDEX_S3_DIR" "s3://public.wire.com/$INDEX_S3_DIR"
 
 rm ./*.tgz &> /dev/null || true # clean any packaged files, if any
 for chart in "${charts[@]}"; do
