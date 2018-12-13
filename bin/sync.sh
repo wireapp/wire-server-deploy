@@ -12,34 +12,66 @@
 
 # Usage: ./bin/sync.sh [--force]
 
-set -e
 set -o pipefail
 
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
-# At the time of writing, version 0.7.0 was installed. 
+# TODO: Should subcharts also be exposed directly? If not, this list needs to be kept up-to-date
+charts=( wire-server fake-aws databases-ephemeral metallb nginx-lb-ingress demo-smtp )
+
+# install s3 plugin
+# At the time of writing, version 0.7.0 was installed.
 # Hopefully version locking isn't necessary
 helm plugin list | grep "s3" > /dev/null || helm plugin install https://github.com/hypnoglow/helm-s3.git
 
-helm s3 init s3://public.wire.com/charts
+# Note: on providing a public URL for charts synced to S3
+# * This is not yet supported by helm-s3 plugin until
+#   https://github.com/hypnoglow/helm-s3/pull/56 is implemented
+# * This workaround uses two folders on s3;
+#   - one to sync with helm-s3,
+#   - a second one with a manually-changed index.yaml to allow fetching charts from public URLs
 
-helm repo add wire s3://public.wire.com/charts 
+INDEX_S3_DIR="charts-tmp"
+PUBLIC_DIR="charts"
+workaround_issue_helm_s3_56() {
+    # retrieve index
+    aws s3 cp s3://public.wire.com/$INDEX_S3_DIR/index.yaml index.yaml
 
-charts=( wire-server fake-aws databases-ephemeral )
+    # sync from $INDEX_S3_DIR to charts directory
+    mapfile -t urls < <(yq r index.yaml 'entries.*.0.urls.0' | awk '{print $2}')
+    for url in "${urls[@]}"; do
+        newurl=${url/$INDEX_S3_DIR/$PUBLIC_DIR};
+        echo "old=$url and new=$newurl"
+        aws s3 cp "$url" "$newurl"
+    done
+
+    # update and upload index to charts
+    sed -i 's/s3\:\/\//https\:\/\/s3-eu-west-1.amazonaws.com\//g' index.yaml
+    aws s3 cp index.yaml s3://public.wire.com/$PUBLIC_DIR/index.yaml
+}
+
+# index/sync charts to S3
+
+export AWS_REGION=eu-west-1
+
+helm s3 init "s3://public.wire.com/$INDEX_S3_DIR"
+
+helm repo add "$INDEX_S3_DIR" "s3://public.wire.com/$INDEX_S3_DIR"
+
 rm ./*.tgz &> /dev/null || true # clean any packaged files, if any
 for chart in "${charts[@]}"; do
     "$SCRIPT_DIR/update.sh" "$chart"
     helm package "charts/${chart}" && sync
     tgz=$(ls "${chart}"-*.tgz)
     echo "syncing ${tgz}..."
-    aws s3api head-object --bucket public.wire.com --key "charts/${tgz}" &> /dev/null
+    aws s3api head-object --bucket public.wire.com --key "$INDEX_S3_DIR/${tgz}" &> /dev/null
     remote=$?
     if [ $remote -ne 0 ]; then
-        helm s3 push "$tgz" wire
+        helm s3 push "$tgz" wire-tmp
         printf "\n--> pushed %s to S3\n\n" "$tgz"
     else
         if [[ $1 == *--force* ]]; then
-            helm s3 push "$tgz" wire --force
+            helm s3 push "$tgz" wire-tmp --force
             printf "\n--> (!) force pushed %s to S3\n\n" "$tgz"
         else
             printf "\n--> %s not changed or not version bumped; doing nothing.\n\n" "$chart"
@@ -49,12 +81,18 @@ for chart in "${charts[@]}"; do
 
 done
 
-helm s3 reindex wire
-helm search wire
+helm s3 reindex wire-tmp
 
+workaround_issue_helm_s3_56
+
+# see results
+helm repo add wire https://s3-eu-west-1.amazonaws.com/public.wire.com/charts
+helm search wire/
 
 # TODO: improve the above script by exiting with an error if helm charts have changed but a version was not bumped.
-# TODO: hash comparison won't work directly: helm package ... results in new md5 hashes each time, even if files don't change. This is due to files being ordered differently in the tar file. See https://github.com/helm/helm/issues/3264
+# TODO: hash comparison won't work directly: helm package ... results in new md5 hashes each time, even if files don't change. This is due to files being ordered differently in the tar file. See
+# * https://github.com/helm/helm/issues/3264
+# * https://github.com/helm/helm/issues/3612
 # cur_hash=($(md5sum ${tgz}))
 # echo $cur_hash
 # remote_hash=$(aws s3api head-object --bucket public.wire.com --key charts/${tgz} | jq '.ETag' -r| tr -d '"')
