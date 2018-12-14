@@ -119,7 +119,7 @@ nginz:
 webapp:
   replicaCount: 1
   image:
-    tag: bed0076358685ef2f591b8c05f185cf4607dd32f
+    tag: 3e2e103cfb5f87e8b168abf41747b9eef4d8b277
   config:
     externalUrls:
       backendRest: bare-https.example.com
@@ -129,17 +129,18 @@ webapp:
 team-settings:
   replicaCount: 1
   image:
-    tag: 4e4467c29197aa85e63eaa644d080704b80bc14b
+    tag: 6f1e22ffa91f6e5de91454238df203bc3cc0ca12
   config:
     externalUrls:
       backendRest: bare-https.example.com
       backendWebsocket: bare-ssl.example.com
       backendDomain: example.com
       webappHost: bare-webapp.example.com
+
 account-pages:
   replicaCount: 1
   image:
-    tag: 8209687ee8c81970db1474905b2c0cd8818398e0
+    tag: 505494f69d957564641300955782c02220d0475a
   config:
     externalUrls:
       backendRest: bare-https.example.com
