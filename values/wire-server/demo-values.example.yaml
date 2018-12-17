@@ -3,7 +3,7 @@ tags:
   spar: false # enable if you want/need Single-Sign-On (SSO)
 
 cassandra-migrations:
-  images:
+  # images:
   #   tag: some-tag (only override if you want a newer/different version than what is in the chart)
   cassandra:
     host: cassandra-ephemeral
@@ -15,7 +15,7 @@ elasticsearch-index:
 
 brig:
   replicaCount: 1
-  image:
+  # image:
   #   tag: some-tag (only override if you want a newer/different version than what is in the chart)
   config:
     cassandra:
@@ -50,19 +50,19 @@ brig:
 
 proxy:
   replicaCount: 1
-  image:
+  # image:
   #   tag: some-tag (only override if you want a newer/different version than what is in the chart)
 
 cannon:
   replicaCount: 1
-  image:
+  # image:
   #   tag: some-tag (only override if you want a newer/different version than what is in the chart)
   # For demo mode only, we don't need to keep websocket connections open on chart upgrades
   drainTimeout: 10
 
 cargohold:
   replicaCount: 1
-  image:
+  # image:
   #   tag: some-tag (only override if you want a newer/different version than what is in the chart)
   config:
     aws:
@@ -73,7 +73,7 @@ cargohold:
 
 galley:
   replicaCount: 1
-  image:
+  # image:
   #   tag: some-tag (only override if you want a newer/different version than what is in the chart)
   config:
     cassandra:
@@ -85,7 +85,7 @@ galley:
 
 gundeck:
   replicaCount: 1
-  image:
+  # image:
   #   tag: some-tag (only override if you want a newer/different version than what is in the chart)
   config:
     cassandra:
@@ -105,9 +105,9 @@ nginz:
   config:
     ws:
       useProxyProtocol: false
-  images:
-    nginz:
-  #   tag: some-tag (only override if you want a newer/different version than what is in the chart)
+  # images:
+  #   nginz:
+  #     tag: some-tag (only override if you want a newer/different version than what is in the chart)
   nginx_conf:
     # using prod means mostly that some internal endpoints are not exposed
     env: prod
