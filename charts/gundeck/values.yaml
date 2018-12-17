@@ -21,6 +21,7 @@ config:
     host: aws-cassandra
   redis:
     host: redis-ephemeral
+    port: 6379
   bulkPush: false
 
 # These values must be set:

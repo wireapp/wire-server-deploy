@@ -27,6 +27,10 @@ data:
       host: gundeck
       port: 8080
 
+    spar:
+      host: spar
+      port: 8080
+
     {{- if (.journal) }}
     journal:
       queueName: {{ .journal.queue }}

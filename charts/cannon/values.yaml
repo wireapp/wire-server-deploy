@@ -5,6 +5,9 @@ image:
   tag: 2.50.216
   pullPolicy: IfNotPresent
 
+config:
+  logLevel: Info
+
 resources:
   requests:
     memory: 256Mi
