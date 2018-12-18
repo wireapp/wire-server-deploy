@@ -1,0 +1,43 @@
+# travis script inspired from https://github.com/LiliC/travis-minikube/tree/minikube-30-kube-1.12
+
+sudo: required
+
+# We need the systemd for the kubeadm and it's default from 16.04+
+dist: xenial
+# This moves Kubernetes specific config files.
+env:
+  - CHANGE_MINIKUBE_NONE_USER=true
+
+before_script:
+  # Make root mounted as rshared to fix kube-dns issues.
+  - sudo mount --make-rshared /
+  # Download kubectl, which is a requirement for using minikube.
+  - curl -Lo kubectl https://storage.googleapis.com/kubernetes-release/release/v1.12.3/bin/linux/amd64/kubectl && chmod +x kubectl && sudo mv kubectl /usr/local/bin/
+  # Download minikube.
+  - curl -Lo minikube https://storage.googleapis.com/minikube/releases/v0.30.0/minikube-linux-amd64 && chmod +x minikube && sudo mv minikube /usr/local/bin/
+  - sudo minikube start --vm-driver=none --bootstrapper=kubeadm --kubernetes-version=v1.12.3
+  # download helm
+  - curl https://raw.githubusercontent.com/kubernetes/helm/master/scripts/get > get_helm.sh
+  - chmod +x get_helm.sh
+  - get_helm.sh -v 2.11.0
+  - helm init -c
+  - helm repo add incubator https://kubernetes-charts-incubator.storage.googleapis.com
+  - helm repo add cos https://centerforopenscience.github.io/helm-charts/
+  - helm repo remove local || true
+  # Fix the kubectl context, as it's often stale.
+  - minikube update-context
+  # Wait for Kubernetes to be up and ready.
+  - JSONPATH='{range .items[*]}{@.metadata.name}:{range @.status.conditions[*]}{@.type}={@.status};{end}{end}'; until kubectl get nodes -o jsonpath="$JSONPATH" 2>&1 | grep -q "Ready=True"; do sleep 1; done
+
+script:
+  - kubectl cluster-info
+  # Verify kube-addon-manager.
+  # kube-addon-manager is responsible for managing other kubernetes components, such as kube-dns, dashboard, storage-provisioner..
+  - JSONPATH='{range .items[*]}{@.metadata.name}:{range @.status.conditions[*]}{@.type}={@.status};{end}{end}'; until kubectl -n kube-system get pods -lcomponent=kube-addon-manager -o jsonpath="$JSONPATH" 2>&1 | grep -q "Ready=True"; do sleep 1;echo "waiting for kube-addon-manager to be available"; kubectl get pods --all-namespaces; done
+  # Wait for kube-dns to be ready.
+  - JSONPATH='{range .items[*]}{@.metadata.name}:{range @.status.conditions[*]}{@.type}={@.status};{end}{end}'; until kubectl -n kube-system get pods -lk8s-app=kube-dns -o jsonpath="$JSONPATH" 2>&1 | grep -q "Ready=True"; do sleep 1;echo "waiting for kube-dns to be available"; kubectl get pods --all-namespaces; done
+  # Create example deployment on Kubernetes.
+  - ./bin/update.sh databases-ephemeral # a recursive wrapper around 'helm dep update'
+  - helm upgrade --install --namespace demo demo-databases-ephemeral charts/databases-ephemeral --wait
+  - kubectl -n demo get all
+  # TODO: full deployment
