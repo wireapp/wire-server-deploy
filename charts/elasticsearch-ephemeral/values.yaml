@@ -5,3 +5,13 @@ image:
 service:
   httpPort: 9200
   transportPort: 9300
+
+resources:
+  limits:
+    cpu: "2000m"
+    memory: 4Gi
+  requests:
+    cpu: "500m"
+    memory: 500Mi
+heap_max: "2048"
+heap_new: "800M"

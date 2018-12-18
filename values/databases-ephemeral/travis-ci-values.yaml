@@ -25,3 +25,14 @@ redis-ephemeral:
     requests:
      cpu: 100m
      memory: 100Mi
+
+elasticsearch-ephemeral:
+  resources:
+    limits:
+      cpu: "200m"
+      memory: 300Mi
+    requests:
+      cpu: "200m"
+      memory: 300Mi
+  heap_max: "200M"
+  heap_new: "50M"

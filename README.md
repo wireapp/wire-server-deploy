@@ -179,7 +179,7 @@ In `values/wire-server/demo-values.yaml` (referred to as `values-file` below) an
     * (this will eventually need to be shared with a turn server, not part of this demo yet)
 * zauth private/public keys (For authentication; `access tokens` and `user tokens` (cookies) are signed and validated with these)
     * Generate from within [wire-server](https://github.com/wireapp/wire-server) with `./dist/zauth -m gen-keypair -i 1` if you have everything compiled; or alternatively with docker using `docker run --rm quay.io/wire/alpine-intermediate /dist/zauth -m gen-keypair -i 1`
-    * add both to secrets-file under `brig.zauth` and the public one to secrets-file under `nginz.secrets.zAuth.publicKeys`
+    * add both to secrets-file under `brig.secrets.zAuth` and the public one to secrets-file under `nginz.secrets.zAuth.publicKeys`
 * domain names and urls
     * in your values-file, replace `example.com` and other domains and subdomains with domains of your choosing. Look for the `# change this` comments. You can try using `sed -i 's/example.com/<your-domain>/g' <values-file>`.
 
@@ -199,8 +199,8 @@ If you're confident in your configuration, try installing it:
 
 ```sh
 helm upgrade --install --namespace demo demo-wire-server charts/wire-server \
-    -f values/demo-values.yaml \
-    -f values/demo-secrets.yaml \
+    -f values/wire-server/demo-values.yaml \
+    -f values/wire-server/demo-secrets.yaml \
     --wait
 ```
 

@@ -21,9 +21,9 @@ spec:
         image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
         env:
         - name: MAX_HEAP_SIZE
-          value: "2048"
+          value: "{{ .Values.heap_max }}"
         - name: HEAP_NEWSIZE
-          value: "800M"
+          value: "{{ .Values.heap_new }}"
         ports:
         - containerPort: 9200
           name: http
@@ -34,13 +34,7 @@ spec:
         volumeMounts:
         - name: storage
           mountPath: /data
-        resources:
-           limits:
-            cpu: "2000m"
-            memory: 4Gi
-           requests:
-            cpu: "500m"
-            memory: 500Mi
+{{ toYaml .Values.resources | indent 12 }}
       volumes:
         - emptyDir:
             medium: ""

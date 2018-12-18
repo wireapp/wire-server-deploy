@@ -29,6 +29,8 @@ before_script:
   - helm repo remove local || true
   # install socat (needed for helm install ...)
   - sudo apt-get install -y socat
+  # install yq to update yaml
+  - curl -sL https://github.com/mikefarah/yq/releases/download/2.2.0/yq_linux_amd64 -o yq && chmod +x yq && sudo mv yq /usr/bin/yq
   # Wait for Kubernetes to be up and ready.
   - JSONPATH='{range .items[*]}{@.metadata.name}:{range @.status.conditions[*]}{@.type}={@.status};{end}{end}'; until kubectl get nodes -o jsonpath="$JSONPATH" 2>&1 | grep -q "Ready=True"; do sleep 1; done
 
@@ -47,8 +49,22 @@ script:
   - helm upgrade --install --namespace demo demo-fake-aws charts/fake-aws --wait
   - helm upgrade --install --namespace demo demo-smtp charts/demo-smtp --wait
   - kubectl -n demo get all
+  - kubectl -n demo describe pods
+    
+  # configure wire-server
+  - cp values/wire-server/demo-values.example.yaml values/wire-server/demo-values.yaml
+  - cp values/wire-server/demo-secrets.example.yaml values/wire-server/demo-secrets.yaml
+  - yq values/wire-server/demo-secrets.yaml brig.secrets.turn.secret $(openssl rand -base64 64 | env LC_CTYPE=C tr -dc a-zA-Z0-9 | head -c 42)
+    # docker, for zauth: TODO: simplify
+  - sudo apt install -y apt-transport-https
+  - curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add - && sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" && sudo apt-get update && sudo apt-get install -y docker-ce
+  - sudo docker run --rm quay.io/wire/alpine-intermediate /dist/zauth -m gen-keypair -i 1 > keys.txt
+  - yq values/wire-server/demo-secrets.yaml brig.secrets.zAuth.publicKeys $(cat keys.txt | sed -n 's/public: \(.*\)/\1/p')
+  - yq values/wire-server/demo-secrets.yaml brig.secrets.zAuth.privateKeys $(cat keys.txt | sed -n 's/secret: \(.*\)/\1/p')
+  - yq values/wire-server/demo-secrets.yaml nginz.secrets.zAuth.publicKeys $(cat keys.txt | sed -n 's/public: \(.*\)/\1/p')
   - helm upgrade --install --namespace demo demo-wire-server charts/wire-server \
-    -f values/demo-values.yaml \
-    -f values/demo-secrets.yaml \
+    -f values/wire-server/demo-values.yaml \
+    -f values/wire-server/demo-secrets.yaml \
     --wait
-  # TODO: full deployment
+  - kubectl -n demo get all
+  - kubectl -n demo describe pods
