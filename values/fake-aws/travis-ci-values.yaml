@@ -4,9 +4,10 @@ fake-aws-sqs:
       cpu: 50m
 
 fake-aws-s3:
-  resources:
-    requests:
-      cpu: 50m
+  fake-aws-s3:
+    resources:
+      requests:
+        cpu: 50m
 
 fake-aws-dynamodb:
   resources:
