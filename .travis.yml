@@ -55,15 +55,9 @@ script:
   - kubectl -n demo get all
     
   # configure wire-server
-  - cp values/wire-server/demo-values.example.yaml values/wire-server/demo-values.yaml
-  - cp values/wire-server/demo-secrets.example.yaml values/wire-server/demo-secrets.yaml
-  - yq w -i values/wire-server/demo-secrets.yaml brig.secrets.turn.secret $(openssl rand -base64 64 | env LC_CTYPE=C tr -dc a-zA-Z0-9 | head -c 42)
     # docker, for zauth: TODO: simplify
   - sudo apt install -y apt-transport-https
   - curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add - && sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" && sudo apt-get update && sudo apt-get install -y docker-ce
-  - sudo docker run --rm quay.io/wire/alpine-intermediate /dist/zauth -m gen-keypair -i 1 > keys.txt
-  - yq w -i values/wire-server/demo-secrets.yaml brig.secrets.zAuth.publicKeys $(cat keys.txt | sed -n 's/public: \(.*\)/\1/p')
-  - yq w -i values/wire-server/demo-secrets.yaml brig.secrets.zAuth.privateKeys $(cat keys.txt | sed -n 's/secret: \(.*\)/\1/p')
-  - yq w -i values/wire-server/demo-secrets.yaml nginz.secrets.zAuth.publicKeys $(cat keys.txt | sed -n 's/public: \(.*\)/\1/p')
+  - ./bin/CI/override-secrets.sh
   - helm upgrade --install --namespace demo demo-wire-server charts/wire-server -f values/wire-server/demo-values.yaml -f values/wire-server/demo-secrets.yaml --wait
   - kubectl -n demo get all
