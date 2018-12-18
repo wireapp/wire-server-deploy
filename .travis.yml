@@ -36,39 +36,34 @@ before_script:
 
 script:
   - kubectl cluster-info
-  - kubectl describe nodes
   # Verify kube-addon-manager.
   # kube-addon-manager is responsible for managing other kubernetes components, such as kube-dns, dashboard, storage-provisioner..
   - JSONPATH='{range .items[*]}{@.metadata.name}:{range @.status.conditions[*]}{@.type}={@.status};{end}{end}'; until kubectl -n kube-system get pods -lcomponent=kube-addon-manager -o jsonpath="$JSONPATH" 2>&1 | grep -q "Ready=True"; do sleep 5;echo "waiting for kube-addon-manager to be available"; kubectl get pods --all-namespaces; done
   # Wait for kube-dns to be ready.
   - JSONPATH='{range .items[*]}{@.metadata.name}:{range @.status.conditions[*]}{@.type}={@.status};{end}{end}'; until kubectl -n kube-system get pods -lk8s-app=kube-dns -o jsonpath="$JSONPATH" 2>&1 | grep -q "Ready=True"; do sleep 1;echo "waiting for kube-dns to be available"; kubectl get pods --all-namespaces; done
+  - kubectl describe nodes
   # Create example deployment on Kubernetes.
   - ./bin/update.sh databases-ephemeral
   - ./bin/update.sh fake-aws
   - ./bin/update.sh wire-server
   - helm upgrade --install --namespace demo demo-databases-ephemeral charts/databases-ephemeral --wait -f values/databases-ephemeral/travis-ci-values.yaml --timeout 200
   - kubectl describe nodes
-  - helm upgrade --install --namespace demo demo-fake-aws charts/fake-aws --wait --timeout 100
+  - helm upgrade --install --namespace demo demo-fake-aws charts/fake-aws --wait --timeout 100 -f values/fake-aws/travis-ci-values.yaml
   - kubectl describe nodes
   - helm upgrade --install --namespace demo demo-smtp charts/demo-smtp --wait --timeout 50
   - kubectl describe nodes
   - kubectl -n demo get all
-  - kubectl -n demo describe pods
     
   # configure wire-server
   - cp values/wire-server/demo-values.example.yaml values/wire-server/demo-values.yaml
   - cp values/wire-server/demo-secrets.example.yaml values/wire-server/demo-secrets.yaml
-  - yq values/wire-server/demo-secrets.yaml brig.secrets.turn.secret $(openssl rand -base64 64 | env LC_CTYPE=C tr -dc a-zA-Z0-9 | head -c 42)
+  - yq w -i values/wire-server/demo-secrets.yaml brig.secrets.turn.secret $(openssl rand -base64 64 | env LC_CTYPE=C tr -dc a-zA-Z0-9 | head -c 42)
     # docker, for zauth: TODO: simplify
   - sudo apt install -y apt-transport-https
   - curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add - && sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" && sudo apt-get update && sudo apt-get install -y docker-ce
   - sudo docker run --rm quay.io/wire/alpine-intermediate /dist/zauth -m gen-keypair -i 1 > keys.txt
-  - yq values/wire-server/demo-secrets.yaml brig.secrets.zAuth.publicKeys $(cat keys.txt | sed -n 's/public: \(.*\)/\1/p')
-  - yq values/wire-server/demo-secrets.yaml brig.secrets.zAuth.privateKeys $(cat keys.txt | sed -n 's/secret: \(.*\)/\1/p')
-  - yq values/wire-server/demo-secrets.yaml nginz.secrets.zAuth.publicKeys $(cat keys.txt | sed -n 's/public: \(.*\)/\1/p')
-  - helm upgrade --install --namespace demo demo-wire-server charts/wire-server \
-    -f values/wire-server/demo-values.yaml \
-    -f values/wire-server/demo-secrets.yaml \
-    --wait
+  - yq w -i values/wire-server/demo-secrets.yaml brig.secrets.zAuth.publicKeys $(cat keys.txt | sed -n 's/public: \(.*\)/\1/p')
+  - yq w -i values/wire-server/demo-secrets.yaml brig.secrets.zAuth.privateKeys $(cat keys.txt | sed -n 's/secret: \(.*\)/\1/p')
+  - yq w -i values/wire-server/demo-secrets.yaml nginz.secrets.zAuth.publicKeys $(cat keys.txt | sed -n 's/public: \(.*\)/\1/p')
+  - helm upgrade --install --namespace demo demo-wire-server charts/wire-server -f values/wire-server/demo-values.yaml -f values/wire-server/demo-secrets.yaml --wait
   - kubectl -n demo get all
-  - kubectl -n demo describe pods

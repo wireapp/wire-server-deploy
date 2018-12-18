@@ -4,7 +4,7 @@ cassandra-ephemeral:
   resources:
     requests:
       memory: 500Mi
-      cpu: 200m
+      cpu: 100m
     limits:
       memory: 500Mi
       cpu: 200m
@@ -23,16 +23,16 @@ redis-ephemeral:
      cpu: 100m
      memory: 100Mi
     requests:
-     cpu: 100m
+     cpu: 50m
      memory: 100Mi
 
 elasticsearch-ephemeral:
   resources:
     limits:
-      cpu: "200m"
+      cpu: 200m
       memory: 300Mi
     requests:
-      cpu: "200m"
+      cpu: 50m
       memory: 300Mi
-  heap_max: "200M"
+  heap_max: "300M"
   heap_new: "50M"

@@ -34,8 +34,10 @@ spec:
         volumeMounts:
         - name: storage
           mountPath: /data
+        resources:
 {{ toYaml .Values.resources | indent 12 }}
       volumes:
         - emptyDir:
             medium: ""
           name: "storage"
+
