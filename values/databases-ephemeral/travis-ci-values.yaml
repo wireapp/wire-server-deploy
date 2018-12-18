@@ -19,13 +19,14 @@ cassandra-ephemeral:
       heap_new_size: 125M
 
 redis-ephemeral:
-  resources:
-    limits:
-     cpu: 100m
-     memory: 100Mi
-    requests:
-     cpu: 50m
-     memory: 100Mi
+  redis-ephemeral:
+    resources:
+      limits:
+       cpu: 100m
+       memory: 100Mi
+      requests:
+       cpu: 50m
+       memory: 100Mi
 
 elasticsearch-ephemeral:
   resources:
