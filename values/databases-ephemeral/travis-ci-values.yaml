@@ -1,21 +1,22 @@
 # travis configuration for a minimal environment, do not use outside of travis
 
 cassandra-ephemeral:
-  resources:
-    requests:
-      memory: 500Mi
-      cpu: 100m
-    limits:
-      memory: 500Mi
-      cpu: 200m
-  ## Change cassandra configuration paramaters below:
-  ## ref: http://docs.datastax.com/en/cassandra/3.0/cassandra/configuration/configCassandra_yaml.html
-  ## Recommended max heap size is 1/2 of system memory
-  ## Recommeneed heap new size is 1/4 of max heap size
-  ## ref: http://docs.datastax.com/en/cassandra/3.0/cassandra/operations/opsTuneJVM.html
-  config:
-    max_heap_size: 250M
-    heap_new_size: 125M
+  cassandra-ephemeral:
+    resources:
+      requests:
+        memory: 1.0Gi
+        cpu: 200m
+      limits:
+        memory: 1.0Gi
+        cpu: 400m
+    ## Change cassandra configuration paramaters below:
+    ## ref: http://docs.datastax.com/en/cassandra/3.0/cassandra/configuration/configCassandra_yaml.html
+    ## Recommended max heap size is 1/2 of system memory
+    ## Recommeneed heap new size is 1/4 of max heap size
+    ## ref: http://docs.datastax.com/en/cassandra/3.0/cassandra/operations/opsTuneJVM.html
+    config:
+      max_heap_size: 250M
+      heap_new_size: 125M
 
 redis-ephemeral:
   resources:
