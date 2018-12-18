@@ -27,6 +27,8 @@ before_script:
   - helm repo add incubator https://kubernetes-charts-incubator.storage.googleapis.com
   - helm repo add cos https://centerforopenscience.github.io/helm-charts/
   - helm repo remove local || true
+  # install socat (needed for helm install ...)
+  - apt-get install -y socat
   # Wait for Kubernetes to be up and ready.
   - JSONPATH='{range .items[*]}{@.metadata.name}:{range @.status.conditions[*]}{@.type}={@.status};{end}{end}'; until kubectl get nodes -o jsonpath="$JSONPATH" 2>&1 | grep -q "Ready=True"; do sleep 1; done
 
