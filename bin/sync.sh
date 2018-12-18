@@ -51,11 +51,9 @@ workaround_issue_helm_s3_56() {
 }
 
 # index/sync charts to S3
-
 export AWS_REGION=eu-west-1
 
 helm s3 init "s3://public.wire.com/$INDEX_S3_DIR"
-
 helm repo add "$INDEX_S3_DIR" "s3://public.wire.com/$INDEX_S3_DIR"
 
 rm ./*.tgz &> /dev/null || true # clean any packaged files, if any
@@ -81,7 +79,9 @@ for chart in "${charts[@]}"; do
 
 done
 
-helm s3 reindex wire-tmp
+set -e
+
+helm s3 reindex "$INDEX_S3_DIR"
 
 workaround_issue_helm_s3_56
 
