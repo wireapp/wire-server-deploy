@@ -36,6 +36,7 @@ before_script:
 
 script:
   - kubectl cluster-info
+  - kubectl describe nodes
   # Verify kube-addon-manager.
   # kube-addon-manager is responsible for managing other kubernetes components, such as kube-dns, dashboard, storage-provisioner..
   - JSONPATH='{range .items[*]}{@.metadata.name}:{range @.status.conditions[*]}{@.type}={@.status};{end}{end}'; until kubectl -n kube-system get pods -lcomponent=kube-addon-manager -o jsonpath="$JSONPATH" 2>&1 | grep -q "Ready=True"; do sleep 5;echo "waiting for kube-addon-manager to be available"; kubectl get pods --all-namespaces; done
@@ -45,9 +46,12 @@ script:
   - ./bin/update.sh databases-ephemeral
   - ./bin/update.sh fake-aws
   - ./bin/update.sh wire-server
-  - helm upgrade --install --namespace demo demo-databases-ephemeral charts/databases-ephemeral --wait -f values/databases-ephemeral/travis-ci-values.yaml
-  - helm upgrade --install --namespace demo demo-fake-aws charts/fake-aws --wait
-  - helm upgrade --install --namespace demo demo-smtp charts/demo-smtp --wait
+  - helm upgrade --install --namespace demo demo-databases-ephemeral charts/databases-ephemeral --wait -f values/databases-ephemeral/travis-ci-values.yaml --timeout 200
+  - kubectl describe nodes
+  - helm upgrade --install --namespace demo demo-fake-aws charts/fake-aws --wait --timeout 100
+  - kubectl describe nodes
+  - helm upgrade --install --namespace demo demo-smtp charts/demo-smtp --wait --timeout 50
+  - kubectl describe nodes
   - kubectl -n demo get all
   - kubectl -n demo describe pods
     
