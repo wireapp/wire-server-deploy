@@ -19,7 +19,7 @@ before_script:
   # download helm
   - curl https://raw.githubusercontent.com/kubernetes/helm/master/scripts/get > get_helm.sh
   - chmod +x get_helm.sh
-  - ./get_helm.sh -v 2.11.0
+  - ./get_helm.sh -v v2.12.0
   - helm init -c
   - helm repo add incubator https://kubernetes-charts-incubator.storage.googleapis.com
   - helm repo add cos https://centerforopenscience.github.io/helm-charts/
