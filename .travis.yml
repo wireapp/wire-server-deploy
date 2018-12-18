@@ -40,7 +40,15 @@ script:
   # Wait for kube-dns to be ready.
   - JSONPATH='{range .items[*]}{@.metadata.name}:{range @.status.conditions[*]}{@.type}={@.status};{end}{end}'; until kubectl -n kube-system get pods -lk8s-app=kube-dns -o jsonpath="$JSONPATH" 2>&1 | grep -q "Ready=True"; do sleep 1;echo "waiting for kube-dns to be available"; kubectl get pods --all-namespaces; done
   # Create example deployment on Kubernetes.
-  - ./bin/update.sh databases-ephemeral # a recursive wrapper around 'helm dep update'
-  - helm upgrade --install --namespace demo demo-databases-ephemeral charts/databases-ephemeral --wait
+  - ./bin/update.sh databases-ephemeral
+  - ./bin/update.sh fake-aws
+  - ./bin/update.sh wire-server
+  - helm upgrade --install --namespace demo demo-databases-ephemeral charts/databases-ephemeral --wait -f values/databases-ephemeral/travis-ci-values.yaml
+  - helm upgrade --install --namespace demo demo-fake-aws charts/fake-aws --wait
+  - helm upgrade --install --namespace demo demo-smtp charts/demo-smtp --wait
   - kubectl -n demo get all
+  - helm upgrade --install --namespace demo demo-wire-server charts/wire-server \
+    -f values/demo-values.yaml \
+    -f values/demo-secrets.yaml \
+    --wait
   # TODO: full deployment
