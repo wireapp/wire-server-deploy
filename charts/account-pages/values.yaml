@@ -23,3 +23,6 @@ service:
 #   backendRest: <nginz-subdomain-https.your.domain>
 #   backendDomain: <your.domain>
 #   webappHost: <webapp-subdomain-webapp.your.domain>
+#secrets:
+#   configJson: <secret-to-be-asked-from-wire>
+#
