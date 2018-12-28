@@ -1,5 +1,7 @@
 teamSettings:
   enabled: false
+accountPages:
+  enabled: false
 tls:
   enabled: true
 
@@ -12,3 +14,4 @@ config:
     webapp: bare-webapp.self-hosted.com
     fakeS3: bare-s3.self-hosted.com
     teamSettings: bare-team.self-hosted.com
+    accountPages: bare-account.self-hosted.com

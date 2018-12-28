@@ -119,7 +119,7 @@ nginz:
 webapp:
   replicaCount: 1
   # image:
-  #   tag: some-tag (only override if you want a newer/different version than what is in the chart)
+  #   tag: # some-tag (only override if you want a newer/different version than what is in the chart)
   config:
     externalUrls:
       backendRest: bare-https.example.com
@@ -129,10 +129,20 @@ webapp:
 team-settings:
   replicaCount: 1
   # image:
-  #   tag: some-tag (only override if you want a newer/different version than what is in the chart)
+  #   tag: # some-tag (only override if you want a newer/different version than what is in the chart)
   config:
     externalUrls:
       backendRest: bare-https.example.com
       backendWebsocket: bare-ssl.example.com
+      backendDomain: example.com
+      webappHost: bare-webapp.example.com
+
+account-pages:
+  replicaCount: 1
+  # image:
+  #   tag: # some-tag (only override if you want a newer/different version than what is in the chart)
+  config:
+    externalUrls:
+      backendRest: bare-https.example.com
       backendDomain: example.com
       webappHost: bare-webapp.example.com

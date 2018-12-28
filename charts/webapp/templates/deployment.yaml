@@ -60,14 +60,14 @@ spec:
         # NOTE: /test/ returns an HTML document a 200 response code
         readinessProbe:
           httpGet:
-            path: /test/
+            path: /_health/
             port: {{ .Values.service.http.webappPort }}
             scheme: HTTP
         livenessProbe:
           initialDelaySeconds: 30
           timeoutSeconds: 3
           httpGet:
-            path: /test/
+            path: /_health/
             port: {{ .Values.service.http.webappPort }}
             scheme: HTTP
         resources:

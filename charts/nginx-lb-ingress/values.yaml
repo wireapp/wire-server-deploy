@@ -1,8 +1,10 @@
 # Default values for nginx-lb-ingress
 
-# Team settings are disabled by default since they
+# Team settings and account pages are disabled by default since they
 # require access to a private repo.
 teamSettings:
+  enabled: false
+accountPages:
   enabled: false
 
 # If you want to use TLS termination on the ingress,
@@ -34,6 +36,8 @@ service:
     externalPort: 9000
   teamSettings:
     externalPort: 8080
+  accountPages:
+    externalPort: 8080
 
 # You will need to supply some DNS names, namely
 # config:
@@ -44,6 +48,8 @@ service:
 #     fakeS3: bare-s3.<domain>
 #     teamSettings: bare-team.<domain>
 #     ^ teamSettings is ignored unless teamSettings.enabled == true
+#     accountPages: bare-account.<domain>
+#     ^ accountPages is ignored unless accountPages.enabled == true
 # For TLS
 # secrets:
 #     tlsWildcardCert: |
