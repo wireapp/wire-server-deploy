@@ -10,14 +10,12 @@ For licensing information, see the attached [LICENSE](LICENSE) file and the list
 
 No license is granted to the Wire trademark and its associated logos, all of which will continue to be owned exclusively by Wire Swiss GmbH. Any use of the Wire trademark and/or its associated logos is expressly prohibited without the express prior written consent of Wire Swiss GmbH.
 
-## Introduction
-
-This repository contains code and documentation on how to deploy [wire-server](https://github.com/wireapp/wire-server). To allow a maximum of flexibility with respect to where wire-server can be deployed (e.g. with cloud providers like AWS, on bare-metal servers, etc), we chose [kubernetes](https://kubernetes.io/) as the target platform.
-
-This means you first need to install a kubernetes cluster, and then deploy wire-server onto that kubernetes cluster.
+## Table of Contents
 
 <!-- vim-markdown-toc GFM -->
 
+* [Introduction](#introduction)
+    * [Why host your own wire-server?](#why-host-your-own-wire-server)
 * [Status](#status)
 * [Prerequisites](#prerequisites)
     * [Required server resources](#required-server-resources)
@@ -34,6 +32,22 @@ This means you first need to install a kubernetes cluster, and then deploy wire-
     * [Support with a production on-premise (self-hosted) installation](#support-with-a-production-on-premise-self-hosted-installation)
 
 <!-- vim-markdown-toc -->
+
+## Introduction
+
+This repository contains code and documentation on how to deploy [wire-server](https://github.com/wireapp/wire-server). To allow a maximum of flexibility with respect to where wire-server can be deployed (e.g. with cloud providers like AWS, on bare-metal servers, etc), we chose [kubernetes](https://kubernetes.io/) as the target platform.
+
+This means you first need to install a kubernetes cluster, and then deploy wire-server onto that kubernetes cluster.
+
+### Why host your own wire-server?
+
+Some reasons might be:
+
+* store (and secure) metadata (e.g. email address, conversation participants) yourself instead of sending it to Wire's servers.
+* Legal reasons
+* White labeling
+* wire.com is unreachable from within your firewall
+* ...
 
 ## Status
 

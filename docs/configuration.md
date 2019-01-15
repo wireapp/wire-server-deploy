@@ -150,6 +150,8 @@ This information is not yet available. If you'd like to contribute by adding thi
 
 ## Persistence and high-availability
 
+Ensure high-availability for etcd (e.g. your kubernetes cluster has at least 3 dedicated etcd nodes (2 vCPU/~8GB RAM each) and ensure you have etcd backups.)
+
 Currently, due to the way kubernetes and cassandra [interact](https://github.com/kubernetes/kubernetes/issues/28969), cassandra cannot reliably be installed on kubernetes. Some people have tried, e.g. [this project](https://github.com/instaclustr/cassandra-operator) though at the time of writing (Nov 2018), this does not yet work as advertised. We recommend therefore to install cassandra, (possibly also elasticsearch and redis) separately, i.e. outside of kubernetes (using 3 nodes each).
 
 For further higher-availability:
