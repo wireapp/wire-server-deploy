@@ -17,7 +17,7 @@ set -o pipefail
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
 # TODO: Should subcharts also be exposed directly? If not, this list needs to be kept up-to-date
-charts=( wire-server fake-aws databases-ephemeral redis-ephemeral metallb nginx-lb-ingress demo-smtp )
+charts=( wire-server fake-aws databases-ephemeral redis-ephemeral metallb nginx-lb-ingress demo-smtp cassandra-external minio-external elasticsearch-external )
 
 # install s3 plugin
 # At the time of writing, version 0.7.0 was installed.
