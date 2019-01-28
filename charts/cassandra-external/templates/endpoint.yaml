@@ -32,4 +32,5 @@ subsets:
       - ip: {{ . }}
       {{- end }}
     ports:
-      - port: {{ .Values.portCql }}
+      - name: cql
+        port: {{ .Values.portCql }}
