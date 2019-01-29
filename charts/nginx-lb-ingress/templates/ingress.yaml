@@ -14,6 +14,7 @@ spec:
       - {{ .Values.config.dns.ssl }}
       - {{ .Values.config.dns.webapp }}
       - {{ .Values.config.dns.fakeS3 }}
+      - {{ .Values.config.dns.fakeS3Other }}
 {{- if .Values.teamSettings.enabled }}
       - {{ .Values.config.dns.teamSettings }}
 {{- end }}
@@ -50,6 +51,20 @@ spec:
           - path: /
             backend:
               serviceName: fake-aws-s3
+              servicePort: {{ .Values.service.s3.externalPort }}
+    - host: {{ .Values.config.dns.fakeS3Other }}
+      http:
+        paths:
+          - path: /
+            backend:
+              serviceName: external-ip
+              servicePort: {{ .Values.service.s3.externalPort }}
+    - host: {{ .Values.config.dns.fakeS3Other2 }}
+      http:
+        paths:
+          - path: /
+            backend:
+              serviceName: external-ip-multiple
               servicePort: {{ .Values.service.s3.externalPort }}
 {{- if .Values.teamSettings.enabled }}
     - host: {{ .Values.config.dns.teamSettings }}

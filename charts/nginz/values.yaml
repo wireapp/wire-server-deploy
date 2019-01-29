@@ -46,7 +46,8 @@ nginx_conf:
     - /search/top
     - /search/common
   upstreams:
-
+    minio-external:
+      - path: /kokotina
     cargohold:
       - path: ~* ^/conversations/([^/]*)/assets
         envs:
