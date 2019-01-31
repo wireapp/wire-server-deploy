@@ -49,7 +49,7 @@ spec:
         paths:
           - path: /
             backend:
-              serviceName: fake-aws-s3
+              serviceName: {{ .Values.service.s3.serviceName }}
               servicePort: {{ .Values.service.s3.externalPort }}
 {{- if .Values.teamSettings.enabled }}
     - host: {{ .Values.config.dns.teamSettings }}

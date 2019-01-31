@@ -32,4 +32,7 @@ subsets:
       - ip: {{ . }}
       {{- end }}
     ports:
-      - port: {{ .Values.portCql }}
+      # port and name in the endpoint must match port and name in the service
+      # see also https://docs.openshift.com/enterprise/3.0/dev_guide/integrating_external_services.html
+      - name: cql
+        port: {{ .Values.portCql }}
