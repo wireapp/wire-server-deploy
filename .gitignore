@@ -1,6 +1,7 @@
 *.tgz
 *secrets.yaml
 *.key
+*.bak
 *.cert
 demo-values.yaml
 requirements.lock
