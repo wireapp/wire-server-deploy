@@ -46,7 +46,7 @@ workaround_issue_helm_s3_56() {
     done
 
     # update and upload index to charts
-    sed -i 's/s3\:\/\//https\:\/\/s3-eu-west-1.amazonaws.com\//g' index.yaml
+    sed -i'.bak' -e 's/s3\:\/\//https\:\/\/s3-eu-west-1.amazonaws.com\//g' index.yaml
     aws s3 cp index.yaml s3://public.wire.com/$PUBLIC_DIR/index.yaml
 }
 
@@ -65,11 +65,11 @@ for chart in "${charts[@]}"; do
     aws s3api head-object --bucket public.wire.com --key "$INDEX_S3_DIR/${tgz}" &> /dev/null
     remote=$?
     if [ $remote -ne 0 ]; then
-        helm s3 push "$tgz" wire-tmp
+        helm s3 push "$tgz" "$INDEX_S3_DIR"
         printf "\n--> pushed %s to S3\n\n" "$tgz"
     else
         if [[ $1 == *--force* ]]; then
-            helm s3 push "$tgz" wire-tmp --force
+            helm s3 push "$tgz" "$INDEX_S3_DIR" --force
             printf "\n--> (!) force pushed %s to S3\n\n" "$tgz"
         else
             printf "\n--> %s not changed or not version bumped; doing nothing.\n\n" "$chart"
