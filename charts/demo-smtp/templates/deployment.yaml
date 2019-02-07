@@ -22,6 +22,9 @@ spec:
       containers:
         - name: {{ .Chart.Name }}
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          env:
+            - name: RELAY_NETWORKS
+              value: "{{ .Values.config.relayNetworks }}"
           ports:
             - name: smtp
               containerPort: 25
