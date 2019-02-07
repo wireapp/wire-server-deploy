@@ -6,7 +6,7 @@ hook:
   enabled: true
   type: pre # possible values: 'pre' or 'post'
 images:
-  tag: 2.50.216
+  tag: 2.50.278
   gundeck: quay.io/wire/gundeck-schema
   brig: quay.io/wire/brig-schema
   galley: quay.io/wire/galley-schema
