@@ -14,3 +14,13 @@ resources:
   requests:
    cpu: 100m
    memory: 128Mi
+
+# Some relevant environment options can be
+# passed to the SMTP docker image, check
+# https://hub.docker.com/r/namshi/smtp/
+# for more details
+envVars:
+# E.g.
+# envVars:
+#   RELAY_NETWORKS: ":x.y.z.w/16"
+#
