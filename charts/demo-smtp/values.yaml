@@ -19,7 +19,9 @@ resources:
 # passed to the SMTP docker image, check
 # https://hub.docker.com/r/namshi/smtp/
 # for more details
-envVars:
+# NOTE: Without an empty dictionary, you will
+# see warnings when overriding envVars
+envVars: {}
 # E.g.
 # envVars:
 #   RELAY_NETWORKS: ":x.y.z.w/16"
