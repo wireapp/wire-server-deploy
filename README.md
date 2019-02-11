@@ -53,7 +53,7 @@ Supported features:
 - wire-team-settings
     - [x] team management (including invitations, requires access to a private repository)
 - wire-account-pages
-    - [x] uesr account management (password reset, requires access to a private repository)
+    - [x] user account management (password reset, requires access to a private repository)
 
 
 ## Prerequisites
