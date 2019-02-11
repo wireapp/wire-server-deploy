@@ -29,6 +29,21 @@ config:
     sqsEndpoint: "https://sqs.eu-west-1.amazonaws.com"
     dynamoDBEndpoint: "https://dynamodb.eu-west-1.amazonaws.com"
   useSES: true # if true, use aws.sesQueue/sesEndpoint, otherwise use smtp settings
+  emailSMS:
+    general:
+      # These branding values are used in SMS/emails sent out. Look at
+      # https://wireapp.github.io/wire-emails/dist for more info.
+      templateBranding:
+        brand: Wire
+        brandUrl: https://wire.com
+        brandLabel: wire.com
+        brandLabelUrl: https://wire.com
+        brandLogoUrl: https://wire.com/p/img/email/logo-email-black.png
+        copyright: © WIRE SWISS GmbH
+        misuse: misuse@wire.com
+        legal: https://wire.com/legal/
+        forgot: https://wire.com/forgot/
+        support: https://support.wire.com/
   authSettings:
     keyIndex: 1
     userTokenTimeout: 4838400    # 56 days
@@ -69,17 +84,6 @@ config:
 #      # it's dependent on the actual AWS setup for SQS and SNS
 #      emailSender: email@example.com
 #      smsSender: "<insert twilio sms sender ID here>" # TODO: should become part of twilioconfig?
-#      templateBranding:
-#        brand: "Name of the brand"
-#        brandUrl: Main website URL
-#        brandLabelUrl: The name to display on the URL
-#        brandLogoUrl: URL to the logo
-#        brandService: "Name "
-#        copyright: "E.g. Your Company"
-#        misuse: "Email to support misuse"
-#        legal: "Terms and conditions URL"
-#        forgot: "URL to page where you can reset a password"
-#        support: "Support page URL"
 
 #  smtp: #optional, only relevant if useSES==false
 #    host: demo-smtp
