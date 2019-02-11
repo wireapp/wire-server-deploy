@@ -9,12 +9,12 @@ resources:
     cpu: "1"
 image:
   repository: quay.io/wire/team-settings
-  tag: 6f1e22ffa91f6e5de91454238df203bc3cc0ca12
+  tag: 1.0.5-e5b56a400181ca72d198c616af3eb81010591a8e
 service:
   https:
     externalPort: 443
   http:
-    servicePort: 8080
+    internalPort: 8080
 
 ## The following has to be provided to deploy this chart
 
@@ -23,8 +23,19 @@ service:
 #   backendRest: <nginz-subdomain-https.your.domain>
 #   backendWebsocket: <nginz-subdomain-ssl.your.domain>
 #   backendDomain: <your.domain>
-#   webappHost: <webapp-subdomain-webapp.your.domain>
+#   appHost: <team-settings-subdomain.your.domain>
 
 #secrets:
 #   configJson: <secret-to-be-asked-from-wire>
+#
+
+# Some relevant environment options, have a look at
+# https://github.com/wireapp/wire-team-settings/wiki/Self-hosting
+# Note that it is a private repo, check README for more info
+# NOTE: Without an empty dictionary, you will see warnings
+#       when overriding envVars
+envVars: {}
+# E.g.
+# envVars:
+#   FEATURE_ENABLE_DEBUG: "true"
 #

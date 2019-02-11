@@ -30,45 +30,33 @@ spec:
         image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
         # Check variables here: https://github.com/wireapp/wire-webapp/wiki/Self-hosting
         env:
-          - name: NODE_ENV
-            value: "production"
           - name: NODE_PORT
-            value: "{{ .Values.service.http.webappPort }}"
+            value: "{{ .Values.service.http.internalPort }}"
           - name: APP_BASE
-            value: https://{{ .Values.config.externalUrls.webappHost }}/
+            value: https://{{ .Values.config.externalUrls.appHost }}/
           - name: BACKEND_REST
             value: https://{{ .Values.config.externalUrls.backendRest }}
           - name: BACKEND_WS
             value: wss://{{ .Values.config.externalUrls.backendWebsocket }}
-          - name: FEATURE_CHECK_CONSENT
-            value: "false"
-          # We should ensure this from the ingress; if we want/need it at this level, do
-          # not forget to change the liveness and readiness probes
-          - name: ENFORCE_HTTPS
-            value: "false"
-          - name: CSP_EXTRA_CONNECT_SRC
-            value: https://*.{{ .Values.config.externalUrls.backendDomain }}, wss://*.{{ .Values.config.externalUrls.backendDomain }}
-          - name: CSP_EXTRA_IMG_SRC
-            value: https://*.{{ .Values.config.externalUrls.backendDomain }}
-          - name: CSP_EXTRA_SCRIPT_SRC
-            value: https://*.{{ .Values.config.externalUrls.backendDomain }}
-          - name: URL_TEAMS_BASE
-            value: {{ .Values.config.externalUrls.backendTeamSettings }}
+      {{- range $key, $val := .Values.envVars }}
+          - name: {{ $key }}
+            value: {{ $val | quote }}
+      {{- end }}
         ports:
         - name: http
-          containerPort: {{ .Values.service.http.webappPort }}
+          containerPort: {{ .Values.service.http.internalPort }}
         # NOTE: /test/ returns an HTML document a 200 response code
         readinessProbe:
           httpGet:
             path: /_health/
-            port: {{ .Values.service.http.webappPort }}
+            port: {{ .Values.service.http.internalPort }}
             scheme: HTTP
         livenessProbe:
           initialDelaySeconds: 30
           timeoutSeconds: 3
           httpGet:
             path: /_health/
-            port: {{ .Values.service.http.webappPort }}
+            port: {{ .Values.service.http.internalPort }}
             scheme: HTTP
         resources:
 {{ toYaml .Values.resources | indent 12 }}

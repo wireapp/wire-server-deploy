@@ -4,7 +4,7 @@ replicaCount: 3
 
 image:
   repository: quay.io/wire/spar
-  tag: 2.50.216
+  tag: 2.50.278
 
 resources:
   requests:
@@ -22,7 +22,7 @@ config:
   cassandra:
     host: aws-cassandra
   # TODO: add commented-out config example
-  
+
   maxScimTokens: 0  # SCIM is not ready for production yet
 
   logLevel: Info

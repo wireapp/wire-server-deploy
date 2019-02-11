@@ -32,28 +32,32 @@ spec:
       - name: team-settings
         image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
         env:
-          - name: HOSTHTTPS
-            value: {{ .Values.config.externalUrls.backendRest }}
-          - name: HOSTSSL
-            value: {{ .Values.config.externalUrls.backendWebsocket }}
-          - name: HOSTDOMAIN
-            value: {{ .Values.config.externalUrls.backendDomain }}
-          - name: WEBAPPHTTPS
-            value: {{ .Values.config.externalUrls.webappHost }}
+          - name: NODE_PORT
+            value: "{{ .Values.service.http.internalPort }}"
+          - name: APP_BASE
+            value: https://{{ .Values.config.externalUrls.appHost }}/
+          - name: BACKEND_REST
+            value: https://{{ .Values.config.externalUrls.backendRest }}
+          - name: BACKEND_WS
+            value: wss://{{ .Values.config.externalUrls.backendWebsocket }}
+      {{- range $key, $val := .Values.envVars }}
+          - name: {{ $key }}
+            value: {{ $val | quote }}
+      {{- end }}
         ports:
         - name: http
-          containerPort: {{ .Values.service.http.servicePort }}
+          containerPort: {{ .Values.service.http.internalPort }}
         readinessProbe:
           httpGet:
             path: /_health/
-            port: {{ .Values.service.http.servicePort }}
+            port: {{ .Values.service.http.internalPort }}
             scheme: HTTP
         livenessProbe:
           initialDelaySeconds: 30
           timeoutSeconds: 3
           httpGet:
             path: /_health/
-            port: {{ .Values.service.http.servicePort }}
+            port: {{ .Values.service.http.internalPort }}
             scheme: HTTP
         resources:
 {{ toYaml .Values.resources | indent 12 }}

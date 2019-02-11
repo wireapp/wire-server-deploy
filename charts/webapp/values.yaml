@@ -9,12 +9,12 @@ resources:
     cpu: "1"
 image:
   repository: quay.io/wire/webapp
-  tag: 3e2e103cfb5f87e8b168abf41747b9eef4d8b277
+  tag: 1.0.84-a3d49cff206f946b2fdbf0488c14a999cf530105
 service:
   https:
     externalPort: 443
   http:
-    webappPort: 8080
+    internalPort: 8080
 
 ## The following has to be provided to deploy this chart
 
@@ -23,4 +23,14 @@ service:
 #   backendRest: <nginz-subdomain-https.your.domain>
 #   backendWebsocket: <nginz-subdomain-ssl.your.domain>
 #   backendDomain: <your.domain>
-#   webappHost: <nginz-subdomain-webapp.your.domain>
+#   appHost: <webapp-subdomain.your.domain>
+
+# Some relevant environment options, have a look at
+# https://github.com/wireapp/wire-webapp/wiki/Self-hosting
+# NOTE: Without an empty dictionary, you will see warnings
+#       when overriding envVars
+envVars: {}
+# E.g.
+# envVars:
+#   FEATURE_ENABLE_DEBUG: "true"
+#

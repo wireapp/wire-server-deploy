@@ -3,7 +3,7 @@
 replicaCount: 3
 image:
   repository: quay.io/wire/brig
-  tag: 2.50.216
+  tag: 2.50.278
 service:
   externalPort: 8080
   internalPort: 8080
@@ -69,6 +69,18 @@ config:
 #      # it's dependent on the actual AWS setup for SQS and SNS
 #      emailSender: email@example.com
 #      smsSender: "<insert twilio sms sender ID here>" # TODO: should become part of twilioconfig?
+#      templateBranding:
+#        brand: "Name of the brand"
+#        brandUrl: Main website URL
+#        brandLabelUrl: The name to display on the URL
+#        brandLogoUrl: URL to the logo
+#        brandService: "Name "
+#        copyright: "E.g. Your Company"
+#        misuse: "Email to support misuse"
+#        legal: "Terms and conditions URL"
+#        forgot: "URL to page where you can reset a password"
+#        support: "Support page URL"
+
 #  smtp: #optional, only relevant if useSES==false
 #    host: demo-smtp
 #    port: 2500

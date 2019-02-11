@@ -9,12 +9,12 @@ resources:
     cpu: "1"
 image:
   repository: quay.io/wire/account-pages
-  tag: 505494f69d957564641300955782c02220d0475a
+  tag: 1.0.4-9ab5a3fc95c7911f903ffe8157ed63aba151b785
 service:
   https:
     externalPort: 443
   http:
-    servicePort: 8080
+    internalPort: 8080
 
 ## The following has to be provided to deploy this chart
 
@@ -22,7 +22,17 @@ service:
 #  externalUrls:
 #   backendRest: <nginz-subdomain-https.your.domain>
 #   backendDomain: <your.domain>
-#   webappHost: <webapp-subdomain-webapp.your.domain>
+#   appHost: <account-pages-subdomain.your.domain>
 #secrets:
 #   configJson: <secret-to-be-asked-from-wire>
+#
+# Some relevant environment options, have a look at
+# https://github.com/wireapp/wire-account/wiki/Self-hosting
+# Note that it is a private repo, check README for more info
+# NOTE: Without an empty dictionary, you will see warnings
+#       when overriding envVars
+envVars: {}
+# E.g.
+# envVars:
+#   FEATURE_ENABLE_DEBUG: "true"
 #

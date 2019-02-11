@@ -3,7 +3,7 @@
 replicaCount: 3
 image:
   repository: quay.io/wire/cargohold
-  tag: 2.50.216
+  tag: 2.50.278
 service:
   externalPort: 8080
   internalPort: 8080
