@@ -16,8 +16,15 @@ set -o pipefail
 
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
+USAGE="Sync helm charts to S3. Usage: $0 to sync all charts or $0 <chartname> to sync only a single one"
+chart_name=$1
+
 # TODO: Should subcharts also be exposed directly? If not, this list needs to be kept up-to-date
 charts=( wire-server fake-aws databases-ephemeral redis-ephemeral metallb nginx-lb-ingress demo-smtp cassandra-external minio-external elasticsearch-external )
+
+if [ -n "$chart_name" ]; then
+    charts=( "$chart_name" )
+fi
 
 # install s3 plugin
 # At the time of writing, version 0.7.0 was installed.
@@ -38,7 +45,11 @@ workaround_issue_helm_s3_56() {
     aws s3 cp s3://public.wire.com/$INDEX_S3_DIR/index.yaml index.yaml
 
     # sync from $INDEX_S3_DIR to charts directory
-    mapfile -t urls < <(yq r index.yaml 'entries.*.0.urls.0' | awk '{print $2}')
+    if [ -n "$chart_name" ]; then
+        mapfile -t urls < <(yq r index.yaml 'entries.*.*.urls.0' | awk -F '- ' '{print $2$3}' | grep "$chart_name")
+    else
+        mapfile -t urls < <(yq r index.yaml 'entries.*.*.urls.0' | awk -F '- ' '{print $2$3}')
+    fi
     for url in "${urls[@]}"; do
         newurl=${url/$INDEX_S3_DIR/$PUBLIC_DIR};
         echo "old=$url and new=$newurl"
