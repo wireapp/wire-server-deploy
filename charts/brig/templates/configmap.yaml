@@ -72,6 +72,19 @@ data:
         templateDir: /usr/share/wire/templates
         emailSender: {{ .emailSMS.general.emailSender }}
         smsSender: {{ .emailSMS.general.smsSender }}
+        templateBranding:
+          {{- with .emailSMS.general.templateBranding }}
+          brand: {{ .brand }}
+          brandUrl: {{ .brandUrl }}
+          brandLabelUrl: {{ .brandLabelUrl }}
+          brandLogoUrl: {{ .brandLogoUrl }}
+          brandService: {{ .brandService }}
+          copyright: {{ .copyright }}
+          misuse: {{ .misuse }}
+          legal: {{ .legal }}
+          forgot: {{ .forgot }}
+          support: {{ .support }}
+          {{- end }}
 
       user:
         activationUrl: {{ .externalUrls.nginz }}/activate?key=${key}&code=${code}
