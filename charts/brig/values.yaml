@@ -39,6 +39,7 @@ config:
         brandLabel: wire.com
         brandLabelUrl: https://wire.com
         brandLogoUrl: https://wire.com/p/img/email/logo-email-black.png
+        brandService: "Wire Service Provider"
         copyright: © WIRE SWISS GmbH
         misuse: misuse@wire.com
         legal: https://wire.com/legal/
