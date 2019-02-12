@@ -17,7 +17,7 @@ data:
       port: 8080
 
     cargohold:
-      host: cargohold
+      host: invalid-cargohold
       port: 8080
 
     provider:
