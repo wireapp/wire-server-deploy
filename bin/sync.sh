@@ -16,7 +16,7 @@ set -o pipefail
 
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
-USAGE="Sync helm charts to S3. Usage: $0 to sync all charts or $0 <chartname> to sync only a single one. --force can be used to override S3 artifacts."
+USAGE="Sync helm charts to S3. Usage: $0 to sync all charts or $0 <chartname> to sync only a single one. --force-push can be used to override S3 artifacts."
 echo "$USAGE"
 chart_name=$1
 
@@ -81,7 +81,7 @@ for chart in "${charts[@]}"; do
         helm s3 push "$tgz" "$INDEX_S3_DIR"
         printf "\n--> pushed %s to S3\n\n" "$tgz"
     else
-        if [[ $1 == *--force* || $2 == *--force* ]]; then
+        if [[ $1 == *--force-push* || $2 == *--force-push* ]]; then
             helm s3 push "$tgz" "$INDEX_S3_DIR" --force
             printf "\n--> (!) force pushed %s to S3\n\n" "$tgz"
         else
