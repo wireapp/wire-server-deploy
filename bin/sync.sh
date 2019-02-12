@@ -16,13 +16,15 @@ set -o pipefail
 
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
-USAGE="Sync helm charts to S3. Usage: $0 to sync all charts or $0 <chartname> to sync only a single one"
+USAGE="Sync helm charts to S3. Usage: $0 to sync all charts or $0 <chartname> to sync only a single one. --force can be used to override S3 artifacts."
+echo "$USAGE"
 chart_name=$1
 
 # TODO: Should subcharts also be exposed directly? If not, this list needs to be kept up-to-date
 charts=( wire-server fake-aws databases-ephemeral redis-ephemeral metallb nginx-lb-ingress demo-smtp cassandra-external minio-external elasticsearch-external )
 
-if [ -n "$chart_name" ]; then
+if [ -n "$chart_name" ] && [ -d "$SCRIPT_DIR/../charts/$chart_name" ]; then
+    echo "only syncing $chart_name"
     charts=( "$chart_name" )
 fi
 
@@ -79,7 +81,7 @@ for chart in "${charts[@]}"; do
         helm s3 push "$tgz" "$INDEX_S3_DIR"
         printf "\n--> pushed %s to S3\n\n" "$tgz"
     else
-        if [[ $1 == *--force* ]]; then
+        if [[ $1 == *--force* || $2 == *--force* ]]; then
             helm s3 push "$tgz" "$INDEX_S3_DIR" --force
             printf "\n--> (!) force pushed %s to S3\n\n" "$tgz"
         else
