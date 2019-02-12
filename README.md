@@ -52,6 +52,8 @@ Supported features:
     - [x] fully functioning web client (like `https://app.wire.com`)
 - wire-team-settings
     - [x] team management (including invitations, requires access to a private repository)
+- wire-account-pages
+    - [x] user account management (password reset, requires access to a private repository)
 
 
 ## Prerequisites
@@ -163,6 +165,7 @@ helm upgrade --install --namespace demo demo-smtp charts/demo-smtp --wait
     - spar (optional, disabled by default)
     - webapp (optional, enabled by default)
     - team-settings (optional, disabled by default - requires access to a private repository)
+    - account-pages (optional, disabled by default - requires access to a private repository)
 
 Start by copying the necessary `values` and `secrets` configuration files:
 
