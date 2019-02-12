@@ -13,8 +13,8 @@ data:
       port: 8080
 
     galley:
-      host: galley
-      port: 8080
+      host: galley-invalid
+      port: 8081
 
     cargohold:
       host: invalid-cargohold
@@ -25,4 +25,4 @@ data:
       publicKey: /etc/wire/integration-secrets/provider-publickey.pem
       cert: /etc/wire/integration-secrets/provider-publiccert.pem
       botHost: https://brig-integration
-      botPort: 9000
+      botPort: 9003
