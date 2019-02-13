@@ -45,7 +45,7 @@ spec:
           command:
           - sh
           - -c
-          - echo turn:127.0.0.1:3478 >> /etc/wire/brig/turn/turn-servers.txt
+          - echo -e "{{- range .Values.turnStatic.v1 }}{{ . }}\n{{- end }}" | sed '$d' > /etc/wire/brig/turn/turn-servers.txt
           volumeMounts:
           - name: turn-servers
             mountPath: "/etc/wire/brig/turn"
@@ -54,7 +54,7 @@ spec:
           command:
           - sh
           - -c
-          - echo turn:localhost:3478 >> /etc/wire/brig/turn/turn-servers-v2.txt
+          - echo -e "{{- range .Values.turnStatic.v2 }}{{ . }}\n{{- end }}" | sed '$d' > /etc/wire/brig/turn/turn-servers-v2.txt
           volumeMounts:
           - name: turn-servers
             mountPath: "/etc/wire/brig/turn"

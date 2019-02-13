@@ -68,6 +68,13 @@ config:
   smtp:
     passwordFile: "/etc/wire/brig/secrets/smtp-password.txt"
 
+turnStatic:
+  v1:
+    - "turn:localhost:3478"
+  v2:
+    - "turn:localhost:3478"
+    - "turn:localhost:3478?transport=tcp"
+
 ## The following has to be provided to deploy this chart:
 
 #config:
