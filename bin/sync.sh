@@ -10,7 +10,7 @@
 # This script uses the helm s3 plugin,
 # for more info see https://github.com/hypnoglow/helm-s3
 
-# Usage: ./bin/sync.sh [--force]
+# Usage: ./bin/sync.sh [--force-push]
 
 set -o pipefail
 
