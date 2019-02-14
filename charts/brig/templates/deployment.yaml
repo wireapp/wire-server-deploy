@@ -31,33 +31,12 @@ spec:
         - name: "brig-config"
           configMap:
             name: "brig"
+        - name: "turn-servers"
+          configMap:
+            name: "turn"
         - name: "brig-secrets"
           secret:
             secretName: "brig"
-        - name: "turn-servers"
-          emptyDir: {}
-      initContainers:
-        # TODO: Proper TURN/calling config;
-        # this just creates a file to allow brig to start, but
-        # audio/video/TURN will not work
-        - name: fake-turn
-          image: alpine:3.6
-          command:
-          - sh
-          - -c
-          - echo turn:127.0.0.1:3478 >> /etc/wire/brig/turn/turn-servers.txt
-          volumeMounts:
-          - name: turn-servers
-            mountPath: "/etc/wire/brig/turn"
-        - name: fake-turn-v2
-          image: alpine:3.6
-          command:
-          - sh
-          - -c
-          - echo turn:localhost:3478 >> /etc/wire/brig/turn/turn-servers-v2.txt
-          volumeMounts:
-          - name: turn-servers
-            mountPath: "/etc/wire/brig/turn"
       containers:
         - name: brig
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
