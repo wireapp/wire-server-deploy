@@ -68,6 +68,8 @@ config:
   smtp:
     passwordFile: "/etc/wire/brig/secrets/smtp-password.txt"
 
+# For audio/video calling, override this turnStatic config with DNS or IPs of your TURN server
+# (the default here is necessary for the brig executable to start, but audio/video calling will not work with this default)
 turnStatic:
   v1:
     - "turn:localhost:3478"
