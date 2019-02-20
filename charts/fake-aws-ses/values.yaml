@@ -6,5 +6,13 @@ service:
   internalPort: 4579
   externalPort: 4569
 
+resources:
+  limits:
+    cpu: "200m"
+    memory: 500Mi
+  requests:
+    cpu: "100m"
+    memory: 100Mi
+
 ## The following needs to be provided (and consistent with the config in brig)
 #sesSender: "sender@example.com"

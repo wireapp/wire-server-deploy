@@ -5,3 +5,11 @@ image:
 service:
   internalPort: 4575
   externalPort: 4575
+
+resources:
+  limits:
+    cpu: "200m"
+    memory: 500Mi
+  requests:
+    cpu: "100m"
+    memory: 100Mi
