@@ -17,6 +17,7 @@ resources:
     cpu: 500m
 
 config:
+  logLevel: Info
   cassandra:
     host: aws-cassandra
   redis:

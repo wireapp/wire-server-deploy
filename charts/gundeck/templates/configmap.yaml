@@ -5,6 +5,9 @@ metadata:
 data:
   {{- with .Values.config }}
   gundeck.yaml: |
+    logNetStrings: True # log using netstrings encoding: http://cr.yp.to/proto/netstrings.txt
+    logLevel: {{ .logLevel }}
+
     gundeck:
       host: 0.0.0.0
       port: {{ $.Values.service.internalPort }}
