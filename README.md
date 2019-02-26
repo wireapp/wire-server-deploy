@@ -207,6 +207,12 @@ helm upgrade --install --namespace demo demo-wire-server charts/wire-server \
     --wait
 ```
 
+If pods fail to come up the `helm upgrade` may fail or hang; you may wish to run `kubectl get pods -n demo -w` to
+see which pods are failing to initialize. Describing the pods may provide information as to why they're failing to
+initialize.
+
+If installation fails you may need to delete the release `helm delete --purge demo-wire-server` and try again.
+
 #### Adding a load balancer, DNS, and SSL termination
 
 * If you're on bare metal or on a cloud provider without external load balancer support, see [configuring a load balancer on bare metal servers](docs/configuration.md#load-balancer-on-bare-metal-servers)
