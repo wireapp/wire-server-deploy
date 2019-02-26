@@ -202,8 +202,8 @@ If you're confident in your configuration, try installing it:
 
 ```sh
 helm upgrade --install --namespace demo demo-wire-server charts/wire-server \
-    -f values/demo-values.yaml \
-    -f values/demo-secrets.yaml \
+    -f values/wire-server/demo-values.yaml \
+    -f values/wire-server/demo-secrets.yaml \
     --wait
 ```
 
