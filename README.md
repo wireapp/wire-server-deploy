@@ -202,10 +202,16 @@ If you're confident in your configuration, try installing it:
 
 ```sh
 helm upgrade --install --namespace demo demo-wire-server charts/wire-server \
-    -f values/demo-values.yaml \
-    -f values/demo-secrets.yaml \
+    -f values/wire-server/demo-values.yaml \
+    -f values/wire-server/demo-secrets.yaml \
     --wait
 ```
+
+If pods fail to come up the `helm upgrade` may fail or hang; you may wish to run `kubectl get pods -n demo -w` to
+see which pods are failing to initialize. Describing the pods may provide information as to why they're failing to
+initialize.
+
+If installation fails you may need to delete the release `helm delete --purge demo-wire-server` and try again.
 
 #### Adding a load balancer, DNS, and SSL termination
 
