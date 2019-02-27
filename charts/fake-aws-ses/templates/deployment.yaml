@@ -32,12 +32,7 @@ spec:
         - name: storage
           mountPath: /data
         resources:
-           limits:
-            cpu: "200m"
-            memory: 500Mi
-           requests:
-            cpu: "100m"
-            memory: 100Mi
+{{ toYaml .Values.resources | indent 12 }}
       - name: initiate-fake-aws-ses
         image: mesosphere/aws-cli:1.14.5
         command: [/bin/sh]

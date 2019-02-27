@@ -7,3 +7,4 @@ demo-values.yaml
 requirements.lock
 values/*/demo-values.override.yaml
 values/*/demo-secrets.override.yaml
+.DS_Store

@@ -35,12 +35,7 @@ spec:
         - name: storage
           mountPath: /data
         resources:
-           limits:
-            cpu: "2000m"
-            memory: 4Gi
-           requests:
-            cpu: "500m"
-            memory: 500Mi
+{{ toYaml .Values.resources | indent 12 }}
       volumes:
         - emptyDir:
             medium: ""
