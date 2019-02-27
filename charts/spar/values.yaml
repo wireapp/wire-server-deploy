@@ -23,6 +23,8 @@ config:
     host: aws-cassandra
   # TODO: add commented-out config example
 
+  richInfoLimit: 5000
+
   maxScimTokens: 0  # SCIM is not ready for production yet
 
   logLevel: Info

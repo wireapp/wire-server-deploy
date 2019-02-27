@@ -61,6 +61,7 @@ config:
     setUserCookieThrottle:
       stdDev: 3000      # 50 minutes
       retryAfter: 86400 # 1 day
+    setRichInfoLimit: 5000
     setDefaultLocale: en
     setMaxConvAndTeamSize: 128  # for old brig; TODO remove
     setMaxTeamSize: 128

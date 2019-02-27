@@ -143,6 +143,7 @@ data:
       setUserCookieThrottle:
         stdDev: {{ .setUserCookieThrottle.stdDev }}
         retryAfter: {{ .setUserCookieThrottle.retryAfter }}
+      setRichInfoLimit: {{ .setRichInfoLimit }}
       setDefaultLocale: en
       setMaxTeamSize: {{ .setMaxTeamSize }}
       setMaxConvSize: {{ .setMaxConvSize }}
