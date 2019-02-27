@@ -10,8 +10,6 @@
 # This script uses the helm s3 plugin,
 # for more info see https://github.com/hypnoglow/helm-s3
 
-# Usage: ./bin/sync.sh [--force]
-
 set -o pipefail
 
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
