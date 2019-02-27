@@ -24,6 +24,8 @@ data:
     maxttlAuthreq: {{ .Values.config.maxttlAuthreq }}
     maxttlAuthresp: {{ .Values.config.maxttlAuthresp }}
 
+    richInfoLimit: {{ .Values.config.richInfoLimit }}
+
     maxScimTokens: {{ .Values.config.maxScimTokens }}
 
     saml:
