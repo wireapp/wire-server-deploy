@@ -12,7 +12,7 @@ spec:
     matchLabels:
       app: cannon
   replicas: {{ .Values.replicaCount }}
-  strategy:
+  updateStrategy:
     type: RollingUpdate
     rollingUpdate:
       maxUnavailable: 0
