@@ -1,5 +1,5 @@
-apiVersion: extensions/v1beta1
-kind: Deployment
+apiVersion: apps/v1
+kind: StatefulSet
 metadata:
   name: cannon
   labels:
@@ -8,6 +8,9 @@ metadata:
     release: {{ .Release.Name }}
     heritage: {{ .Release.Service }}
 spec:
+  selector:
+    matchLabels:
+      app: cannon
   replicas: {{ .Values.replicaCount }}
   strategy:
     type: RollingUpdate
@@ -17,6 +20,7 @@ spec:
   template:
     metadata:
       labels:
+        app: cannon
         wireService: cannon
         release: {{ .Release.Name }}
       annotations:
