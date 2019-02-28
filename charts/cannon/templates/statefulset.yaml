@@ -1,3 +1,6 @@
+# Spins up pods with stable names; e.g. cannon-0 ... cannon-<replicaCount>
+# Specific pods can be accessed within the cluster at cannon-<n>.cannon 
+# (the second 'cannon' is the name of the headless service)
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
@@ -8,9 +11,10 @@ metadata:
     release: {{ .Release.Name }}
     heritage: {{ .Release.Service }}
 spec:
+  serviceName: cannon
   selector:
     matchLabels:
-      app: cannon
+      wireService: cannon
   replicas: {{ .Values.replicaCount }}
   updateStrategy:
     type: RollingUpdate
@@ -20,7 +24,6 @@ spec:
   template:
     metadata:
       labels:
-        app: cannon
         wireService: cannon
         release: {{ .Release.Name }}
       annotations:
