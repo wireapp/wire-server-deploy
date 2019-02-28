@@ -40,6 +40,10 @@ spec:
             # Instead we sleep for a day. (SIGTERM is still sent, but after the preStop completes)
             exec:
               command: ["sleep", {{ .Values.drainTimeout | quote }} ]
+        env:
+        - name: CANNON_SERVICE_NAME
+          # Should match the name of the headless-service
+          value: cannon
         volumeMounts:
         - name: empty
           mountPath: /etc/wire/cannon/ip

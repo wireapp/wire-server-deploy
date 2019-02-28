@@ -24,4 +24,4 @@ spec:
       name: {{ .Values.service.name }}
   selector:
     wireService: cannon
-    # release: {{ .Release.Name }}
+    release: {{ .Release.Name }}
