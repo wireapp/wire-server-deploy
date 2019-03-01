@@ -17,6 +17,7 @@ resources:
     cpu: 500m
 
 service:
+  name: cannon
   internalPort: 8080
   externalPort: 8080
 

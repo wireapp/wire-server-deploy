@@ -11,7 +11,7 @@ metadata:
     release: {{ .Release.Name }}
     heritage: {{ .Release.Service }}
 spec:
-  serviceName: cannon
+  serviceName: {{ .Values.service.name }}
   selector:
     matchLabels:
       wireService: cannon
@@ -42,8 +42,9 @@ spec:
               command: ["sleep", {{ .Values.drainTimeout | quote }} ]
         env:
         - name: CANNON_SERVICE_NAME
-          # Should match the name of the headless-service
-          value: cannon
+          value: {{ .Values.service.name }}
+        - name: CANNON_SERVICE_PORT
+          value: {{ .Values.service.externalPort }}
         volumeMounts:
         - name: empty
           mountPath: /etc/wire/cannon/ip
