@@ -74,6 +74,7 @@ spec:
         - /bin/sh
         args:
         - -c
+        # e.g. cannon-0.cannon:8080
         - echo "${HOSTNAME}.{{ .Values.service.name }}:{{ .Values.service.externalPort }}" > /etc/wire/cannon/externalHost/host.txt
         volumeMounts:
         - name: empty
