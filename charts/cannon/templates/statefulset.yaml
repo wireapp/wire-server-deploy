@@ -40,11 +40,6 @@ spec:
             # Instead we sleep for a day. (SIGTERM is still sent, but after the preStop completes)
             exec:
               command: ["sleep", {{ .Values.drainTimeout | quote }} ]
-        env:
-        - name: CANNON_SERVICE_NAME
-          value: {{ .Values.service.name }}
-        - name: CANNON_SERVICE_PORT
-          value: {{ .Values.service.externalPort }}
         volumeMounts:
         - name: empty
           mountPath: /etc/wire/cannon/externalHost
@@ -75,7 +70,7 @@ spec:
         args:
         - -c
         # e.g. cannon-0.cannon:8080
-        - echo "${HOSTNAME}.{{ .Values.service.name }}:{{ .Values.service.externalPort }}" > /etc/wire/cannon/externalHost/host.txt
+        - echo "${HOSTNAME}.{{ .Values.service.name }}" > /etc/wire/cannon/externalHost/host.txt
         volumeMounts:
         - name: empty
           mountPath: /etc/wire/cannon/externalHost
