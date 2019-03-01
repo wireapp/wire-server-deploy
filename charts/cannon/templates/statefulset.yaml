@@ -47,7 +47,7 @@ spec:
           value: {{ .Values.service.externalPort }}
         volumeMounts:
         - name: empty
-          mountPath: /etc/wire/cannon/ip
+          mountPath: /etc/wire/cannon/externalHost
         - name: cannon-config
           mountPath: /etc/wire/cannon/conf
         ports:
@@ -74,15 +74,10 @@ spec:
         - /bin/sh
         args:
         - -c
-        - echo ${MY_POD_IP} > /etc/wire/cannon/ip/ip.txt
-        env:
-        - name: MY_POD_IP
-          valueFrom:
-            fieldRef:
-              fieldPath: status.podIP
+        - echo "${HOSTNAME}.{{ .Values.service.name }}:{{ .Values.service.externalPort }}" > /etc/wire/cannon/externalHost/host.txt
         volumeMounts:
         - name: empty
-          mountPath: /etc/wire/cannon/ip
+          mountPath: /etc/wire/cannon/externalHost
       dnsPolicy: ClusterFirst
       restartPolicy: Always
       volumes:

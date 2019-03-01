@@ -8,7 +8,7 @@ data:
     cannon:
       host: 0.0.0.0
       port: {{ .Values.service.internalPort }}
-      externalHostFile: /etc/wire/cannon/ip/ip.txt
+      externalHostFile: /etc/wire/cannon/externalHost/host.txt
 
     gundeck:
       host: gundeck
