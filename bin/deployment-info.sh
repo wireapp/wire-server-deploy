@@ -8,14 +8,15 @@ deployment=${2?$usage}
 
 repo="https://github.com/wireapp/wire-server"
 
-tag=$(kubectl -n "$namespace" get deployment "$deployment" -o json |
+image=$(kubectl -n "$namespace" get deployment "$deployment" -o json |
     # Filter out only pod image ids
     jq -r '.spec.template.spec.containers[].image' |
     # ignore sidecar containers, etc.
-    grep "/wire/$deployment:" |
-    # select only docker image tag; not repo
-    cut -f2 -d:
+    grep "/wire/$deployment:"
 )
+
+# select only docker image tag; not repo
+tag=$(echo $image | cut -f2 -d:)
 
 commit=$(
     # get all tags from repo
@@ -31,6 +32,6 @@ release=$(helm ls -a |
 
 # align output nicely
 column -t <(
-    echo -e "image-tag\trelease\tcommit\tlink"
-    echo -e "$tag\t$release\t$commit\t$repo/releases/tag/image-$tag"
+    echo -e "image\trelease\tcommit\tlink"
+    echo -e "$image\t$release\t$commit\t$repo/releases/tag/image-$tag"
 )
