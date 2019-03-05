@@ -37,3 +37,6 @@ resources:
 #       domain: assets.example.com
 #       keyPairId: ABC....
 #       privateKeyPath: /etc/wire/cargohold/secrets/cf-pk.pem
+
+config:
+  logLevel: Info
