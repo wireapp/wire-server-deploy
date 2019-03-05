@@ -16,6 +16,9 @@ resources:
     memory: 512Mi
     cpu: 500m
 
+config:
+  logLevel: Info
+
 ## The following has to be provided:
 #
 # secrets:
