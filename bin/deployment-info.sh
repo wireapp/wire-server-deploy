@@ -41,6 +41,6 @@ wire_server_deploy_commit=$(
 
 # align output nicely
 column -t <(
-    echo -e "image\trelease\twire server commit\twire server link\twire server deploy commit\twire server deploy link"
+    echo -e "image\trelease\twire-server-commit\twire-server-link\twire-server-deploy-commit\twire-server-deploy-link"
     echo -e "$image\t$release\t$wire_server_commit\t$wire_server_repo/releases/tag/image/$tag\t$wire_server_deploy_commit\t$wire_server_deploy_repo/releases/tag/chart/$release"
 )
