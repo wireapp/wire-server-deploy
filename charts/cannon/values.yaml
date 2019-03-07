@@ -1,13 +1,10 @@
-# Default values for cannon.
 replicaCount: 3
 image:
   repository: quay.io/wire/cannon
-  tag: 2.50.278
+  tag: 2.50.320
   pullPolicy: IfNotPresent
-
 config:
   logLevel: Info
-
 resources:
   requests:
     memory: 256Mi
@@ -15,9 +12,7 @@ resources:
   limits:
     memory: 512Mi
     cpu: 500m
-
 service:
   internalPort: 8080
   externalPort: 8080
-
 drainTimeout: 86400

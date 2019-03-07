@@ -1,13 +1,10 @@
-# Default values for cargohold.
-
 replicaCount: 3
 image:
   repository: quay.io/wire/cargohold
-  tag: 2.50.278
+  tag: 2.50.320
 service:
   externalPort: 8080
   internalPort: 8080
-
 resources:
   requests:
     memory: 256Mi
@@ -15,28 +12,5 @@ resources:
   limits:
     memory: 512Mi
     cpu: 500m
-
 config:
   logLevel: Info
-
-## The following has to be provided:
-#
-# secrets:
-#   awsKeyId: dummykey
-#   awsSecretKey: dummysecret
-#   # Optionally:
-#   cloudFront:
-#     cfPrivateKey: |
-#       -----BEGIN RSA PRIVATE KEY-----
-#       ...
-#       -----END RSA PRIVATE KEY-----
-#
-# config:
-#   aws:
-#     s3Bucket: my-bucket
-#     s3Endpoint: https://s3-eu-west-1.amazonaws.com
-## Optionally, for cloudfront:
-#     cloudFront:
-#       domain: assets.example.com
-#       keyPairId: ABC....
-#       privateKeyPath: /etc/wire/cargohold/secrets/cf-pk.pem

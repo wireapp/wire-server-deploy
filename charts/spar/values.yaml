@@ -1,11 +1,7 @@
-# Default values for spar.
-
 replicaCount: 3
-
 image:
   repository: quay.io/wire/spar
-  tag: 2.50.278
-
+  tag: 2.50.320
 resources:
   requests:
     memory: 256Mi
@@ -13,18 +9,12 @@ resources:
   limits:
     memory: 512Mi
     cpu: 500m
-
 service:
   externalPort: 8080
   internalPort: 8080
-
 config:
   cassandra:
     host: aws-cassandra
-  # TODO: add commented-out config example
-
   richInfoLimit: 5000
-
-  maxScimTokens: 0  # SCIM is not ready for production yet
-
+  maxScimTokens: 0
   logLevel: Info

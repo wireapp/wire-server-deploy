@@ -1,4 +1,3 @@
-# Default values for nginz.
 replicaCount: 3
 resources:
   requests:
@@ -13,16 +12,15 @@ images:
     tag: latest
   nginz:
     repository: quay.io/wire/nginz
-    tag: 2.50.278
+    tag: 2.50.320
 config:
   http:
     httpPort: 8080
   ws:
     wsPort: 8081
-    # This is needed if behind an ELB, for instance
     useProxyProtocol: true
 drainTimeout: 86300
-terminationGracePeriodSeconds: 86400 # should be higher than the drainTimeout
+terminationGracePeriodSeconds: 86400
 nginx_conf:
   user: nginx
   group: nginx
@@ -35,288 +33,280 @@ nginx_conf:
   worker_connections: 65536
   swagger_root: /var/www/swagger
   disabled_paths:
-    - /conversations/last-events
-    - ~* ^/conversations/([^/]*)/knock
-    - ~* ^/conversations/([^/]*)/hot-knock
-    - ~* ^/conversations/([^/]*)/messages
-    - ~* ^/conversations/([^/]*)/client-messages
-    - ~* ^/conversations/([^/]*)/events
-    - ~* ^/conversations/([^/]*)/call
-    - ~* ^/conversations/([^/]*)/call/state
-    - /search/top
-    - /search/common
+  - /conversations/last-events
+  - ~* ^/conversations/([^/]*)/knock
+  - ~* ^/conversations/([^/]*)/hot-knock
+  - ~* ^/conversations/([^/]*)/messages
+  - ~* ^/conversations/([^/]*)/client-messages
+  - ~* ^/conversations/([^/]*)/events
+  - ~* ^/conversations/([^/]*)/call
+  - ~* ^/conversations/([^/]*)/call/state
+  - /search/top
+  - /search/common
   upstreams:
-
     cargohold:
-      - path: ~* ^/conversations/([^/]*)/assets
-        envs:
-          - all
-        max_body_size: '0'
-        disable_request_buffering: true
-      - path: ~* ^/conversations/([^/]*)/otr/assets
-        envs:
-          - all
-        max_body_size: '0'
-        disable_request_buffering: true
-      - path: /assets
-        envs:
-          - all
-        max_body_size: '0'
-        disable_request_buffering: true
-        doc: true
-      - path: /bot/assets
-        envs:
-          - all
-        max_body_size: '0'
-        disable_request_buffering: true
-      - path: /provider/assets
-        envs:
-          - all
-        allow_credentials: true
-        restrict_whitelisted_origin: true
-        max_body_size: '0'
-        disable_request_buffering: true
-
+    - path: ~* ^/conversations/([^/]*)/assets
+      envs:
+      - all
+      max_body_size: "0"
+      disable_request_buffering: true
+    - path: ~* ^/conversations/([^/]*)/otr/assets
+      envs:
+      - all
+      max_body_size: "0"
+      disable_request_buffering: true
+    - path: /assets
+      envs:
+      - all
+      max_body_size: "0"
+      disable_request_buffering: true
+      doc: true
+    - path: /bot/assets
+      envs:
+      - all
+      max_body_size: "0"
+      disable_request_buffering: true
+    - path: /provider/assets
+      envs:
+      - all
+      allow_credentials: true
+      restrict_whitelisted_origin: true
+      max_body_size: "0"
+      disable_request_buffering: true
     brig:
-      - path: /users
-        envs:
-          - all
-        envs:
-          - all
-        doc: true
-      - path: /self
-        envs:
-          - all
-      - path: /connections
-        envs:
-          - all
-      - path: /invitations
-        envs:
-          - all
-      - path: /clients
-        envs:
-          - all
-      - path: /properties
-        envs:
-          - all
-      - path: /provider/register
-        envs:
-          - all
-        disable_zauth: true
-      - path: /provider/activate
-        envs:
-          - all
-        disable_zauth: true
-      - path: /provider/approve
-        envs:
-          - all
-        disable_zauth: true
-      - path: /provider/login
-        envs:
-          - all
-        disable_zauth: true
-        allow_credentials: true
-      - path: /provider/password-reset
-        envs:
-          - all
-        disable_zauth: true
-      - path: /providers
-        envs:
-          - all
-      - path: /services
-        envs:
-          - all
-      - path: /provider
-        envs:
-          - all
-        allow_credentials: true
-        restrict_whitelisted_origin: true
-      - path: /bot/self
-        envs:
-          - all
-      - path: /bot/client
-        envs:
-          - all
-      - path: /bot/users
-        envs:
-          - all
-      - path: ~* ^/conversations/([^/]*)/bots
-        envs:
-          - all
-      - path: /invitations/info
-        envs:
-          - all
-        disable_zauth: true
-      - path: /register
-        envs:
-          - all
-        allow_credentials: true
-        restrict_whitelisted_origin: true
-        disable_zauth: true
-      - path: /activate
-        envs:
-          - all
-        allow_credentials: true
-        restrict_whitelisted_origin: true
-        disable_zauth: true
-      - path: /delete
-        envs:
-          - all
-        disable_zauth: true
-      - path: /password-reset
-        envs:
-          - all
-        disable_zauth: true
-      - path: /login/send
-        envs:
-          - all
-        disable_zauth: true
-      - path: /i/users/activation-code
-        envs:
-          - staging
-        disable_zauth: true
-        basic_auth: true
-      - path: /i/users/login-code
-        envs:
-          - staging
-        disable_zauth: true
-        basic_auth: true
-      - path: /i/users/invitation-code
-        envs:
-          - staging
-        disable_zauth: true
-        basic_auth: true
-      - path: ~* ^/i/teams/([^/]*)/suspend
-        envs:
-          - staging
-        disable_zauth: true
-        basic_auth: true
-      - path: ~* ^/i/teams/([^/]*)/unsuspend
-        envs:
-          - staging
-        disable_zauth: true
-        basic_auth: true
-      - path: /cookies
-        envs:
-          - all
-      - path: /access
-        envs:
-          - all
-        disable_zauth: true
-        allow_credentials: true
-        restrict_whitelisted_origin: true
-        unlimited_requests_endpoint: true
-      - path: /login
-        envs:
-          - all
-        disable_zauth: true
-        allow_credentials: true
-      - path: /onboarding
-        envs:
-          - all
-        max_body_size: '5m'
-        body_buffer_size: '1m'
-      - path: /search
-        envs:
-          - all
-      - path: ~* ^/teams/([^/]*)/invitations(.*)
-        envs:
-          - all
-      - path: ~* ^/teams/invitations/info$
-        envs:
-          - all
-        disable_zauth: true
-      - path: /i/teams/invitation-code
-        envs:
-          - staging
-        disable_zauth: true
-        basic_auth: true
-      - path: /calls
-        envs:
-          - all
-
+    - path: /users
+      envs:
+      - all
+      envs:
+      - all
+      doc: true
+    - path: /self
+      envs:
+      - all
+    - path: /connections
+      envs:
+      - all
+    - path: /invitations
+      envs:
+      - all
+    - path: /clients
+      envs:
+      - all
+    - path: /properties
+      envs:
+      - all
+    - path: /provider/register
+      envs:
+      - all
+      disable_zauth: true
+    - path: /provider/activate
+      envs:
+      - all
+      disable_zauth: true
+    - path: /provider/approve
+      envs:
+      - all
+      disable_zauth: true
+    - path: /provider/login
+      envs:
+      - all
+      disable_zauth: true
+      allow_credentials: true
+    - path: /provider/password-reset
+      envs:
+      - all
+      disable_zauth: true
+    - path: /providers
+      envs:
+      - all
+    - path: /services
+      envs:
+      - all
+    - path: /provider
+      envs:
+      - all
+      allow_credentials: true
+      restrict_whitelisted_origin: true
+    - path: /bot/self
+      envs:
+      - all
+    - path: /bot/client
+      envs:
+      - all
+    - path: /bot/users
+      envs:
+      - all
+    - path: ~* ^/conversations/([^/]*)/bots
+      envs:
+      - all
+    - path: /invitations/info
+      envs:
+      - all
+      disable_zauth: true
+    - path: /register
+      envs:
+      - all
+      allow_credentials: true
+      restrict_whitelisted_origin: true
+      disable_zauth: true
+    - path: /activate
+      envs:
+      - all
+      allow_credentials: true
+      restrict_whitelisted_origin: true
+      disable_zauth: true
+    - path: /delete
+      envs:
+      - all
+      disable_zauth: true
+    - path: /password-reset
+      envs:
+      - all
+      disable_zauth: true
+    - path: /login/send
+      envs:
+      - all
+      disable_zauth: true
+    - path: /i/users/activation-code
+      envs:
+      - staging
+      disable_zauth: true
+      basic_auth: true
+    - path: /i/users/login-code
+      envs:
+      - staging
+      disable_zauth: true
+      basic_auth: true
+    - path: /i/users/invitation-code
+      envs:
+      - staging
+      disable_zauth: true
+      basic_auth: true
+    - path: ~* ^/i/teams/([^/]*)/suspend
+      envs:
+      - staging
+      disable_zauth: true
+      basic_auth: true
+    - path: ~* ^/i/teams/([^/]*)/unsuspend
+      envs:
+      - staging
+      disable_zauth: true
+      basic_auth: true
+    - path: /cookies
+      envs:
+      - all
+    - path: /access
+      envs:
+      - all
+      disable_zauth: true
+      allow_credentials: true
+      restrict_whitelisted_origin: true
+      unlimited_requests_endpoint: true
+    - path: /login
+      envs:
+      - all
+      disable_zauth: true
+      allow_credentials: true
+    - path: /onboarding
+      envs:
+      - all
+      max_body_size: 5m
+      body_buffer_size: 1m
+    - path: /search
+      envs:
+      - all
+    - path: ~* ^/teams/([^/]*)/invitations(.*)
+      envs:
+      - all
+    - path: ~* ^/teams/invitations/info$
+      envs:
+      - all
+      disable_zauth: true
+    - path: /i/teams/invitation-code
+      envs:
+      - staging
+      disable_zauth: true
+      basic_auth: true
+    - path: /calls
+      envs:
+      - all
     galley:
-      - path: /conversations/code-check
-        disable_zauth: true
-        envs:
-          - all
-      - path: ~* ^/conversations/([^/]*)/otr/messages
-        envs:
-          - all
-        max_body_size: '1m'
-        body_buffer_size: '256k'
-      - path: /broadcast/otr/messages
-        envs:
-          - all
-        max_body_size: '1m'
-        body_buffer_size: '256k'
-      - path: /bot/conversation
-        envs:
-          - all
-      - path: /bot/messages
-        envs:
-          - all
-        max_body_size: '1m'
-        body_buffer_size: '256k'
-      - path: /conversations
-        envs:
-          - all
-        doc: true
-      - path: ~* ^/teams$
-        envs:
-          - all
-      - path: ~* ^/teams/([^/]*)$
-        envs:
-          - all
-      - path: ~* ^/teams/([^/]*)/members(.*)
-        envs:
-          - all
-      - path: ~* ^/teams/([^/]*)/conversations(.*)
-        envs:
-          - all
-
+    - path: /conversations/code-check
+      disable_zauth: true
+      envs:
+      - all
+    - path: ~* ^/conversations/([^/]*)/otr/messages
+      envs:
+      - all
+      max_body_size: 1m
+      body_buffer_size: 256k
+    - path: /broadcast/otr/messages
+      envs:
+      - all
+      max_body_size: 1m
+      body_buffer_size: 256k
+    - path: /bot/conversation
+      envs:
+      - all
+    - path: /bot/messages
+      envs:
+      - all
+      max_body_size: 1m
+      body_buffer_size: 256k
+    - path: /conversations
+      envs:
+      - all
+      doc: true
+    - path: ~* ^/teams$
+      envs:
+      - all
+    - path: ~* ^/teams/([^/]*)$
+      envs:
+      - all
+    - path: ~* ^/teams/([^/]*)/members(.*)
+      envs:
+      - all
+    - path: ~* ^/teams/([^/]*)/conversations(.*)
+      envs:
+      - all
     gundeck:
-      - path: /push
-        envs:
-          - all
-        doc: true
-      - path: /presences
-        envs:
-          - all
-      - path: /notifications
-        envs:
-          - all
-
+    - path: /push
+      envs:
+      - all
+      doc: true
+    - path: /presences
+      envs:
+      - all
+    - path: /notifications
+      envs:
+      - all
     spar:
-      - path: /identity-providers
-        envs:
-          - all
-      - path: /sso-initiate-bind
-        envs:
-          - all
-      - path: /sso
-        envs:
-          - all
-        disable_zauth: true
-
+    - path: /identity-providers
+      envs:
+      - all
+    - path: /sso-initiate-bind
+      envs:
+      - all
+    - path: /sso
+      envs:
+      - all
+      disable_zauth: true
     proxy:
-      - path: /proxy
-        envs:
-          - all
-        doc: true
-
+    - path: /proxy
+      envs:
+      - all
+      doc: true
     cannon:
-      - path: /await
-        envs:
-          - all
-        use_websockets: true
-        doc: true
-
+    - path: /await
+      envs:
+      - all
+      use_websockets: true
+      doc: true
     ibis:
-      - path: /billing
-        envs:
-          - all
-        disable_zauth: true
-      - path: ~* ^/teams/([^/]*)/billing(.*)
-        envs:
-          - all
+    - path: /billing
+      envs:
+      - all
+      disable_zauth: true
+    - path: ~* ^/teams/([^/]*)/billing(.*)
+      envs:
+      - all

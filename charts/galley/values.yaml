@@ -1,16 +1,11 @@
-# Default values for galley.
-
 replicaCount: 3
-
 image:
   repository: quay.io/wire/galley
-  tag: 2.50.278
+  tag: 2.50.320
   schemaRepository: quay.io/wire/galley-schema
-
 service:
   externalPort: 8080
   internalPort: 8080
-
 resources:
   requests:
     memory: 256Mi
@@ -18,24 +13,12 @@ resources:
   limits:
     memory: 512Mi
     cpu: 500m
-
 config:
   logLevel: Info
-
   cassandra:
     host: aws-cassandra
     replicaCount: 3
-
   settings:
-    maxConvAndTeamSize: 128  # for old galley; TODO remove
+    maxConvAndTeamSize: 128
     maxTeamSize: 128
     maxConvSize: 128
-
-# These values must be set:
-# settings:
-#   conversationCodeURI: "https://url-to-webapp/join/"
-
-# Optional
-# journal:
-#   queueName: my-team-events.fifo
-#   endpoint: https://sqs.eu-west-1.amazonaws.com

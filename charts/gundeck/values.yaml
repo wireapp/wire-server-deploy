@@ -1,13 +1,10 @@
-# Default values for gundeck.
-
 replicaCount: 3
 image:
   repository: quay.io/wire/gundeck
-  tag: 2.50.278
+  tag: 2.50.320
 service:
   externalPort: 8080
   internalPort: 8080
-
 resources:
   requests:
     memory: 256Mi
@@ -15,7 +12,6 @@ resources:
   limits:
     memory: 512Mi
     cpu: 500m
-
 config:
   logLevel: Info
   cassandra:
@@ -24,16 +20,3 @@ config:
     host: redis-ephemeral
     port: 6379
   bulkPush: false
-
-# These values must be set:
-# config:
-#   aws:
-#     account: ""
-#     region: eu-west-1
-#     arnEnv: ""
-#     queueName: my-gundeck-events
-#     sqsEndpoint: "https://sqs.eu-west-1.amazonaws.com"
-#     snsEndpoint: "https://sns.eu-west-1.amazonaws.com"
-# secrets:
-#   awsKeyId:
-#   awsSecretKey:

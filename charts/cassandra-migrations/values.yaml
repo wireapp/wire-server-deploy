@@ -1,17 +1,9 @@
-# Default values for cassandra-migrations
-
 hook:
-# when hook.enabled=true (default), this chart does not work standalone, but is intended as
-# either a 'post'-subchart to a cassandra chart or a 'pre'-subchart to wire-server
   enabled: true
-  type: pre # possible values: 'pre' or 'post'
+  type: pre
 images:
-  tag: 2.50.278
+  tag: 2.50.320
   gundeck: quay.io/wire/gundeck-schema
   brig: quay.io/wire/brig-schema
   galley: quay.io/wire/galley-schema
   spar: quay.io/wire/spar-schema
-## the following has to be passed when using this chart:
-# cassandra:
-#   host: dns-to-cassandra
-#   replicaCount: 3
