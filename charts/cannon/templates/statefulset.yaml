@@ -1,5 +1,8 @@
-apiVersion: extensions/v1beta1
-kind: Deployment
+# Spins up pods with stable names; e.g. cannon-0 ... cannon-<replicaCount>
+# Specific pods can be accessed within the cluster at cannon-<n>.cannon 
+# (the second 'cannon' is the name of the headless service)
+apiVersion: apps/v1
+kind: StatefulSet
 metadata:
   name: cannon
   labels:
@@ -8,8 +11,12 @@ metadata:
     release: {{ .Release.Name }}
     heritage: {{ .Release.Service }}
 spec:
+  serviceName: {{ .Values.service.name }}
+  selector:
+    matchLabels:
+      wireService: cannon
   replicas: {{ .Values.replicaCount }}
-  strategy:
+  updateStrategy:
     type: RollingUpdate
     rollingUpdate:
       maxUnavailable: 0
@@ -35,7 +42,7 @@ spec:
               command: ["sleep", {{ .Values.drainTimeout | quote }} ]
         volumeMounts:
         - name: empty
-          mountPath: /etc/wire/cannon/ip
+          mountPath: /etc/wire/cannon/externalHost
         - name: cannon-config
           mountPath: /etc/wire/cannon/conf
         ports:
@@ -62,15 +69,11 @@ spec:
         - /bin/sh
         args:
         - -c
-        - echo ${MY_POD_IP} > /etc/wire/cannon/ip/ip.txt
-        env:
-        - name: MY_POD_IP
-          valueFrom:
-            fieldRef:
-              fieldPath: status.podIP
+        # e.g. cannon-0.cannon
+        - echo "${HOSTNAME}.{{ .Values.service.name }}" > /etc/wire/cannon/externalHost/host.txt
         volumeMounts:
         - name: empty
-          mountPath: /etc/wire/cannon/ip
+          mountPath: /etc/wire/cannon/externalHost
       dnsPolicy: ClusterFirst
       restartPolicy: Always
       volumes:
