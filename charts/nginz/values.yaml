@@ -12,7 +12,7 @@ images:
     tag: latest
   nginz:
     repository: quay.io/wire/nginz
-    tag: 2.50.322
+    tag: 2.50.323
 config:
   http:
     httpPort: 8080
