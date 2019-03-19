@@ -24,19 +24,22 @@ wire_server_commit=$(
     # get all tags from repo
     git ls-remote --tags "$wire_server_repo" |
     grep "image-$tag" |
-    cut -f1
+    cut -f1 |
+    tr -d ' \t\n'
 )
 
 release=$(
     helm ls -a |
     grep "wire-server" |
-    cut -f5
+    cut -f5 |
+    tr -d ' \t\n'
 )
 
 wire_server_deploy_commit=$(
     git ls-remote --tags "$wire_server_deploy_repo" |
     grep "$release" |
-    cut -f1
+    cut -f1 |
+    tr -d ' \t\n'
 )
 
 # align output nicely
