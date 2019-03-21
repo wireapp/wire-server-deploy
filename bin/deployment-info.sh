@@ -9,8 +9,13 @@ deployment=${2?$usage}
 wire_server_repo="https://github.com/wireapp/wire-server"
 wire_server_deploy_repo="https://github.com/wireapp/wire-server-deploy"
 
+resource_type=deployment
+if [[ "$2" == cannon ]]; then
+    resource_type=statefulsets
+fi
+
 image=$(
-    kubectl -n "$namespace" get deployment "$deployment" -o json |
+    kubectl -n "$namespace" get "$resource_type" "$deployment" -o json |
     # Filter out only pod image ids
     jq -r '.spec.template.spec.containers[].image' |
     # ignore sidecar containers, etc.

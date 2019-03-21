@@ -245,8 +245,12 @@ Example run:
 
 ```
 ./deployment-info.sh demo brig
-image                       release             wire-server-commit                        wire-server-link                                                    wire-server-deploy-commit                 wire-server-deploy-link
-quay.io/wire/brig:2.50.319  wire-server-0.24.8  8ec8b7ce2e5a184233aa9361efa86351c109c134  https://github.com/wireapp/wire-server/releases/tag/image/2.50.319  1752758b6e0c1ccbd3841047653243daa7b693ea  https://github.com/wireapp/wire-server-deploy/releases/tag/chart/wire-server-0.24.8
+docker_image:               quay.io/wire/brig:2.50.319
+chart_version:              wire-server-0.24.9
+wire_server_commit:         8ec8b7ce2e5a184233aa9361efa86351c109c134
+wire_server_link:           https://github.com/wireapp/wire-server/releases/tag/image/image/2.50.319
+wire_server_deploy_commit:  01e0f261ca8163e63860f8b2af6d4ae329a32c14
+wire_server_deploy_link:    https://github.com/wireapp/wire-server-deploy/releases/tag/chart/wire-server-0.24.9
 ```
 
 Note you'll need `kubectl`, `git` and `helm` installed
