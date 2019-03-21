@@ -16,4 +16,4 @@ service:
   name: cannon
   internalPort: 8080
   externalPort: 8080
-drainTimeout: 86400
+drainTimeout: 0

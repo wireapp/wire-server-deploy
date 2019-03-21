@@ -18,9 +18,6 @@ spec:
   replicas: {{ .Values.replicaCount }}
   updateStrategy:
     type: RollingUpdate
-    rollingUpdate:
-      maxUnavailable: 0
-      maxSurge: {{ .Values.replicaCount | mul 2 }} # as old cannons stick around for a day, allow up to 2 new clusters of 3 pods
   template:
     metadata:
       labels:
@@ -29,6 +26,7 @@ spec:
       annotations:
         checksum/configmap: {{ include (print .Template.BasePath "/configmap.yaml") . | sha256sum }}
     spec:
+      podManagementPolicy: Parallel
       terminationGracePeriodSeconds: {{ .Values.drainTimeout }} # should be higher than the sleep duration of preStop
       containers:
       - name: cannon
