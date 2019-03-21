@@ -52,7 +52,7 @@ column -t <(
     echo -e "docker_image:\t$image"
     echo -e "chart_version:\t$chart_version"
     echo -e "wire_server_commit:\t$wire_server_commit"
-    echo -e "wire_server_link:\t$wire_server_repo/releases/tag/image/$image_tag"
+    echo -e "wire_server_link:\t$wire_server_repo/releases/tag/$image_tag"
     echo -e "wire_server_deploy_commit:\t$wire_server_deploy_commit"
     echo -e "wire_server_deploy_link:\t$wire_server_deploy_repo/releases/tag/chart/$chart_version"
  )
