@@ -33,7 +33,7 @@ wire_server_commit=$(
     tr -d ' \t\n'
 )
 
-release=$(
+chart_version=$(
     helm ls -a |
     grep "wire-server" |
     cut -f5 |
@@ -42,13 +42,17 @@ release=$(
 
 wire_server_deploy_commit=$(
     git ls-remote --tags "$wire_server_deploy_repo" |
-    grep "$release" |
+    grep "$chart_version" |
     cut -f1 |
     tr -d ' \t\n'
 )
 
 # align output nicely
 column -t <(
-    echo -e "image\trelease\twire-server-commit\twire-server-link\twire-server-deploy-commit\twire-server-deploy-link"
-    echo -e "$image\t$release\t$wire_server_commit\t$wire_server_repo/releases/tag/image/$image_tag\t$wire_server_deploy_commit\t$wire_server_deploy_repo/releases/tag/chart/$release"
-)
+    echo -e "docker_image:\t$image"
+    echo -e "chart_version:\t$chart_version"
+    echo -e "wire_server_commit:\t$wire_server_commit"
+    echo -e "wire_server_link:\t$wire_server_repo/releases/tag/image/$image_tag"
+    echo -e "wire_server_deploy_commit:\t$wire_server_deploy_commit"
+    echo -e "wire_server_deploy_link:\t$wire_server_deploy_repo/releases/tag/chart/$chart_version"
+ )
