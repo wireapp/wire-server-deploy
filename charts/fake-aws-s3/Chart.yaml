@@ -1,4 +1,4 @@
 apiVersion: v1
 description: Wrapper chart for stable/minio
 name: fake-aws-s3
-version: 0.24.15
+version: 0.24.16
