@@ -1,7 +1,7 @@
 replicaCount: 3
 image:
   repository: quay.io/wire/cannon
-  tag: 2.50.347
+  tag: 2.51.2
   pullPolicy: IfNotPresent
 config:
   logLevel: Info
