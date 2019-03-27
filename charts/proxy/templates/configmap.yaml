@@ -4,6 +4,9 @@ metadata:
   name: "proxy"
 data:
   proxy.yaml: |
+    logNetStrings: True # log using netstrings encoding: http://cr.yp.to/proto/netstrings.txt
+    logLevel: {{ .Values.config.logLevel }}
+
     host: 0.0.0.0
     port: {{ .Values.service.internalPort }}
     httpPoolSize: 1000
