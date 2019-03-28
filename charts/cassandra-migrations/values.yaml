@@ -2,7 +2,7 @@ hook:
   enabled: true
   type: pre
 images:
-  tag: 2.51.3
+  tag: 2.51.4
   gundeck: quay.io/wire/gundeck-schema
   brig: quay.io/wire/brig-schema
   galley: quay.io/wire/galley-schema
