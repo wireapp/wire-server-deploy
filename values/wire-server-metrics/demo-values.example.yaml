@@ -1,0 +1,32 @@
+# This configuration switches to use memory instead of disk for metrics services
+# NOTE: If the pods are killed you WILL lose all your metrics history
+# wire-server-metrics:
+#   prometheus-operator:
+#     grafana:
+#       persistence:
+#         enabled: false
+#   prometheusSpec:
+#     storageSpec: null
+#   alertmanager:
+#     alertmanagerSpec:
+#         storage: null
+
+
+# This configuration Allows you to use a custom storage class to provision
+# disks for your metrics services
+# wire-server-metrics:
+#   prometheus-operator:
+#     grafana:
+#       persistence:
+#         storageClassName: "<my-storage-class>"
+#   prometheusSpec:
+#     storageSpec: 
+#       volumeClaimTemplate:
+#         spec:
+#           storageClassName: "<my-storage-class>"
+#   alertmanager:
+#     alertmanagerSpec:
+#       storage:
+#         volumeClaimTemplate:
+#           spec:
+#             storageClassName: "<my-storage-class>"

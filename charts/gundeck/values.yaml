@@ -1,7 +1,7 @@
 replicaCount: 3
 image:
   repository: quay.io/wire/gundeck
-  tag: 2.51.12
+  tag: 2.51.14
 service:
   externalPort: 8080
   internalPort: 8080
