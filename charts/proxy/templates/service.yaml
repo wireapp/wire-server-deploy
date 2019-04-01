@@ -10,7 +10,8 @@ metadata:
 spec:
   type: ClusterIP
   ports:
-    - port: {{ .Values.service.externalPort }}
+    - name: http
+      port: {{ .Values.service.externalPort }}
       targetPort: {{ .Values.service.internalPort }}
   selector:
     wireService: proxy
