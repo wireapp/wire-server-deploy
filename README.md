@@ -32,6 +32,7 @@ This means you first need to install a kubernetes cluster, and then deploy wire-
         * [Adding a load balancer, DNS, and SSL termination](#adding-a-load-balancer-dns-and-ssl-termination)
         * [Beyond the demo](#beyond-the-demo)
     * [Support with a production on-premise (self-hosted) installation](#support-with-a-production-on-premise-self-hosted-installation)
+* [Monitoring](#monitoring)
 * [Troubleshooting](#troubleshooting)
 
 <!-- vim-markdown-toc -->
@@ -226,6 +227,10 @@ For further configuration options (some have specific requirements about your en
 ### Support with a production on-premise (self-hosted) installation
 
 [Get in touch](https://wire.com/pricing/).
+
+## Monitoring
+
+See the [monitoring guide](./docs/monitoring.md)
 
 ## Troubleshooting
 

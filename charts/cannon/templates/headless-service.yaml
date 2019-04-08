@@ -18,10 +18,10 @@ spec:
   # This is what makes it a Headless Service
   clusterIP: None
   ports:
-    - port: {{ .Values.service.externalPort }}
+    - name: http
+      port: {{ .Values.service.externalPort }}
       targetPort: {{ .Values.service.internalPort }}
       protocol: TCP
-      name: {{ .Values.service.name }}
   selector:
     wireService: cannon
     release: {{ .Release.Name }}
