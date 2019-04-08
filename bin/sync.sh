@@ -19,7 +19,19 @@ echo "$USAGE"
 chart_name=$1
 
 # TODO: Should subcharts also be exposed directly? If not, this list needs to be kept up-to-date
-charts=( wire-server fake-aws databases-ephemeral redis-ephemeral metallb nginx-lb-ingress demo-smtp cassandra-external minio-external elasticsearch-external )
+charts=(
+    wire-server
+    wire-server-metrics
+    fake-aws
+    databases-ephemeral
+    redis-ephemeral
+    metallb
+    nginx-lb-ingress
+    demo-smtp
+    cassandra-external
+    minio-external
+    elasticsearch-external
+)
 
 if [ -n "$chart_name" ] && [ -d "$SCRIPT_DIR/../charts/$chart_name" ]; then
     echo "only syncing $chart_name"
@@ -46,9 +58,11 @@ workaround_issue_helm_s3_56() {
 
     # sync from $INDEX_S3_DIR to charts directory
     if [ -n "$chart_name" ]; then
-        mapfile -t urls < <(yq r index.yaml 'entries.*.*.urls.0' | awk -F '- ' '{print $2$3}' | grep "$chart_name")
+        # Read chart urls into a bash array
+        # mapfile/readarray are nicer, but don't work on Mac's builtin bash
+        IFS=$'\n' read -d '' -r -a urls < <(yq r index.yaml 'entries.*.*.urls.0' | awk -F '- ' '{print $2$3}' | grep "$chart_name")
     else
-        mapfile -t urls < <(yq r index.yaml 'entries.*.*.urls.0' | awk -F '- ' '{print $2$3}')
+        IFS=$'\n' read -d '' -r -a urls < <((yq r index.yaml 'entries.*.*.urls.0' | awk -F '- ' '{print $2$3}'))
     fi
     for url in "${urls[@]}"; do
         newurl=${url/$INDEX_S3_DIR/$PUBLIC_DIR};
