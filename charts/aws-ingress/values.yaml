@@ -1,0 +1,29 @@
+# The following ports must match the ports used in wire-server
+#
+ingress:
+  webapp:
+    https:
+      externalPort: 443
+      sslCert: arn:aws:iam::00000-accountnumber-00000:server-certificate/example.com
+      sslPolicy: ELBSecurityPolicy-TLS-1-2-2017-01
+      hostname: <prefix>-webapp-https.<domain>
+      ttl: 300
+    http:
+      webappPort: 8080
+  nginz:
+    https:
+      externalPort: 443
+      sslCert: arn:aws:iam::00000-accountnumber-00000:server-certificate/example.com
+      sslPolicy: ELBSecurityPolicy-TLS-1-2-2017-01
+      hostname: <prefix>-nginz-https.<domain>
+      ttl: 300
+    http:
+      httpPort: 8080
+    wss:
+      externalPort: 443
+      sslCert: arn:aws:iam::00000-accountnumber-00000:server-certificate/example.com
+      sslPolicy: ELBSecurityPolicy-TLS-1-2-2017-01
+      hostname: <prefix>-webapp-https.<domain>
+      ttl: 300
+    ws:
+      wsPort: 8081
