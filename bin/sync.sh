@@ -10,7 +10,7 @@
 # This script uses the helm s3 plugin,
 # for more info see https://github.com/hypnoglow/helm-s3
 
-set -o pipefail
+set -eo pipefail
 
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
@@ -58,9 +58,13 @@ workaround_issue_helm_s3_56() {
 
     # sync from $INDEX_S3_DIR to charts directory
     if [ -n "$chart_name" ]; then
-        mapfile -t urls < <(yq r index.yaml 'entries.*.*.urls.0' | awk -F '- ' '{print $2$3}' | grep "$chart_name")
+        # Read chart urls into a bash array
+        # mapfile/readarray are nicer, but don't work on Mac's builtin bash
+        urls=()
+        while IFS='' read -r line; do array+=("$line"); done < <(yq r index.yaml 'entries.*.*.urls.0' | awk -F '- ' '{print $2$3}' | grep "$chart_name")
     else
-        mapfile -t urls < <(yq r index.yaml 'entries.*.*.urls.0' | awk -F '- ' '{print $2$3}')
+        urls=()
+        while IFS='' read -r line; do array+=("$line"); done < <(yq r index.yaml 'entries.*.*.urls.0' | awk -F '- ' '{print $2$3}')
     fi
     for url in "${urls[@]}"; do
         newurl=${url/$INDEX_S3_DIR/$PUBLIC_DIR};
@@ -85,9 +89,8 @@ for chart in "${charts[@]}"; do
     helm package "charts/${chart}" && sync
     tgz=$(ls "${chart}"-*.tgz)
     echo "syncing ${tgz}..."
-    aws s3api head-object --bucket public.wire.com --key "$INDEX_S3_DIR/${tgz}" &> /dev/null
-    remote=$?
-    if [ $remote -ne 0 ]; then
+    # Push the artifact only if it doesn't already exist
+    if ! aws s3api head-object --bucket public.wire.com --key "$INDEX_S3_DIR/${tgz}" &> /dev/null ; then
         helm s3 push "$tgz" "$INDEX_S3_DIR"
         printf "\n--> pushed %s to S3\n\n" "$tgz"
     else
@@ -101,8 +104,6 @@ for chart in "${charts[@]}"; do
     rm "$tgz"
 
 done
-
-set -e
 
 helm s3 reindex "$INDEX_S3_DIR"
 
