@@ -18,3 +18,5 @@ config:
   richInfoLimit: 5000
   maxScimTokens: 0
   logLevel: Info
+  maxttlAuthreq: 7200
+  maxttlAuthresp: 7200

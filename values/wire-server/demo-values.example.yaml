@@ -125,6 +125,7 @@ webapp:
       backendRest: bare-https.example.com
       backendWebsocket: bare-ssl.example.com
       backendDomain: example.com
+      webappHost: bare-webapp.example.com
 
 team-settings:
   replicaCount: 1
