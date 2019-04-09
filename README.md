@@ -108,6 +108,14 @@ Optionally, if working in a team and you'd like to share `secrets.yaml` files be
 
 The demo setup is the easiest way to install a functional wire-server with limitations (such as no persistent storage, no high-availability, missing features). For the purposes of this demo, we assume you **do not have an AWS account**. Try this demo first before trying to configure a more complicated setup involving persistence and higher availability.
 
+Get charts from wire's s3 repo:
+
+```shell
+helm repo add wire https://s3-eu-west-1.amazonaws.com/public.wire.com/charts
+```
+
+(Alternatively, you can run replace `wire/<chart>` with `charts/<chart>` in all subsequent commands.  This will read charts from your local file system.  Make sure your working directory is the root of this repo, and that after changing any of the chart files, you run `./bin/update.sh` on them.)
+
 *For all the following `helm upgrade` commands, it can be useful to run a second terminal with `kubectl --namespace demo get pods -w` to see what's happening.*
 
 #### Install non-persistent, non-highly-available databases
@@ -122,8 +130,7 @@ The following will install (or upgrade) 3 single-pod databases and 3 ClusterIP s
     - redis-ephemeral
 
 ```shell
-./bin/update.sh databases-ephemeral # a recursive wrapper around 'helm dep update'
-helm upgrade --install --namespace demo demo-databases-ephemeral charts/databases-ephemeral --wait
+helm upgrade --install --namespace demo demo-databases-ephemeral wire/databases-ephemeral --wait
 ```
 
 To delete: `helm delete --purge demo-databases-ephemeral`
@@ -139,8 +146,7 @@ The code in wire-server still depends on some AWS services for some of its funct
     - fake-aws-dynamodb
 
 ```shell
-./bin/update.sh fake-aws # a recursive wrapper around 'helm dep update'
-helm upgrade --install --namespace demo demo-fake-aws charts/fake-aws --wait
+helm upgrade --install --namespace demo demo-fake-aws wire/fake-aws --wait
 ```
 
 To delete: `helm delete --purge demo-fake-aws`
@@ -150,7 +156,7 @@ To delete: `helm delete --purge demo-fake-aws`
 You can either install this very basic SMTP server, or configure your own (see SMTP options in [this section](docs/configuration.md#smtp-server))
 
 ```shell
-helm upgrade --install --namespace demo demo-smtp charts/demo-smtp --wait
+helm upgrade --install --namespace demo demo-smtp wire/demo-smtp --wait
 ```
 
 #### Install wire-server
@@ -188,22 +194,16 @@ In `values/wire-server/demo-values.yaml` (referred to as `values-file` below) an
 * domain names and urls
     * in your values-file, replace `example.com` and other domains and subdomains with domains of your choosing. Look for the `# change this` comments. You can try using `sed -i 's/example.com/<your-domain>/g' <values-file>`.
 
-Update the chart dependencies:
-
-```sh
-./bin/update.sh wire-server
-```
-
 Try linting your chart, are any configuration values missing?
 
 ```sh
-helm lint -f values/wire-server/demo-values.yaml -f values/wire-server/demo-secrets.yaml charts/wire-server
+helm lint -f values/wire-server/demo-values.yaml -f values/wire-server/demo-secrets.yaml wire/wire-server
 ```
 
 If you're confident in your configuration, try installing it:
 
 ```sh
-helm upgrade --install --namespace demo demo-wire-server charts/wire-server \
+helm upgrade --install --namespace demo demo-wire-server wire/wire-server \
     -f values/wire-server/demo-values.yaml \
     -f values/wire-server/demo-secrets.yaml \
     --wait
