@@ -58,11 +58,9 @@ workaround_issue_helm_s3_56() {
 
     # sync from $INDEX_S3_DIR to charts directory
     if [ -n "$chart_name" ]; then
-        # Read chart urls into a bash array
-        # mapfile/readarray are nicer, but don't work on Mac's builtin bash
-        IFS=$'\n' read -d '' -r -a urls < <(yq r index.yaml 'entries.*.*.urls.0' | awk -F '- ' '{print $2$3}' | grep "$chart_name")
+        mapfile -t urls < <(yq r index.yaml 'entries.*.*.urls.0' | awk -F '- ' '{print $2$3}' | grep "$chart_name")
     else
-        IFS=$'\n' read -d '' -r -a urls < <((yq r index.yaml 'entries.*.*.urls.0' | awk -F '- ' '{print $2$3}'))
+        mapfile -t urls < <(yq r index.yaml 'entries.*.*.urls.0' | awk -F '- ' '{print $2$3}')
     fi
     for url in "${urls[@]}"; do
         newurl=${url/$INDEX_S3_DIR/$PUBLIC_DIR};
