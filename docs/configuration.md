@@ -137,7 +137,7 @@ To give your load balancers public DNS names, create and edit `values/external-d
 ```
 helm upgrade --install --namespace demo demo-external-dns stable/external-dns \
     --version 1.7.3 \
-    -f values/aws-ingress/demo-values.yaml \
+    -f values/external-dns/demo-values.yaml \
     --wait
 ```
 
