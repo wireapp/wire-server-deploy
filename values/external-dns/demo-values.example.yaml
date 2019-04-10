@@ -3,7 +3,7 @@ external-dns:
   rbac:
     create: true
   aws:
-    region: eu-central-1
+    region: "<your-region>" # e.g. eu-central-1
     zoneType: public
     domainFilters: ["<your domain>"]
     zoneIdFilters: ["<your zone id>"]
