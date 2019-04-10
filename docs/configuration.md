@@ -142,9 +142,11 @@ helm upgrade --install --namespace demo demo-external-dns stable/external-dns \
     --wait
 ```
 
-Note that you have to add the appropriate IAM permissions to your cluster (see the [README](https://github.com/helm/charts/tree/master/stable/external-dns)).
+Things to note about external-dns:
 
-Alternatively, use the AWS route53 console.
+- There can only be a single external-dns chart installed (one per kubernetes cluster, not one per namespace).  So if you already have one running for another namespace you probably don't need to do anything.
+- You have to add the appropriate IAM permissions to your cluster (see the [README](https://github.com/helm/charts/tree/master/stable/external-dns)).
+- Alternatively, use the AWS route53 console.
 
 ### Other cloud providers
 
