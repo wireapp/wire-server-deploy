@@ -1,0 +1,16 @@
+external-dns:
+  provider: aws
+  rbac:
+    create: true
+  aws:
+    region: "<your-region>" # e.g. eu-central-1
+    zoneType: public
+    domainFilters: ["<your domain>"]
+    zoneIdFilters: ["<your zone id>"]
+  resources:
+    requests:
+      memory: 128Mi
+      cpu: 200m
+    limits:
+      memory: 256Mi
+      cpu: 400m

@@ -31,6 +31,7 @@ charts=(
     cassandra-external
     minio-external
     elasticsearch-external
+    aws-ingress
 )
 
 if [ -n "$chart_name" ] && [ -d "$SCRIPT_DIR/../charts/$chart_name" ]; then

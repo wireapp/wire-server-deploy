@@ -104,8 +104,7 @@ cp values/nginx-lb-ingress/demo-secrets.example.yaml values/nginx-lb-ingress/dem
 Install `metallb` (for more information see the [docs](https://metallb.universe.tf)):
 
 ```sh
-./bin/update.sh metallb
-helm upgrade --install --namespace metallb-system metallb charts/metallb \
+helm upgrade --install --namespace metallb-system metallb wire/metallb \
     -f values/metallb/demo-values.yaml \
     --wait --timeout 1800
 ```
@@ -113,8 +112,7 @@ helm upgrade --install --namespace metallb-system metallb charts/metallb \
 Install `nginx-lb-ingress`:
 
 ```
-./bin/update.sh nginx-lb-ingress
-helm upgrade --install --namespace demo nginx-lb-ingress charts/nginx-lb-ingress \
+helm upgrade --install --namespace demo demo-nginx-lb-ingress wire/nginx-lb-ingress \
     -f values/nginx-lb-ingress/demo-values.yaml \
     -f values/nginx-lb-ingress/demo-secrets.yaml \
     --wait
@@ -123,6 +121,34 @@ helm upgrade --install --namespace demo nginx-lb-ingress charts/nginx-lb-ingress
 Now, create DNS records for the URLs configured above.
 
 ## Load Balancer on cloud-provider
+
+### AWS
+
+[Upload the required certificates](https://aws.amazon.com/premiumsupport/knowledge-center/import-ssl-certificate-to-iam/).  Create and configure `values/aws-ingress/demo-values.yaml` from the examples.
+
+```
+helm upgrade --install --namespace demo demo-aws-ingress wire/aws-ingress \
+    -f values/aws-ingress/demo-values.yaml \
+    --wait
+```
+
+To give your load balancers public DNS names, create and edit `values/external-dns/demo-values.yaml`, then run [external-dns](https://github.com/helm/charts/tree/master/stable/external-dns):
+
+```
+helm repo update
+helm upgrade --install --namespace demo demo-external-dns stable/external-dns \
+    --version 1.7.3 \
+    -f values/external-dns/demo-values.yaml \
+    --wait
+```
+
+Things to note about external-dns:
+
+- There can only be a single external-dns chart installed (one per kubernetes cluster, not one per namespace).  So if you already have one running for another namespace you probably don't need to do anything.
+- You have to add the appropriate IAM permissions to your cluster (see the [README](https://github.com/helm/charts/tree/master/stable/external-dns)).
+- Alternatively, use the AWS route53 console.
+
+### Other cloud providers
 
 This information is not yet available. If you'd like to contribute by adding this information for your cloud provider, feel free to read the [contributing guidelines](../CONTRIBUTING.md) and open a PR.
 

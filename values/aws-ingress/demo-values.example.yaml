@@ -1,0 +1,12 @@
+ingress:
+  webapp:
+    https:
+      sslCert: "<webapp aws cert name>"
+      hostname: "<webapp hostname>"
+  nginz:
+    https:
+      sslCert: "<nginz https aws cert name>"
+      hostname: "<nginz https hostname>"
+    wss:
+      sslCert: "<nginz wss aws cert name>"
+      hostname: "<nginz wss hostname>"
