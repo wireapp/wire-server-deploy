@@ -4,6 +4,12 @@
 # corresponding certificates uploaded, see
 # https://aws.amazon.com/premiumsupport/knowledge-center/import-ssl-certificate-to-iam/
 #
+
+teamSettings:
+  enabled: false
+accountPages:
+  enabled: false
+
 ingress:
   webapp:
     https:
@@ -44,3 +50,21 @@ ingress:
     selector:
       key: app
       value: minio # (currently) fake-aws-s3 chart uses 'minio', minio-external chart uses 'minio-external'
+  teamSettings:
+    https:
+      externalPort: 443
+      sslCert: arn:aws:iam::00000-accountnumber-00000:server-certificate/example.com
+      sslPolicy: ELBSecurityPolicy-TLS-1-2-2017-01
+      hostname: <prefix>-teams-https.<domain>
+      ttl: 300
+    http:
+      teamSettingsPort: 8080
+  accountPages:
+    https:
+      externalPort: 443
+      sslCert: arn:aws:iam::00000-accountnumber-00000:server-certificate/example.com
+      sslPolicy: ELBSecurityPolicy-TLS-1-2-2017-01
+      hostname: <prefix>-account-https.<domain>
+      ttl: 300
+    http:
+      accountPagesPort: 8080
