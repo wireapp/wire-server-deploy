@@ -5,7 +5,7 @@ kibana:
     # To adjust a config option to an env var uppercase + replace `.` with `_`
     # Ref: https://www.elastic.co/guide/en/kibana/current/settings.html
     #
-    ELASTICSEARCH_URL: http://elasticsearch-6-ephemeral:9200
+    ELASTICSEARCH_URL: http://elasticsearch-ephemeral:9200
     SERVER_PORT: 5601
     LOGGING_VERBOSE: "true"
     SERVER_DEFAULTROUTE: "/app/kibana"
@@ -14,7 +14,7 @@ kibana:
       ## Default Kibana configuration from kibana-docker.
       server.name: kibana
       server.host: "0"
-      elasticsearch.url: http://elasticsearch-6-ephemeral:9200
+      elasticsearch.url: http://elasticsearch-ephemeral:9200
       ## Custom config properties below
       ## Ref: https://www.elastic.co/guide/en/kibana/current/settings.html
       # server.port: 5601

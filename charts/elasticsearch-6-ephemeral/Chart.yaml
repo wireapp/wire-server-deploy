@@ -1,4 +1,0 @@
-apiVersion: v1
-description: Dummy ephemeral elasticsearch, version 6
-name: elasticsearch-6-ephemeral
-version: 0.27.0

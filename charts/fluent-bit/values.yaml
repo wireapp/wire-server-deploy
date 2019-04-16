@@ -3,7 +3,7 @@ fluent-bit:
   backend:
     type: es
     es:
-      host: elasticsearch-6-ephemeral
+      host: elasticsearch-ephemeral
       port: 9200
       # Elastic Index Name
       index: kubernetes_cluster
