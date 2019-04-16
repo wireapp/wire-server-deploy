@@ -24,6 +24,10 @@ spec:
           value: "2048"
         - name: HEAP_NEWSIZE
           value: "800M"
+        - name: "bootstrap.system_call_filter"
+          value: "false"
+        - name: "discovery.type"
+          value: "single-node"
         ports:
         - containerPort: 9200
           name: http
