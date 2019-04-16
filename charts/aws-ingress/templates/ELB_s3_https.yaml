@@ -13,7 +13,9 @@ metadata:
 spec:
   type: LoadBalancer
   selector:
-    wireService: {{ .Values.ingress.s3.http.serviceName }}
+    # wireService: {{ .Values.ingress.s3.http.serviceName }}
+    # TODO: We need to think of a better way to do this
+    app: minio
   ports:
   - name: service
     protocol: TCP
