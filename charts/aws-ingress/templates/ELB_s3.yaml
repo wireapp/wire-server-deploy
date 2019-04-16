@@ -1,7 +1,7 @@
 kind: Service
 apiVersion: v1
 metadata:
-  name: s3-https
+  name: s3-elb-https
   annotations:
     # annotations are documented under https://kubernetes.io/docs/concepts/services-networking/service/
     service.beta.kubernetes.io/aws-load-balancer-ssl-ports: "{{ .Values.ingress.s3.https.externalPort }}"
