@@ -59,7 +59,7 @@ Click on 'discover' to view data.
 
 ## Nuking it all.
 
-Find the names of the helm releases for your pods (look at `helm ls` and `kubectl -n <namespace> get pods` , and run `helm del <helm_deploy_name>` for each of them.
+Find the names of the helm releases for your pods (look at `helm ls` and `kubectl -n <namespace> get pods` , and run `helm del <helm_deploy_name> --purge` for each of them.
 
 Note: Elasticsearch does not use the name of the helm chart, and therefore is harder to identify.
 
