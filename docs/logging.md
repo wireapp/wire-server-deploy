@@ -1,9 +1,15 @@
 # Deploying logging for the staging cluster:
 
+## sync charts from filesystem to S3
+If you've been doing any work to the elasticsearch-ephemeral, kibana, or fluent-bit charts, you need to upload those changes to the S3 bucket that helm uses to store charts:
+
+```
+bin/sync.sh
+```
+
 ## Deploying ElasticSearch
 ```
-helm dep update charts/elasticsearch-ephemeral/
-helm install --namespace <namespace> charts/elasticsearch-ephemeral/
+$ helm install --namespace <namespace> charts/elasticsearch-ephemeral/
 ```
 
 Note that since we are not specifying a release name during helm install, it generates a 'verb-noun' pair, and uses it.
@@ -12,21 +18,19 @@ Elasticsearch's chart does not use the release name of the helm chart in the pod
 
 ## Deploying Kibana
 ```
-helm dep update charts/kibana/
-helm install --namespace <namespace> charts/kibana/
+$ helm install --namespace <namespace> charts/kibana/
 ```
 
 Note that since we are not specifying a release name during helm install, it generates a 'verb-noun' pair, and uses it. If you look at your pod names, you can see this name prepended to your pods in 'kubectl -n <namespace> get pods'.
 
 ## Deploying fluent-bit
 ```
-helm dep update charts/fluent-bit/
-helm install --namespace <namespace> charts/fluent-bit/
+$ helm install --namespace <namespace> charts/fluent-bit/
 ```
 
 Alternately, if there is already fluent-bit deployed in your environment, get the helm name for the deployment (verb-noun prepended to the pod name), and
 ```
-helm upgrade <helm-name> --namespace <namespace> charts/fluent-bit/
+$ helm upgrade <helm-name> --namespace <namespace> charts/fluent-bit/
 ```
 
 Note that since we are not specifying a release name during helm install, it generates a 'verb-noun' pair, and uses it. if you look at your pod names, you can see this name prepended to your pods in 'kubectl -n <namespace> get pods'.
@@ -35,7 +39,7 @@ Note that since we are not specifying a release name during helm install, it gen
 
 Get the pod name for your kibana instance (not the one set up with fluent-bit), and
 ```
-kubectl -n <namespace> port-forward <pod_name> 5601:5601
+$ kubectl -n <namespace> port-forward <pod_name> 5601:5601
 ```
 
 go to 127.0.0.1:5601 in your web browser.
@@ -50,7 +54,7 @@ go to 127.0.0.1:5601 in your web browser.
 
 Get the pod name for your kibana instance (not the one set up with fluent-bit), and
 ```
-kubectl -n <namespace> port-forward <pod_name> 5601:5601
+$ kubectl -n <namespace> port-forward <pod_name> 5601:5601
 ```
 
 Go to 127.0.0.1:5601 in your web browser.
@@ -64,7 +68,9 @@ Find the names of the helm releases for your pods (look at `helm ls` and `kubect
 Note: Elasticsearch does not use the name of the helm chart, and therefore is harder to identify.
 
 ## Debugging
+```
 kubectl -n <namespace> logs <host>
+```
 
 # How this was developed:
 First, we deployed elasticsearch with the elasticsearch-ephemeral chart, then kibana. then we deployed fluent-bit, which set up a kibana of it's own that looks broken. It had a kibana .tgz in an incorrect location. It also set up way more VMs than I thought, AND consumed the logs for the entire cluster, Rather than for the namespace it's contained in, as I expected. 
