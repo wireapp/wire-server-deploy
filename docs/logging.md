@@ -1,15 +1,8 @@
 # Deploying logging for the staging cluster:
 
-## sync charts from filesystem to S3
-If you've been doing any work to the elasticsearch-ephemeral, kibana, or fluent-bit charts, you need to upload those changes to the S3 bucket that helm uses to store charts:
-
-```
-bin/sync.sh
-```
-
 ## Deploying ElasticSearch
 ```
-$ helm install --namespace <namespace> charts/elasticsearch-ephemeral/
+$ helm install --namespace <namespace> wire/elasticsearch-ephemeral/
 ```
 
 Note that since we are not specifying a release name during helm install, it generates a 'verb-noun' pair, and uses it.
@@ -18,19 +11,19 @@ Elasticsearch's chart does not use the release name of the helm chart in the pod
 
 ## Deploying Kibana
 ```
-$ helm install --namespace <namespace> charts/kibana/
+$ helm install --namespace <namespace> wire/kibana/
 ```
 
 Note that since we are not specifying a release name during helm install, it generates a 'verb-noun' pair, and uses it. If you look at your pod names, you can see this name prepended to your pods in 'kubectl -n <namespace> get pods'.
 
 ## Deploying fluent-bit
 ```
-$ helm install --namespace <namespace> charts/fluent-bit/
+$ helm install --namespace <namespace> wire/fluent-bit/
 ```
 
 Alternately, if there is already fluent-bit deployed in your environment, get the helm name for the deployment (verb-noun prepended to the pod name), and
 ```
-$ helm upgrade <helm-name> --namespace <namespace> charts/fluent-bit/
+$ helm upgrade <helm-name> --namespace <namespace> wire/fluent-bit/
 ```
 
 Note that since we are not specifying a release name during helm install, it generates a 'verb-noun' pair, and uses it. if you look at your pod names, you can see this name prepended to your pods in 'kubectl -n <namespace> get pods'.
