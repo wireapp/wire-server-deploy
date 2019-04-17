@@ -18,7 +18,6 @@ USAGE="Sync helm charts to S3. Usage: $0 to sync all charts or $0 <chartname> to
 echo "$USAGE"
 chart_name=$1
 
-# TODO: Should subcharts also be exposed directly? If not, this list needs to be kept up-to-date
 charts=(
     $(find $SCRIPT_DIR/../charts/ -maxdepth 1 -type d | sed -n "s=$SCRIPT_DIR/../charts/\(.\+\)=\1 =p")
 )
