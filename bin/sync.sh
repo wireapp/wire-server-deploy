@@ -22,7 +22,6 @@ chart_name=$1
 charts=(
     $(find $SCRIPT_DIR/../charts/ -maxdepth 1 -type d | sed -n "s=$SCRIPT_DIR/../charts/\(.\+\)=\1 =p")
 )
-echo $charts
 
 if [ -n "$chart_name" ] && [ -d "$SCRIPT_DIR/../charts/$chart_name" ]; then
     echo "only syncing $chart_name"
