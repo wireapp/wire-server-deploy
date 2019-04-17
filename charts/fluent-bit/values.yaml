@@ -1,0 +1,7 @@
+# See defaults in https://github.com/helm/charts/tree/master/stable/fluent-bit
+fluent-bit:
+  backend:
+    type: es
+    es:
+      host: elasticsearch-ephemeral
+
