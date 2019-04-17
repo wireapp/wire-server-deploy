@@ -20,19 +20,9 @@ chart_name=$1
 
 # TODO: Should subcharts also be exposed directly? If not, this list needs to be kept up-to-date
 charts=(
-    wire-server
-    wire-server-metrics
-    fake-aws
-    databases-ephemeral
-    redis-ephemeral
-    metallb
-    nginx-lb-ingress
-    demo-smtp
-    cassandra-external
-    minio-external
-    elasticsearch-external
-    aws-ingress
+    $(find $SCRIPT_DIR/../charts/ -maxdepth 1 -type d | sed -n "s=$SCRIPT_DIR/../charts/\(.\+\)=\1 =p")
 )
+echo $charts
 
 if [ -n "$chart_name" ] && [ -d "$SCRIPT_DIR/../charts/$chart_name" ]; then
     echo "only syncing $chart_name"
@@ -86,6 +76,7 @@ helm repo add "$INDEX_S3_DIR" "s3://public.wire.com/$INDEX_S3_DIR"
 
 rm ./*.tgz &> /dev/null || true # clean any packaged files, if any
 for chart in "${charts[@]}"; do
+    echo "Syncing chart $chart..."
     "$SCRIPT_DIR/update.sh" "$chart"
     helm package "charts/${chart}" && sync
     tgz=$(ls "${chart}"-*.tgz)
