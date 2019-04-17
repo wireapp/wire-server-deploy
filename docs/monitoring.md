@@ -2,6 +2,7 @@
 
 <!-- vim-markdown-toc GFM -->
 
+* [Prerequisites](#prerequisites)
 * [Installation](#installation)
 * [Monitoring in a separate namespace](#monitoring-in-a-separate-namespace)
 * [Using Custom Storage Classes](#using-custom-storage-classes)
@@ -13,6 +14,9 @@
 
 <!-- vim-markdown-toc -->
 
+## Prerequisites
+
+See the [development setup](https://github.com/wireapp/wire-server-deploy#development-setup)
 
 ## Installation
 
@@ -38,7 +42,7 @@ need to provide your [custom storage class](#using-custom-storage-classes).
 First we install the Storage Classes via the `aws-storage` chart:
 
 ```
-helm upgrade --install demo-aws-storage charts/aws-storage \
+helm upgrade --install demo-aws-storage wire/aws-storage \
     --namespace demo \
     --wait
 ```
@@ -62,7 +66,7 @@ repository run the following:
 
 ```
 ./bin/update.sh charts/wire-server-metrics
-helm upgrade --install demo-wire-server-metrics charts/wire-server-metrics \
+helm upgrade --install demo-wire-server-metrics wire/wire-server-metrics \
     --namespace demo \
     --wait
 ```
