@@ -60,6 +60,8 @@ config:
     setMaxConvAndTeamSize: 128
     setMaxTeamSize: 128
     setMaxConvSize: 128
+  optMutableSettings:
+    setEmailVisibility: visible_to_self
   smtp:
     passwordFile: /etc/wire/brig/secrets/smtp-password.txt
 turnStatic:

@@ -164,4 +164,8 @@ data:
       setMaxTeamSize: {{ .setMaxTeamSize }}
       setMaxConvSize: {{ .setMaxConvSize }}
     {{- end }}
+    {{- with .optMutableSettings }}
+    optMutableSettings:
+      setEmailVisibility: {{ .setEmailVisibility }}
+    {{- end }}
   {{- end }}
