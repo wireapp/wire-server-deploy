@@ -9,3 +9,5 @@ minio:
     enabled: true
     name: dummy-bucket
     purge: true
+  environment:
+    MINIO_BROWSER: "off"
