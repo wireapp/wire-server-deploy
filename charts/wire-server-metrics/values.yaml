@@ -42,8 +42,8 @@ prometheus-operator:
             orgId: 1
             folder: ''
             type: file
-            disableDeletion: false
-            editable: true
+            disableDeletion: true
+            editable: false
             options:
               path: /var/lib/grafana/dashboards/default
 
@@ -51,20 +51,20 @@ prometheus-operator:
     # a release soon.
     # REF: https://github.com/helm/charts/issues/12352
     #      https://github.com/helm/charts/pull/12512
-    # dashboards:
-    #   default:
-    #     # grafana can only access files from within its own chart directory
-    #     # which we don't have access to here; we can either dump the json
-    #     # directly into the values file, or load from a url
+    dashboards:
+      default:
+        # grafana can only access files from within its own chart directory
+        # which we don't have access to here; we can either dump the json
+        # directly into the values file, or load from a url
 
-    #     brig:
-    #       url: https://raw.githubusercontent.com/wireapp/wire-server-deploy/cp/prometheus-operator/charts/wire-server-metrics/dashboards/brig.json
-    #     cannon:
-    #       url: https://raw.githubusercontent.com/wireapp/wire-server-deploy/cp/prometheus-operator/charts/wire-server-metrics/dashboards/cannon.json
-    #     galley:
-    #       url: https://raw.githubusercontent.com/wireapp/wire-server-deploy/cp/prometheus-operator/charts/wire-server-metrics/dashboards/galley.json
-    #     gundeck:
-    #       url: https://raw.githubusercontent.com/wireapp/wire-server-deploy/cp/prometheus-operator/charts/wire-server-metrics/dashboards/gundeck.json
+        brig:
+          url: https://raw.githubusercontent.com/wireapp/wire-server-deploy/master/charts/wire-server-metrics/dashboards/brig.json
+        cannon:
+          url: https://raw.githubusercontent.com/wireapp/wire-server-deploy/master/charts/wire-server-metrics/dashboards/cannon.json
+        galley:
+          url: https://gist.githubusercontent.com/ChrisPenner/dc8f2b50b62eaf746ce306df4e610126/raw/446d15fe9b3f76ef4a0cdb6175a628c33aac0039/galley.json
+        gundeck:
+          url: https://raw.githubusercontent.com/wireapp/wire-server-deploy/master/charts/wire-server-metrics/dashboards/gundeck.json
 
   prometheusSpec:
     storageSpec:
