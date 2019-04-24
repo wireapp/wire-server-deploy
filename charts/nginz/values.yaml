@@ -282,6 +282,8 @@ nginx_conf:
       - all
     spar:
     - path: /identity-providers
+      # body sizes of ~70k have been observed.
+      max_body_size: '256k'
       envs:
       - all
     - path: /sso-initiate-bind
