@@ -12,7 +12,7 @@ images:
     tag: latest
   nginz:
     repository: quay.io/wire/nginz
-    tag: 2.51.14
+    tag: 2.52.0
 config:
   http:
     httpPort: 8080
@@ -282,8 +282,7 @@ nginx_conf:
       - all
     spar:
     - path: /identity-providers
-      # body sizes of ~70k have been observed.
-      max_body_size: '256k'
+      max_body_size: 256k
       envs:
       - all
     - path: /sso-initiate-bind
