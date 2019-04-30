@@ -23,6 +23,7 @@ This means you first need to install a kubernetes cluster, and then deploy wire-
     * [Required server resources](#required-server-resources)
 * [Contents of this repository](#contents-of-this-repository)
 * [Development setup](#development-setup)
+    * [If you're a maintainer of wire-server-deploy](#if-youre-a-maintainer-of-wire-server-deploy)
 * [Installing wire-server](#installing-wire-server)
     * [Demo installation](#demo-installation)
         * [Install non-persistent, non-highly-available databases](#install-non-persistent-non-highly-available-databases)
@@ -94,10 +95,22 @@ You need to install
 
 and you need to configure access to a kubernetes cluster (minimum v1.9+, 1.12+ recommended).
 
+For any of the listed `helm install` or `helm upgrade` commands in the documentation, you must first enable the wire charts helm repo (a mirror of this github repository hosted publicly on AWS's S3)
+
+```shell
+helm repo add wire https://s3-eu-west-1.amazonaws.com/public.wire.com/charts
+```
+
+(You can see available charts by running `helm search wire/`. To see new versions as time passes, you may need to run `helm repo update`)
+
 Optionally, if working in a team and you'd like to share `secrets.yaml` files between developers using a private git repository and encrypted files, you may wish to install
 
 * [sops](https://github.com/mozilla/sops)
 * [helm-secrets plugin](https://github.com/futuresimple/helm-secrets)
+
+### If you're a maintainer of wire-server-deploy
+
+see [maintainers.md](docs/maintainers.md)
 
 ## Installing wire-server
 
@@ -107,12 +120,6 @@ Optionally, if working in a team and you'd like to share `secrets.yaml` files be
 * Requires only a kubernetes cluster
 
 The demo setup is the easiest way to install a functional wire-server with limitations (such as no persistent storage, no high-availability, missing features). For the purposes of this demo, we assume you **do not have an AWS account**. Try this demo first before trying to configure a more complicated setup involving persistence and higher availability.
-
-Get charts from wire's s3 repo:
-
-```shell
-helm repo add wire https://s3-eu-west-1.amazonaws.com/public.wire.com/charts
-```
 
 (Alternatively, you can run replace `wire/<chart>` with `charts/<chart>` in all subsequent commands.  This will read charts from your local file system.  Make sure your working directory is the root of this repo, and that after changing any of the chart files, you run `./bin/update.sh` on them.)
 

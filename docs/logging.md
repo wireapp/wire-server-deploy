@@ -1,5 +1,9 @@
 # Deploying logging for the staging cluster:
 
+## Prerequisites
+
+See the [development setup](https://github.com/wireapp/wire-server-deploy#development-setup)
+
 ## Deploying ElasticSearch
 ```
 $ helm install --namespace <namespace> wire/elasticsearch-ephemeral/
