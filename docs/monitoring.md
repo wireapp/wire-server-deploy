@@ -4,6 +4,7 @@
 
 * [Prerequisites](#prerequisites)
 * [Installation](#installation)
+* [Adding Dashbaords](#adding-dashbaords)
 * [Monitoring in a separate namespace](#monitoring-in-a-separate-namespace)
 * [Using Custom Storage Classes](#using-custom-storage-classes)
 * [Troubleshooting](#troubleshooting)
@@ -75,6 +76,11 @@ See the [Prometheus Operator
 README](https://github.com/helm/charts/tree/master/stable/prometheus-operator#work-arounds-for-known-issues)
 for more information and troubleshooting help.
 
+## Adding Dashbaords
+
+Grafana dashbaord configurations are included as JSON inside the
+`charts/wire-server-metrics/dashboards` directory. You may import these via
+Grafana's web UI. See [Accessing grafana](#accessing-grafana).
 
 ## Monitoring in a separate namespace
 
