@@ -47,6 +47,10 @@ spec:
   - name: integration
     image: "{{ .Values.image.repository }}-integration:{{ .Values.image.tag }}"
     # TODO: Add TURN tests once we have an actual way to test it
+    # The brig-integration tests mutate the turn settings files before tests
+    # to get certain behaviour. This doesn't work on kubernetes because brig
+    # is a different pod than brig-integration and they can't both mouht the
+    # same file-system.
     command: ["brig-integration", "--pattern", "!/turn/"]
     volumeMounts:
     - name: "brig-integration"
