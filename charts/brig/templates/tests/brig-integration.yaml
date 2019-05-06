@@ -47,7 +47,7 @@ spec:
   - name: integration
     image: "{{ .Values.image.repository }}-integration:{{ .Values.image.tag }}"
     # TODO: Add TURN tests once we have an actual way to test it
-    command: ["brig-integration", "--pattern", "!/turn/"]
+    command: ["brig-integration"]
     volumeMounts:
     - name: "brig-integration"
       mountPath: "/etc/wire/integration"
