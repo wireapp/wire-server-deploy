@@ -37,6 +37,9 @@ spec:
     - name: "brig-secrets"
       secret:
         secretName: "brig"
+    - name: "turn-servers"
+      configMap:
+        name: "turn"
     - name: "brig-integration-secrets"
       configMap:
         name: "brig-integration-secrets"
@@ -52,12 +55,15 @@ spec:
       mountPath: "/etc/wire/brig/conf"
     - name: "brig-secrets"
       mountPath: "/etc/wire/brig/secrets"    
+    - name: "turn-servers"
+      mountPath: "/etc/wire/brig/turn"
     - name: "brig-integration-secrets"
       # TODO: Maybe we should put integration yaml also under
       #       `/integration/conf` by default? Note that currently
       #       brig-integration cannot read config files from
       #       non-default locations
       mountPath: "/etc/wire/integration-secrets"
+
     env:
     # these dummy values are necessary for Amazonka's "Discover"
     - name: AWS_ACCESS_KEY_ID
