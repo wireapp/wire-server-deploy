@@ -9,6 +9,11 @@ prometheus-operator:
           - path: '/i/metrics'
             port: http
             interval: 3m
+            metricRelabelings:
+              # Rename 'service' to 'role' to allow sharing of grafana dashboards
+              # between k8s and AWS services.
+              - sourceLabels: [service]
+                targetLabel: role
         namespaceSelector:
           # The namespaces which we can monitor are still limited by the 
           # `prometheus.rbac.roleNamespaces` rules
