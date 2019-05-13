@@ -1,0 +1,35 @@
+apiVersion: v1
+data:
+  stern.yaml: |
+    logNetStrings: True # log using netstrings encoding:
+                        # http://cr.yp.to/proto/netstrings.txt
+    logLevel: {{ .Values.config.logLevel }}
+
+    stern:
+      host: 0.0.0.0
+      port: {{ .Values.service.internalPort }}
+
+    brig:
+      host: brig
+      port: 8080
+
+    galley:
+      host: galley
+      port: 8080
+
+    gundeck:
+      host: gundeck
+      port: 8080
+
+    # Both ibis and galeb should be made optional for
+    # installations where these services are not available
+    galeb:
+      host: galeb
+      port: 8080
+
+    ibis:
+      host: ibis
+      port: 8080
+kind: ConfigMap
+metadata:
+  name: stern

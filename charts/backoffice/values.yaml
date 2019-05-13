@@ -1,0 +1,17 @@
+replicaCount: 1
+image:
+  repository: quay.io/wire/backoffice-frontend
+  tag: 1.0.1
+  pullPolicy: IfNotPresent
+config:
+  logLevel: Info
+resources:
+  requests:
+    memory: 128Mi
+    cpu: 125m
+  limits:
+    memory: 512Mi
+    cpu: 500m
+service:
+  internalPort: 8080
+  externalPort: 8080

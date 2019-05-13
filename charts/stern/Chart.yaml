@@ -1,0 +1,4 @@
+apiVersion: v1
+description: Stern - Service to be used to serve a backoffice tool
+name: stern
+version: 0.1.0
