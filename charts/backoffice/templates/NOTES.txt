@@ -1,0 +1,4 @@
+You have successfully deployed the backoffice tool! Given the default config, you can now access the frontend in 2 steps:
+
+  * kubectl port-forward svc/backoffice 8080:8080
+  * Open your local browser at http://localhost:8080
