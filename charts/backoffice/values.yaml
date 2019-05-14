@@ -1,10 +1,16 @@
 replicaCount: 1
-image:
-  repository: quay.io/wire/backoffice-frontend
-  tag: 1.0.1
-  pullPolicy: IfNotPresent
-config:
-  logLevel: Info
+images:
+  frontend:
+    repository: quay.io/wire/backoffice-frontend
+    tag: 1.0.1
+    pullPolicy: IfNotPresent
+  stern:
+    repository: quay.io/wire/stern
+    tag: 2.53.3
+    pullPolicy: IfNotPresent
+service:
+  internalPort: 8080
+  externalPort: 8080
 resources:
   requests:
     memory: 128Mi
@@ -12,9 +18,8 @@ resources:
   limits:
     memory: 512Mi
     cpu: 500m
-service:
-  internalPort: 8080
-  externalPort: 8080
+config:
+  logLevel: Info
 # `baseUrl` is the URL by which the backoffice is accessed in the browser.
 # It needs to match exactly for links to work correctly (it's used in the swagger UI).
 # Example: if you want to access it from localhost:8080, then you should define baseUrl
