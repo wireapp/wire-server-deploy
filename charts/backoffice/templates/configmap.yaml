@@ -130,8 +130,7 @@ data:
                 return 200;
             }
 
-            # TODO: Make this configurable
-            rewrite ^/api-docs/stern /stern/api-docs?base_url=http://localhost:8080/api break;
+            rewrite ^/api-docs/stern /stern/api-docs?base_url={{ .Values.baseUrl }}/api break;
 
             # This path is used by swagger to fetch the docs from the service
             location /stern {

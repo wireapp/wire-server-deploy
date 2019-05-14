@@ -36,6 +36,7 @@ spec:
           imagePullPolicy: {{ default "" .Values.imagePullPolicy | quote }}
           volumeMounts:
           - name: "backoffice-config"
+            # We don't want to override existing files under /etc/nginx except for nginx.conf
             mountPath: "/etc/nginx/nginx.conf"
             subPath: nginx.conf
           ports:
