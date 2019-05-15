@@ -1,0 +1,32 @@
+replicaCount: 1
+images:
+  frontend:
+    repository: quay.io/wire/backoffice-frontend
+    tag: 1.0.1
+    pullPolicy: IfNotPresent
+  stern:
+    repository: quay.io/wire/stern
+    tag: 2.53.3
+    pullPolicy: IfNotPresent
+service:
+  internalPort: 8080
+  externalPort: 8080
+resources:
+  requests:
+    memory: 128Mi
+    cpu: 125m
+  limits:
+    memory: 512Mi
+    cpu: 500m
+config:
+  logLevel: Info
+# `baseUrl` is the URL by which the backoffice is accessed in the browser.
+# It needs to match exactly for links to work correctly (it's used in the swagger UI).
+# Example: if you want to access it from localhost:8080, then you should define baseUrl
+# as `http://localhost:8080` and port-forward the service from port 8080 to the defined externalPort:
+#
+# -- kubectl port-forward svc/backoffice 8080:8080
+#
+# Format:
+# kubectl -n <namespace> port-forward svc/backoffice <local_port>:<service.externalPort>
+baseUrl: http://localhost:8080
