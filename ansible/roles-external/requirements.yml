@@ -1,0 +1,24 @@
+# Requirements file is used to keep track of ansible role origins and versions.
+# Files are downloaded to `./roles-external`. Do not edit those directly.
+#
+# See https://docs.ansible.com/ansible/galaxy.html#installing-multiple-roles-from-a-file
+#
+# To update existing roles: ( --force overrides existing folders)
+#
+#   ansible-galaxy install -r roles-external/requirements.yml --force
+
+- src: git+https://github.com/ANXS/hostname.git
+  name: hostname
+  version: b4e2a190372c09aca4c6dcae12cbcf66c17ed020 # 2018-07-20
+
+- src: git+https://github.com/geerlingguy/ansible-role-java
+  name: ansible-role-java
+  version: 1.9.4
+
+- src: git+https://github.com/geerlingguy/ansible-role-ntp
+  name: ansible-role-ntp
+  version: 1.6.2
+
+- src: git+https://github.com/wireapp/ansible-cassandra
+  name: ansible-cassandra
+  version: v0.1.0

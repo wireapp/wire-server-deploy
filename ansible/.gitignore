@@ -1,0 +1,9 @@
+ansible.log
+
+*.tfstate*
+.terraform
+credentials.tfvars
+
+artifacts
+credentials
+roles-external/*

@@ -1,0 +1,66 @@
+# first time:
+# ansible-playbook -i inventory/<env>/hosts.ini cassandra.yml
+# subsequent times:
+# ansible-playbook -i inventory/<env>/hosts.ini cassandra.yml --skip-tags bootstrap
+#
+# filewatch with
+#
+# ls databases.yml | entr ansible-playbook -i inventory/<env>/hosts.ini cassandra.yml
+
+####################################################
+# run once on new hosts
+####################################################
+# TODO: You currently need a copy of kubespray locally
+#       to make this work
+# - hosts: cassandra
+#   any_errors_fatal: true
+#   gather_facts: false
+#   become: true
+#   vars:
+#     ansible_ssh_pipelining: false
+#   roles:
+#     - { role: bootstrap-os, tags: bootstrap-os}
+#   tags:
+#     - bootstrap
+
+####################################################
+# cassandra
+####################################################
+
+- hosts: cassandra
+  any_errors_fatal: true
+  become: true
+  vars:
+    ansible_ssh_pipelining: false
+    cassandra_keyspaces:
+      - galley
+      - spar
+      - gundeck
+      - brig
+      - spar
+    cassandra_clustername: test_cluster
+  roles:
+    - hostname
+    - ansible-role-ntp
+    - ansible-role-java
+    - role: ansible-cassandra
+      tags:
+        - cassandra
+  tasks:
+    # TODO: separate rolling-restart script needed to apply configuration changes
+    # - systemd:
+    #     service: cassandra
+    #     state: restarted
+    - debug: var=cassandra_seed_resolved
+      tags:
+        - cassandra
+        - debug
+    - shell: nodetool status
+      register: status
+      tags:
+        - cassandra
+        - debug
+    - debug: var=status.stdout_lines
+      tags:
+        - cassandra
+        - debug
