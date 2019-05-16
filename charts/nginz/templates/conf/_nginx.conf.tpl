@@ -224,7 +224,7 @@ http {
     location {{ $location.path }} {
             {{- if ($location.basic_auth) }}
         auth_basic "Restricted";
-        auth_basic_user_file /etc/nginz/basic_auth.conf;
+        auth_basic_user_file {{ $.Values.nginx_conf.basic_auth_file }};
             {{- end -}}
 
             {{- if ($location.disable_zauth) }}
