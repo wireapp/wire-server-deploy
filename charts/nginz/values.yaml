@@ -27,7 +27,7 @@ nginx_conf:
   upstream_config: /etc/wire/nginz/upstreams/upstreams.conf
   zauth_keystore: /etc/wire/nginz/secrets/zauth.conf
   zauth_acl: /etc/wire/nginz/conf/zauth.acl
-  giphy_secret: /etc/wire/nginz/secrets/giphy_secret.txt
+  basic_auth_file: /etc/wire/nginz/secrets/basic_auth.txt
   worker_processes: auto
   worker_rlimit_nofile: 131072
   worker_connections: 65536
