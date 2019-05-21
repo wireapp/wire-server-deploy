@@ -12,6 +12,9 @@ spec:
     - name: "galley"
       configMap:
         name: "galley"
+    - name: "galley-integration-secrets"
+      configMap:
+        name: "galley-integration-secrets"
   containers:
   - name: integration
     image: "{{ .Values.image.repository }}-integration:{{ .Values.image.tag }}"
@@ -20,6 +23,9 @@ spec:
       mountPath: "/etc/wire/integration"
     - name: "galley"
       mountPath: "/etc/wire/galley/conf"
+    - name: "galley-integration-secrets"
+      # TODO: see corresp. TODO in brig.
+      mountPath: "/etc/wire/integration-secrets"
     env:
     # these dummy values are necessary for Amazonka's "Discover"
     - name: AWS_ACCESS_KEY_ID

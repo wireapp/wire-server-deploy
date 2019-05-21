@@ -20,5 +20,5 @@ data:
       privateKey: /etc/wire/integration-secrets/provider-privatekey.pem
       publicKey: /etc/wire/integration-secrets/provider-publickey.pem
       cert: /etc/wire/integration-secrets/provider-publiccert.pem
-      botHost: https://brig-integration
+      botHost: https://galley-integration
       botPort: 9000
