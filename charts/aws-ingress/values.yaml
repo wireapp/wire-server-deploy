@@ -31,7 +31,7 @@ ingress:
       ttl: 300
     ws:
       wsPort: 8081
-  s3-minio:
+  s3minio:
     enabled: false # set to true if you wish to use minio on AWS instead of using real S3
     https:
       externalPort: 443
