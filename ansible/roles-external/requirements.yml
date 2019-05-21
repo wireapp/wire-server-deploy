@@ -22,3 +22,7 @@
 - src: git+https://github.com/wireapp/ansible-cassandra
   name: ansible-cassandra
   version: v0.1.0
+
+- src: https://github.com/atosatto/ansible-minio.git
+  name: ansible-minio
+  version: v1.1.0

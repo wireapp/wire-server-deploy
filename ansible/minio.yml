@@ -1,0 +1,63 @@
+# https://docs.min.io/docs/distributed-minio-quickstart-guide.html
+# first time:
+# ansible-playbook -i inventory/<env>/hosts.ini minio.yml
+# subsequent times:
+# ansible-playbook -i inventory/<env>/hosts.ini minio.yml --skip-tags bootstrap
+#
+# filewatch with
+#
+# ls databases.yml | entr ansible-playbook -i inventory/<env>/hosts.ini cassandra.yml
+
+####################################################
+# run once on new hosts
+####################################################
+# TODO: You currently need a copy of kubespray locally
+#       to make this work
+# - hosts: minio
+#   any_errors_fatal: true
+#   gather_facts: false
+#   become: true
+#   vars:
+#     ansible_ssh_pipelining: false
+#   roles:
+#     - { role: bootstrap-os, tags: bootstrap-os}
+#   tags:
+#     - bootstrap
+
+####################################################
+# minio
+####################################################
+#
+# minio requires at least 2 datadirs (e.g. 2 servers x 1 disk each)
+# operating docs: https://docs.minio.io/docs/minio-admin-complete-guide.html
+# It assumes that `/mnt` is the right place for the data
+#
+- hosts: minio
+  any_errors_fatal: true
+  become: true
+  gather_facts: true
+  vars:
+    minio_server_datadirs: [ "/mnt/minio-data" ]
+    minio_server_addr: ":9000"
+    minio_access_key: dummykey
+    minio_secret_key: dummysecret
+    minio_network_interface: "{% if ansible_default_ipv4 is defined %}{{ ansible_default_ipv4.interface }}{% else %}eth0{% endif %}"
+    minio_server_env_extra: "MINIO_BROWSER=off"
+  pre_tasks:
+    - name: set intermediate variable
+      set_fact:
+        minio_address: 'http://{{ hostvars[item]["ansible_default_ipv4"]["address"]}}{{ minio_server_addr }}{{ minio_server_datadirs[0] }}'
+      with_items: '{{ groups["minio"] }}'
+      register: _minio_server_result
+
+    - name: set minio_server_cluster_nodes variable
+      set_fact:
+        minio_server_cluster_nodes: "{{ _minio_server_result.results | map(attribute='ansible_facts.minio_address') | list }}"
+
+    - debug: var=minio_server_cluster_nodes
+      run_once: true
+  roles:
+    - hostname
+    - ansible-minio
+  tags:
+    - minio
