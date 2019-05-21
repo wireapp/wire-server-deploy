@@ -15,3 +15,10 @@ data:
     cannon:
       host: cannon
       port: 8080
+
+    provider:
+      privateKey: /etc/wire/integration-secrets/provider-privatekey.pem
+      publicKey: /etc/wire/integration-secrets/provider-publickey.pem
+      cert: /etc/wire/integration-secrets/provider-publiccert.pem
+      botHost: https://brig-integration
+      botPort: 9000
