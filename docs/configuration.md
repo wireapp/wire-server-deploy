@@ -176,7 +176,15 @@ This information is not yet available. If you'd like to contribute by adding thi
 
 ## Persistence and high-availability
 
-Currently, due to the way kubernetes and cassandra [interact](https://github.com/kubernetes/kubernetes/issues/28969), cassandra cannot reliably be installed on kubernetes. Some people have tried, e.g. [this project](https://github.com/instaclustr/cassandra-operator) though at the time of writing (Nov 2018), this does not yet work as advertised. We recommend therefore to install cassandra, (possibly also elasticsearch and redis) separately, i.e. outside of kubernetes (using 3 nodes each).
+Currently, due to the way kubernetes and cassandra [interact](https://github.com/kubernetes/kubernetes/issues/28969), cassandra cannot reliably be installed on kubernetes. Some people have tried, e.g. [this project](https://github.com/instaclustr/cassandra-operator) though at the time of writing (Nov 2018), this does not yet work as advertised. We recommend therefore to install cassandra, (possibly also elasticsearch and redis) separately, i.e. outside of kubernetes (using 3 nodes each). More over, minio should be installed outside of the cluster (using _at least_ 2 nodes). There are example playbooks available at ../ansible/{cassandra,minio}.yml
+
+Once you have those cluster up & running, don't forget to deploy external services using the respective charts, e.g.:
+
+```
+helm upgrade --install --namespace <namespace> <chart_name> wire/{cassandra,minio}-external -f values.yaml
+```
+
+And ensure what this values.yaml file contains the correct service name (i.e., `cassandra-external` and/or `minio-external`, depending on your configuration).
 
 For further higher-availability:
 
