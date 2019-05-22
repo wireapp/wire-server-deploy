@@ -43,4 +43,4 @@ ingress:
       s3Port: 9000
     selector:
       key: app
-      value: minio
+      value: minio # (currently) fake-aws-s3 chart uses 'minio', minio-external chart uses 'minio-external'
