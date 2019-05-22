@@ -22,6 +22,9 @@ metadata:
   name: "{{ .Release.Name }}-galley-integration"
   annotations:
     "helm.sh/hook": test-success
+  labels:
+    wireService: galley-integration
+    release: {{ .Release.Name }}
 spec:
   volumes:
     - name: "galley-integration"
