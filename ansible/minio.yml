@@ -6,7 +6,7 @@
 #
 # filewatch with
 #
-# ls databases.yml | entr ansible-playbook -i inventory/<env>/hosts.ini cassandra.yml
+# ls minio.yml | entr ansible-playbook -i inventory/<env>/hosts.ini minio.yml
 
 ####################################################
 # run once on new hosts
