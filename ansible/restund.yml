@@ -1,0 +1,44 @@
+# first time:
+# ansible-playbook -i inventory/<env>/hosts.ini restund.yml
+# subsequent times:
+# ansible-playbook -i inventory/<env>/hosts.ini restund.yml --skip-tags bootstrap
+#
+# filewatch with
+#
+# ls restund.yml | entr ansible-playbook -i inventory/<env>/hosts.ini restund.yml
+
+---
+- name: secrets
+  hosts: localhost
+  gather_facts: no
+  become: no
+  tasks:
+    - set_fact:
+        # NOTE: Ensure that the zrest secret is the same as used by brig!
+        restund_zrest_secret: 'ENSURE_YOU_DEFINE_THIS_WITH_THE_SAME_VALUE_AS_BRIG'
+  tags:
+    - secrets
+    - provision
+
+# TODO: Use common bootstrap role
+- name: bootstrap
+  hosts: restund
+  gather_facts: no
+  tasks:
+    - raw: sudo apt-get update && sudo apt-get install -y python2.7 python-simplejson
+  tags:
+    - bootstrap
+
+- name: provision
+  hosts: restund
+  gather_facts: yes
+  become: yes
+  any_errors_fatal: True
+  vars:
+    # TODO: Add TLS certificate
+    restund_zrest_secret: '{{ hostvars.localhost.restund_zrest_secret }}'
+  roles:
+    - hostname
+    - ansible-restund
+  tags:
+    - provision

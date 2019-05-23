@@ -1,0 +1,11 @@
+---
+- name: journald.conf
+  copy:
+    src:   files/journald.conf
+    dest:  /etc/systemd/journald.conf
+    owner: root
+    group: root
+    mode:  0644
+  notify: reload journald
+  tags:
+    - system

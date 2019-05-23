@@ -1,0 +1,5 @@
+---
+- import_tasks: system.yml
+- import_tasks: packages.yml
+- import_tasks: rkt.yml
+- import_tasks: restund.yml

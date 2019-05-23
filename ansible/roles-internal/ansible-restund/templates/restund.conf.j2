@@ -1,0 +1,43 @@
+# core
+daemon                  no
+debug                   no
+realm                   dummy.io
+syncinterval            600
+udp_listen              {{ ansible_default_ipv4.address }}:{{ restund_udp_listen_port }}
+udp_sockbuf_size        524288
+tcp_listen              {{ ansible_default_ipv4.address }}:{{ restund_tcp_listen_port }}
+# TODO: Readd TLS
+# tls_listen              {{ ansible_default_ipv4.address }}:{{ restund_tls_listen_port }},/usr/local/etc/restund/restund.pem
+
+# modules
+module_path             /usr/local/lib/restund/modules
+module                  stat.so
+module                  drain.so
+module                  binding.so
+module                  auth.so
+module                  turn.so
+module                  zrest.so
+module                  status.so
+
+# auth
+auth_nonce_expiry       3600
+
+# turn
+turn_max_allocations    64000
+turn_max_lifetime       3600
+turn_relay_addr         {{ ansible_default_ipv4.address }}
+{% if ansible_default_ipv4.address != public_ipv4 %}
+turn_public_addr        {{ public_ipv4 }}
+{% endif %}
+
+# syslog
+syslog_facility         24
+
+# status
+status_udp_addr         127.0.0.1
+status_udp_port         {{ restund_udp_status_port }}
+status_http_addr        127.0.0.1
+status_http_port        {{ restund_http_status_port }}
+
+# zrest
+zrest_secret            {{ restund_zrest_secret }}

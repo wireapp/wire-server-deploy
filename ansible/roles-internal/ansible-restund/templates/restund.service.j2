@@ -1,0 +1,24 @@
+[Unit]
+Description=restund
+Requires=network-online.target
+After=network-online.target
+
+# TODO: Avoid using insecure-options=image!
+[Service]
+Slice=machine.slice
+LimitNOFILE=50000
+ExecStart=/usr/bin/rkt run \
+    --insecure-options=image \
+    --net=host \
+    --dns=host \
+    --hosts-entry=host \
+    --volume volume-usr-local-etc-restund,kind=host,source=/etc/restund,readOnly=true \
+    {{ aci_base_url }}/restund/restund-{{ versions.restund }}_linux_amd64.aci \
+    --user=restund \
+    --group=restund
+ExecStopPost=/usr/bin/rkt gc --mark-only
+KillMode=mixed
+Restart=always
+
+[Install]
+WantedBy=multi-user.target

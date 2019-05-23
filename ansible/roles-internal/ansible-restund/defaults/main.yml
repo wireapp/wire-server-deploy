@@ -1,0 +1,27 @@
+---
+rkt_version: 1.30.0
+rkt_fly_version: 1.30.0
+node_exporter_version: v0.17.0
+
+versions:
+  restund: 0.4.13w6b1.0.23
+  nginx:   1.15.12-alpine
+  rex:     0.2.2b1.0.6
+  process_exporter: 0.4.0
+
+restund_udp_listen_port: 3478
+restund_tcp_listen_port: 3478
+restund_tls_listen_port: 5349
+restund_udp_status_port: 33000
+restund_http_status_port: 8080
+
+aci_base_url: https://public-wire-com.s3-eu-west-1.amazonaws.com
+rkt_s3_bucket_vhost: '{{ aci_base_url|regex_replace("^http(s?)://","") }}'
+
+current_time: "{{ ansible_date_time.epoch }}"
+
+two_weeks_in_seconds: "{{ 14 * 24 * 60 * 60 }}"
+two_weeks_from_now: "{{ current_time|int + two_weeks_in_seconds|int }}"
+
+four_weeks_in_seconds: "{{ 28 * 24 * 60 * 60 }}"
+four_weeks_from_now: "{{ current_time|int + four_weeks_in_seconds|int }}"

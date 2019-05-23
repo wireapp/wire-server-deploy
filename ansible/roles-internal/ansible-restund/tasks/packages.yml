@@ -1,0 +1,20 @@
+---
+- name: packages
+  apt:
+    state: latest
+    install_recommends: no
+    name:
+      - ca-certificates
+      - curl
+      - gnupg2
+      - htop
+      - ltrace
+      - nload
+      - strace
+      - systemd-container
+      - tmux
+      - unattended-upgrades
+      - python-openssl
+      - dnsutils
+  tags:
+    - packages

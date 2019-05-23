@@ -1,0 +1,70 @@
+---
+- name: fetch rkt installer
+  get_url:
+    url:  https://raw.githubusercontent.com/coreos/rkt/v{{ rkt_version }}/scripts/install-rkt.sh
+    dest: /tmp/install-rkt.sh
+    sha256sum: 71b21a4946e3e2afaf5310ef040b890cb629cbcdc519429638b759c38868c8a4
+  tags:
+    - rkt
+
+- command: /bin/bash /tmp/install-rkt.sh creates=/usr/bin/rkt
+  tags:
+    - rkt
+
+- command: /bin/bash /tmp/install-rkt.sh
+  when: force_reinstall_rkt is defined and force_reinstall_rkt
+  tags:
+    - rkt
+
+- name: mkdir /etc/rkt/auth.d
+  file:
+    path:  /etc/rkt/auth.d
+    state: directory
+    group: rkt-admin
+  tags:
+    - rkt
+
+# Need a way to render these
+# - name: render /etc/rkt/auth.d/w-aci.json
+#   template:
+#     src:   templates/rkt_w-aci.json.j2
+#     dest:  /etc/rkt/auth.d/w-aci.json
+#     group: rkt-admin
+#   tags:
+#     - rkt
+
+# - name: sync /etc/rkt/trustedkeys
+#   synchronize:
+#     src:  files/rkt/trustedkeys
+#     dest: /etc/rkt/
+#     recursive: yes
+#     delete:    yes
+#     # TODO: Does not seem to work anymore...
+#     # rsync_opts:
+#     #   - "--owner root --group rkt-admin"
+#   tags:
+#     - rkt
+
+# TODO: Cannot list keys - how to?
+- name: trust public keys in the public.wire.com bucket
+  command: |
+    rkt trust
+        --root
+        --skip-fingerprint-review
+        https://s3-eu-west-1.amazonaws.com/public.wire.com/pubkeys/{{ item }}
+  when: item.endswith(".asc")
+  with_items: "{{ rkt_pubkeys|default([]) }}"
+  tags:
+    - rkt
+
+- name: trust stage1-fly
+  command: rkt trust --skip-fingerprint-review --prefix "coreos.com/rkt/stage1-fly"
+  tags:
+    - rkt
+
+# TODO: Replace with file?
+- name: Set permissions
+  shell: |
+    chown -R root:rkt-admin /etc/rkt
+  tags:
+    - rkt

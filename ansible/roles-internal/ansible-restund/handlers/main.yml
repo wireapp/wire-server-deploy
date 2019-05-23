@@ -1,0 +1,15 @@
+---
+- name: systemctl daemon-reload
+  command: systemctl daemon-reload
+
+- name: reload sshd
+  service: name=sshd state=reloaded
+
+- name: rkt gc
+  command: rkt gc
+
+- name: rkt image gc
+  command: rkt image gc
+
+- name: reload journald
+  command: systemctl force-reload systemd-journald

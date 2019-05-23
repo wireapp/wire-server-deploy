@@ -1,0 +1,3 @@
+---
+ansible_ssh_host: w.x.y.z
+public_ipv4: w.x.y.z

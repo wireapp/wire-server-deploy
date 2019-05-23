@@ -1,0 +1,66 @@
+---
+- name: add restund group
+  group: name=restund state=present system=true
+  tags:
+    - restund
+
+- name: add restund user
+  user:
+    name:   restund
+    shell:  /bin/false
+    group:  restund
+    system: true
+    createhome: false
+  tags:
+    - restund
+
+- name: create /etc/restund
+  file:
+    path:  /etc/restund
+    state: directory
+    mode:  0755
+    owner: restund
+    group: restund
+  tags:
+    - restund
+
+- name: restund.conf
+  template:
+    src:   templates/restund.conf.j2
+    dest:  /etc/restund/restund.conf
+    mode:  0440
+    owner: restund
+    group: restund
+  tags:
+    - restund
+
+# TODO: Ensure we install the tls certificate
+# - name: install restund tls certificate
+#   copy:
+#     dest:    /etc/restund/restund.pem
+#     content: '{{ restund_tls_certificate }}'
+#     mode:    0440
+#     owner:   restund
+#     group:   restund
+#   tags:
+#     - restund
+
+- name: install restund unit file
+  template:
+    src:   templates/restund.service.j2
+    dest:  /lib/systemd/system/restund.service
+    mode:  0644
+    owner: root
+    group: root
+  notify:
+    - systemctl daemon-reload
+    # - restart restund # NOTE: Restarting restund should be done _manually_
+    - rkt gc
+    - rkt image gc
+  tags:
+    - restund
+
+- service:
+    name:    restund
+    enabled: true
+    state:   started
