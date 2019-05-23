@@ -8,6 +8,7 @@
 ## Preparation
 
 Before provisioning, ensure you replace the `restund_zrest_secret` as described in the sample restund.yml playbook.
+Besides adding the servers to your inventory file, don't forget to add a yml at `host_vars/<server>.yml`
 
 ## How do I connect this restund server with wire-server?
 
