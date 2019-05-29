@@ -4,7 +4,7 @@ description = "Radically simple IT automation"
 name = "ansible"
 optional = false
 python-versions = ">=2.7,!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*,!=3.4.*"
-version = "2.8.0"
+version = "2.7.11"
 
 [[package]]
 category = "main"
@@ -260,11 +260,11 @@ python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, <4"
 version = "1.25.3"
 
 [metadata]
-content-hash = "3d70ae9761ced69e26bcdc384b8e55287174e82a41abfd9678127d033c6fac82"
+content-hash = "d38abee2710ed965632c0786fd1a94afa871e480554695d4c15a3881203b298e"
 python-versions = "^2.7"
 
 [metadata.hashes]
-ansible = ["7234dd7d89150dc5bf035bc1ec3c084a8a0699d89e1c9b06b2af6dd34b2ef3ae"]
+ansible = ["e7e6de461b7d07cb4d8b2dd2a32b231af7c56e6bf39b851024671aaa52fd377e"]
 ansible-modules-hashivault = ["8a3846057fd353de9d8ceda8afe80d31649d233d49c88a49f487a85fc3cd7fbe"]
 boto = ["147758d41ae7240dc989f0039f27da8ca0d53734be0eb869ef16e3adcfa462e8", "ea0d3b40a2d852767be77ca343b58a9e3a4b00d9db440efb8da74b4e58025e5a"]
 boto3 = ["98516650f72c02d0c7b47e6f0df69c19a0d1046d3973783ed7b0f093e8e81adb", "aa06b240e49dbc8443bd96086c92baa0275281e0f7cc0439a328fef9ac254253"]
