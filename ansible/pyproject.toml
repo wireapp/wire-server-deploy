@@ -10,9 +10,15 @@ ansible = "2.8.*"
 ansible-modules-hashivault = "*"
 boto = "*"
 dnspython = "*"
-netaddr = "*"
+netaddr = ">= 0.7"
 psycopg2-binary = "*"
 boto3 = "*"
+jinja2 = ">= 2.10.1"
+pbr = "^5.2"
+hvac = ">= 0.8"
+jmespath = ">= 0.9.4"
+"ruamel.yaml" = ">= 0.15.96"
+PyYAML = "*"
 
 [tool.poetry.dev-dependencies]
 
