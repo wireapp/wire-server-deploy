@@ -1,0 +1,19 @@
+# download a specific version of kubespray
+# Usage: see Makefile
+- hosts: localhost
+  gather_facts: no
+  vars:
+    # kubespray release 2.10 branch from 2019-05-20
+    # uses
+    # kube_version = "v1.14.2"
+    # helm_version = "v2.13.1"
+    # (if needed, these can be overridding in the hosts.ini under the [k8s-cluster:vars] section)
+    kubespray_version: e2f5a9748e4dbfe2fdba7931198b0b5f1f4bdc7e
+  tasks:
+  - name: "sync kubespray to {{ kubespray_version }}"
+    git:
+      repo: 'https://github.com/kubernetes-sigs/kubespray.git'
+      dest: roles-external/kubespray
+      version: "{{ kubespray_version }}"
+      force: yes
+      depth: 1
