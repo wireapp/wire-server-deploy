@@ -269,6 +269,9 @@ nginx_conf:
     - path: ~* ^/teams/([^/]*)/conversations(.*)
       envs:
       - all
+    - path: ~* ^/teams/([^/]*)/legalhold(.*)
+      envs:
+      - all
     gundeck:
     - path: /push
       envs:
