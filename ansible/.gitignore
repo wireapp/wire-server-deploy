@@ -1,2 +1,4 @@
 roles-external/*
 hosts.ini
+artifacts
+secrets
