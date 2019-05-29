@@ -5,7 +5,7 @@
 #
 # To update existing roles: ( --force overrides existing folders)
 #
-#   ansible-galaxy install -r roles-external/requirements.yml --force
+#   ansible-galaxy install -r requirements.yml --force
 
 - src: git+https://github.com/elastic/ansible-elasticsearch.git
   name: elasticsearch
@@ -34,3 +34,12 @@
 - src: git+https://github.com/wireapp/ansible-tinc.git
   name: ansible-tinc
   version: master
+
+- src: https://github.com/githubixx/ansible-role-kubectl.git
+  name: ansible-kubectl
+  # keep the kubectl version in sync with kubespray (see download_kubespray.yml)
+  version: "8.0.1+1.14.2" 
+
+- src: https://github.com/andrewrothstein/ansible-kubernetes-helm.git
+  name: ansible-helm
+  version: 33978bc2e486f087066acc737d4468f1fa1c5883 # 2019-05-17
