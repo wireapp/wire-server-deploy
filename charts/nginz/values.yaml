@@ -272,6 +272,10 @@ nginx_conf:
     - path: ~* ^/teams/([^/]*)/legalhold(.*)
       envs:
       - all
+    - path: ~* ^/teams/api-docs
+      envs:
+      - all
+      disable_zauth: true
     gundeck:
     - path: /push
       envs:
