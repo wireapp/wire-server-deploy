@@ -275,7 +275,7 @@ nginx_conf:
     - path: ~* ^/teams/api-docs
       envs:
       - all
-      disable_zauth: true    gundeck:
+      disable_zauth: true
     gundeck:
     - path: /push
       envs:
