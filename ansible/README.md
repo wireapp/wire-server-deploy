@@ -27,11 +27,21 @@ This document assumes
 
 ## Development setup
 
-```
-# install 'poetry' (python dependency management)
-curl -sSL https://raw.githubusercontent.com/sdispater/poetry/master/get-poetry.py | python
-source $HOME/.poetry/env
+**Install (python dependency management)**
 
+See also [poetry](https://poetry.eustace.io/).
+
+This assumes you're using python 2.7 (if you only have python3 available, you may need to find some workarounds):
+
+```
+curl -sSL https://raw.githubusercontent.com/sdispater/poetry/master/get-poetry.py > get-poetry.py
+python get-poetry.py
+source $HOME/.poetry/env
+```
+
+**Install python dependencies**
+
+```
 # install the python dependencies to run ansible
 cd ansible
 poetry install
