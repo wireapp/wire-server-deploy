@@ -11,7 +11,7 @@ work-in-progress
 - [ ] diagram
 - [ ] other assumptions?
 - [x] install kubernetes with kubespray
-- [ ] install cassandra
+- [x] install cassandra
 - [ ] install elasticsearch
 - [ ] install redis
 - [ ] install turn servers
@@ -104,7 +104,24 @@ poetry run ansible-playbook -i hosts.ini kubernetes.yml -vv
 
 ### cassandra
 
-TODO
+Set variables in the hosts.ini file under `[cassandra:vars]`. Most defaults should be fine, except maybe for the cluster name and the network interface to use:
+
+```
+[cassandra:vars]
+## set to True if using AWS
+is_aws_environment = False
+## Set the network interface name for cassandra to bind to if you have more than one network interface
+# cassandra_network_interface = eth0
+# cassandra_clustername: default
+```
+
+(see [defaults/main.yml](https://github.com/wireapp/ansible-cassandra/blob/master/defaults/main.yml) for a full list of variables to change if necessary)
+
+Install cassandra:
+
+```
+poetry run ansible-playbook -i hosts.ini cassandra.yml -vv
+```
 
 ### tinc
 
