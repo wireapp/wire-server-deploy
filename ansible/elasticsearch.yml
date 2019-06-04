@@ -1,0 +1,54 @@
+- name: elasticsearch
+  hosts: elasticsearch_master
+  gather_facts: true
+  vars:
+    es_enable_xpack: false
+    es_xpack_features: [] # disable features
+    es_instance_name: "{{ ansible_hostname }}"
+
+    # bind to both site IP and localhost, but publish only site IP:
+    # netstat -antlp | grep LISTEN
+    #   tcp        0      0 172.17.0.4:9200         0.0.0.0:*               LISTEN      8663/java
+    #   tcp        0      0 127.0.0.1:9200          0.0.0.0:*               LISTEN      8663/java
+    #   tcp        0      0 172.17.0.4:9300         0.0.0.0:*               LISTEN      8663/java
+    #   tcp        0      0 127.0.0.1:9300          0.0.0.0:*               LISTEN      8663/java
+    # curl localhost:9200/_cat/nodes?v
+    #   ip         heap.percent ram.percent cpu load_1m load_5m load_15m node.role master name
+    #   172.17.0.4           12          76 100    6.50    6.52     7.20 mdi       *      es3-es3
+    #   172.17.0.2           11          76 100    6.50    6.52     7.20 mdi       -      es1-es1
+    #   172.17.0.3           11          76 100    6.50    6.52     7.20 mdi       -      es2-es2
+    # for more details see
+    # see https://www.elastic.co/guide/en/elasticsearch/reference/current/modules-network.html
+    es_network_interface: "{{ elasticsearch_network_interface | default(ansible_default_ipv4.interface) }}"
+    es_network:
+      publish_host: "_{{ es_network_interface }}_"
+      bind_host:
+        - "_{{ es_network_interface }}_"
+        - "_local_"
+    es_masters: '{% for host in groups["elasticsearch_master"] %}{{ hostvars[host]["ansible_" + elasticsearch_network_interface]["ipv4"]["address"] }}:9300{% if not loop.last %},{% endif %}{% endfor %}'
+    es_config:
+      cluster.name: "elasticsearch-directory"
+      http.port: "{{ es_api_port }}" # 9200 by default
+      transport.tcp.port: 9300
+      # minimum master nodes should be a quorum of eligible master nodes (e.g. for 3 nodes: 3 / 2 + 1 = 2)
+      # (//) is python's integer division
+      discovery.zen.minimum_master_nodes: "{{ (groups['elasticsearch_master'] | length // 2 + 1) | int }}"
+      discovery.zen.ping.unicast.hosts: "{{ es_masters }}"
+      network.publish_host: "{{ es_network.publish_host | default('_site_') }}"
+      network.bind_host: "{{ es_network.bind_host | default(['_site_', '_local_']) }}"
+      node.data: true
+      node.master: true
+  pre_tasks:
+    - debug: var=es_config
+      # required for openjdk
+      # see https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=863199
+    - name: ensure man directory exist
+      file:
+        path: /usr/share/man/man1
+        state: directory
+        mode: 0755
+  roles:
+    - role: elasticsearch
+  tags:
+    - elasticsearch
+    - es
