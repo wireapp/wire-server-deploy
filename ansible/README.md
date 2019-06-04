@@ -30,9 +30,10 @@ This document assumes
 ```
 # install 'poetry' (python dependency management)
 curl -sSL https://raw.githubusercontent.com/sdispater/poetry/master/get-poetry.py | python
+source $HOME/.poetry/env
 
-cd ansible
 # install the python dependencies to run ansible
+cd ansible
 poetry install
 
 # download the ansible roles necessary to install databases and kubernetes

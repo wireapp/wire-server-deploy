@@ -5,7 +5,7 @@ description = ""
 authors = ["jschaul <jschaul@users.noreply.github.com>"]
 
 [tool.poetry.dependencies]
-python = "^2.7"
+python = "^2.7 || >=3.5"
 ansible = "2.7.*"
 ansible-modules-hashivault = "*"
 boto = "*"
