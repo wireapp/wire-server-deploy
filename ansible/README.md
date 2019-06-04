@@ -12,7 +12,7 @@ work-in-progress
 - [ ] other assumptions?
 - [x] install kubernetes with kubespray
 - [ ] install cassandra
-- [ ] install elasticsearch
+- [x] install elasticsearch
 - [ ] install redis
 - [ ] install turn servers
 - [ ] polish
@@ -105,6 +105,14 @@ poetry run ansible-playbook -i hosts.ini kubernetes.yml -vv
 ### cassandra
 
 TODO
+
+### ElasticSearch
+
+Set 'elasticsearch_network_interface' in your hosts file under `[elasticsearch:vars]` to the name of the interface you wish elasticsearch nodes to talk to each other on.
+
+```
+poetry run ansible-playbook -i hosts.ini elasticsearch.yml -vv
+```
 
 ### tinc
 
