@@ -28,25 +28,32 @@ This document assumes
 
 ## Dependencies
 
+* Install 'poetry' (python dependency management). See also the [poetry documentation](https://poetry.eustace.io/).
 
-* Install 'poetry' (python dependency management)
+This assumes you're using python 2.7 (if you only have python3 available, you may need to find some workarounds):
+
 ```
 sudo apt install python2.7 python-pip
-curl -sSL https://raw.githubusercontent.com/sdispater/poetry/master/get-poetry.py | python2.7
+curl -sSL https://raw.githubusercontent.com/sdispater/poetry/master/get-poetry.py > get-poetry.py
+python2.7 get-poetry.py
 source $HOME/.poetry/env
 ln -s /usr/bin/python2.7 $HOME/.poetry/bin/python
 ```
 
 * Install the python dependencies to run ansible.
+
 ```
 git clone https://github.com/wireapp/wire-server-deploy.git
-cd wire-server-deploy
-cd ansible
-export CURL_CA_BUNDLE=/etc/ssl/certs/ca-certificates.crt
+cd wire-server-deploy/ansible
+
+## (optional) if you need ca certificates other than the default ones:
+# export CURL_CA_BUNDLE=/etc/ssl/certs/ca-certificates.crt
+
 poetry install
 ```
 
-# download the ansible roles necessary to install databases and kubernetes
+* download the ansible roles necessary to install databases and kubernetes
+
 ```
 make download
 ```
