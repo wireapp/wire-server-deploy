@@ -10,6 +10,10 @@
   hosts: localhost
   gather_facts: no
   vars:
+    # Ensure these versions match the server-side ones (or are compatible)
+    # Also see download_kubespray.yml
+    kubernetes_helm_ver: v2.13.1
+    kubectl_version: "1.14.2"
     # default directories for a global installation
     kubectl_bin_directory: "/usr/local/bin"
     kubernetes_helm_bin_dir: "/usr/local/bin"
@@ -17,7 +21,6 @@
     kubectl_os: "{{ os.stdout }}" # to override, use "linux" for Linux, "darwin" for MacOS X, "windows" for Windows
     # Processor architecture "kubectl" should run on
     kubectl_arch: "amd64" # other possible values: "386","arm64","arm","ppc64le","s390x"
-    kubernetes_helm_ver: v2.13.1
   pre_tasks:
   - name: figure out OS
     shell: if [[ "$OSTYPE" == "darwin"* ]]; then echo darwin; else echo linux; fi;
