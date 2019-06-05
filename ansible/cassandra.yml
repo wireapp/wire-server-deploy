@@ -1,0 +1,35 @@
+- hosts: cassandra
+  any_errors_fatal: true
+  vars:
+    cassandra_keyspaces:
+      - brig
+      - galley
+      - gundeck
+      - spar
+  roles:
+    - role: hostname
+      tags:
+        - hostname
+
+    - role: ansible-role-ntp
+      tags:
+        - ntp
+
+    - role: ansible-role-java
+      tags:
+        - java
+
+    - role: ansible-cassandra
+      tags:
+        - cassandra
+  tasks:
+    # these are optional debug tasks to see that the cluser has come up sucessfully
+    - shell: nodetool status
+      register: nodetool_status
+      tags:
+        - cassandra
+        - debug
+    - debug: var=nodetool_status.stdout_lines
+      tags:
+        - cassandra
+        - debug
