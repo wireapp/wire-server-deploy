@@ -1,6 +1,7 @@
 # ansible-based configuration
 
-In a production environment, some parts of the wire-server infrastructure (such as e.g. cassandra databases) are best configured outside kubernetes. The documentation and code under this folder is meant to help with that.
+In a production environment, some parts of the wire-server infrastructure (such as e.g. cassandra databases) are best configured outside kubernetes. Additionally, kubernetes can be rapidly set up with kubespray, via ansible.
+The documentation and code under this folder is meant to help with that.
 
 ## Status
 
@@ -25,32 +26,39 @@ This document assumes
 * about 1000 active users
 * all VMs run ubuntu 16.04 or ubuntu 18.04
 
-## Development setup
+## Dependencies
 
-**Install (python dependency management)**
-
-See also [poetry](https://poetry.eustace.io/).
+* Install 'poetry' (python dependency management). See also the [poetry documentation](https://poetry.eustace.io/).
 
 This assumes you're using python 2.7 (if you only have python3 available, you may need to find some workarounds):
 
 ```
+sudo apt install python2.7 python-pip
 curl -sSL https://raw.githubusercontent.com/sdispater/poetry/master/get-poetry.py > get-poetry.py
-python get-poetry.py
+python2.7 get-poetry.py
 source $HOME/.poetry/env
+ln -s /usr/bin/python2.7 $HOME/.poetry/bin/python
 ```
 
-**Install python dependencies**
+* Install the python dependencies to run ansible.
 
 ```
-# install the python dependencies to run ansible
-cd ansible
+git clone https://github.com/wireapp/wire-server-deploy.git
+cd wire-server-deploy/ansible
+
+## (optional) if you need ca certificates other than the default ones:
+# export CURL_CA_BUNDLE=/etc/ssl/certs/ca-certificates.crt
+
 poetry install
+```
 
-# download the ansible roles necessary to install databases and kubernetes
+* download the ansible roles necessary to install databases and kubernetes
+
+```
 make download
 ```
 
-## Creating virtual machines
+## Provision virtual machines
 
 Create the following:
 
@@ -65,6 +73,8 @@ Create the following:
 
 It's up to you how you create these VMs - kvm on a bare metal machine, VM on a cloud provider, etc. Make sure they run ubuntu 16.04/18.04.
 
+Ensure that your VMs have IP addresses that do not change.
+
 ## Configuring virtual machines
 
 ### All VMs
@@ -75,6 +85,16 @@ Copy the example hosts file:
 
 * replace the `ansible_host` values (`X.X.X.X`) with the IPs that you can reach by SSH.
 * replace the `ip` values (`Y.Y.Y.Y`) with the IPs which you wish kubernetes to bind to.
+
+#### Authentication
+* if you want to use passwords:
+```
+sudo apt install sshpass
+```
+* in hosts.ini, change the ansible_user to the user you want to login as, the ansible_ssh_pass to the password (if you require one), and the ansible_become_pass to the sudo password (if required.)
+
+#### ansible pre-kubernetes
+Now that you have a working hosts.ini, and you can access the host, run any ansible scripts you need, in order for the nodes to have internet (proxy config, ssl certificates, etc).
 
 ### kubernetes
 
