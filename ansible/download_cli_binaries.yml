@@ -8,7 +8,6 @@
 #
 - name: download binaries
   hosts: localhost
-  gather_facts: no
   vars:
     # Ensure these versions match the server-side ones (or are compatible)
     # Also see download_kubespray.yml
@@ -25,6 +24,11 @@
   - name: figure out OS
     shell: if [[ "$OSTYPE" == "darwin"* ]]; then echo darwin; else echo linux; fi;
     register: os
+
+  - name: fix for kubectl role when on debian
+    set_fact:
+      unarchive_deps_xz_pkg: xz-utils
+    when: ansible_os_family == 'Debian'
 
   - name: Set local directory variables
     set_fact:

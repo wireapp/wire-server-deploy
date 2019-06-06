@@ -20,21 +20,3 @@
       version: "{{ kubespray_version }}"
       force: yes
       depth: 1
-
-- name: download binaries
-  hosts: localhost
-  gather_facts: no
-  become: true
-  vars:
-    kubectl_bin_directory: "/usr/local/bin"
-    # kubectl_owner: "{{ lookup('env', 'USER') }}"
-    # kubectl_group: "{{ lookup('env', 'USER') }}"
-    # Operarting system on which "kubectl" should run on
-    kubectl_os: "linux" # use "darwin" for MacOS X, "windows" for Windows
-    # Processor architecture "kubectl" should run on
-    kubectl_arch: "amd64" # other possible values: "386","arm64","arm","ppc64le","s390x"
-    kubernetes_helm_ver: v2.13.1
-  roles:
-    - ansible-kubectl
-    - ansible-helm
-  tags: download-kubectl
