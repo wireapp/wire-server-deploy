@@ -12,7 +12,7 @@ work-in-progress
 - [ ] other assumptions?
 - [x] install kubernetes with kubespray
 - [x] install cassandra
-- [ ] install elasticsearch
+- [x] install elasticsearch
 - [ ] install redis
 - [ ] install turn servers
 - [ ] polish
@@ -121,6 +121,20 @@ Install cassandra:
 
 ```
 poetry run ansible-playbook -i hosts.ini cassandra.yml -vv
+```
+
+### ElasticSearch
+
+* In your 'hosts.ini' file, in the `[elasticsearch:vars]` section, set 'elasticsearch_network_interface' to the name of the interface you want elasticsearch nodes to talk to each other on. For example:
+```
+[elasticsearch:vars]
+# default first interface on ubuntu 18 on kvm:
+elasticsearch_network_interface=ens3
+```
+
+* Use poetry to run ansible, and deploy ElasticSearch:
+```
+poetry run ansible-playbook -i hosts.ini elasticsearch.yml -vv
 ```
 
 ### tinc
