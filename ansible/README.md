@@ -14,7 +14,7 @@ work-in-progress
 - [x] install cassandra
 - [x] install elasticsearch
 - [ ] install redis
-- [ ] install turn servers
+- [x] install turn servers
 - [ ] polish
 
 ## Assumptions
@@ -139,6 +139,6 @@ poetry run ansible-playbook -i hosts.ini elasticsearch.yml -vv
 
 ### tinc
 
-* (optional) add a `vpn_ip=Z.Z.Z.Z` item to each entry in the hosts file with a (fresh) IP range if you wish to use [tinc mesh vpn](http://tinc-vpn.org/). Ensure to run the tinc.yml playbook first. See the Tinc section for details. 
+* (optional) add a `vpn_ip=Z.Z.Z.Z` item to each entry in the hosts file with a (fresh) IP range if you wish to use [tinc mesh vpn](http://tinc-vpn.org/). Ensure to run the tinc.yml playbook first. See the Tinc section for details.
 
 TODO add playbook.

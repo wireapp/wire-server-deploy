@@ -31,6 +31,10 @@
   name: ansible-minio
   version: v1.1.0
 
+- src: git+https://github.com/wireapp/ansible-restund.git
+  name: ansible-restund
+  version: v0.1.0
+
 - src: git+https://github.com/wireapp/ansible-tinc.git
   name: ansible-tinc
   version: master
@@ -38,7 +42,7 @@
 - src: https://github.com/githubixx/ansible-role-kubectl.git
   name: ansible-kubectl
   # keep the kubectl version in sync with kubespray (see download_kubespray.yml)
-  version: "8.0.1+1.14.2" 
+  version: "8.0.1+1.14.2"
 
 - src: https://github.com/andrewrothstein/ansible-kubernetes-helm.git
   name: ansible-helm
