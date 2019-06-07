@@ -1,0 +1,50 @@
+# to install kubectl and helm globally on your path, run
+#
+#   ansible-playbook -i localhost, -c local download_cli_binaries.yml
+#
+# to install to a local directory 'bin', run
+#
+#   ansible-playbook -i localhost, -c local download_cli_binaries.yml -e local_installation=True
+#
+- name: download binaries
+  hosts: localhost
+  vars:
+    # Ensure these versions match the server-side ones (or are compatible)
+    # Also see download_kubespray.yml
+    kubernetes_helm_ver: v2.13.1
+    kubectl_version: "1.14.2"
+    # default directories for a global installation
+    kubectl_bin_directory: "/usr/local/bin"
+    kubernetes_helm_bin_dir: "/usr/local/bin"
+    # Operarting system on which "kubectl" should run on
+    kubectl_os: "{{ os.stdout }}" # to override, use "linux" for Linux, "darwin" for MacOS X, "windows" for Windows
+    # Processor architecture "kubectl" should run on
+    kubectl_arch: "amd64" # other possible values: "386","arm64","arm","ppc64le","s390x"
+  pre_tasks:
+  - name: figure out OS
+    shell: if [[ "$OSTYPE" == "darwin"* ]]; then echo darwin; else echo linux; fi;
+    register: os
+
+  - name: fix for kubectl role when on debian
+    set_fact:
+      unarchive_deps_xz_pkg: xz-utils
+    when: ansible_os_family == 'Debian'
+
+  - name: Set local directory variables
+    set_fact:
+      kubectl_bin_directory: "{{ playbook_dir }}/bin"
+      kubernetes_helm_bin_dir: "{{ playbook_dir }}/bin"
+      kubectl_owner: "{{ lookup('env', 'USER') }}"
+      kubectl_group: "{{ lookup('env', 'USER') }}"
+    when: local_installation is defined and local_installation
+  - name: ensure dir exists
+    file:
+      path: "{{ kubectl_bin_directory }}"
+      state: directory
+      owner: "{{ kubectl_owner }}"
+      group: "{{ kubectl_owner }}"
+    when: local_installation is defined and local_installation
+
+  roles:
+    - ansible-kubectl
+    - ansible-helm
