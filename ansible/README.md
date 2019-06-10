@@ -33,7 +33,7 @@ This document assumes
 This assumes you're using python 2.7 (if you only have python3 available, you may need to find some workarounds):
 
 ```
-sudo apt install python2.7 python-pip
+sudo apt install -y python2.7 python-pip
 curl -sSL https://raw.githubusercontent.com/sdispater/poetry/master/get-poetry.py > get-poetry.py
 python2.7 get-poetry.py
 source $HOME/.poetry/env
@@ -45,10 +45,8 @@ ln -s /usr/bin/python2.7 $HOME/.poetry/bin/python
 ```
 git clone https://github.com/wireapp/wire-server-deploy.git
 cd wire-server-deploy/ansible
-
 ## (optional) if you need ca certificates other than the default ones:
 # export CURL_CA_BUNDLE=/etc/ssl/certs/ca-certificates.crt
-
 poetry install
 ```
 
@@ -84,28 +82,30 @@ Copy the example hosts file:
 `cp hosts.example.ini hosts.ini`
 
 * replace the `ansible_host` values (`X.X.X.X`) with the IPs that you can reach by SSH.
-* replace the `ip` values (`Y.Y.Y.Y`) with the IPs which you wish kubernetes to bind to.
+* replace the `ip` values (`Y.Y.Y.Y`) with the IPs which you wish kubernetes to provide services on.
 
 #### Authentication
 * if you want to use passwords:
 ```
 sudo apt install sshpass
 ```
-* in hosts.ini, change the ansible_user to the user you want to login as, the ansible_ssh_pass to the password (if you require one), and the ansible_become_pass to the sudo password (if required.)
+
+* in hosts.ini, uncomment the 'ansible_user = ...' line, and change '...' to the user you want to login as.
+* in hosts.ini, uncomment the 'ansible_ssh_pass = ...' line, and change '...' to the password for the user you are logging in as.
+* in hosts.ini, uncomment the 'ansible_become_pass = ...' line, and change the ... to the password you'd enter to sudo.
 
 #### ansible pre-kubernetes
 Now that you have a working hosts.ini, and you can access the host, run any ansible scripts you need, in order for the nodes to have internet (proxy config, ssl certificates, etc).
 
-### kubernetes
+### Installing kubernetes
 
 ```
 poetry run ansible-playbook -i hosts.ini kubernetes.yml -vv
 ```
 
-### cassandra
+### Cassandra
 
-Set variables in the hosts.ini file under `[cassandra:vars]`. Most defaults should be fine, except maybe for the cluster name and the network interface to use:
-
+* Set variables in the hosts.ini file under `[cassandra:vars]`. Most defaults should be fine, except maybe for the cluster name and the network interface to use:
 ```
 [cassandra:vars]
 ## set to True if using AWS
