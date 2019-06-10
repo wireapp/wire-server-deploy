@@ -86,6 +86,10 @@ Copy the example hosts file:
 * replace the `ansible_host` values (`X.X.X.X`) with the IPs that you can reach by SSH.
 * replace the `ip` values (`Y.Y.Y.Y`) with the IPs which you wish kubernetes to bind to.
 
+#### WARNING: host re-use
+
+The playbooks mess with the hostnames of their targets.  You MUST pick different (virtual) hosts for the different playbooks.  If you e.g. want to run C* and k8s on the same 3 machines, the hostnames will be overwritten by the second installation playbook, corrupting the first.
+
 #### Authentication
 * if you want to use passwords:
 ```
@@ -139,6 +143,6 @@ poetry run ansible-playbook -i hosts.ini elasticsearch.yml -vv
 
 ### tinc
 
-* (optional) add a `vpn_ip=Z.Z.Z.Z` item to each entry in the hosts file with a (fresh) IP range if you wish to use [tinc mesh vpn](http://tinc-vpn.org/). Ensure to run the tinc.yml playbook first. See the Tinc section for details. 
+* (optional) add a `vpn_ip=Z.Z.Z.Z` item to each entry in the hosts file with a (fresh) IP range if you wish to use [tinc mesh vpn](http://tinc-vpn.org/). Ensure to run the tinc.yml playbook first. See the Tinc section for details.
 
 TODO add playbook.
