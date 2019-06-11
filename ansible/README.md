@@ -141,6 +141,24 @@ elasticsearch_network_interface=ens3
 poetry run ansible-playbook -i hosts.ini elasticsearch.yml -vv
 ```
 
+### Restund
+
+Set other variables in the hosts.ini file under `[restund:vars]`. Most defaults should be fine, except for the network interface to use:
+
+ ```
+[restund:vars]
+# If ansible_default_ipv4 is defined, then that interface is used otherwise
+# it defaults to eth0 anyway. Overrride as shown below if you wish to.
+restund_network_interface=eth0
+```
+
+(see [defaults/main.yml](https://github.com/wireapp/ansible-restund/blob/master/defaults/main.yml) for a full list of variables to change if necessary)
+
+ Install restund:
+
+ ```
+poetry run ansible-playbook -i hosts.ini restund.yml -vv
+
 ### tinc
 
 * (optional) add a `vpn_ip=Z.Z.Z.Z` item to each entry in the hosts file with a (fresh) IP range if you wish to use [tinc mesh vpn](http://tinc-vpn.org/). Ensure to run the tinc.yml playbook first. See the Tinc section for details.
