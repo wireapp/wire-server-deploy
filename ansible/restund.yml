@@ -3,11 +3,14 @@
   hosts: localhost
   gather_facts: no
   become: no
-  tasks:
-    - set_fact:
-        # NOTE: Ensure that the zrest secret is the same as used by brig!
-        #       More info to be found at the [demo-secrets.yaml](https://github.com/wireapp/wire-server-deploy/blob/master/values/wire-server/demo-secrets.example.yaml#L9-L12)
-        restund_zrest_secret: 'ENSURE_YOU_DEFINE_THIS_WITH_THE_SAME_VALUE_AS_BRIG'
+  # TODO: instead of prompting, use path to helm configuration secrets file?
+  #      (prerequisite: improved documentation, consistent paths/naming)
+  #vars_files: "{{ playbook_dir }}/../values/wire-server/secrets.yaml"
+  #restund_zrest_secret: "{{ brig.secrets.turn.secret }}"
+  vars_prompt:
+      # More info to be found at the [demo-secrets.yaml](https://github.com/wireapp/wire-server-deploy/blob/master/values/wire-server/demo-secrets.example.yaml#L9-L12)"
+    - name: restund_zrest_secret
+      prompt: "Enter the restund_zrest_secret, which must match the brig.secrets.turn.secret in the helm configuration."
   tags:
     - secrets
 

@@ -14,7 +14,7 @@ work-in-progress
 - [x] install cassandra
 - [x] install elasticsearch
 - [ ] install redis
-- [x] install turn servers
+- [x] install restund servers
 - [ ] polish
 
 ## Assumptions
