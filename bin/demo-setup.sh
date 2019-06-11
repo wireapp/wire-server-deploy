@@ -52,10 +52,13 @@ all_charts=( "${phase_0_charts_metallb[@]}" "${phase_1_charts_pre[@]}" "${phase_
 
 if [ "$updatedependencies" == true ] ; then
     # remove previous versions of helm charts, if any
-    find "$DIR/charts" | grep ".tgz" | xargs -n 1 rm
+    ( find "$DIR/charts" | grep ".tgz" | xargs -n 1 rm ) || true  # fails the first time we run this.
 
     # download/refresh dependencies, if any
     helm repo add cos https://centerforopenscience.github.io/helm-charts/
+    helm repo add goog https://kubernetes-charts-incubator.storage.googleapis.com
+    helm repo add wire https://s3-eu-west-1.amazonaws.com/public.wire.com/charts || true
+
     for chart in "${all_charts[@]}"; do
         source "$DIR/bin/update.sh" "${chart}"
     done
