@@ -27,6 +27,11 @@
   name: ansible-cassandra
   version: v0.1.2
 
+# my horrible redis work thus far - JEL
+- src: git+https://github.com/wireapp/ansible-redis.git
+  name: ansible-redis
+  version: make_work
+
 - src: git+https://github.com/atosatto/ansible-minio.git
   name: ansible-minio
   version: v1.1.0

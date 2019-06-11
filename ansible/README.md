@@ -13,7 +13,7 @@ work-in-progress
 - [x] install kubernetes with kubespray
 - [x] install cassandra
 - [x] install elasticsearch
-- [ ] install redis
+- [x] install redis
 - [ ] install turn servers
 - [ ] polish
 
@@ -121,7 +121,7 @@ is_aws_environment = False
 
 (see [defaults/main.yml](https://github.com/wireapp/ansible-cassandra/blob/master/defaults/main.yml) for a full list of variables to change if necessary)
 
-Install cassandra:
+* Install cassandra:
 
 ```
 poetry run ansible-playbook -i hosts.ini cassandra.yml -vv
@@ -139,6 +139,20 @@ elasticsearch_network_interface=ens3
 * Use poetry to run ansible, and deploy ElasticSearch:
 ```
 poetry run ansible-playbook -i hosts.ini elasticsearch.yml -vv
+```
+
+### Redis
+
+* In your 'hosts.ini' file, in the `[redis:vars]` section, set 'redis_network_interface' no the name of the interface you want redis nodes to talk to each other on. For example:
+```
+[redis:vars]
+# default first interface on ubuntu 18 on kvm:
+redis_network_interface=ens3
+```
+
+* Use poetry to run ansible, and deploy Redis:
+```
+poetry run ansible-playbook -i hosts.ini redis.yml -vv
 ```
 
 ### tinc
