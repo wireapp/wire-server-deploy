@@ -1,0 +1,22 @@
+---
+- name: provision
+  hosts: restund
+  gather_facts: yes
+  become: yes
+  any_errors_fatal: True
+  vars_prompt:
+      # More info to be found at the [demo-secrets.yaml](https://github.com/wireapp/wire-server-deploy/blob/master/values/wire-server/demo-secrets.example.yaml#L9-L12)"
+    - name: restund_zrest_secret
+      prompt: "Enter the restund_zrest_secret, which must match the brig.secrets.turn.secret in the helm configuration."
+  roles:
+    - role: hostname
+      tags:
+        - hostname
+
+    - role: ansible-role-ntp
+      tags:
+        - ntp
+
+    - role: ansible-restund
+      tags:
+        - restund
