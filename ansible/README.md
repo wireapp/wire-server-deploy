@@ -13,6 +13,7 @@ work-in-progress
 - [x] install kubernetes with kubespray
 - [x] install cassandra
 - [x] install elasticsearch
+- [x] install minio
 - [ ] install redis
 - [ ] install turn servers
 - [ ] polish
@@ -139,6 +140,21 @@ elasticsearch_network_interface=ens3
 * Use poetry to run ansible, and deploy ElasticSearch:
 ```
 poetry run ansible-playbook -i hosts.ini elasticsearch.yml -vv
+```
+
+### Minio
+
+* In your 'hosts.ini' file, in the `[minio:vars]` section, set 'minio_network_interface'. For example:
+
+```
+[minio:vars]
+# Default interface
+minio_network_interface=eth0
+```
+
+* Use poetry to run ansible, and deploy Minio:
+```
+poetry run ansible-playbook -i hosts.ini minio.yml -vv
 ```
 
 ### tinc

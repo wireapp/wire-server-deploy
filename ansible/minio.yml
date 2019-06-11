@@ -1,0 +1,43 @@
+####################################################
+# minio
+####################################################
+#
+# minio requires at least 2 datadirs (e.g. 2 servers x 1 disk each)
+# operating docs: https://docs.minio.io/docs/minio-admin-complete-guide.html
+# It assumes that `/mnt` is the right place for the data
+#
+- hosts: minio
+  any_errors_fatal: true
+  become: true
+  gather_facts: true
+  vars:
+    minio_server_datadirs: [ "/mnt/minio-data" ]
+    minio_server_addr: ":9000"
+    minio_access_key: "REPLACE_THIS_WITH_THE_DESIRED_ACCESS_KEY"
+    minio_secret_key: "REPLACE_THIS_WITH_THE_DESIRED_SECRET_KEY"
+    minio_network_interface: "{% if minio_network_interface is not defined %}{% if ansible_default_ipv4 is defined %}{{ ansible_default_ipv4.interface }}{% else %}eth0{% endif %}{% else %}{{ minio_network_interface }}{% endif %}"
+    minio_server_env_extra: "MINIO_BROWSER=off"
+  pre_tasks:
+    - name: set intermediate variable
+      set_fact:
+        minio_address: 'http://{{ hostvars[item]["ansible_default_ipv4"]["address"]}}{{ minio_server_addr }}{{ minio_server_datadirs[0] }}'
+      with_items: '{{ groups["minio"] }}'
+      register: _minio_server_result
+
+    - name: set minio_server_cluster_nodes variable
+      set_fact:
+        minio_server_cluster_nodes: "{{ _minio_server_result.results | map(attribute='ansible_facts.minio_address') | list }}"
+
+    - debug: var=minio_server_cluster_nodes
+      run_once: true
+  roles:
+    - role: hostname
+      tags:
+        - hostname
+
+    - role: ansible-role-ntp
+      tags:
+        - ntp
+    - role: ansible-minio
+      tags:
+        - minio
