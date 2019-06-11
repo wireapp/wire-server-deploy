@@ -143,21 +143,35 @@ poetry run ansible-playbook -i hosts.ini elasticsearch.yml -vv
 
 ### Restund
 
-Set other variables in the hosts.ini file under `[restund:vars]`. Most defaults should be fine, except for the network interface to use:
+Set other variables in the hosts.ini file under `[restund:vars]`. Most defaults should be fine, except for the network interfaces to use:
 
- ```
+* set `ansible_host=` under the `[all]` section to the IP for SSH access.
+* (optional) set `restund_network_interface = ` under the `[restund:vars]` section to the interface name you wish the process to use. Defaults to the default_ipv4_address, or `eth0`.
+* (optional) set `public_ipv4=` to the public IP that you wish to advertise to Wire clients (android, web, etc). This might be different than the IPs visible to the VM. This defaults to the ip of the machine in the `restund_network_interface`.
+
+```ini
+[all]
+(...)
+# * 'public_ipv4'  is the public IP to advertise if different than the
+#                  network interface to bind to.
+restund01         ansible_host=X.X.X.X public_ipv4=Y.Y.Y.Y
+
+(...)
+
 [restund:vars]
-# If ansible_default_ipv4 is defined, then that interface is used otherwise
-# it defaults to eth0 anyway. Overrride as shown below if you wish to.
+## Set the network interface name for restund to bind to if you have more than one network interface
+## If unset, defaults to the ansible_default_ipv4 (if defined) otherwise to eth0
+# restund_network_interface = eth0
 restund_network_interface=eth0
 ```
 
 (see [defaults/main.yml](https://github.com/wireapp/ansible-restund/blob/master/defaults/main.yml) for a full list of variables to change if necessary)
 
- Install restund:
+Install restund:
 
- ```
+```
 poetry run ansible-playbook -i hosts.ini restund.yml -vv
+```
 
 ### tinc
 
