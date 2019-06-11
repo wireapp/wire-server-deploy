@@ -1,26 +1,13 @@
 ---
-- name: secrets
-  hosts: localhost
-  gather_facts: no
-  become: no
-  # TODO: instead of prompting, use path to helm configuration secrets file?
-  #      (prerequisite: improved documentation, consistent paths/naming)
-  #vars_files: "{{ playbook_dir }}/../values/wire-server/secrets.yaml"
-  #restund_zrest_secret: "{{ brig.secrets.turn.secret }}"
-  vars_prompt:
-      # More info to be found at the [demo-secrets.yaml](https://github.com/wireapp/wire-server-deploy/blob/master/values/wire-server/demo-secrets.example.yaml#L9-L12)"
-    - name: restund_zrest_secret
-      prompt: "Enter the restund_zrest_secret, which must match the brig.secrets.turn.secret in the helm configuration."
-  tags:
-    - secrets
-
 - name: provision
   hosts: restund
   gather_facts: yes
   become: yes
   any_errors_fatal: True
-  vars:
-    restund_zrest_secret: '{{ hostvars.localhost.restund_zrest_secret }}'
+  vars_prompt:
+      # More info to be found at the [demo-secrets.yaml](https://github.com/wireapp/wire-server-deploy/blob/master/values/wire-server/demo-secrets.example.yaml#L9-L12)"
+    - name: restund_zrest_secret
+      prompt: "Enter the restund_zrest_secret, which must match the brig.secrets.turn.secret in the helm configuration."
   roles:
     - role: hostname
       tags:
