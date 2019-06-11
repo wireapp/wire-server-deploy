@@ -1,0 +1,26 @@
+- hosts: elasticsearch
+  tasks:
+    - shell: "ifconfig | grep 'inet'"
+    - name: ensure to gather network information
+      setup:
+        gather_subset: network
+    - debug: var=ansible_all_ipv4_addresses
+
+- hosts: localhost
+  vars:
+    external_dir_name: elasticsearch-external
+    server_type: elasticsearch
+    network_interface: "{{ elasticsearch_network_interface }}"
+  tasks:
+    - debug: var=hostvars["elasticsearch2"]["ansible_vpn0"]
+    - fail:
+    - name: create external IP directory
+      file:
+        state: directory
+        path: "{{ playbook_dir }}/../values/{{ external_dir_name }}"
+
+    - name: hello
+      template:
+        src: templates/helm_external.yaml.j2
+        dest: "{{ playbook_dir }}/../values/{{ external_dir_name }}/values.yaml"
+
