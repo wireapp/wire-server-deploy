@@ -28,4 +28,4 @@
 
     - role: ansible-restund
       tags:
-        - cassandra
+        - restund
