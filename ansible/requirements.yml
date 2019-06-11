@@ -15,6 +15,10 @@
   name: hostname
   version: da6f329b2984e84d2248d4251e0c679c53dfbb30 # 2019-01-16
 
+- src: git+https://github.com/ANXS/apt.git
+  name: ANXS.apt
+  version: v2.0.0 # 2018-11-03
+
 - src: git+https://github.com/geerlingguy/ansible-role-java.git
   name: ansible-role-java
   version: 1.9.5

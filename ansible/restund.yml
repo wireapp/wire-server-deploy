@@ -1,0 +1,31 @@
+---
+- name: secrets
+  hosts: localhost
+  gather_facts: no
+  become: no
+  tasks:
+    - set_fact:
+        # NOTE: Ensure that the zrest secret is the same as used by brig!
+        restund_zrest_secret: 'ENSURE_YOU_DEFINE_THIS_WITH_THE_SAME_VALUE_AS_BRIG'
+  tags:
+    - secrets
+
+- name: provision
+  hosts: restund
+  gather_facts: yes
+  become: yes
+  any_errors_fatal: True
+  vars:
+    restund_zrest_secret: '{{ hostvars.localhost.restund_zrest_secret }}'
+  roles:
+    - role: hostname
+      tags:
+        - hostname
+
+    - role: ansible-role-ntp
+      tags:
+        - ntp
+
+    - role: ansible-restund
+      tags:
+        - cassandra
