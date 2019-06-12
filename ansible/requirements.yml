@@ -33,7 +33,7 @@
 
 - src: git+https://github.com/wireapp/ansible-minio.git
   name: ansible-minio
-  version: rough_draft
+  version: v1.0.2-wire
 
 - src: git+https://github.com/wireapp/ansible-restund.git
   name: ansible-restund
