@@ -52,3 +52,6 @@
   name: ansible-helm
   version: 33978bc2e486f087066acc737d4468f1fa1c5883 # 2019-05-17
 
+- src: https://github.com/cchurch/ansible-role-admin-users.git
+  name: admin_users
+  version: "0.7.2"

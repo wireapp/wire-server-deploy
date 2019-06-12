@@ -1,0 +1,14 @@
+# Optional - support playbook/role
+#
+# creates admin users (with passwordless sudo) on machines
+# you probably need some other way (e.g. using passwords) to initially run this playbook.
+# See the `-k` and `-K` flags when running ansible-playbook.
+#
+- hosts: all
+  vars:
+    admin_users:
+      - username: admin
+        fullname: Mister admin
+        pubkey: "{{ lookup('file', 'files/ssh/admin.pub') }}"
+  roles:
+    - admin_user
