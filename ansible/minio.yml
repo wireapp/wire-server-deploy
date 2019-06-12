@@ -5,22 +5,21 @@
 # minio requires at least 2 datadirs (e.g. 2 servers x 1 disk each)
 # operating docs: https://docs.minio.io/docs/minio-admin-complete-guide.html
 #
-- layouts:
-  - layout1:
-    name: "server1"
-    minio_server_addr: ":9000"
-    minio_server_datadirs: "/var/lib/minio-server1"
-    minio_server_envfile:  "/etc/default/minio-server1"
-  - layout2:
-    minio_server_addr: ":9001"
-    minio_server_datadirs: "/var/lib/minio-server2"
-    minio_server_envfile:  "/etc/default/minio-server2"
-
 - hosts: minio
   any_errors_fatal: true
   become: true
   gather_facts: true
   vars:
+    layouts:
+      layout1:
+        name: "server1"
+        minio_server_addr: ":9000"
+        minio_server_datadirs: "/var/lib/minio-server1"
+        minio_server_envfile:  "/etc/default/minio-server1"
+      layout2:
+        minio_server_addr: ":9001"
+        minio_server_datadirs: "/var/lib/minio-server2"
+        minio_server_envfile:  "/etc/default/minio-server2"
     minio_server_env_extra: "MINIO_BROWSER=off"
   pre_tasks:
     - debug: var=minio_server_cluster_nodes
