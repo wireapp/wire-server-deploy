@@ -13,6 +13,7 @@ work-in-progress
 - [x] install kubernetes with kubespray
 - [x] install cassandra
 - [x] install elasticsearch
+- [x] install minio
 - [ ] install redis
 - [x] install restund servers
 - [ ] polish
@@ -132,13 +133,29 @@ poetry run ansible-playbook -i hosts.ini cassandra.yml -vv
 * In your 'hosts.ini' file, in the `[elasticsearch:vars]` section, set 'elasticsearch_network_interface' to the name of the interface you want elasticsearch nodes to talk to each other on. For example:
 ```
 [elasticsearch:vars]
-# default first interface on ubuntu 18 on kvm:
+# default first interface on ubuntu on kvm:
 elasticsearch_network_interface=ens3
 ```
 
 * Use poetry to run ansible, and deploy ElasticSearch:
 ```
 poetry run ansible-playbook -i hosts.ini elasticsearch.yml -vv
+```
+
+### Minio
+
+* In your 'hosts.ini' file, in the `[minio:vars]` section, make sure you set the 'minio_network_interface' to the name of the interface you want minio nodes to talk to each other on. The default from the playbook is not going to be correct for your machine. For example:
+```
+[minio:vars]
+# Default first interface on ubuntu on kvm:
+minio_network_interface=ens3
+```
+
+* In your 'hosts.ini' file, in the `[minio:vars]` section, ensure you set minio_access_key and minio_secret key.
+
+* Use poetry to run ansible, and deploy Minio:
+```
+poetry run ansible-playbook -i hosts.ini minio.yml -vv
 ```
 
 ### Restund
