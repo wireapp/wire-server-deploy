@@ -44,10 +44,25 @@ brig:
       general:
         emailSender: email@example.com # change this
         smsSender: "insert-sms-sender-for-twilio" # change this if SMS support is desired
+      user:
+        passwordResetUrl: https://account.example.com/reset/?key=${key}&code=${code}
+        activationUrl: https://account.example.com/verify/?key=${key}&code=${code}
+        smsActivationUrl: https://account.example.com/v/${code}
+        deletionUrl: https://account.example.com/d/?key=${key}&code=${code}
+        invitationUrl: https://account.example.com/i/${code}
     smtp:
       host: demo-smtp # change this if you want to use your own SMTP server
       port: 25        # change this
       connType: plain # change this. Possible values: plain|ssl|tls
+  turnStatic:
+    v1:
+      - "turn:turn01.example.com:80"
+      - "turn:turn02.example.com:80"
+    v2:
+      - "turn:turn01.example.com:3478"
+      - "turn:turn02.example.com:3478"
+      - "turn:turn01.example.com:80?transport=tcp"
+      - "turn:turn02.example.com:80?transport=tcp"
 
 proxy:
   replicaCount: 3
@@ -70,7 +85,7 @@ cargohold:
       # change if using real AWS
       s3Bucket: dummy-bucket
       s3Endpoint: http://minio-external:9000
-      s3DownloadEndpoint: https://bare-s3.example.com
+      s3DownloadEndpoint: https://s3.example.com
 
 galley:
   replicaCount: 3
@@ -82,7 +97,7 @@ galley:
       replicaCount: 3
     settings:
       # prefix URI used when inviting users to a conversation by link
-      conversationCodeURI: https://example.com/join/ # change this
+      conversationCodeURI: https://webapp.example.com/join/ # change this
 
 gundeck:
   replicaCount: 3
