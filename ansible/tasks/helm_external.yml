@@ -1,0 +1,10 @@
+---
+- name: create external IP directory
+  file:
+    state: directory
+    path: "{{ playbook_dir }}/../values/{{ external_dir_name }}"
+
+- name: write IPs for helm
+  template:
+    src: templates/helm_external.yaml.j2
+    dest: "{{ playbook_dir }}/../values/{{ external_dir_name }}/values.yaml"
