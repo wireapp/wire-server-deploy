@@ -109,7 +109,9 @@ Copy the example hosts file:
 The playbooks mess with the hostnames of their targets.  You MUST pick different (virtual) hosts for the different playbooks.  If you e.g. want to run C* and k8s on the same 3 machines, the hostnames will be overwritten by the second installation playbook, corrupting the first.
 
 #### Authentication
+
 * if you want to use passwords:
+
 ```
 sudo apt install sshpass
 ```
@@ -130,13 +132,16 @@ poetry run ansible-playbook -i hosts.ini kubernetes.yml -vv
 ### Cassandra
 
 * Set variables in the hosts.ini file under `[cassandra:vars]`. Most defaults should be fine, except maybe for the cluster name and the network interface to use:
-```
+
+```ini
 [cassandra:vars]
 ## set to True if using AWS
 is_aws_environment = False
+# cassandra_clustername: default
+
+[all:vars]
 ## Set the network interface name for cassandra to bind to if you have more than one network interface
 # cassandra_network_interface = eth0
-# cassandra_clustername: default
 ```
 
 (see [defaults/main.yml](https://github.com/wireapp/ansible-cassandra/blob/master/defaults/main.yml) for a full list of variables to change if necessary)
@@ -150,8 +155,9 @@ poetry run ansible-playbook -i hosts.ini cassandra.yml -vv
 ### ElasticSearch
 
 * In your 'hosts.ini' file, in the `[elasticsearch:vars]` section, set 'elasticsearch_network_interface' to the name of the interface you want elasticsearch nodes to talk to each other on. For example:
-```
-[elasticsearch:vars]
+
+```ini
+[all:vars]
 # default first interface on ubuntu on kvm:
 elasticsearch_network_interface=ens3
 ```
@@ -163,9 +169,10 @@ poetry run ansible-playbook -i hosts.ini elasticsearch.yml -vv
 
 ### Minio
 
-* In your 'hosts.ini' file, in the `[minio:vars]` section, make sure you set the 'minio_network_interface' to the name of the interface you want minio nodes to talk to each other on. The default from the playbook is not going to be correct for your machine. For example:
-```
-[minio:vars]
+* In your 'hosts.ini' file, in the `[all:vars]` section, make sure you set the 'minio_network_interface' to the name of the interface you want minio nodes to talk to each other on. The default from the playbook is not going to be correct for your machine. For example:
+
+```ini
+[all:vars]
 # Default first interface on ubuntu on kvm:
 minio_network_interface=ens3
 ```
@@ -198,7 +205,6 @@ restund01         ansible_host=X.X.X.X public_ipv4=Y.Y.Y.Y
 ## Set the network interface name for restund to bind to if you have more than one network interface
 ## If unset, defaults to the ansible_default_ipv4 (if defined) otherwise to eth0
 # restund_network_interface = eth0
-restund_network_interface=eth0
 ```
 
 (see [defaults/main.yml](https://github.com/wireapp/ansible-restund/blob/master/defaults/main.yml) for a full list of variables to change if necessary)
