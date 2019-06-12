@@ -9,12 +9,12 @@ tls:
 #                should be adjusted on a per installation basis
 config:
   dns:
-    https: bare-https.example.com
-    ssl: bare-ssl.wire.link
-    webapp: bare-webapp.wire.link
-    fakeS3: bare-s3.wire.link
-    teamSettings: bare-team.wire.link
-    accountPages: bare-account.wire.link
+    https: nginz-https.example.com
+    ssl: nginz-ssl.example.com
+    webapp: webapp.example.com
+    fakeS3: s3.example.com
+    teamSettings: team.example.com
+    accountPages: account.example.com
 
 service:
   s3:
