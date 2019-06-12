@@ -1,0 +1,5 @@
+# Note that these are the correct values assuming that both Cassandra
+# and Elasticsearch are deployed outside of Kubernetes
+tags:
+  cassandra-ephemeral: false
+  elasticsearch-ephemeral: false

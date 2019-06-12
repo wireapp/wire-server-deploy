@@ -5,7 +5,8 @@
 *.cert
 # Sometimes left behind as an artifact during CI runs
 /index.yaml
-demo-values.yaml
+secrets.yaml
+values.yaml
 requirements.lock
 values/*/demo-values.override.yaml
 values/*/demo-secrets.override.yaml
