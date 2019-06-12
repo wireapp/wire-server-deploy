@@ -76,8 +76,7 @@ helm repo add wire https://s3-eu-west-1.amazonaws.com/public.wire.com/charts || 
 
 # Install external charts first
 install_chart cassandra-external external
-# TODO: Add when ready
-# install_chart minio-external external
+install_chart minio-external external
 install_chart elasticsearch-external external
 install_chart databases-ephemeral external
 install_chart fake-aws external
