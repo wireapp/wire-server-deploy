@@ -34,8 +34,8 @@ brig:
       blacklistTable: integration-brig-userkey-blacklist
       prekeyTable: integration-brig-prekeys
     externalUrls:
-      nginz: https://api.example.com # change this
-      teamSettings: https://teams.example.com # change this (on unset if team settings are not used)
+      nginz: https://nginz-https.example.com # change this
+      teamSettings: https://teams.example.com # change this (or unset if team settings are not used)
       teamCreatorWelcome: https://teams.example.com/login # change this
       teamMemberWelcome: https://wire.example.com/download # change this
     optSettings:
