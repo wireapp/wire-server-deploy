@@ -175,6 +175,25 @@ poetry run ansible-playbook -i hosts.ini restund.yml -vv
 
 ### tinc
 
-* (optional) add a `vpn_ip=Z.Z.Z.Z` item to each entry in the hosts file with a (fresh) IP range if you wish to use [tinc mesh vpn](http://tinc-vpn.org/). Ensure to run the tinc.yml playbook first. See the Tinc section for details.
+Installing [tinc mesh vpn](http://tinc-vpn.org/) is **optional and experimental**. It allows having a private network interface `vpn0` on the target VMs.
 
-TODO add playbook.
+* Add a `vpn_ip=Z.Z.Z.Z` item to each entry in the hosts file with a (fresh) IP range if you wish to use  Ensure to run the tinc.yml playbook first, before other playbooks.
+* Add a group `vpn`:
+
+```
+[all]
+server1 ansible_host=X.X.X.X vpn_ip=10.10.1.XXX
+
+[cassandra]
+server1
+
+[vpn:children]
+cassandra
+elasticsearch
+```
+
+Configure the physical network interface inside tinc.yml if it is not `eth0`. Then:
+
+```
+poetry run ansible-playbook -i hosts.ini tinc.yml -vv
+```

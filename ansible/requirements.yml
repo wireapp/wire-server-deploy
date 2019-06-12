@@ -51,3 +51,7 @@
 - src: https://github.com/andrewrothstein/ansible-kubernetes-helm.git
   name: ansible-helm
   version: 33978bc2e486f087066acc737d4468f1fa1c5883 # 2019-05-17
+
+- src: git+https://github.com/wireapp/ansible-tinc.git
+  name: ansible-tinc
+  version: v0.1.0

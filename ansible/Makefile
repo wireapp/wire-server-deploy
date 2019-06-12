@@ -17,3 +17,7 @@ download-cli-binaries:
 .PHONY: download-ansible-roles
 download-ansible-roles:
 	poetry run ansible-galaxy install -r requirements.yml
+
+.PHONY: download-ansible-roles-force
+download-ansible-roles-force:
+	poetry run ansible-galaxy install -r requirements.yml --force
