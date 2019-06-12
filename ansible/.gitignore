@@ -3,3 +3,4 @@ hosts.ini
 artifacts
 secrets
 *.retry
+output
