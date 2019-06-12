@@ -21,20 +21,7 @@
         minio_server_datadirs: "/var/lib/minio-server2"
         minio_server_envfile:  "/etc/default/minio-server2"
     minio_server_env_extra: "MINIO_BROWSER=off"
-  pre_tasks:
-    - debug: var=minio_server_cluster_nodes
-      run_once: true
   roles:
-
-# Commented out for now. should not depend on hostname.
-#    - role: hostname
-#      tags:
-#        - hostname
-
-# Also commented out. ntp broken?
-#     - role: ansible-role-ntp
-#       tags:
-#         - ntp
     - role: ansible-minio
       layout: layout1
       tags:

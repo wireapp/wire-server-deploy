@@ -144,7 +144,7 @@ poetry run ansible-playbook -i hosts.ini elasticsearch.yml -vv
 
 ### Minio
 
-* In your 'hosts.ini' file, in the `[minio:vars]` section, set 'minio_network_interface'. For example:
+* In your 'hosts.ini' file, in the `[minio:vars]` section, make sure you set the 'minio_network_interface' to the name of the interface you want minio nodes to talk to each other on. The default from the playbook is not going to be correct for your machine. For example:
 ```
 [minio:vars]
 # Default first interface on ubuntu on kvm:
