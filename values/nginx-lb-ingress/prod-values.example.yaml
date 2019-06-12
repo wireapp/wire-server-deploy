@@ -1,0 +1,36 @@
+teamSettings:
+  enabled: false
+accountPages:
+  enabled: false
+tls:
+  enabled: true
+
+# CHANGEME-PROD: These values are suggested for deployments on bare metal and
+#                should be adjusted on a per installation basis
+config:
+  dns:
+    https: bare-https.example.com
+    ssl: bare-ssl.wire.link
+    webapp: bare-webapp.wire.link
+    fakeS3: bare-s3.wire.link
+    teamSettings: bare-team.wire.link
+    accountPages: bare-account.wire.link
+
+service:
+  s3:
+    externalPort: 9000
+    serviceName: minio-external
+    externallyCreated: true
+
+# CHANGEME-PROD: NodePort is more friendly to use than a dedicated LB such as metallb
+#                when in layer-2 mode since it listens on all k8s nodes; this is a typical
+#                setup when all your k8s nodes are on internal IPs and thus this requires
+#                setting up your firewall and forward 443 to 31773, as well as 80 to 31772
+nginx-ingress:
+  controller:
+    service:
+      type: NodePort
+      nodePorts:
+        # NOTE: This has to match the port forwarded from the firewall for SSL (443) and TCP (80)
+        https: 31773
+        http: 31772
