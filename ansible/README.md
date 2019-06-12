@@ -3,6 +3,25 @@
 In a production environment, some parts of the wire-server infrastructure (such as e.g. cassandra databases) are best configured outside kubernetes. Additionally, kubernetes can be rapidly set up with kubespray, via ansible.
 The documentation and code under this folder is meant to help with that.
 
+<!-- vim-markdown-toc GFM -->
+
+* [Status](#status)
+* [Assumptions](#assumptions)
+* [Dependencies](#dependencies)
+* [Provision virtual machines](#provision-virtual-machines)
+* [Configuring virtual machines](#configuring-virtual-machines)
+    * [All VMs](#all-vms)
+        * [WARNING: host re-use](#warning-host-re-use)
+        * [Authentication](#authentication)
+        * [ansible pre-kubernetes](#ansible-pre-kubernetes)
+    * [Installing kubernetes](#installing-kubernetes)
+    * [Cassandra](#cassandra)
+    * [ElasticSearch](#elasticsearch)
+    * [Restund](#restund)
+    * [tinc](#tinc)
+
+<!-- vim-markdown-toc -->
+
 ## Status
 
 work-in-progress
@@ -177,19 +196,24 @@ poetry run ansible-playbook -i hosts.ini restund.yml -vv
 
 Installing [tinc mesh vpn](http://tinc-vpn.org/) is **optional and experimental**. It allows having a private network interface `vpn0` on the target VMs.
 
-* Add a `vpn_ip=Z.Z.Z.Z` item to each entry in the hosts file with a (fresh) IP range if you wish to use  Ensure to run the tinc.yml playbook first, before other playbooks.
+_Note: Ensure to run the tinc.yml playbook first if you use tinc, before other playbooks._
+
+* Add a `vpn_ip=Z.Z.Z.Z` item to each entry in the hosts file with a (fresh) IP range if you wish to use tinc.
 * Add a group `vpn`:
 
-```
+```ini
+# this is a minimal example
 [all]
 server1 ansible_host=X.X.X.X vpn_ip=10.10.1.XXX
+server1 ansible_host=X.X.X.X vpn_ip=10.10.1.YYY
 
 [cassandra]
 server1
+server2
 
 [vpn:children]
 cassandra
-elasticsearch
+# add other server groups here as necessary
 ```
 
 Configure the physical network interface inside tinc.yml if it is not `eth0`. Then:
