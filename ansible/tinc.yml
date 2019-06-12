@@ -1,0 +1,39 @@
+# EXPERIMENTAL
+#
+# Deploys tinc VPN - creates a new network interface on all servers in the vpn group.
+# Useful for testing different network interface setups.
+
+- name: Create build directory
+  hosts: 127.0.0.1
+  connection: local
+  gather_facts: false
+  tasks:
+    - name: Create build directory
+      tempfile:
+        state: directory
+        suffix: _tinc
+      register: build_dir
+    - name: Make it available to other plays
+      set_fact:
+        build_dir: "{{ build_dir.path }}"
+    - debug:
+        msg: "Build root: {{ build_dir }}"
+
+- name: Provision tinc server
+  hosts: vpn
+  vars:
+    tinc_build_root: "{{ hostvars['localhost']['build_dir'] }}"
+    # CHANGE THIS if your default network interface is not eth0
+    physical_ip: "{{ ansible_eth0.ipv4.address }}"
+  roles:
+    - ansible-tinc
+
+- name: Cleanup
+  hosts: 127.0.0.1
+  connection: local
+  gather_facts: false
+  tasks:
+    - name: Delete the build folder
+      file:
+        state: absent
+        path: "{{ hostvars['localhost']['build_dir'] }}/"
