@@ -12,7 +12,7 @@ images:
     tag: latest
   nginz:
     repository: quay.io/wire/nginz
-    tag: 2.52.0
+    tag: 2.55.0
 config:
   http:
     httpPort: 8080
@@ -25,9 +25,9 @@ nginx_conf:
   user: nginx
   group: nginx
   upstream_config: /etc/wire/nginz/upstreams/upstreams.conf
-  zauth_keystore: /etc/wire/nginz/secrets/zauth.conf # see charts/nginz/README.md
-  zauth_acl: /etc/wire/nginz/conf/zauth.acl # see charts/nginz/README.md
-  basic_auth_file: /etc/wire/nginz/secrets/basic_auth.txt # see charts/nginz/README.md
+  zauth_keystore: /etc/wire/nginz/secrets/zauth.conf
+  zauth_acl: /etc/wire/nginz/conf/zauth.acl
+  basic_auth_file: /etc/wire/nginz/secrets/basic_auth.txt
   worker_processes: auto
   worker_rlimit_nofile: 131072
   worker_connections: 65536
