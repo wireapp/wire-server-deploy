@@ -1,0 +1,25 @@
+- hosts: k8s-cluster
+  vars:
+    # example:
+    # proxy_host: 10.0.0.1
+    # proxy_port: 3128
+  tasks:
+    - name: add proxy config to docker-options
+      lineinfile:
+        path: /etc/systemd/system/docker.service.d/docker-options.conf
+        regexp: '^Environment="HTTP_PROXY='
+        line: 'Environment="HTTP_PROXY=http://{{ proxy_host }}:{{ proxy_port }}"'
+        state: present
+
+    - name: add proxy config to docker-options
+      lineinfile:
+        path: /etc/systemd/system/docker.service.d/docker-options.conf
+        regexp: '^Environment="HTTPS_PROXY='
+        line: 'Environment="HTTPS_PROXY=http://{{ proxy_host }}:{{ proxy_port }}"'
+        state: present
+
+    - name: reload systemctl
+      shell: systemctl daemon-reload
+
+    - name: restart docker
+      shell: systemctl restart docker
