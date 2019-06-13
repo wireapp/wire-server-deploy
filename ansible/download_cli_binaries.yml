@@ -48,3 +48,7 @@
   roles:
     - ansible-kubectl
     - ansible-helm
+
+  tasks:
+    - name: initialize helm
+      shell: helm init --client-only
