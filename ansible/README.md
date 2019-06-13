@@ -84,7 +84,7 @@ Create the following:
 
 | Name          | Amount | CPU | memory | disk   |
 | ----          | --     | --  | --     | ---    |
-| cassandra     | 3      | 1   | 2 GB   | 60 GB  |
+| cassandra     | 3      | 2   | 4 GB   | 80 GB  |
 | minio         | 3      | 1   | 2 GB   | 100 GB |
 | elasticsearch | 3      | 1   | 2 GB   | 10 GB  |
 | redis         | 3      | 1   | 2 GB   | 10 GB  |
