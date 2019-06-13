@@ -144,7 +144,6 @@ webapp:
       backendTeamSettings: teams.example.com
       appHost: webapp.example.com
   envVars:
-    APP_BASE: "https://app.example.com"
     APP_NAME: "Webapp"
     ENFORCE_HTTPS: "false"
     FEATURE_CHECK_CONSENT: "false"
