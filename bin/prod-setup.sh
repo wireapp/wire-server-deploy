@@ -4,28 +4,8 @@ set -e
 
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )/.."
 
-secretsfilename="prod-secrets.example.yaml"
-valuesfilename="prod-values.example.yaml"
-
-# Option parsing:
-# https://sookocheff.com/post/bash/parsing-bash-script-arguments-with-shopts/
-while getopts ":o" opt; do
-  case ${opt} in
-    o ) secretsfilename="prod-secrets.yaml"
-        valuesfilename="prod-values.yaml"
-      ;;
-    \? ) echo "$USAGE" 1>&2
-         exit 1
-      ;;
-  esac
-done
-shift $((OPTIND -1))
-
-if [ "$#" -ne 0 ]; then
-    echo "Usage: setup -o"
-    echo "  -o   use this option if you want to override default values/secrets (i.e., looks for prod-secrets.yaml and prod-values.yaml)"
-    exit 1
-fi;
+secretsfilename=${secretsfilename:-secrets.yaml}
+valuesfilename=${valuesfilename:-values.yaml}
 
 echo $secretsfilename
 echo $valuesfilename
@@ -65,7 +45,7 @@ function install_chart() {
     helm upgrade --install --namespace "${NAMESPACE}" "${NAMESPACE}-${chart}" "${location}" \
         $option \
         $version \
-        --wait --devel --timeout "$timeout"
+        --wait --timeout "$timeout"
 
 }
 
