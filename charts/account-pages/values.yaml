@@ -23,12 +23,9 @@ service:
 #   backendRest: <nginz-subdomain-https.your.domain>
 #   backendDomain: <your.domain>
 #   appHost: <account-pages-subdomain.your.domain>
-#secrets:
-#   configJson: <secret-to-be-asked-from-wire>
 #
 # Some relevant environment options, have a look at
 # https://github.com/wireapp/wire-account/wiki/Self-hosting
-# Note that it is a private repo, check README for more info
 # NOTE: Without an empty dictionary, you will see warnings
 #       when overriding envVars
 envVars: {}
