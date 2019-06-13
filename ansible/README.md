@@ -17,7 +17,9 @@ The documentation and code under this folder is meant to help with that.
     * [Installing kubernetes](#installing-kubernetes)
     * [Cassandra](#cassandra)
     * [ElasticSearch](#elasticsearch)
+    * [Minio](#minio)
     * [Restund](#restund)
+    * [Installing helm charts - prerequisites](#installing-helm-charts---prerequisites)
     * [tinc](#tinc)
 
 <!-- vim-markdown-toc -->
@@ -214,6 +216,26 @@ Install restund:
 ```
 poetry run ansible-playbook -i hosts.ini restund.yml -vv
 ```
+
+### Installing helm charts - prerequisites
+
+The `helm_external.yml` playbook can be used to write the IPs of the databases into the `values/cassandra-external/values.yaml` file, and thus make them available for helm and the `...-external` charts (e.g. `cassandra-external`).
+
+Ensure to define the following in your hosts.ini under `[all:vars]`:
+
+```ini
+[all:vars]
+minio_network_interface = ...
+cassandra_network_interface = ...
+elasticsearch_network_interface = ...
+redis_network_interface = ...
+```
+
+```
+poetry run ansible-playbook -i hosts.ini -vv --diff helm_external.yml
+```
+
+Now you can install the helm charts.
 
 ### tinc
 
