@@ -1,4 +1,4 @@
-# Default values for the team-settings.
+# Default values for the account-pages.
 replicaCount: 1
 resources:
   requests:
@@ -8,8 +8,8 @@ resources:
     memory: 512Mi
     cpu: "1"
 image:
-  repository: quay.io/wire/account-pages
-  tag: 1.0.4-9ab5a3fc95c7911f903ffe8157ed63aba151b785
+  repository: quay.io/wire/account
+  tag: 176-0.1.0-a02b4f-v0.20.4-staging
 service:
   https:
     externalPort: 443
@@ -23,12 +23,9 @@ service:
 #   backendRest: <nginz-subdomain-https.your.domain>
 #   backendDomain: <your.domain>
 #   appHost: <account-pages-subdomain.your.domain>
-#secrets:
-#   configJson: <secret-to-be-asked-from-wire>
 #
 # Some relevant environment options, have a look at
 # https://github.com/wireapp/wire-account/wiki/Self-hosting
-# Note that it is a private repo, check README for more info
 # NOTE: Without an empty dictionary, you will see warnings
 #       when overriding envVars
 envVars: {}
