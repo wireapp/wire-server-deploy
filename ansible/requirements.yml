@@ -37,7 +37,7 @@
 
 - src: git+https://github.com/wireapp/ansible-restund.git
   name: ansible-restund
-  version: f82e65ae6d84a700af954977194798ef77da7f62
+  version: 18969531d355f7e679c629b599aa8a6d71497b5b
 
 - src: git+https://github.com/wireapp/ansible-tinc.git
   name: ansible-tinc
