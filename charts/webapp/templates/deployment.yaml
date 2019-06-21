@@ -30,10 +30,11 @@ spec:
         image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
         # Check variables here: https://github.com/wireapp/wire-webapp/wiki/Self-hosting
         env:
+          # it is vital that you don't add trailing '/' in this section!
           - name: NODE_PORT
             value: "{{ .Values.service.http.internalPort }}"
           - name: APP_BASE
-            value: https://{{ .Values.config.externalUrls.appHost }}/
+            value: https://{{ .Values.config.externalUrls.appHost }}
           - name: BACKEND_REST
             value: https://{{ .Values.config.externalUrls.backendRest }}
           - name: BACKEND_WS
