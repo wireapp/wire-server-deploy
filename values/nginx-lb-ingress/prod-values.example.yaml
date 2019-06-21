@@ -27,7 +27,14 @@ service:
 #                setup when all your k8s nodes are on internal IPs and thus this requires
 #                setting up your firewall and forward 443 to 31773, as well as 80 to 31772
 nginx-ingress:
+  defaultBackend:
+    image:
+      imagePullPolicy: IfNotFound
   controller:
+    image:
+      imagePullPolicy: IfNotFound
+    config:
+      proxy-buffer-size: "16k"
     service:
       type: NodePort
       nodePorts:
