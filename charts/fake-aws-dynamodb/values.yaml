@@ -6,6 +6,10 @@ service:
   internalPort: 8000
   externalPort: 4567
 
+tables:
+  brigPrekeys: integration-brig-prekeys
+  brigUserkeyBlacklist: integration-brig-userkey-blacklist
+
 resources:
   limits:
     cpu: "300m"
