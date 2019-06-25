@@ -1,4 +1,5 @@
 - hosts: localhost
+  gather_facts: false
   tasks:
     - name: check CA certificate existance (run files/registry/mk-cert if this fails)
       shell: ls files/registry/certs/wire.com.crt
@@ -34,13 +35,17 @@
         - images.sh
         - registry-run.sh
 
-
 - hosts: k8s-cluster
   tags: trust
   vars:
     cert_local_dir: "files/registry/certs"
     cert_dir: "/usr/local/share/ca-certificates/wire.com"
     cert_name: "wire.com.crt"
+  vars_prompt:
+    - name: registry_dns_name
+      prompt: dns name used for certificate generation as CN
+      private: no
+
   tasks:
     - name: create man-in-the-middle certificate directory
       file:
@@ -56,6 +61,15 @@
 
     - name: update ca certificates
       shell: update-ca-certificates
+
+    - name: Add IP/dns of registry
+      lineinfile:
+        dest: /etc/hosts
+        regexp: '.*{{ registry_dns_name }}$'
+        line: "{{ hostvars[groups['registry'][0]]['ansible_' + registry_network_interface]['ipv4']['address'] }} {{ registry_dns_name }}"
+        state: present
+      tags:
+        - hostname
 
 - hosts: k8s-cluster
   serial: 1
