@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
 
-USAGE="create certificate using self-signed CA. Usage: $0 <CN> <IP-SAN> <DNS-SAN> where CN is 'mydomain.com'"
+USAGE="create certificate using self-signed CA. Usage: $0 <CN> where CN is 'mydomain.com'"
 cn=${1:?$USAGE}
-san1=${2:?$USAGE}
-san2=${3:?$USAGE}
+
 
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 CERT_DIR="${SCRIPT_DIR}/certs"
 mkdir -p "$CERT_DIR"
+
 
 CA_cert=wire.com.crt
 CA_key=private.pem
@@ -16,14 +16,25 @@ cd "$CERT_DIR" || exit
 
 set -ex
 
+echo $cn > dns_name
+
+ALLDOMAINS=""
+for ONEREGISTRYIN in quay.io k8s.gcr.io gcr.io docker.caching.proxy.internal registry-1.docker.io auth.docker.io ${REGISTRIES}; do
+    ONEREGISTRY=$(echo ${ONEREGISTRYIN} | xargs) # Remove whitespace
+    echo "Adding certificate for registry: $ONEREGISTRY"
+    ALLDOMAINS="${ALLDOMAINS},DNS:${ONEREGISTRY}"
+done
+export ALLDOMAINS=${ALLDOMAINS:1} # remove the first comma and export
+
 openssl genrsa -out client.key 2048
 
 openssl req -new -sha256 -key client.key -subj "/CN=${cn}" \
-    -config <(cat ../openssl.cnf \
-        <(printf "subjectAltName      = @alt_names\n[alt_names]\nIP.1 = $san1\nDNS.1 = $san2")) \
+    -reqexts SAN -config <(cat <(printf "[req]\ndistinguished_name = dn\n[dn]\n[SAN]\nsubjectAltName=${ALLDOMAINS}")) \
     -out client-csr.csr
 
-openssl x509 -req -in client-csr.csr -CA "$CA_cert" -CAkey "$CA_key" -CAcreateserial -out client.crt -days 500 -sha256
+openssl x509 -req -in client-csr.csr -CA "$CA_cert" -CAkey "$CA_key" -CAcreateserial -out client.crt \
+    -days 500 -sha256 -extensions SAN \
+    -extfile <(cat <(printf "[req]\ndistinguished_name = dn\n[dn]\n[SAN]\nsubjectAltName=${ALLDOMAINS}")) \
 
 rm client-csr.csr
 

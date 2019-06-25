@@ -42,12 +42,10 @@
     cert_local_dir: "files/registry/certs"
     cert_dir: "/usr/local/share/ca-certificates/wire.com"
     cert_name: "wire.com.crt"
-  vars_prompt:
-    - name: registry_dns_name
-      prompt: dns name used for certificate generation as CN
-      private: no
-
+    registry_dns_name: "{{ lookup('file', 'files/registry/certs/dns_name') }}"
   tasks:
+    - debug: var=registry_dns_name
+
     - name: create man-in-the-middle certificate directory
       file:
         path: "{{ cert_dir }}"
@@ -63,19 +61,30 @@
     - name: update ca certificates
       shell: update-ca-certificates
 
-    - name: Add IP/dns of registry
+    - name: Add IP/dns of registry and of upstream docker registries to /etc/hosts
       lineinfile:
         dest: /etc/hosts
-        regexp: '.*{{ registry_dns_name }}$'
-        line: "{{ hostvars[groups['registry'][0]]['ansible_' + registry_network_interface]['ipv4']['address'] }} {{ registry_dns_name }}"
+        regexp: '.*{{ item }}$'
+        line: "{{ hostvars[groups['registry'][0]]['ansible_' + registry_network_interface]['ipv4']['address'] }} {{ item }}"
         state: present
+      with_items:
+        - "{{ registry_dns_name }}"
+        - quay.io
+        - k8s.gcr.io
+        - gcr.io
+        - docker.caching.proxy.internal
+        - registry-1.docker.io
+        - auth.docker.io
       tags:
         - hostname
 
 - hosts: k8s-cluster
   serial: 1
+  tags: restart
   tasks:
     - name: restart docker to update trust store
       shell: systemctl restart docker
+      when: restart is defined
     - pause:
         seconds: 30
+      when: restart is defined
