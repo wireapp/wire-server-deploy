@@ -23,7 +23,7 @@
         dest: "/opt/registry/certs/{{ item }}"
       with_items:
         - client.crt
-        - client.pem
+        - client.key
 
     - name: copy bash
       copy:
@@ -57,5 +57,10 @@
     - name: update ca certificates
       shell: update-ca-certificates
 
-    - name: warning
-      debug: msg="You may need to 'systemctl restart docker' on each kubernetes machine!"
+- hosts: k8s-cluster
+  serial: 1
+  tasks:
+    - name: restart docker to update trust store
+      shell: systemctl restart docker
+    - pause:
+        seconds: 30
