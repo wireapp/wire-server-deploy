@@ -272,12 +272,6 @@ nginx_conf:
     - path: ~* ^/teams/([^/]*)/conversations(.*)
       envs:
       - all
-    - path: ~* ^/teams/([^/]*)/invitations(.*)
-      envs:
-      - all
-    - path: ~* ^/teams/([^/]*)/services(.*)
-      envs:
-      - all
     - path: ~* ^/teams/([^/]*)/legalhold(.*)
       envs:
       - all
