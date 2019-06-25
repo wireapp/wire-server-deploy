@@ -218,6 +218,9 @@ nginx_conf:
     - path: ~* ^/teams/([^/]*)/invitations(.*)
       envs:
       - all
+    - path: ~* ^/teams/([^/]*)/services(.*)
+      envs:
+      - all
     - path: ~* ^/teams/invitations/info$
       envs:
       - all
