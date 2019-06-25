@@ -1,3 +1,11 @@
+- hosts: localhost
+  tasks:
+    - name: check CA certificate existance (run files/registry/mk-cert if this fails)
+      shell: ls files/registry/certs/wire.com.crt
+
+    - name: check client certificate existance (run files/registry/mk-sub-cert if this fails)
+      shell: ls files/registry/certs/client.crt
+
 - hosts: registry
   tasks:
     - name: create dir
@@ -6,25 +14,31 @@
         state: directory
       with_items:
         - /opt/registry
+        - /opt/registry/certs
         - /mnt/registry
 
-    - name: copy cert dir
+    - name: copy cert files
       copy:
-        src: /home/user/Documents/git/docker-squid4/mk-ca-cert/certs
-        dest: /opt/registry
+        src: "files/registry/certs/{{ item }}"
+        dest: "/opt/registry/certs/{{ item }}"
+      with_items:
+        - client.crt
+        - client.pem
 
     - name: copy bash
       copy:
-        src: files/{{ item }}
+        src: files/registry/{{ item }}
         dest: /opt/registry/{{ item }}
         mode: 0755
       with_items:
         - images.sh
         - registry-run.sh
+
+
 - hosts: k8s-cluster
   tags: trust
   vars:
-    cert_local_dir: "/home/user/Documents/git/docker-squid4/mk-ca-cert/certs"
+    cert_local_dir: "files/registry/certs"
     cert_dir: "/usr/local/share/ca-certificates/wire.com"
     cert_name: "wire.com.crt"
   tasks:
@@ -42,3 +56,6 @@
 
     - name: update ca certificates
       shell: update-ca-certificates
+
+    - name: warning
+      debug: msg="You may need to 'systemctl restart docker' on each kubernetes machine!"
