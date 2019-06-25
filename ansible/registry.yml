@@ -1,0 +1,44 @@
+- hosts: registry
+  tasks:
+    - name: create dir
+      file:
+        path: "{{ item }}"
+        state: directory
+      with_items:
+        - /opt/registry
+        - /mnt/registry
+
+    - name: copy cert dir
+      copy:
+        src: /home/user/Documents/git/docker-squid4/mk-ca-cert/certs
+        dest: /opt/registry
+
+    - name: copy bash
+      copy:
+        src: files/{{ item }}
+        dest: /opt/registry/{{ item }}
+        mode: 0755
+      with_items:
+        - images.sh
+        - registry-run.sh
+- hosts: k8s-cluster
+  tags: trust
+  vars:
+    cert_local_dir: "/home/user/Documents/git/docker-squid4/mk-ca-cert/certs"
+    cert_dir: "/usr/local/share/ca-certificates/wire.com"
+    cert_name: "wire.com.crt"
+  tasks:
+    - name: create man-in-the-middle certificate directory
+      file:
+        path: "{{ cert_dir }}"
+        state: directory
+        mode: 0755
+
+    - name: copy certificate
+      copy:
+        src: "{{ cert_local_dir }}/{{ cert_name }}"
+        dest: "{{ cert_dir }}/{{ cert_name }}"
+        mode: 0644
+
+    - name: update ca certificates
+      shell: update-ca-certificates
