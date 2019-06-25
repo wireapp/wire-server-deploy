@@ -1,22 +1,13 @@
----
-- name: gather tls certificate
-  hosts: localhost
-  pre_tasks:
-    - name: Read TLS config
-      set_fact:
-        # Reminder that the pem file should look like:
-        # -----BEGIN CERTIFICATE-----
-        # --- ... CERT CONTENT ... --
-        # -----END CERTIFICATE-----
-        # -----BEGIN CERTIFICATE-----
-        # --- ... INTERMEDIATE ..----
-        # -----END CERTIFICATE----
-        # -----BEGIN PRIVATE KEY-----
-        # --- .... PRIV KEY -----
-        # -----END PRIVATE KEY-----
-
-        restund_tls_certificate: "{{ lookup('file', '/tmp/tls_cert_and_priv_key.pem') }}"
-
+# Reminder that the pem file should look like:
+# -----BEGIN CERTIFICATE-----
+# --- ... CERT CONTENT ... --
+# -----END CERTIFICATE-----
+# -----BEGIN CERTIFICATE-----
+# --- ... INTERMEDIATE ..----
+# -----END CERTIFICATE----
+# -----BEGIN PRIVATE KEY-----
+# --- .... PRIV KEY -----
+# -----END PRIVATE KEY-----
 - name: provision
   hosts: restund
   gather_facts: yes
@@ -29,7 +20,7 @@
   vars:
     # This config will make restund run as root and listen on ports 80 and 443
     - restund_user: root
-    - restund_tls_certificate: "{{ hostvars.localhost.restund_tls_certificate }}"
+    - restund_tls_certificate: "{{ lookup('file', '/tmp/tls_cert_and_priv_key.pem') }}"
     - restund_udp_listen_port: 80
     - restund_tcp_listen_port: 80
     - restund_tls_listen_port: 443
