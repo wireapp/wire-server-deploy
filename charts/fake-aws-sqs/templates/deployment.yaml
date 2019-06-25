@@ -35,21 +35,29 @@ spec:
           exec_until_ready() {
               until $1; do echo 'service not ready yet'; sleep 1; done
           }
+          queue_exists() {
+              OUTPUT=$(aws --endpoint-url=http://localhost:{{ $.Values.service.httpPort }} sqs list-queues | grep $1 | wc -l)
+              echo $OUTPUT
+          }
 
           echo 'Creating AWS resources'
           aws configure set aws_access_key_id dummy
           aws configure set aws_secret_access_key dummy
           aws configure set region eu-west-1
 
-          # Create queues
-          {{ range $i, $queueName := .Values.queueNames }}
-              exec_until_ready "aws --endpoint-url=http://localhost:{{ $.Values.service.httpPort }} sqs create-queue --queue-name {{ $queueName }}"
-          {{ end }}
-
           while true
           do
-              echo "Resources created, sleeping for 30, to keep this container (and thus the pod) alive"
-              sleep 30
+              # Recreate resources if needed
+              {{ range $i, $queueName := .Values.queueNames }}
+                  QUEUE=$(queue_exists "{{ $queueName }}")
+                  if [ "$QUEUE" == "1" ]
+                    then echo "Queue {{ $queueName }} exists, no need to re-create"
+                    else exec_until_ready "aws --endpoint-url=http://localhost:{{ $.Values.service.httpPort }} sqs create-queue --queue-name {{ $queueName }}"
+                  fi
+              {{ end }}
+
+              echo 'Sleeping 10'
+              sleep 10
           done
       volumes:
         - emptyDir: {}
