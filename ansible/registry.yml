@@ -34,6 +34,7 @@
       with_items:
         - images.sh
         - registry-run.sh
+        - list_of_docker_images.txt
 
 - hosts: k8s-cluster
   tags: trust
