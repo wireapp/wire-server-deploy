@@ -36,7 +36,8 @@ spec:
               until $1; do echo 'service not ready yet'; sleep 1; done
           }
           queue_exists() {
-              OUTPUT=$(aws --endpoint-url=http://localhost:{{ $.Values.service.httpPort }} sqs list-queues | grep $1 | wc -l)
+              # NOTE: we use the '"' to match the queue name more exactly (otherwise there is some overlap)
+              OUTPUT=$(aws --endpoint-url=http://localhost:{{ $.Values.service.httpPort }} sqs list-queues | grep $1'"' | wc -l)
               echo $OUTPUT
           }
 
