@@ -42,18 +42,24 @@ spec:
           exec_until_ready() {
               until $1; do echo 'service not ready yet'; sleep 1; done
           }
+          ses_identity_exists() {
+              OUTPUT=$(aws --endpoint-url=http://localhost:{{ $.Values.service.internalPort }} ses list-identities | grep $1 | wc -l)
+              echo $OUTPUT
+          }
           echo 'Creating AWS resources'
           aws configure set aws_access_key_id dummy
           aws configure set aws_secret_access_key dummy
           aws configure set region eu-west-1
 
-          # Set our sender address as verified
-          exec_until_ready "aws --endpoint-url=http://localhost:{{ .Values.service.internalPort }} ses verify-email-identity --email-address {{ .Values.sesSender }}"
-
           while true
           do
-              echo "Resources created, sleeping for 30, to keep this container (and thus the pod) alive"
-              sleep 30
+              SES_SENDER=$(ses_identity_exists "{{ $.Values.sesSender }}")
+              if [ "$SES_SENDER" == "1" ]
+                # Set our sender address as verified
+                then echo "Resources already created, sleeping for 10, to keep this container (and thus the pod) alive"
+                else exec_until_ready "aws --endpoint-url=http://localhost:{{ $.Values.service.internalPort }} ses verify-email-identity --email-address {{ $.Values.sesSender }}" && echo 'Resource successfully created'
+              fi
+              sleep 10
           done
       volumes:
         - emptyDir: {}
