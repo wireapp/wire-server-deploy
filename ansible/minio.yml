@@ -11,6 +11,7 @@
   gather_facts: true
   vars:
     minio_server_env_extra: "MINIO_BROWSER=off"
+    bucket_name: "dummy-bucket"
     layouts:
       # The first minio instance on this server.
       layout1:
@@ -33,3 +34,19 @@
       layout: layout2
       tags:
         - minio
+  tasks:
+    - name: "check if bucket {{ bucket_name }} exists"
+      shell: "mc ls def"
+      environment:
+        MC_HOST_def: "http://{{ minio_access_key }}:{{ minio_secret_key }}@localhost{{ layouts.layout1.minio_server_addr }}"
+      run_once: true
+      register: check_bucket
+      tags: bucket-create
+
+    - name: create bucket
+      shell: "mc mb def/{{ bucket_name }}"
+      environment:
+        MC_HOST_def: "http://{{ minio_access_key }}:{{ minio_secret_key }}@localhost{{ layouts.layout1.minio_server_addr }}"
+      run_once: true
+      when: bucket_name not in check_bucket.stdout
+      tags: bucket-create
