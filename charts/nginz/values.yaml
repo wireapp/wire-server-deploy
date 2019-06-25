@@ -215,6 +215,12 @@ nginx_conf:
     - path: /search
       envs:
       - all
+    - path: ~* ^/teams/([^/]*)/invitations(.*)
+      envs:
+      - all
+    - path: ~* ^/teams/([^/]*)/services(.*)
+      envs:
+      - all
     - path: ~* ^/teams/invitations/info$
       envs:
       - all
@@ -264,12 +270,6 @@ nginx_conf:
       envs:
       - all
     - path: ~* ^/teams/([^/]*)/conversations(.*)
-      envs:
-      - all
-    - path: ~* ^/teams/([^/]*)/invitations(.*)
-      envs:
-      - all
-    - path: ~* ^/teams/([^/]*)/services(.*)
       envs:
       - all
     - path: ~* ^/teams/([^/]*)/legalhold(.*)
