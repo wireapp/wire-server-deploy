@@ -1,3 +1,26 @@
+# experimental!
+#
+# sets up a private docker registry with fake certificates and scripts to mirror images
+# then spoofs DNS on kubernetes nodes to pull images from that registry
+#
+# add this to your hosts.ini:
+#
+# [all]
+# registry01 ansible_host=1.2.3.4
+#
+# [registry]
+# registry01
+#
+# [all:vars]
+# registry_network_interface = eth0
+#
+#
+# Be sure to run `docker login` from the registry node if you wish to mirror any private images.
+#
+#
+# the first time, run with `-e restart=true`
+# after mirroring, re-run with `-e dns_spoofing=true`
+#
 - hosts: localhost
   gather_facts: false
   tasks:
@@ -77,6 +100,7 @@
         - auth.docker.io
       tags:
         - hostname
+      when: dns_spoofing is defined
 
 - hosts: k8s-cluster
   serial: 1
