@@ -1,7 +1,6 @@
 # CHANGEME-PROD: All values here should be changed/reviewed
 tags:
   proxy: false # enable if you want/need giphy/youtube/etc proxying
-  spar: false # enable if you want/need Single-Sign-On (SSO)
 
 cassandra-migrations:
   # images:
@@ -131,6 +130,25 @@ nginz:
   # For demo mode only, we don't need to keep websocket connections open on upgrade:
   drainTimeout: 10
   terminationGracePeriodSeconds: 30
+
+spar:
+  replicaCount: 3
+  # image:
+  #   tag: some-tag (only override if you want a newer/different version than what is in the chart)
+  config:
+    cassandra:
+      host: cassandra-external
+      replicaCount: 3
+    logLevel: Debug
+    domain: example.com
+    appUri: https://nginz-https.example.com
+    ssoUri: https://nginz-https.example.com/sso
+    maxttlAuthreq: 28800
+    maxttlAuthresp: 28800
+    contacts:
+    - type: ContactSupport
+      company: YourCompany
+      email: email:support@example.com
 
 webapp:
   replicaCount: 1
