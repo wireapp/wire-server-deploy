@@ -1,0 +1,114 @@
+# experimental!
+#
+# sets up a private docker registry with fake certificates and scripts to mirror images
+# then spoofs DNS on kubernetes nodes to pull images from that registry
+#
+# add this to your hosts.ini:
+#
+# [all]
+# registry01 ansible_host=1.2.3.4
+#
+# [registry]
+# registry01
+#
+# [all:vars]
+# registry_network_interface = eth0
+#
+#
+# Be sure to run `docker login` from the registry node if you wish to mirror any private images.
+#
+#
+# the first time, run with `-e restart=true`
+# after mirroring, re-run with `-e dns_spoofing=true`
+#
+- hosts: localhost
+  gather_facts: false
+  tasks:
+    - name: check CA certificate existance (run files/registry/mk-cert if this fails)
+      shell: ls files/registry/certs/wire.com.crt
+
+    - name: check client certificate existance (run files/registry/mk-sub-cert if this fails)
+      shell: ls files/registry/certs/client.crt
+
+- hosts: registry
+  tasks:
+    - name: create dir
+      file:
+        path: "{{ item }}"
+        state: directory
+      with_items:
+        - /opt/registry
+        - /opt/registry/certs
+        - /mnt/registry
+
+    - name: copy cert files
+      copy:
+        src: "files/registry/certs/{{ item }}"
+        dest: "/opt/registry/certs/{{ item }}"
+      with_items:
+        - client.crt
+        - client.key
+
+    - name: copy bash
+      copy:
+        src: files/registry/{{ item }}
+        dest: /opt/registry/{{ item }}
+        mode: 0755
+      with_items:
+        - images.sh
+        - registry-run.sh
+        - list_of_docker_images.txt
+
+- hosts: k8s-cluster
+  tags: trust
+  vars:
+    cert_local_dir: "files/registry/certs"
+    cert_dir: "/usr/local/share/ca-certificates/wire.com"
+    cert_name: "wire.com.crt"
+    registry_dns_name: "{{ lookup('file', 'files/registry/certs/dns_name') }}"
+  tasks:
+    - debug: var=registry_dns_name
+
+    - name: create man-in-the-middle certificate directory
+      file:
+        path: "{{ cert_dir }}"
+        state: directory
+        mode: 0755
+
+    - name: copy certificate
+      copy:
+        src: "{{ cert_local_dir }}/{{ cert_name }}"
+        dest: "{{ cert_dir }}/{{ cert_name }}"
+        mode: 0644
+
+    - name: update ca certificates
+      shell: update-ca-certificates
+
+    - name: Add IP/dns of registry and of upstream docker registries to /etc/hosts
+      lineinfile:
+        dest: /etc/hosts
+        regexp: '.*{{ item }}$'
+        line: "{{ hostvars[groups['registry'][0]]['ansible_' + registry_network_interface]['ipv4']['address'] }} {{ item }}"
+        state: present
+      with_items:
+        - "{{ registry_dns_name }}"
+        - quay.io
+        - k8s.gcr.io
+        - gcr.io
+        - docker.caching.proxy.internal
+        - registry-1.docker.io
+        - auth.docker.io
+      tags:
+        - hostname
+      when: dns_spoofing is defined
+
+- hosts: k8s-cluster
+  serial: 1
+  tags: restart
+  tasks:
+    - name: restart docker to update trust store
+      shell: systemctl restart docker
+      when: restart is defined
+    - pause:
+        seconds: 30
+      when: restart is defined
