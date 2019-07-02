@@ -19,6 +19,7 @@ hvac = ">= 0.8"
 jmespath = ">= 0.9.4"
 "ruamel.yaml" = ">= 0.15.96"
 PyYAML = "*"
+mitogen = "*"
 
 [tool.poetry.dev-dependencies]
 
