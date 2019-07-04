@@ -7,6 +7,7 @@
   hosts: 127.0.0.1
   connection: local
   gather_facts: false
+  become: false
   tasks:
     - name: Create build directory
       tempfile:
@@ -31,6 +32,7 @@
 - name: Cleanup
   hosts: 127.0.0.1
   connection: local
+  become: false
   gather_facts: false
   tasks:
     - name: Delete the build folder

@@ -1,0 +1,27 @@
+- hosts: kube-node
+  tasks:
+    - name: "Redirect TLS traffic to the kubernetes ingress"
+      become: true
+      iptables:
+        table: "nat"
+        chain: "PREROUTING"
+        in_interface: "eth0"
+        protocol: "tcp"
+        match: "tcp"
+        destination_port: "443"
+        jump: "REDIRECT"
+        to_ports: "31773"
+        state: "present"
+    - name: "Redirect http traffic to the kubernetes ingress"
+      become: true
+      iptables:
+        table: "nat"
+        chain: "PREROUTING"
+        in_interface: "eth0"
+        protocol: "tcp"
+        match: "tcp"
+        destination_port: "80"
+        jump: "REDIRECT"
+        to_ports: "31772"
+        state: "present"
+      
