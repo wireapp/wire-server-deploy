@@ -45,6 +45,8 @@ config:
     sessionTokenTimeout: 604800
     accessTokenTimeout: 900
     providerTokenTimeout: 604800
+    legalholdUserTokenTimeout: 4838400
+    legalholdAccessTokenTimeout: 900
   optSettings:
     setActivationTimeout: 1209600
     setTeamInvitationTimeout: 1814400

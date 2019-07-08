@@ -136,6 +136,8 @@ data:
         sessionTokenTimeout: {{ .sessionTokenTimeout }}
         accessTokenTimeout: {{ .accessTokenTimeout }}
         providerTokenTimeout: {{ .providerTokenTimeout }}
+        legalHoldUserTokenTimeout: {{ .legalholdUserTokenTimeout }}
+        legalHoldAccessTokenTimeout: {{ .legalholdAccessTokenTimeout }}
       {{- end }}
 
     turn:
