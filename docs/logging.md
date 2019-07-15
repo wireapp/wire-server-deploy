@@ -47,6 +47,15 @@ go to 127.0.0.1:5601 in your web browser.
 4. Click on the 'Time Filter field name' dropdown, and select '@timestamp'.
 5. Click on 'create index patern'.
 
+## Deploying ElasticSearch-Curator
+```
+$ helm install --namespace <namespace> wire/elasticsearch-curator
+```
+
+Note that since we are not specifying a release name during helm install, it generates a 'verb-noun' pair, and uses it. If you look at your pod names, you can see this name prepended to your pods in 'kubectl -n <namespace> get pods'.
+
+ElasticSearch-curator trims the logs that are contained in kibana, so that your elasticsearch pod does not get too large, crash, and need re-built.
+
 ## Usage:
 
 Get the pod name for your kibana instance (not the one set up with fluent-bit), and
