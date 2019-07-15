@@ -191,8 +191,8 @@ poetry run ansible-playbook -i hosts.ini minio.yml -vv
 Set other variables in the hosts.ini file under `[restund:vars]`. Most defaults should be fine, except for the network interfaces to use:
 
 * set `ansible_host=X.X.X.X` under the `[all]` section to the IP for SSH access.
-* (recommended) set `restund_network_interface = ` under the `[restund:vars]` section to the interface name you wish the process to use. Defaults to the default_ipv4_address, or `eth0`.
-* (optional, be sure you understand what's happening before setting this) `public_ipv4=Y.Y.Y.Y` - misleadingly named so, a better name would be "restund_udp_peer_ipv4": set this to the IP to advertise for other restund servers if different than the ip on the 'restund_network_interface'. If using 'public_ipv4', make sure that UDP (!) traffic from any restund server (including itself) can reach that IP (for restund->restund communication). This should only be necessary if you're installing restund on a VM that is reachable on a public IP address but the process cannot bind to that public IP address directly (e.g. on AWS VPC VM).
+* (recommended) set `restund_network_interface = ` under the `[restund:vars]` section to the interface name you wish the process to use. Defaults to the default_ipv4_address, with a fallback to `eth0`.
+* (optional) `restund_peer_udp_advertise_addr=Y.Y.Y.Y`: set this to the IP to advertise for other restund servers if different than the ip on the 'restund_network_interface'. If using 'restund_peer_udp_advertise_addr', make sure that UDP (!) traffic from any restund server (including itself) can reach that IP (for `restund <-> restund` communication). This should only be necessary if you're installing restund on a VM that is reachable on a public IP address but the process cannot bind to that public IP address directly (e.g. on AWS VPC VM). If unset, `restund <-> restund` UDP traffic will default to the IP in the `restund_network_interface`.
 
 ```ini
 [all]
@@ -204,7 +204,7 @@ restund01         ansible_host=X.X.X.X
 [all:vars]
 ## Set the network interface name for restund to bind to if you have more than one network interface
 ## If unset, defaults to the ansible_default_ipv4 (if defined) otherwise to eth0
-# restund_network_interface = eth0
+restund_network_interface = eth0
 ```
 
 (see [defaults/main.yml](https://github.com/wireapp/ansible-restund/blob/master/defaults/main.yml) for a full list of variables to change if necessary)
