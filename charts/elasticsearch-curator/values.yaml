@@ -1,6 +1,9 @@
 # See defaults in https://github.com/helm/charts/tree/master/stable/elasticsearch-curator
 elasticsearch-curator:
   configMaps:
-    config_yml:
+    config_yml: |-
+      ---
       client:
-        hosts: elasticsearch-ephemeral
+        hosts:
+	  - elasticsearch-ephemeral
+        port: 9200
