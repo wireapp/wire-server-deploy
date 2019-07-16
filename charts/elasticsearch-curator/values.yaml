@@ -23,7 +23,7 @@ elasticsearch-curator:
             stats_result:
             epoch:
             exclude: False
-      config_yml: |-
+    config_yml: |-
       ---
       client:
         hosts:
