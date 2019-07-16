@@ -1,0 +1,7 @@
+site_name: Wire-Server
+# theme: readthedocs
+nav:
+  - Overview: 'overview/index.md'
+  - Administrator's Guide:
+     - 'administration/cassandra.md'
+     - 'administration/elasticsearch.md'
