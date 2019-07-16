@@ -28,49 +28,24 @@ if [ -n "$chart_name" ] && [ -d "$SCRIPT_DIR/../charts/$chart_name" ]; then
 fi
 
 # install s3 plugin
-# At the time of writing, version 0.7.0 was installed.
-# Hopefully version locking isn't necessary
-helm plugin list | grep "s3" > /dev/null || helm plugin install https://github.com/hypnoglow/helm-s3.git
-
-# Note: on providing a public URL for charts synced to S3
-# * This is not yet supported by helm-s3 plugin until
-#   https://github.com/hypnoglow/helm-s3/pull/56 is implemented
-# * This workaround uses two folders on s3;
-#   - one to sync with helm-s3,
-#   - a second one with a manually-changed index.yaml to allow fetching charts from public URLs
-
-INDEX_S3_DIR="charts-tmp"
-PUBLIC_DIR="charts"
-workaround_issue_helm_s3_56() {
-    # retrieve index
-    aws s3 cp s3://public.wire.com/$INDEX_S3_DIR/index.yaml index.yaml
-
-    # sync from $INDEX_S3_DIR to charts directory
-    if [ -n "$chart_name" ]; then
-        # Read chart urls into a bash array
-        # mapfile/readarray are nicer, but don't work on Mac's builtin bash
-        urls=()
-        while IFS='' read -r line; do array+=("$line"); done < <(yq r index.yaml 'entries.*.*.urls.0' | awk -F '- ' '{print $2$3}' | grep "$chart_name")
-    else
-        urls=()
-        while IFS='' read -r line; do array+=("$line"); done < <(yq r index.yaml 'entries.*.*.urls.0' | awk -F '- ' '{print $2$3}')
-    fi
-    for url in "${urls[@]}"; do
-        newurl=${url/$INDEX_S3_DIR/$PUBLIC_DIR};
-        echo "old=$url and new=$newurl"
-        aws s3 cp "$url" "$newurl"
-    done
-
-    # update and upload index to charts
-    sed -i'.bak' -e 's/s3\:\/\//https\:\/\/s3-eu-west-1.amazonaws.com\//g' index.yaml
-    aws s3 cp index.yaml s3://public.wire.com/$PUBLIC_DIR/index.yaml
-}
+# See https://github.com/hypnoglow/helm-s3/pull/56 for reason to use fork
+s3_plugin_version=$(helm plugin list | grep "^s3 " | awk '{print $2}')
+if [[ $s3_plugin_version != "0.9.0" ]]; then
+    echo "not version 0.9.0 from steven-sheehy fork, upgrading or installing plugin..."
+    helm plugin remove s3 || true
+    helm plugin install https://github.com/steven-sheehy/helm-s3.git --version v0.9.0
+fi
 
 # index/sync charts to S3
 export AWS_REGION=eu-west-1
+PUBLIC_DIR="charts"
 
-helm s3 init "s3://public.wire.com/$INDEX_S3_DIR"
-helm repo add "$INDEX_S3_DIR" "s3://public.wire.com/$INDEX_S3_DIR"
+S3_URL="s3://public.wire.com/$PUBLIC_DIR"
+PUBLIC_URL="https://s3-eu-west-1.amazonaws.com/public.wire.com/$PUBLIC_DIR"
+
+helm s3 init "$S3_URL" --publish "$PUBLIC_URL"
+helm repo add "$PUBLIC_DIR" "$S3_URL"
+helm repo add wire "$PUBLIC_URL"
 
 rm ./*.tgz &> /dev/null || true # clean any packaged files, if any
 for chart in "${charts[@]}"; do
@@ -80,12 +55,12 @@ for chart in "${charts[@]}"; do
     tgz=$(ls "${chart}"-*.tgz)
     echo "syncing ${tgz}..."
     # Push the artifact only if it doesn't already exist
-    if ! aws s3api head-object --bucket public.wire.com --key "$INDEX_S3_DIR/${tgz}" &> /dev/null ; then
-        helm s3 push "$tgz" "$INDEX_S3_DIR"
+    if ! aws s3api head-object --bucket public.wire.com --key "$PUBLIC_DIR/${tgz}" &> /dev/null ; then
+        helm s3 push "$tgz" "$PUBLIC_DIR"
         printf "\n--> pushed %s to S3\n\n" "$tgz"
     else
         if [[ $1 == *--force-push* || $2 == *--force-push* ]]; then
-            helm s3 push "$tgz" "$INDEX_S3_DIR" --force
+            helm s3 push "$tgz" "$PUBLIC_DIR" --force
             printf "\n--> (!) force pushed %s to S3\n\n" "$tgz"
         else
             printf "\n--> %s not changed or not version bumped; doing nothing.\n\n" "$chart"
@@ -95,12 +70,9 @@ for chart in "${charts[@]}"; do
 
 done
 
-helm s3 reindex "$INDEX_S3_DIR"
-
-workaround_issue_helm_s3_56
-
+# this step is not entirely necessary but may help reduce inconsistencies in the case of aborted syncs or concurrent writes.
+helm s3 reindex "$PUBLIC_DIR" --publish "$PUBLIC_URL"
 # see results
-helm repo add wire https://s3-eu-west-1.amazonaws.com/public.wire.com/charts
 helm search wire/
 
 # TODO: improve the above script by exiting with an error if helm charts have changed but a version was not bumped.
