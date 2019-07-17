@@ -18,11 +18,11 @@ While one server is enough to get started, two servers provide high-availability
 
 You can either have restund servers directly exposed to the public internet:
 
-![architecture-restund](img/architecture-restund)
+![architecture-restund](img/architecture-restund.png)
 
 Or you can have them reachable by fronting them with a firewall or load balancer machine that may have a different IP than the server where restund is installed:
 
-![architecture-restund-lb](img/architecture-restund-lb)
+![architecture-restund-lb](img/architecture-restund-lb.png)
 
 ### Protocols and open ports
 
@@ -52,7 +52,7 @@ High-availability is nevertheless ensured by having and advertising more than on
 
 A simplified flow of how restund servers, along with the wire-server are used to establish a call:
 
-![restund-flow](img/restund-flow.png)
+![flow-restund](img/flow-restund.png)
 
 ### DNS
 
