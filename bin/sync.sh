@@ -14,7 +14,7 @@ set -eo pipefail
 
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
-USAGE="Sync helm charts to S3. Usage: $0 to sync all charts or $0 <chartname> to sync only a single one. --force-push can be used to override S3 artifacts."
+USAGE="Sync helm charts to S3. Usage: $0 to sync all charts or $0 <chartname> to sync only a single one. --force-push can be used to override S3 artifacts. --reindex can be used to force a complete reindexing in case the index is malformed."
 echo "$USAGE"
 chart_name=$1
 
@@ -34,6 +34,14 @@ if [[ $s3_plugin_version != "0.9.0" ]]; then
     echo "not version 0.9.0 from steven-sheehy fork, upgrading or installing plugin..."
     helm plugin remove s3 || true
     helm plugin install https://github.com/steven-sheehy/helm-s3.git --version v0.9.0
+else
+    # double check we have the right version of the s3 plugin
+    plugin_sha=$(cat $HOME/.helm/plugins/helm-s3.git/.git/HEAD)
+    if [[ $plugin_sha != "f7ab4a8818f11380807da45a6c738faf98106d62" ]]; then
+        echo "git hash doesn't match forked s3-plugin version (or maybe there is a path issue and your plugins are installed elsewhere? Attempting to re-install..."
+        helm plugin remove s3
+        helm plugin install https://github.com/steven-sheehy/helm-s3.git --version v0.9.0
+    fi
 fi
 
 # index/sync charts to S3
@@ -43,7 +51,12 @@ PUBLIC_DIR="charts"
 S3_URL="s3://public.wire.com/$PUBLIC_DIR"
 PUBLIC_URL="https://s3-eu-west-1.amazonaws.com/public.wire.com/$PUBLIC_DIR"
 
-helm s3 init "$S3_URL" --publish "$PUBLIC_URL"
+# initialize index file only if file doesn't yet exist
+if ! aws s3api head-object --bucket public.wire.com --key "$PUBLIC_DIR/index.yaml" &> /dev/null ; then
+    echo "initializing fresh index.yaml"
+    helm s3 init "$S3_URL" --publish "$PUBLIC_URL"
+fi
+
 helm repo add "$PUBLIC_DIR" "$S3_URL"
 helm repo add wire "$PUBLIC_URL"
 
@@ -59,7 +72,7 @@ for chart in "${charts[@]}"; do
         helm s3 push "$tgz" "$PUBLIC_DIR"
         printf "\n--> pushed %s to S3\n\n" "$tgz"
     else
-        if [[ $1 == *--force-push* || $2 == *--force-push* ]]; then
+        if [[ $1 == *--force-push* || $2 == *--force-push* || $3 == *--force-push* ]]; then
             helm s3 push "$tgz" "$PUBLIC_DIR" --force
             printf "\n--> (!) force pushed %s to S3\n\n" "$tgz"
         else
@@ -70,10 +83,15 @@ for chart in "${charts[@]}"; do
 
 done
 
-# this step is not entirely necessary but may help reduce inconsistencies in the case of aborted syncs or concurrent writes.
-helm s3 reindex "$PUBLIC_DIR" --publish "$PUBLIC_URL"
-# see results
-helm search wire/
+if [[ $1 == *--reindex* || $2 == *--reindex* || $3 == *--reindex* ]]; then
+    printf "\n--> (!) Reindexing, this can take a few minutes...\n\n" "$tgz"
+    helm s3 reindex "$PUBLIC_DIR" --publish "$PUBLIC_URL"
+    # see all results
+    helm search wire -l
+else
+    printf "\n--> Not reindexing by default. Pass the --reindex flag in case the index.yaml is incomplete. See all wire charts using \n helm search wire -l\n\n"
+fi
+
 
 # TODO: improve the above script by exiting with an error if helm charts have changed but a version was not bumped.
 # TODO: hash comparison won't work directly: helm package ... results in new md5 hashes each time, even if files don't change. This is due to files being ordered differently in the tar file. See
