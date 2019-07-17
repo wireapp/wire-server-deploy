@@ -46,4 +46,14 @@ Currently one restund server can have a maximum of 64000 allocations. If you hav
 
 Load balancing is not possible, since STUN/TURN is a stateful protocol, so UDP packets addressed to `restund server 1`, if by means of a load balancer were to end up at `restund server 2`, would get dropped, as the second server doesn't know the source address.
 
-High-availability is nevertheless ensured by having more than one restund server.
+High-availability is nevertheless ensured by having and advertising more than one restund server.
+
+### Discovery and establishing a call
+
+A simplified flow of how restund servers, along with the wire-server are used to establish a call:
+
+![restund-flow](img/restund-flow.png)
+
+### DNS
+
+Usually DNS records are used which point to the public IPs of the restund servers (or of the respective firewall or load balancer machines). These DNS names are then used when configuring wire-server.
