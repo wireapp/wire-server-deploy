@@ -29,7 +29,7 @@ fi
 
 # install s3 plugin
 # See https://github.com/hypnoglow/helm-s3/pull/56 for reason to use fork
-s3_plugin_version=$(helm plugin list | grep "^s3 " | awk '{print $2}')
+s3_plugin_version=$(helm plugin list | grep "^s3 " | awk '{print $2}' || true)
 if [[ $s3_plugin_version != "0.9.0" ]]; then
     echo "not version 0.9.0 from steven-sheehy fork, upgrading or installing plugin..."
     helm plugin remove s3 || true
