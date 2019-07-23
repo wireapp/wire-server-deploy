@@ -12,3 +12,7 @@ values/*/demo-values.override.yaml
 values/*/demo-secrets.override.yaml
 .DS_Store
 values-init-done
+# Emacs backup files
+*~
+# Emacs autosave files
+\#*\#

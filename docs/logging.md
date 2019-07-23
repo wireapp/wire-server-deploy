@@ -6,7 +6,7 @@ See the [development setup](https://github.com/wireapp/wire-server-deploy#develo
 
 ## Deploying ElasticSearch
 ```
-$ helm install --namespace <namespace> wire/elasticsearch-ephemeral/
+$ helm install --namespace <namespace> wire/elasticsearch-ephemeral
 ```
 
 Note that since we are not specifying a release name during helm install, it generates a 'verb-noun' pair, and uses it.
@@ -15,19 +15,19 @@ Elasticsearch's chart does not use the release name of the helm chart in the pod
 
 ## Deploying Kibana
 ```
-$ helm install --namespace <namespace> wire/kibana/
+$ helm install --namespace <namespace> wire/kibana
 ```
 
 Note that since we are not specifying a release name during helm install, it generates a 'verb-noun' pair, and uses it. If you look at your pod names, you can see this name prepended to your pods in 'kubectl -n <namespace> get pods'.
 
 ## Deploying fluent-bit
 ```
-$ helm install --namespace <namespace> wire/fluent-bit/
+$ helm install --namespace <namespace> wire/fluent-bit
 ```
 
 Alternately, if there is already fluent-bit deployed in your environment, get the helm name for the deployment (verb-noun prepended to the pod name), and
 ```
-$ helm upgrade <helm-name> --namespace <namespace> wire/fluent-bit/
+$ helm upgrade <helm-name> --namespace <namespace> wire/fluent-bit
 ```
 
 Note that since we are not specifying a release name during helm install, it generates a 'verb-noun' pair, and uses it. if you look at your pod names, you can see this name prepended to your pods in 'kubectl -n <namespace> get pods'.
@@ -46,6 +46,15 @@ go to 127.0.0.1:5601 in your web browser.
 3. Click on 'Next step'
 4. Click on the 'Time Filter field name' dropdown, and select '@timestamp'.
 5. Click on 'create index patern'.
+
+## Deploying ElasticSearch-Curator
+```
+$ helm install --namespace <namespace> wire/elasticsearch-curator
+```
+
+Note that since we are not specifying a release name during helm install, it generates a 'verb-noun' pair, and uses it. If you look at your pod names, you can see this name prepended to your pods in 'kubectl -n <namespace> get pods'.
+
+ElasticSearch-curator trims the logs that are contained in kibana, so that your elasticsearch pod does not get too large, crash, and need re-built.
 
 ## Usage:
 
