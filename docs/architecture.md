@@ -34,7 +34,7 @@ In case e.g. office firewall rules disallow UDP traffic, there is a possibility 
 
 #### TCP
 
-Two (configurable) ports are used by restund for TCP, one for plain TCP and one for TLS. By default restund uses ports `3478` for plain TCP and port `5349` for TLS. You can instead use for example ports `80` and `443` (requires to run restund as root) or 
+Two (configurable) ports are used by restund for TCP, one for plain TCP and one for TLS. By default restund uses ports `3478` for plain TCP and port `5349` for TLS. You can instead use (if that's easier with firewall rules) for example ports `80` and `443` (requires to run restund as root) or do a redirect from a load balancer (if using one) to redirect `443 -> 5349` and `80 -> 3478`.
 
 ### Amount of users and filedescriptors
 
