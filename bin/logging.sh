@@ -2,7 +2,7 @@
 
 NAMESPACE=${NAMESPACE:-monitoring}
 
-help repo update
+helm repo update
 
 helm upgrade --install --namespace "$NAMESPACE" "$NAMESPACE-elasticsearch-ephemeral" wire/elasticsearch-ephemeral
 helm upgrade --install --namespace "$NAMESPACE" "$NAMESPACE-fluent-bit" wire/fluent-bit

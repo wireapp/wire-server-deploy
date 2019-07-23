@@ -86,10 +86,14 @@ done
 if [[ $1 == *--reindex* || $2 == *--reindex* || $3 == *--reindex* ]]; then
     printf "\n--> (!) Reindexing, this can take a few minutes...\n\n"
     helm s3 reindex "$PUBLIC_DIR" --publish "$PUBLIC_URL"
+    # update local cache with newly pushed charts
+    helm repo update
     # see all results
     helm search wire/ -l
 else
-    printf "\n--> Not reindexing by default. Pass the --reindex flag in case the index.yaml is incomplete. See all wire charts using \n helm search wire -l\n\n"
+    # update local cache with newly pushed charts
+    helm repo update
+    printf "\n--> Not reindexing by default. Pass the --reindex flag in case the index.yaml is incomplete. See all wire charts using \n helm search wire/ -l\n\n"
 fi
 
 
