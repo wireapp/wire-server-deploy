@@ -5,13 +5,12 @@ accountPages:
 tls:
   enabled: true
 
-# NOTE: These values are suggested for deployments on bare metal and
-#       should be adjusted on a per installation basis
+# NOTE: These values must be adjusted on a per installation basis
 config:
   dns:
-    https: bare-https.self-hosted.com
-    ssl: bare-ssl.self-hosted.com
-    webapp: bare-webapp.self-hosted.com
-    fakeS3: bare-s3.self-hosted.com
-    teamSettings: bare-team.self-hosted.com
-    accountPages: bare-account.self-hosted.com
+    https: nginz-https.example.com
+    ssl: nginz-ssl.example.com
+    webapp: webapp.example.com
+    fakeS3: s3.example.com
+    teamSettings: team.example.com
+    accountPages: account.example.com
