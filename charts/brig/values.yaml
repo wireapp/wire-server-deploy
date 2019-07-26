@@ -41,12 +41,12 @@ config:
         support: https://support.wire.com/
   authSettings:
     keyIndex: 1
-    userTokenTimeout: 4838400
-    sessionTokenTimeout: 604800
-    accessTokenTimeout: 900
-    providerTokenTimeout: 604800
-    legalholdUserTokenTimeout: 4838400
-    legalholdAccessTokenTimeout: 900
+    userTokenTimeout: 4838400           # 56 days
+    sessionTokenTimeout: 86400          # 1 day
+    accessTokenTimeout: 900             # 15 minutes
+    providerTokenTimeout: 900           # 15 minutes
+    legalholdUserTokenTimeout: 4838400  # 56 days
+    legalholdAccessTokenTimeout: 900    # 15 minutes
   optSettings:
     setActivationTimeout: 1209600
     setTeamInvitationTimeout: 1814400
