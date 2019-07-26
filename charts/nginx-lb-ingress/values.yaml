@@ -23,7 +23,11 @@ tls:
 
 nginx-ingress:
   controller:
+    # scope:
+    #   enabled: true # Only listen to the scoped namespace
     config:
+      http2-max-field-size: 16k
+      http2-max-header-size: 32k
       proxy-body-size: 1024m
 
 service:
@@ -40,6 +44,13 @@ service:
     externalPort: 8080
   accountPages:
     externalPort: 8080
+
+# service:
+#       type: NodePort
+#       nodePorts:
+#         # NOTE: This has to match the port forwarded from the firewall
+#         https: 31773
+#         http: 31772
 
 # You will need to supply some DNS names, namely
 # config:
