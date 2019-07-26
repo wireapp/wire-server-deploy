@@ -1,5 +1,5 @@
 # Spins up pods with stable names; e.g. cannon-0 ... cannon-<replicaCount>
-# Specific pods can be accessed within the cluster at cannon-<n>.cannon 
+# Specific pods can be accessed within the cluster at cannon-<n>.cannon
 # (the second 'cannon' is the name of the headless service)
 apiVersion: apps/v1
 kind: StatefulSet
@@ -68,7 +68,7 @@ spec:
         args:
         - -c
         # e.g. cannon-0.cannon
-        - echo "${HOSTNAME}.{{ .Values.service.name }}" > /etc/wire/cannon/externalHost/host.txt
+        - echo "${HOSTNAME}.{{ .Values.service.name }}.{{ .Release.Namespace }}" > /etc/wire/cannon/externalHost/host.txt
         volumeMounts:
         - name: empty
           mountPath: /etc/wire/cannon/externalHost
