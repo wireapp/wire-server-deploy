@@ -1,0 +1,67 @@
+# Default values for nginx-ingress-services
+
+# Team settings and account pages are disabled by default since they
+# require access to a private repo.
+teamSettings:
+  enabled: false
+accountPages:
+  enabled: false
+
+# If you want to use TLS termination on the ingress,
+# then set this variable to true and ensure that there
+# is a valid wildcard TLS certificate
+# When TLS is enable, ensure that you have the certificate
+# and secret in a file under helm_vars/bare/secret.yaml (or
+# another location) since enabling TLS requires you to supply
+# a `tlsWildcardCert` and `tlsWildcardKey` (these will then be
+# 64 encoded as part of the secret creation) so those values
+# should simply contain the certificate and key (you can also
+# encrypt them with sops and use helm-wrapper, check README.md
+# for an example)
+tls:
+  enabled: true
+
+service:
+  nginz:
+    externalHttpPort: 8080
+    externalTcpPort: 8081
+  webapp:
+    externalPort: 8080
+  s3:
+    externalPort: 9000
+    serviceName: fake-aws-s3
+    externallyCreated: false # See note below
+  teamSettings:
+    externalPort: 8080
+  accountPages:
+    externalPort: 8080
+
+# You will need to supply some DNS names, namely
+# config:
+#   dns:
+#     https: bare-https.<domain>
+#     ssl: bare-ssl.<domain>
+#     webapp: bare-webapp.<domain>
+#     fakeS3: bare-s3.<domain>
+#     teamSettings: bare-team.<domain>
+#     ^ teamSettings is ignored unless teamSettings.enabled == true
+#     accountPages: bare-account.<domain>
+#     ^ accountPages is ignored unless accountPages.enabled == true
+# For TLS
+# secrets:
+#     tlsWildcardCert: |
+#         -----BEGIN CERTIFICATE-----
+#         -----END CERTIFICATE-----
+#     tlsWildcardKey: |
+#         -----BEGIN PRIVATE KEY-----
+#         -----END PRIVATE KEY-----
+#
+# For Services:
+# service:
+#   s3:
+#     externallyCreated: true
+#     ^ externallyCreated might be useful if S3 access is provided by
+#       an external service such as `minio-external`: in such cases
+#       we do not want to create yet another service here but rather
+#       use that service instead in the ingress
+#     serviceName: minio-external
