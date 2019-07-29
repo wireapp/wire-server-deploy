@@ -1,0 +1,23 @@
+teamSettings:
+  enabled: false
+accountPages:
+  enabled: false
+tls:
+  enabled: true
+
+# CHANGEME-PROD: These values are suggested for deployments on bare metal and
+#                should be adjusted on a per installation basis
+config:
+  dns:
+    https: nginz-https.example.com
+    ssl: nginz-ssl.example.com
+    webapp: webapp.example.com
+    fakeS3: s3.example.com
+    teamSettings: team.example.com
+    accountPages: account.example.com
+
+service:
+  s3:
+    externalPort: 9000
+    serviceName: minio-external
+    externallyCreated: true

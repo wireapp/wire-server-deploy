@@ -1,4 +1,4 @@
-# Default values for nginx-lb-ingress
+# Default values for nginx-ingress-services
 
 # Team settings and account pages are disabled by default since they
 # require access to a private repo.
@@ -20,11 +20,6 @@ accountPages:
 # for an example)
 tls:
   enabled: true
-
-nginx-ingress:
-  controller:
-    config:
-      proxy-body-size: 1024m
 
 service:
   nginz:

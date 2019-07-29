@@ -20,7 +20,7 @@ spec:
 {{- if .Values.accountPages.enabled }}
       - {{ .Values.config.dns.accountPages }}
 {{- end }}
-    secretName: nginx-ingress-wildcard-tls-certificate
+    secretName: nginx-ingress-services-wildcard-tls-certificate
 {{- end }}
   rules:
     - host: {{ .Values.config.dns.https }}

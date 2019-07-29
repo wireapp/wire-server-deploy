@@ -44,11 +44,12 @@ set -ex
 echo "NAMESPACE = $NAMESPACE"
 
 phase_0_charts_metallb=( metallb )
+phase_0_charts_ingress_controller=( nginx-ingress-controller )
 phase_1_charts_pre=( fake-aws databases-ephemeral demo-smtp )
 phase_2_charts_main=( wire-server )
 # charts for ingress, creating ELB's and DNS records
-phase_3_charts_ingress=( nginx-lb-ingress )
-all_charts=( "${phase_0_charts_metallb[@]}" "${phase_1_charts_pre[@]}" "${phase_2_charts_main[@]}" "${phase_3_charts_ingress[@]}")
+phase_3_charts_ingress=( nginx-ingress-services )
+all_charts=( "${phase_0_charts_metallb[@]}" "${phase_0_charts_ingress_controller[@]}" "${phase_1_charts_pre[@]}" "${phase_2_charts_main[@]}" "${phase_3_charts_ingress[@]}")
 
 if [ "$updatedependencies" == true ] ; then
     # remove previous versions of helm charts, if any
@@ -69,6 +70,18 @@ if [ "$installloadbalancer" == true ] ; then
     helm upgrade --install --namespace metallb-system metallb \
         "${DIR}/charts/metallb" -f "${DIR}/values/metallb/${valuesfilename}" \
         --wait --timeout 1800
+fi
+
+# Make sure we have one ingress-controller
+if [ -f "${DIR}/values/${chart}/${valuesfilename}" ]; then
+    helm upgrade --install --namespace nginx-ingress-controller-system nginx-ingress-controller \
+        "${DIR}/charts/nginx-ingress-controller" \
+        -f "${DIR}/values/${chart}/${valuesfilename}" \
+        --wait --timeout 300
+else
+    helm upgrade --install --namespace nginx-ingress-controller-system nginx-ingress-controller \
+        "${DIR}/charts/nginx-ingress-controller" \
+        --wait --timeout 300
 fi
 
 for chart in "${phase_1_charts_pre[@]}"; do
