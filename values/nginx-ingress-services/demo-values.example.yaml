@@ -14,16 +14,3 @@ config:
     fakeS3: s3.example.com
     teamSettings: team.example.com
     accountPages: account.example.com
-
-nginx-ingress:
-  controller:
-    config:
-      proxy-buffer-size: "16k"
-      http2-max-field-size: "16k"
-      http2-max-header-size: "32k"
-    service:
-      type: NodePort
-      nodePorts:
-        # NOTE: This has to match the port forwarded from the firewall for SSL (443) and TCP (80)
-        https: 31773
-        http: 31772

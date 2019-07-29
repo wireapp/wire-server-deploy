@@ -1,6 +1,5 @@
-# Notes
-
-This helm chart does _NOT_ deploy an ingress controller! Ensure you already have one on your cluster.
+This helm chart is a helper to set up needed services, ingresses and (likely) secrets to access your cluster.
+It will _NOT_ deploy an ingress controller! Ensure you already have one on your cluster - or have a look at our [nginx-ingress-controller](../nginx-ingress-controller/README.md)
 
 If tls.enabled == true, then you need to supply 2 variables, `tlsWildcardCert` and `tlsWildcardKey` that could either be supplied as plain text in the form of a `-f path/to/secrets.yaml`, like this:
 

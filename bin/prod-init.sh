@@ -14,8 +14,9 @@ cp -v $VALUES_DIR/wire-server/{prod-values.example,values}.yaml
 cp -v $VALUES_DIR/wire-server/{prod-secrets.example,secrets}.yaml
 cp -v $VALUES_DIR/databases-ephemeral/{prod-values.example,values}.yaml
 cp -v $VALUES_DIR/fake-aws/{prod-values.example,values}.yaml
-cp -v $VALUES_DIR/nginx-lb-ingress/{prod-values.example,values}.yaml
-cp -v $VALUES_DIR/nginx-lb-ingress/{prod-secrets.example,secrets}.yaml
+cp -v $VALUES_DIR/nginx-ingress-controller/{prod-values.example,values}.yaml
+cp -v $VALUES_DIR/nginx-ingress-services/{prod-values.example,values}.yaml
+cp -v $VALUES_DIR/nginx-ingress-services/{prod-secrets.example,secrets}.yaml
 cp -v $VALUES_DIR/demo-smtp/{prod-values.example,values}.yaml
 
 #cp "$VALUES_DIR/cassandra-external/{prod-values.example,values}.yaml"
