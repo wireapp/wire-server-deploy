@@ -1,10 +1,10 @@
 kind: ClusterRoleBinding
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
-  name: reaper-role
+  name: {{ .Release.Namespace }}-reaper-role
 subjects:
 - kind: ServiceAccount
-  name: reaper-role
+  name: {{ .Release.Namespace }}-reaper-role
   namespace: {{ .Release.Namespace }}
 roleRef:
   kind: ClusterRole
@@ -14,4 +14,4 @@ roleRef:
 apiVersion: v1
 kind: ServiceAccount
 metadata:
-  name: reaper-role
+  name: {{ .Release.Namespace }}-reaper-role
