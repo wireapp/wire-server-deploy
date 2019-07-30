@@ -28,7 +28,4 @@ spec:
               AWS_SECRET_ACCESS_KEY={{ .Values.minio.secretKey }} AWS_ACCESS_KEY_ID={{ .Values.minio.accessKey }} aws s3 --endpoint http://{{ .Values.minio.fullnameOverride }}:9000 mb s3://{{ .Values.minio.defaultBucket.name }}
               sleep 10
           done
-      volumes:
-        - emptyDir: {}
-          name: "storage"
 
