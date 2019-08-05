@@ -41,6 +41,7 @@ nginx-ingress:
     #   kubernetes.io/hostname: <some-host>
     service:
       type: NodePort
+      externalTrafficPolicy: local
       nodePorts:
         # NOTE: This has to match the port forwarded from the firewall for SSL (443) and TCP (80)
         https: 31773
