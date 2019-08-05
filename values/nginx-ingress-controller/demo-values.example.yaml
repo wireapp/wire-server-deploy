@@ -28,7 +28,7 @@ nginx-ingress:
     kind: DaemonSet
     service:
       type: NodePort
-      externalTrafficPolicy: local
+      externalTrafficPolicy: Local
       nodePorts:
         # NOTE: This has to match the port forwarded from the firewall for SSL (443) and TCP (80)
         https: 31773
