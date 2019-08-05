@@ -1,5 +1,4 @@
 # Normally, NodePort will listen to traffic on all nodes, and uses
-#
 # kube-proxy to redirect to the node that actually runs
 # nginx-ingress-controller. However one problem with this is that this
 # traffic is NAT'ed. This means that nginx will not have access to the

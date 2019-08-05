@@ -18,6 +18,11 @@
 # requests and redirect them to the correct service, whilst maintaining the
 # source ip address.  The ingress controller is sort of taking over the
 # role of what kube-proxy was doing before.
+#
+# More information: 
+#   https://kubernetes.io/docs/tutorials/services/source-ip/#source-ip-for-services-with-typenodeport
+#   https://kubernetes.github.io/ingress-nginx/deploy/baremetal/
+#
 nginx-ingress:
   controller:
     kind: DaemonSet
