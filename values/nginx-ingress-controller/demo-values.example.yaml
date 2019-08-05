@@ -1,7 +1,29 @@
+# Normally, NodePort will listen to traffic on all nodes, and uses
+# kube-proxy to redirect to the node that actually runs
+# nginx-ingress-controller. However one problem with this is that this
+# traffic is NAT'ed. This means that nginx will not have access to the
+# source IP address from which the request originated.  We want to have
+# this source IP address for potentially logging and rate-limiting based on
+# it. By setting externalTrafficPolicy: local,  nodes will no longer
+# forward requests to other nodes if they receive a request that they
+# themselves can not handle. Upside is that the traffic is now not NAT'ed
+# anymore, and we get access to the source IP address. Downside is that you
+# need to know beforehand which nodes run a certain pod. However, with
+# kubernetes a pod can be rescheduled to any node at any time so we can not
+# trust this.  We could do something with node affinities to decide apriori
+# on what set of nodes will be publicly reachable and make sure the nginx
+# controller pods are only ran on there but for now that sounds a bit
+# overkill. Instead, we just simply run the ingress controller on each node
+# using a daemonset. This means that any node in the cluster can receive
+# requests and redirect them to the correct service, whilst maintaining the
+# source ip address.  The ingress controller is sort of taking over the
+# role of what kube-proxy was doing before.
 nginx-ingress:
   controller:
+    kind: DaemonSet
     service:
       type: NodePort
+      externalTrafficPolicy: local
       nodePorts:
         # NOTE: This has to match the port forwarded from the firewall for SSL (443) and TCP (80)
         https: 31773
