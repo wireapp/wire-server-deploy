@@ -59,9 +59,9 @@ config:
       retryAfter: 86400
     setRichInfoLimit: 5000
     setDefaultLocale: en
-    setMaxConvAndTeamSize: 128
-    setMaxTeamSize: 128
-    setMaxConvSize: 128
+    setMaxConvAndTeamSize: 500
+    setMaxTeamSize: 500
+    setMaxConvSize: 500
     setEmailVisibility: visible_to_self
   smtp:
     passwordFile: /etc/wire/brig/secrets/smtp-password.txt
