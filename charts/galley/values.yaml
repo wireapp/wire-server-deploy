@@ -19,6 +19,6 @@ config:
     host: aws-cassandra
     replicaCount: 3
   settings:
-    maxConvAndTeamSize: 128
-    maxTeamSize: 128
-    maxConvSize: 128
+    maxConvAndTeamSize: 500
+    maxTeamSize: 500
+    maxConvSize: 500
