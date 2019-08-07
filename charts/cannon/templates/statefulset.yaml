@@ -70,7 +70,7 @@ spec:
         - /bin/sh
         args:
         - -c
-        # e.g. cannon-0.cannon
+        # e.g. cannon-0.cannon.production
         - echo "${HOSTNAME}.{{ .Values.service.name }}.{{ .Release.Namespace }}" > /etc/wire/cannon/externalHost/host.txt
         volumeMounts:
         - name: empty
