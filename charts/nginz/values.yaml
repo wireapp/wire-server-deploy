@@ -284,6 +284,9 @@ nginx_conf:
       envs:
       - all
       disable_zauth: true
+    - path: ~* ^/teams/([^/]*)/features/([^/])*
+      envs:
+      - all
     gundeck:
     - path: /push
       envs:
