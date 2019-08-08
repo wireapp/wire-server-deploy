@@ -9,7 +9,7 @@ resources:
 images:
   nginzDisco:
     repository: quay.io/wire/nginz_disco
-    tag: latest
+    tag: 1.0.1
   nginz:
     repository: quay.io/wire/nginz
     tag: 2.58.0
