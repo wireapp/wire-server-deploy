@@ -161,6 +161,15 @@ data:
       setUserCookieThrottle:
         stdDev: {{ .setUserCookieThrottle.stdDev }}
         retryAfter: {{ .setUserCookieThrottle.retryAfter }}
+      {{- if .limitFailedLogins }}
+      limitFailedLogins:
+        timeout: {{ .limitFailedLogins.timeout }} # seconds.  if you reach the limit, how long do you have to wait to try again.
+        retryLimit: {{ .limitFailedLogins.retryLimit }}  # how many times can you have a failed login in that timeframe.
+      {{- end }}
+      {{- if .suspendInactiveUsers }}
+      suspendInactiveUsers:
+        suspendTimeout: {{ .suspendInactiveUsers.suspendTimeout }}
+      {{- end }}
       setRichInfoLimit: {{ .setRichInfoLimit }}
       setDefaultLocale: en
       setMaxTeamSize: {{ .setMaxTeamSize }}
