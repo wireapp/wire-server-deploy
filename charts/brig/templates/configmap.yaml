@@ -162,7 +162,7 @@ data:
         stdDev: {{ .setUserCookieThrottle.stdDev }}
         retryAfter: {{ .setUserCookieThrottle.retryAfter }}
       {{- if .setLimitFailedLogins }}
-      limitFailedLogins:
+      setLimitFailedLogins:
         timeout: {{ .limitFailedLogins.timeout }} # seconds.  if you reach the limit, how long do you have to wait to try again.
         retryLimit: {{ .limitFailedLogins.retryLimit }}  # how many times can you have a failed login in that timeframe.
       {{- end }}
