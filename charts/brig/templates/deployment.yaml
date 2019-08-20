@@ -25,6 +25,7 @@ spec:
       annotations:
         # An annotation of the configmap checksum ensures changes to the configmap cause a redeployment upon `helm upgrade`
         checksum/configmap: {{ include (print .Template.BasePath "/configmap.yaml") . | sha256sum }}
+        checksum/turnconfigmap: {{ include (print .Template.BasePath "/turnconfigmap.yaml") . | sha256sum }}
         checksum/secret: {{ include (print .Template.BasePath "/secret.yaml") . | sha256sum }}
     spec:
       volumes:
