@@ -86,19 +86,9 @@ Grafana's web UI. See [Accessing grafana](#accessing-grafana).
 
 It is advisable to separate your monitoring services from your application services.
 To accomplish this you may deploy `wire-server-metrics` into a separate namespace from
-`wire-server`. Simply provide a different namespace to the `helm upgrade --install` calls
-and adjust the following config option in your `values.yaml`:
+`wire-server`. Simply provide a different namespace to the `helm upgrade --install` calls.
 
-```yaml
-wire-server-metrics:
-  prometheus-operator:
-    prometheus:
-        rbac:
-        # Namespaces which may be monitored by prometheus
-        roleNamespaces:
-            - kube-system
-            - <my-wire-server-namespace>
-```
+This chart will monitor all wire services across _all_ namespaces.
 
 ## Using Custom Storage Classes
 
@@ -113,8 +103,8 @@ If you receive the following error:
 
 ```
 Error: validation failed: [unable to recognize "": no matches for kind "Alertmanager" in version
-"monitoring.coreos.com/v1", unable to recognize "": no matches for kind "Prometheus" in version 
-"monitoring.coreos.com/v1", unable to recognize "": no matches for kind "PrometheusRule" in version 
+"monitoring.coreos.com/v1", unable to recognize "": no matches for kind "Prometheus" in version
+"monitoring.coreos.com/v1", unable to recognize "": no matches for kind "PrometheusRule" in version
 ```
 
 Please run the script to install Custom Resource Definitions which is detailed in
@@ -145,11 +135,13 @@ If you wish to deploy monitoring without any persistent disk (not recommended)
 you may add the following overrides to your `values.yaml` file.
 
 ```yaml
-wire-server-metrics:
-  prometheus-operator:
-    grafana:
-      persistence:
-        enabled: false
+prometheus-operator:
+  grafana:
+    persistence:
+      enabled: false
+    extraEmptyDirMounts:
+      - name: dashboards-dir
+        mountPath: /var/lib/grafana/dashboards/default
   prometheusSpec:
     storageSpec: null
   alertmanager:
@@ -163,22 +155,21 @@ If you wish to use a different storage class (for instance if you don't run on A
 you may add the following overrides to your `values.yaml` file.
 
 ```yaml
-wire-server-metrics:
-  prometheus-operator:
-    grafana:
-      persistence:
+prometheus-operator:
+  grafana:
+    persistence:
+      storageClassName: "<my-storage-class>"
+prometheusSpec:
+  storageSpec:
+    volumeClaimTemplate:
+      spec:
         storageClassName: "<my-storage-class>"
-  prometheusSpec:
-    storageSpec: 
+alertmanager:
+  alertmanagerSpec:
+    storage:
       volumeClaimTemplate:
         spec:
           storageClassName: "<my-storage-class>"
-  alertmanager:
-    alertmanagerSpec:
-      storage:
-        volumeClaimTemplate:
-          spec:
-            storageClassName: "<my-storage-class>"
 ```
 
 ## Accessing grafana

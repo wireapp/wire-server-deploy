@@ -14,9 +14,9 @@ prometheus-operator:
               # between k8s and AWS services.
               - sourceLabels: [service]
                 targetLabel: role
+        # This monitors _all_ namespaces and selects all
+        # pods that with a wireServices selector
         namespaceSelector:
-          # The namespaces which we can monitor are still limited by the 
-          # `prometheus.rbac.roleNamespaces` rules
           any: true
         selector:
           matchExpressions:
@@ -52,7 +52,7 @@ prometheus-operator:
             options:
               path: /var/lib/grafana/dashboards/default
 
-    # TODO: Chart importing is broken for the time being; should be fixed in 
+    # TODO: Chart importing is broken for the time being; should be fixed in
     # a release soon.
     # REF: https://github.com/helm/charts/issues/12352
     #      https://github.com/helm/charts/pull/12512
@@ -91,7 +91,3 @@ prometheus-operator:
             resources:
               requests:
                 storage: 10Gi
-  coreDns:
-    enabled: false
-  kubeDns:
-    enabled: true
