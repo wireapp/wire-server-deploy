@@ -16,3 +16,5 @@ Once the chart is deployed, try to access the grafana dashboard
 ```
 kubectl -n <namespace> port-forward service/<name-of-the-grafana-service> 8080:80
 ```
+
+If all is well, `grafana` should be available locally at http://localhost:8080
