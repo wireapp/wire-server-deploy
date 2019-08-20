@@ -1,4 +1,11 @@
 prometheus-operator:
+  # Operator specifics
+  prometheusOperator:
+    # Don't try to create custom resource types; we prefer to do it manually
+    # Otherwise we run into race conditions when installing helm charts
+    createCustomResource: false
+
+  # Prometheus
   prometheus:
     additionalServiceMonitors:
       - name: wire-services
@@ -15,7 +22,7 @@ prometheus-operator:
               - sourceLabels: [service]
                 targetLabel: role
         namespaceSelector:
-          # The namespaces which we can monitor are still limited by the 
+          # The namespaces which we can monitor are still limited by the
           # `prometheus.rbac.roleNamespaces` rules
           any: true
         selector:
@@ -23,37 +30,61 @@ prometheus-operator:
             # select any pod with a 'wireService' label
             - key: wireService
               operator: Exists
+    # Example of AWS persistent storage for prometheus
+    # prometheusSpec:
+    #   storageSpec:
+    #     volumeClaimTemplate:
+    #       spec:
+    #         storageClassName: "aws-ebs-retained"
+    #         accessModes: ["ReadWriteOnce"]
+    #         resources:
+    #           requests:
+    #             storage: 10Gi
 
-  prometheusOperator:
-    # Don't try to create custom resource types; we prefer to do it manually
-    # Otherwise we run into race conditions when installing helm charts
-    createCustomResource: false
+  # Example of AWS persistent storage for the alertmanager
+  # alertmanager:
+  #   alertmanagerSpec:
+  #     storage:
+  #       volumeClaimTemplate:
+  #         spec:
+  #           storageClassName: "aws-ebs-retained"
+  #           accessModes: ["ReadWriteOnce"]
+  #           resources:
+  #             requests:
+  #               storage: 10Gi
 
-  grafana:
-    adminPassword: "admin"
-    ingress:
-      enabled: false
-    persistence:
-      storageClassName: "aws-ebs-retained"
-      enabled: true
-      accessModes: ["ReadWriteOnce"]
-      size: 10Gi
+  #
+  # grafana:
+  #   adminPassword: "admin"
+  #   Option 1. (no persistence, beware of data loss!)
+  #   Option 2.
+  # Example of AWS persistent storage for the alertmanager
+  #   persistence:
+  #     storageClassName: "aws-ebs-retained"
+  #     enabled: true
+  #     accessModes: ["ReadWriteOnce"]
+  #     size: 10Gi
+  #   # This can be useful if you have no persistence
+  #   extraEmptyDirMounts:
+  #     - /var/lib/grafana/dashboards
+  #   dashboardProviders:
+  #     dashboardproviders.yaml:
+  #       apiVersion: 1
+  #       providers:
+  #         - name: 'default'
+  #           orgId: 1
+  #           folder: ''
+  #           type: file
+  #           disableDeletion: false
+  #           editable: true
+  #           options:
+  #             # NOTE: Make sure this is writeable
+  #             # path: /var/lib/grafana/dashboards/default # some-other-path
 
-    dashboardProviders:
-      dashboardproviders.yaml:
-        apiVersion: 1
-        providers:
-          - name: 'default'
-            orgId: 1
-            folder: ''
-            type: file
-            disableDeletion: false
-            editable: true
-            options:
-              path: /var/lib/grafana/dashboards/default
-
-    # TODO: Chart importing is broken for the time being; should be fixed in 
+    # TODO: Chart importing is broken for the time being; should be fixed in
     # a release soon.
+    # NOTE: This should actually be fixed now but requires the latest helm
+    #       which has not been tested yet
     # REF: https://github.com/helm/charts/issues/12352
     #      https://github.com/helm/charts/pull/12512
     # dashboards:
@@ -71,26 +102,6 @@ prometheus-operator:
     #     gundeck:
     #       url: https://raw.githubusercontent.com/wireapp/wire-server-deploy/cp/prometheus-operator/charts/wire-server-metrics/dashboards/gundeck.json
 
-  prometheusSpec:
-    storageSpec:
-      volumeClaimTemplate:
-        spec:
-          storageClassName: "aws-ebs-retained"
-          accessModes: ["ReadWriteOnce"]
-          resources:
-            requests:
-              storage: 10Gi
-
-  alertmanager:
-    alertmanagerSpec:
-      storage:
-        volumeClaimTemplate:
-          spec:
-            storageClassName: "aws-ebs-retained"
-            accessModes: ["ReadWriteOnce"]
-            resources:
-              requests:
-                storage: 10Gi
   coreDns:
     enabled: false
   kubeDns:
