@@ -166,9 +166,9 @@ data:
         timeout: {{ .setLimitFailedLogins.timeout }} # seconds.  if you reach the limit, how long do you have to wait to try again.
         retryLimit: {{ .setLimitFailedLogins.retryLimit }}  # how many times can you have a failed login in that timeframe.
       {{- end }}
-      {{- if .suspendInactiveUsers }}
-      suspendInactiveUsers:
-        suspendTimeout: {{ .suspendInactiveUsers.suspendTimeout }}
+      {{- if .setSuspendInactiveUsers }}
+      setSuspendInactiveUsers:
+        suspendTimeout: {{ .setSuspendInactiveUsers.suspendTimeout }}
       {{- end }}
       setRichInfoLimit: {{ .setRichInfoLimit }}
       setDefaultLocale: en
