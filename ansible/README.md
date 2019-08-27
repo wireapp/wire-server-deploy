@@ -44,9 +44,9 @@ work-in-progress
 This document assumes
 
 * a bare-metal setup (no cloud provider)
-* a production setup where 30 minutes of downtime is unacceptable
+* a production SLA where 30 minutes of downtime is unacceptable
 * about 1000 active users
-* all VMs run ubuntu 16.04 or ubuntu 18.04
+* all machines run ubuntu 16.04 or ubuntu 18.04
 
 ## Dependencies
 
@@ -63,7 +63,6 @@ ln -s /usr/bin/python2.7 $HOME/.poetry/bin/python
 ```
 
 * Install the python dependencies to run ansible.
-
 ```
 git clone https://github.com/wireapp/wire-server-deploy.git
 cd wire-server-deploy/ansible
@@ -73,7 +72,6 @@ poetry install
 ```
 
 * download the ansible roles necessary to install databases and kubernetes
-
 ```
 make download
 ```
@@ -95,7 +93,7 @@ It's up to you how you create these VMs - kvm on a bare metal machine, VM on a c
 
 Ensure that your VMs have IP addresses that do not change.
 
-## Configuring virtual machines
+## Preparing to run ansible
 
 ### All VMs
 
@@ -103,26 +101,55 @@ Copy the example hosts file:
 
 `cp hosts.example.ini hosts.ini`
 
-* replace the `ansible_host` values (`X.X.X.X`) with the IPs that you can reach by SSH.
-* replace the `ip` values (`Y.Y.Y.Y`) with the IPs which you wish kubernetes to provide services on.
+* Edit the hosts.ini, setting the permanent IPs of the hosts you are setting up wire on. 
+ * replace the `ansible_host` values (`X.X.X.X`) with the IPs that you can reach by SSH. these are the 'internal' addresses of the machines, not what a client will be connecting to.
+ * replace the `ip` values (`Y.Y.Y.Y`) with the IPs which you wish kubernetes to provide services to clients on.
+
+There are more settings in this file that we will set in later steps.
 
 #### WARNING: host re-use
 
-The playbooks mess with the hostnames of their targets.  You MUST pick different (virtual) hosts for the different playbooks.  If you e.g. want to run C* and k8s on the same 3 machines, the hostnames will be overwritten by the second installation playbook, corrupting the first.
+Some of these playbooks mess with the hostnames of their targets.  You MUST pick different hosts for playbooks that rename the host.  If you e.g. attempt to run Cassandra and k8s on the same 3 machines, the hostnames will be overwritten by the second installation playbook, corrupting the first.
+
+At the least, we know that the cassandra and kubernetes playbooks are both guilty of hostname manipulation.
 
 #### Authentication
 
-* if you want to use passwords:
-
+##### Password authentication
+* if you want to use passwords both for ansible authenticating to a machine, and for ansible to gain root priveledges:
 ```
 sudo apt install sshpass
 ```
+ * in hosts.ini, uncomment the 'ansible_user = ...' line, and change '...' to the user you want to login as.
+ * in hosts.ini, uncomment the 'ansible_ssh_pass = ...' line, and change '...' to the password for the user you are logging in as.
+ * in hosts.ini, uncomment the 'ansible_become_pass = ...' line, and change the ... to the password you'd enter to sudo.
 
-* in hosts.ini, uncomment the 'ansible_user = ...' line, and change '...' to the user you want to login as.
-* in hosts.ini, uncomment the 'ansible_ssh_pass = ...' line, and change '...' to the password for the user you are logging in as.
-* in hosts.ini, uncomment the 'ansible_become_pass = ...' line, and change the ... to the password you'd enter to sudo.
+##### Configuring SSH keys
+(from https://linoxide.com/how-tos/ssh-login-with-public-key/)
+If you want a bit higher security, you can copy SSH keys between the machine you are administrating with, and the machines you are managing with ansible.
 
-#### ansible pre-kubernetes
+* Create an SSH key.
+```
+ssh-keygen -t rsa
+```
+
+* Install your SSH key on each of the machines you are managing with ansible, so that you can SSH into them without a password:
+```
+ssh-copy-id -i ~/.ssh/id_rsa.pub $USERNAME@$IP
+```
+Replace `$USERNAME` with the username of the account you set up when you installed the machine.
+
+##### Sudo without password
+Ansible can be configured to use a password for switching from the unpriviledged $USERNAME to the root user. This involves having the password lying about, so has security problems.
+If you want ansible to not be prompted for any administrative command (a different security problem!):
+
+* As root on each of the nodes, add the following line at the end of the /etc/sudoers file:
+```
+<ANSIBLE_LOGIN_USERNAME>     ALL=(ALL) NOPASSWD:ALL
+```
+Replace `<ANSIBLE_LOGIN_USERNAME>` with the username of the account you set up when you installed the machine.
+
+#### Ansible pre-kubernetes
 Now that you have a working hosts.ini, and you can access the host, run any ansible scripts you need, in order for the nodes to have internet (proxy config, ssl certificates, etc).
 
 ### Installing kubernetes
