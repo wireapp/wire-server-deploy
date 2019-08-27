@@ -4,8 +4,6 @@ a (blacklist (path "/provider")
              (path "/bot/**")
              (path "/i/**"))
 
-u (whitelist (path "/access"))
-
 b (whitelist (path "/bot")
              (path "/bot/**"))
 
