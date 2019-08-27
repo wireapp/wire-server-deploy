@@ -12,3 +12,7 @@ b (whitelist (path "/bot")
 p (whitelist (path "/provider")
              (path "/provider/**"))
 
+# LegalHold Access Tokens
+la (whitelist (path "/notifications")
+              (path "/assets/v3/**")
+              (path "/users/**"))
