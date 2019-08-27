@@ -109,9 +109,9 @@ There are more settings in this file that we will set in later steps.
 
 #### WARNING: host re-use
 
-Some of these playbooks mess with the hostnames of their targets.  You MUST pick different (virtual) hosts playbooks that rename the host.  If you e.g. attempt to run Cassandra and k8s on the same 3 machines, the hostnames will be overwritten by the second installation playbook, corrupting the first.
+Some of these playbooks mess with the hostnames of their targets.  You MUST pick different hosts for playbooks that rename the host.  If you e.g. attempt to run Cassandra and k8s on the same 3 machines, the hostnames will be overwritten by the second installation playbook, corrupting the first.
 
-FIXME: what playbooks are guilty of this?
+At the least, we know that the cassandra and kubernetes playbooks are both guilty of hostname manipulation.
 
 #### Authentication
 
@@ -126,14 +126,14 @@ sudo apt install sshpass
 
 ##### Configuring SSH keys
 (from https://linoxide.com/how-tos/ssh-login-with-public-key/)
-If you want a bit higher security, you can copy SSH keys between your admin node, and your ansible nodes.
+If you want a bit higher security, you can copy SSH keys between the machine you are administrating with, and the machines you are managing with ansible.
 
-* On 'admin', create an SSH key.
+* Create an SSH key.
 ```
 ssh-keygen -t rsa
 ```
 
-* Install your SSH key on each of the kubenodes, so that you can SSH into them without a password:
+* Install your SSH key on each of the machines you are managing with ansible, so that you can SSH into them without a password:
 ```
 ssh-copy-id -i ~/.ssh/id_rsa.pub $USERNAME@$IP
 ```
