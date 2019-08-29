@@ -43,4 +43,9 @@ data:
       maxTeamSize: {{ .settings.maxTeamSize }}
       maxConvSize: {{ .settings.maxConvSize }}
       conversationCodeURI: {{ .settings.conversationCodeURI | quote }}
+      {{- if .settings.featureFlags }}
+      featureFlags:
+        sso: {{ .settings.featureFlags.sso }}
+        legalhold: {{ .settings.featureFlags.legalhold }}
+      {{- end }}
   {{- end }}
