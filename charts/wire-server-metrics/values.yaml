@@ -52,24 +52,15 @@ prometheus-operator:
             options:
               path: /var/lib/grafana/dashboards/default
 
-    # TODO: Chart importing is broken for the time being; should be fixed in
-    # a release soon.
-    # REF: https://github.com/helm/charts/issues/12352
-    #      https://github.com/helm/charts/pull/12512
-    # dashboards:
-    #   default:
-    #     # grafana can only access files from within its own chart directory
-    #     # which we don't have access to here; we can either dump the json
-    #     # directly into the values file, or load from a url
-
-    #     brig:
-    #       url: https://raw.githubusercontent.com/wireapp/wire-server-deploy/cp/prometheus-operator/charts/wire-server-metrics/dashboards/brig.json
-    #     cannon:
-    #       url: https://raw.githubusercontent.com/wireapp/wire-server-deploy/cp/prometheus-operator/charts/wire-server-metrics/dashboards/cannon.json
-    #     galley:
-    #       url: https://raw.githubusercontent.com/wireapp/wire-server-deploy/cp/prometheus-operator/charts/wire-server-metrics/dashboards/galley.json
-    #     gundeck:
-    #       url: https://raw.githubusercontent.com/wireapp/wire-server-deploy/cp/prometheus-operator/charts/wire-server-metrics/dashboards/gundeck.json
+    dashboards:
+      default:
+        # grafana can only access files from within its own chart directory
+        # which we don't have access to here; we can either dump the json
+        # directly into the values file, or load from a url
+        messages:
+          url: https://raw.githubusercontent.com/wireapp/wire-server-deploy/master/charts/wire-server-metrics/dashboards/message-stats.json
+        services:
+          url: https://raw.githubusercontent.com/wireapp/wire-server-deploy/master/charts/wire-server-metrics/dashboards/services.json
 
   prometheusSpec:
     storageSpec:
