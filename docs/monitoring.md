@@ -139,9 +139,6 @@ prometheus-operator:
   grafana:
     persistence:
       enabled: false
-    extraEmptyDirMounts:
-      - name: dashboards-dir
-        mountPath: /var/lib/grafana/dashboards/default
   prometheusSpec:
     storageSpec: null
   alertmanager:
