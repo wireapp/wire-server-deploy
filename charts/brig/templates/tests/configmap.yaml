@@ -21,7 +21,7 @@ data:
       port: 8080
 
     nginz:
-      host: nginz
+      host: nginz-integration-http
       port: 8080
 
     provider:
