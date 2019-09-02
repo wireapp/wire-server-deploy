@@ -159,17 +159,17 @@ prometheus-operator:
   grafana:
     persistence:
       storageClassName: "<my-storage-class>"
-prometheusSpec:
-  storageSpec:
-    volumeClaimTemplate:
-      spec:
-        storageClassName: "<my-storage-class>"
-alertmanager:
-  alertmanagerSpec:
-    storage:
+  prometheusSpec:
+    storageSpec:
       volumeClaimTemplate:
         spec:
           storageClassName: "<my-storage-class>"
+  alertmanager:
+    alertmanagerSpec:
+      storage:
+        volumeClaimTemplate:
+          spec:
+            storageClassName: "<my-storage-class>"
 ```
 
 ## Accessing grafana
