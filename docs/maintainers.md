@@ -5,7 +5,7 @@ Apart from the usual development setup, you'll additionally need [yq](https://gi
 For local development, instead of `helm install wire/<chart-name>`, use
 
 ```
-./bin/update.sh <chart-name> # this will clean and re-package subcharts
+./bin/update.sh ./charts/<chart-name> # this will clean and re-package subcharts
 helm install charts/<chart-name> # specify a local file path
 ```
 

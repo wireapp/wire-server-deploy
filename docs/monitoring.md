@@ -66,7 +66,7 @@ Now we can install the metrics chart; from the root of the `wire-server-deploy`
 repository run the following:
 
 ```
-./bin/update.sh charts/wire-server-metrics
+./bin/update.sh ./charts/wire-server-metrics
 helm upgrade --install demo-wire-server-metrics wire/wire-server-metrics \
     --namespace demo \
     --wait
