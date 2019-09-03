@@ -5,7 +5,9 @@ metadata:
 data:
   integration.yaml: |
     brig:
-      host: brig
+      # Full URL is set so that there can be a common cookiedomain between nginz and brig
+      # needed by some integration tests
+      host: brig.{{ .Release.Namespace }}.svc.cluster.local
       port: {{ .Values.service.internalPort }}
 
     cannon:
@@ -21,7 +23,9 @@ data:
       port: 8080
 
     nginz:
-      host: nginz-integration-http
+      # Full URL is set so that there can be a common cookiedomain between nginz and brig
+      # needed by some integration tests
+      host: nginz-integration-http.{{ .Release.Namespace }}.svc.cluster.local
       port: 8080
 
     provider:
