@@ -1,7 +1,7 @@
 replicaCount: 3
 image:
   repository: quay.io/wire/brig
-  tag: 2.58.0
+  tag: 2.59.0
 service:
   externalPort: 8080
   internalPort: 8080
@@ -41,12 +41,12 @@ config:
         support: https://support.wire.com/
   authSettings:
     keyIndex: 1
-    userTokenTimeout: 4838400           # 56 days
-    sessionTokenTimeout: 86400          # 1 day
-    accessTokenTimeout: 900             # 15 minutes
-    providerTokenTimeout: 900           # 15 minutes
-    legalholdUserTokenTimeout: 4838400  # 56 days
-    legalholdAccessTokenTimeout: 900    # 15 minutes
+    userTokenTimeout: 4838400
+    sessionTokenTimeout: 86400
+    accessTokenTimeout: 900
+    providerTokenTimeout: 900
+    legalholdUserTokenTimeout: 4838400
+    legalholdAccessTokenTimeout: 900
   optSettings:
     setActivationTimeout: 1209600
     setTeamInvitationTimeout: 1814400
