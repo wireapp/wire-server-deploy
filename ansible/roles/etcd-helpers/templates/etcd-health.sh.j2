@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+
+HOST={{ ansible_hostname }}
+
+etcdctl --endpoints https://127.0.0.1:2379 --ca-file=/etc/ssl/etcd/ssl/ca.pem --cert-file=/etc/ssl/etcd/ssl/member-$HOST.pem --key-file=/etc/ssl/etcd/ssl/member-$HOST-key.pem --debug cluster-health

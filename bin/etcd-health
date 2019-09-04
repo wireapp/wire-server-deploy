@@ -1,6 +1,0 @@
-#!/usr/bin/env bash
-
-# TODO move to ansible/files and put onto kubernetes nodes after installing kubernetes
-# TODO 2 - add to kubespray upstream, potentially.
-
-etcdctl --endpoints https://127.0.0.1:2379 --ca-file=/etc/ssl/etcd/ssl/ca.pem --cert-file=/etc/ssl/etcd/ssl/member-$(hostname).pem --key-file=/etc/ssl/etcd/ssl/member-$(hostname)-key.pem --debug cluster-health
