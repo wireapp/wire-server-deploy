@@ -1,8 +1,11 @@
 #!/usr/bin/env bash
 
+# Similar script to prod-setup.sh
+# This script can be used in an environment without access to public helm repositories
+
 set -e
 
-DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )/.." && pwd )"
+TOP_LEVEL_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )/../.." && pwd )"
 
 secretsfilename="secrets.yaml"
 valuesfilename="values.yaml"
@@ -31,16 +34,16 @@ function install_chart() {
     if [[ $external == 'external' ]]; then
         location="wire/${chart}"
     else
-        location="${DIR}/charts/${chart}"
+        location="${TOP_LEVEL_DIR}/charts/${chart}"
         $rebuild && (cd $location && helm dep build)
-        $online && ./bin/update.sh "$chart"
+        $online && "${TOP_LEVEL_DIR}/bin/update.sh" "$chart"
     fi
     if [ -n "$version" ]; then
         version="--version $version"
         echo "Instaling version $version"
     fi
-    valuesfile="${DIR}/values/${chart}/$valuesfilename"
-    secretsfile="${DIR}/values/${chart}/$secretsfilename"
+    valuesfile="${TOP_LEVEL_DIR}/values/${chart}/$valuesfilename"
+    secretsfile="${TOP_LEVEL_DIR}/values/${chart}/$secretsfilename"
     if [[ -f "$valuesfile" && -f "$secretsfile" ]]; then
         option="-f $valuesfile -f $secretsfile"
     elif [[ -f "$valuesfile" ]]; then
