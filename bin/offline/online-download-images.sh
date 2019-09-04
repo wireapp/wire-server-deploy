@@ -54,3 +54,15 @@ download account "$ACCOUNT_VERSION"
 
 # requires authentication!
 download team-settings "$TEAM_VERSION"
+
+set +x
+
+echo "Done downloading docker images."
+echo "You now have a folder $FOLDER"
+echo "You can transfer that folder, or optionally create a tar file first that you then transfer, e.g."
+echo "  tar -czvf $FOLDER.tgz $FOLDER"
+echo ""
+echo "On the target machine:"
+echo "1. (optionally:) uncompress using:   tar -xzvf $FOLDER.tgz"
+echo "2. cd $FOLDER"
+echo "3. ./$(basename "$LOAD_SCRIPT")"
