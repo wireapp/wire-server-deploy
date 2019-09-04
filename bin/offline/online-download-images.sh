@@ -2,10 +2,18 @@
 
 set -ex
 
+#####################################################
+# PLEASE UPDATE VERSIONS BELOW!
+#####################################################
+
 BACKEND_VERSION=2.60.0
 WEBAPP_VERSION="42720-0.1.0-64e6cb-v0.22.0-production"
 TEAM_VERSION="10562-2.8.0-9e1e59-v0.22.1-production"
 ACCOUNT_VERSION="242-2.0.1-c4282e-v0.20.4-production"
+
+###########################################################
+# You should not need to change the code below
+############################################################
 
 # prepare destination folder
 NOW=$(date +"%Y-%m-%d_%H-%M-%S")
