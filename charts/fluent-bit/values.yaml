@@ -4,4 +4,9 @@ fluent-bit:
     type: es
     es:
       host: elasticsearch-ephemeral
+  parsers:
+    json:
+      - extraEntries: |-
+         Decode_Field_As escaped_utf8 log do_next
+         Decode_Field_As json log
 
