@@ -50,10 +50,11 @@ This document assumes
 
 ## Dependencies
 
-* Install 'poetry' (python dependency management). See also the [poetry documentation](https://poetry.eustace.io/).
+### Poetry
+First, we're going to install [Poetry](https://poetry.eustace.io/). We'll be using it to run ansible playbooks later.
+These directions assume you're using python 2.7 (if you only have python3 available, you may need to find some workarounds):
 
-This assumes you're using python 2.7 (if you only have python3 available, you may need to find some workarounds):
-
+To install poetry:
 ```
 sudo apt install -y python2.7 python-pip
 curl -sSL https://raw.githubusercontent.com/sdispater/poetry/master/get-poetry.py > get-poetry.py
@@ -61,6 +62,8 @@ python2.7 get-poetry.py
 source $HOME/.poetry/env
 ln -s /usr/bin/python2.7 $HOME/.poetry/bin/python
 ```
+
+### Ansible
 
 * Install the python dependencies to run ansible.
 ```
@@ -76,7 +79,7 @@ poetry install
 make download
 ```
 
-## Provision virtual machines
+## Provisioning machines
 
 Create the following:
 
@@ -89,9 +92,9 @@ Create the following:
 | kubernetes    | 3      | 4   | 8 GB   | 20 GB  |
 | turn          | 2      | 1   | 2 GB   | 10 GB  |
 
-It's up to you how you create these VMs - kvm on a bare metal machine, VM on a cloud provider, etc. Make sure they run ubuntu 16.04/18.04.
+It's up to you how you create these VMs - kvm on a bare metal machine, VM on a cloud provider, a real physical machine. Make sure they run ubuntu 16.04/18.04.
 
-Ensure that your VMs have IP addresses that do not change.
+Ensure that the machines have IP addresses that do not change.
 
 ## Preparing to run ansible
 
