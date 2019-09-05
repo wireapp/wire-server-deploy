@@ -1,5 +1,19 @@
 #!/usr/bin/env bash
 
+# There are two bash scripts at work here:
+# the main script (the one you're reading) needs internet and does two things:
+# 1. pull and save multiple docker images from the internet and save them as tar files
+# 2. write another bash script
+#
+# The offline script can then, along with the docker tar files, be copied to an environment without internet
+# It then allows loading the docker images from the tar files into your environment,
+# and pushing them to a local docker registry that can work disconnected from the internet.
+# See also ansible/registry.yml for details on that setup.
+#
+# Usage: 1. edit version numbers in this script
+#        2. run this script
+#        3. follow the instructions printed at the end
+
 set -ex
 
 #####################################################
