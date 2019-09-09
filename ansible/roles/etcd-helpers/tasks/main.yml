@@ -1,0 +1,12 @@
+# TODO - add this task/role to kubespray upstream, potentially.
+#
+- name: Add etcd helper scripts
+  template:
+    src: "{{ item }}.j2"
+    dest: "{{ etcd_helpers_path }}/{{ item }}"
+    owner: root
+    group: root
+    mode: '0755'
+  with_items:
+    - etcd-health.sh
+    - etcdctl3.sh
