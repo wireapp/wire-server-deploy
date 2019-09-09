@@ -1,12 +1,12 @@
 # See defaults in https://github.com/helm/charts/tree/master/stable/fluent-bit
 fluent-bit:
+  logLevel: debug
   backend:
     type: es
     es:
       host: elasticsearch-ephemeral
   parsers:
-    json:
-      - extraEntries: |-
-         Decode_Field_As escaped_utf8 log do_next
-         Decode_Field_As json log
-
+    enabled: true
+    regex:
+      - name: nginz
+        regex: '^(?<remote_addr>[^ ]*) (?<remote_user>[^ ]*) "(?<thetime>[0-9\/a-zA-Z:]* [+][0-9]*)" "(?<request>.*)" (?<status>[0-9]*) (?<body_bytes_sent>[0-9]*) "(?<http_referer>[^ ])" "(?<http_user_agent>.*)" (?<http_x_forwarded_for>[^ ]*) (?<connection>[^ ]*) (?<request_time>[0-9.]*) (?<upstream_response_time>[0-9.]*) (?<upstream_cache_status>[^ ]*) (?<zauth_user>[^ ]*) (?<zauth_connection>[^ ]*) (?<request>[a-z0-9]*) (?<optional>[^ ]*)$'
