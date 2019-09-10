@@ -25,6 +25,28 @@ Note that since we are not specifying a release name during helm install, it gen
 $ helm install --namespace <namespace> wire/fluent-bit
 ```
 
+## Configuring fluent-bit
+Per pod-template, you can specify what parsers `fluent-bit` needs to use to interpret the pod's logs in a structured way.
+By default, it just parses them as plain text. But, you can change this using a pod annotation. E.g.:
+```
+apiVersion: v1
+kind: Pod
+metadata:
+  name: brig
+  labels:
+    app: brig
+  annotations:
+    fluentbit.io/parser: json
+spec:
+  containers:
+  - name: apache
+    image: edsiper/apache_logs
+```
+
+You can also define your own custom parsers in our `fluent-bit` chart's `values.yml`. For example, we have one defined for `nginz`.
+For more info, see : https://github.com/fluent/fluent-bit-docs/blob/master/filter/kubernetes.md#kubernetes-annotations
+
+
 Alternately, if there is already fluent-bit deployed in your environment, get the helm name for the deployment (verb-noun prepended to the pod name), and
 ```
 $ helm upgrade <helm-name> --namespace <namespace> wire/fluent-bit
