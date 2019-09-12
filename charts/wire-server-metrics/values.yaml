@@ -8,7 +8,7 @@ prometheus-operator:
         endpoints:
           - path: '/i/metrics'
             port: http
-            interval: 3m
+            interval: 10s
             metricRelabelings:
               # Rename 'service' to 'role' to allow sharing of grafana dashboards
               # between k8s and AWS services.
