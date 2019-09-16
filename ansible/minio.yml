@@ -50,3 +50,15 @@
       run_once: true
       when: bucket_name not in check_bucket.stdout
       tags: bucket-create
+
+    - name: "add local mc config alias"
+      shell: "mc config host add local http://localhost{{ layouts.layout1.minio_server_addr }} {{ minio_access_key }} {{ minio_secret_key }}"
+      tags: mc-config
+
+    - name: "remove dummy config aliases added by default"
+      shell: "mc config host rm {{ item }}"
+      with_items:
+        - gcs
+        - s3
+        - play
+      tags: mc-config
