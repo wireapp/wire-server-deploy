@@ -6,7 +6,7 @@ images:
     pullPolicy: IfNotPresent
   stern:
     repository: quay.io/wire/stern
-    tag: 2.59.0
+    tag: 2.62.0
     pullPolicy: IfNotPresent
 service:
   internalPort: 8080
