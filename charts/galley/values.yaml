@@ -23,6 +23,6 @@ config:
     maxConvAndTeamSize: 500
     maxTeamSize: 500
     maxConvSize: 500
-    featureFlags:
+    featureFlags:  # see #RefConfigOptions in `/docs/reference` (https://github.com/wireapp/wire-server/)
       sso: disabled-by-default
       legalhold: disabled-by-default
