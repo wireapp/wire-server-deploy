@@ -13,16 +13,21 @@
 set -eo pipefail
 
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+TOP_LEVEL_DIR=$SCRIPT_DIR/..
+CHART_DIR=$TOP_LEVEL_DIR/charts
+
+cd "$TOP_LEVEL_DIR"
 
 USAGE="Sync helm charts to S3. Usage: $0 to sync all charts or $0 <chartname> to sync only a single one. --force-push can be used to override S3 artifacts. --reindex can be used to force a complete reindexing in case the index is malformed."
 echo "$USAGE"
 chart_name=$1
 
 charts=(
-    $(find $SCRIPT_DIR/../charts/ -maxdepth 1 -type d | sed -n "s=$SCRIPT_DIR/../charts/\(.\+\)=\1 =p")
+    $(find $CHART_DIR/ -maxdepth 1 -type d | sed -n "s=$CHART_DIR/\(.\+\)=\1 =p")
 )
 
-if [ -n "$chart_name" ] && [ -d "$SCRIPT_DIR/../charts/$chart_name" ]; then
+# If ./sync.sh is run with a parameter, only synchronize one chart
+if [ -n "$chart_name" ] && [ -d "$CHART_DIR/$chart_name" ]; then
     echo "only syncing $chart_name"
     charts=( "$chart_name" )
 fi
@@ -63,8 +68,8 @@ helm repo add wire "$PUBLIC_URL"
 rm ./*.tgz &> /dev/null || true # clean any packaged files, if any
 for chart in "${charts[@]}"; do
     echo "Syncing chart $chart..."
-    "$SCRIPT_DIR/update.sh" "$chart"
-    helm package "charts/${chart}" && sync
+    "$SCRIPT_DIR/update.sh" "$CHART_DIR/$chart"
+    helm package "$CHART_DIR/${chart}" && sync
     tgz=$(ls "${chart}"-*.tgz)
     echo "syncing ${tgz}..."
     # Push the artifact only if it doesn't already exist
