@@ -16,6 +16,7 @@ TARGET_IFACE=$(route | grep default | awk '{print $8}')
 TARGET_HOST=$(/sbin/ifconfig $TARGET_IFACE | grep 'inet addr:' | cut -d: -f2 | awk '{ print $1}')
 
 if [[ ! -f hosts.ini ]]; then
+   curl -sSfL https://raw.githubusercontent.com/wireapp/wire-server-deploy/feature/simple-bootstrap/ansible/hosts.example-demo.ini > hosts.example-demo.ini
    cp hosts.example-demo.ini hosts.ini
    sed -i "s/X.X.X.X/$TARGET_HOST/g" hosts.ini
 fi
