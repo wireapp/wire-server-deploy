@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+mkdir /opt/admin
+cd /opt/admin
 mkdir -p ../admin_work_dir && cd ../admin_work_dir
 mkdir -p ../dot_ssh
 mkdir -p ../dot_kube
