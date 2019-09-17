@@ -21,4 +21,4 @@ if [[ ! -f hosts.ini ]]; then
    sed -i "s/X.X.X.X/$TARGET_HOST/g" hosts.ini
 fi
 
-poetry run ansible-playbook -i hosts.ini kubernetes.yaml
+poetry run ansible-playbook -i hosts.ini kubernetes.yml
