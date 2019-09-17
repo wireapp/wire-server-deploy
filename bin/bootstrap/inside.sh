@@ -22,3 +22,6 @@ if [[ ! -f hosts.ini ]]; then
 fi
 
 poetry run ansible-playbook -i hosts.ini kubernetes.yml
+
+echo "Great, kubernetes is up! Now follow the directions from:"
+echo "  https://docs.wire.com/how-to/install/helm.html"
