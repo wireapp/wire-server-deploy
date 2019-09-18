@@ -12,7 +12,6 @@
 
 set -eo pipefail
 
-
 USAGE="Sync helm charts to S3. Usage: $0 to sync all charts or $0 <chart-directory> to sync only a single one. --force-push can be used to override S3 artifacts. --reindex can be used to force a complete reindexing in case the index is malformed."
 
 branch=$(git rev-parse --abbrev-ref HEAD)
@@ -40,16 +39,14 @@ CHART_DIR=$TOP_LEVEL_DIR/charts
 cd "$TOP_LEVEL_DIR"
 
 chart_dir=$1
-chart_name=$(basename $chart_dir)
-
-charts=(
-    $(find $CHART_DIR/ -maxdepth 1 -type d | sed -n "s=$CHART_DIR/\(.\+\)=\1 =p")
-)
 
 # If ./sync.sh is run with a parameter, only synchronize one chart
-if [ -n "$chart_name" ] && [ -d "$CHART_DIR/$chart_name" ]; then
+if [ -n "$chart_dir" ] && [ -d "$chart_dir" ]; then
+    chart_name=$(basename $chart_dir)
     echo "only syncing $chart_name"
     charts=( "$chart_name" )
+else
+    charts=( $(find $CHART_DIR/ -maxdepth 1 -type d | sed -n "s=$CHART_DIR/\(.\+\)=\1 =p") )
 fi
 
 # install s3 plugin
