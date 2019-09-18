@@ -26,7 +26,7 @@ function write_versions() {
         sed -e "s/  version: \".*\"/  version: \"$target_version\"/g" requirements.yaml > "$tempfile" && mv "$tempfile" requirements.yaml
         deps=( $(helm dependency list | grep -v NAME | awk '{print $1}') )
         for dep in "${deps[@]}"; do
-            if [ -d "$CHART_DIR/$dep" ]; then
+            if [ -d "$CHART_DIR/$dep" ] && [ "$chart" != "$dep" ]; then
                 (cd "$CHART_DIR/$dep" && write_versions "$target_version")
             fi
         done
