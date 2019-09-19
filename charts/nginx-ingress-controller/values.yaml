@@ -9,10 +9,3 @@ nginx-ingress:
       http2-max-header-size: 32k
       proxy-buffer-size: 16k
       proxy-body-size: 1024m
-
-  # service:
-  #   type: NodePort
-  #   nodePorts:
-  #     # NOTE: This has to match the port forwarded from the firewall
-  #     https: 31773
-  #     http: 31772
