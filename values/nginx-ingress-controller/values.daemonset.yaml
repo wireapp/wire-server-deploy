@@ -43,6 +43,15 @@ nginx-ingress:
     # Or in ansible you can set the `node_labels` variable in a declarative way
     # https://github.com/kubernetes-sigs/kubespray/blob/master/docs/vars.md#other-service-variables
     #
+    # In your inventory file you could for example set:
+    #
+    # [ingress]
+    # mynode1
+    # mynode2
+    #
+    # [ingress:vars]
+    # node_labels = "wire.com/role=ingress"
+    #
     # If you have labelled the nodes that are fit for receiving ingress, you
     # can uncomment the following nodeSelector to make sure that only those
     # nodes actually have the ingress controller running:
