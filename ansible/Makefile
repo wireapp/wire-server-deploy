@@ -9,7 +9,7 @@ download-kubespray:
 	poetry run ansible-playbook -i localhost, -c local download_kubespray.yml
 
 .PHONY: download-cli-binaries
-download-cli-binaries:
+download-cli-binaries: download-ansible-roles
 	# assumes /usr/local/bin is writable and on your PATH
 	# assumes amd64 (change variables if needed)
 	poetry run ansible-playbook -i localhost, -c local download_cli_binaries.yml
