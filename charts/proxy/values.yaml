@@ -7,10 +7,10 @@ service:
   internalPort: 8080
 resources:
   requests:
-    memory: 128Mi
-    cpu: 100m
+    memory: "128Mi"
+    cpu: "100m"
   limits:
-    memory: 512Mi
-    cpu: 500m
+    memory: "512Mi"
+    cpu: "500m"
 config:
   logLevel: Debug
