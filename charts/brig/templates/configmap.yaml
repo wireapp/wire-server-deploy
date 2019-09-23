@@ -12,7 +12,7 @@ data:
   brig.yaml: |
     logNetStrings: True # log using netstrings encoding:
                         # http://cr.yp.to/proto/netstrings.txt
-    logFormat: {{ . logFormat }}
+    logFormat: {{ .logFormat }}
     logLevel: {{ .logLevel }}
 
     brig:
