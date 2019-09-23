@@ -2,14 +2,14 @@
 replicaCount: 1
 resources:
   requests:
-    memory: 256Mi
-    cpu: "0.5"
+    memory: "128Mi"
+    cpu: "100m"
   limits:
-    memory: 512Mi
+    memory: "512Mi"
     cpu: "1"
 image:
   repository: quay.io/wire/webapp
-  tag: 41491-0.1.0-9fe4de-v0.20.2-production
+  tag: 44421-0.1.0-e438dc-v0.24.0-production
 service:
   https:
     externalPort: 443
