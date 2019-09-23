@@ -15,6 +15,7 @@ resources:
     cpu: 500m
 config:
   logLevel: Debug
+  logFormat: JSON
   cassandra:
     host: aws-cassandra
     replicaCount: 3
