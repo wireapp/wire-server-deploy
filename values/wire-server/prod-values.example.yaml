@@ -82,7 +82,7 @@ cargohold:
   config:
     aws:
       # change if using real AWS
-      s3Bucket: dummy-bucket
+      s3Bucket: assets
       s3Endpoint: http://minio-external:9000
       s3DownloadEndpoint: https://s3.example.com
 
