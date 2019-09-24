@@ -36,7 +36,7 @@
     # Deeplink configuration section
     assetsURL: "https://{{ prefix }}s3.{{ domain }}"
     deeplink_config_json: "{{ assetsURL }}/public/deeplink.json"
-    blackListURL: "{{ assetsURL }}/public/blacklist.json"
+    blackListURL: "{{ assetsURL }}/public/blacklist/android"
     backendURL: "https://{{ prefix }}https.{{ domain }}"
     backendWSURL: "https://{{ prefix }}ssl.{{ domain }}"
     teamsURL: "https://{{ prefix }}team.{{ domain }}"
@@ -96,10 +96,28 @@
         - deeplink.json
       tags: deeplink
 
-    - name: "Add deeplink files"
+    - name: "Add deeplink files to minio"
       shell: "mc cp /tmp/{{ item }} local/public/{{ item }}"
       run_once: true
       with_items:
         - deeplink.html
         - deeplink.json
       tags: deeplink
+
+    - name: "create blacklist template files"
+      template:
+        src: "templates/minio/blacklist/{{ item }}"
+        dest: "/tmp/{{ item }}"
+      run_once: true
+      with_items:
+        - android.json
+        - ios.json
+      tags: blacklist
+
+    - name: "Add blacklist files to minio"
+      shell: "mc cp /tmp/{{ item }} local/public/blacklist/{{ item }}"
+      run_once: true
+      with_items:
+        - android.json
+        - ios.json
+      tags: blacklist
