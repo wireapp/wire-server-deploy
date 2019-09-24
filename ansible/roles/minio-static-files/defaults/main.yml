@@ -1,0 +1,24 @@
+# Deeplink configuration defaults
+#
+# This role requires the following variables to be set:
+#
+#prefix: example-
+#domain: example.com
+#deeplink_title: Example Environment
+
+assetsURL: "https://{{ prefix }}s3.{{ domain }}"
+deeplink_config_json: "{{ assetsURL }}/public/deeplink.json"
+backendURL: "https://{{ prefix }}https.{{ domain }}"
+backendWSURL: "https://{{ prefix }}ssl.{{ domain }}"
+teamsURL: "https://{{ prefix }}team.{{ domain }}"
+accountsURL: "https://{{ prefix }}account.{{ domain }}"
+
+# FUTUREWORK:
+# Note the website, for Wire, points to https://wire.com
+# There is currently no equivalent for custom backends
+# So all URLs in the mobile app that point to a url on the wire website will
+# not work, as the default of 'www' points nowhere.
+websiteURL: "https://{{ prefix }}www.{{ domain }}"
+
+# This currently assumes android clients only
+blackListURL: "{{ assetsURL }}/public/blacklist/android.json"
