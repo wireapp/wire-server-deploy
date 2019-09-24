@@ -14,7 +14,7 @@
     bucket_names:
       - "dummy-bucket"
       - "assets"
-      - "config"
+      - "public"
     layouts:
       # The first minio instance on this server.
       layout1:
@@ -55,11 +55,16 @@
       when: item not in check_bucket.stdout
       tags: bucket-create
 
-    - name: "add local mc config alias"
+    - name: "make the 'public' bucket world-accessible"
+      shell: "mc policy public local/public"
+      run_once: true
+      tags: bucket-create
+
+    - name: "add 'local' mc config alias with correct credentials"
       shell: "mc config host add local http://localhost{{ layouts.layout1.minio_server_addr }} {{ minio_access_key }} {{ minio_secret_key }}"
       tags: mc-config
 
-    - name: "remove dummy config aliases added by default"
+    - name: "remove unneeded config aliases added by default"
       shell: "mc config host rm {{ item }}"
       with_items:
         - gcs
