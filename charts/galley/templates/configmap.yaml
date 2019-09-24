@@ -8,7 +8,7 @@ data:
     logNetStrings: True # log using netstrings encoding:
                         # http://cr.yp.to/proto/netstrings.txt
     logLevel: {{ .logLevel }}
-    logFormat: { .logFormat }}
+    logFormat: {{ .logFormat }}
 
     galley:
       host: 0.0.0.0
