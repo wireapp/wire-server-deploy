@@ -10,6 +10,11 @@
   become: true
   gather_facts: true
   vars:
+    ########### Set these variables!
+    prefix: "example-"
+    domain: "example.com"
+    deeplink_title: "example.com environment"
+    ###########
     minio_server_env_extra: "MINIO_BROWSER=off"
     bucket_names:
       - "dummy-bucket"
@@ -28,6 +33,15 @@
         minio_server_addr: ":9092"
         minio_server_datadirs: "/var/lib/minio-server2"
         minio_server_envfile: "/etc/default/minio-server2"
+    # Deeplink configuration section
+    assetsURL: "https://{{ prefix }}s3.{{ domain }}"
+    deeplink_config_json: "{{ assetsURL }}/public/deeplink.json"
+    blackListURL: "{{ assetsURL }}/public/blacklist.json"
+    backendURL: "https://{{ prefix }}https.{{ domain }}"
+    backendWSURL: "https://{{ prefix }}ssl.{{ domain }}"
+    teamsURL: "https://{{ prefix }}team.{{ domain }}"
+    accountsURL: "https://{{ prefix }}account.{{ domain }}"
+    websiteURL: "https://{{ prefix }}www.{{ domain }}"
   roles:
     - role: ansible-minio
       layout: layout1
@@ -71,3 +85,21 @@
         - s3
         - play
       tags: mc-config
+
+    - name: "create deeplink template files"
+      template:
+        src: "templates/minio/{{ item }}"
+        dest: "/tmp/{{ item }}"
+      run_once: true
+      with_items:
+        - deeplink.html
+        - deeplink.json
+      tags: deeplink
+
+    - name: "Add deeplink files"
+      shell: "mc cp /tmp/{{ item }} local/public/{{ item }}"
+      run_once: true
+      with_items:
+        - deeplink.html
+        - deeplink.json
+      tags: deeplink
