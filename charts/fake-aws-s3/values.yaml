@@ -5,9 +5,15 @@ minio:
   secretKey: dummysecret
   persistence:
     enabled: false
-  defaultBucket:
-    enabled: true
-    name: dummy-bucket
-    purge: true
+  buckets:
+    - name: dummy-bucket
+      purge: true
+      policy: none
+    - name: assets
+      purge: false
+      policy: none
+    - name: public
+      purge: false
+      policy: public
   environment:
     MINIO_BROWSER: "off"
