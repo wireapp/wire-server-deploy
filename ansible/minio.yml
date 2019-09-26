@@ -71,3 +71,18 @@
         - s3
         - play
       tags: mc-config
+
+  # This play has to run after minio is installed and buckets are configured
+- hosts: minio
+  any_errors_fatal: true
+  become: true
+  gather_facts: true
+  tags: static-files
+  roles:
+    - role: minio-static-files
+      # Override these variables!
+      # FUTUREWORK: parse them from a configuration file shared with helm
+      # (as the domain needs to be known in helm override values.yaml)
+      prefix: "example-"
+      domain: "example.com"
+      deeplink_title: "example.com environment"
