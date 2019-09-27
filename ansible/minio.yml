@@ -55,14 +55,14 @@
       when: item not in check_bucket.stdout
       tags: bucket-create
 
-    - name: "make the 'public' bucket world-accessible"
-      shell: "mc policy public local/public"
-      run_once: true
-      tags: bucket-create
-
     - name: "add 'local' mc config alias with correct credentials"
       shell: "mc config host add local http://localhost{{ layouts.layout1.minio_server_addr }} {{ minio_access_key }} {{ minio_secret_key }}"
       tags: mc-config
+
+    - name: "make the 'public' bucket world-accessible"
+      shell: "mc policy set public local/public"
+      run_once: true
+      tags: bucket-create
 
     - name: "remove unneeded config aliases added by default"
       shell: "mc config host rm {{ item }}"
@@ -83,6 +83,6 @@
       # Override these variables!
       # FUTUREWORK: parse them from a configuration file shared with helm
       # (as the domain needs to be known in helm override values.yaml)
-      prefix: "example-"
-      domain: "example.com"
-      deeplink_title: "example.com environment"
+      prefix: "{{ minio_deeplink_prefix | default('example-') }}"
+      domain: "{{ minio_deeplink_domain | default('example.com') }}"
+      deeplink_title: "{{ minio_deeplink_domain | default('example.com environment') }}"
