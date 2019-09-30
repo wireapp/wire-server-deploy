@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+# See the README.md file next to this script for more information about this script and how it's used.
+
 mkdir /opt/admin
 cd /opt/admin
 mkdir -p ../admin_work_dir && cd ../admin_work_dir
@@ -22,7 +24,7 @@ sudo add-apt-repository -y ppa:projectatomic/ppa
 sudo apt-get update -qq
 sudo apt-get -qq -y install podman
 
-curl -sSfL https://raw.githubusercontent.com/wireapp/wire-server-deploy/feature/simple-bootstrap/bin/bootstrap/inside.sh > inside.sh
+curl -sSfL https://raw.githubusercontent.com/wireapp/wire-server-deploy/develop/bin/bootstrap/inside.sh > inside.sh
 chmod +x inside.sh
 
 podman run -it --network=host -v $(pwd):/mnt -v $(pwd)/../dot_ssh:/root/.ssh -v $(pwd)/../dot_kube:/root/.kube --entrypoint /mnt/inside.sh quay.io/wire/networkless-admin
