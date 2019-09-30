@@ -9,8 +9,8 @@ CERT_DIR="${SCRIPT_DIR}/certs"
 mkdir -p "$CERT_DIR"
 
 
-CA_cert=wire.com.crt
-CA_key=private.pem
+CA_cert=${2:?wire.com.crt}
+CA_key=${2:?private.pem}
 
 cd "$CERT_DIR" || exit
 
