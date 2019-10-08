@@ -42,7 +42,7 @@ service:
 #     https: nginz-https.<domain>
 #     ssl: nginz-ssl.<domain>
 #     webapp: webapp.<domain>
-#     fakeS3: s3.<domain>
+#     fakeS3: assets.<domain>
 #     teamSettings: teams.<domain>
 #     ^ teamSettings is ignored unless teamSettings.enabled == true
 #     accountPages: account.<domain>

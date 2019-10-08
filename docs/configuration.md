@@ -80,7 +80,7 @@ In case you're unfamiliar with the [helm documentation](https://docs.helm.sh/)
 * DNS records for the different exposed addresses (the ingress depends on the usage of virtual hosts), namely:
   * nginz-https.your-domain
   * nginz-ssl.your-domain
-  * s3.your-domain
+  * assets.your-domain
   * webapp.your-domain
   * teams.your-domain (optional)
   * account.your-domain (optional)

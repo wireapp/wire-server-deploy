@@ -69,7 +69,7 @@ cargohold:
       # change if using real AWS
       s3Bucket: dummy-bucket
       s3Endpoint: http://fake-aws-s3:9000
-      s3DownloadEndpoint: https://s3.example.com
+      s3DownloadEndpoint: https://assets.example.com
 
 galley:
   replicaCount: 1
