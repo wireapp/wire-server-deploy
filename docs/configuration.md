@@ -78,11 +78,12 @@ In case you're unfamiliar with the [helm documentation](https://docs.helm.sh/)
 
 * A kubernetes node with a _public_ IP address (or internal, if you do not plan to expose the Wire backend over the Internet but we will assume you are using a public IP address)
 * DNS records for the different exposed addresses (the ingress depends on the usage of virtual hosts), namely:
-  * bare-https.your-domain
-  * bare-ssl.your-domain
-  * bare-s3.your-domain
-  * bare-webapp.your-domain
-  * bare-team.your-domain (optional)
+  * nginz-https.your-domain
+  * nginz-ssl.your-domain
+  * s3.your-domain
+  * webapp.your-domain
+  * teams.your-domain (optional)
+  * account.your-domain (optional)
 * A wildcard certificate for the different hosts (*.your-domain) - we assume you want to do SSL termination on the ingress controller
 
 **Caveats**:

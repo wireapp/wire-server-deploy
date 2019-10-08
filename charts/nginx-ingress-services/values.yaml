@@ -39,13 +39,13 @@ service:
 # You will need to supply some DNS names, namely
 # config:
 #   dns:
-#     https: bare-https.<domain>
-#     ssl: bare-ssl.<domain>
-#     webapp: bare-webapp.<domain>
-#     fakeS3: bare-s3.<domain>
-#     teamSettings: bare-team.<domain>
+#     https: nginz-https.<domain>
+#     ssl: nginz-ssl.<domain>
+#     webapp: webapp.<domain>
+#     fakeS3: s3.<domain>
+#     teamSettings: teams.<domain>
 #     ^ teamSettings is ignored unless teamSettings.enabled == true
-#     accountPages: bare-account.<domain>
+#     accountPages: account.<domain>
 #     ^ accountPages is ignored unless accountPages.enabled == true
 # For TLS
 # secrets:
