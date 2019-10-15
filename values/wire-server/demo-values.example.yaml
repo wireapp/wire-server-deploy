@@ -69,7 +69,7 @@ cargohold:
       # change if using real AWS
       s3Bucket: dummy-bucket
       s3Endpoint: http://fake-aws-s3:9000
-      s3DownloadEndpoint: https://bare-s3.example.com
+      s3DownloadEndpoint: https://assets.example.com
 
 galley:
   replicaCount: 1
@@ -122,10 +122,10 @@ webapp:
   #   tag: # some-tag (only override if you want a newer/different version than what is in the chart)
   config:
     externalUrls:
-      backendRest: bare-https.example.com
-      backendWebsocket: bare-ssl.example.com
+      backendRest: nginz-https.example.com
+      backendWebsocket: nginz-ssl.example.com
       backendDomain: example.com
-      appHost: bare-webapp.example.com
+      appHost: webapp.example.com
 
 team-settings:
   replicaCount: 1
@@ -133,10 +133,10 @@ team-settings:
   #   tag: # some-tag (only override if you want a newer/different version than what is in the chart)
   config:
     externalUrls:
-      backendRest: bare-https.example.com
-      backendWebsocket: bare-ssl.example.com
+      backendRest: nginz-https.example.com
+      backendWebsocket: nginz-ssl.example.com
       backendDomain: example.com
-      appHost: bare-webapp.example.com
+      appHost: webapp.example.com
 
 account-pages:
   replicaCount: 1
@@ -144,6 +144,6 @@ account-pages:
   #   tag: # some-tag (only override if you want a newer/different version than what is in the chart)
   config:
     externalUrls:
-      backendRest: bare-https.example.com
+      backendRest: nginz-https.example.com
       backendDomain: example.com
-      appHost: bare-webapp.example.com
+      appHost: webapp.example.com
