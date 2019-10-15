@@ -12,8 +12,15 @@
 # registry01
 #
 # [all:vars]
+# FIXME: do we need an interface binding? we're abusing apache, and localhost.
 # registry_network_interface = eth0
-#
+# # the CA key on the registry host
+# registry_ca_cert = /home/wire/docker-squid4/mk-ca-cert/certs/wire.com.crt
+# registry_ca_key  = /home/wire/docker-squid4/mk-ca-cert/certs/private.pem
+# create_ca_cert = false
+# create_ca_domain = wire.com
+# contenthome = /home/wire/docker-squid4/docker-squid/docker_registry
+# registry_dns_name = proxybox.wire.com
 #
 # Be sure to run `docker login` from the registry node if you wish to mirror any private images.
 #
@@ -24,65 +31,55 @@
 - hosts: localhost
   gather_facts: false
   tasks:
-    - name: check CA certificate existance (run files/registry/mk-cert if this fails)
-      shell: ls files/registry/certs/wire.com.crt
+  - name: create_ca
+    command: "files/registry/mk-certs"
+    when: create_ca_cert
 
-    - name: check client certificate existance (run files/registry/mk-sub-cert if this fails)
-      shell: ls files/registry/certs/client.crt
+  - name: copy fake ca certificate
+    copy:
+      src: "files/registry/certs/{{ create_ca_domain }}.crt"
+      dest: "/usr/local/share/ca-certificates/{{ create_ca_domain }}/{{ create_ca_domain }}.crt"
+    when: create_ca_cert
 
 - hosts: registry
   tasks:
     - name: create dir
       file:
-        path: "{{ item }}"
+        path: "{{ contenthome }}{{ item }}"
         state: directory
       with_items:
         - /opt/registry
         - /opt/registry/certs
         - /mnt/registry
 
-    - name: copy cert files
-      copy:
-        src: "files/registry/certs/{{ item }}"
-        dest: "/opt/registry/certs/{{ item }}"
-      with_items:
-        - client.crt
-        - client.key
-
-    - name: copy bash
+    - name: copy bash scripts
       copy:
         src: files/registry/{{ item }}
-        dest: /opt/registry/{{ item }}
+        dest: {{ contenthome }}/opt/registry/{{ item }}
         mode: 0755
       with_items:
         - images.sh
+        - upload_image.sh
         - registry-run.sh
         - list_of_docker_images.txt
+        - mk-sub-certificate
+
+    - name: copy fake ca certificate
+      copy:
+        src: "files/registry/certs/{{ create_ca_domain }}.crt"
+        dest: "/usr/local/share/ca-certificates/{{ create_ca_domain }}/{{ create_ca_domain }}.crt"
+      when: create_ca_cert
+
+    - name: create sub certificate
+      command: "{{ contenthome }}/opt/registry/mk-sub-certificate proxybox.org {{ registry_ca_cert }} {{ registry_ca_key }}"
+      args:
+        chdir: "{{ contenthome }}/opt/registry"
 
 - hosts: k8s-cluster
   tags: trust
   vars:
-    cert_local_dir: "files/registry/certs"
-    cert_dir: "/usr/local/share/ca-certificates/wire.com"
-    cert_name: "wire.com.crt"
-    registry_dns_name: "{{ lookup('file', 'files/registry/certs/dns_name') }}"
   tasks:
     - debug: var=registry_dns_name
-
-    - name: create man-in-the-middle certificate directory
-      file:
-        path: "{{ cert_dir }}"
-        state: directory
-        mode: 0755
-
-    - name: copy certificate
-      copy:
-        src: "{{ cert_local_dir }}/{{ cert_name }}"
-        dest: "{{ cert_dir }}/{{ cert_name }}"
-        mode: 0644
-
-    - name: update ca certificates
-      shell: update-ca-certificates
 
     - name: Add IP/dns of registry and of upstream docker registries to /etc/hosts
       lineinfile:
