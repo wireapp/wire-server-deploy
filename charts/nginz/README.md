@@ -21,4 +21,4 @@ This only needs to be done when you wish to bypass normal authentication for som
 
 ## Sidecar container nginz-disco
 
-Due to nginx not supporting DNS names for its list of upstream servers (unless you pay extra), the [nginz-disco](https://github.com/wireapp/wire-server/tools/nginz-disco) container is a simple bash script to do DNS lookups and write the resulting IPs to a file. Nginz reloads on changes to this file.
+Due to nginx not supporting DNS names for its list of upstream servers (unless you pay extra), the [nginz-disco](https://github.com/wireapp/wire-server/tree/develop/tools/nginz_disco) container is a simple bash script to do DNS lookups and write the resulting IPs to a file. Nginz reloads on changes to this file.
