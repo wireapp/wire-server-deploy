@@ -1,7 +1,7 @@
 replicaCount: 3
 image:
   repository: quay.io/wire/spar
-  tag: 2.64.0
+  tag: 2.65.0
 resources:
   requests:
     memory: 256Mi

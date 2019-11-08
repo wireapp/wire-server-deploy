@@ -1,4 +1,4 @@
 apiVersion: v1
 description: Dummy ephemeral SES service (based on localstack)
 name: fake-aws-ses
-version: 0.75.0
+version: 0.76.0
