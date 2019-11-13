@@ -60,9 +60,9 @@
       tags: mc-config
 
     - name: "make the 'public' bucket world-accessible"
-      shell: "mc policy set public local/public"
+      shell: "mc policy public local/public"
       run_once: true
-      tags: bucket-create
+      tags: mc-config
 
     - name: "remove unneeded config aliases added by default"
       shell: "mc config host rm {{ item }}"
