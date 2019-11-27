@@ -11,3 +11,9 @@ Once the chart is installed, and given default values, you can access the fronte
 
  * kubectl port-forward svc/backoffice 8080:8080
  * Open your local browser at http://localhost:8080
+
+If you don't directly access your cluster from your machine, you can do the following (note the backoffice requires port 8080 to be used, but that port is already used by the API server of kubernetes, so use another port like 9999 as intermediate step):
+
+* in a terminal from a kubernetes-master node: `kubectl port-forward svc/backoffice 9999:8080`
+* from another terminal on your machine: `ssh <kubernetes-master> -L 8080:localhost:9999 -N`
+* Access your local browser on http://localhost:8080
