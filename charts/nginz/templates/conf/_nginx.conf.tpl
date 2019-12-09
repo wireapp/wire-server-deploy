@@ -51,8 +51,12 @@ http {
   #
   # Logging
   #
+  # Note sanitized_request:
+  # We allow passing access_token as query parameter for e.g. websockets
+  # However we do not want to log access tokens.
+  #
 
-  log_format custom_zeta '$remote_addr $remote_user "$time_local" "$request" $status $body_bytes_sent "$http_referer" "$http_user_agent" $http_x_forwarded_for $connection $request_time $upstream_response_time $upstream_cache_status $zauth_user $zauth_connection $request_id $proxy_protocol_addr';
+  log_format custom_zeta '$remote_addr $remote_user "$time_local" "$sanitized_request" $status $body_bytes_sent "$http_referer" "$http_user_agent" $http_x_forwarded_for $connection $request_time $upstream_response_time $upstream_cache_status $zauth_user $zauth_connection $request_id $proxy_protocol_addr';
   access_log /dev/stdout custom_zeta;
 
   #
@@ -222,6 +226,13 @@ http {
             {{- end }}
 
     location {{ $location.path }} {
+
+        # remove access_token from logs, see 'Note sanitized_request' above.
+        set $sanitized_request $request;
+        if ($sanitized_request ~ (.*)access_token=[^&]*(.*)) {
+            set $sanitized_request $1access_token=****$2;
+        }
+
             {{- if ($location.basic_auth) }}
         auth_basic "Restricted";
         auth_basic_user_file {{ $.Values.nginx_conf.basic_auth_file }};
