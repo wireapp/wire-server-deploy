@@ -5,11 +5,6 @@
 # https://aws.amazon.com/premiumsupport/knowledge-center/import-ssl-certificate-to-iam/
 #
 
-teamSettings:
-  enabled: false
-accountPages:
-  enabled: false
-
 ingress:
   webapp:
     https:
