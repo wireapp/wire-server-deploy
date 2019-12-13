@@ -1,4 +1,4 @@
-{{- if .Values.accountPages.enabled }}
+{{- if .Values.ingress.accountPages.enabled }}
 kind: Service
 apiVersion: v1
 metadata:
