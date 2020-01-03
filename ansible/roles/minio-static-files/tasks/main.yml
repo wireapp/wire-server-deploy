@@ -1,0 +1,35 @@
+- name: "create deeplink template files"
+  template:
+    src: "{{ item }}.j2"
+    dest: "/tmp/{{ item }}"
+  run_once: true
+  with_items:
+    - deeplink.html
+    - deeplink.json
+  tags: deeplink
+
+- name: "Add deeplink files to minio"
+  shell: "mc cp /tmp/{{ item }} local/public/{{ item }}"
+  run_once: true
+  with_items:
+    - deeplink.html
+    - deeplink.json
+  tags: deeplink
+
+- name: "copy blacklist files"
+  copy:
+    src: "{{ item }}"
+    dest: "/tmp/{{ item }}"
+  run_once: true
+  with_items:
+    - android.json
+    - ios.json
+  tags: blacklist
+
+- name: "Add blacklist files to minio"
+  shell: "mc cp /tmp/{{ item }} local/public/blacklist/{{ item }}"
+  run_once: true
+  with_items:
+    - android.json
+    - ios.json
+  tags: blacklist

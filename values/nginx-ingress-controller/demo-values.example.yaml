@@ -1,8 +1,0 @@
-nginx-ingress:
-  controller:
-    service:
-      type: NodePort
-      nodePorts:
-        # NOTE: This has to match the port forwarded from the firewall for SSL (443) and TCP (80)
-        https: 31773
-        http: 31772

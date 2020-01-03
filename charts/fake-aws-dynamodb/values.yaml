@@ -13,7 +13,7 @@ tables:
 resources:
   limits:
     cpu: "300m"
-    memory: 3000Mi
+    memory: "3000Mi"
   requests:
     cpu: "100m"
-    memory: 100Mi
+    memory: "100Mi"

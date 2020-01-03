@@ -4,11 +4,11 @@ cassandra-ephemeral:
     enabled: false
   resources:
     requests:
-      memory: 2.0Gi
-      cpu: 1
+      memory: "2.0Gi"
+      cpu: "1"
     limits:
-      memory: 4.0Gi
-      cpu: 4
+      memory: "4.0Gi"
+      cpu: "4"
   ## Change cassandra configuration paramaters below:
   ## ref: http://docs.datastax.com/en/cassandra/3.0/cassandra/configuration/configCassandra_yaml.html
   ## Recommended max heap size is 1/2 of system memory

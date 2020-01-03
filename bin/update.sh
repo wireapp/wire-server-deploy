@@ -1,12 +1,10 @@
 #!/usr/bin/env bash
 
-USAGE="download and bundle dependent helm charts: $0 <chart-directory>"
-chart=${1:?$USAGE}
-
-BASE_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )/.."
-CHARTS_DIR="$BASE_DIR/charts"
-
 set -e
+
+USAGE="download and bundle dependent helm charts: $0 <chart-directory>"
+dir=${1:?$USAGE}
+
 
 # nothing serves on localhost, remove that repo
 helm repo remove local 2&> /dev/null || true
@@ -31,4 +29,4 @@ helmDepUp () {
     fi
 }
 
-helmDepUp "${CHARTS_DIR}/${chart}"
+helmDepUp "$dir"

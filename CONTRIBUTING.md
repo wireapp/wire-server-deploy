@@ -12,7 +12,7 @@ If submitting pull requests, please follow these guidelines:
 
 * if you want to make larger changes, it might be best to first open an issue to discuss the change.
 * if helm charts are involved, 
-    * use the `./bin/update.sh <chart-name>` script, to ensure changes in a subchart (e.g. brig) are correctly propagated to the parent chart (e.g. wire-server) before linting or installing.
+    * use the `./bin/update.sh ./charts/<chart-name>` script, to ensure changes in a subchart (e.g. brig) are correctly propagated to the parent chart (e.g. wire-server) before linting or installing.
     * ensure they pass linting, you can check with `helm lint -f path/to/extra/values-file.yaml charts/mychart`. 
     * If you can, try to also install the chart to see if they work the way you intended.
 

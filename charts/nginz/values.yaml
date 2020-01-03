@@ -1,10 +1,10 @@
 replicaCount: 3
 resources:
   requests:
-    memory: 256Mi
-    cpu: "0.5"
+    memory: "256Mi"
+    cpu: "100m"
   limits:
-    memory: 1024Mi
+    memory: "1024Mi"
     cpu: "2"
 images:
   nginzDisco:

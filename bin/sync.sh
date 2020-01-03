@@ -12,19 +12,41 @@
 
 set -eo pipefail
 
+USAGE="Sync helm charts to S3. Usage: $0 to sync all charts or $0 <chart-directory> to sync only a single one. --force-push can be used to override S3 artifacts. --reindex can be used to force a complete reindexing in case the index is malformed."
+
+branch=$(git rev-parse --abbrev-ref HEAD)
+if [ $branch == "master" ]; then
+    PUBLIC_DIR="charts"
+    REPO_NAME="wire"
+elif [ $branch == "develop" ]; then
+    PUBLIC_DIR="charts-develop"
+    REPO_NAME="wire-develop"
+else
+    echo "You are not on master or develop. Synchronizing charts on a custom branch will push them to the charts-custom helm repository in order not to interfere with versioning on master/develop."
+    read -p "Are you sure you want to push to charts-custom? [yN] " -n 1 -r
+    echo
+    if [[ ! $REPLY =~ ^[Yy]$ ]]
+    then
+        exit 1
+    fi
+    PUBLIC_DIR="charts-custom"
+    REPO_NAME="wire-custom"
+fi
+
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+TOP_LEVEL_DIR=$SCRIPT_DIR/..
+CHART_DIR=$TOP_LEVEL_DIR/charts
+cd "$TOP_LEVEL_DIR"
 
-USAGE="Sync helm charts to S3. Usage: $0 to sync all charts or $0 <chartname> to sync only a single one. --force-push can be used to override S3 artifacts. --reindex can be used to force a complete reindexing in case the index is malformed."
-echo "$USAGE"
-chart_name=$1
+chart_dir=$1
 
-charts=(
-    $(find $SCRIPT_DIR/../charts/ -maxdepth 1 -type d | sed -n "s=$SCRIPT_DIR/../charts/\(.\+\)=\1 =p")
-)
-
-if [ -n "$chart_name" ] && [ -d "$SCRIPT_DIR/../charts/$chart_name" ]; then
+# If ./sync.sh is run with a parameter, only synchronize one chart
+if [ -n "$chart_dir" ] && [ -d "$chart_dir" ]; then
+    chart_name=$(basename $chart_dir)
     echo "only syncing $chart_name"
     charts=( "$chart_name" )
+else
+    charts=( $(find $CHART_DIR/ -maxdepth 1 -type d | sed -n "s=$CHART_DIR/\(.\+\)=\1 =p") )
 fi
 
 # install s3 plugin
@@ -46,8 +68,8 @@ fi
 
 # index/sync charts to S3
 export AWS_REGION=eu-west-1
-PUBLIC_DIR="charts"
 
+# PUBLIC_DIR is set to 'charts' for master or 'charts-develop' for develop above.
 S3_URL="s3://public.wire.com/$PUBLIC_DIR"
 PUBLIC_URL="https://s3-eu-west-1.amazonaws.com/public.wire.com/$PUBLIC_DIR"
 
@@ -58,13 +80,13 @@ if ! aws s3api head-object --bucket public.wire.com --key "$PUBLIC_DIR/index.yam
 fi
 
 helm repo add "$PUBLIC_DIR" "$S3_URL"
-helm repo add wire "$PUBLIC_URL"
+helm repo add "$REPO_NAME" "$PUBLIC_URL"
 
 rm ./*.tgz &> /dev/null || true # clean any packaged files, if any
 for chart in "${charts[@]}"; do
     echo "Syncing chart $chart..."
-    "$SCRIPT_DIR/update.sh" "$chart"
-    helm package "charts/${chart}" && sync
+    "$SCRIPT_DIR/update.sh" "$CHART_DIR/$chart"
+    helm package "$CHART_DIR/${chart}" && sync
     tgz=$(ls "${chart}"-*.tgz)
     echo "syncing ${tgz}..."
     # Push the artifact only if it doesn't already exist
@@ -89,11 +111,11 @@ if [[ $1 == *--reindex* || $2 == *--reindex* || $3 == *--reindex* ]]; then
     # update local cache with newly pushed charts
     helm repo update
     # see all results
-    helm search wire/ -l
+    helm search "$REPO_NAME/" -l
 else
     # update local cache with newly pushed charts
     helm repo update
-    printf "\n--> Not reindexing by default. Pass the --reindex flag in case the index.yaml is incomplete. See all wire charts using \n helm search wire/ -l\n\n"
+    printf "\n--> Not reindexing by default. Pass the --reindex flag in case the index.yaml is incomplete. See all wire charts using \n helm search $REPO_NAME/ -l\n\n"
 fi
 
 
