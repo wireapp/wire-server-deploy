@@ -1,9 +1,9 @@
 # Default values for nginx-ingress-services
 
-# Team settings and account pages are disabled by default since they
-# require access to a private repo.
+# Team settings is disabled by default since it requires access to a private repo.
 teamSettings:
   enabled: false
+# Account pages may be useful to enable password reset or email validation done after the initial registration
 accountPages:
   enabled: false
 
