@@ -1,5 +1,6 @@
 [all]
 ${connection_strings_node}
+${connection_strings_etcd}
 ${connection_strings_minio}
 ${connection_strings_elasticsearch}
 ${connection_strings_cassandra}
