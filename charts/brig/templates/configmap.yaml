@@ -176,5 +176,11 @@ data:
       setMaxTeamSize: {{ .setMaxTeamSize }}
       setMaxConvSize: {{ .setMaxConvSize }}
       setEmailVisibility: {{ .setEmailVisibility }}
+      setPropertyMaxKeyLen: {{ .setPropertyMaxKeyLen }}
+      setPropertyMaxValueLen: {{ .setPropertyMaxValueLen }}
+      setDeleteThrottleMillis: {{ .setDeleteThrottleMillis }}
+      {{- if .setSearchSameTeamOnly }}
+      setSearchSameTeamOnly: {{ .setSearchSameTeamOnly }}
+      {{- end }}
     {{- end }}
   {{- end }}
