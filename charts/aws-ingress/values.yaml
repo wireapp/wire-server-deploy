@@ -4,13 +4,14 @@
 # corresponding certificates uploaded, see
 # https://aws.amazon.com/premiumsupport/knowledge-center/import-ssl-certificate-to-iam/
 #
+
 ingress:
   webapp:
     https:
       externalPort: 443
       sslCert: arn:aws:iam::00000-accountnumber-00000:server-certificate/example.com
       sslPolicy: ELBSecurityPolicy-TLS-1-2-2017-01
-      hostname: <prefix>-webapp-https.<domain>
+      hostname: webapp.example.com
       ttl: 300
     http:
       webappPort: 8080
@@ -19,7 +20,7 @@ ingress:
       externalPort: 443
       sslCert: arn:aws:iam::00000-accountnumber-00000:server-certificate/example.com
       sslPolicy: ELBSecurityPolicy-TLS-1-2-2017-01
-      hostname: <prefix>-nginz-https.<domain>
+      hostname: nginz-https.example.com
       ttl: 300
     http:
       httpPort: 8080
@@ -27,7 +28,7 @@ ingress:
       externalPort: 443
       sslCert: arn:aws:iam::00000-accountnumber-00000:server-certificate/example.com
       sslPolicy: ELBSecurityPolicy-TLS-1-2-2017-01
-      hostname: <prefix>-webapp-https.<domain>
+      hostname: nginz-ssl.example.com
       ttl: 300
     ws:
       wsPort: 8081
@@ -37,10 +38,28 @@ ingress:
       externalPort: 443
       sslCert: arn:aws:iam::00000-accountnumber-00000:server-certificate/example.com
       sslPolicy: ELBSecurityPolicy-TLS-1-2-2017-01
-      hostname: <prefix>-s3-https.<domain>
+      hostname: assets.example.com
       ttl: 300
     http:
       s3Port: 9000
     selector:
       key: app
       value: minio # (currently) fake-aws-s3 chart uses 'minio', minio-external chart uses 'minio-external'
+  teamSettings:
+    https:
+      externalPort: 443
+      sslCert: arn:aws:iam::00000-accountnumber-00000:server-certificate/example.com
+      sslPolicy: ELBSecurityPolicy-TLS-1-2-2017-01
+      hostname: teams.example.com
+      ttl: 300
+    http:
+      teamSettingsPort: 8080
+  accountPages:
+    https:
+      externalPort: 443
+      sslCert: arn:aws:iam::00000-accountnumber-00000:server-certificate/example.com
+      sslPolicy: ELBSecurityPolicy-TLS-1-2-2017-01
+      hostname: account.example.com
+      ttl: 300
+    http:
+      accountPagesPort: 8080

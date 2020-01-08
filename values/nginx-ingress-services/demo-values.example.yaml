@@ -12,5 +12,5 @@ config:
     ssl: nginz-ssl.example.com
     webapp: webapp.example.com
     fakeS3: assets.example.com
-    teamSettings: team.example.com
+    teamSettings: teams.example.com
     accountPages: account.example.com
