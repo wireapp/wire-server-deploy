@@ -1,5 +1,5 @@
 # download a specific version of kubespray
-# Note: installing it via ansible-galaxy would re-arranges its content (roles/etcd is misplaced)
+# Note: installing it via ansible-galaxy would re-arrange its content (roles/etcd is misplaced)
 #       the reason for this behaviour is yet to be known
 # Usage: see Makefile
 - name: download kubespray
