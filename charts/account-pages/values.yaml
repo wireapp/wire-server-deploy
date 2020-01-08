@@ -33,6 +33,8 @@ envVars: {}
 # envVars:
 #   FEATURE_ENABLE_DEBUG: "true"
 #   You are likely to need at least following CSP headers
+#   due to the fact that you are likely to do cross sub-domain requests
+#   i.e., from account.example.com to nginz-https.example.com
 #   CSP_EXTRA_CONNECT_SRC: "https://*.example.com, wss://*.example.com"
 #   CSP_EXTRA_IMG_SRC: "https://*.example.com"
 #   CSP_EXTRA_SCRIPT_SRC: "https://*.example.com"
