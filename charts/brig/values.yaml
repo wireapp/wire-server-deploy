@@ -64,6 +64,9 @@ config:
     setMaxTeamSize: 500
     setMaxConvSize: 500
     setEmailVisibility: visible_to_self
+    setPropertyMaxKeyLen: 1024
+    setPropertyMaxValueLen: 524288
+    setDeleteThrottleMillis: 100
   smtp:
     passwordFile: /etc/wire/brig/secrets/smtp-password.txt
 turnStatic:
