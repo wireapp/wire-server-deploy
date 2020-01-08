@@ -67,6 +67,8 @@ config:
     setPropertyMaxKeyLen: 1024
     setPropertyMaxValueLen: 524288
     setDeleteThrottleMillis: 100
+    # Allow search within same team only. Default: false
+    # setSearchSameTeamOnly: false|true
   smtp:
     passwordFile: /etc/wire/brig/secrets/smtp-password.txt
 turnStatic:
