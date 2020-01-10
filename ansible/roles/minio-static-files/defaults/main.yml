@@ -6,7 +6,7 @@
 #domain: example.com
 #deeplink_title: Example Environment
 
-assetsURL: "https://{{ prefix }}s3.{{ domain }}"
+assetsURL: "https://{{ prefix }}assets.{{ domain }}"
 deeplink_config_json: "{{ assetsURL }}/public/deeplink.json"
 backendURL: "https://{{ prefix }}https.{{ domain }}"
 backendWSURL: "https://{{ prefix }}ssl.{{ domain }}"

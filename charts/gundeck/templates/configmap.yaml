@@ -41,4 +41,7 @@ data:
       httpPoolSize: 1024
       notificationTTL: 2419200
       bulkPush: {{ .bulkPush }}
+      maxConcurrentNativePushes:
+        soft: 1000
+        # hard: 30  # more than this number of threads will not be allowed
   {{- end }}

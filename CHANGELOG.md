@@ -1,3 +1,30 @@
+# 2020-01-09
+
+## Features
+
+ - Helm charts:
+   - gundeck: set soft limit to active max concurrent push metrics (#165)
+   - backoffice: add missing backoffice second pod to offline download (#166)
+   - nginz: sanitize access tokens from logs (#169)
+   - brig: branding defaults to simplify customization (#168)
+   - brig: added new config options (#173)
+   - aws-ingress: added team settings and account pages (#42)
+   - team-settings: updated to latest app (#175)
+   - webapp: updated to latest app (#175)
+   - account-pages: updated to latest app (#175)
+
+## Other updates
+- Standardise docs to use example.com everywhere (#161, #172)
+- Cleaned up and moved docs around to wire-docs (#157)
+
+## Breaking changes / known issues when upgrading
+
+- None known
+
+## Bug fixes
+- Minor mc usage fix for minio
+
+
 # 2019-09-30 #162
 
 ## Features

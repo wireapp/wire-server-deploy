@@ -43,6 +43,18 @@ brig:
       general:
         emailSender: email@example.com # change this
         smsSender: "insert-sms-sender-for-twilio" # change this if SMS support is desired
+        templateBranding: # change all of these, they are used in emails
+          brand: Wire
+          brandUrl: https://wire.com
+          brandLabel: wire.com
+          brandLabelUrl: https://wire.com
+          brandLogoUrl: https://wire.com/p/img/email/logo-email-black.png
+          brandService: Wire Service Provider
+          copyright: © WIRE SWISS GmbH
+          misuse: misuse@wire.com
+          legal: https://wire.com/legal/
+          forgot: https://wire.com/forgot/
+          support: https://support.wire.com/
       user:
         passwordResetUrl: https://account.example.com/reset/?key=${key}&code=${code}
         activationUrl: https://account.example.com/verify/?key=${key}&code=${code}
@@ -84,7 +96,7 @@ cargohold:
       # change if using real AWS
       s3Bucket: assets
       s3Endpoint: http://minio-external:9000
-      s3DownloadEndpoint: https://s3.example.com
+      s3DownloadEndpoint: https://assets.example.com
 
 galley:
   replicaCount: 3

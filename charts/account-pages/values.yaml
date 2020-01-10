@@ -9,7 +9,7 @@ resources:
     cpu: "1"
 image:
   repository: quay.io/wire/account
-  tag: 242-2.0.1-c4282e-v0.20.4-production
+  tag: 2124-2.0.2-df000b-v0.24.26-production
 service:
   https:
     externalPort: 443
@@ -20,9 +20,9 @@ service:
 
 #config:
 #  externalUrls:
-#   backendRest: <nginz-subdomain-https.your.domain>
-#   backendDomain: <your.domain>
-#   appHost: <account-pages-subdomain.your.domain>
+#   backendRest: nginz-https.example.com
+#   backendWebsocket: nginz-ssl.example.com
+#   appHost: account.example.com
 #
 # Some relevant environment options, have a look at
 # https://github.com/wireapp/wire-account/wiki/Self-hosting
@@ -32,4 +32,18 @@ envVars: {}
 # E.g.
 # envVars:
 #   FEATURE_ENABLE_DEBUG: "true"
-#
+#   You are likely to need at least following CSP headers
+#   due to the fact that you are likely to do cross sub-domain requests
+#   i.e., from account.example.com to nginz-https.example.com
+#   CSP_EXTRA_CONNECT_SRC: "https://*.example.com, wss://*.example.com"
+#   CSP_EXTRA_IMG_SRC: "https://*.example.com"
+#   CSP_EXTRA_SCRIPT_SRC: "https://*.example.com"
+#   CSP_EXTRA_DEFAULT_SRC: "https://*.example.com"
+#   CSP_EXTRA_FONT_SRC: "https://*.example.com"
+#   CSP_EXTRA_FRAME_SRC: "https://*.example.com"
+#   CSP_EXTRA_MANIFEST_SRC: "https://*.example.com"
+#   CSP_EXTRA_OBJECT_SRC: "https://*.example.com"
+#   CSP_EXTRA_MEDIA_SRC: "https://*.example.com"
+#   CSP_EXTRA_PREFETCH_SRC: "https://*.example.com"
+#   CSP_EXTRA_STYLE_SRC: "https://*.example.com"
+#   CSP_EXTRA_WORKER_SRC: "https://*.example.com"
