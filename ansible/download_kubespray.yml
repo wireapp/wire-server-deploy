@@ -1,4 +1,6 @@
 # download a specific version of kubespray
+# Note: installing it via ansible-galaxy would re-arrange its content (roles/etcd is misplaced)
+#       the reason for this behaviour is yet to be known
 # Usage: see Makefile
 - name: download kubespray
   hosts: localhost
@@ -9,7 +11,7 @@
     # uses
     # kube_version = "v1.14.2"
     # helm_version = "v2.13.1"
-    # (if needed, these can be overridding in the hosts.ini under the [k8s-cluster:vars] section)
+    # (if needed, these can be overridden in the hosts.ini under the [k8s-cluster:vars] section)
     # also see download_cli_binaries.yml to see client-side versions of `kubectl` and `helm`.
     kubespray_version: e2f5a9748e4dbfe2fdba7931198b0b5f1f4bdc7e
   tasks:
