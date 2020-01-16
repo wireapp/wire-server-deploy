@@ -51,11 +51,13 @@ play: export PATH := $(MKFILE_DIR)/bin:$(PYTHON_MODULES_DIR)/bin:$(PATH)
 play: export PYTHONPATH = $(wildcard $(PYTHON_MODULES_DIR)/lib/python*)/site-packages
 play: export ANSIBLE_CONFIG = $(MKFILE_DIR)/ansible.cfg
 play: export ANSIBLE_ROLES_PATH = $(ANSIBLE_THIRDPARTY_ROLES):$(MKFILE_DIR)/roles
+play: export ANSIBLE_BECOME = no
 play:
 	ansible-playbook \
 		--inventory=localhost \
 		--connection=local \
 		--extra-vars="local_installation=True" \
+		$(MKFILE_DIR)/download_kubespray.yml \
 		$(MKFILE_DIR)/download_cli_binaries.yml
 
 .PHONY: clean

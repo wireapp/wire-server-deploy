@@ -34,15 +34,13 @@
     set_fact:
       kubectl_bin_directory: "{{ playbook_dir }}/bin"
       kubernetes_helm_bin_dir: "{{ playbook_dir }}/bin"
-      kubectl_owner: "{{ lookup('env', 'USER') }}"
-      kubectl_group: "{{ lookup('env', 'USER') }}"
     when: local_installation is defined and local_installation
   - name: ensure dir exists
     file:
       path: "{{ kubectl_bin_directory }}"
       state: directory
-      owner: "{{ kubectl_owner }}"
-      group: "{{ kubectl_owner }}"
+      owner: "{{ ansible_facts['user_uid'] }}"
+      group: "{{ ansible_facts['user_gid'] }}"
     when: local_installation is defined and local_installation
 
   roles:
