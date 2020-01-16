@@ -1,0 +1,12 @@
+ansible >=2.7.0, <2.8.0
+ansible-modules-hashivault
+boto
+dnspython
+netaddr >= 0.7
+boto3
+jinja2 >= 2.10.1
+pbr >=5.2.0, <6.0.0
+hvac >= 0.8
+jmespath >= 0.9.4
+ruamel.yaml >= 0.15.96
+PyYAML
