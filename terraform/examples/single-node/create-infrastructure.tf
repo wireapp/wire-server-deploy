@@ -14,7 +14,7 @@ provider "hcloud" {
 
 resource "hcloud_ssh_key" "default" {
   name       = "myssh-key"
-  public_key = "${file("secrets/myssh-key")}"
+  public_key = file("secrets/myssh-key")
 }
 
 resource "hcloud_server" "node" {
