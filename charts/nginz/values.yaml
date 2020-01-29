@@ -313,10 +313,10 @@ nginx_conf:
       envs:
       - all
     - path: /i/sso
-      envs:
-      - staging
       disable_zauth: true
       basic_auth: true
+      envs:
+      - staging
     - path: /sso-initiate-bind
       envs:
       - all
