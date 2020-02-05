@@ -281,11 +281,11 @@ nginx_conf:
       disable_zauth: true
       basic_auth: true
     - path: ~* ^/custom-backend/by-domain/([^/]*)$
-      zauth: false
+      disable_zauth: true
       envs:
       - all
     - path: ~* ^/i/custom-backend/by-domain/([^/]*)$
-      zauth: false
+      disable_zauth: true
       basic_auth: true
       envs:
       - staging
