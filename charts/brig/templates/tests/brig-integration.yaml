@@ -51,7 +51,7 @@ spec:
     # to get certain behaviour. This doesn't work on kubernetes because brig
     # is a different pod than brig-integration and they can't both mouht the
     # same file-system.
-    command: ["brig-integration", "--pattern", "!/turn/"]
+    command: ["brig-integration", "--pattern", "!/turn/ && !/user.auth.cookies.limit/"]
     volumeMounts:
     - name: "brig-integration"
       mountPath: "/etc/wire/integration"
