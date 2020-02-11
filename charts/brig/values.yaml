@@ -69,6 +69,8 @@ config:
     setDeleteThrottleMillis: 100
     # Allow search within same team only. Default: false
     # setSearchSameTeamOnly: false|true
+    # Allow settings max number of user clients. Default: 7
+    # setUserMaxPermClients: <int>
   smtp:
     passwordFile: /etc/wire/brig/secrets/smtp-password.txt
 turnStatic:
