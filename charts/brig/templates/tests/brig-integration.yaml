@@ -51,6 +51,8 @@ spec:
     # to get certain behaviour. This doesn't work on kubernetes because brig
     # is a different pod than brig-integration and they can't both mouht the
     # same file-system.
+    # The other test, "user.auth.cookies.limit", is skipped as it is flaky.
+    # This is tracked in https://github.com/zinfra/backend-issues/issues/1150.
     command: ["brig-integration", "--pattern", "!/turn/ && !/user.auth.cookies.limit/"]
     volumeMounts:
     - name: "brig-integration"
