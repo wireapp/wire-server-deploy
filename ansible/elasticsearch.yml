@@ -4,9 +4,7 @@
   vars:
     # The following sets java heap size to 1GB (default is 2GB)
     # comment that line when deploying on machines with >= 4GB memory.
-    es_jvm_custom_parameters:
-      - "-Xmx1g"
-      - "-Xms1g"
+    es_heap_size: "1g"
 
     es_enable_xpack: false
     es_xpack_features: [] # disable features
