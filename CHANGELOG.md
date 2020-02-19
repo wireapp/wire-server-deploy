@@ -1,3 +1,18 @@
+# NEXT
+
+## Important
+
+- upgrading an existing Helm release of `wire-server` needs to be enforced (i.e. `--force`) or done by reinstalling it
+
+## Features
+
+- enable Helm v3 support
+
+## Bug fixes
+
+- changed cannon template to comply with K8s StatefulSetSpec [#187](https://github.com/wireapp/wire-server-deploy/pull/187)
+
+
 # 2020-01-09
 
 ## Features
