@@ -52,7 +52,8 @@ data:
                      "name"       : { "type": "keyword", "index": false },
                      "handle"     : { "type": "text"                    },
                      "accent_id"  : { "type": "byte",    "index": false },
-                     "suspended"  : { "type": "integer"                 }
+                     "suspended"  : { "type": "integer"                 },
+                     "team_id"    : { "type": "keyword"                 }
                  }
             }
 
