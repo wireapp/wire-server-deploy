@@ -182,5 +182,8 @@ data:
       {{- if .setSearchSameTeamOnly }}
       setSearchSameTeamOnly: {{ .setSearchSameTeamOnly }}
       {{- end }}
+      {{- if .setUserMaxPermClients }}
+      setUserMaxPermClients: {{ .setUserMaxPermClients }}
+      {{- end }}
     {{- end }}
   {{- end }}

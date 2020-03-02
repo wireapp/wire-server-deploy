@@ -21,6 +21,7 @@ spec:
   replicas: {{ .Values.replicaCount }}
   updateStrategy:
     type: RollingUpdate
+  podManagementPolicy: Parallel
   template:
     metadata:
       labels:
@@ -29,7 +30,6 @@ spec:
       annotations:
         checksum/configmap: {{ include (print .Template.BasePath "/configmap.yaml") . | sha256sum }}
     spec:
-      podManagementPolicy: Parallel
       terminationGracePeriodSeconds: {{ .Values.drainTimeout }} # should be higher than the sleep duration of preStop
       containers:
       - name: cannon

@@ -60,7 +60,7 @@
       tags: mc-config
 
     - name: "make the 'public' bucket world-accessible"
-      shell: "mc policy public local/public"
+      shell: "mc policy set public local/public"
       run_once: true
       tags: mc-config
 

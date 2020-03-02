@@ -280,6 +280,15 @@ nginx_conf:
       - staging
       disable_zauth: true
       basic_auth: true
+    - path: ~* ^/custom-backend/by-domain/([^/]*)$
+      disable_zauth: true
+      envs:
+      - all
+    - path: ~* ^/i/custom-backend/by-domain/([^/]*)$
+      disable_zauth: true
+      basic_auth: true
+      envs:
+      - staging
     - path: ~* ^/teams/api-docs
       envs:
       - all
@@ -303,13 +312,36 @@ nginx_conf:
       max_body_size: 256k
       envs:
       - all
+    - path: /i/sso
+      disable_zauth: true
+      basic_auth: true
+      envs:
+      - staging
     - path: /sso-initiate-bind
       envs:
       - all
+    - path: /sso/initiate-login
+      envs:
+      - all
+      disable_zauth: true
+      allow_credentials: true
+    - path: /sso/finalize-login
+      envs:
+      - all
+      disable_zauth: true
+      allow_credentials: true
     - path: /sso
       envs:
       - all
       disable_zauth: true
+    - path: /scim/v2
+      envs:
+      - all
+      disable_zauth: true
+      allow_credentials: true
+    - path: /scim
+      envs:
+      - all
     proxy:
     - path: /proxy
       envs:
