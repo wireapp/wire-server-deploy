@@ -1,16 +1,22 @@
-# NEXT
+# 2020-03-02
 
-## Important
+## Breaking changes / known issues when upgrading
 
 - upgrading an existing Helm release of `wire-server` needs to be enforced (i.e. `--force`) or done by reinstalling it
 
 ## Features
 
 - enable Helm v3 support
+- Helm charts:
+  - nginz: Expose internal sso settings and custom backends (#178, #191)
+  - brig: New option setUserMaxPermClients is now available for brig (#185)
+  - cannon: comply with K8s StatefulSetSpec (#187)
 
-## Bug fixes
+## Other updates
 
-- changed cannon template to comply with K8s StatefulSetSpec [#187](https://github.com/wireapp/wire-server-deploy/pull/187)
+- Skip flaky test in brig-integration (#184)
+- Ansible: fix mc policy set (#181) - thanks @kvaps
+- Ansible: Fix setting heap size for ES (#188)
 
 
 # 2020-01-09
