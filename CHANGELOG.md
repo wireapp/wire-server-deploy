@@ -1,3 +1,10 @@
+# 2020-03-06
+
+## Bug fixes
+
+- fix an issue where rerunning `helm upgrade nginx-ingress-controller` (w/o any change) might fail as
+  described in https://github.com/helm/charts/pull/20518 (#194)
+
 # 2020-03-02
 
 ## Breaking changes / known issues when upgrading
