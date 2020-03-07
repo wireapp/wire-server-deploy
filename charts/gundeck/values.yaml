@@ -20,3 +20,5 @@ config:
     host: redis-ephemeral
     port: 6379
   bulkPush: false
+  aws:
+    region: "eu-west-1"

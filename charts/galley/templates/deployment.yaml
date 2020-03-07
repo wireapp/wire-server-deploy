@@ -55,7 +55,7 @@ spec:
                 name: galley
                 key: awsSecretKey
           - name: AWS_REGION
-            value: eu-west-1
+            value: "{{ .Values.config.aws.region }}"
           ports:
             - containerPort: {{ .Values.service.internalPort }}
           livenessProbe:
