@@ -22,7 +22,9 @@ resource "hcloud_server" "node" {
   name        = "node${count.index}"
   image       = "ubuntu-18.04"
   server_type = "cx41"
-  ssh_keys    = ["hetznerssh-key"]
+  ssh_keys    = [
+    hcloud_ssh_key.default.name
+  ]
 
   # Nuremberg (for choices see `hcloud datacenter list`)
   location = "nbg1"
@@ -33,7 +35,9 @@ resource "hcloud_server" "etcd" {
   name        = "etcd${count.index}"
   image       = "ubuntu-18.04"
   server_type = "cx41"
-  ssh_keys    = ["hetznerssh-key"]
+  ssh_keys    = [
+    hcloud_ssh_key.default.name
+  ]
 
   # Nuremberg (for choices see `hcloud datacenter list`)
   location = "nbg1"
@@ -44,7 +48,9 @@ resource "hcloud_server" "redis" {
   name        = "redis${count.index}"
   image       = "ubuntu-18.04"
   server_type = "cx11"
-  ssh_keys    = ["hetznerssh-key"]
+  ssh_keys    = [
+    hcloud_ssh_key.default.name
+  ]
 
   # Nuremberg (for choices see `hcloud datacenter list`)
   location = "nbg1"
@@ -55,7 +61,9 @@ resource "hcloud_server" "restund" {
   name        = "restund${count.index}"
   image       = "ubuntu-18.04"
   server_type = "cx11"
-  ssh_keys    = ["hetznerssh-key"]
+  ssh_keys    = [
+    hcloud_ssh_key.default.name
+  ]
 
   # Nuremberg (for choices see `hcloud datacenter list`)
   location = "nbg1"
@@ -66,7 +74,9 @@ resource "hcloud_server" "minio" {
   name        = "minio${count.index}"
   image       = "ubuntu-18.04"
   server_type = "cx11"
-  ssh_keys    = ["hetznerssh-key"]
+  ssh_keys    = [
+    hcloud_ssh_key.default.name
+  ]
 
   # Nuremberg (for choices see `hcloud datacenter list`)
   location = "nbg1"
@@ -77,7 +87,9 @@ resource "hcloud_server" "cassandra" {
   name        = "cassandra${count.index}"
   image       = "ubuntu-18.04"
   server_type = "cx21"
-  ssh_keys    = ["hetznerssh-key"]
+  ssh_keys    = [
+    hcloud_ssh_key.default.name
+  ]
 
   # Nuremberg (for choices see `hcloud datacenter list`)
   location = "nbg1"
@@ -88,7 +100,9 @@ resource "hcloud_server" "elasticsearch" {
   name        = "elasticsearch${count.index}"
   image       = "ubuntu-18.04"
   server_type = "cx11"
-  ssh_keys    = ["hetznerssh-key"]
+  ssh_keys    = [
+    hcloud_ssh_key.default.name
+  ]
 
   # Nuremberg (for choices see `hcloud datacenter list`)
   location = "nbg1"
@@ -143,10 +157,9 @@ resource "null_resource" "vpnredis" {
   }
 }
 
-data "template_file" "inventory" {
-  template = "${file("inventory.tpl")}"
-
-  vars = {
+resource "local_file" "inventory" {
+  filename    = "${path.module}/hosts.ini"
+  content     = templatefile( "${path.module}/inventory.tpl", {
     connection_strings_node          = "${join("\n", formatlist("%s ansible_host=%s vpn_ip=%s ip=%s", hcloud_server.node.*.name, hcloud_server.node.*.ipv4_address, null_resource.vpnkube.*.triggers.ip, null_resource.vpnkube.*.triggers.ip))}"
     connection_strings_etcd          = "${join("\n", formatlist("%s ansible_host=%s vpn_ip=%s ip=%s etcd_member_name=%s", hcloud_server.etcd.*.name, hcloud_server.etcd.*.ipv4_address, null_resource.vpnetcd.*.triggers.ip, null_resource.vpnetcd.*.triggers.ip, null_resource.vpnetcd.*.triggers.member))}"
     connection_strings_cassandra     = "${join("\n", formatlist("%s ansible_host=%s vpn_ip=%s", hcloud_server.cassandra.*.name, hcloud_server.cassandra.*.ipv4_address, null_resource.vpncass.*.triggers.ip))}"
@@ -162,15 +175,5 @@ data "template_file" "inventory" {
     list_minio                       = "${join("\n",hcloud_server.minio.*.name)}"
     list_redis                       = "${join("\n",hcloud_server.redis.*.name)}"
     list_restund                     = "${join("\n",hcloud_server.restund.*.name)}"
-  }
-}
-
-resource "null_resource" "inventories" {
-  provisioner "local-exec" {
-    command = "echo '${data.template_file.inventory.rendered}' > hosts.ini"
-  }
-
-  triggers = {
-    template = "${data.template_file.inventory.rendered}"
-  }
+  })
 }
