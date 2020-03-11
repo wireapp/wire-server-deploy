@@ -22,6 +22,10 @@
     - role: ansible-cassandra
       tags:
         - cassandra
+
+    - role: ntp-verify
+      tags:
+        - ntp
   tasks:
     # these are optional debug tasks to see that the cluser has come up sucessfully
     - shell: nodetool status
