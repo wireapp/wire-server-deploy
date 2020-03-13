@@ -10,6 +10,9 @@ metadata:
 spec:
   replicas: 1
   template:
+    selector:
+      matchLabels:
+        app: {{ template "fullname" . }}
     metadata:
       labels:
         app: {{ template "fullname" . }}
