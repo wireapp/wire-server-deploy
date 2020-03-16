@@ -11,10 +11,10 @@ metadata:
     component: {{ template "fullname" . }}
 spec:
   replicas: 1
+  selector:
+    matchLabels:
+      component: {{ template "fullname" . }}
   template:
-    selector:
-      matchLabels:
-        component: {{ template "fullname" . }}
     metadata:
       labels:
         component: {{ template "fullname" . }}

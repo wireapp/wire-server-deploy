@@ -9,11 +9,11 @@ metadata:
     heritage: {{ .Release.Service }}
 spec:
   replicas: 1
+  selector:
+    matchLabels:
+      wireService: reaper
+      release: {{ .Release.Name }}
   template:
-    selector:
-      matchLabels:
-        wireService: reaper
-        release: {{ .Release.Name }}
     metadata:
       labels:
         wireService: reaper
