@@ -61,7 +61,6 @@ config:
       retryAfter: 86400
     setRichInfoLimit: 5000
     setDefaultLocale: en
-    setMaxConvAndTeamSize: 500
     setMaxTeamSize: 500
     setMaxConvSize: 500
     setEmailVisibility: visible_to_self
