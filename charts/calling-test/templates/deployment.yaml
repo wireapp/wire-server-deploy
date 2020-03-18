@@ -1,18 +1,18 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ include "avs-nwtesttool.fullname" . }}
+  name: {{ include "calling-test.fullname" . }}
   labels:
-    {{- include "avs-nwtesttool.labels" . | nindent 4 }}
+    {{- include "calling-test.labels" . | nindent 4 }}
 spec:
   replicas: {{ .Values.replicaCount }}
   selector:
     matchLabels:
-      {{- include "avs-nwtesttool.selectorLabels" . | nindent 6 }}
+      {{- include "calling-test.selectorLabels" . | nindent 6 }}
   template:
     metadata:
       labels:
-        {{- include "avs-nwtesttool.selectorLabels" . | nindent 8 }}
+        {{- include "calling-test.selectorLabels" . | nindent 8 }}
     spec:
       containers:
         - name: {{ .Chart.Name }}

@@ -2,7 +2,7 @@
 {{/*
 Expand the name of the chart.
 */}}
-{{- define "avs-nwtesttool.name" -}}
+{{- define "calling-test.name" -}}
 {{- default .Chart.Name .Values.nameOverride | trunc 63 | trimSuffix "-" -}}
 {{- end -}}
 
@@ -11,7 +11,7 @@ Create a default fully qualified app name.
 We truncate at 63 chars because some Kubernetes name fields are limited to this (by the DNS naming spec).
 If release name contains chart name it will be used as a full name.
 */}}
-{{- define "avs-nwtesttool.fullname" -}}
+{{- define "calling-test.fullname" -}}
 {{- if .Values.fullnameOverride -}}
 {{- .Values.fullnameOverride | trunc 63 | trimSuffix "-" -}}
 {{- else -}}
@@ -27,16 +27,16 @@ If release name contains chart name it will be used as a full name.
 {{/*
 Create chart name and version as used by the chart label.
 */}}
-{{- define "avs-nwtesttool.chart" -}}
+{{- define "calling-test.chart" -}}
 {{- printf "%s-%s" .Chart.Name .Chart.Version | replace "+" "_" | trunc 63 | trimSuffix "-" -}}
 {{- end -}}
 
 {{/*
 Common labels
 */}}
-{{- define "avs-nwtesttool.labels" -}}
-helm.sh/chart: {{ include "avs-nwtesttool.chart" . }}
-{{ include "avs-nwtesttool.selectorLabels" . }}
+{{- define "calling-test.labels" -}}
+helm.sh/chart: {{ include "calling-test.chart" . }}
+{{ include "calling-test.selectorLabels" . }}
 {{- if .Chart.AppVersion }}
 app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
 {{- end }}
@@ -46,17 +46,17 @@ app.kubernetes.io/managed-by: {{ .Release.Service }}
 {{/*
 Selector labels
 */}}
-{{- define "avs-nwtesttool.selectorLabels" -}}
-app.kubernetes.io/name: {{ include "avs-nwtesttool.name" . }}
+{{- define "calling-test.selectorLabels" -}}
+app.kubernetes.io/name: {{ include "calling-test.name" . }}
 app.kubernetes.io/instance: {{ .Release.Name }}
 {{- end -}}
 
 {{/*
 Create the name of the service account to use
 */}}
-{{- define "avs-nwtesttool.serviceAccountName" -}}
+{{- define "calling-test.serviceAccountName" -}}
 {{- if .Values.serviceAccount.create -}}
-    {{ default (include "avs-nwtesttool.fullname" .) .Values.serviceAccount.name }}
+    {{ default (include "calling-test.fullname" .) .Values.serviceAccount.name }}
 {{- else -}}
     {{ default "default" .Values.serviceAccount.name }}
 {{- end -}}

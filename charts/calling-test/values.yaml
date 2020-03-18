@@ -8,8 +8,8 @@ envVars:
   # note: this should be overridden in every deployment
   BACKEND_HTTPS_URL: https://staging-nginz-https.zinfra.io
 
-nameOverride: ""
-fullnameOverride: ""
+nameOverride: "calling-test"
+fullnameOverride: "calling-test"
 
 service:
   type: ClusterIP
