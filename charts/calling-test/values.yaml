@@ -6,7 +6,7 @@ image:
 
 envVars:
   # note: this should be overridden in every deployment
-  BACKEND_HTTPS_URL: https://staging-nginz-https.zinfra.io
+  BACKEND_HTTPS_URL: https://nginz-https.example.com
 
 nameOverride: "calling-test"
 fullnameOverride: "calling-test"
