@@ -1,6 +1,6 @@
 apiVersion: v2
 name: avs-nwtesttool
-description: Testing tool for audio/video/signalling: Shows which restund/TURN servers can be reached, and how many connections can be established. See https://github.com/wireapp/wire-avs-nwtesttool for more details.
+description: Testing tool for audio/video/signalling. Shows which restund/TURN servers can be reached, and how many connections can be established. See https://github.com/wireapp/wire-avs-nwtesttool for more details.
 
 # A chart can be either an 'application' or a 'library' chart.
 #
