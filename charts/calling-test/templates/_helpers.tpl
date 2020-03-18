@@ -50,14 +50,3 @@ Selector labels
 app.kubernetes.io/name: {{ include "calling-test.name" . }}
 app.kubernetes.io/instance: {{ .Release.Name }}
 {{- end -}}
-
-{{/*
-Create the name of the service account to use
-*/}}
-{{- define "calling-test.serviceAccountName" -}}
-{{- if .Values.serviceAccount.create -}}
-    {{ default (include "calling-test.fullname" .) .Values.serviceAccount.name }}
-{{- else -}}
-    {{ default "default" .Values.serviceAccount.name }}
-{{- end -}}
-{{- end -}}
