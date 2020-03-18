@@ -1,12 +1,25 @@
 redis-ephemeral:
   usePassword: false
-  persistence:
-    enabled: false
+  master:
+    persistence:
+      enabled: false
+  slave:
+    persistence:
+      enabled: false
 
-  resources:
-    limits:
-      cpu: "1000m"
-      memory: "1024Mi"
-    requests:
-      cpu: "500m"
-      memory: "512Mi"
+  master:
+    resources:
+      limits:
+        cpu: "1000m"
+        memory: "1024Mi"
+      requests:
+        cpu: "500m"
+        memory: "512Mi"
+  slave:
+    resources:
+      limits:
+        cpu: "1000m"
+        memory: "1024Mi"
+      requests:
+        cpu: "500m"
+        memory: "512Mi"
