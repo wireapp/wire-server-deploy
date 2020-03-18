@@ -1,7 +1,12 @@
 replicaCount: 1
 image:
+  # note: the docker image tag is configured as 'appVersion' in Chart.yaml
   repository: quay.io/wire/avs-nwtesttool
   pullPolicy: IfNotPresent
+
+envVars:
+  # note: this should be overridden in every deployment
+  BACKEND_HTTPS_URL: https://staging-nginz-https.zinfra.io
 
 nameOverride: ""
 fullnameOverride: ""
