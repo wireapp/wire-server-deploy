@@ -13,9 +13,9 @@
 # ^-- This is an example of a "bad" output, where no NTP servers can actually be reached
 #     The check is a bit fragile but may help catching things earlier on
 - fail:
-    msg: You might have a misconfigured check the output above and ensure that you are
-         able to connect to the configured NTP servers! If you have no idea what this
-         means, refer to https://detailed.wordpress.com/2017/10/22/understanding-ntpq-output
+    msg: Check the output above and ensure that you are able to connect to the configured
+         NTP servers! If you have no idea what this means, refer to
+         https://detailed.wordpress.com/2017/10/22/understanding-ntpq-output
   when: ntpq_output.stdout_lines|length <= 3
 
 # Get the current time in miliseconds from all hosts!
