@@ -55,3 +55,7 @@
 - src: https://github.com/cchurch/ansible-role-admin-users.git
   name: admin_users
   version: "0.7.2"
+
+- src: git+https://github.com/wireapp/ansible-ntp-verify.git
+  name: ansible-ntp-verify
+  version: v0.0.1

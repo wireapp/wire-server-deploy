@@ -1,3 +1,0 @@
-ntp_daemon: "{{ 'ntp' if ansible_os_family == 'Debian' else 'ntpd' }}"
-allowed_time_diff_between_servers_in_ms: 100
-# ^-- How many miliseconds can we tolerate between the servers?
