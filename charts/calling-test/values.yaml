@@ -8,6 +8,9 @@ envVars:
   # note: this should be overridden in every deployment
   BACKEND_HTTPS_URL: https://nginz-https.example.com
 
+# These name overrides are used also for routing.
+# Wire-server's nginz subchart will route /calling-test to this chart
+# If you change this name, that functionality will break.
 nameOverride: "calling-test"
 fullnameOverride: "calling-test"
 
