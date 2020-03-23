@@ -361,3 +361,8 @@ nginx_conf:
     - path: ~* ^/teams/([^/]*)/billing(.*)
       envs:
       - all
+    calling-test:
+    - path: /calling-test
+      envs:
+      - all
+      disable_zauth: true
