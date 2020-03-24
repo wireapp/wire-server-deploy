@@ -30,7 +30,7 @@ spec:
     spec:
       restartPolicy: OnFailure
       containers:
-        - name: curl
+        - name: brig-index
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
           args:
             - create
