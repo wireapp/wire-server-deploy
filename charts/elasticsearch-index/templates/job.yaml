@@ -30,17 +30,16 @@ spec:
     spec:
       restartPolicy: OnFailure
       containers:
-        - name: curl
-          image: appropriate/curl
-          command:
-            - /bin/sh
-            - -c
-            - source /tmp/templates/init.sh
-          volumeMounts:
-            - mountPath: /tmp/templates
-              name: es-init-volume
-
-      volumes:
-        - name: es-init-volume
-          configMap:
-            name: es-init-config
+        # Creates index in elasticsearch only when it doesn't exist.
+        # Does nothing if the index exists.
+        - name: brig-index
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          args:
+            - create
+            - --elasticsearch-server
+            - "http://{{ required "missing elasticsearch-index.elasticsearch.host!" .Values.elasticsearch.host }}:{{ .Values.elasticsearch.port }}"
+            - --elasticsearch-index
+            - "{{ .Values.elasticsearch.index }}"
+            - --elasticsearch-shards=5
+            - --elasticsearch-replicas=2
+            - --elasticsearch-refresh-interval=5
