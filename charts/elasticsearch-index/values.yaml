@@ -10,4 +10,4 @@ hook:
   type: pre # possible values: 'pre' or 'post'
 image:
   repository: quay.io/wire/brig-index
-  tag: 2.69.0
+  tag: 2.77.3
