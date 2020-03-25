@@ -1,3 +1,16 @@
+# 2020-03-25
+
+## Features
+
+- `calling-test` chart using the wire-nwtesttool (#204)
+
+## Internal changes
+
+- Move hardcoded AWS_REGION env var value into chart values file (#197) - thanks @kvaps
+- Use apps/v1 for all deployments (#201)
+- Fix elasticsearch-external endpoint (#198)
+- Minor improvements to consistency with naming and settings.
+
 # 2020-03-06
 
 ## Bug fixes

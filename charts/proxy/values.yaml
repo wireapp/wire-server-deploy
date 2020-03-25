@@ -1,7 +1,7 @@
 replicaCount: 3
 image:
   repository: quay.io/wire/proxy
-  tag: 2.76.0
+  tag: 2.77.0
 service:
   externalPort: 8080
   internalPort: 8080
