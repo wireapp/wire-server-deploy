@@ -1,0 +1,12 @@
+#
+# This playbook helps you check if ntp has been properly setup on the host that Cassandra
+# is running on. Verifies that the daemon is running and that there is no more than
+# `allowed_time_diff_between_servers_in_ms` diff between all servers
+#
+# NOTE: This playbook has been tested on Ubuntu and using ansible2.7
+# TODO: Adjust this to be run on _ALL_ hosts in the inventory
+#
+- hosts: cassandra
+  any_errors_fatal: true
+  roles:
+    - role: ntp-verify
