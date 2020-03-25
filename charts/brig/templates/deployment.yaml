@@ -1,4 +1,4 @@
-apiVersion: extensions/v1beta1
+apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: brig
@@ -65,7 +65,7 @@ spec:
                 key: awsSecretKey
           # TODO: Is this the best way to do this?
           - name: AWS_REGION
-            value: "eu-west-1"
+            value: "{{ .Values.config.aws.region }}"
           ports:
             - containerPort: {{ .Values.service.internalPort }}
           livenessProbe:

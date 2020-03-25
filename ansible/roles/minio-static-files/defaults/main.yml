@@ -10,7 +10,7 @@ assetsURL: "https://{{ prefix }}assets.{{ domain }}"
 deeplink_config_json: "{{ assetsURL }}/public/deeplink.json"
 backendURL: "https://{{ prefix }}https.{{ domain }}"
 backendWSURL: "https://{{ prefix }}ssl.{{ domain }}"
-teamsURL: "https://{{ prefix }}team.{{ domain }}"
+teamsURL: "https://{{ prefix }}teams.{{ domain }}"
 accountsURL: "https://{{ prefix }}account.{{ domain }}"
 
 # FUTUREWORK:
