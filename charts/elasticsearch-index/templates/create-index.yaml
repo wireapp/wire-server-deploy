@@ -29,10 +29,10 @@ spec:
         chart: "{{.Chart.Name}}-{{.Chart.Version}}"
     spec:
       restartPolicy: OnFailure
-      containers:
+      initContainers:
         # Creates index in elasticsearch only when it doesn't exist.
         # Does nothing if the index exists.
-        - name: brig-index
+        - name: brig-index-create
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
           args:
             - create
@@ -43,3 +43,12 @@ spec:
             - --elasticsearch-shards=5
             - --elasticsearch-replicas=2
             - --elasticsearch-refresh-interval=5
+      containers:
+        - name: brig-index-update-mapping
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          args:
+            - update-mapping
+            - --elasticsearch-server
+            - "http://{{ required "missing elasticsearch-index.elasticsearch.host!" .Values.elasticsearch.host }}:{{ .Values.elasticsearch.port }}"
+            - --elasticsearch-index
+            - "{{ .Values.elasticsearch.index }}"
