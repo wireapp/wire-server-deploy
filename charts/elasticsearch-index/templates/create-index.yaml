@@ -9,9 +9,6 @@ metadata:
     release: {{.Release.Name | quote }}
     chart: "{{.Chart.Name}}-{{.Chart.Version}}"
   annotations:
-    # when hook.enabled=true (default), this chart does not work standalone, but is intended as
-    # either a 'post'-subchart to an elasticsearch chart or a 'pre'-subchart to wire-server
-    # For the meaning of hooks, see https://docs.helm.sh/developing_charts/#hooks
     "helm.sh/hook": pre-install,pre-upgrade
     "helm.sh/hook-delete-policy": "before-hook-creation"
 spec:
