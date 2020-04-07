@@ -9,4 +9,4 @@
 - hosts: cassandra
   any_errors_fatal: true
   roles:
-    - role: ntp-verify
+    - role: ansible-ntp-verify
