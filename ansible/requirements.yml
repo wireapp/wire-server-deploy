@@ -50,7 +50,7 @@
 
 - src: https://github.com/andrewrothstein/ansible-kubernetes-helm.git
   name: ansible-helm
-  version: 33978bc2e486f087066acc737d4468f1fa1c5883 # 2019-05-17
+  version: "v1.3.7" # 2020-04-02
 
 - src: https://github.com/cchurch/ansible-role-admin-users.git
   name: admin_users
