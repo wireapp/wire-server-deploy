@@ -29,7 +29,7 @@
       bind_host:
         - "_{{ es_network_interface }}_"
         - "_local_"
-    es_masters: '{% for host in groups["elasticsearch_master"] %}{{ hostvars[host]["ansible_" + elasticsearch_network_interface]["ipv4"]["address"] }}:9300{% if not loop.last %},{% endif %}{% endfor %}'
+    es_masters: '{% for host in groups["elasticsearch_master"] %}{{ hostvars[host]["ansible_" + es_network_interface]["ipv4"]["address"] }}:9300{% if not loop.last %},{% endif %}{% endfor %}'
     es_config:
       cluster.name: "elasticsearch-directory"
       http.port: "{{ es_api_port }}" # 9200 by default
