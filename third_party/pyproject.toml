@@ -1,0 +1,27 @@
+[tool.poetry]
+name = "third_party"
+version = "0.1.0"
+description = ""
+authors = ["Wire Swiss GmbH"]
+
+[tool.poetry.dependencies]
+python = "^3.5"
+ansible = "~2.7"
+jinja2 = "^2.10"
+pyyaml = "^5.1"
+cryptography = "^2.7"
+jsonnet = "^0.14.0"
+boto = ">= 2.49"
+dnspython = ">= 1.16"
+netaddr = ">= 0.7"
+boto3 = ">= 1.10"
+pbr = ">= 5.2"
+jmespath = ">= 0.9.4"
+"ruamel.yaml" = ">= 0.15.96"
+certbot-dns-route53 = ">= 1.0.0"
+awscli = ">= 1.16.303"
+click = "^7.0"
+
+[build-system]
+requires = ["poetry>=0.12"]
+build-backend = "poetry.masonry.api"
