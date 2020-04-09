@@ -56,6 +56,10 @@ spec:
                 key: awsSecretKey
           - name: AWS_REGION
             value: "{{ .Values.config.aws.region }}"
+      {{- range $key, $val := .Values.envVars }}
+          - name: {{ $key }}
+            value: {{ $val | quote }}
+      {{- end }}
           ports:
             - containerPort: {{ .Values.service.internalPort }}
           livenessProbe:
