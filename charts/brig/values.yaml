@@ -79,3 +79,6 @@ turnStatic:
   v2:
   - turn:localhost:3478
   - turn:localhost:3478?transport=tcp
+# NOTE: Without an empty dictionary, you will see warnings
+#       when overriding envVars
+envVars: {}
