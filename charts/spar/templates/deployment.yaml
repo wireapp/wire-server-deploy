@@ -37,6 +37,11 @@ spec:
           volumeMounts:
           - name: "spar-config"
             mountPath: "/etc/wire/spar/conf"
+          env:
+      {{- range $key, $val := .Values.envVars }}
+          - name: {{ $key }}
+            value: {{ $val | quote }}
+      {{- end }}
           ports:
             - containerPort: {{ .Values.service.internalPort }}
           livenessProbe:
