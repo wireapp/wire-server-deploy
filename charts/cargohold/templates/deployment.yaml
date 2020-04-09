@@ -54,6 +54,10 @@ spec:
               secretKeyRef:
                 name: cargohold
                 key: awsSecretKey
+      {{- range $key, $val := .Values.envVars }}
+          - name: {{ $key }}
+            value: {{ $val | quote }}
+      {{- end }}
           ports:
             - containerPort: {{ .Values.service.internalPort }}
           livenessProbe:
