@@ -42,6 +42,10 @@ ${list_elasticsearch}
 [elasticsearch_master:children]
 elasticsearch
 
+[elasticsearch:vars]
+# Put a hold on the ES package. Updating ES to a different version that 6.6 currently breaks its integration with Wire.
+es_version_lock = True
+
 [cassandra:vars]
 is_aws_environment = False
 # cassandra_clustername = default
@@ -74,6 +78,11 @@ ansible_python_interpreter = /usr/bin/python3
 # cassandra_network_interface = vpn0
 # redis_network_interface = vpn0
 # registry_network_interface = vpn0
+# restund_network_interface = vpn0
+
+## configure a proxy if one is needed to access the Internet
+# http_proxy = ""
+# https_proxy = ""
 
 ### KUBERNETES (see kubespray documentation for details) ###
 
