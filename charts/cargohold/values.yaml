@@ -16,3 +16,6 @@ config:
   logLevel: Info
   aws:
     s3Bucket: assets
+# NOTE: Without an empty dictionary, you will see warnings
+#       when overriding envVars
+envVars: {}
