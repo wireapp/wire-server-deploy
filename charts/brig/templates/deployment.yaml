@@ -66,6 +66,10 @@ spec:
           # TODO: Is this the best way to do this?
           - name: AWS_REGION
             value: "{{ .Values.config.aws.region }}"
+      {{- range $key, $val := .Values.envVars }}
+          - name: {{ $key }}
+            value: {{ $val | quote }}
+      {{- end }}
           ports:
             - containerPort: {{ .Values.service.internalPort }}
           livenessProbe:
