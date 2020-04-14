@@ -157,6 +157,7 @@ spar:
     ssoUri: https://nginz-https.example.com/sso
     maxttlAuthreq: 28800
     maxttlAuthresp: 28800
+    # maxScimTokens: 16 # uncomment this if you want to use SCIM provisioning
     contacts:
     - type: ContactSupport
       company: YourCompany
