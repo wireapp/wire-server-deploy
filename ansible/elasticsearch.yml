@@ -6,6 +6,10 @@
     # comment that line when deploying on machines with >= 4GB memory.
     es_heap_size: "1g"
 
+    # Put a hold on the ES package.
+    # Updating ES to a different version than 6.6 currently breaks its integration with Wire.
+    es_version_lock: true
+
     es_enable_xpack: false
     es_xpack_features: [] # disable features
     es_instance_name: "{{ ansible_hostname }}"
