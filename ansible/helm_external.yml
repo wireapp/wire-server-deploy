@@ -2,8 +2,6 @@
 # that these databases listen on. These files are used as overrides with the
 # <database>-external helm charts (e.g. cassandra-external).
 #
-# Prerequisite: the '<database>_network_interface' must be defined.
-#
 # After any change to IPs/servers:
 # 1. run this playbook:
 #      poetry run ansible-playbook -i hosts.ini helm_external.yml -vv --diff
@@ -24,25 +22,25 @@
       vars:
         external_dir_name: elasticsearch-external
         server_type: elasticsearch
-        network_interface: "{{ elasticsearch_network_interface }}"
+        network_interface: "{{ elasticsearch_network_interface | default('') }}"
 
     - name: Generate minio IPs for helm
       include_tasks: tasks/helm_external.yml
       vars:
         external_dir_name: minio-external
         server_type: minio
-        network_interface: "{{ minio_network_interface }}"
+        network_interface: "{{ minio_network_interface | default('') }}"
 
     - name: Generate cassandra IPs for helm
       include_tasks: tasks/helm_external.yml
       vars:
         external_dir_name: cassandra-external
         server_type: cassandra
-        network_interface: "{{ cassandra_network_interface }}"
+        network_interface: "{{ cassandra_network_interface | default('') }}"
 
     - name: Generate redis IPs for helm
       include_tasks: tasks/helm_external.yml
       vars:
         external_dir_name: redis-external
         server_type: redis
-        network_interface: "{{ redis_network_interface }}"
+        network_interface: "{{ redis_network_interface | default('') }}"
