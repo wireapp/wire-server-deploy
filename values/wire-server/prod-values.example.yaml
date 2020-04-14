@@ -175,7 +175,7 @@ webapp:
       appHost: webapp.example.com
   envVars:
     APP_NAME: "Webapp"
-    ENFORCE_HTTPS: "false"
+    ENFORCE_HTTPS: "true"
     FEATURE_CHECK_CONSENT: "false"
     FEATURE_ENABLE_ACCOUNT_REGISTRATION: "true"
     FEATURE_ENABLE_DEBUG: "false"
@@ -216,7 +216,7 @@ team-settings:
       appHost: webapp.example.com
   envVars:
     APP_NAME: "Team Settings"
-    ENFORCE_HTTPS: "false"
+    ENFORCE_HTTPS: "true"
     FEATURE_CHECK_CONSENT: "false"
     FEATURE_ENABLE_DEBUG: "false"
     FEATURE_ENABLE_NEW_TEAM: "true"
@@ -249,7 +249,7 @@ account-pages:
   envVars:
     APP_NAME: "Wire Account Management"
     COMPANY_NAME: "YourCompany"
-    FEATURE_ENFORCE_HTTPS: "false"
+    FEATURE_ENFORCE_HTTPS: "true"
     FEATURE_ENABLE_DEBUG: "false"
     URL_SUPPORT_BASE: "https://www.example.com/support"
     URL_TEAMS_BASE: "https://teams.example.com"
