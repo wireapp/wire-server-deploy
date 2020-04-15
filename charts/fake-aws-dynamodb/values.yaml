@@ -8,7 +8,6 @@ service:
 
 tables:
   brigPrekeys: integration-brig-prekeys
-  brigUserkeyBlacklist: integration-brig-userkey-blacklist
 
 resources:
   limits:
