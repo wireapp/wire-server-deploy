@@ -1,3 +1,24 @@
+# [ 2020-04-15 ]
+
+## Features
+
+- Use brig-index to create index in ES (#189)
+- Allow docker registry to run with custom host and port (023eb5e)
+- Verify proper NTP installation on Cassandra hosts (#199, c1acc03)
+- Pin openjdk 8 (#211)
+- Add brig index migrations (#212)
+- Bump external role ansible-helm to support installing newer versions of Helm (c86c36f)
+- Add ES, restund_network_interface and http_proxy settings to terraform inventory template (#216)
+- Add important envVars for team-settings and account-pages in example values (#215)
+- Add comment about configuring maxScimTokens setting (#214)
+- Lock ES version in ES ansible (#219)
+- Add comment about restund_network_interface in example hosts.ini (#219)
+- Allow network interfaces being unset in inventory for nodes hosting backing services (#213)
+
+## Bug fixes
+
+- Fix incorrect bash used in docker-registry (cb73c38)
+
 # 2020-03-25
 
 ## Features
