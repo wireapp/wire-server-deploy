@@ -9,10 +9,10 @@ resources:
 images:
   nginzDisco:
     repository: quay.io/wire/nginz_disco
-    tag: 2.77.0
+    tag: 2.78.0
   nginz:
     repository: quay.io/wire/nginz
-    tag: 2.77.0
+    tag: 2.78.0
 config:
   http:
     httpPort: 8080
