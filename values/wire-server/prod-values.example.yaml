@@ -157,6 +157,7 @@ spar:
     ssoUri: https://nginz-https.example.com/sso
     maxttlAuthreq: 28800
     maxttlAuthresp: 28800
+    # maxScimTokens: 16 # uncomment this if you want to use SCIM provisioning
     contacts:
     - type: ContactSupport
       company: YourCompany
@@ -214,6 +215,27 @@ team-settings:
       backendWebsocket: nginz-ssl.example.com
       backendDomain: example.com
       appHost: webapp.example.com
+  envVars:
+    APP_NAME: "Team Settings"
+    ENFORCE_HTTPS: "false"
+    FEATURE_CHECK_CONSENT: "false"
+    FEATURE_ENABLE_DEBUG: "false"
+    FEATURE_ENABLE_NEW_TEAM: "true"
+    URL_ACCOUNT_BASE: "https://account.example.com"
+    URL_WEBAPP_BASE: "https://webapp.example.com"
+    URL_WEBSITE_BASE: "https://www.example.com"
+    CSP_EXTRA_CONNECT_SRC: "https://*.example.com, wss://*.example.com"
+    CSP_EXTRA_IMG_SRC: "https://*.example.com"
+    CSP_EXTRA_SCRIPT_SRC: "https://*.example.com"
+    CSP_EXTRA_DEFAULT_SRC: "https://*.example.com"
+    CSP_EXTRA_FONT_SRC: "https://*.example.com"
+    CSP_EXTRA_FRAME_SRC: "https://*.example.com"
+    CSP_EXTRA_MANIFEST_SRC: "https://*.example.com"
+    CSP_EXTRA_OBJECT_SRC: "https://*.example.com"
+    CSP_EXTRA_MEDIA_SRC: "https://*.example.com"
+    CSP_EXTRA_PREFETCH_SRC: "https://*.example.com"
+    CSP_EXTRA_STYLE_SRC: "https://*.example.com"
+    CSP_EXTRA_WORKER_SRC: "https://*.example.com"
 
 # NOTE: Only relevant if you want account-pages
 account-pages:
@@ -225,3 +247,24 @@ account-pages:
       backendRest: nginz-https.example.com
       backendDomain: example.com
       appHost: webapp.example.com
+  envVars:
+    APP_NAME: "Wire Account Management"
+    COMPANY_NAME: "YourCompany"
+    FEATURE_ENFORCE_HTTPS: "false"
+    FEATURE_ENABLE_DEBUG: "false"
+    URL_SUPPORT_BASE: "https://www.example.com/support"
+    URL_TEAMS_BASE: "https://teams.example.com"
+    URL_WEBAPP_BASE: "https://webapp.example.com"
+    URL_WEBSITE_BASE: "https://www.example.com"
+    CSP_EXTRA_CONNECT_SRC: "https://*.example.com, wss://*.example.com"
+    CSP_EXTRA_IMG_SRC: "https://*.example.com"
+    CSP_EXTRA_SCRIPT_SRC: "https://*.example.com"
+    CSP_EXTRA_DEFAULT_SRC: "https://*.example.com"
+    CSP_EXTRA_FONT_SRC: "https://*.example.com"
+    CSP_EXTRA_FRAME_SRC: "https://*.example.com"
+    CSP_EXTRA_MANIFEST_SRC: "https://*.example.com"
+    CSP_EXTRA_OBJECT_SRC: "https://*.example.com"
+    CSP_EXTRA_MEDIA_SRC: "https://*.example.com"
+    CSP_EXTRA_PREFETCH_SRC: "https://*.example.com"
+    CSP_EXTRA_STYLE_SRC: "https://*.example.com"
+    CSP_EXTRA_WORKER_SRC: "https://*.example.com"

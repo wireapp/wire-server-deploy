@@ -3,7 +3,7 @@
 USAGE="$0 <target-backend-version>"
 target_version=${1?$USAGE}
 
-charts=(brig cannon galley gundeck spar cargohold proxy cassandra-migrations backoffice)
+charts=(brig cannon galley gundeck spar cargohold proxy cassandra-migrations backoffice elasticsearch-index)
 
 for chart in "${charts[@]}"; do
     sed -i "s/  tag: .*/  tag: $target_version/g" "charts/$chart/values.yaml"

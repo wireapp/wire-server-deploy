@@ -6,6 +6,10 @@
     # comment that line when deploying on machines with >= 4GB memory.
     es_heap_size: "1g"
 
+    # Put a hold on the ES package.
+    # Updating ES to a different version than 6.6 currently breaks its integration with Wire.
+    es_version_lock: true
+
     es_enable_xpack: false
     es_xpack_features: [] # disable features
     es_instance_name: "{{ ansible_hostname }}"
@@ -29,7 +33,7 @@
       bind_host:
         - "_{{ es_network_interface }}_"
         - "_local_"
-    es_masters: '{% for host in groups["elasticsearch_master"] %}{{ hostvars[host]["ansible_" + elasticsearch_network_interface]["ipv4"]["address"] }}:9300{% if not loop.last %},{% endif %}{% endfor %}'
+    es_masters: '{% for host in groups["elasticsearch_master"] %}{{ hostvars[host]["ansible_" + es_network_interface]["ipv4"]["address"] }}:9300{% if not loop.last %},{% endif %}{% endfor %}'
     es_config:
       cluster.name: "elasticsearch-directory"
       http.port: "{{ es_api_port }}" # 9200 by default
