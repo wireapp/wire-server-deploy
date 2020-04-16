@@ -44,10 +44,24 @@ spec:
           - name: "proxy-config"
             mountPath: "/etc/wire/proxy/conf"
           env:
-      {{- range $key, $val := .Values.envVars }}
-          - name: {{ $key }}
-            value: {{ $val | quote }}
-      {{- end }}
+          {{- if .Values.config.proxy.httpProxy }}
+          - name: http_proxy
+            value: {{ .Values.config.proxy.httpProxy | quote }}
+          - name: HTTP_PROXY
+            value: {{ .Values.config.proxy.httpProxy | quote }}
+          {{- end }}
+          {{- if .Values.config.proxy.httpsProxy }}
+          - name: https_proxy
+            value: {{ .Values.config.proxy.httpsProxy | quote }}
+          - name: HTTPS_PROXY
+            value: {{ .Values.config.proxy.httpsProxy | quote }}
+          {{- end }}
+          {{- if .Values.config.proxy.noProxy }}
+          - name: no_proxy
+            value: {{ .Values.config.proxy.noProxy | quote }}
+          - name: NO_PROXY
+            value: {{ .Values.config.proxy.noProxy | quote }}
+          {{- end }}
           ports:
             - containerPort: {{ .Values.service.internalPort }}
           livenessProbe:
