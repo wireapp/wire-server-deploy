@@ -50,11 +50,6 @@ spec:
           while true
           do
               # Recreate resources if needed
-              TABLE=$(table_exists "{{ $.Values.tables.brigUserkeyBlacklist }}")
-              if [ "$TABLE" == "1" ]
-                then echo "Table {{ $.Values.tables.brigUserkeyBlacklist }} exists, no need to re-create"
-                else exec_until_ready "aws --endpoint-url=http://localhost:{{ $.Values.service.internalPort }} dynamodb create-table --table-name {{ $.Values.tables.brigUserkeyBlacklist }} --attribute-definitions AttributeName=key,AttributeType=S --key-schema AttributeName=key,KeyType=HASH --provisioned-throughput ReadCapacityUnits=5,WriteCapacityUnits=5"
-              fi
               TABLE=$(table_exists "{{ $.Values.tables.brigPrekeys }}")
               if [ "$TABLE" == "1" ]
                 then echo "Table {{ $.Values.tables.brigPrekeys }} exists, no need to re-create"

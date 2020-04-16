@@ -43,7 +43,6 @@ data:
 
     {{- with .aws }}
     aws:
-      blacklistTable: {{ .blacklistTable }}
       prekeyTable: {{ .prekeyTable }}
       sqsEndpoint: {{ .sqsEndpoint | quote }}
       dynamoDBEndpoint: {{ .dynamoDBEndpoint | quote }}

@@ -30,7 +30,6 @@ brig:
       dynamoDBEndpoint: http://fake-aws-dynamodb:4567
       # these must match the table names created on fake or real AWS services
       internalQueue: integration-brig-events-internal
-      blacklistTable: integration-brig-userkey-blacklist
       prekeyTable: integration-brig-prekeys
     externalUrls:
       nginz: https://api.example.com # change this
