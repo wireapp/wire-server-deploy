@@ -73,12 +73,13 @@ config:
     # setUserMaxPermClients: <int>
   smtp:
     passwordFile: /etc/wire/brig/secrets/smtp-password.txt
+  proxy:
+    http_proxy: ""
+    https_proxy: ""
+    no_proxy: ""
 turnStatic:
   v1:
   - turn:localhost:3478
   v2:
   - turn:localhost:3478
   - turn:localhost:3478?transport=tcp
-# NOTE: Without an empty dictionary, you will see warnings
-#       when overriding envVars
-envVars: {}
