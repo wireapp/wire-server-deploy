@@ -20,6 +20,7 @@ config:
   logLevel: Info
   maxttlAuthreq: 7200
   maxttlAuthresp: 7200
-# NOTE: Without an empty dictionary, you will see warnings
-#       when overriding envVars
-envVars: {}
+  proxy:
+    httpProxy: ""
+    httpsProxy: ""
+    noProxy: ""
