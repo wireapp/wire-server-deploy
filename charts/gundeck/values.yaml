@@ -22,6 +22,7 @@ config:
   bulkPush: false
   aws:
     region: "eu-west-1"
-# NOTE: Without an empty dictionary, you will see warnings
-#       when overriding envVars
-envVars: {}
+  proxy:
+    httpProxy: ""
+    httpsProxy: ""
+    noProxy: ""
