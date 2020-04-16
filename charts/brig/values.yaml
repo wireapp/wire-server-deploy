@@ -74,9 +74,9 @@ config:
   smtp:
     passwordFile: /etc/wire/brig/secrets/smtp-password.txt
   proxy:
-    http_proxy: ""
-    https_proxy: ""
-    no_proxy: ""
+    httpProxy: ""
+    httpsProxy: ""
+    noProxy: ""
 turnStatic:
   v1:
   - turn:localhost:3478
