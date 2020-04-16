@@ -44,3 +44,4 @@
         external_dir_name: redis-external
         server_type: redis
         network_interface: "{{ redis_network_interface | default('') }}"
+      when: redis_network_interface is defined
