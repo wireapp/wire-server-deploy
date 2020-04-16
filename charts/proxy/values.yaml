@@ -14,6 +14,7 @@ resources:
     cpu: "500m"
 config:
   logLevel: Debug
-# NOTE: Without an empty dictionary, you will see warnings
-#       when overriding envVars
-envVars: {}
+  proxy:
+    httpProxy: ""
+    httpsProxy: ""
+    noProxy: ""
