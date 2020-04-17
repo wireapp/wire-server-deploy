@@ -23,6 +23,7 @@
         external_dir_name: elasticsearch-external
         server_type: elasticsearch
         network_interface: "{{ elasticsearch_network_interface | default('') }}"
+      when: '"elasticsearch" in groups'
 
     - name: Generate minio IPs for helm
       include_tasks: tasks/helm_external.yml
@@ -30,6 +31,7 @@
         external_dir_name: minio-external
         server_type: minio
         network_interface: "{{ minio_network_interface | default('') }}"
+      when: '"minio" in groups'
 
     - name: Generate cassandra IPs for helm
       include_tasks: tasks/helm_external.yml
@@ -37,6 +39,7 @@
         external_dir_name: cassandra-external
         server_type: cassandra
         network_interface: "{{ cassandra_network_interface | default('') }}"
+      when: '"cassandra" in groups'
 
     - name: Generate redis IPs for helm
       include_tasks: tasks/helm_external.yml
@@ -44,4 +47,4 @@
         external_dir_name: redis-external
         server_type: redis
         network_interface: "{{ redis_network_interface | default('') }}"
-      when: redis_network_interface is defined
+      when: '"redis" in groups'
