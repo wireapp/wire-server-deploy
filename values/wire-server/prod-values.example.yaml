@@ -12,6 +12,8 @@ cassandra-migrations:
 elasticsearch-index:
   elasticsearch:
     host: elasticsearch-external
+  cassandra:
+    host: cassandra-external
 
 brig:
   replicaCount: 3
