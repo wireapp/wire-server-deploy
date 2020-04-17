@@ -12,6 +12,8 @@ cassandra-migrations:
 elasticsearch-index:
   elasticsearch:
     host: elasticsearch-ephemeral
+  cassandra:
+    host: cassandra-ephemeral
 
 brig:
   replicaCount: 1
