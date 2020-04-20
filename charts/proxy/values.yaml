@@ -14,7 +14,4 @@ resources:
     cpu: "500m"
 config:
   logLevel: Debug
-  proxy:
-    httpProxy: ""
-    httpsProxy: ""
-    noProxy: ""
+  proxy: {}

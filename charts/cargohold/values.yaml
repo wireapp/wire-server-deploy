@@ -16,7 +16,4 @@ config:
   logLevel: Info
   aws:
     s3Bucket: assets
-  proxy:
-    httpProxy: ""
-    httpsProxy: ""
-    noProxy: ""
+  proxy: {}

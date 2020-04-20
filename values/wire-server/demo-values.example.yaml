@@ -3,8 +3,8 @@ tags:
   spar: false # enable if you want/need Single-Sign-On (SSO)
 
 cassandra-migrations:
-  # images:
-  #   tag: some-tag (only override if you want a newer/different version than what is in the chart)
+#  images:
+#    tag: some-tag (only override if you want a newer/different version than what is in the chart)
   cassandra:
     host: cassandra-ephemeral
     replicaCount: 1
@@ -15,8 +15,8 @@ elasticsearch-index:
 
 brig:
   replicaCount: 1
-  # image:
-  #   tag: some-tag (only override if you want a newer/different version than what is in the chart)
+#  image:
+#    tag: some-tag (only override if you want a newer/different version than what is in the chart)
   config:
     cassandra:
       host: cassandra-ephemeral
@@ -47,34 +47,53 @@ brig:
       host: demo-smtp # change this if you want to use your own SMTP server
       port: 25        # change this
       connType: plain # change this. Possible values: plain|ssl|tls
+#    proxy: 
+#      httpProxy: "http://proxy.example.com"
+#      httpsProxy: "bar"
+#      noProxyList: 
+#        - "local.example.com"
+#        - "10.23.0.0/16"
 
 proxy:
   replicaCount: 1
-  # image:
-  #   tag: some-tag (only override if you want a newer/different version than what is in the chart)
+#  image:
+#    tag: some-tag (only override if you want a newer/different version than what is in the chart)
+#  config:
+#    proxy: 
+#      httpProxy: "http://proxy.example.com"
+#      httpsProxy: "bar"
+#      noProxyList: 
+#        - "local.example.com"
+#        - "10.23.0.0/16"
 
 cannon:
   replicaCount: 1
-  # image:
-  #   tag: some-tag (only override if you want a newer/different version than what is in the chart)
+#  image:
+#    tag: some-tag (only override if you want a newer/different version than what is in the chart)
   # For demo mode only, we don't need to keep websocket connections open on chart upgrades
   drainTimeout: 10
 
 cargohold:
   replicaCount: 1
-  # image:
-  #   tag: some-tag (only override if you want a newer/different version than what is in the chart)
+#  image:
+#    tag: some-tag (only override if you want a newer/different version than what is in the chart)
   config:
     aws:
       # change if using real AWS
       s3Bucket: dummy-bucket
       s3Endpoint: http://fake-aws-s3:9000
       s3DownloadEndpoint: https://assets.example.com
+#    proxy: 
+#      httpProxy: "http://proxy.example.com"
+#      httpsProxy: "bar"
+#      noProxyList: 
+#        - "local.example.com"
+#        - "10.23.0.0/16"
 
 galley:
   replicaCount: 1
-  # image:
-  #   tag: some-tag (only override if you want a newer/different version than what is in the chart)
+#  image:
+#    tag: some-tag (only override if you want a newer/different version than what is in the chart)
   config:
     cassandra:
       host: cassandra-ephemeral
@@ -82,11 +101,17 @@ galley:
     settings:
       # prefix URI used when inviting users to a conversation by link
       conversationCodeURI: https://example.com/join/ # change this
+#    proxy: 
+#      httpProxy: "http://proxy.example.com"
+#      httpsProxy: "bar"
+#      noProxyList: 
+#        - "local.example.com"
+#        - "10.23.0.0/16"
 
 gundeck:
   replicaCount: 1
-  # image:
-  #   tag: some-tag (only override if you want a newer/different version than what is in the chart)
+#  image:
+#    tag: some-tag (only override if you want a newer/different version than what is in the chart)
   config:
     cassandra:
       host: cassandra-ephemeral
@@ -99,15 +124,21 @@ gundeck:
       queueName: integration-gundeck-events
       sqsEndpoint: http://fake-aws-sqs:4568
       snsEndpoint: http://fake-aws-sns:4575
+#    proxy: 
+#      httpProxy: "http://proxy.example.com"
+#      httpsProxy: "bar"
+#      noProxyList: 
+#        - "local.example.com"
+#        - "10.23.0.0/16"
 
 nginz:
   replicaCount: 1
   config:
     ws:
       useProxyProtocol: false
-  # images:
-  #   nginz:
-  #     tag: some-tag (only override if you want a newer/different version than what is in the chart)
+#  images:
+#    nginz:
+#      tag: some-tag (only override if you want a newer/different version than what is in the chart)
   nginx_conf:
     # using prod means mostly that some internal endpoints are not exposed
     env: prod
@@ -118,8 +149,8 @@ nginz:
 
 webapp:
   replicaCount: 1
-  # image:
-  #   tag: # some-tag (only override if you want a newer/different version than what is in the chart)
+#  image:
+#    tag: some-tag (only override if you want a newer/different version than what is in the chart)
   config:
     externalUrls:
       backendRest: nginz-https.example.com
@@ -129,8 +160,8 @@ webapp:
 
 team-settings:
   replicaCount: 1
-  # image:
-  #   tag: # some-tag (only override if you want a newer/different version than what is in the chart)
+#  image:
+#    tag: some-tag (only override if you want a newer/different version than what is in the chart)
   config:
     externalUrls:
       backendRest: nginz-https.example.com
@@ -140,8 +171,8 @@ team-settings:
 
 account-pages:
   replicaCount: 1
-  # image:
-  #   tag: # some-tag (only override if you want a newer/different version than what is in the chart)
+#  image:
+#    tag: some-tag (only override if you want a newer/different version than what is in the chart)
   config:
     externalUrls:
       backendRest: nginz-https.example.com

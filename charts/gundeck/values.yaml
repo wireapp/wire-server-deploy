@@ -22,7 +22,4 @@ config:
   bulkPush: false
   aws:
     region: "eu-west-1"
-  proxy:
-    httpProxy: ""
-    httpsProxy: ""
-    noProxy: ""
+  proxy: {}

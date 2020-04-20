@@ -66,24 +66,26 @@ spec:
           # TODO: Is this the best way to do this?
           - name: AWS_REGION
             value: "{{ .Values.config.aws.region }}"
-          {{- if .Values.config.proxy.httpProxy }}
+          {{- with .Values.config.proxy }}
+          {{- if .httpProxy }}
           - name: http_proxy
-            value: {{ .Values.config.proxy.httpProxy | quote }}
+            value: {{ .httpProxy | quote }}
           - name: HTTP_PROXY
-            value: {{ .Values.config.proxy.httpProxy | quote }}
+            value: {{ .httpProxy | quote }}
           {{- end }}
-          {{- if .Values.config.proxy.httpsProxy }}
+          {{- if .httpsProxy }}
           - name: https_proxy
-            value: {{ .Values.config.proxy.httpsProxy | quote }}
+            value: {{ .httpsProxy | quote }}
           - name: HTTPS_PROXY
-            value: {{ .Values.config.proxy.httpsProxy | quote }}
+            value: {{ .httpsProxy | quote }}
           {{- end }}
-          {{- if .Values.config.proxy.noProxy }}
+          {{- if .noProxyList }}
           - name: no_proxy
-            value: {{ .Values.config.proxy.noProxy | quote }}
+            value: {{ join "," .noProxyList | quote }}
           - name: NO_PROXY
-            value: {{ .Values.config.proxy.noProxy | quote }}
-          {{- end }}      
+            value: {{ join "," .noProxyList | quote }}
+          {{- end }}
+          {{- end }} 
           ports:
             - containerPort: {{ .Values.service.internalPort }}
           livenessProbe:
