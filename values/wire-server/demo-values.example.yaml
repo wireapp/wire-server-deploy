@@ -48,10 +48,10 @@ brig:
       host: demo-smtp # change this if you want to use your own SMTP server
       port: 25        # change this
       connType: plain # change this. Possible values: plain|ssl|tls
-#    proxy: 
+#    proxy:
 #      httpProxy: "http://proxy.example.com"
-#      httpsProxy: "bar"
-#      noProxyList: 
+#      httpsProxy: "https://proxy.example.com"
+#      noProxyList:
 #        - "local.example.com"
 #        - "10.23.0.0/16"
 
@@ -62,7 +62,7 @@ proxy:
 #  config:
 #    proxy: 
 #      httpProxy: "http://proxy.example.com"
-#      httpsProxy: "bar"
+#      httpsProxy: "https://proxy.example.com"
 #      noProxyList: 
 #        - "local.example.com"
 #        - "10.23.0.0/16"
@@ -86,7 +86,7 @@ cargohold:
       s3DownloadEndpoint: https://assets.example.com
 #    proxy: 
 #      httpProxy: "http://proxy.example.com"
-#      httpsProxy: "bar"
+#      httpsProxy: "https://proxy.example.com"
 #      noProxyList: 
 #        - "local.example.com"
 #        - "10.23.0.0/16"
@@ -104,7 +104,7 @@ galley:
       conversationCodeURI: https://example.com/join/ # change this
 #    proxy: 
 #      httpProxy: "http://proxy.example.com"
-#      httpsProxy: "bar"
+#      httpsProxy: "https://proxy.example.com"
 #      noProxyList: 
 #        - "local.example.com"
 #        - "10.23.0.0/16"
@@ -127,7 +127,7 @@ gundeck:
       snsEndpoint: http://fake-aws-sns:4575
 #    proxy: 
 #      httpProxy: "http://proxy.example.com"
-#      httpsProxy: "bar"
+#      httpsProxy: "https://proxy.example.com"
 #      noProxyList: 
 #        - "local.example.com"
 #        - "10.23.0.0/16"
