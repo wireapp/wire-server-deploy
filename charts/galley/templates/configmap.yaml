@@ -43,6 +43,7 @@ data:
       intraListing: false
       maxTeamSize: {{ .settings.maxTeamSize }}
       maxConvSize: {{ .settings.maxConvSize }}
+      truncationLimit: {{ .settings.truncationLimit }}
       conversationCodeURI: {{ .settings.conversationCodeURI | quote }}
       {{- if .settings.featureFlags }}
       featureFlags:
