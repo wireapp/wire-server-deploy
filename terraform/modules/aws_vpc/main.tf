@@ -28,9 +28,9 @@ module "vpc" {
   enable_dns_support   = true
 
   enable_dhcp_options      = true
-  dhcp_options_domain_name = "offline.zinfra.io"
-#  dhcp_options_domain_name_servers = 
-  
+  dhcp_options_domain_name = var.dhcp_options_domain_name
+  #  dhcp_options_domain_name_servers = 
+
   # In case we run terraform from within the environment.
   # VPC endpoint for DynamoDB
   enable_dynamodb_endpoint = true
@@ -41,19 +41,20 @@ module "vpc" {
   ec2_endpoint_private_dns_enabled = true
   ec2_endpoint_security_group_ids  = [data.aws_security_group.default.id]
 
-  enable_nat_gateway = true
+  enable_nat_gateway     = true
   one_nat_gateway_per_az = false
-# Use this only in productionish environments.
-#  one_nat_gateway_per_az = true
+  # Use this only in productionish environments.
+  #  one_nat_gateway_per_az = true
 
+  # TODO variabilify tags
   tags = {
     Owner       = "Backend Team"
     Environment = "Offline"
     TrustZone   = "Crash"
   }
   vpc_tags = {
-    Owner       = "Backend Team"
-    Name        = "vpc-offline"
-    TrustZone   = "Crash"
+    Owner     = "Backend Team"
+    Name      = "vpc-offline"
+    TrustZone = "Crash"
   }
 }
