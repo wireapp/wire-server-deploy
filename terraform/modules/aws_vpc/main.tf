@@ -46,15 +46,12 @@ module "vpc" {
   # Use this only in productionish environments.
   #  one_nat_gateway_per_az = true
 
-  # TODO variabilify tags
   tags = {
     Owner       = "Backend Team"
-    Environment = "Offline"
-    TrustZone   = "Crash"
+    Environment = var.environment
   }
   vpc_tags = {
     Owner     = "Backend Team"
-    Name      = "vpc-offline"
-    TrustZone = "Crash"
+    Name      = var.name
   }
 }
