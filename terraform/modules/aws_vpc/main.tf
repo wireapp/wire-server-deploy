@@ -14,7 +14,7 @@ data "aws_security_group" "default" {
 }
 
 module "vpc" {
-  source = "github.com/terraform-aws-modules/terraform-aws-vpc"
+  source = "github.com/terraform-aws-modules/terraform-aws-vpc?ref=v2.33.0"
 
   name = var.name
 
