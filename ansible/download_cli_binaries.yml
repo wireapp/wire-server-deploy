@@ -11,7 +11,7 @@
   vars:
     # Ensure these versions match the server-side ones (or are compatible)
     # Also see download_kubespray.yml
-    kubernetes_helm_ver: v3.1.0
+    kubernetes_helm_ver: v3.1.1
     kubectl_version: "1.14.2"
     # default directories for a global installation
     kubectl_bin_directory: "/usr/local/bin"
