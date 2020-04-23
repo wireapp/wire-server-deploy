@@ -4,12 +4,21 @@ Terraform module: Terraform state facility
 Ensures the existence of locations in which a Terraform state is stored and locked. It allows working in a collaborative
 and distributed fashion on any kind of Terraform code.
 
-It should be a one-time setup that doesn't need to be touched. Though, the module allows to be destroyed.
+It should be a one-time setup that doesn't need to be touched.
 
 It makes use of the following AWS services:
 
 * S3 bucket (Object Storage)
 * DynamoDB (document-based Database)
+
+The module can be used in the following way
+```
+module "initiate-tf-state-sharing" {
+  source = "github.com/wireapp/wire-server-deploy.git//terraform/modules/aws_terraform-state-share"
+  bucket_name = "myBucketName"
+  table_name = "myTableName"
+}
+```
 
 In order to destroy the previously created instance, one can
 
