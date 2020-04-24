@@ -51,7 +51,7 @@ module "vpc" {
     Environment = var.environment
   }
   vpc_tags = {
-    Owner     = "Backend Team"
-    Name      = var.name
+    Owner = "Backend Team"
+    Name  = var.name
   }
 }

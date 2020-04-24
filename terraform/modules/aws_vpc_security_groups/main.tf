@@ -11,7 +11,7 @@ resource "aws_security_group" "world_ssh_in" {
     to_port     = 22
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
-    }
+  }
 
   tags = {
     Name = "world_ssh_in"
@@ -29,13 +29,13 @@ resource "aws_security_group" "world_web_out" {
     to_port     = 80
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
-    }
+  }
   egress {
     from_port   = 443
     to_port     = 443
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
-    }
+  }
 
   tags = {
     Name = "world_web_out"
@@ -67,9 +67,9 @@ resource "aws_security_group" "has_ssh" {
   vpc_id      = var.vpc_id
 
   ingress {
-    from_port   = 22
-    to_port     = 22
-    protocol    = "tcp"
+    from_port       = 22
+    to_port         = 22
+    protocol        = "tcp"
     security_groups = ["${aws_security_group.ssh_from.id}"]
   }
 
@@ -106,7 +106,7 @@ resource "aws_security_group" "talk_to_assets" {
     to_port     = 123
     protocol    = "udp"
     cidr_blocks = ["172.17.0.0/20"]
-    }
+  }
 
   # HTTP
   egress {
@@ -114,7 +114,7 @@ resource "aws_security_group" "talk_to_assets" {
     to_port     = 80
     protocol    = "tcp"
     cidr_blocks = ["172.17.0.0/20"]
-    }
+  }
 
   # HTTPS
   egress {
@@ -122,7 +122,7 @@ resource "aws_security_group" "talk_to_assets" {
     to_port     = 443
     protocol    = "tcp"
     cidr_blocks = ["172.17.0.0/20"]
-    }
+  }
 
   tags = {
     Name = "talk_to_assets"
@@ -136,42 +136,42 @@ resource "aws_security_group" "has_assets" {
   vpc_id      = var.vpc_id
 
   ingress {
-    from_port   = 53
-    to_port     = 53
-    protocol    = "tcp"
+    from_port       = 53
+    to_port         = 53
+    protocol        = "tcp"
     security_groups = ["${aws_security_group.talk_to_assets.id}"]
   }
 
   ingress {
-    from_port   = 53
-    to_port     = 53
-    protocol    = "udp"
+    from_port       = 53
+    to_port         = 53
+    protocol        = "udp"
     security_groups = ["${aws_security_group.talk_to_assets.id}"]
   }
 
   # Time
   ingress {
-    from_port   = 123
-    to_port     = 123
-    protocol    = "udp"
+    from_port       = 123
+    to_port         = 123
+    protocol        = "udp"
     security_groups = ["${aws_security_group.talk_to_assets.id}"]
-    }
+  }
 
   # HTTP
   ingress {
-    from_port   = 80
-    to_port     = 80
-    protocol    = "tcp"
+    from_port       = 80
+    to_port         = 80
+    protocol        = "tcp"
     security_groups = ["${aws_security_group.talk_to_assets.id}"]
-    }
+  }
 
   # HTTPS
   ingress {
-    from_port   = 443
-    to_port     = 443
-    protocol    = "tcp"
+    from_port       = 443
+    to_port         = 443
+    protocol        = "tcp"
     security_groups = ["${aws_security_group.talk_to_assets.id}"]
-    }
+  }
 
   tags = {
     Name = "has_assets"
@@ -204,25 +204,25 @@ resource "aws_security_group" "k8s_node" {
 
   # incoming from the admin node (kubectl)
   ingress {
-    from_port   = 6443
-    to_port     = 6443
-    protocol    = "tcp"
+    from_port       = 6443
+    to_port         = 6443
+    protocol        = "tcp"
     security_groups = ["${aws_security_group.talk_to_k8s.id}"]
   }
 
   # FIXME: tighten this up.
   ingress {
-    from_port   = 0
-    to_port     = 65535
-    protocol    = "tcp"
+    from_port       = 0
+    to_port         = 65535
+    protocol        = "tcp"
     security_groups = ["${aws_security_group.k8s_private.id}"]
   }
 
   # FIXME: tighten this up. need UDP for flannel.
   ingress {
-    from_port   = 0
-    to_port     = 65535
-    protocol    = "udp"
+    from_port       = 0
+    to_port         = 65535
+    protocol        = "udp"
     security_groups = ["${aws_security_group.k8s_private.id}"]
   }
 
@@ -295,7 +295,7 @@ resource "aws_security_group" "talk_to_stateful" {
     to_port     = 9092
     protocol    = "tcp"
     cidr_blocks = ["172.17.0.0/20"]
-  }  
+  }
 
   tags = {
     Name = "talk_to_stateful"
@@ -346,7 +346,7 @@ resource "aws_security_group" "stateful_private" {
     to_port     = 9092
     protocol    = "tcp"
     cidr_blocks = ["172.17.0.0/20"]
-  }  
+  }
 
   tags = {
     Name = "stateful_private"
@@ -361,73 +361,73 @@ resource "aws_security_group" "stateful_node" {
 
   # incoming cassandra clients
   ingress {
-    from_port   = 9042
-    to_port     = 9042
-    protocol    = "tcp"
+    from_port       = 9042
+    to_port         = 9042
+    protocol        = "tcp"
     security_groups = ["${aws_security_group.talk_to_stateful.id}"]
   }
 
   # incoming elasticsearch clients.
   ingress {
-    from_port   = 9200
-    to_port     = 9200
-    protocol    = "tcp"
+    from_port       = 9200
+    to_port         = 9200
+    protocol        = "tcp"
     security_groups = ["${aws_security_group.talk_to_stateful.id}"]
   }
 
   # incoming minio clients.
   ingress {
-    from_port   = 9000
-    to_port     = 9000
-    protocol    = "tcp"
+    from_port       = 9000
+    to_port         = 9000
+    protocol        = "tcp"
     security_groups = ["${aws_security_group.talk_to_stateful.id}"]
   }
 
   # incoming minio clients.
   ingress {
-    from_port   = 9092
-    to_port     = 9092
-    protocol    = "tcp"
+    from_port       = 9092
+    to_port         = 9092
+    protocol        = "tcp"
     security_groups = ["${aws_security_group.talk_to_stateful.id}"]
   }
 
   # other cassandra nodes (non-TLS)
   ingress {
-    from_port   = 7000
-    to_port     = 7000
-    protocol    = "tcp"
+    from_port       = 7000
+    to_port         = 7000
+    protocol        = "tcp"
     security_groups = ["${aws_security_group.stateful_private.id}"]
   }
 
   # other cassandra nodes (TLS)
   ingress {
-    from_port   = 9160
-    to_port     = 9160
-    protocol    = "tcp"
+    from_port       = 9160
+    to_port         = 9160
+    protocol        = "tcp"
     security_groups = ["${aws_security_group.stateful_private.id}"]
   }
 
   # other elasticsearch nodes
   ingress {
-    from_port   = 9300
-    to_port     = 9300
-    protocol    = "tcp"
+    from_port       = 9300
+    to_port         = 9300
+    protocol        = "tcp"
     security_groups = ["${aws_security_group.stateful_private.id}"]
   }
 
   # other minio nodes
   ingress {
-    from_port   = 9000
-    to_port     = 9000
-    protocol    = "tcp"
+    from_port       = 9000
+    to_port         = 9000
+    protocol        = "tcp"
     security_groups = ["${aws_security_group.stateful_private.id}"]
   }
 
   # other minio nodes
   ingress {
-    from_port   = 9092
-    to_port     = 9092
-    protocol    = "tcp"
+    from_port       = 9092
+    to_port         = 9092
+    protocol        = "tcp"
     security_groups = ["${aws_security_group.stateful_private.id}"]
   }
 
