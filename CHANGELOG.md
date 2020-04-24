@@ -3,7 +3,7 @@
 ## Release Notes
 
 - This version adds a new migration to the elasticsearch index, it will go through all users in
-  cassandra and (re-)create all users in elasticsearch. So, it could take a long time to finish 
+  cassandra and (re-)create all users in elasticsearch. So, it could take a long time to finish
   depending on the number of users in the system.
 
 ## Features
