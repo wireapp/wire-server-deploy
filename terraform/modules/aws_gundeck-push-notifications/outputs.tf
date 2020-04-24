@@ -1,12 +1,14 @@
+# Output required to configured wire-server
+
 output "notification_queue_name" {
   value = aws_sqs_queue.push_notifications.name
 }
 
-output "queue_endpoint" {
+output "sqs_endpoint" {
   value = "https://sqs.${var.region}.amazonaws.com"
 }
 
-output "notification_endpoint" {
+output "sns_endpoint" {
   value = "https://sns.${var.region}.amazonaws.com"
 }
 
