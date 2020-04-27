@@ -12,7 +12,7 @@ variable "environment" {
 
 variable "account_id" {
   type        = string
-  description = "AWS account the created resourcces are need to be assigned to"
+  description = "AWS account the created resources are need to be assigned to"
 }
 
 # Check https://github.com/zinfra/backend-wiki/wiki/Native-Push-Notifications#ios

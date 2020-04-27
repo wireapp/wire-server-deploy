@@ -16,7 +16,7 @@ resource "aws_sns_platform_application" "apns_voip" {
   # ^-- Path to the public certificate
   platform_credential = file("${var.apns_credentials_path}.key.pem")
   # ^-- Path to the private key
-  event_delivery_failure_topic_arn = "arn:aws:sns:${var.region}:${var.account_id}:${var.environment}-${var.queue_name}"
+  event_delivery_failure_topic_arn = aws_sns_topic.device_state_changed.arn
   # ^-- Topic to subscribe to
   event_endpoint_updated_topic_arn = "arn:aws:sns:${var.region}:${var.account_id}:${var.environment}-${var.queue_name}"
   # ^-- Topic to subscribe to
@@ -42,12 +42,12 @@ resource "aws_sns_platform_application" "gcm" {
 
 # Create topics and queues to publish push notifications
 
-resource "aws_sns_topic" "incoming_message_or_call" {
+resource "aws_sns_topic" "device_state_changed" {
   name = "${var.environment}-${var.queue_name}"
 }
 
 resource "aws_sns_topic_subscription" "platform_updates_subscription" {
-  topic_arn            = aws_sns_topic.incoming_message_or_call.arn
+  topic_arn            = aws_sns_topic.device_state_changed.arn
   protocol             = "sqs"
   endpoint             = aws_sqs_queue.push_notifications.arn
   raw_message_delivery = true

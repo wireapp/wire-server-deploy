@@ -1,4 +1,4 @@
-# Output required to configured wire-server
+# Output required to configure wire-server
 
 output "notification_queue_name" {
   value = aws_sqs_queue.push_notifications.name

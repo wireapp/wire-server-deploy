@@ -22,7 +22,7 @@ resource "aws_sqs_queue_policy" "allow_sns_push_notification_events" {
               "Resource": "${aws_sqs_queue.push_notifications.arn}",
               "Condition": {
                   "ArnEquals": {
-                      "aws:SourceArn": "${aws_sns_topic.incoming_message_or_call.arn}"
+                      "aws:SourceArn": "${aws_sns_topic.device_state_changed.arn}"
                   }
               }
           }
