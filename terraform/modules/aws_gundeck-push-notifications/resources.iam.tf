@@ -1,5 +1,5 @@
 resource "aws_iam_user" "gundeck" {
-  name          = "gundeck-full-access"
+  name          = "${var.environment}-gundeck-full-access"
   force_destroy = true
 }
 
