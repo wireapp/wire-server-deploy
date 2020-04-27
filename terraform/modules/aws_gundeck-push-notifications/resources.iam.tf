@@ -11,7 +11,7 @@ resource "aws_iam_access_key" "gundeck" {
 # and to consume messages from the SQS queues
 #
 resource "aws_iam_user_policy" "gundeck" {
-  name = "gundeck-full-access-policy"
+  name = "${var.environment}-gundeck-full-access-policy"
   user = aws_iam_user.gundeck.name
 
   policy = <<-EOP
