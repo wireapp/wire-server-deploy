@@ -73,6 +73,7 @@ config:
     # setUserMaxPermClients: <int>
   smtp:
     passwordFile: /etc/wire/brig/secrets/smtp-password.txt
+  proxy: {}
 turnStatic:
   v1:
   - turn:localhost:3478

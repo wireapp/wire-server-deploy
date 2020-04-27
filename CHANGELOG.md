@@ -1,9 +1,28 @@
-# [ 2020-04-15 ]
+# 2020-04-24
+
+## Features
+
+- Add missing galley route to nginz. (#223)
+- Add maxFanoutSize to galley's options (#231)
+- move to helm 3. (#236)
+- terraform configuration from the offline environment. (#230)
+- terraform module to initialize state sharing on AWS (#234)
+- add a commented out block for specifying a non-default elasticsearch apt mirror. (#225)
+
+## Bug fixes
+
+- Fix commented out example value for HTTPS proxy environment variable
+- All to set HTTP proxy environment vars for brig, cargohold, galley, gundeck, proxy, spar (#217)
+- skip memorizing the IPs of redis nodes if there are not any. (#224)
+- Add missing cassandra host value for elasticsearch-index chart (#227)
+- Remove unused table (#222)
+
+# 2020-04-15
 
 ## Release Notes
 
 - This version adds a new migration to the elasticsearch index, it will go through all users in
-  cassandra and (re-)create all users in elasticsearch. So, it could take a long time to finish 
+  cassandra and (re-)create all users in elasticsearch. So, it could take a long time to finish
   depending on the number of users in the system.
 
 ## Features

@@ -20,3 +20,4 @@ config:
   logLevel: Info
   maxttlAuthreq: 7200
   maxttlAuthresp: 7200
+  proxy: {}
