@@ -6,7 +6,7 @@ This module enables Push Notifications for iOS and Android devices. It is used b
 
 #### How to use the module
 
-```hcl-terraform
+```hcl
 module "gundeck-push-notification" {
   source = "github.com/wireapp/wire-server-deploy.git//terraform/modules/aws-gundeck-push-notifications?ref=develop"
   
