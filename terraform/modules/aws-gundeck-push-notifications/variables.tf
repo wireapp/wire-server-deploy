@@ -1,19 +1,15 @@
 variable "region" {
   type        = string
-  description = "defines in which region state and lock are being stored"
+  description = "defines in which region state and lock are being stored (default: 'eu-central-1')"
   default     = "eu-central-1"
 }
 
 variable "environment" {
   type        = string
-  description = "name of the environment as a scope for the created resources (e.g., prod. Can be staging or anything else)"
+  description = "name of the environment as a scope for the created resources (default: 'dev'; example: 'prod', 'staging')"
   default     = "dev"
 }
 
-variable "account_id" {
-  type        = string
-  description = "AWS account the created resources are need to be assigned to"
-}
 
 # Check https://github.com/zinfra/backend-wiki/wiki/Native-Push-Notifications#ios
 variable "apns_application_id" {
@@ -21,10 +17,18 @@ variable "apns_application_id" {
   description = "iOS application name (aka app ID), e.g. 'wire.com'"
 }
 
-variable "apns_credentials_path" {
+# docs: https://www.terraform.io/docs/providers/aws/r/sns_platform_application.html#platform_credential
+variable "apns_key" {
   type        = string
-  description = "path to certificate and private key files (omit '.[cert,key].pem')"
+  description = "content of the key file"
 }
+
+# docs: https://www.terraform.io/docs/providers/aws/r/sns_platform_application.html#platform_principal
+variable "apns_cert" {
+  type        = string
+  description = "content of the cert file"
+}
+
 
 # Check https://github.com/zinfra/backend-wiki/wiki/Native-Push-Notifications#android
 variable "gcm_application_id" {
@@ -32,9 +36,10 @@ variable "gcm_application_id" {
   description = "Android application name (aka sender ID), e.g. '482078210000'"
 }
 
-variable "gcm_credentials_path" {
+# docs: https://www.terraform.io/docs/providers/aws/r/sns_platform_application.html#platform_credential
+variable "gcm_key" {
   type        = string
-  description = "path to the key file (omit '.key.txt')"
+  description = "content of the key file"
 }
 
 

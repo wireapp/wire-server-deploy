@@ -12,13 +12,13 @@ resource "aws_sns_platform_application" "apns_voip" {
   #
   platform = "APNS_VOIP"
   # ^-- We only use VoIP at the moment
-  platform_principal = file("${var.apns_credentials_path}.cert.pem")
+  platform_principal = var.apns_cert
   # ^-- Path to the public certificate
-  platform_credential = file("${var.apns_credentials_path}.key.pem")
+  platform_credential = var.apns_key
   # ^-- Path to the private key
   event_delivery_failure_topic_arn = aws_sns_topic.device_state_changed.arn
   # ^-- Topic to subscribe to
-  event_endpoint_updated_topic_arn = "arn:aws:sns:${var.region}:${var.account_id}:${var.environment}-${var.queue_name}"
+  event_endpoint_updated_topic_arn = aws_sns_topic.device_state_changed.arn
   # ^-- Topic to subscribe to
 }
 
@@ -32,11 +32,11 @@ resource "aws_sns_platform_application" "gcm" {
   # More details: https://github.com/zinfra/backend-wiki/wiki/Native-Push-Notifications#android
   #
   platform            = "GCM"
-  platform_credential = file("${var.gcm_credentials_path}.key.txt")
+  platform_credential = var.gcm_key
   # ^-- Path to the secret token
-  event_delivery_failure_topic_arn = "arn:aws:sns:${var.region}:${var.account_id}:${var.environment}-${var.queue_name}"
+  event_delivery_failure_topic_arn = aws_sns_topic.device_state_changed.arn
   # ^-- Topic to subscribe to
-  event_endpoint_updated_topic_arn = "arn:aws:sns:${var.region}:${var.account_id}:${var.environment}-${var.queue_name}"
+  event_endpoint_updated_topic_arn = aws_sns_topic.device_state_changed.arn
   # ^-- Topic to subscribe to
 }
 
