@@ -7,7 +7,7 @@ queue for internal events.
 
 #### How to use the module
 
-```hcl-terraform
+```hcl
 module "bring_prekey_storage_and_event_queue" {
   source = "github.com/wireapp/wire-server-deploy.git//terraform/modules/aws-brig-prekey-storage-event-queue?ref=develop"
   

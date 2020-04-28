@@ -1,17 +1,20 @@
 Terraform module: Brig to enable email sending
 ==============================================
 
-This module creates AWS resources (SES, SQS, SNS) enabling Brig to send emails.
+Wire-server's "brig" components needs to send emails. This can either be done by configuring an
+SMTP server (Option 1), or by using AWS resources (SES, SQS, SNS) (Option 2).
+
+This terraform module enables brig to send emails using option 2.
 
 
 #### How to use the module
 
-```hcl-terraform
+```hcl
 module "bring_email_sending" {
   source = "github.com/wireapp/wire-server-deploy.git//terraform/modules/aws-brig-email-sending?ref=develop"
   
   environment = "staging"
-  sender_address = "no-reploy@wire.com"
+  sender_address = "no-reply@example.com"
 }
 ```
 
