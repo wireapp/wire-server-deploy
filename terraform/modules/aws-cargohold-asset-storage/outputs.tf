@@ -5,7 +5,7 @@ output "bucket_name" {
 }
 
 output "s3_endpoint" {
-  value = "https://s3.${var.region}.amazonaws.com"
+  value = "https://s3.${aws_s3_bucket.asset_storage.region}.amazonaws.com"
 }
 
 output "cargohold_access_key" {

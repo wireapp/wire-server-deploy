@@ -3,10 +3,16 @@ Terraform module: Cargohold Asset Storage
 
 This module creates an Object Storage on AWS for cargohold to store encrypted assets.
 
+State: __experimental__
+
+#### TODO
+
+* [ ] add cloudfront support
+
 
 #### How to use the module
 
-```hcl-terraform
+```hcl
 module "cargohold_asset_storage" {
   source = "github.com/wireapp/wire-server-deploy.git//terraform/modules/aws-cargohold-asset-storage?ref=develop"
   
