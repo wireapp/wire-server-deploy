@@ -1,9 +1,18 @@
 Terraform module: Cargohold Asset Storage
 =========================================
 
+State: __experimental__
+
 This module creates an Object Storage on AWS for cargohold to store encrypted assets.
 
-State: __experimental__
+AWS resources: S3
+
+
+#### Important note
+
+This module causes Terraform to store sensitive data in the `.tfstate` file. Hence, encrypting the state should be
+mandatory.
+
 
 #### TODO
 
