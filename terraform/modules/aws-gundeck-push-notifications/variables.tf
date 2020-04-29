@@ -45,6 +45,6 @@ variable "gcm_key" {
 
 variable "queue_name" {
   type        = string
-  description = "name of the queue to fetch events from"
-  default     = "gundeck-push-notifications"
+  description = "name of the queue to fetch events from (prefix: $environment)"
+  default     = "gundeck-events"
 }

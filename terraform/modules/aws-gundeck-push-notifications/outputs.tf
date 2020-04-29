@@ -5,20 +5,17 @@ output "notification_queue_name" {
 }
 
 output "sqs_endpoint" {
-  value = "https://sqs.${var.region}.amazonaws.com"
+  value = "https://sqs.${data.aws_region.current.name}.amazonaws.com"
 }
 
 output "sns_endpoint" {
-  value = "https://sns.${var.region}.amazonaws.com"
+  value = "https://sns.${data.aws_region.current.name}.amazonaws.com"
 }
 
 output "gundeck_access_key" {
   value = aws_iam_access_key.gundeck.id
 }
 
-# This value is sensitive in nature and you cannot be obtained from AWS console.
-# However, it is stored in the Terraform state, like all outputs, and can be
-# queried with `terraform output`.
 output "gundeck_access_secret" {
   value = aws_iam_access_key.gundeck.secret
 }

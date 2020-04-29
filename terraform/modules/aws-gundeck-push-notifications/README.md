@@ -1,7 +1,17 @@
 Terraform module: Gundeck Push Notifications
 ============================================
 
+State: __experimental__
+
 This module enables Push Notifications for iOS and Android devices. It is used by Gundeck when running in an AWS cloud.
+
+AWS resources: SQS, SNS
+
+
+#### Important note
+
+This module causes Terraform to store sensitive data in the `.tfstate` file. Hence, encrypting the state should be
+mandatory.
 
 
 #### How to use the module
