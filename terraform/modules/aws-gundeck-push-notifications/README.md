@@ -22,8 +22,8 @@ module "gundeck-push-notification" {
   
   environment = "dev"
   apns_application_id = "myapp.tld"
-  apns_key = file("path/to/app-credentials/key.pem")
-  apns_cert = file("path/to/app-credentials/cert.pem")
+  apns_voip_key = file("path/to/app-credentials/key.pem")
+  apns_voip_cert = file("path/to/app-credentials/cert.pem")
   gcm_application_id = "123456789"
   gcm_key = file("path/to/app-credentials/key.txt")
 }

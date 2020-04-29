@@ -18,13 +18,13 @@ variable "apns_application_id" {
 }
 
 # docs: https://www.terraform.io/docs/providers/aws/r/sns_platform_application.html#platform_credential
-variable "apns_key" {
+variable "apns_voip_key" {
   type        = string
   description = "content of the key file"
 }
 
 # docs: https://www.terraform.io/docs/providers/aws/r/sns_platform_application.html#platform_principal
-variable "apns_cert" {
+variable "apns_voip_cert" {
   type        = string
   description = "content of the cert file"
 }

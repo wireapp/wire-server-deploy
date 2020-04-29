@@ -12,9 +12,9 @@ resource "aws_sns_platform_application" "apns_voip" {
   #
   platform = "APNS_VOIP"
   # ^-- We only use VoIP at the moment
-  platform_principal = var.apns_cert
+  platform_principal = var.apns_voip_cert
   # ^-- Path to the public certificate
-  platform_credential = var.apns_key
+  platform_credential = var.apns_voip_key
   # ^-- Path to the private key
   event_delivery_failure_topic_arn = aws_sns_topic.device_state_changed.arn
   # ^-- Topic to subscribe to
