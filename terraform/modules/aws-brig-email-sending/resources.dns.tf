@@ -28,6 +28,18 @@ resource "aws_route53_record" "ses_domain_spf" {
   records = ["v=spf1 include:amazonses.com -all"]
 }
 
+# indicate compliance with SPF or DKIM
+# docs: https://dmarc.org/wiki/FAQ
+#       https://docs.aws.amazon.com/ses/latest/DeveloperGuide/send-email-authentication-dmarc.html
+#
+resource "aws_route53_record" "ses_domain_dmarc" {
+  zone_id = var.zone_id
+  name    = "_dmarc.${aws_ses_domain_identity.brig.domain}"
+  type    = "TXT"
+  ttl     = "600"
+  records = [ "v=DMARC1; p=quarantine; pct=25; rua=mailto:dmarcreports@${aws_ses_domain_identity.brig.domain}" ]
+}
+
 # NOTE: in order to configure MAIL FROM
 # docs: https://www.terraform.io/docs/providers/aws/r/ses_domain_mail_from.html
 #
