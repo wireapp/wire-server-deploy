@@ -6,7 +6,8 @@ State: __experimental__
 Wire-server's "brig" components needs to send emails. This can either be done by configuring an
 SMTP server (Option 1), or by using AWS resources (Option 2).
 
-This terraform module enables brig to send emails using option 2.
+This terraform module enables brig to send emails using option 2. In addition, it configures *MAIL FROM* for outgoing
+emails, but does not enable incoming emails (possible solution: `aws_ses_receipt_rule`).
 
 AWS resources: SES, SQS, SNS, DNS
 
@@ -20,11 +21,12 @@ mandatory.
 #### How to use the module
 
 ```hcl
-module "bring_email_sending" {
+module "brig_email_sending" {
   source = "github.com/wireapp/wire-server-deploy.git//terraform/modules/aws-brig-email-sending?ref=develop"
   
   environment = "staging"
-  sender_address = "no-reply@example.com"
+  zone_id = "Z12345678SQWERTYU"
+  domain = "example.com"        # results in ''
 }
 ```
 

@@ -3,8 +3,10 @@ Terraform module: Brig pre-key locking & event queue
 
 State: __experimental__
 
-This module allows Brig to leverage AWS resources (A) to lock pre-keys during insertion and
-retrieval, and (B) to establish a message queue for internal events.
+This module allows wire-server's brig service to leverage AWS resources (A) to
+acquire a lock using dynamoDB (used during insertion and retrieval of prekeys
+in cassandra to avoid race conditions), and (B) to establish a message queue
+for internal events (used e.g. during user deletions).
 
 AWS resources: SQS, DynamoDB
 
@@ -18,10 +20,10 @@ mandatory.
 #### How to use the module
 
 ```hcl
-module "bring_prekey_lock_and_event_queue" {
+module "brig_prekey_lock_and_event_queue" {
   source = "github.com/wireapp/wire-server-deploy.git//terraform/modules/aws-brig-prekey-lock-event-queue?ref=develop"
   
-  environment = "staging"  
+  environment = "staging"
 }
 ```
 

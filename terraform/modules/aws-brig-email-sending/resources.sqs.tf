@@ -29,4 +29,3 @@ resource "aws_sqs_queue_policy" "allow_email_notification_events" {
   }
   EOP
 }
-
