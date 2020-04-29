@@ -8,7 +8,7 @@ SMTP server (Option 1), or by using AWS resources (Option 2).
 
 This terraform module enables brig to send emails using option 2.
 
-AWS resources: SES, SQS, SNS
+AWS resources: SES, SQS, SNS, DNS
 
 
 #### Important note

@@ -15,6 +15,11 @@ variable "email_domain" {
   description = "FQDN of the email address that is used in 'From' when sending emails (example: example.com)"
 }
 
+variable "zone_id" {
+  type = string
+  description = "zone ID defined by a 'aws_route53_zone.zone_id' resource (example: Z12345678SQWERTYU"
+}
+
 variable "email_sender" {
   type        = string
   description = "username of the email address that is used in 'From' when sending emails (default: `no-reply`)"

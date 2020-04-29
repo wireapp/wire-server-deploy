@@ -1,11 +1,11 @@
 # Output required to configure wire-server
 
 output "sqs_endpoint" {
-  value = "https://sqs.${var.region}.amazonaws.com"
+  value = "https://sqs.${data.aws_region.current}.amazonaws.com"
 }
 
 output "dynamodb_endpoint" {
-  value = "https://dynamodb.${var.region}.amazonaws.com"
+  value = "https://dynamodb.${data.aws_region.current}.amazonaws.com"
 }
 
 output "brig_access_key" {

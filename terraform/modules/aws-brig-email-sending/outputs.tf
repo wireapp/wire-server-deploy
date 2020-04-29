@@ -1,7 +1,7 @@
 # Output required to configure wire-server
 
 output "ses_endpoint" {
-  value = "https://email.${var.region}.amazonaws.com"
+  value = "https://email.${data.aws_region.current}.amazonaws.com"
 }
 
 output "brig_access_key" {
