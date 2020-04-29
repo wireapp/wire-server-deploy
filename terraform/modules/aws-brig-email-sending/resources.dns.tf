@@ -20,6 +20,14 @@ resource "aws_route53_record" "ses_domain_dkim_record" {
   records = ["${element(aws_ses_domain_dkim.brig.dkim_tokens, count.index)}.dkim.amazonses.com"]
 }
 
+resource "aws_route53_record" "ses_domain_spf" {
+  zone_id = var.zone_id
+  name    = aws_ses_domain_identity.brig.domain
+  type    = "TXT"
+  ttl     = "600"
+  records = ["v=spf1 include:amazonses.com -all"]
+}
+
 # NOTE: in order to configure MAIL FROM
 # docs: https://www.terraform.io/docs/providers/aws/r/ses_domain_mail_from.html
 #
