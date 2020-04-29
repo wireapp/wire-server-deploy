@@ -1,10 +1,20 @@
 Terraform module: Brig to enable email sending
 ==============================================
 
+State: __experimental__
+
 Wire-server's "brig" components needs to send emails. This can either be done by configuring an
-SMTP server (Option 1), or by using AWS resources (SES, SQS, SNS) (Option 2).
+SMTP server (Option 1), or by using AWS resources (Option 2).
 
 This terraform module enables brig to send emails using option 2.
+
+AWS resources: SES, SQS, SNS
+
+
+#### Important note
+
+This module causes Terraform to store sensitive data in the `.tfstate` file. Hence, encrypting the state should be
+mandatory.
 
 
 #### How to use the module

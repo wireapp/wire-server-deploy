@@ -10,7 +10,13 @@ variable "environment" {
   default     = "dev"
 }
 
-variable "sender_address" {
+variable "email_domain" {
   type        = string
-  description = "email address that is used as 'From' in emails sent by wire-server (example: no-reply@example.com)"
+  description = "FQDN of the email address that is used in 'From' when sending emails (example: example.com)"
+}
+
+variable "email_sender" {
+  type        = string
+  description = "username of the email address that is used in 'From' when sending emails (default: `no-reply`)"
+  default = "no-reply"
 }

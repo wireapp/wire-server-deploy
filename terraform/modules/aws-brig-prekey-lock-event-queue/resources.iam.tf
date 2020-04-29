@@ -7,7 +7,7 @@ resource "aws_iam_access_key" "brig" {
   user = aws_iam_user.brig.name
 }
 
-resource "aws_iam_user_policy" "allow_brig_to_store_prekeys" {
+resource "aws_iam_user_policy" "allow_brig_to_lock_prekeys" {
   name = "${var.environment}-brig-prekeys-policy"
   user = aws_iam_user.brig.name
 
@@ -23,7 +23,7 @@ resource "aws_iam_user_policy" "allow_brig_to_store_prekeys" {
                   "dynamodb:DeleteItem"
               ],
               "Resource": [
-                  "${aws_dynamodb_table.prekeys.arn}"
+                  "${aws_dynamodb_table.prekey_locks.arn}"
               ]
           }
       ]
