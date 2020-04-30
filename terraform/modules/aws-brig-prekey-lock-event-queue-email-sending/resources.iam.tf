@@ -1,5 +1,5 @@
 resource "aws_iam_user" "brig" {
-  name          = "${var.environment}-brig-prekeys-events"
+  name          = "${var.environment}-brig-services"
   force_destroy = true
 }
 

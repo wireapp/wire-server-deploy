@@ -13,5 +13,6 @@ output "brig_access_key" {
 }
 
 output "brig_access_secret" {
-  value = aws_iam_access_key.brig.secret
+  value     = aws_iam_access_key.brig.secret
+  sensitive = true
 }

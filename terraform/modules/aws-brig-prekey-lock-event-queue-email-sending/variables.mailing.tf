@@ -1,23 +1,21 @@
-variable "region" {
-  type        = string
-  description = "defines in which region state and lock are being stored (default: 'eu-central-1')"
-  default     = "eu-central-1"
+variable "enable_email_sending" {
+  type = bool
+  description = "flag to either hand off email sending to AWS or not"
+  default = true
 }
 
-variable "environment" {
-  type        = string
-  description = "name of the environment as a scope for the created resources (default: 'dev'; example: 'prod', 'staging')"
-  default     = "dev"
-}
-
+# NOTE: setting the default to `null` allows to omit this var when instantiating the module
+#       while still forcing it to be set, when email sending is enabled
+#
 variable "zone_id" {
   type        = string
   description = "zone ID defined by a 'aws_route53_zone.zone_id' resource (example: Z12345678SQWERTYU)"
+  default = null
 }
-
 variable "domain" {
   type        = string
   description = "FQDN of the email address that is used in 'From' when sending emails (example: example.com)"
+  default = null
 }
 
 # As to why configuring a MAIL FROM

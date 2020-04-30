@@ -1,13 +1,6 @@
-resource "aws_iam_user" "brig" {
-  name          = "${var.environment}-brig-email-sending"
-  force_destroy = true
-}
-
-resource "aws_iam_access_key" "brig" {
-  user = aws_iam_user.brig.name
-}
-
 resource "aws_iam_user_policy" "allow_brig_to_queue_email_events" {
+  count = local.emailing_enabled
+
   name = "${var.environment}-brig-email-events-queue-policy"
   user = aws_iam_user.brig.name
 
@@ -23,7 +16,7 @@ resource "aws_iam_user_policy" "allow_brig_to_queue_email_events" {
                   "sqs:ReceiveMessage"
               ],
               "Resource": [
-                  "${aws_sqs_queue.email_events.arn}"
+                  "${aws_sqs_queue.email_events[0].arn}"
               ]
           }
       ]
@@ -32,6 +25,8 @@ resource "aws_iam_user_policy" "allow_brig_to_queue_email_events" {
 }
 
 resource "aws_iam_user_policy" "allow_brig_to_send_emails" {
+  count = local.emailing_enabled
+
   name = "${var.environment}-brig-send-emails-policy"
   user = aws_iam_user.brig.name
 
