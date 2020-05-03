@@ -6,6 +6,7 @@
   hosts: localhost
   gather_facts: no
   become: false
+  environment: "{{ proxy_env }}"
   vars:
     # kubespray release 2.10 branch from 2019-05-20
     # uses

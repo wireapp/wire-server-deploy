@@ -13,6 +13,7 @@
   gather_facts: yes
   become: yes
   any_errors_fatal: True
+  environment: "{{ proxy_env }}"
   vars_prompt:
       # More info to be found at the [demo-secrets.yaml](https://github.com/wireapp/wire-server-deploy/blob/master/values/wire-server/demo-secrets.example.yaml#L9-L12)"
     - name: restund_zrest_secret

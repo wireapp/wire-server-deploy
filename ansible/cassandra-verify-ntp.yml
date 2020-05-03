@@ -8,5 +8,6 @@
 #
 - hosts: cassandra
   any_errors_fatal: true
+  environment: "{{ proxy_env }}"
   roles:
     - role: ansible-ntp-verify

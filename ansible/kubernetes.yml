@@ -4,5 +4,6 @@
 - import_playbook: roles-external/kubespray/cluster.yml
 
 - hosts: etcd
+  environment: "{{ proxy_env }}"
   roles:
     - etcd-helpers
