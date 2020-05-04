@@ -1,7 +1,7 @@
 - name: elasticsearch
   hosts: elasticsearch_master
   gather_facts: true
-  environment: "{{ proxy_env }}"
+  environment: "{{ proxy_env | default({}) }}"
   vars:
     # The following sets java heap size to 1GB (default is 2GB)
     # comment that line when deploying on machines with >= 4GB memory.

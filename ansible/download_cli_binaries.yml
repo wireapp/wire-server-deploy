@@ -8,7 +8,7 @@
 #
 - name: download binaries
   hosts: localhost
-  environment: "{{ proxy_env }}"
+  environment: "{{ proxy_env | default({}) }}"
   vars:
     # Ensure these versions match the server-side ones (or are compatible)
     # Also see download_kubespray.yml

@@ -5,7 +5,7 @@
 # See the `-k` and `-K` flags when running ansible-playbook.
 #
 - hosts: all
-  environment: "{{ proxy_env }}"
+  environment: "{{ proxy_env | default({}) }}"
   vars:
     admin_users:
       - username: admin
