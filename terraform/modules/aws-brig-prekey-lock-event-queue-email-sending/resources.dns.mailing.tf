@@ -14,7 +14,8 @@ resource "aws_route53_record" "ses_domain_verification_record" {
 # docs: https://docs.aws.amazon.com/ses/latest/DeveloperGuide/send-email-authentication-dkim-easy-setup-domain.html
 #
 resource "aws_route53_record" "ses_domain_dkim_record" {
-  count   = var.enable_email_sending ? length( aws_ses_domain_dkim.brig[0].dkim_tokens ) : 0
+  # FUTUREWORK: try replacing `3` with `length( aws_ses_domain_dkim.brig[0].dkim_tokens )`
+  count   = var.enable_email_sending ? 3 : 0
 
   zone_id = var.zone_id
   name    = "${element(aws_ses_domain_dkim.brig[0].dkim_tokens, count.index)}._domainkey.${var.domain}"
