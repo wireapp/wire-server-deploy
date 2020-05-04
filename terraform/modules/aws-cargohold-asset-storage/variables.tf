@@ -11,7 +11,7 @@ variable "environment" {
 }
 
 variable "bucket_name" {
-  type = string
+  type        = string
   description = "Name of the bucket that cargohold uses to store files (default: 'assets'; prefix: $environment) "
-  default = "assets"
+  default     = "assets"
 }
