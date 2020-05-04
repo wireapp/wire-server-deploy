@@ -51,5 +51,6 @@ data:
       featureFlags:
         sso: {{ .settings.featureFlags.sso }}
         legalhold: {{ .settings.featureFlags.legalhold }}
+        indexedBillingTeamMembers:: {{ .settings.featureFlags.indexedBillingTeamMembers }}
       {{- end }}
   {{- end }}
