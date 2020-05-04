@@ -45,7 +45,7 @@ module "brig_prekey_lock_and_event_queue" {
   source = "github.com/wireapp/wire-server-deploy.git//terraform/modules/aws-brig-prekey-lock-event-queue-email-sending?ref=develop"
   
   environment = "staging"
-  install_mailing = false    # default: true
+  enable_email_sending = false    # default: true
 }
 ```
 

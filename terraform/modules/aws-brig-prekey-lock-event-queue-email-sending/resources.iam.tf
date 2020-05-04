@@ -1,5 +1,5 @@
 resource "aws_iam_user" "brig" {
-  name          = "${var.environment}-brig-services"
+  name          = "${var.environment}-brig-full-access"
   force_destroy = true
 }
 
