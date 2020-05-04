@@ -54,5 +54,6 @@ data:
       featureFlags:
         sso: {{ .settings.featureFlags.sso }}
         legalhold: {{ .settings.featureFlags.legalhold }}
+        customSearchVisibility: {{ .settings.featureFlags.customSearchVisibility }}
       {{- end }}
   {{- end }}
