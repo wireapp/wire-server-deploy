@@ -47,7 +47,7 @@ data:
       maxFanoutSize: {{ .settings.maxFanoutSize }}
       {{- end }}
       conversationCodeURI: {{ .settings.conversationCodeURI | quote }}
-      {{- if .settings.indexedBillingTeamMembers }}
+      {{- if .settings.enableIndexedBillingTeamMembers }}
       enableIndexedBillingTeamMembers: {{ .settings.enableIndexedBillingTeamMembers }}
       {{- end }}
       {{- if .settings.featureFlags }}
