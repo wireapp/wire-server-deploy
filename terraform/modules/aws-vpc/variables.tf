@@ -11,6 +11,6 @@ variable "environment" {
 
 variable "dhcp_options_domain_name" {
   type        = string
-  description = "domain name given by AWS to the instances over DHCP."
+  description = "the default domain given to hosts in this VPC by the AWS DHCP servers"
   default     = "internal.vpc"
 }

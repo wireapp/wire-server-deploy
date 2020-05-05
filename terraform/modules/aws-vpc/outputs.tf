@@ -9,3 +9,7 @@ output "public_subnets" {
 output "private_subnets" {
   value = module.vpc.private_subnets
 }
+
+output "domain_name" {
+  value = module.vpc.dhcp_options_domain_name
+}
