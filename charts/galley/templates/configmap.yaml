@@ -47,10 +47,12 @@ data:
       maxFanoutSize: {{ .settings.maxFanoutSize }}
       {{- end }}
       conversationCodeURI: {{ .settings.conversationCodeURI | quote }}
+      {{- if .settings.indexedBillingTeamMembers }}
+      enableIndexedBillingTeamMembers: {{ .settings.enableIndexedBillingTeamMembers }}
+      {{- end }}
       {{- if .settings.featureFlags }}
       featureFlags:
         sso: {{ .settings.featureFlags.sso }}
         legalhold: {{ .settings.featureFlags.legalhold }}
-        indexedBillingTeamMembers:: {{ .settings.featureFlags.indexedBillingTeamMembers }}
       {{- end }}
   {{- end }}

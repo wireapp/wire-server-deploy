@@ -25,7 +25,6 @@ config:
     featureFlags:  # see #RefConfigOptions in `/docs/reference` (https://github.com/wireapp/wire-server/)
       sso: disabled-by-default
       legalhold: disabled-by-default
-      indexedBillingTeamMembers: disabled
   aws:
     region: "eu-west-1"
   proxy: {}
