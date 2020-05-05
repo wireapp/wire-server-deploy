@@ -1,5 +1,6 @@
 - hosts: cassandra
   any_errors_fatal: true
+  environment: "{{ proxy_env | default({}) }}"
   vars:
     cassandra_keyspaces:
       - brig
