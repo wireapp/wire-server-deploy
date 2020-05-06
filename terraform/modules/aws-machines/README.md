@@ -39,7 +39,7 @@ module "machines" {
   role = "mytestrole"
 
   image = {
-    filter = "ubuntu/images/hvm-ssd/ubuntu-bionic-18.04-amd64-server-"
+    filter = "ubuntu/images/hvm-ssd/ubuntu-bionic-18.04-amd64-server-*"
     owner = "099720109477"  # Canonical
     hypervisor = "hvm"
   }

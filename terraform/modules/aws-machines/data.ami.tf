@@ -1,4 +1,6 @@
 data "aws_ami" "instance_image" {
+  count = length(var.instances) > 0 ? 1 : 0
+
   most_recent = true
 
   filter {

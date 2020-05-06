@@ -1,5 +1,5 @@
 resource "aws_instance" "machine" {
-  ami           = data.aws_ami.instance_image.id
+  ami           = data.aws_ami.instance_image[0].id
 
   // NOTE: the trick is to use a self-provided uID as identifier not an index of a list, otherwise
   // TF reshuffles things removes the wrong instance
