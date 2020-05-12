@@ -111,6 +111,8 @@ galley:
     settings:
       # prefix URI used when inviting users to a conversation by link
       conversationCodeURI: https://webapp.example.com/join/ # change this
+    aws:
+      region: "eu-west-1"
 
 gundeck:
   replicaCount: 3
