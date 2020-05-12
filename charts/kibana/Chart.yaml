@@ -1,4 +1,4 @@
 apiVersion: v1
 description: Wrapper chart for stable/kibana
 name: kibana
-version: 0.102.0
+version: 0.103.0
