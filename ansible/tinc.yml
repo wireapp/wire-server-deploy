@@ -22,6 +22,7 @@
 
 - name: Provision tinc server
   hosts: vpn
+  environment: "{{ proxy_env | default({}) }}"
   vars:
     tinc_build_root: "{{ hostvars['localhost']['build_dir'] }}"
     # CHANGE THIS if your default network interface is not eth0

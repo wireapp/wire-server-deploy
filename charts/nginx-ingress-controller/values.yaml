@@ -59,7 +59,7 @@ nginx-ingress:
     # mynode2
     #
     # [ingress:vars]
-    # node_labels = "wire.com/role=ingress"
+    # node_labels = {"wire.com/role": "ingress"}
     #
     # If you have labelled the nodes that are fit for receiving ingress, you
     # can uncomment the following nodeSelector to make sure that only those

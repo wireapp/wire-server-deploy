@@ -9,6 +9,7 @@
   any_errors_fatal: true
   become: true
   gather_facts: true
+  environment: "{{ proxy_env | default({}) }}"
   vars:
     minio_server_env_extra: "MINIO_BROWSER=off"
     bucket_names:
@@ -78,6 +79,7 @@
   become: true
   gather_facts: true
   tags: static-files
+  environment: "{{ proxy_env | default({}) }}"
   roles:
     - role: minio-static-files
       # Override these variables!

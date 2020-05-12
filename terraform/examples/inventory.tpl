@@ -91,7 +91,6 @@ bootstrap_os = ubuntu
 docker_dns_servers_strict = False
 
 [k8s-cluster:vars]
-helm_enabled = True
 # flannel is preferred on bare-metal setups, in case you wish to use metallb
 kube_network_plugin = flannel
 ## download the kubeconfig after installing to localhost

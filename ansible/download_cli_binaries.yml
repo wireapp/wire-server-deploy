@@ -8,10 +8,11 @@
 #
 - name: download binaries
   hosts: localhost
+  environment: "{{ proxy_env | default({}) }}"
   vars:
     # Ensure these versions match the server-side ones (or are compatible)
     # Also see download_kubespray.yml
-    kubernetes_helm_ver: v2.13.1
+    kubernetes_helm_ver: v3.1.1
     kubectl_version: "1.14.2"
     # default directories for a global installation
     kubectl_bin_directory: "/usr/local/bin"
@@ -49,6 +50,3 @@
     - ansible-kubectl
     - ansible-helm
 
-  tasks:
-    - name: initialize helm
-      shell: helm init --client-only

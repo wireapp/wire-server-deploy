@@ -2,6 +2,9 @@
 cassandra-ephemeral:
   persistence:
     enabled: false
+  # Needed for https://github.com/helm/helm/issues/7424
+  updateStrategy:
+    type: RollingUpdate
   resources:
     requests:
       memory: "2.0Gi"

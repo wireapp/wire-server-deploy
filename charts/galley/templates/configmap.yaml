@@ -43,10 +43,17 @@ data:
       intraListing: false
       maxTeamSize: {{ .settings.maxTeamSize }}
       maxConvSize: {{ .settings.maxConvSize }}
+      {{- if .settings.maxFanoutSize }}
+      maxFanoutSize: {{ .settings.maxFanoutSize }}
+      {{- end }}
       conversationCodeURI: {{ .settings.conversationCodeURI | quote }}
+      {{- if .settings.enableIndexedBillingTeamMembers }}
+      enableIndexedBillingTeamMembers: {{ .settings.enableIndexedBillingTeamMembers }}
+      {{- end }}
       {{- if .settings.featureFlags }}
       featureFlags:
         sso: {{ .settings.featureFlags.sso }}
         legalhold: {{ .settings.featureFlags.legalhold }}
+        teamSearchVisibility: {{ .settings.featureFlags.teamSearchVisibility }}
       {{- end }}
   {{- end }}
