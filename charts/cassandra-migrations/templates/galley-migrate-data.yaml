@@ -27,8 +27,8 @@ spec:
           image: "{{ .Values.images.galley-migrate-data }}:{{ .Values.image.tag }}"
           args:
            - --cassandra-host
-            - "{{ .Values.cassandra.host }}"
+           - "{{ .Values.cassandra.host }}"
            - --cassandra-port
-            - "9042"
+           - "9042"
            - --cassandra-keyspace
            - galley
