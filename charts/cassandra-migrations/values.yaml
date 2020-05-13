@@ -1,6 +1,3 @@
-hook:
-  enabled: true
-  type: pre
 images:
   tag: 2.78.0
   gundeck: quay.io/wire/gundeck-schema
