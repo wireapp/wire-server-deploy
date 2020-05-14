@@ -4,4 +4,4 @@ images:
   brig: quay.io/wire/brig-schema
   galley: quay.io/wire/galley-schema
   spar: quay.io/wire/spar-schema
-  galley-migrate-data: quay.io/wire/galley-migrate-data
+  galleyMigrateData: quay.io/wire/galley-migrate-data

@@ -27,7 +27,7 @@ spec:
       restartPolicy: OnFailure
       containers:
         - name: galley-migrate-data
-          image: "{{ .Values.images.galley-migrate-data }}:{{ .Values.image.tag }}"
+          image: "{{ .Values.images.galleyMigrateData }}:{{ .Values.images.tag }}"
           args:
            - --cassandra-host
            - "{{ .Values.cassandra.host }}"
