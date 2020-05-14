@@ -1,5 +1,5 @@
 images:
-  tag: 2.78.0
+  tag: 2.82.2
   gundeck: quay.io/wire/gundeck-schema
   brig: quay.io/wire/brig-schema
   galley: quay.io/wire/galley-schema
