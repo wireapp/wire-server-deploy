@@ -64,8 +64,8 @@ data:
         smtpConnType: {{ .smtp.connType }}
         {{- if .smtp.username }}
         smtpCredentials:
-          username: {{ .smtp.username }}
-          password: {{ .smtp.passwordFile }}
+          smtpUsername: {{ .smtp.username }}
+          smtpPassword: {{ .smtp.passwordFile }}
         {{- end }}
       {{- end }}
       general:
