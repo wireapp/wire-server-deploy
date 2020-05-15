@@ -1,3 +1,45 @@
+# 2020-05-15
+
+## Upgrade Notes
+
+Deployment steps:
+1. Deploy new version of all services as usual, make sure `galley.config.settings.enableIndexedBillingTeamMember` is `false`.
+1. Make sure `galley-migrate-data` job completes.
+1. Set `galley.config.settings.enableIndexedBillingTeamMember` to `true` and re-deploy the same version.
+
+## Features
+
+- Add aws region in brig and galley in prod values example file (#229)
+- Add job to migrate galley data post-install/upgrade (#263)
+- Add customSearchVisibility for galley chart (#252)
+- Add indexedBillingTeamMember feature flag for galley (#251)
+- Add maxFanoutSize to galley's options (#231)
+- Add missing galley route to nginz (#223)
+- Move to helm 3 (#236)
+- All to set HTTP proxy environment vars for brig, cargohold, galley, gundeck, proxy, spar (#217)
+- Add possibility to specify proxy env vars in Ansible inventory (#249)
+- Add example for declaration of turns servers (#235)
+- Skip memorizing the IPs of redis nodes if there are not any. (#224)
+- Add a commented out block for specifying a non-default elasticsearch apt mirror (#225)
+
+## Bug Fixes
+
+- Fix helm --wait for cassandra (#253)
+- Fix node_labels declaration example in inventory (#226)
+- Fix smtpCredentials to match EmailSMTPCredentials in brig Options.hs (#265)
+
+## Internal Changes
+
+- Deploy instances (#238)
+- Remove unused table (#222)
+- Add TF module for brig to provide prekey locking, an event queue and (optionally) email sending services (#244)
+- Add module to enable mobile push notification for Gundeck (#241)
+- Add module to set up object storage (S3) on AWS for Cargohold (#243)
+- Add terraform configuration from the offline environment. (#230)
+- Add module to initialize state sharing on AWS (#234)
+- Add missing cassandra host value for elasticsearch-index chart (#227)
+- Ensure that no provider is defined in any of the modules (#257)
+
 # 2020-04-24
 
 ## Features
@@ -22,7 +64,7 @@
 ## Release Notes
 
 - This version adds a new migration to the elasticsearch index, it will go through all users in
-  cassandra and (re-)create all users in elasticsearch. So, it could take a long time to finish 
+  cassandra and (re-)create all users in elasticsearch. So, it could take a long time to finish
   depending on the number of users in the system.
 
 ## Features
