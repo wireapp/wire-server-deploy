@@ -22,6 +22,9 @@ config:
   settings:
     maxTeamSize: 500
     maxConvSize: 500
+    # Before making indexedBillingTeamMember true while upgrading, please
+    # refer to notes here: https://github.com/wireapp/wire-server-deploy/releases/tag/v2020-05-15
+    indexedBillingTeamMember: false
     featureFlags:  # see #RefConfigOptions in `/docs/reference` (https://github.com/wireapp/wire-server/)
       sso: disabled-by-default
       legalhold: disabled-by-default
