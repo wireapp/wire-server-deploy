@@ -28,6 +28,7 @@ brig:
     useSES: false
     aws:
       # change if using real AWS
+      region: "eu-west-1"
       sqsEndpoint: http://fake-aws-sqs:4568
       dynamoDBEndpoint: http://fake-aws-dynamodb:4567
       # these must match the table names created on fake or real AWS services
@@ -81,6 +82,8 @@ brig:
       - "turn:turn02.example.com:3478"
       - "turn:turn01.example.com:80?transport=tcp"
       - "turn:turn02.example.com:80?transport=tcp"
+      - "turns:turn01.example.com:443?transport=tcp"
+      - "turns:turn02.example.com:443?transport=tcp"
 
 proxy:
   replicaCount: 3
@@ -129,6 +132,8 @@ galley:
     settings:
       # prefix URI used when inviting users to a conversation by link
       conversationCodeURI: https://webapp.example.com/join/ # change this
+    aws:
+      region: "eu-west-1"
 #    proxy: 
 #      httpProxy: "http://proxy.example.com"
 #      httpsProxy: "https://proxy.example.com"
@@ -147,7 +152,7 @@ gundeck:
     aws:
       # change if using real AWS
       account: "123456789012"
-      region: eu-west-1
+      region: "eu-west-1"
       arnEnv: integration
       queueName: integration-gundeck-events
       sqsEndpoint: http://fake-aws-sqs:4568

@@ -14,7 +14,7 @@ It makes use of the following AWS services:
 The module can be used in the following way
 ```
 module "initiate-tf-state-sharing" {
-  source = "github.com/wireapp/wire-server-deploy.git//terraform/modules/aws_terraform-state-share"
+  source = "github.com/wireapp/wire-server-deploy.git//terraform/modules/aws-terraform-state-share"
   bucket_name = "myBucketName"
   table_name = "myTableName"
 }
