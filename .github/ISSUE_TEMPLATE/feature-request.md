@@ -1,35 +1,40 @@
 ---
 name: Feature Request
-about: Template for a question around the topic of deploying Wire 
-title: Request: [REQUEST NAME]
+about: Template for a question around the topic of deploying wire-server 
+title: Feature: [FEATURE TITLE]
 labels: 
 assignees:
 ---
 
-### Basic information
-
-* On-premises: Yes/No
-* Cloud-Provider (e.g. AWS, GCP, etc): TODO
-* Installation type: demo/prod
-* Kubernetes version: TODO
-* related Technology + Version (Ansible, Helm, Terraform): TODO
-
-
-### How did you install Wire?
-
-TODO
-
 
 ### What kind of feature are you looking for?
 
-TODO
+<!--
+Describe the feature.
+-->
 
 
 ### In which scenario would this feature be helpful?
 
-TODO
+<!--
+Please describe the use case in a comprehensible manner.
+The more context you give the better we can understand the underlying issue.  
+-->
 
 
-### How do you imagine that is feature is being used (e.g example code)?
+### How do you imagine that this feature is being used?
 
-TODO
+<!--
+Explain the user perspective.
+Share some example code.  
+-->
+
+
+### How did you install Wire?
+
+<!--
+In context of the proposed feature, please explain your setup a little. 
+Which installation instructions did you follow on docs.wire.com (e.g. demo / production)?
+Where and how do you run Kubernetes (operating system version and cloud provider, if any)?
+How was Kubernetes installed (e.g. Kubespray, managed, etc.)?
+-->
