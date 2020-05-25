@@ -1,3 +1,8 @@
+# 2020-05-25
+
+- Fix typo in default galley helm values: teamSearchVisibility (#271)
+- Make field brig.config.aws.sesQueue to be required if being used (#268)
+
 # 2020-05-15
 
 ## Upgrade Notes

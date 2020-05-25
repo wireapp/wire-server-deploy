@@ -55,7 +55,7 @@ data:
     emailSMS:
       email:
       {{- if .useSES }}
-        sesQueue: {{ .aws.sesQueue }}
+        sesQueue: {{ required "Missing value: brig.aws.sesQueue" .aws.sesQueue }}
         sesEndpoint: {{ .aws.sesEndpoint | quote }}
       {{- else }}
         smtpEndpoint:
