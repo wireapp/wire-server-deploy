@@ -63,6 +63,11 @@ config:
     setDefaultLocale: en
     setMaxTeamSize: 500
     setMaxConvSize: 500
+    # Who can see the emails of other users
+    # visible_to_self: only the self user can
+    # visible_if_on_same_team: users in the same team can view each others' emails
+    # visible_if_on_team: any team user can have its email viewed
+    # Ref.: https://github.com/wireapp/wire-server/blob/0126651a25aabc0c5589edc2b1988bb06550a03a/services/brig/src/Brig/Options.hs#L304-L306
     setEmailVisibility: visible_to_self
     setPropertyMaxKeyLen: 1024
     setPropertyMaxValueLen: 524288
