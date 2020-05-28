@@ -11,7 +11,7 @@ resource "random_string" "bucket" {
   number = true
   special = false
 
-  keepers {
+  keepers = {
     env = var.environment
     name = var.bucket_name
   }
