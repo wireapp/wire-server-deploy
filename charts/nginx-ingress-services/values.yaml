@@ -20,6 +20,14 @@ accountPages:
 # for an example)
 tls:
   enabled: true
+  useCertificateManager: false
+
+certificate-manager:
+  inTestMode: false
+  # NOTE:
+  #  (1) required to be set in values.yaml
+  #  (2) used by Letsencrypt to send expiration notices and alike
+  # certmasterEmail: "certmaster@example.com"
 
 service:
   nginz:
@@ -65,3 +73,5 @@ service:
 #       we do not want to create yet another service here but rather
 #       use that service instead in the ingress
 #     serviceName: minio-external
+
+

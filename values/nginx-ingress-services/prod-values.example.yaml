@@ -4,6 +4,14 @@ accountPages:
   enabled: false
 tls:
   enabled: true
+  # NOTE: enable to automate certificate issuing with  jetstack/cert-manager instead of
+  #       providing your own via secrets.yaml
+  useCertificateManager: false
+
+# CHANGEME-PROD: required, if certificate manager is used; set to receive cert expiration
+#                notice and other Letsencrypt related notification
+certificate-manager:
+  certmasterEmail:
 
 # CHANGEME-PROD: These values are suggested for deployments on bare metal and
 #                should be adjusted on a per installation basis

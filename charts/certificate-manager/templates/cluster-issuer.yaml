@@ -1,0 +1,20 @@
+apiVersion: cert-manager.io/v1alpha2
+kind: ClusterIssuer
+metadata:
+  name: letsencrypt-http01
+  docs: "https://cert-manager.io/docs/configuration/acme/"
+  labels:
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    release: "{{ .Release.Name }}"
+    heritage: "{{ .Release.Service }}"
+spec:
+  acme:
+    server: {{ include "certificate-manager.apiServerURL" . | quote }}
+    email: {{ required "Missing value: certmasterEmail" .Values.certmasterEmail | quote }}
+    # NOTE: this secret doesnt need to be created, it only get a name with this
+    privateKeySecretRef:
+      name: letsencrypt-http01-account-key
+    solvers:
+      - http01:
+          ingress:
+            class: nginx

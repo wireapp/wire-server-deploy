@@ -1,0 +1,12 @@
+# Indicated whether Letsencrypt's staging API server is used and therefore certificates are NOT trusted
+# default: production API server is used and certificates are trusted
+inTestMode: true
+
+# NOTE: passing configuration over to `cert-manager`
+# DOCS: https://github.com/jetstack/cert-manager/blob/master/deploy/charts/cert-manager/README.template.md#configuration
+cert-manager:
+  namespaceOverride: 'cert-manager-ns'
+
+  # NOTE: has to stay false until this Helm+CRDs mess is sorted out and as long as we provide them ourselves in ./crds
+  # ISSUE: https://github.com/helm/helm/issues/5871
+  installCRDs: false
