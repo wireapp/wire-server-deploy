@@ -37,7 +37,7 @@
 
 - src: git+https://github.com/wireapp/ansible-restund.git
   name: ansible-restund
-  version: v0.1.4
+  version: v0.1.5
 
 - src: git+https://github.com/wireapp/ansible-tinc.git
   name: ansible-tinc
