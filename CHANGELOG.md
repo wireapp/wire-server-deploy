@@ -1,3 +1,14 @@
+# 2020-06-03
+
+## Features
+
+- Add .elasticsearch.additionalWriteIndex to brig config (#277)
+- Upgrade restund to include fix from wireapp/restund#3 (#278)
+
+## Internal Changes
+
+- TF modules: Ensure uniqueness of cargohold bucket name (#272)
+
 # 2020-05-25
 
 - Fix typo in default galley helm values: teamSearchVisibility (#271)
