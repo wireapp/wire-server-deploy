@@ -28,6 +28,9 @@ data:
     elasticsearch:
       url: http://{{ .elasticsearch.host }}:{{ .elasticsearch.port }}
       index: {{ .elasticsearch.index }}
+      {{- if .elasticsearch.additionalWriteIndex }}
+      additionalWriteIndex: {{ .elasticsearch.additionalWriteIndex }}
+      {{- end }}
 
     cargohold:
       host: cargohold
