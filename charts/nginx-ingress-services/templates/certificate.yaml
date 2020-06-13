@@ -1,4 +1,4 @@
-{{- if and .Values.tls.enabled .Values.tls.useCertificateManager -}}
+{{- if and .Values.tls.enabled .Values.tls.useCertManager -}}
 apiVersion: cert-manager.io/v1alpha2
 kind: Certificate
 metadata:
@@ -12,10 +12,10 @@ metadata:
 spec:
   issuerRef:
     name: letsencrypt-http01
-    kind: ClusterIssuer
+    kind: Issuer
   usages:
     - server auth
-  duration: 2160h     # 90d; NOTE: ignored by Letsencrypt
+  duration: 2160h     # 90d, Letsencrypt default; NOTE: changes are ignored by Letsencrypt
   renewBefore: 360h   # 15d
   isCA: false
   keyAlgorithm: ecdsa

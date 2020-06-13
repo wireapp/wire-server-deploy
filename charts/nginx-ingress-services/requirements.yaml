@@ -1,5 +1,0 @@
-dependencies:
-- name: certificate-manager
-  version: 0.1.0
-  repository: "file://../certificate-manager"
-  condition: tls.useCertificateManager

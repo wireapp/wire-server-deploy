@@ -29,11 +29,23 @@ at the same time being used for distinct scenarios
 */}}
 {{- define "nginx-ingress-services.getCertificateSecretName" -}}
 {{- $nameParts := list (include "nginx-ingress-services.fullname" .) -}}
-{{- if .Values.tls.useCertificateManager -}}
+{{- if .Values.tls.useCertManager -}}
     {{- $nameParts = append $nameParts "managed" -}}
 {{- else -}}
     {{- $nameParts = append $nameParts "wildcard" -}}
 {{- end -}}
 {{- $nameParts = append $nameParts "tls-certificate" -}}
 {{- join "-" $nameParts -}}
+{{- end -}}
+
+{{/*
+Returns the Letsencrypt API server URL based on whether testMode is enabled or disabled
+*/}}
+{{- define "certificate-manager.apiServerURL" -}}
+{{- $hostnameParts := list "acme" -}}
+{{- if .Values.certManager.inTestMode -}}
+    {{- $hostnameParts = append $hostnameParts "staging" -}}
+{{- end -}}
+{{- $hostnameParts = append $hostnameParts "v02" -}}
+{{- join "-" $hostnameParts | printf "https://%s.api.letsencrypt.org/directory" -}}
 {{- end -}}

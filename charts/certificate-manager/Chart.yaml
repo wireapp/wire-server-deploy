@@ -1,4 +1,0 @@
-apiVersion: "v1"
-name: "certificate-manager"
-version: "0.1.0"
-description: "A wrapper chart for jetstack's cert-manager"
