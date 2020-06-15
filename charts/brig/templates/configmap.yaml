@@ -74,7 +74,7 @@ data:
       general:
         templateDir: /usr/share/wire/templates
         emailSender: {{ .emailSMS.general.emailSender }}
-        smsSender: {{ .emailSMS.general.smsSender }}
+        smsSender: {{ .emailSMS.general.smsSender | quote }}
         templateBranding:
           {{- with .emailSMS.general.templateBranding }}
           brand: {{ .brand }}
