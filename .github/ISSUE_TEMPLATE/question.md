@@ -1,7 +1,7 @@
 ---
 name: Question
 about: template for a question around the topic of deploying wire-server 
-title: Question: [QUESTION TITLE]
+title: "Question: [QUESTION TITLE]"
 labels: ''
 assignees: ''
 ---

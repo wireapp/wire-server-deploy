@@ -1,9 +1,9 @@
 ---
 name: Feature Request
 about: Template for a question around the topic of deploying wire-server 
-title: Feature: [FEATURE TITLE]
-labels: 
-assignees:
+title: "Feature: [FEATURE TITLE]"
+labels: ''
+assignees: ''
 ---
 
 

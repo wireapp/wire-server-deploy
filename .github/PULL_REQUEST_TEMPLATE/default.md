@@ -14,14 +14,16 @@ Fixes ${ISSUE_URL}
 
 <!-- choose the kind of change this PR introduces -->
 
-* [] Fix
-* [] Feature
+* [ ] Fix
+* [ ] Feature
 
 
 ### Basic information 
 
 Technology: <!-- Ansible, Kubernetes, Helm, Terraform -->
+
 Version: <!-- Version of the technologies you just referred to -->
+
 * [ ] I ran/applied the changes myself
 * [ ] I can confirm that it was successful
 
