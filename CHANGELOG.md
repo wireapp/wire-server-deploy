@@ -1,3 +1,17 @@
+# 2020-06-19
+
+## Features
+
+* Update all three frontends (webapp, team-settings, account-pages) to latest production release (#286)
+
+## Bug Fixes
+
+* Quote smsSender (#287)
+
+## Internal Changes
+
+* Add Github templates for Issues and PRs (#259, d5b16a99f0aa)
+
 # 2020-06-03
 
 ## Features
