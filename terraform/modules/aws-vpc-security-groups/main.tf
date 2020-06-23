@@ -216,7 +216,7 @@ resource "aws_security_group" "k8s_node" {
     to_port         = 31773
     protocol        = "tcp"
     # NOTE: NLBs dont allow security groups to be be set on them, which is why
-    # we go with the CIDR for now, which is hard-coded adn evil and needs fixing
+    # we go with the CIDR for now, which is hard-coded and evil and needs fixing
     cidr_blocks = ["172.17.0.0/20"]
   }
 
@@ -445,4 +445,3 @@ resource "aws_security_group" "stateful_node" {
     Name = "stateful_node"
   }
 }
-
