@@ -6,9 +6,6 @@ USAGE="download and bundle dependent helm charts: $0 <chart-directory>"
 dir=${1:?$USAGE}
 
 
-# nothing serves on localhost, remove that repo
-helm repo remove local 2&> /dev/null || true
-
 # hacky workaround for helm's lack of recursive dependency update
 # See https://github.com/helm/helm/issues/2247
 helmDepUp () {
