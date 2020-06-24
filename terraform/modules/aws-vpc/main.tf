@@ -50,4 +50,10 @@ module "vpc" {
     Owner = "Backend Team"
     Name  = var.name
   }
+  private_subnet_tags = {
+    Routability = "private"
+  }
+  public_subnet_tags = {
+    Routability = "public"
+  }
 }
