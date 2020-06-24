@@ -2,11 +2,11 @@ replicaCount: 1
 images:
   frontend:
     repository: quay.io/wire/backoffice-frontend
-    tag: 2.85.0
+    tag: 2.86.0
     pullPolicy: IfNotPresent
   stern:
     repository: quay.io/wire/stern
-    tag: 2.85.0
+    tag: 2.86.0
     pullPolicy: IfNotPresent
 service:
   internalPort: 8080
