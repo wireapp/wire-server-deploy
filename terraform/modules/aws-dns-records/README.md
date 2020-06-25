@@ -3,7 +3,7 @@ Terraform module: DNS records
 
 State: __experimental__
 
-This module creates a set of DNS entries on AWS. As of now it can the following type of records:
+This module creates a set of DNS entries on AWS. As of now it's capable of managing the following type of records:
 
 * A (`ips`)
 * CNAME (`cnames`)
