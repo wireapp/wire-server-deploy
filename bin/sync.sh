@@ -49,21 +49,13 @@ else
     charts=( $(find $CHART_DIR/ -maxdepth 1 -type d | sed -n "s=$CHART_DIR/\(.\+\)=\1 =p") )
 fi
 
-# install s3 plugin
+# install s3 plugin if not present
 # See https://github.com/hypnoglow/helm-s3/pull/56 for reason to use fork
 s3_plugin_version=$(helm plugin list | grep "^s3 " | awk '{print $2}' || true)
 if [[ $s3_plugin_version != "0.9.0" ]]; then
     echo "not version 0.9.0 from steven-sheehy fork, upgrading or installing plugin..."
     helm plugin remove s3 || true
     helm plugin install https://github.com/steven-sheehy/helm-s3.git --version v0.9.0
-else
-    # double check we have the right version of the s3 plugin
-    plugin_sha=$(cat $HOME/.helm/plugins/helm-s3.git/.git/HEAD)
-    if [[ $plugin_sha != "f7ab4a8818f11380807da45a6c738faf98106d62" ]]; then
-        echo "git hash doesn't match forked s3-plugin version (or maybe there is a path issue and your plugins are installed elsewhere? Attempting to re-install..."
-        helm plugin remove s3
-        helm plugin install https://github.com/steven-sheehy/helm-s3.git --version v0.9.0
-    fi
 fi
 
 # index/sync charts to S3

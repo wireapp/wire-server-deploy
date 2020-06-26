@@ -178,15 +178,24 @@ resource "aws_security_group" "has_assets" {
   }
 }
 
-# A security group for access to kubernetes nodes. should be added to the admin host only.
+# A security group for administrative access to kubernetes nodes. should be added to the admin host only.
 resource "aws_security_group" "talk_to_k8s" {
   name        = "talk_to_k8s"
   description = "hosts that are allowed to speak to kubernetes."
   vpc_id      = var.vpc_id
 
+  # kubectl
   egress {
     from_port   = 6443
     to_port     = 6443
+    protocol    = "tcp"
+    cidr_blocks = ["172.17.0.0/20"]
+  }
+
+  # the application itsself.
+  egress {
+    from_port   = 31772
+    to_port     = 31773
     protocol    = "tcp"
     cidr_blocks = ["172.17.0.0/20"]
   }
@@ -224,6 +233,16 @@ resource "aws_security_group" "k8s_node" {
     to_port         = 65535
     protocol        = "udp"
     security_groups = ["${aws_security_group.k8s_private.id}"]
+  }
+
+  # incoming traffic to the application.
+  ingress {
+    from_port   = 31772
+    to_port     = 31773
+    protocol    = "tcp"
+    # NOTE: NLBs dont allow security groups to be set on them, which is why
+    # we go with the CIDR for now, which is hard-coded and needs fixing
+    cidr_blocks = ["172.17.0.0/20"]
   }
 
   tags = {

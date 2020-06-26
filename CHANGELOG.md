@@ -1,3 +1,22 @@
+# 2020-06-26
+
+## Features
+
+* [charts] introduce cert-manager support in `nginx-ingress-services` to automate TLS certificate 
+  issuing. Please refer to the [docs](https://docs.wire.com/how-to/install/helm.html#how-to-direct-traffic-to-your-cluster)
+  or the issue [#280](https://github.com/wireapp/wire-server-deploy/pull/280) for more details.
+
+## Bug Fixes
+
+* [charts] Update frontend apps version: webapp, team-settings, due to a broken team-settings version (#300)  
+
+## Internal Changes
+
+* cleanup scripts used in automation (#300)
+* ongoing work in several Terraform modules: ingress, CORS, cargohold
+
+For more information, please refer to the [diff](https://github.com/wireapp/wire-server-deploy/compare/v2020-06-19...v2020-06-26) 
+
 # 2020-06-19
 
 ## Features

@@ -4,6 +4,17 @@ accountPages:
   enabled: false
 tls:
   enabled: true
+  # NOTE: enable to automate certificate issuing with jetstack/cert-manager instead of
+  #       providing your own certs in secrets.yaml. Cert-manager is not installed automatically,
+  #       it needs to be installed beforehand (see ./../../charts/certificate-manager/README.md)
+  useCertManager: false
+
+certManager:
+  # NOTE: change to tell cert-manager to issue a valid certificate
+  inTestMode: true
+  # CHANGEME-PROD: required, if certificate manager is used; set to receive cert expiration
+  #                notice and other Letsencrypt related notification
+  certmasterEmail:
 
 # NOTE: These values must be adjusted on a per installation basis
 config:

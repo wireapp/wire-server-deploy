@@ -24,7 +24,7 @@ module "vpc" {
   private_subnets = ["172.17.0.0/22", "172.17.4.0/22", "172.17.8.0/22"]
   public_subnets  = ["172.17.12.0/24", "172.17.13.0/24", "172.17.14.0/24"]
 
-  enable_dns_hostnames = true
+  enable_dns_hostnames = false
   enable_dns_support   = true
 
   enable_dhcp_options      = true
@@ -35,11 +35,7 @@ module "vpc" {
   # VPC endpoint for DynamoDB
   enable_dynamodb_endpoint = true
 
-  # In case we run terraform from within the environment.
-  # VPC Endpoint for EC2
-  enable_ec2_endpoint              = true
-  ec2_endpoint_private_dns_enabled = true
-  ec2_endpoint_security_group_ids  = [data.aws_security_group.default.id]
+  enable_s3_endpoint = true
 
   enable_nat_gateway     = true
   one_nat_gateway_per_az = false
@@ -53,5 +49,11 @@ module "vpc" {
   vpc_tags = {
     Owner = "Backend Team"
     Name  = var.name
+  }
+  private_subnet_tags = {
+    Routability = "private"
+  }
+  public_subnet_tags = {
+    Routability = "public"
   }
 }

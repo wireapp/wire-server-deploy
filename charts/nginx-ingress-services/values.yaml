@@ -20,6 +20,22 @@ accountPages:
 # for an example)
 tls:
   enabled: true
+  # NOTE:
+  #  (1) enables automated certificate renewal provided by https://github.com/jetstack/cert-manager
+  #  (2) supersedes wildcard certificate configuration mentioned above
+  # IMPORTANT: requires cert-manager to be installed on the cluster beforehand, e.g.
+  #            `helm upgrade --install -n cert-manager-ns --set 'installCRDs=true' cert-manager jetstack/cert-manager`
+  #
+  useCertManager: false
+
+certManager:
+  # Indicates whether Letsencrypt's staging API server is used and therefore certificates are NOT trusted
+  # default: production API server is used and certificates are trusted
+  inTestMode: false
+  # NOTE:
+  #  (1) required to be set in values.yaml
+  #  (2) used by Letsencrypt to send expiration notices and alike
+  certmasterEmail:
 
 service:
   nginz:
