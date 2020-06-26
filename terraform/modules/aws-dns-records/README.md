@@ -26,8 +26,8 @@ module "dns_records" {
 
 If not further specified, it created entries for the following FQDNs:
 
-* `https.staging.example.com`
-* `ssl.staging.example.com`
+* `nginz-https.staging.example.com`
+* `nginz-ssl.staging.example.com`
 * `webapp.staging.example.com`
 * `assets.staging.example.com`
 * `account.staging.example.com`

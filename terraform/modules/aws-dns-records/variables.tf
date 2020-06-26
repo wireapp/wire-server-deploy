@@ -19,8 +19,8 @@ variable "subdomains" {
   type        = list(string)
   description = "list of sub-domains that will be registered under the given root domain"
   default = [
-    "https",
-    "ssl",
+    "nginz-https",
+    "nginz-ssl",
     "webapp",
     "assets",
     "account",
