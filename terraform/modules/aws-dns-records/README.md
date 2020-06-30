@@ -24,7 +24,7 @@ module "dns_records" {
 }
 ```
 
-If not further specified, it created entries for the following FQDNs:
+If not further specified, it creates entries for the following FQDNs:
 
 * `nginz-https.staging.example.com`
 * `nginz-ssl.staging.example.com`
@@ -32,3 +32,7 @@ If not further specified, it created entries for the following FQDNs:
 * `assets.staging.example.com`
 * `account.staging.example.com`
 * `teams.staging.example.com`
+
+These sub-domains represent the primary set of FQDNs used in a
+[`wire-server` installation](https://docs.wire.com/how-to/install/helm-prod.html#how-to-set-up-dns-records),
+to expose all frontend applications as well as necessary HTTP & websocket endpoints.
