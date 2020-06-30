@@ -257,7 +257,7 @@ team-settings:
       backendRest: nginz-https.example.com
       backendWebsocket: nginz-ssl.example.com
       backendDomain: example.com
-      appHost: webapp.example.com
+      appHost: teams.example.com
   envVars:
     APP_NAME: "Team Settings"
     ENFORCE_HTTPS: "false"
@@ -289,7 +289,7 @@ account-pages:
     externalUrls:
       backendRest: nginz-https.example.com
       backendDomain: example.com
-      appHost: webapp.example.com
+      appHost: account.example.com
   envVars:
     APP_NAME: "Wire Account Management"
     COMPANY_NAME: "YourCompany"
