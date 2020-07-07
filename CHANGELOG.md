@@ -1,3 +1,25 @@
+# 2020-07-07
+
+## Notes
+
+This release contains a staging version of the webapp. So, you might want to be a bit more cautious or
+even skip this one entirely.
+
+## Features
+
+None
+
+## Bug Fixes
+
+* [charts] Update frontend apps version: webapp (#308)
+* removed unused replicaCount settings (#304)
+
+## Internal Changes
+
+* team-settings: Set default of `FEATURE_ENABLE_PAYMENT` to false (#294)
+* [terraform modules] Add a module to create some DNS records (#298)
+
+
 # 2020-06-26
 
 ## Features
@@ -12,7 +34,7 @@
 
 ## Internal Changes
 
-* cleanup scripts used in automation (#300)
+* cleanup scripts used in automation (#295)
 * ongoing work in several Terraform modules: ingress, CORS, cargohold
 
 For more information, please refer to the [diff](https://github.com/wireapp/wire-server-deploy/compare/v2020-06-19...v2020-06-26) 
