@@ -74,9 +74,9 @@ For more information, please refer to the [diff](https://github.com/wireapp/wire
 ## Upgrade Notes
 
 Deployment steps:
-1. Deploy new version of all services as usual, make sure `galley.config.settings.enableIndexedBillingTeamMember` is `false`.
+1. Deploy new version of all services as usual, make sure `galley.config.settings.enableIndexedBillingTeamMembers` is `false`.
 1. Make sure `galley-migrate-data` job completes.
-1. Set `galley.config.settings.enableIndexedBillingTeamMember` to `true` and re-deploy the same version.
+1. Set `galley.config.settings.enableIndexedBillingTeamMembers` to `true` and re-deploy the same version.
 
 ## Features
 
