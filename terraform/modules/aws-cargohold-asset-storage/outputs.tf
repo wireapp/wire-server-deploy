@@ -4,6 +4,10 @@ output "bucket_name" {
   value = aws_s3_bucket.asset_storage.bucket
 }
 
+output "bucket_id" {
+  value = aws_s3_bucket.asset_storage.id
+}
+
 output "s3_endpoint" {
   value = "https://s3.${aws_s3_bucket.asset_storage.region}.amazonaws.com"
 }
