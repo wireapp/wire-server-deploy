@@ -15,3 +15,13 @@ variable "bucket_name" {
   description = "Name of the bucket that cargohold uses to store files (default: 'assets'; prefix: $environment) "
   default     = "assets"
 }
+
+variable "vpc_id" {
+  type        = string
+  description = "the ID of the VPC to add an S3 endpoint to"
+}
+
+variable "subnet_ids" {
+  type        = list(string)
+  description = "list of the subnet IDs of the subnets to make the S3 endpoint available to."
+}
