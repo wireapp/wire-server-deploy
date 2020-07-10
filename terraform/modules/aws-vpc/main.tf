@@ -7,10 +7,21 @@ provider "aws" {
   region = "eu-central-1"
 }
 
-# Used for the in-VPC EC2 endpoint.
-data "aws_security_group" "default" {
-  name   = "default"
-  vpc_id = module.vpc.vpc_id
+resource "aws_vpc_endpoint" "s3" {
+  vpc_id       = module.vpc.vpc_id
+  service_name = "com.amazonaws.eu-central-1.s3"
+
+  tags = {
+    Environment = var.environment
+  }
+}
+
+# FIXME: create one of these for each private subnet. private_route_table_ids
+resource "aws_vpc_endpoint_route_table_association" "private_s3" {
+  count = length(module.vpc.private_route_table_ids)
+
+  route_table_id  = module.vpc.private_route_table_ids[count.index]
+  vpc_endpoint_id = aws_vpc_endpoint.s3.id
 }
 
 module "vpc" {
@@ -34,8 +45,6 @@ module "vpc" {
   # In case we run terraform from within the environment.
   # VPC endpoint for DynamoDB
   enable_dynamodb_endpoint = true
-
-  enable_s3_endpoint = true
 
   enable_nat_gateway     = true
   one_nat_gateway_per_az = false
