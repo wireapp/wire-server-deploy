@@ -45,8 +45,8 @@ data "aws_route_tables" "private" {
 
 # the routing table association that allows nodes to route traffic to the S3 endpoint.
 resource "aws_vpc_endpoint_route_table_association" "private_s3" {
-  count = length(data.aws_route_tables.private.ids)
+  for_each = { for k, v in data.aws_route_tables.private.ids : v => v }
 
-  route_table_id  = tolist(data.aws_route_tables.private.ids)[count.index]
+  route_table_id  = each.value
   vpc_endpoint_id = aws_vpc_endpoint.s3.id
 }
