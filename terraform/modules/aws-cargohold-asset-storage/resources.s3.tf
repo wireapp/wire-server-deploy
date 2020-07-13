@@ -24,3 +24,29 @@ resource "random_string" "bucket" {
     name = var.bucket_name
   }
 }
+
+resource "aws_vpc_endpoint" "s3" {
+  vpc_id       = var.vpc_id
+  service_name = "com.amazonaws.${var.region}.s3"
+
+  tags = {
+    Environment = var.environment
+  }
+}
+
+data "aws_route_tables" "private" {
+  vpc_id = var.vpc_id
+
+  filter {
+    name   = "association.subnet-id"
+    values = var.subnet_ids
+  }
+}
+
+# the routing table association that allows nodes to route traffic to the S3 endpoint.
+resource "aws_vpc_endpoint_route_table_association" "private_s3" {
+  for_each = { for k, v in data.aws_route_tables.private.ids : v => v }
+
+  route_table_id  = each.value
+  vpc_endpoint_id = aws_vpc_endpoint.s3.id
+}
