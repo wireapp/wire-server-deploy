@@ -187,5 +187,8 @@ data:
       {{- if .setUserMaxPermClients }}
       setUserMaxPermClients: {{ .setUserMaxPermClients }}
       {{- end }}
+      {{- if .setRestrictUserCreation }}
+      setRestrictUserCreation: {{ .setRestrictUserCreation }}
+      {{- end }}
     {{- end }}
   {{- end }}
