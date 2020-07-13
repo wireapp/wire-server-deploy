@@ -15,7 +15,9 @@ b) are tagged with `Routability:public`
 c) be attached to the machines tagged with the `target_role`
 
 
-*Please note, in order for this to work, ingress has to be allowed on the given target ports for all target machines.* 
+*Please note, in order for this to work, ingress has to be allowed on the given target ports for all target machines.
+Furthermore, since those target machines are referred to by their role (AWS tag) and are not part of an auto-scaling
+group, the instance of this module has to be re-applied every time the set of machines changes.* 
 
 AWS resources: lb (type: network)
 
