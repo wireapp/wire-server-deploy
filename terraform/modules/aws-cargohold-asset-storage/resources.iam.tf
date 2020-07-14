@@ -85,9 +85,3 @@ resource "aws_iam_policy_attachment" "cargohold-s3-attach" {
   roles       = [aws_iam_role.cargohold-s3.name]
   policy_arn = aws_iam_policy.cargohold-s3.arn
 }
-
-# create an instance profile, using our IAM role.
-#resource "aws_iam_instance_profile" "cargohold-s3" {
-#  name  = "${var.environment}-cargohold-s3"
-#  role = aws_iam_role.cargohold-s3.name
-#}
