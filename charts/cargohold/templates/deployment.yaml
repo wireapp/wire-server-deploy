@@ -54,6 +54,8 @@ spec:
               secretKeyRef:
                 name: cargohold
                 key: awsSecretKey
+          - name: AWS_REGION
+            value: "{{ .Values.config.aws.region }}"
           {{- with .Values.config.proxy }}
           {{- if .httpProxy }}
           - name: http_proxy
