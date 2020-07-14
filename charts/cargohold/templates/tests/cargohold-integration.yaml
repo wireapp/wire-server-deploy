@@ -17,4 +17,12 @@ spec:
     volumeMounts:
     - name: "cargohold-integration"
       mountPath: "/etc/wire/integration"
+    env:
+    # these dummy values are necessary for Amazonka's "Discover"
+    - name: AWS_ACCESS_KEY_ID
+      value: "dummy"
+    - name: AWS_SECRET_ACCESS_KEY
+      value: "dummy"
+    - name: AWS_REGION
+      value: "eu-west-1"
   restartPolicy: Never
