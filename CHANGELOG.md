@@ -1,3 +1,10 @@
+# 2020-07-13
+
+## Features
+
+* Brig: Allow overriding optSettings.setRestrictUserCreation (#313)
+* add a bash script for talking to s3 with AWS authentication V4. for testing s3 connection during installation. (#305)
+
 # 2020-07-07
 
 ## Notes
@@ -24,20 +31,20 @@ None
 
 ## Features
 
-* [charts] introduce cert-manager support in `nginx-ingress-services` to automate TLS certificate 
+* [charts] introduce cert-manager support in `nginx-ingress-services` to automate TLS certificate
   issuing. Please refer to the [docs](https://docs.wire.com/how-to/install/helm.html#how-to-direct-traffic-to-your-cluster)
   or the issue [#280](https://github.com/wireapp/wire-server-deploy/pull/280) for more details.
 
 ## Bug Fixes
 
-* [charts] Update frontend apps version: webapp, team-settings, due to a broken team-settings version (#300)  
+* [charts] Update frontend apps version: webapp, team-settings, due to a broken team-settings version (#300)
 
 ## Internal Changes
 
 * cleanup scripts used in automation (#295)
 * ongoing work in several Terraform modules: ingress, CORS, cargohold
 
-For more information, please refer to the [diff](https://github.com/wireapp/wire-server-deploy/compare/v2020-06-19...v2020-06-26) 
+For more information, please refer to the [diff](https://github.com/wireapp/wire-server-deploy/compare/v2020-06-19...v2020-06-26)
 
 # 2020-06-19
 
@@ -74,9 +81,9 @@ For more information, please refer to the [diff](https://github.com/wireapp/wire
 ## Upgrade Notes
 
 Deployment steps:
-1. Deploy new version of all services as usual, make sure `galley.config.settings.enableIndexedBillingTeamMember` is `false`.
+1. Deploy new version of all services as usual, make sure `galley.config.settings.enableIndexedBillingTeamMembers` is `false`.
 1. Make sure `galley-migrate-data` job completes.
-1. Set `galley.config.settings.enableIndexedBillingTeamMember` to `true` and re-deploy the same version.
+1. Set `galley.config.settings.enableIndexedBillingTeamMembers` to `true` and re-deploy the same version.
 
 ## Features
 
