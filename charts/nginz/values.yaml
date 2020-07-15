@@ -225,6 +225,10 @@ nginx_conf:
       envs:
       - all
       disable_zauth: true
+    - path: ~* ^/teams/invitations/by-email$
+      envs:
+      - all
+      disable_zauth: true
     - path: /i/teams/invitation-code
       envs:
       - staging
