@@ -15,7 +15,7 @@ AWS resources: route53
 
 ```hcl
 module "dns_records" {
-  source = "github.com/wireapp/wire-server-deploy.git//terraform/modules/aws-dns-records?ref=develop"
+  source = "github.com/wireapp/wire-server-deploy.git//terraform/modules/aws-dns-records?ref=CHANGE-ME"
   
   environment = "staging"
 

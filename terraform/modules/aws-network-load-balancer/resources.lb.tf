@@ -1,11 +1,11 @@
 resource "aws_lb" "nlb" {
   name = "${var.environment}-loadbalancer"
 
-  internal           = false
-  load_balancer_type = "network"
+  internal                         = false
+  load_balancer_type               = "network"
   enable_cross_zone_load_balancing = true
 
-  subnets = data.aws_subnet_ids.public_subnets.ids
+  subnets = var.subnet_ids
 
   tags = {
     Environment = var.environment
@@ -13,38 +13,40 @@ resource "aws_lb" "nlb" {
 }
 
 
-resource "aws_lb_listener" "ingress" {
+
+resource "aws_lb_listener" "ingress-http" {
   load_balancer_arn = aws_lb.nlb.arn
 
-  for_each = local.port_mapping
-
-  port     = lookup(each.value, "port")
-  protocol = lookup(each.value, "protocol")
+  port     = 80
+  protocol = "TCP"
 
   default_action {
     type             = "forward"
-    target_group_arn = aws_lb_target_group.nodes[each.key].arn
+    target_group_arn = aws_lb_target_group.nodes-http.arn
   }
 }
 
 
-resource "aws_lb_target_group" "nodes" {
-  for_each = local.port_mapping
+resource "aws_lb_target_group" "nodes-http" {
+  name = "${var.environment}-nodes-http"
 
-  name = "${var.environment}-${var.target_role}s-${each.key}"
+  vpc_id = data.aws_vpc.this.id
 
-  vpc_id      = data.aws_vpc.this.id
-  target_type = "instance"
-  port        = lookup(each.value, "node_port")
-  protocol    = lookup(each.value, "protocol")
+  # NOTE: using "instance" - as an alternative type - does not work due to the way how security groups being
+  #       configured (VPC CIDR vs NLB network IP addresses)
+  # SRC:  https://docs.aws.amazon.com/elasticloadbalancing/latest/network/target-group-register-targets.html#target-security-groups
+  # DOC:  https://docs.aws.amazon.com/elasticloadbalancing/latest/network/load-balancer-target-groups.html
+  target_type = "ip"
+  port        = var.node_port_http
+  protocol    = "TCP"
 
   // docs: https://docs.aws.amazon.com/elasticloadbalancing/latest/network/target-group-health-checks.html
   //
   health_check {
     protocol = "TCP"
-    port     = lookup(each.value, "node_port")
+    port     = var.node_port_http
     interval = 30 // NOTE: 10 or 30 seconds
-    # NOTE: defaults to 10 for TCP and is not allowed to be set
+    # NOTE: defaults to 10 for TCP and is not allowed to be set when using an NLB
     # timeout  = 10
   }
 
@@ -53,16 +55,55 @@ resource "aws_lb_target_group" "nodes" {
   }
 }
 
-resource "aws_lb_target_group_attachment" "every_port_on_each_instance" {
-  for_each = {
-    for pair in setproduct(keys(local.port_mapping), data.aws_instances.nodes.ids) :
-    "${pair[0]}:${pair[1]}" => {
-      mapping_name = pair[0]
-      instance_id  = pair[1]
-    }
+
+resource "aws_lb_target_group_attachment" "each-node-http" {
+  for_each = { for _, ip in var.node_ips : "http-ip-${replace(ip, ".", "-")}" => ip }
+
+  target_group_arn = aws_lb_target_group.nodes-http.arn
+  port             = aws_lb_target_group.nodes-http.port
+  target_id        = each.value
+}
+
+
+
+resource "aws_lb_listener" "ingress-https" {
+  load_balancer_arn = aws_lb.nlb.arn
+
+  port     = 443
+  protocol = "TCP"
+
+  default_action {
+    type             = "forward"
+    target_group_arn = aws_lb_target_group.nodes-https.arn
+  }
+}
+
+
+resource "aws_lb_target_group" "nodes-https" {
+  name = "${var.environment}-nodes-https"
+
+  vpc_id = data.aws_vpc.this.id
+
+  target_type = "ip"
+  port        = var.node_port_https
+  protocol    = "TCP"
+
+  health_check {
+    protocol = "TCP"
+    port     = var.node_port_https
+    interval = 30
   }
 
-  target_group_arn = aws_lb_target_group.nodes[each.value.mapping_name].arn
-  port             = aws_lb_target_group.nodes[each.value.mapping_name].port
-  target_id        = each.value.instance_id
+  tags = {
+    Environment = var.environment
+  }
+}
+
+
+resource "aws_lb_target_group_attachment" "each-node-https" {
+  for_each = { for _, ip in var.node_ips : "https-ip-${replace(ip, ".", "-")}" => ip }
+
+  target_group_arn = aws_lb_target_group.nodes-https.arn
+  port             = aws_lb_target_group.nodes-https.port
+  target_id        = each.value
 }

@@ -4,19 +4,24 @@ variable "environment" {
   default     = "dev"
 }
 
-variable "http_target_port" {
-  type = number
+variable "node_port_http" {
+  type        = number
   description = "HTTP port from the target machines that the LB forwards ingress on port 80 to"
-  default = 8080
+  default     = 8080
 }
 
-variable "https_target_port" {
-  type = number
+variable "node_port_https" {
+  type        = number
   description = "HTTPS port from the target machines that the LB forwards ingress on port 443 to"
-  default = 8443
+  default     = 8443
 }
 
-variable "target_role" {
-  type = string
-  description = ""
+variable "node_ips" {
+  type        = list(string)
+  description = "a list of private IPs from all nodes the load balancer forwards traffic to"
+}
+
+variable "subnet_ids" {
+  type        = list(string)
+  description = "a list of IDs from subnets where the nodes are connected to"
 }
