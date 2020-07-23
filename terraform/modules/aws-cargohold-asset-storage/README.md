@@ -23,8 +23,8 @@ mandatory.
 
 ```hcl
 module "cargohold_asset_storage" {
-  source = "github.com/wireapp/wire-server-deploy.git//terraform/modules/aws-cargohold-asset-storage?ref=develop"
-  
+  source = "github.com/wireapp/wire-server-deploy.git//terraform/modules/aws-cargohold-asset-storage?ref=CHANGE-ME"
+
   environment = "staging"
 }
 ```
