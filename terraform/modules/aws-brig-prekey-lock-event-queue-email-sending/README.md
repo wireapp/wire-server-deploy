@@ -1,4 +1,4 @@
-Terraform module: Brig pre-key locking, event queue (optional: email sending) 
+Terraform module: Brig pre-key locking, event queue (optional: email sending)
 =============================================================================
 
 State: __experimental__
@@ -9,7 +9,7 @@ in cassandra to avoid race conditions), and (B) to establish a message queue
 for internal events (used e.g. during user deletions).
 
 [Optional] Wire-server's "brig" components needs to send emails. This can either
-be done by configuring an SMTP server (Option 1), or by using AWS resources (Option 2).           
+be done by configuring an SMTP server (Option 1), or by using AWS resources (Option 2).
 This terraform module can enable brig to send emails using option 2. In addition, it
 configures *MAIL FROM* for outgoing emails, but does not enable incoming emails
 (possible solution: `aws_ses_receipt_rule`).
