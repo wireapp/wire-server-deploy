@@ -29,8 +29,8 @@ mandatory.
 
 ```hcl
 module "brig_prekey_lock_and_event_queue_emailing" {
-  source = "github.com/wireapp/wire-server-deploy.git//terraform/modules/aws-brig-prekey-lock-event-queue-email-sending?ref=develop"
-  
+  source = "github.com/wireapp/wire-server-deploy.git//terraform/modules/aws-brig-prekey-lock-event-queue-email-sending?ref=CHANGE-ME"
+
   environment = "staging"
 
   zone_id = "Z12345678SQWERTYU"
@@ -42,8 +42,8 @@ module "brig_prekey_lock_and_event_queue_emailing" {
 
 ```hcl
 module "brig_prekey_lock_and_event_queue" {
-  source = "github.com/wireapp/wire-server-deploy.git//terraform/modules/aws-brig-prekey-lock-event-queue-email-sending?ref=develop"
-  
+  source = "github.com/wireapp/wire-server-deploy.git//terraform/modules/aws-brig-prekey-lock-event-queue-email-sending?ref=CHANGE-ME"
+
   environment = "staging"
   enable_email_sending = false    # default: true
 }
