@@ -13,7 +13,6 @@ resource "aws_lb" "nlb" {
 }
 
 
-
 resource "aws_lb_listener" "ingress-http" {
   load_balancer_arn = aws_lb.nlb.arn
 
@@ -32,7 +31,7 @@ resource "aws_lb_target_group" "nodes-http" {
 
   vpc_id = data.aws_vpc.this.id
 
-  # NOTE: using "instance" - as an alternative type - does not work due to the way how security groups being
+  # NOTE: using "instance" - as an alternative type - does not work due to the way security groups are being
   #       configured (VPC CIDR vs NLB network IP addresses)
   # SRC:  https://docs.aws.amazon.com/elasticloadbalancing/latest/network/target-group-register-targets.html#target-security-groups
   # DOC:  https://docs.aws.amazon.com/elasticloadbalancing/latest/network/load-balancer-target-groups.html
@@ -40,12 +39,12 @@ resource "aws_lb_target_group" "nodes-http" {
   port        = var.node_port_http
   protocol    = "TCP"
 
-  // docs: https://docs.aws.amazon.com/elasticloadbalancing/latest/network/target-group-health-checks.html
-  //
+  # docs: https://docs.aws.amazon.com/elasticloadbalancing/latest/network/target-group-health-checks.html
+  #
   health_check {
     protocol = "TCP"
     port     = var.node_port_http
-    interval = 30 // NOTE: 10 or 30 seconds
+    interval = 30  # NOTE: 10 or 30 seconds
     # NOTE: defaults to 10 for TCP and is not allowed to be set when using an NLB
     # timeout  = 10
   }
@@ -63,7 +62,6 @@ resource "aws_lb_target_group_attachment" "each-node-http" {
   port             = aws_lb_target_group.nodes-http.port
   target_id        = each.value
 }
-
 
 
 resource "aws_lb_listener" "ingress-https" {

@@ -6,13 +6,13 @@ variable "environment" {
 
 variable "node_port_http" {
   type        = number
-  description = "HTTP port from the target machines that the LB forwards ingress on port 80 to"
+  description = "HTTP port on the target machines that the LB forwards ingress from port 80 to"
   default     = 8080
 }
 
 variable "node_port_https" {
   type        = number
-  description = "HTTPS port from the target machines that the LB forwards ingress on port 443 to"
+  description = "HTTPS port on the target machines that the LB forwards ingress from port 443 to"
   default     = 8443
 }
 
@@ -23,5 +23,5 @@ variable "node_ips" {
 
 variable "subnet_ids" {
   type        = list(string)
-  description = "a list of IDs from subnets where the nodes are connected to"
+  description = "a list of IDs from subnets where the nodes are part of, and the load balancer egress is attached to"
 }
