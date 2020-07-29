@@ -1,3 +1,13 @@
+# 2020-07-39
+
+## Features
+
+* [tf-module:dns-records] Add output for FQDNs (#315)
+* README.md: stop explicitly referring to the "develop" branch (#318)
+* nginz redirect /teams/invitations/by-email to brig (#317)
+* S3 support (#311, #316)
+* Provide AWS_REGION variable to cargohold (#314)
+
 # 2020-07-13
 
 ## Features
