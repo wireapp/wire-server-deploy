@@ -7,12 +7,6 @@ provider "aws" {
   region = "eu-central-1"
 }
 
-# Used for the in-VPC EC2 endpoint.
-data "aws_security_group" "default" {
-  name   = "default"
-  vpc_id = module.vpc.vpc_id
-}
-
 module "vpc" {
   source = "github.com/terraform-aws-modules/terraform-aws-vpc?ref=v2.33.0"
 
@@ -34,8 +28,6 @@ module "vpc" {
   # In case we run terraform from within the environment.
   # VPC endpoint for DynamoDB
   enable_dynamodb_endpoint = true
-
-  enable_s3_endpoint = true
 
   enable_nat_gateway     = true
   one_nat_gateway_per_az = false
