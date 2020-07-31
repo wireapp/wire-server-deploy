@@ -18,8 +18,8 @@ mandatory.
 
 ```hcl
 module "gundeck-push-notification" {
-  source = "github.com/wireapp/wire-server-deploy.git//terraform/modules/aws-gundeck-push-notifications?ref=develop"
-  
+  source = "github.com/wireapp/wire-server-deploy.git//terraform/modules/aws-gundeck-push-notifications?ref=CHANGE-ME"
+
   environment = "dev"
   apns_application_id = "myapp.tld"
   apns_voip_key = file("path/to/app-credentials/key.pem")
