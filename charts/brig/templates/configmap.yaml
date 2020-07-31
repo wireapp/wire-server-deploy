@@ -150,6 +150,19 @@ data:
       configTTL: 3600 # 1 hour
       tokenTTL: 43200 # 12 hours
 
+    {{- if .sft }}
+    {{- with .sft }}
+    sft:
+      sftBaseDomain: {{ required "Missing value: .sft.sftBaseDomain" .sftBaseDomain }}
+      {{- if .sftSRVServiceName }}
+      sftSRVServiceName: {{ .sftSRVServiceName }}
+      {{- end }}
+      {{- if .sftDiscoveryIntervalSeconds }}
+      sftSRVServiceName: {{ .sftDiscoveryIntervalSeconds }}
+      {{- end }}
+    {{- end }}
+    {{- end }}
+
     {{- with .optSettings }}
     optSettings:
       setActivationTimeout: {{ .setActivationTimeout }}
