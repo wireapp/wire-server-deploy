@@ -158,7 +158,7 @@ data:
       sftSRVServiceName: {{ .sftSRVServiceName }}
       {{- end }}
       {{- if .sftDiscoveryIntervalSeconds }}
-      sftSRVServiceName: {{ .sftDiscoveryIntervalSeconds }}
+      sftDiscoveryIntervalSeconds: {{ .sftDiscoveryIntervalSeconds }}
       {{- end }}
     {{- end }}
     {{- end }}
