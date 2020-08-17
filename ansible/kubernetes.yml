@@ -7,3 +7,20 @@
   environment: "{{ proxy_env | default({}) }}"
   roles:
     - etcd-helpers
+
+- hosts: k8s-cluster
+  environment: "{{ proxy_env | default({}) }}"
+  roles:
+    - role: logrotate
+      logrotate_scripts:
+        - name: podlogs
+          path: "/var/lib/docker/containers/*/*.log"
+          options:
+            - daily
+            - size 50M
+            - missingok
+            - compress
+            - rotate 3
+            - copytruncate
+            - notifempty
+            - nocreate
