@@ -13,14 +13,16 @@
   roles:
     - role: logrotate
       logrotate_scripts:
+        # The following will rotate pod logs once per day to keep no more than
+        # 3 days (maxage 1, rotate 2) of logs for data minimization/protection
+        # reasons.
         - name: podlogs
           path: "/var/lib/docker/containers/*/*.log"
           options:
             - daily
-            - size 50M
             - missingok
-            - compress
-            - rotate 3
+            - rotate 2
+            - maxage 1
             - copytruncate
-            - notifempty
             - nocreate
+            - nocompress
