@@ -7,3 +7,5 @@
   environment: "{{ proxy_env | default({}) }}"
   roles:
     - etcd-helpers
+
+- import_playbook: kubernetes_logging.yml
