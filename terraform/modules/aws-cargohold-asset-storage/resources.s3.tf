@@ -34,18 +34,9 @@ resource "aws_vpc_endpoint" "s3" {
   }
 }
 
-data "aws_route_tables" "private" {
-  vpc_id = var.vpc_id
-
-  filter {
-    name   = "association.subnet-id"
-    values = var.subnet_ids
-  }
-}
-
 # the routing table association that allows nodes to route traffic to the S3 endpoint.
 resource "aws_vpc_endpoint_route_table_association" "private_s3" {
-  for_each = { for k, v in data.aws_route_tables.private.ids : v => v }
+  for_each = { for k, v in var.route_table_ids : v => v }
 
   route_table_id  = each.value
   vpc_endpoint_id = aws_vpc_endpoint.s3.id
