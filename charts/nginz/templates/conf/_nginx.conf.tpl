@@ -229,7 +229,7 @@ http {
 
         # remove access_token from logs, see 'Note sanitized_request' above.
         set $sanitized_request $request;
-        if ($sanitized_request ~ (.*)access_token=[^&]*(.*)) {
+        if ($sanitized_request ~ (.*)access_token=[^&\s]*(.*)) {
             set $sanitized_request $1access_token=****$2;
         }
 
