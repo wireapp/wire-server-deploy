@@ -184,17 +184,6 @@ resource "aws_security_group" "talk_to_k8s" {
   description = "hosts that are allowed to speak to kubernetes."
   vpc_id      = var.vpc_id
 
-  # HACK: running out of security groups per instance.
-  #       adding this here since the admin node needs to talk to S3.
-  # S3
-  egress {
-    description = ""
-    from_port   = 443
-    to_port     = 443
-    protocol    = "tcp"
-    cidr_blocks = var.s3_CIDRs
-  }
-
   # kubectl
   egress {
     description = ""
@@ -286,16 +275,6 @@ resource "aws_security_group" "k8s_private" {
     to_port     = 65535
     protocol    = "udp"
     cidr_blocks = ["172.17.0.0/20"]
-  }
-
-  # HACK: running out of security groups, adding this here since all k8s nodes need to talk to S3.
-  # S3
-  egress {
-    description = ""
-    from_port   = 443
-    to_port     = 443
-    protocol    = "tcp"
-    cidr_blocks = var.s3_CIDRs
   }
 
   tags = {
