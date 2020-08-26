@@ -1,4 +1,3 @@
-# a security group for access to the private traffic between kubernetes nodes. should be added to all kubernetes nodes.
 resource "aws_security_group" "talk_to_S3" {
   name        = "talk_to_S3"
   description = "hosts that are allowed to talk to S3."
