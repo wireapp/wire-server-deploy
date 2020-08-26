@@ -3,7 +3,6 @@ resource "aws_security_group" "talk_to_S3" {
   description = "hosts that are allowed to talk to S3."
   vpc_id      = var.vpc_id
 
-  # S3
   egress {
     description = ""
     from_port   = 443
