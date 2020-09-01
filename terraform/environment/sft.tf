@@ -1,4 +1,4 @@
-variable "sft_servers" {
+variable "sft_server_names" {
   default = []
   type = list(string)
 }
@@ -12,12 +12,12 @@ variable "sft_server_type" {
 }
 
 module "sft" {
-  count = min(1, length(var.sft_servers))
+  count = min(1, length(var.sft_server_names))
 
   source = "../modules/sft"
   root_domain = var.root_domain
   environment = var.environment
-  sft_servers = var.sft_servers
+  server_names = var.sft_server_names
   a_record_ttl = var.sft_a_record_ttl
   server_type = var.sft_server_type
   image = var.hcloud_image

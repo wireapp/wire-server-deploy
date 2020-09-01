@@ -6,7 +6,7 @@ variable "environment" {
   type = string
 }
 
-variable "sft_servers" {
+variable "server_names" {
   description = "List of names of sft servers. The server will be availables at sft<name>.<environment>.<root_domain>"
   type = set(string)
 }

@@ -14,11 +14,11 @@ resource "local_file" "inventory_hosts" {
       awsAccessKey = aws_iam_access_key.srv-announcer.secret
       awsRegion = data.aws_region.current.name
       zoneDomain = var.root_domain
-      instances = [ for serverName in var.sft_servers :
+      instances = [ for server_name in var.server_names :
         {
-          hostname = hcloud_server.sft[serverName].name
-          ipaddress = hcloud_server.sft[serverName].ipv4_address
-          fqdn = aws_route53_record.sft_a[serverName].fqdn
+          hostname = hcloud_server.sft[server_name].name
+          ipaddress = hcloud_server.sft[server_name].ipv4_address
+          fqdn = aws_route53_record.sft_a[server_name].fqdn
         }
       ]
     }
