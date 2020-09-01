@@ -11,11 +11,6 @@ variable "sft_server_type" {
   default = "cx11"
 }
 
-variable "sft_ssh_keys" {
-  type = list(string)
-  default = []
-}
-
 module "sft" {
   count = min(1, length(var.sft_servers))
 
@@ -27,5 +22,5 @@ module "sft" {
   server_type = var.sft_server_type
   image = var.hcloud_image
   location = var.hcloud_location
-  ssh_keys = var.sft_ssh_keys
+  ssh_keys = [hcloud_ssh_key.operator_ssh.name]
 }

@@ -5,4 +5,5 @@ resource "hcloud_server" "sft" {
   server_type = var.server_type
   image = var.image
   location = var.location
+  ssh_keys = var.ssh_keys
 }
