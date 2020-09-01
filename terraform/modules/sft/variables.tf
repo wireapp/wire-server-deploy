@@ -34,3 +34,7 @@ variable "location" {
 variable "ssh_keys" {
   type = list
 }
+
+variable "inventory_file" {
+  type = string
+}

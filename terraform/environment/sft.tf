@@ -23,4 +23,5 @@ module "sft" {
   image = var.hcloud_image
   location = var.hcloud_location
   ssh_keys = [hcloud_ssh_key.operator_ssh.name]
+  inventory_file = var.inventory_file
 }
