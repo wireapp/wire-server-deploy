@@ -5,7 +5,7 @@ description = ""
 authors = ["jschaul <jschaul@users.noreply.github.com>"]
 
 [tool.poetry.dependencies]
-python = "^2.7 || >=3.5"
+python = ">=3.5"
 ansible = "2.7.*"
 ansible-modules-hashivault = "*"
 boto = "*"
@@ -16,8 +16,9 @@ jinja2 = ">= 2.10.1"
 pbr = "^5.2"
 hvac = ">= 0.8"
 jmespath = ">= 0.9.4"
-"ruamel.yaml" = ">= 0.15.96"
+# "ruamel.yaml" = ">= 0.15.96"
 PyYAML = "*"
+pyOpenSSL = "*"
 
 [tool.poetry.dev-dependencies]
 
