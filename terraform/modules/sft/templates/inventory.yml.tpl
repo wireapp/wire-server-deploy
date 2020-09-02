@@ -1,4 +1,4 @@
-servers:
+sft_servers:
   hosts:
   %{~ for instance in instances ~}
     ${ instance.hostname }:
