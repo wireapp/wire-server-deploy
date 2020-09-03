@@ -56,11 +56,11 @@ resource "aws_lb_target_group" "nodes-http" {
 
 
 resource "aws_lb_target_group_attachment" "each-node-http" {
-  for_each = { for _, ip in var.node_ips : "http-ip-${replace(ip, ".", "-")}" => ip }
+  count = length(var.node_ips)
 
   target_group_arn = aws_lb_target_group.nodes-http.arn
   port             = aws_lb_target_group.nodes-http.port
-  target_id        = each.value
+  target_id        = var.node_ips[count.index]
 }
 
 
@@ -99,9 +99,9 @@ resource "aws_lb_target_group" "nodes-https" {
 
 
 resource "aws_lb_target_group_attachment" "each-node-https" {
-  for_each = { for _, ip in var.node_ips : "https-ip-${replace(ip, ".", "-")}" => ip }
+  count = length(var.node_ips)
 
   target_group_arn = aws_lb_target_group.nodes-https.arn
   port             = aws_lb_target_group.nodes-https.port
-  target_id        = each.value
+  target_id        = var.node_ips[count.index]
 }
