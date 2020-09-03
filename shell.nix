@@ -20,7 +20,7 @@ let
 in
 pkgs.mkShell{
   name = "wire-server-deploy";
-  nativeBuildInputs = [poetryEnv] ;
+  nativeBuildInputs = [ poetryEnv ] ;
   buildInputs = with pkgs; [ terraform_0_13 ];
 }
 
