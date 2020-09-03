@@ -2,6 +2,7 @@
   become: no
   roles:
     - role: sft-monitoring-certs
+
 - hosts: sft_servers
   roles:
     - role: sft-server
