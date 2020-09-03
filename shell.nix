@@ -29,6 +29,7 @@ pkgs.mkShell{
   nativeBuildInputs = [ poetryEnv ] ;
   buildInputs = with pkgs; [
     terraform_0_13
+    python37Packages.poetry
   ];
 }
 
