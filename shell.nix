@@ -10,17 +10,25 @@ let
   pkgs = import sources.nixpkgs {
     overlays = [ (import "${poetry2nixOverlay}/overlay.nix") ];
   };
-  lib = pkgs.lib;
-  poetryOverrides = pkgs.poetry2nix.mkDefaultPoetryOverrides (import ./nix/poetry-overrides.nix { inherit pkgs lib; });
+
   poetryEnv = pkgs.poetry2nix.mkPoetryEnv {
     projectDir = ./ansible;
     python = pkgs.python37;
-    overrides = poetryOverrides;
+    overrides = pkgs.poetry2nix.overrides.withDefaults ( self: super: {
+      psutil = super.psutil.overridePythonAttrs (old: rec {
+        doCheck = false;
+      });
+      paramiko = super.paramiko.overridePythonAttrs (old: rec {
+        doCheck = false;
+      });
+    });
   };
 in
 pkgs.mkShell{
   name = "wire-server-deploy";
   nativeBuildInputs = [ poetryEnv ] ;
-  buildInputs = with pkgs; [ terraform_0_13 ];
+  buildInputs = with pkgs; [
+    terraform_0_13
+  ];
 }
 
