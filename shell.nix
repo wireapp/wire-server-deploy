@@ -1,14 +1,8 @@
 let
   sources = import ./nix/sources.nix;
 
-  poetry2nixOverlay = builtins.fetchGit {
-    ref = "master";
-    rev = "ab40bbdc964b7cc0a69d6f9ce77afbc79bb6e815";
-    url = "https://github.com/nix-community/poetry2nix";
-  };
-
   pkgs = import sources.nixpkgs {
-    overlays = [ (import "${poetry2nixOverlay}/overlay.nix") ];
+    overlays = [ (import (sources.poetry2nix + "/overlay.nix")) ];
   };
 
   poetryEnv = pkgs.poetry2nix.mkPoetryEnv {
