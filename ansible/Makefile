@@ -1,3 +1,7 @@
+ROOT_DIR:=$(shell dirname $(realpath $(firstword $(MAKEFILE_LIST))))
+CAILLEACH_DIR:=$(abspath ${ROOT_DIR}/../../cailleach)
+ENV_DIR:=${CAILLEACH_DIR}/environments/${ENV}
+SHELL:=/usr/bin/env bash
 
 default: download
 
@@ -21,3 +25,17 @@ download-ansible-roles:
 .PHONY: download-ansible-roles-force
 download-ansible-roles-force:
 	poetry run ansible-galaxy install -r requirements.yml --force
+
+.PHONY: provision-sft
+provision-sft: check-env
+	poetry run ansible-playbook ${ROOT_DIR}/provision-sft.yml  \
+		-i ${ENV_DIR}/gen/terraform-inventory.yml \
+		-i ${ENV_DIR}/inventory.yml \
+		--private-key ${ENV_DIR}/operator_ssh.dec \
+		-vv
+
+.PHONY: check-env
+check-env:
+ifndef ENV
+	$(error ENV is not set)
+endif
