@@ -25,3 +25,8 @@ variable "subnet_ids" {
   type        = list(string)
   description = "a list of IDs from subnets where the nodes are part of, and the load balancer egress is attached to"
 }
+
+variable "aws_vpc_id" {
+  type        = string
+  description = "the ID of the VPC we are adding our targets to."
+}
