@@ -3,6 +3,8 @@ sft_servers:
   %{~ for instance in instances ~}
     ${ instance.hostname }:
       ansible_host: '${ instance.ipaddress }'
+      ansible_ssh_user: root
+      ansible_python_interpreter: /usr/bin/python3
 
       sft_fqdn: '${ instance.fqdn }'
 
