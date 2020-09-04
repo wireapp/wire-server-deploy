@@ -1,3 +1,25 @@
+# 2020-09-04
+
+## Features
+
+* Added support for network load balancers (#299)
+* Output account number when creating gundeck resources (#326)
+* Add logrotation of 3 days to all pod logs (#329)
+* SFT discovery (#322)
+
+## Bug Fixes
+
+* Add default AWS region to example values files (#328)
+* Fix sanitized_request parsing on nginx (#330)
+* Updated prod-values.example with missing vars for galley (#335)
+
+## Internal Changes
+
+* Drop CBC ciphersuites for ingress (#323)
+* Allow TLS >= 1.2 only for backoffice (#324)
+* Replace subnet IDs input with route table IDs (#331)
+* Explicit VPC ID when creating network load balancers (#333)
+
 # 2020-07-29
 
 ## Features
