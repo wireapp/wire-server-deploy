@@ -31,7 +31,7 @@ provision-sft: check-env
 	poetry run ansible-playbook ${ANSIBLE_DIR}/provision-sft.yml  \
 		-i ${ENV_DIR}/gen/terraform-inventory.yml \
 		-i ${ENV_DIR}/inventory.yml \
-		--private-key ${ENV_DIR}/operator_ssh.dec \
+		--private-key ${ENV_DIR}/operator-ssh.dec \
 		-vv
 
 .PHONY: bootstrap
@@ -39,7 +39,7 @@ bootstrap: check-env
 	poetry run ansible-playbook ${ANSIBLE_DIR}/bootstrap.yml \
 		-i ${ENV_DIR}/gen/terraform-inventory.yml \
 		-i ${ENV_DIR}/inventory.yml \
-		--private-key ${ENV_DIR}/operator_ssh.dec \
+		--private-key ${ENV_DIR}/operator-ssh.dec \
 		-vv
 
 .PHONY: check-env
