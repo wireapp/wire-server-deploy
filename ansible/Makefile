@@ -1,5 +1,5 @@
-ROOT_DIR:=$(shell dirname $(realpath $(firstword $(MAKEFILE_LIST))))
-CAILLEACH_DIR:=$(abspath ${ROOT_DIR}/../../cailleach)
+ANSIBLE_DIR:=$(shell dirname $(realpath $(firstword $(MAKEFILE_LIST))))
+CAILLEACH_DIR:=$(abspath ${ANSIBLE_DIR}/../../cailleach)
 ENV_DIR:=${CAILLEACH_DIR}/environments/${ENV}
 SHELL:=/usr/bin/env bash
 
@@ -28,7 +28,15 @@ download-ansible-roles-force:
 
 .PHONY: provision-sft
 provision-sft: check-env
-	poetry run ansible-playbook ${ROOT_DIR}/provision-sft.yml  \
+	poetry run ansible-playbook ${ANSIBLE_DIR}/provision-sft.yml  \
+		-i ${ENV_DIR}/gen/terraform-inventory.yml \
+		-i ${ENV_DIR}/inventory.yml \
+		--private-key ${ENV_DIR}/operator_ssh.dec \
+		-vv
+
+.PHONY: bootstrap
+bootstrap: check-env
+	poetry run ansible-playbook ${ANSIBLE_DIR}/bootstrap.yml \
 		-i ${ENV_DIR}/gen/terraform-inventory.yml \
 		-i ${ENV_DIR}/inventory.yml \
 		--private-key ${ENV_DIR}/operator_ssh.dec \
