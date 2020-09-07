@@ -12,7 +12,7 @@ init: check-env
 apply: check-env
 	cd ${ENV_DIR} && \
 		source hcloud-token.dec && \
-		terraform apply ${ROOT_DIR}
+		terraform apply -var 'inventory_file=./gen/terraform-inventory.yml' ${ROOT_DIR}
 
 .PHONY: check-env
 check-env:
