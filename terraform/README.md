@@ -6,6 +6,9 @@ directory of terraform.
 
 ## How to create a new environment
 
+Recommended: Use nix-shell from the root of this repository to ensure that you
+have the right version of terraform.
+
 1. Export "CAILLEACH_DIR" environment variable to a repository where you want to
    store environment specific data.
 1. Export "ENV" as the name of the environment
