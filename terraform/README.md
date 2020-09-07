@@ -22,7 +22,18 @@ directory of terraform.
    dynamodb_table = "<dynamodb-lock-table>"
    ```
    Please refer to [s3 backend docs](https://www.terraform.io/docs/backends/types/s3.html) for details.
-1. Create variables for the environment in `$ENV_DIR/terraform.tfvar`.
+1. Create token from hetzner cloud and put it in a file called `$ENV_DIR/hcloud-token.dec`
+   ```
+   export HCLOUD_TOKEN=<token>
+   ```
+1. Create ssh key-pair, put the private key in a filed called `$ENV_DIR/operator-ssh.dec`
+1. Create variables for the environment in `$ENV_DIR/terraform.tfvar`, example:
+   ```tf
+   environment = <env>
+   sft_server_names = ["1", "2"]
+   root_domain = "example.com"
+   operator_ssh_public_key = <public key from step above>
+   ```
 1. Initialiaze terraform
    ```
    make init ENV=$ENV
