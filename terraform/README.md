@@ -1,0 +1,33 @@
+# Terraform for wire-server
+
+This directory contains (aspires to contain) all the terraform required to setup
+wire-server. The `environment` directory is to be considered the "root"
+directory of terraform.
+
+## How to create a new environment
+
+1. Export "CAILLEACH_DIR" environment variable to a repository where you want to
+   store environment specific data.
+1. Export "ENV" as the name of the environment
+1. Create environment directory.
+   ```bash
+   export ENV_DIR="$CAILLEACH_DIR/environments/$ENV"
+   mkdir -p "$ENV_DIR"
+   ```
+1. Create backend-config in `"$ENV_DIR/backend.tfvars` which looks like this:
+   ```tf
+   region  = "<aws-region>"
+   bucket  = "<aws-bucket>"
+   key = "<s3-backend-key>"
+   dynamodb_table = "<dynamodb-lock-table>"
+   ```
+   Please refer to [s3 backend docs](https://www.terraform.io/docs/backends/types/s3.html) for details.
+1. Create variables for the environment in `$ENV_DIR/terraform.tfvar`.
+1. Initialiaze terraform
+   ```
+   make init ENV=$ENV
+   ```
+1. Apply terraform
+   ```
+   make apply ENV=$ENV
+   ```
