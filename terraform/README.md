@@ -24,12 +24,16 @@ have the right version of terraform.
    key = "<s3-backend-key>"
    dynamodb_table = "<dynamodb-lock-table>"
    ```
-   Please refer to [s3 backend docs](https://www.terraform.io/docs/backends/types/s3.html) for details.
-1. Create token from hetzner cloud and put it in a file called `$ENV_DIR/hcloud-token.dec`
+
+   Please refer to [s3 backend
+   docs](https://www.terraform.io/docs/backends/types/s3.html) for details.
+1. Create token from hetzner cloud and put it in a file called
+   `$ENV_DIR/hcloud-token.dec`<sup>[1]</sup>.
    ```
    export HCLOUD_TOKEN=<token>
    ```
-1. Create ssh key-pair, put the private key in a filed called `$ENV_DIR/operator-ssh.dec`
+1. Create ssh key-pair, put the private key in a filed called
+   `$ENV_DIR/operator-ssh.dec`<sup>[1]</sup>.
 1. Create variables for the environment in `$ENV_DIR/terraform.tfvar`, example:
    ```tf
    environment = <env>
@@ -45,3 +49,6 @@ have the right version of terraform.
    ```
    make apply ENV=$ENV
    ```
+
+<sup>[1]</sup>For wire employees: Encrypt this file using `sops`, it will not
+work in the `nix-shell`, so change shell as needed.
