@@ -9,6 +9,8 @@ directory of terraform.
 Recommended: Use nix-shell from the root of this repository to ensure that you
 have the right version of terraform.
 
+Run all commands from `terraform/environment` directory.
+
 1. Export "CAILLEACH_DIR" environment variable to a repository where you want to
    store environment specific data.
 1. Export "ENV" as the name of the environment
@@ -32,15 +34,20 @@ have the right version of terraform.
    ```
    export HCLOUD_TOKEN=<token>
    ```
-1. Create ssh key-pair, put the private key in a filed called
-   `$ENV_DIR/operator-ssh.dec`<sup>[1]</sup>.
-1. Create variables for the environment in `$ENV_DIR/terraform.tfvar`, example:
+1. Create ssh key-pair, put the private key in a file called
+   `$ENV_DIR/operator-ssh.dec`<sup>[1]</sup>. Example:
+
+   ```bash
+   ssh-keygen -o -a 100 -t ed25519 -f operator-ssh.dec -C "backend+${ENV}-operator@wire.com" 
+   ```
+1. Create variables for the environment in `$ENV_DIR/terraform.tfvars`, example:
    ```tf
    environment = <env>
    sft_server_names = ["1", "2"]
    root_domain = "example.com"
    operator_ssh_public_key = <public key from step above>
    ```
+   Delete operator-ssh.dec.pub.
 1. Initialiaze terraform
    ```
    make init ENV=$ENV
@@ -49,6 +56,7 @@ have the right version of terraform.
    ```
    make apply ENV=$ENV
    ```
+1. To bootstrap the nodes, please refer to the [ansible README](../ansible/README.md)
 
 <sup>[1]</sup>For wire employees: Encrypt this file using `sops`, it will not
 work in the `nix-shell`, so change shell as needed.
