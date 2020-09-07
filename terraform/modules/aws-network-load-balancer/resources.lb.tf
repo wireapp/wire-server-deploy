@@ -29,7 +29,7 @@ resource "aws_lb_listener" "ingress-http" {
 resource "aws_lb_target_group" "nodes-http" {
   name = "${var.environment}-nodes-http"
 
-  vpc_id = data.aws_vpc.this.id
+  vpc_id = var.aws_vpc_id
 
   # NOTE: using "instance" - as an alternative type - does not work due to the way security groups are being
   #       configured (VPC CIDR vs NLB network IP addresses)
@@ -80,7 +80,7 @@ resource "aws_lb_listener" "ingress-https" {
 resource "aws_lb_target_group" "nodes-https" {
   name = "${var.environment}-nodes-https"
 
-  vpc_id = data.aws_vpc.this.id
+  vpc_id = var.aws_vpc_id
 
   target_type = "ip"
   port        = var.node_port_https
