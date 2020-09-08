@@ -14,6 +14,12 @@ apply: check-env
 		source hcloud-token.dec && \
 		terraform apply -var 'inventory_file=./gen/terraform-inventory.yml' ${ROOT_DIR}
 
+.PHONY: destroy
+destroy: check-env
+	cd ${ENV_DIR} && \
+		source hcloud-token.dec && \
+		terraform destroy -var 'inventory_file=./gen/terraform-inventory.yml' ${ROOT_DIR}
+
 .PHONY: check-env
 check-env:
 ifndef ENV
