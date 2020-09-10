@@ -1,7 +1,7 @@
 ANSIBLE_DIR:=$(shell dirname $(realpath $(firstword $(MAKEFILE_LIST))))
 CAILLEACH_DIR:=$(abspath ${ANSIBLE_DIR}/../../cailleach)
 ENV_DIR:=${CAILLEACH_DIR}/environments/${ENV}
-SHELL:=/usr/bin/env bash
+SHELL:=/usr/bin/env bash -eo pipefail
 
 default: download
 
