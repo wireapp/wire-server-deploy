@@ -21,10 +21,6 @@ module "vpc" {
   enable_dns_hostnames = false
   enable_dns_support   = true
 
-  enable_dhcp_options      = true
-  dhcp_options_domain_name = var.dhcp_options_domain_name
-  #  dhcp_options_domain_name_servers = 
-
   # In case we run terraform from within the environment.
   # VPC endpoint for DynamoDB
   enable_dynamodb_endpoint = true
