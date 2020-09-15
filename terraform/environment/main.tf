@@ -3,7 +3,7 @@ variable "environment" {
 }
 
 variable "root_domain" {
-  default = "wire.com"
+  type = string
 }
 
 variable "inventory_file" {
