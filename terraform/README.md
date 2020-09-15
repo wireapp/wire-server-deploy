@@ -29,8 +29,9 @@ Run all commands from `terraform/environment` directory.
 
    Please refer to [s3 backend
    docs](https://www.terraform.io/docs/backends/types/s3.html) for details.
-1. Create token from hetzner cloud and put it in a file called
-   `$ENV_DIR/hcloud-token.dec`<sup>[1]</sup>.
+1. Create token from hetzner cloud and put the following contents (including the export) 
+    in a file called `$ENV_DIR/hcloud-token.dec`<sup>[1]</sup>:
+```suggestion
    ```
    export HCLOUD_TOKEN=<token>
    ```
