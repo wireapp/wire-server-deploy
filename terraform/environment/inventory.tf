@@ -1,4 +1,4 @@
-# Generates invetory file to be used by ansible. Ideally, we would generate this
+# Generates an inventory file to be used by ansible. Ideally, we would generate this
 # outside terraform using outputs, but it is not possible to use 'terraform
 # output' when the init directory is different from the root code directory.
 # Terrform Issue: https://github.com/hashicorp/terraform/issues/17300
