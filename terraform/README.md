@@ -39,7 +39,8 @@ Run all commands from `terraform/environment` directory.
    `$ENV_DIR/operator-ssh.dec`<sup>[1]</sup>. Example:
 
    ```bash
-   ssh-keygen -o -a 100 -t ed25519 -f operator-ssh.dec -C "backend+${ENV}-operator@wire.com" 
+   ssh-keygen -o -a 100 -t ed25519 -f "$ENV_DIR/operator-ssh.dec" -C "example@example.com"
+   # see footnote 2 if you're a wire employee
    ```
 1. Create variables for the environment in `$ENV_DIR/terraform.tfvars`, example:
    ```tf
@@ -61,3 +62,6 @@ Run all commands from `terraform/environment` directory.
 
 <sup>[1]</sup>For wire employees: Encrypt this file using `sops`, it will not
 work in the `nix-shell`, so change shell as needed.
+
+<sup>[2]</sup>For wire employees: Use "backend+${ENV}-operator@wire.com" as a
+convention.
