@@ -7,9 +7,22 @@ This directory hosts a range of ansible playbooks to install kubernetes and data
 
 ## Bootrap environment created by `terraform/environment`
 
+An 'environment' is supposed to represent all the setup required for the Wire
+backend to function.
+
+'Bootstrapping' an environment means running a range of idempotent ansible
+playbooks against servers specified in an inventory, resulting in a fully
+functional environment. This action can be re-run as often as you want (e.g. in
+case you change some variables or upgrade to new versions).
+
+To start with, the environment only has SFT servers; but more will be added here
+soon.
+
 1. Ensure `$ENV_DIR/operator-ssh.dec` exists and contains an ssh key for the
    environment.
 1. Ensure that `make apply` has been run for the environment. Please refer to
-   [docs in the terraform folder](../terraform/README.md) for details about how to run this.
+   [docs in the terraform folder](../terraform/README.md) for details about how
+   to run this.
 1. Ensure all required variables are set in `$ENV_DIR/inventory.yml`
-1. Running `make bootstrap ENV=$ENV` from this directory will bootstrap the whole environment.
+1. Running `make bootstrap ENV=$ENV` from this directory will bootstrap the
+   environment.
