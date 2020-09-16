@@ -26,5 +26,5 @@ soon.
    the [docs in the terraform folder](../terraform/README.md) for details about
    how to run this.
 1. Ensure all required variables are set in `$ENV_DIR/inventory.yml`
-1. Running `make bootstrap ENV=$ENV` from this directory will bootstrap the
+1. Running `make bootstrap` from this directory will bootstrap the
    environment.

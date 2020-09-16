@@ -52,11 +52,11 @@ Run all commands from `terraform/environment` directory.
    Delete operator-ssh.dec.pub.
 1. Initialiaze terraform
    ```
-   make init ENV=$ENV
+   make init
    ```
 1. Apply terraform
    ```
-   make apply ENV=$ENV
+   make apply
    ```
 1. To bootstrap the nodes, please refer to the [ansible README](../ansible/README.md)
 
