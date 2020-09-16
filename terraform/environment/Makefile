@@ -1,6 +1,5 @@
 ROOT_DIR:=$(shell dirname $(realpath $(firstword $(MAKEFILE_LIST))))
 CAILLEACH_DIR:=$(abspath ${ROOT_DIR}/../../../cailleach)
-ENV_DIR:=${CAILLEACH_DIR}/environments/${ENV}
 SHELL:=/usr/bin/env bash
 
 .PHONY: init
@@ -22,6 +21,10 @@ destroy: check-env
 
 .PHONY: check-env
 check-env:
+ifndef ENV_DIR
 ifndef ENV
-	$(error ENV is not set)
+	$(error please define either ENV or ENV_DIR)
+else
+ENV_DIR=${CAILLEACH_DIR}/environments/${ENV}
+endif
 endif

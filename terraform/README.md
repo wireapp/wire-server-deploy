@@ -11,14 +11,15 @@ have the right version of terraform.
 
 Run all commands from `terraform/environment` directory.
 
-1. Export "CAILLEACH_DIR" environment variable to a repository where you want to
-   store environment specific data.
-1. Export "ENV" as the name of the environment
-1. Create environment directory.
-   ```bash
-   export ENV_DIR="$CAILLEACH_DIR/environments/$ENV"
-   mkdir -p "$ENV_DIR"
-   ```
+1. Export `ENV_DIR` environment variable to a directory where you want to store
+   data specific to an environment. Ensure that this directory exists.
+
+   For Wire employees, please create this directory in `cailleach/environments`.
+   If cailleach is not checked-out as a sibling directory to wire-server-deploy,
+   please export `CAILLEACH_DIR` as absolute path to the cailleach directory.
+   Additionally, export `ENV` as the name of the environment. For the rest of
+   this README, please consider `ENV_DIR` to be
+   `${CAILLEACH_DIR}/environments/${ENV}`.
 1. Create backend-config in `"$ENV_DIR/backend.tfvars` which looks like this:
    ```tf
    region  = "<aws-region>"

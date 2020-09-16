@@ -18,11 +18,13 @@ case you change some variables or upgrade to new versions).
 To start with, the environment only has SFT servers; but more will be added here
 soon.
 
+1. Please ensure `ENV_DIR` or `ENV` are exported as specified in the [docs in
+   the terraform folder](../terraform/README.md)
 1. Ensure `$ENV_DIR/operator-ssh.dec` exists and contains an ssh key for the
    environment.
 1. Ensure that `make apply` has been run for the environment. Please refer to
-   [docs in the terraform folder](../terraform/README.md) for details about how
-   to run this.
+   the [docs in the terraform folder](../terraform/README.md) for details about
+   how to run this.
 1. Ensure all required variables are set in `$ENV_DIR/inventory.yml`
 1. Running `make bootstrap ENV=$ENV` from this directory will bootstrap the
    environment.
