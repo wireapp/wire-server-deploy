@@ -12,16 +12,12 @@ resource "local_file" "inventory" {
         "ansible_python_interpreter" = "/usr/bin/python3"
         "sft_fqdn" = instance.fqdn
 
-        "announcer_zone_domain" = var.root_domain
-        "announcer_aws_key_id" = module.sft[0].sft.aws_key_id
-        "announcer_aws_access_key" = module.sft[0].sft.aws_access_key
-        "announcer_aws_region" = module.sft[0].sft.aws_region
-        "announcer_srv_records" = {
-          "sft" = {
-            "name" = "_sft._tcp.${var.environment}"
-            "target" = instance.fqdn
-          }
-        }
+        "srv_announcer_zone_domain" = var.root_domain
+        "srv_announcer_aws_key_id" = module.sft[0].sft.aws_key_id
+        "srv_announcer_aws_access_key" = module.sft[0].sft.aws_access_key
+        "srv_announcer_aws_region" = module.sft[0].sft.aws_region
+        "srv_announcer_record_name": "_sft._tcp.${var.environment}"
+        "srv_announcer_record_target": instance.fqdn
       }}
     }
   })
