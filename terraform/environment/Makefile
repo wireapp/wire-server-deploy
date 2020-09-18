@@ -1,4 +1,5 @@
 ROOT_DIR:=$(shell dirname $(realpath $(firstword $(MAKEFILE_LIST))))
+# Please ignore this if you're not a wire employee
 CAILLEACH_DIR:=$(abspath ${ROOT_DIR}/../../../cailleach)
 SHELL:=/usr/bin/env bash
 
