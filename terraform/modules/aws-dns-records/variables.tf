@@ -51,3 +51,8 @@ variable "ttl" {
   description = "time to live for the DNS entries (defaults to 1 minute)"
   default     = 60
 }
+
+variable "create_spf_record" {
+  type    = bool
+  default = false
+}
