@@ -1,3 +1,5 @@
+# FUTUREWORK: Attach a volume for etcd state, so we can recreate this machine
+# when we need to.
 resource "hcloud_server" "node" {
   count       = var.node_count
   name        = "${ var.environment }-kubenode${ format("%02d", count.index + 1 )}"
