@@ -1,1 +1,2 @@
 - import_playbook: ./provision-sft.yml
+- import_playbook: ./kubernetes.yml

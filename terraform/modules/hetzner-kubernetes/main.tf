@@ -7,6 +7,9 @@ resource "hcloud_server" "node" {
   location    = var.location
 
   labels = {
+    # FUTUREWORK: This label name is very undecriptive and it should be renamed
+    # to "etcd_member_name". This is kept as it is because legacy environments
+    # have it.
     member = "etcd${ format("%02d", count.index + 1 )}"
   }
 }
