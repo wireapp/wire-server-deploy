@@ -4,7 +4,7 @@ data "aws_region" "current" {}
 
 output "sft" {
   value = {
-    sft_srv: "_sft._tcp.${var.environment}"
+    sft_srv = "_sft._tcp.${var.environment}"
     aws_key_id = aws_iam_access_key.srv-announcer.id
     aws_access_key = aws_iam_access_key.srv-announcer.secret
     aws_region = data.aws_region.current.name
