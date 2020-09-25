@@ -27,6 +27,6 @@ module "hetzner_kubernetes" {
   environment = var.environment
   root_domain = var.root_domain
   server_type = var.kubernetes_server_type
-  ssh_keys = length(var.kubernetes_ssh_keys) > 0 ? var.kubernetes_ssh_keys : [hcloud_ssh_key.operator_ssh.name]
+  ssh_keys = local.hcloud_ssh_keys
   node_count = var.kubernetes_node_count
 }
