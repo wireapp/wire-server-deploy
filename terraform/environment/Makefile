@@ -20,6 +20,20 @@ destroy: check-env
 		source hcloud-token.dec && \
 		terraform destroy -var 'inventory_file=./gen/terraform-inventory.yml' ${ROOT_DIR}
 
+.PHONY: console
+console: check-env
+	cd ${ENV_DIR} && \
+		source hcloud-token.dec && \
+		terraform console -var 'inventory_file=./gen/terraform-inventory.yml' ${ROOT_DIR}
+
+.PHONY: force-unlock
+force-unlock: check-env
+ifndef LOCK_ID
+	$(error please define LOCK_ID)
+endif
+	cd ${ENV_DIR} && \
+		terraform force-unlock ${LOCK_ID} ${ROOT_DIR}
+
 .PHONY: check-env
 check-env:
 ifndef ENV_DIR
