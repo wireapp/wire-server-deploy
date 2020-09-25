@@ -9,3 +9,4 @@
 - hosts: sft_servers
   roles:
     - role: sft-server
+    - role: srv-announcer
