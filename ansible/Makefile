@@ -42,6 +42,15 @@ bootstrap: check-env
 		--private-key ${ENV_DIR}/operator-ssh.dec \
 		-vv
 
+.PHONY: kube-minio-static-files
+kube-minio-static-files: check-env
+	poetry run ansible-playbook ${ANSIBLE_DIR}/kube-minio-static-files.yml \
+		-i ${ENV_DIR}/gen/terraform-inventory.yml \
+		-i ${ENV_DIR}/inventory.yml \
+		--private-key ${ENV_DIR}/operator-ssh.dec \
+		--extra-vars "service_cluster_ip=$$(KUBECONFIG=${ENV_DIR}/gen/artifacts/admin.conf kubectl get service fake-aws-s3 -o json | jq -r .spec.clusterIP)" \
+		-vv
+
 .PHONY: check-env
 check-env:
 ifndef ENV_DIR

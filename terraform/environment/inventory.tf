@@ -32,6 +32,7 @@ resource "local_file" "inventory" {
     "kube-master"  = {"hosts" = local.kubernetes_hosts}
     "kube-node" = {"hosts" = local.kubernetes_hosts}
     "etcd" = {"hosts" = local.kubernetes_hosts}
+    "minio" = {"hosts" = local.kubernetes_hosts}
     "k8s-cluster" = {
       "hosts" = {for node in module.hetzner_kubernetes[0].nodes :
         node.hostname => {
