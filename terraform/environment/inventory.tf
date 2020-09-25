@@ -3,14 +3,16 @@
 # output' when the init directory is different from the root code directory.
 # Terraform Issue: https://github.com/hashicorp/terraform/issues/17300
 locals {
-  kubernetes_hosts = {for node in module.hetzner_kubernetes[0].nodes : node.hostname => {} }
+  kubernetes_nodes = flatten(module.hetzner_kubernetes[*].nodes)
+  kubernetes_hosts = {for node in local.kubernetes_nodes : node.hostname => {}}
+  sft_instances = flatten(module.sft[*].sft.instances)
 }
 
 resource "local_file" "inventory" {
   filename = var.inventory_file
   content = jsonencode({
     "sft_servers" = {
-      "hosts" = { for instance in module.sft[0].sft.instances :  instance.hostname => {
+      "hosts" = { for instance in local.sft_instances :  instance.hostname => {
         "ansible_host" = instance.ipaddress
         "ansible_ssh_user" = "root"
         # NOTE: Maybe this is not required for ansible 2.9
@@ -34,7 +36,7 @@ resource "local_file" "inventory" {
     "etcd" = {"hosts" = local.kubernetes_hosts}
     "minio" = {"hosts" = local.kubernetes_hosts}
     "k8s-cluster" = {
-      "hosts" = {for node in module.hetzner_kubernetes[0].nodes :
+      "hosts" = {for node in local.kubernetes_nodes :
         node.hostname => {
           "ansible_host" = node.ipaddress
           "etcd_member_name" = node.etcd_member_name
