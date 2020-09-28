@@ -1,0 +1,23 @@
+- hosts: k8s-cluster
+  environment: "{{ proxy_env | default({}) }}"
+  roles:
+    - role: logrotate
+      logrotate_scripts:
+        # The following will rotate pod logs once per day to keep no more than
+        # 3 days (maxage 1, rotate 2) of logs for data minimization/protection
+        # reasons.
+        #
+        # NOTE for wire-server-deploy maintainers: if you change the following
+        # options, ensure to also keep the documentation up-to-date, see the
+        # documentation introduced in
+        # https://github.com/wireapp/wire-docs/pull/79
+        - name: podlogs
+          path: "/var/lib/docker/containers/*/*.log"
+          options:
+            - daily
+            - missingok
+            - rotate 2
+            - maxage 1
+            - copytruncate
+            - nocreate
+            - nocompress

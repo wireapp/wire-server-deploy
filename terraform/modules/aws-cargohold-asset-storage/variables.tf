@@ -21,7 +21,4 @@ variable "vpc_id" {
   description = "the ID of the VPC to add an S3 endpoint to"
 }
 
-variable "subnet_ids" {
-  type        = list(string)
-  description = "list of the subnet IDs of the subnets to make the S3 endpoint available to."
-}
+

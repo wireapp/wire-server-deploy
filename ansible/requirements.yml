@@ -59,3 +59,11 @@
 - src: git+https://github.com/wireapp/ansible-ntp-verify.git
   name: ansible-ntp-verify
   version: v0.0.1
+
+- src: git+https://github.com/nickhammond/ansible-logrotate.git
+  name: logrotate
+  version: "91d570f68c44261d2051a99a2b3c7d736306bf0d" # 2018-02-16
+
+- src: git+https://github.com/wireapp/ansible-sft.git
+  name: sft
+  version: "369db98e2e1ddf156ea0c9dbd2801c9d83e10a5a" # master (2020-09-25)

@@ -1,4 +1,21 @@
-# 2020-07-39
+# 2020-09-28
+
+## Features
+* Documentation: Add galley feature flags and default AWS region to example values files (#328, #335)
+* Privacy: Add logrotation of 3 days to all pod logs (#329)
+* Security: Update TLS config: Drop CBC cipher suites (#323, #324)
+
+## Bug Fixes
+* fix sanitized_request parsing on nginx (#330)
+
+## Internal
+* Add automation for deploying SFT servers (#337, #341, #322)
+* Add account number to output of terraform gundeck module (#326)
+* remove issuance of a default search domain via the AWS dhcp servers. breaks dns lookup inside of k8s. (#338)
+* [terraform-module:cargohold] Replace subnet IDs input with route table IDs (#331)
+* [terraform-module] Introduce network load balancer (#299)
+
+# 2020-07-29
 
 ## Features
 

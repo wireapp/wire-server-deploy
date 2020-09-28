@@ -19,3 +19,7 @@ output "gundeck_access_key" {
 output "gundeck_access_secret" {
   value = aws_iam_access_key.gundeck.secret
 }
+
+output "aws_account_id" {
+  value = data.aws_caller_identity.current.account_id
+}
