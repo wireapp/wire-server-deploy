@@ -39,10 +39,10 @@ resource "aws_iam_user_policy" "gundeck" {
                   "sns:SetEndpointAttributes",
                   "sns:Publish"
               ],
-              "Resource": [
-                  "${aws_sns_platform_application.gcm.arn}",
-                  "${aws_sns_platform_application.apns_voip.arn}"
-              ]
+              "Resource": ${jsonencode(concat(
+                [for _, v in aws_sns_platform_application.android : v.arn],
+                [for _, v in aws_sns_platform_application.ios : v.arn]
+              ))}
           }
       ]
   }

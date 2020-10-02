@@ -1,7 +1,8 @@
 # Create platform applications for iOS and Android. At the moment, only VoIP is being used for iOS
 
-resource "aws_sns_platform_application" "apns_voip" {
-  name = "${var.environment}-${var.apns_application_id}"
+resource "aws_sns_platform_application" "ios" {
+  for_each = { for _, app in var.ios_applications : app.id => app }
+  name     = "${var.environment}-${each.value.id}"
   # ^-- <env>-<bundleID>
   #  <env> should match the env on gundeck's config
   #  <bundleID> name of the application, which is bundled/hardcoded when the app is built
@@ -10,11 +11,11 @@ resource "aws_sns_platform_application" "apns_voip" {
   # to register for push notifications
   # More details: https://github.com/zinfra/backend-wiki/wiki/Native-Push-Notifications#ios
   #
-  platform = "APNS_VOIP"
+  platform = each.value.platform
   # ^-- We only use VoIP at the moment
-  platform_principal = var.apns_voip_cert
+  platform_principal = each.value.cert
   # ^-- Path to the public certificate
-  platform_credential = var.apns_voip_key
+  platform_credential = each.value.key
   # ^-- Path to the private key
   event_delivery_failure_topic_arn = aws_sns_topic.device_state_changed.arn
   # ^-- Topic to subscribe to
@@ -22,8 +23,9 @@ resource "aws_sns_platform_application" "apns_voip" {
   # ^-- Topic to subscribe to
 }
 
-resource "aws_sns_platform_application" "gcm" {
-  name = "${var.environment}-${var.gcm_application_id}"
+resource "aws_sns_platform_application" "android" {
+  for_each = { for _, app in var.android_applications : app.id => app }
+  name     = "${var.environment}-${each.value.id}"
   # ^-- <env>-<projectID>
   #
   # <env> should match the env on gundeck's config
@@ -31,8 +33,8 @@ resource "aws_sns_platform_application" "gcm" {
   #
   # More details: https://github.com/zinfra/backend-wiki/wiki/Native-Push-Notifications#android
   #
-  platform            = "GCM"
-  platform_credential = var.gcm_key
+  platform            = each.value.platform
+  platform_credential = each.value.key
   # ^-- Path to the secret token
   event_delivery_failure_topic_arn = aws_sns_topic.device_state_changed.arn
   # ^-- Topic to subscribe to

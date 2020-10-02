@@ -12,34 +12,25 @@ variable "environment" {
 
 
 # Check https://github.com/zinfra/backend-wiki/wiki/Native-Push-Notifications#ios
-variable "apns_application_id" {
-  type        = string
-  description = "iOS application name (aka app ID), e.g. 'wire.com'"
-}
-
-# docs: https://www.terraform.io/docs/providers/aws/r/sns_platform_application.html#platform_credential
-variable "apns_voip_key" {
-  type        = string
-  description = "content of the key file"
-}
-
-# docs: https://www.terraform.io/docs/providers/aws/r/sns_platform_application.html#platform_principal
-variable "apns_voip_cert" {
-  type        = string
-  description = "content of the cert file"
+variable "ios_applications" {
+  type = list(object({
+    id       = string # iOS application name (aka app ID), e.g. 'wire.com'
+    platform = string
+    key      = string # docs: https://www.terraform.io/docs/providers/aws/r/sns_platform_application.html#platform_credential
+    cert     = string # docs: https://www.terraform.io/docs/providers/aws/r/sns_platform_application.html#platform_principal
+  }))
+  description = "list of iOS applications and their credentials to be registered for push notifications (SNS)"
 }
 
 
 # Check https://github.com/zinfra/backend-wiki/wiki/Native-Push-Notifications#android
-variable "gcm_application_id" {
-  type        = string
-  description = "Android application name (aka sender ID), e.g. '482078210000'"
-}
-
-# docs: https://www.terraform.io/docs/providers/aws/r/sns_platform_application.html#platform_credential
-variable "gcm_key" {
-  type        = string
-  description = "content of the key file"
+variable "android_applications" {
+  type = list(object({
+    id       = string # Android application name (aka sender ID), e.g. '482078210000'
+    platform = string
+    key      = string # docs: https://www.terraform.io/docs/providers/aws/r/sns_platform_application.html#platform_credential
+  }))
+  description = "list of iOS applications and their credentials to be registered for push notifications (SNS)"
 }
 
 
