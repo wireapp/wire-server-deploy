@@ -18,3 +18,13 @@ resource "aws_route53_record" "cname" {
   ttl     = var.ttl
   records = var.cnames
 }
+
+resource "aws_route53_record" "spf" {
+  count = var.create_spf_record ? 1 : 0
+
+  zone_id = data.aws_route53_zone.rz.zone_id
+  name    = join(".", local.name_suffix)
+  type    = "TXT"
+  ttl     = "60"
+  records = [ for ip in var.ips : "v=spf1 ip4:${ ip } -all" ]
+}

@@ -1,0 +1,54 @@
+# WARNING: This is not recommended for production use.
+#
+# FUTUREWORK: https://github.com/zinfra/backend-issues/issues/1763
+- hosts: minio
+  any_errors_fatal: true
+  become: true
+  gather_facts: true
+  vars:
+    minio_access_key: 'dummykey'
+    minio_secret_key: 'dummysecret'
+  tasks:
+    - name: "install minio client CLI"
+      import_role:
+        name: ansible-minio
+        tasks_from: install-client
+
+    - name: "add 'local' mc config alias with correct credentials"
+      shell: "mc config host add local http://{{ service_cluster_ip }}:9000 {{ minio_access_key }} {{ minio_secret_key }}"
+
+    - name: "create 'public' bucket"
+      shell: "mc mb --ignore-existing local/public"
+
+    - name: "make the 'public' bucket world-accessible"
+      shell: "mc policy set public local/public"
+      run_once: true
+
+    - name: "remove unneeded config aliases added by default"
+      shell: "mc config host rm {{ item }}"
+      with_items:
+        - gcs
+        - s3
+        - play
+
+    - name: "add some file to minio"
+      import_role:
+        name: minio-static-files
+      vars:
+        prefix: ""
+        domain: "${environment_name}.${root_domain}"
+        deeplink_title: "${environment_name}.${root_domain}"
+
+- hosts: minio
+  any_errors_fatal: true
+  become: true
+  gather_facts: true
+  tags: static-files
+  roles:
+    - role: minio-static-files
+      # Override these variables!
+      # FUTUREWORK: parse them from a configuration file shared with helm
+      # (as the domain needs to be known in helm override values.yaml)
+      prefix: "{{ minio_deeplink_prefix | default('example-') }}"
+      domain: "{{ minio_deeplink_domain | default('example.com') }}"
+      deeplink_title: "{{ minio_deeplink_domain | default('example.com environment') }}"
