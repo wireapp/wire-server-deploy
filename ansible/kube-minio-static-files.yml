@@ -1,4 +1,6 @@
 # WARNING: This is not recommended for production use.
+#
+# FUTUREWORK: https://github.com/zinfra/backend-issues/issues/1763
 - hosts: minio
   any_errors_fatal: true
   become: true

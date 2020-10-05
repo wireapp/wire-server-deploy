@@ -42,6 +42,7 @@ bootstrap: check-env
 		--private-key ${ENV_DIR}/operator-ssh.dec \
 		-vv
 
+# FUTUREWORK: https://github.com/zinfra/backend-issues/issues/1763
 .PHONY: kube-minio-static-files
 kube-minio-static-files: check-env
 	poetry run ansible-playbook ${ANSIBLE_DIR}/kube-minio-static-files.yml \
