@@ -3,42 +3,32 @@ ROOT_DIR:=$(shell dirname $(realpath $(firstword $(MAKEFILE_LIST))))
 CAILLEACH_DIR:=$(abspath ${ROOT_DIR}/../../../cailleach)
 SHELL:=/usr/bin/env bash
 
+export TF_DATA_DIR=${ENV_DIR}/.terraform
+
 .PHONY: init
 init: check-env
-	cd ${ENV_DIR} && \
-		terraform init -backend-config=${ENV_DIR}/backend.tfvars ${ROOT_DIR}
+	terraform init -backend-config=${ENV_DIR}/backend.tfvars
 
-.PHONY: apply
-apply: check-env
-	cd ${ENV_DIR} && \
-		source hcloud-token.dec && \
-		terraform apply -var 'inventory_file=./gen/terraform-inventory.yml' ${ROOT_DIR}
-
-.PHONY: plan
-plan: check-env
-	cd ${ENV_DIR} && \
-		source hcloud-token.dec && \
-		terraform plan -var 'inventory_file=./gen/terraform-inventory.yml' ${ROOT_DIR}
-
-.PHONY: destroy
-destroy: check-env
-	cd ${ENV_DIR} && \
-		source hcloud-token.dec && \
-		terraform destroy -var 'inventory_file=./gen/terraform-inventory.yml' ${ROOT_DIR}
-
-.PHONY: console
-console: check-env
-	cd ${ENV_DIR} && \
-		source hcloud-token.dec && \
-		terraform console -var 'inventory_file=./gen/terraform-inventory.yml' ${ROOT_DIR}
+.PHONY: output
+output: check-env
+	terraform output -json
 
 .PHONY: force-unlock
 force-unlock: check-env
 ifndef LOCK_ID
 	$(error please define LOCK_ID)
 endif
-	cd ${ENV_DIR} && \
-		terraform force-unlock ${LOCK_ID} ${ROOT_DIR}
+	terraform force-unlock ${LOCK_ID} ${ROOT_DIR}
+
+.PHONY: create-inventory
+create-inventory: check-env
+	mkdir -p ${ENV_DIR}/gen && \
+		terraform output -json inventory > ${ENV_DIR}/gen/terraform-inventory.yml
+
+.PHONY: apply plan console destroy
+apply plan console destroy:
+	source ${ENV_DIR}/hcloud-token.dec && \
+		terraform $@ -var-file=${ENV_DIR}/terraform.tfvars
 
 .PHONY: check-env
 check-env:

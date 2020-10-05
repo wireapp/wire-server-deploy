@@ -8,9 +8,8 @@ locals {
   sft_instances = flatten(module.sft[*].sft.instances)
 }
 
-resource "local_file" "inventory" {
-  filename = var.inventory_file
-  content = jsonencode({
+output "inventory" {
+  value = {
     "sft_servers" = {
       "hosts" = { for instance in local.sft_instances :  instance.hostname => {
         "ansible_host" = instance.ipaddress
@@ -49,5 +48,5 @@ resource "local_file" "inventory" {
         "docker_dns_servers_strict" = false
       }
     }
-  })
+  }
 }

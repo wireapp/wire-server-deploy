@@ -58,6 +58,10 @@ Run all commands from `terraform/environment` directory.
    ```
    make apply
    ```
+1. Create inventory
+   ```
+   make create-inventory
+   ```
 1. To bootstrap the nodes, please refer to the [ansible README](../ansible/README.md)
 
 <sup>[1]</sup>For wire employees: Encrypt this file using `sops`, it will not
