@@ -3,6 +3,11 @@ variable "sft_server_names" {
   type = list(string)
 }
 
+variable "sft_server_names_stale" {
+  default = []
+  type = list(string)
+}
+
 variable "sft_a_record_ttl" {
   default = 60
 }
@@ -11,8 +16,12 @@ variable "sft_server_type" {
   default = "cx11"
 }
 
+variable "sft_server_type_stale" {
+  default = "cx11"
+}
+
 module "sft" {
-  count = min(1, length(var.sft_server_names))
+  count = min(1, length(concat(var.sft_server_names_stale, var.sft_server_names)))
 
   source = "../modules/sft"
   root_domain = var.root_domain
@@ -23,4 +32,6 @@ module "sft" {
   image = var.hcloud_image
   location = var.hcloud_location
   ssh_keys = local.hcloud_ssh_keys
+  server_names_stale = var.sft_server_names_stale
+  server_type_stale = var.sft_server_type_stale
 }

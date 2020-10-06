@@ -11,6 +11,12 @@ variable "server_names" {
   type = set(string)
 }
 
+variable "server_names_stale" {
+  #TODO: Make this better
+  description = "List of names of stale sft servers. The server will be availables at sft<name>.<environment>.<root_domain>, ideally these shouldn't be touched by terraform"
+  type = set(string)
+}
+
 variable "a_record_ttl" {
   type = number
 }
@@ -20,6 +26,10 @@ variable "metrics_srv_record_ttl" {
 }
 
 variable "server_type" {
+  default = "cx11"
+}
+
+variable "server_type_stale" {
   default = "cx11"
 }
 
