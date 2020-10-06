@@ -8,7 +8,7 @@ output "sft" {
     aws_key_id = aws_iam_access_key.srv-announcer.id
     aws_access_key = aws_iam_access_key.srv-announcer.secret
     aws_region = data.aws_region.current.name
-    instances = [ for server_name in var.server_names :
+    instances = [ for server_name, _ in local.map_server_name_to_type :
       {
         hostname = hcloud_server.sft[server_name].name
         ipaddress = hcloud_server.sft[server_name].ipv4_address
