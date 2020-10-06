@@ -1,3 +1,10 @@
+# 2020-10-06
+
+## Internal
+
+* Ansible & Terraform for bootstrapping Kubernetes (#343)
+* Ansible & Terraform SFT improvements (#344, #346, #348)
+
 # 2020-09-28
 
 ## Features
