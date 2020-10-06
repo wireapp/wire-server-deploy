@@ -1,8 +1,15 @@
 # Create platform applications for iOS and Android. At the moment, only VoIP is being used for iOS
 
 resource "aws_sns_platform_application" "ios" {
-  for_each = { for _, app in var.ios_applications : app.id => app }
-  name     = "${var.environment}-${each.value.id}"
+  for_each = {
+    for _, app_platform in flatten([
+      for _, app in var.ios_applications : [
+        for _, platform in app.platforms : merge({ platform = platform }, app)
+      ]
+    ]) : "${app_platform.id}-${app_platform.platform}" => app_platform
+  }
+
+  name = "${var.environment}-${each.value.id}"
   # ^-- <env>-<bundleID>
   #  <env> should match the env on gundeck's config
   #  <bundleID> name of the application, which is bundled/hardcoded when the app is built
@@ -24,8 +31,15 @@ resource "aws_sns_platform_application" "ios" {
 }
 
 resource "aws_sns_platform_application" "android" {
-  for_each = { for _, app in var.android_applications : app.id => app }
-  name     = "${var.environment}-${each.value.id}"
+  for_each = {
+    for _, app_platform in flatten([
+      for _, app in var.android_applications : [
+        for _, platform in app.platforms : merge({ platform = platform }, app)
+      ]
+    ]) : "${app_platform.id}-${app_platform.platform}" => app_platform
+  }
+
+  name = "${var.environment}-${each.value.id}"
   # ^-- <env>-<projectID>
   #
   # <env> should match the env on gundeck's config
