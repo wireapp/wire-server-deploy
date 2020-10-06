@@ -22,5 +22,5 @@ module "sft" {
   server_type = var.sft_server_type
   image = var.hcloud_image
   location = var.hcloud_location
-  ssh_keys = [hcloud_ssh_key.operator_ssh.name]
+  ssh_keys = local.hcloud_ssh_keys
 }

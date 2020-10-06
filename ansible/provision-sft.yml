@@ -10,3 +10,17 @@
   roles:
     - role: sft-server
     - role: srv-announcer
+  tasks:
+    # The Ubuntu images provided by hetzner have systemd-resolved enabled,
+    # but don't use the nss module, and direct all traffic through the
+    # 127.0.0.53 stub resolver
+    # This one seems to be flaky.
+    # Instead, configure it to use /run/systemd/resolve/resolv.conf, which points to
+    # the DNS servers retrieved via DHCP directly
+    - name: Workaround systemd-resolved being flaky
+      file:
+        src: /run/systemd/resolve/resolv.conf
+        dest: /etc/resolv.conf
+        owner: root
+        group: root
+        state: link
