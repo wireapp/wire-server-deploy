@@ -1,0 +1,8 @@
+- hosts: # TODO
+  serial: 1
+  gather_facts: false
+  tasks:
+    - name: stop srv announcer
+      systemd:
+        name: srv-announcer
+        state: stopped

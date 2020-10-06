@@ -34,6 +34,14 @@ provision-sft: check-env
 		--private-key ${ENV_DIR}/operator-ssh.dec \
 		-vv
 
+.PHONY: stop-stale
+stop-stale: check-env
+	poetry run ansible-playbook ${ANSIBLE_DIR}/sft_stop.yml  \
+		-i ${ENV_DIR}/gen/terraform-inventory.yml \
+		-i ${ENV_DIR}/inventory.yml \
+		--private-key ${ENV_DIR}/operator-ssh.dec \
+		-vv
+
 .PHONY: bootstrap
 bootstrap: check-env
 	poetry run ansible-playbook ${ANSIBLE_DIR}/bootstrap.yml \
