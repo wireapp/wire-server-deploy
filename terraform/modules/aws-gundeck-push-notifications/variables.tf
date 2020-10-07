@@ -20,6 +20,7 @@ variable "ios_applications" {
     cert      = string # docs: https://www.terraform.io/docs/providers/aws/r/sns_platform_application.html#platform_principal
   }))
   description = "list of iOS applications and their credentials to be registered for push notifications (SNS)"
+  default = []
 }
 
 
@@ -31,6 +32,7 @@ variable "android_applications" {
     key       = string # docs: https://www.terraform.io/docs/providers/aws/r/sns_platform_application.html#platform_credential
   }))
   description = "list of iOS applications and their credentials to be registered for push notifications (SNS)"
+  default = []
 }
 
 
