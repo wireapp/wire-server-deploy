@@ -3,7 +3,7 @@ data "aws_route53_zone" "sft_zone" {
 }
 
 resource "aws_route53_record" "sft_a" {
-  for_each = setunion(var.server_names, var.server_names_stale)
+  for_each = setunion(var.server_groups.blue.server_names, var.server_groups.green.server_names)
 
   zone_id = data.aws_route53_zone.sft_zone.zone_id
   name    = "sft${each.value}.sft.${var.environment}"

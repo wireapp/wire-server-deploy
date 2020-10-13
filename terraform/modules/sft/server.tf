@@ -1,7 +1,8 @@
 locals {
-  map_server_name_to_type_stale = {for _, server_name in  var.server_names_stale: server_name => var.server_type_stale}
-  map_server_name_to_type_fresh = {for _, server_name in var.server_names : server_name => var.server_type}
-  map_server_name_to_type = merge(local.map_server_name_to_type_stale, local.map_server_name_to_type_fresh)
+  // This duplication is bad, but terraform doesn't allow defining functions.
+  map_server_name_to_type_green = {for _, server_name in  var.server_groups.green.server_names: server_name => var.server_groups.green.server_type}
+  map_server_name_to_type_blue = {for _, server_name in var.server_groups.blue.server_names : server_name => var.server_groups.blue.server_type}
+  map_server_name_to_type = merge(local.map_server_name_to_type_blue, local.map_server_name_to_type_green)
 }
 
 
