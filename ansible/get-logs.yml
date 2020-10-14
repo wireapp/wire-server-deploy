@@ -1,0 +1,11 @@
+- hosts: [ "{{ log_host }}" ]
+  tasks:
+    - name: get logs
+      shell: journalctl -u {{ log_service }} --since {{ log_since }} --until {{ log_until }}
+      register: the_logs
+    - name: save logs
+      delegate_to: localhost
+      become: no
+      copy:
+        dest: /tmp/{{log_host}}-{{ log_service }}-{{ log_since }}-{{ log_until }}
+        content: "{{ the_logs.stdout }}"
