@@ -25,6 +25,6 @@ soon.
 1. Ensure that `make apply` and `make create-inventory` have been run for the
    environment. Please refer to the [docs in the terraform
    folder](../terraform/README.md) for details about how to run this.
-1. Ensure all required variables are set in `$ENV_DIR/inventory.yml`
+1. Ensure all required variables are set in `$ENV_DIR/inventory/*.yml`
 1. Running `make bootstrap` from this directory will bootstrap the
    environment.
