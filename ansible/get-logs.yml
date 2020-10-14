@@ -1,4 +1,4 @@
-- hosts: [ "{{ log_host }}" ]
+- hosts: "{{ log_host }}"
   tasks:
     - name: get logs
       shell: journalctl -u {{ log_service }} --since {{ log_since }} --until {{ log_until }}
