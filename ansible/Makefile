@@ -30,7 +30,7 @@ download-ansible-roles-force:
 provision-sft: check-env
 	poetry run ansible-playbook ${ANSIBLE_DIR}/provision-sft.yml  \
 		-i ${ENV_DIR}/gen/terraform-inventory.yml \
-		-i ${ENV_DIR}/inventory.yml \
+		-i ${ENV_DIR}/inventory \
 		--private-key ${ENV_DIR}/operator-ssh.dec \
 		-vv
 
@@ -38,7 +38,7 @@ provision-sft: check-env
 bootstrap: check-env
 	poetry run ansible-playbook ${ANSIBLE_DIR}/bootstrap.yml \
 		-i ${ENV_DIR}/gen/terraform-inventory.yml \
-		-i ${ENV_DIR}/inventory.yml \
+		-i ${ENV_DIR}/inventory \
 		--private-key ${ENV_DIR}/operator-ssh.dec \
 		-vv
 
@@ -47,7 +47,7 @@ bootstrap: check-env
 kube-minio-static-files: check-env
 	poetry run ansible-playbook ${ANSIBLE_DIR}/kube-minio-static-files.yml \
 		-i ${ENV_DIR}/gen/terraform-inventory.yml \
-		-i ${ENV_DIR}/inventory.yml \
+		-i ${ENV_DIR}/inventory \
 		--private-key ${ENV_DIR}/operator-ssh.dec \
 		--extra-vars "service_cluster_ip=$$(KUBECONFIG=${ENV_DIR}/gen/artifacts/admin.conf kubectl get service fake-aws-s3 -o json | jq -r .spec.clusterIP)" \
 		-vv
@@ -61,8 +61,8 @@ else
 ENV_DIR=${CAILLEACH_DIR}/environments/${ENV}
 endif
 endif
-ifeq ("$(wildcard ${ENV_DIR}/inventory.yml)", "")
-	$(error please make sure ${ENV_DIR}/inventory.yml exists)
+ifeq ("$(wildcard ${ENV_DIR}/inventory)", "")
+	$(error please make sure ${ENV_DIR}/inventory exists)
 endif
 ifeq ("$(wildcard ${ENV_DIR}/gen/terraform-inventory.yml)", "")
 	$(error please make you have applied terraform for ${ENV_DIR})

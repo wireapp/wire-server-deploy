@@ -66,4 +66,4 @@
 
 - src: git+https://github.com/wireapp/ansible-sft.git
   name: sft
-  version: "e587a0d323c6a30d944d9c0e66203dfb7169026b" # develop (2020-09-30)
+  version: "5527fe908f22f73e275a3cf0a9bd08a08cb173e5" # develop (2020-10-15)

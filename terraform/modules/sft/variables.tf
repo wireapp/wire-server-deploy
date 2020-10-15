@@ -6,15 +6,32 @@ variable "environment" {
   type = string
 }
 
-variable "server_names" {
-  description = "List of names of sft servers. The server will be availables at sft<name>.<environment>.<root_domain>"
-  type = set(string)
-}
+variable "server_groups" {
+  description = <<EOD
+    Names of sft servers divided between blue and green groups. Each group can
+    contain an arbitrary set of servers names. There should be no servers which
+    are in more than 1 group. These groups can be used to run upgrades on the
+    SFT service. The server will be availables at
+    sft<name>.<environment>.<root_domain>"
+    EOD
+  type = object({
+    //Arbitrary name for the first group
+    blue = object({
+      server_names = set(string)
+      server_type  = string
+    })
 
-variable "server_names_stale" {
-  #TODO: Make this better
-  description = "List of names of stale sft servers. The server will be availables at sft<name>.<environment>.<root_domain>, ideally these shouldn't be touched by terraform"
-  type = set(string)
+    //Arbitrary name for the second group
+    green = object({
+      server_names = set(string)
+      server_type  = string
+    })
+  })
+
+  validation {
+    condition = length(setintersection(var.server_groups.blue.server_names, var.server_groups.green.server_names)) == 0
+    error_message = "The server_names in the blue and green server_groups must not intersect."
+  }
 }
 
 variable "a_record_ttl" {
