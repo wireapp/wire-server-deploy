@@ -52,6 +52,27 @@ kube-minio-static-files: check-env
 		--extra-vars "service_cluster_ip=$$(KUBECONFIG=${ENV_DIR}/gen/artifacts/admin.conf kubectl get service fake-aws-s3 -o json | jq -r .spec.clusterIP)" \
 		-vv
 
+LOG_UNTIL ?= "now"
+.PHONY: get-logs
+get-logs: check-env
+ifndef LOG_HOST
+	$(error please define LOG_HOST)
+endif
+ifndef LOG_SERVICE
+	$(error please define LOG_SERVICE)
+endif
+ifndef LOG_SINCE
+	$(error please define LOG_SINCE)
+endif
+	poetry run ansible-playbook ${ANSIBLE_DIR}/get-logs.yml \
+		-i ${ENV_DIR}/gen/terraform-inventory.yml \
+		-i ${ENV_DIR}/inventory.yml \
+		--private-key ${ENV_DIR}/operator-ssh.dec \
+		--extra-vars "log_host=${LOG_HOST}" \
+		--extra-vars "log_service=${LOG_SERVICE}" \
+		--extra-vars "log_since=${LOG_SINCE}" \
+		--extra-vars "log_until=${LOG_UNTIL}"
+
 .PHONY: check-env
 check-env:
 ifndef ENV_DIR
