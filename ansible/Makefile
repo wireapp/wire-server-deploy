@@ -52,7 +52,7 @@ kube-minio-static-files: check-env
 		--extra-vars "service_cluster_ip=$$(KUBECONFIG=${ENV_DIR}/gen/artifacts/admin.conf kubectl get service fake-aws-s3 -o json | jq -r .spec.clusterIP)" \
 		-vv
 
-LOG_UNTIL="now"
+LOG_UNTIL ?= "now"
 .PHONY: get-logs
 get-logs: check-env
 ifndef LOG_HOST
