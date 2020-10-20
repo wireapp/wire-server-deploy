@@ -13,5 +13,7 @@ pkgs.mkShell{
   buildInputs = with pkgs; [
     terraform_0_13
     python37Packages.poetry
+    python37Packages.pip
+    python37
   ] ++ ciDependencies;
 }
