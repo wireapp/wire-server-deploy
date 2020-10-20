@@ -19,7 +19,7 @@ let
     });
   };
   ciDependencies = if provideCIDependencies
-                   then with pkgs; [ aws sops ]
+                   then with pkgs; [ awscli sops ]
                    else [];
 in
 pkgs.mkShell{
