@@ -19,7 +19,7 @@ let
     });
   };
   ciDependencies = if provideCIDependencies
-                   then with pkgs; [ awscli sops gnupg ]
+                   then with pkgs; [ awscli sops gnupg git ]
                    else [];
 in
 pkgs.mkShell{
