@@ -1,3 +1,4 @@
+{ provideCIDependencies ? false }:
 let
   sources = import ./nix/sources.nix;
 
@@ -17,6 +18,9 @@ let
       });
     });
   };
+  ciDependencies = if provideCIDependencies
+                   then with pkgs; [ aws sops ]
+                   else [];
 in
 pkgs.mkShell{
   name = "wire-server-deploy";
@@ -24,5 +28,5 @@ pkgs.mkShell{
   buildInputs = with pkgs; [
     terraform_0_13
     python37Packages.poetry
-  ];
+  ] ++ ciDependencies;
 }
