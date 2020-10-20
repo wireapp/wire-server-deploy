@@ -3,6 +3,6 @@ FROM nixos/nix
 # TODO: I am sure there is a better way to build cache than to run echo
 COPY . /wire-server-deploy
 
-RUN nix-shell /wire-server-deploy/shell.nix --command 'echo cache built'
+RUN nix-shell /wire-server-deploy/shell.nix --arg provideCIDependencies true --command 'echo cache built'
 
 RUN rm -rf /wire-server-deploy
