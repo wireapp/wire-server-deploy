@@ -10,9 +10,7 @@ in {
       awscli
       sops
       gnupg
-      git
       yq
-      bash
       gnumake
     ];
   };
