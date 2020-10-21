@@ -73,8 +73,8 @@ endif
 		--extra-vars "log_since=${LOG_SINCE}" \
 		--extra-vars "log_until=${LOG_UNTIL}"
 
-.PHONY: check-env
-check-env:
+.PHONY: ensure-env-dir
+ensure-env-dir:
 ifndef ENV_DIR
 ifndef ENV
 	$(error please define either ENV or ENV_DIR)
@@ -82,12 +82,15 @@ else
 ENV_DIR=${CAILLEACH_DIR}/environments/${ENV}
 endif
 endif
-ifeq ("$(wildcard ${ENV_DIR}/inventory)", "")
+
+${ENV_DIR}/inventory:
 	$(error please make sure ${ENV_DIR}/inventory exists)
-endif
-ifeq ("$(wildcard ${ENV_DIR}/gen/terraform-inventory.yml)", "")
+
+${ENV_DIR}/gen/terraform-inventory.yml:
 	$(error please make you have applied terraform for ${ENV_DIR})
-endif
-ifeq ("$(wildcard ${ENV_DIR}/operator-ssh.dec)", "")
+
+${ENV_DIR}/operator-ssh.dec:
 	$(error please make sure ${ENV_DIR}/operator-ssh.dec exists and contains the private key to ssh into servers)
-endif
+
+.PHONY: check-env
+check-env: ensure-env-dir ${ENV_DIR}/operator-ssh.dec ${ENV_DIR}/gen/terraform-inventory.yml ${ENV_DIR}/inventory
