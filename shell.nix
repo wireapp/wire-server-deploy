@@ -1,12 +1,7 @@
-{ provideCIDependencies ? false }:
 let
   sources = import ./nix/sources.nix;
 
   pkgs = import sources.nixpkgs {};
-
-  ciDependencies = if provideCIDependencies
-                   then with pkgs; [ awscli sops gnupg git ]
-                   else [];
 in
 pkgs.mkShell{
   name = "wire-server-deploy";
@@ -15,5 +10,9 @@ pkgs.mkShell{
     python37Packages.poetry
     python37Packages.pip
     python37
-  ] ++ ciDependencies;
+    awscli
+    sops
+    gnupg
+    git
+  ];
 }
