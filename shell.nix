@@ -14,5 +14,6 @@ pkgs.mkShell{
     sops
     gnupg
     git
+    yq
   ];
 }
