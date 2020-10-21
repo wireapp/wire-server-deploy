@@ -12,6 +12,7 @@ in {
       gnupg
       git
       yq
+      bash
     ];
   };
 }
