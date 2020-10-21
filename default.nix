@@ -13,6 +13,7 @@ in {
       git
       yq
       bash
+      gnumake
     ];
   };
 }
