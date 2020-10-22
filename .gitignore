@@ -18,3 +18,7 @@ values-init-done
 
 # Envrc local overrides
 /.envrc.local
+
+# Nix-created result symlinks
+result
+result-*
