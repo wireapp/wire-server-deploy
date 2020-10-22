@@ -3,19 +3,6 @@ ANSIBLE_DIR:=$(shell dirname $(realpath $(firstword $(MAKEFILE_LIST))))
 CAILLEACH_DIR:=$(abspath ${ANSIBLE_DIR}/../../cailleach)
 SHELL:=/usr/bin/env bash -eo pipefail
 
-default: download
-
-.PHONY: download
-download: download-ansible-roles
-
-.PHONY: download-ansible-roles
-download-ansible-roles:
-	ansible-galaxy install -r requirements.yml
-
-.PHONY: download-ansible-roles-force
-download-ansible-roles-force:
-	ansible-galaxy install -r requirements.yml --force
-
 .PHONY: provision-sft
 provision-sft: check-env
 	ansible-playbook ${ANSIBLE_DIR}/provision-sft.yml  \
