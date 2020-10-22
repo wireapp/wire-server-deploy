@@ -15,8 +15,8 @@
   "editable": true,
   "gnetId": null,
   "graphTooltip": 0,
-  "id": 23,
-  "iteration": 1556873944843,
+  "id": 50,
+  "iteration": 1584951112798,
   "links": [],
   "panels": [
     {
@@ -242,6 +242,111 @@
         "x": 0,
         "y": 16
       },
+      "id": 30,
+      "panels": [],
+      "title": "Cargohold stats",
+      "type": "row"
+    },
+    {
+      "aliasColors": {},
+      "bars": false,
+      "dashLength": 10,
+      "dashes": false,
+      "fill": 1,
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 17
+      },
+      "id": 28,
+      "legend": {
+        "avg": false,
+        "current": false,
+        "max": false,
+        "min": false,
+        "show": true,
+        "total": false,
+        "values": false
+      },
+      "lines": true,
+      "linewidth": 1,
+      "links": [],
+      "nullPointMode": "null",
+      "options": {},
+      "percentage": false,
+      "pointradius": 2,
+      "points": false,
+      "renderer": "flot",
+      "seriesOverrides": [],
+      "spaceLength": 10,
+      "stack": false,
+      "steppedLine": false,
+      "targets": [
+        {
+          "expr": "sum(rate(http_request_duration_seconds_count{handler=\"/assets/v3\", status_code=\"201\", namespace=\"$namespace\"}[5m]))",
+          "format": "time_series",
+          "intervalFactor": 1,
+          "legendFormat": "uploaded/sec",
+          "refId": "A"
+        },
+        {
+          "expr": "sum(rate(http_request_duration_seconds_count{handler=\"/assets/v3/:key\", status_code=\"302\", namespace=\"$namespace\"}[5m]))\n",
+          "format": "time_series",
+          "intervalFactor": 1,
+          "legendFormat": "downloaded/sec",
+          "refId": "B"
+        }
+      ],
+      "thresholds": [],
+      "timeFrom": null,
+      "timeRegions": [],
+      "timeShift": null,
+      "title": "Assets (cargohold)",
+      "tooltip": {
+        "shared": true,
+        "sort": 0,
+        "value_type": "individual"
+      },
+      "type": "graph",
+      "xaxis": {
+        "buckets": null,
+        "mode": "time",
+        "name": null,
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        },
+        {
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        }
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 25
+      },
       "id": 21,
       "panels": [],
       "title": "Gundeck Stats",
@@ -265,7 +370,7 @@
         "h": 7,
         "w": 12,
         "x": 0,
-        "y": 17
+        "y": 26
       },
       "heatmap": {},
       "hideZeroBuckets": true,
@@ -275,6 +380,7 @@
         "show": false
       },
       "links": [],
+      "options": {},
       "reverseYBuckets": false,
       "targets": [
         {
@@ -324,7 +430,7 @@
         "h": 7,
         "w": 12,
         "x": 12,
-        "y": 17
+        "y": 26
       },
       "id": 9,
       "legend": {
@@ -340,6 +446,7 @@
       "linewidth": 1,
       "links": [],
       "nullPointMode": "null",
+      "options": {},
       "paceLength": 10,
       "percentage": false,
       "pointradius": 2,
@@ -435,7 +542,7 @@
         "h": 7,
         "w": 12,
         "x": 0,
-        "y": 24
+        "y": 33
       },
       "id": 2,
       "legend": {
@@ -451,6 +558,7 @@
       "linewidth": 1,
       "links": [],
       "nullPointMode": "null",
+      "options": {},
       "paceLength": 10,
       "percentage": false,
       "pointradius": 2,
@@ -521,7 +629,7 @@
         "h": 7,
         "w": 12,
         "x": 12,
-        "y": 24
+        "y": 33
       },
       "id": 4,
       "legend": {
@@ -537,6 +645,7 @@
       "linewidth": 1,
       "links": [],
       "nullPointMode": "null",
+      "options": {},
       "paceLength": 10,
       "percentage": true,
       "pointradius": 2,
@@ -602,7 +711,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 31
+        "y": 40
       },
       "id": 19,
       "panels": [],
@@ -627,7 +736,7 @@
         "h": 7,
         "w": 12,
         "x": 0,
-        "y": 32
+        "y": 41
       },
       "heatmap": {},
       "hideZeroBuckets": true,
@@ -637,6 +746,7 @@
         "show": false
       },
       "links": [],
+      "options": {},
       "reverseYBuckets": false,
       "targets": [
         {
@@ -686,7 +796,7 @@
         "h": 7,
         "w": 12,
         "x": 12,
-        "y": 32
+        "y": 41
       },
       "id": 13,
       "legend": {
@@ -703,6 +813,7 @@
       "linewidth": 1,
       "links": [],
       "nullPointMode": "null",
+      "options": {},
       "paceLength": 10,
       "percentage": true,
       "pointradius": 2,
@@ -788,7 +899,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 39
+        "y": 48
       },
       "id": 11,
       "legend": {
@@ -804,6 +915,7 @@
       "linewidth": 1,
       "links": [],
       "nullPointMode": "null",
+      "options": {},
       "paceLength": 10,
       "percentage": false,
       "pointradius": 2,
@@ -873,8 +985,8 @@
         "allValue": null,
         "current": {
           "tags": [],
-          "text": "staging",
-          "value": "staging"
+          "text": "default",
+          "value": "default"
         },
         "datasource": "Prometheus",
         "definition": "kube_namespace_labels",
@@ -883,138 +995,7 @@
         "label": null,
         "multi": false,
         "name": "namespace",
-        "options": [
-          {
-            "selected": false,
-            "text": "All",
-            "value": "$__all"
-          },
-          {
-            "selected": false,
-            "text": "chris",
-            "value": "chris"
-          },
-          {
-            "selected": false,
-            "text": "chris-test",
-            "value": "chris-test"
-          },
-          {
-            "selected": false,
-            "text": "demo",
-            "value": "demo"
-          },
-          {
-            "selected": false,
-            "text": "demo2",
-            "value": "demo2"
-          },
-          {
-            "selected": false,
-            "text": "fisx",
-            "value": "fisx"
-          },
-          {
-            "selected": false,
-            "text": "global",
-            "value": "global"
-          },
-          {
-            "selected": false,
-            "text": "joe",
-            "value": "joe"
-          },
-          {
-            "selected": false,
-            "text": "matthias",
-            "value": "matthias"
-          },
-          {
-            "selected": false,
-            "text": "metallb-system",
-            "value": "metallb-system"
-          },
-          {
-            "selected": true,
-            "text": "staging",
-            "value": "staging"
-          },
-          {
-            "selected": false,
-            "text": "staging-metrics",
-            "value": "staging-metrics"
-          },
-          {
-            "selected": false,
-            "text": "test-2en9vf2arqph",
-            "value": "test-2en9vf2arqph"
-          },
-          {
-            "selected": false,
-            "text": "test-484gdrhp8px4",
-            "value": "test-484gdrhp8px4"
-          },
-          {
-            "selected": false,
-            "text": "test-5t9t91jnf4ds",
-            "value": "test-5t9t91jnf4ds"
-          },
-          {
-            "selected": false,
-            "text": "test-8v0m4wjlebdz",
-            "value": "test-8v0m4wjlebdz"
-          },
-          {
-            "selected": false,
-            "text": "test-9wyh13nzsklw",
-            "value": "test-9wyh13nzsklw"
-          },
-          {
-            "selected": false,
-            "text": "test-a8naztqkyneg",
-            "value": "test-a8naztqkyneg"
-          },
-          {
-            "selected": false,
-            "text": "test-ab9cgmivxfxi",
-            "value": "test-ab9cgmivxfxi"
-          },
-          {
-            "selected": false,
-            "text": "test-mu2d9h1eohhh",
-            "value": "test-mu2d9h1eohhh"
-          },
-          {
-            "selected": false,
-            "text": "test-vlofz373vi5a",
-            "value": "test-vlofz373vi5a"
-          },
-          {
-            "selected": false,
-            "text": "test-wiuxbjzfgf0m",
-            "value": "test-wiuxbjzfgf0m"
-          },
-          {
-            "selected": false,
-            "text": "test-xm4f7254de0n",
-            "value": "test-xm4f7254de0n"
-          },
-          {
-            "selected": false,
-            "text": "default",
-            "value": "default"
-          },
-          {
-            "selected": false,
-            "text": "kube-public",
-            "value": "kube-public"
-          },
-          {
-            "selected": false,
-            "text": "kube-system",
-            "value": "kube-system"
-          }
-        ],
+        "options": [],
         "query": "kube_namespace_labels",
         "refresh": 0,
         "regex": "/namespace=\"([^\"]+)\"/",
@@ -1060,5 +1041,5 @@
   "timezone": "",
   "title": "Message Stats",
   "uid": "sqSUztzZz",
-  "version": 4
+  "version": 5
 }
