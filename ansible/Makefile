@@ -6,11 +6,7 @@ SHELL:=/usr/bin/env bash -eo pipefail
 default: download
 
 .PHONY: download
-download: download-ansible-roles download-kubespray
-
-.PHONY: download-kubespray
-download-kubespray:
-	ansible-playbook -i localhost, -c local download_kubespray.yml
+download: download-ansible-roles
 
 .PHONY: download-ansible-roles
 download-ansible-roles:

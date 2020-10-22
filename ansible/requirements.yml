@@ -45,7 +45,7 @@
 
 - src: https://github.com/githubixx/ansible-role-kubectl.git
   name: ansible-kubectl
-  # keep the kubectl version in sync with kubespray (see download_kubespray.yml)
+  # keep the kubectl version in sync with kubespray
   version: "8.0.1+1.14.2"
 
 - src: https://github.com/andrewrothstein/ansible-kubernetes-helm.git
