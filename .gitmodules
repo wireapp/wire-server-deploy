@@ -1,3 +1,51 @@
 [submodule "ansible/roles-external/kubespray"]
 	path = ansible/roles-external/kubespray
 	url = https://github.com/kubernetes-sigs/kubespray.git
+[submodule "ansible/roles-external/elasticsearch"]
+	path = ansible/roles-external/elasticsearch
+	url = https://github.com/elastic/ansible-elasticsearch.git
+[submodule "ansible/roles-external/hostname"]
+	path = ansible/roles-external/hostname
+	url = https://github.com/ANXS/hostname.git
+[submodule "ansible/roles-external/ANXS.apt"]
+	path = ansible/roles-external/ANXS.apt
+	url = https://github.com/ANXS/apt.git
+[submodule "ansible/roles-external/ansible-role-java"]
+	path = ansible/roles-external/ansible-role-java
+	url = https://github.com/geerlingguy/ansible-role-java.git
+[submodule "ansible/roles-external/ansible-role-ntp"]
+	path = ansible/roles-external/ansible-role-ntp
+	url = https://github.com/geerlingguy/ansible-role-ntp.git
+[submodule "ansible/roles-external/ansible-cassandra"]
+	path = ansible/roles-external/ansible-cassandra
+	url = https://github.com/wireapp/ansible-cassandra.git
+[submodule "ansible/roles-external/ansible-minio"]
+	path = ansible/roles-external/ansible-minio
+	url = https://github.com/wireapp/ansible-minio.git
+[submodule "ansible/roles-external/ansible-restund"]
+	path = ansible/roles-external/ansible-restund
+	url = https://github.com/wireapp/ansible-restund.git
+[submodule "ansible/roles-external/ansible-tinc"]
+	path = ansible/roles-external/ansible-tinc
+	url = https://github.com/wireapp/ansible-tinc.git
+[submodule "ansible/roles-external/ansible-role-kubectl"]
+	path = ansible/roles-external/ansible-role-kubectl
+	url = https://github.com/githubixx/ansible-role-kubectl.git
+[submodule "ansible/roles-external/ansible-kubectl"]
+	path = ansible/roles-external/ansible-kubectl
+	url = https://github.com/githubixx/ansible-role-kubectl.git
+[submodule "ansible/roles-external/ansible-helm"]
+	path = ansible/roles-external/ansible-helm
+	url = https://github.com/andrewrothstein/ansible-kubernetes-helm
+[submodule "ansible/roles-external/admin_users"]
+	path = ansible/roles-external/admin_users
+	url = https://github.com/cchurch/ansible-role-admin-users.git
+[submodule "ansible/roles-external/ansible-ntp-verify"]
+	path = ansible/roles-external/ansible-ntp-verify
+	url = https://github.com/wireapp/ansible-ntp-verify.git
+[submodule "ansible/roles-external/logrotate"]
+	path = ansible/roles-external/logrotate
+	url = https://github.com/nickhammond/ansible-logrotate.git
+[submodule "ansible/roles-external/sft"]
+	path = ansible/roles-external/sft
+	url = https://github.com/wireapp/ansible-sft.git
