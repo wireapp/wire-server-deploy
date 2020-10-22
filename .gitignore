@@ -15,3 +15,6 @@ values-init-done
 *~
 # Emacs autosave files
 \#*\#
+
+# Envrc local overrides
+/.envrc.local

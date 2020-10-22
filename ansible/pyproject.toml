@@ -19,8 +19,7 @@ jmespath = ">= 0.9.4"
 # "ruamel.yaml" = ">= 0.15.96"
 PyYAML = "*"
 pyOpenSSL = "*"
-zipp = "*" # Not a real dependency, but poetry2nix doesn't work without this, I
-           # don't understand enough nix to debug this.
+paramiko = "*"
 
 [tool.poetry.dev-dependencies]
 

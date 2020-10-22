@@ -22,17 +22,5 @@
         "type": "tarball",
         "url": "https://github.com/NixOS/nixpkgs-channels/archive/707bed528c3c8df388175656d441b672fac68942.tar.gz",
         "url_template": "https://github.com/<owner>/<repo>/archive/<rev>.tar.gz"
-    },
-    "poetry2nix": {
-        "branch": "master",
-        "description": "Convert poetry projects to nix automagically [maintainer=@adisbladis] ",
-        "homepage": "",
-        "owner": "nix-community",
-        "repo": "poetry2nix",
-        "rev": "ab40bbdc964b7cc0a69d6f9ce77afbc79bb6e815",
-        "sha256": "0ysygfhd4w6vh5nz6vm9npshzq00fb9cc7qawrin10lkai2xcgd1",
-        "type": "tarball",
-        "url": "https://github.com/nix-community/poetry2nix/archive/ab40bbdc964b7cc0a69d6f9ce77afbc79bb6e815.tar.gz",
-        "url_template": "https://github.com/<owner>/<repo>/archive/<rev>.tar.gz"
     }
 }
