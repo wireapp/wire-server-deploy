@@ -4,7 +4,7 @@
 #
 # After any change to IPs/servers:
 # 1. run this playbook:
-#      poetry run ansible-playbook -i hosts.ini helm_external.yml -vv --diff
+#      ansible-playbook -i hosts.ini helm_external.yml -vv --diff
 # 2. re-run the helm upgrade specifying the override files.
 
 - hosts:
