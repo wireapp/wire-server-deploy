@@ -18,6 +18,9 @@ data:
       {{- if .s3DownloadEndpoint }}
       s3DownloadEndpoint: {{ .s3DownloadEndpoint }}
       {{- end }}
+      {{- if .s3Compatibility }}
+      s3Compatibility: {{ .s3Compatibility }}
+      {{- end }}
       {{ if .cloudFront }}
       cloudFront:
         domain: {{ .cloudFront.domain }}
