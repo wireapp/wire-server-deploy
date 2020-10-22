@@ -26,6 +26,8 @@ in {
       pkgs.awscli
       pkgs.gnumake
       pkgs.gnupg
+      pkgs.kubectl_1_14_10
+      pkgs.kubernetes-helm
       pkgs.moreutils
       pkgs.pythonForAnsible
       pkgs.skopeo
