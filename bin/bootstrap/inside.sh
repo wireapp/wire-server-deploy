@@ -23,7 +23,7 @@ if [[ ! -f hosts.ini ]]; then
    sed -i "s/X.X.X.X/$TARGET_HOST/g" hosts.ini
 fi
 
-poetry run ansible-playbook -i hosts.ini kubernetes.yml
+ansible-playbook -i hosts.ini kubernetes.yml
 
 echo "Great, kubernetes is up! Now follow the directions from:"
 echo "  https://docs.wire.com/how-to/install/helm.html"
