@@ -42,5 +42,5 @@
         type: "SRV"
         record: "_sft._tcp.{{ environment_name }}.{{ root_domain }}"
         state: "delete"
-        value: '{{ srv_records.set.value }}'
-        ttl: '{{ srv_records.set.ttl }}'
+        value: "{{ srv_records.set.value }}"
+        ttl: "{{ srv_records.set.ttl }}"
