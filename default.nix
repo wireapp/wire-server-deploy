@@ -12,6 +12,7 @@ in {
       gnupg
       yq
       gnumake
+      moreutils
     ];
   };
 }
