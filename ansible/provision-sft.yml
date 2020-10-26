@@ -5,6 +5,7 @@
   become: no
   roles:
     - role: sft-monitoring-certs
+      when: "{{ (groups['sft_servers'] | length) > 0 }}"
 
 - hosts: sft_servers
   roles:
