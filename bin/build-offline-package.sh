@@ -25,7 +25,7 @@ helm repo add wire https://s3-eu-west-1.amazonaws.com/public.wire.com/charts
 mkdir -p "$out/charts"
 
 charts=(
-  backoffice
+  # backoffice # commented out for now, points to 2.90.0 which doesn't seem to exist on quay.io
   fluent-bit
   kibana
   nginx-ingress-controller
