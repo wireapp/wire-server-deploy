@@ -63,6 +63,8 @@ config:
     setDefaultLocale: en
     setMaxTeamSize: 500
     setMaxConvSize: 500
+    # Allowed values: https://github.com/wireapp/wire-server/blob/0126651a25aabc0c5589edc2b1988bb06550a03a/services/brig/src/Brig/Options.hs#L304-L306
+    # Description: https://github.com/wireapp/wire-server/blob/0126651a25aabc0c5589edc2b1988bb06550a03a/services/brig/src/Brig/Options.hs#L290-L299
     setEmailVisibility: visible_to_self
     setPropertyMaxKeyLen: 1024
     setPropertyMaxValueLen: 524288

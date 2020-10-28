@@ -5,6 +5,7 @@
   become: no
   roles:
     - role: sft-monitoring-certs
+      when: "{{ (groups['sft_servers'] | length) > 0 }}"
 
 - hosts: sft_servers
   roles:
@@ -24,3 +25,22 @@
         owner: root
         group: root
         state: link
+
+- hosts: localhost
+  become: no
+  tasks:
+    - name: Get all SRV recoreds
+      route53:
+        zone: "{{ root_domain }}"
+        type: "SRV"
+        record: "_sft._tcp.{{ environment_name }}.{{ root_domain }}"
+        state: get
+      register: srv_records
+    - name: Delete all SRV records
+      route53:
+        zone: "{{ root_domain }}"
+        type: "SRV"
+        record: "_sft._tcp.{{ environment_name }}.{{ root_domain }}"
+        state: "delete"
+        value: "{{ srv_records.set.value }}"
+        ttl: "{{ srv_records.set.ttl }}"

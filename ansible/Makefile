@@ -30,7 +30,7 @@ download-ansible-roles-force:
 provision-sft: check-env
 	poetry run ansible-playbook ${ANSIBLE_DIR}/provision-sft.yml  \
 		-i ${ENV_DIR}/gen/terraform-inventory.yml \
-		-i ${ENV_DIR}/inventory.yml \
+		-i ${ENV_DIR}/inventory \
 		--private-key ${ENV_DIR}/operator-ssh.dec \
 		-vv
 
@@ -38,7 +38,7 @@ provision-sft: check-env
 bootstrap: check-env
 	poetry run ansible-playbook ${ANSIBLE_DIR}/bootstrap.yml \
 		-i ${ENV_DIR}/gen/terraform-inventory.yml \
-		-i ${ENV_DIR}/inventory.yml \
+		-i ${ENV_DIR}/inventory \
 		--private-key ${ENV_DIR}/operator-ssh.dec \
 		-vv
 
@@ -47,13 +47,34 @@ bootstrap: check-env
 kube-minio-static-files: check-env
 	poetry run ansible-playbook ${ANSIBLE_DIR}/kube-minio-static-files.yml \
 		-i ${ENV_DIR}/gen/terraform-inventory.yml \
-		-i ${ENV_DIR}/inventory.yml \
+		-i ${ENV_DIR}/inventory \
 		--private-key ${ENV_DIR}/operator-ssh.dec \
 		--extra-vars "service_cluster_ip=$$(KUBECONFIG=${ENV_DIR}/gen/artifacts/admin.conf kubectl get service fake-aws-s3 -o json | jq -r .spec.clusterIP)" \
 		-vv
 
-.PHONY: check-env
-check-env:
+LOG_UNTIL ?= "now"
+.PHONY: get-logs
+get-logs: check-env
+ifndef LOG_HOST
+	$(error please define LOG_HOST)
+endif
+ifndef LOG_SERVICE
+	$(error please define LOG_SERVICE)
+endif
+ifndef LOG_SINCE
+	$(error please define LOG_SINCE)
+endif
+	poetry run ansible-playbook ${ANSIBLE_DIR}/get-logs.yml \
+		-i ${ENV_DIR}/gen/terraform-inventory.yml \
+		-i ${ENV_DIR}/inventory.yml \
+		--private-key ${ENV_DIR}/operator-ssh.dec \
+		--extra-vars "log_host=${LOG_HOST}" \
+		--extra-vars "log_service=${LOG_SERVICE}" \
+		--extra-vars "log_since=${LOG_SINCE}" \
+		--extra-vars "log_until=${LOG_UNTIL}"
+
+.PHONY: ensure-env-dir
+ensure-env-dir:
 ifndef ENV_DIR
 ifndef ENV
 	$(error please define either ENV or ENV_DIR)
@@ -61,12 +82,15 @@ else
 ENV_DIR=${CAILLEACH_DIR}/environments/${ENV}
 endif
 endif
-ifeq ("$(wildcard ${ENV_DIR}/inventory.yml)", "")
-	$(error please make sure ${ENV_DIR}/inventory.yml exists)
-endif
-ifeq ("$(wildcard ${ENV_DIR}/gen/terraform-inventory.yml)", "")
+
+${ENV_DIR}/inventory:
+	$(error please make sure ${ENV_DIR}/inventory exists)
+
+${ENV_DIR}/gen/terraform-inventory.yml:
 	$(error please make you have applied terraform for ${ENV_DIR})
-endif
-ifeq ("$(wildcard ${ENV_DIR}/operator-ssh.dec)", "")
+
+${ENV_DIR}/operator-ssh.dec:
 	$(error please make sure ${ENV_DIR}/operator-ssh.dec exists and contains the private key to ssh into servers)
-endif
+
+.PHONY: check-env
+check-env: ensure-env-dir ${ENV_DIR}/operator-ssh.dec ${ENV_DIR}/gen/terraform-inventory.yml ${ENV_DIR}/inventory

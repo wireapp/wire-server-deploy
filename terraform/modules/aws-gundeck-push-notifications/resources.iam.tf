@@ -11,6 +11,8 @@ resource "aws_iam_access_key" "gundeck" {
 # and to consume messages from the SQS queues
 #
 resource "aws_iam_user_policy" "gundeck" {
+  count = length(aws_sns_platform_application.apps) > 0 ? 1 : 0
+
   name = "${var.environment}-gundeck-full-access-policy"
   user = aws_iam_user.gundeck.name
 
@@ -39,10 +41,9 @@ resource "aws_iam_user_policy" "gundeck" {
                   "sns:SetEndpointAttributes",
                   "sns:Publish"
               ],
-              "Resource": [
-                  "${aws_sns_platform_application.gcm.arn}",
-                  "${aws_sns_platform_application.apns_voip.arn}"
-              ]
+              "Resource": ${jsonencode(
+                [for _, v in aws_sns_platform_application.apps : v.arn]
+              )}
           }
       ]
   }

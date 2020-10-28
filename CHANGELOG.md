@@ -1,3 +1,29 @@
+# 2020-10-28
+
+## Features
+
+* ansible/requirements.yml: Bump SFT for new checksum format (#361)
+* Create SFT servers in two groups (#356)
+* Skip creating SFT monitoring certs if there are no SFT servers (#357)
+* Delete the SFT SRV record after provsioning (#368)
+* Update message stats dashboard (#208)
+
+## Bug fixes / work-arounds
+
+* add support for cargohold s3Compatibility option (#364)
+
+## Documentation
+
+* Comment on email visibility feature flag (#276)
+
+## Internal
+
+* Better nix support (#362, #358, #367, #369)
+* ansible/Makefile: Print errors correctly when ENV is not in order (#359)
+* Makefile target to get logs (#355)
+* Makefile target to decrypt sops containers (#354)
+* [tf-module:push-notifications] Allow to define multiple apps per client platform (#347)
+
 # 2020-10-06
 
 ## Internal
