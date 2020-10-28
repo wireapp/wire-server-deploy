@@ -23,6 +23,7 @@ in {
     paths = [
       profileEnv
       pkgs.ansible_with_libs
+      pkgs.aptly
       pkgs.awscli
       pkgs.gnumake
       pkgs.gnupg
