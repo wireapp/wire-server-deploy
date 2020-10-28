@@ -1,0 +1,14 @@
+./mirror.sh python-apt aufs-tools apt-transport-https software-properties-common conntrack ipvsadm ipset curl rsync socat unzip e2fsprogs xfsprogs ebtables
+
+yq ".required_pkgs" < roles/kubernetes/preinstall/vars/ubuntu.yml
+yq ".common_required_pkgs" < roles/kubernetes/preinstall/defaults/main.yml
+
+plus some additional foo in roles/kubernetes/preinstall/tasks/0070-system-packages.yml
+70:    common_required_pkgs: "{{ common_required_pkgs|default([]) + ['ipvsadm', 'ipset'] }}"
+
+
+TODO:
+ - hook things together, makefile?
+ - work out signing, as we might need it
+ - also serve pubkey in tarball
+
