@@ -38,9 +38,6 @@ TOP_LEVEL_DIR=$SCRIPT_DIR/..
 CHART_DIR=$TOP_LEVEL_DIR/charts
 cd "$TOP_LEVEL_DIR"
 
-echo $CHART_DIR
-asdf
-
 chart_dir=$1
 
 # If ./sync.sh is run with a parameter, only synchronize one chart
@@ -51,9 +48,6 @@ if [ -n "$chart_dir" ] && [ -d "$chart_dir" ]; then
 else
     charts=( $(find $CHART_DIR/ -maxdepth 1 -type d | sed -n "s=$CHART_DIR/\(.\+\)=\1 =p") )
 fi
-
-echo $charts
-safs
 
 # install s3 plugin if not present
 # See https://github.com/hypnoglow/helm-s3/pull/56 for reason to use fork
