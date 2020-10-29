@@ -1,4 +1,4 @@
 dependencies:
 - name: metallb
   version: 0.8.0
-  repository: https://kubernetes-charts.storage.googleapis.com
+  repository: https://s3-eu-west-1.amazonaws.com/public.wire.com/charts-googlestorage-mirror

@@ -2,4 +2,6 @@
 dependencies:
   - name: prometheus-operator
     version: 6.7.2
-    repository: "@stable"
+    repository: https://s3-eu-west-1.amazonaws.com/public.wire.com/charts-googlestorage-mirror
+# Source: https://github.com/wireapp/charts/tree/master/stable/prometheus-operator
+# TODO: For further upgrades, move to https://github.com/prometheus-community/helm-charts/tree/main/charts/kube-prometheus-stack

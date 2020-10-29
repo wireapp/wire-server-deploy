@@ -1,6 +1,7 @@
 dependencies:
 - name: cassandra
   version: 0.15.2
-  # Published from https://github.com/wireapp/charts/blob/master/incubator/cassandra
-  repository: https://s3-eu-west-1.amazonaws.com/public.wire.com/charts
+  repository: https://s3-eu-west-1.amazonaws.com/public.wire.com/charts-googlestorage-mirror
   alias: cassandra-ephemeral
+# Source: https://github.com/wireapp/charts/blob/master/incubator/cassandra
+# TODO: For further upgrades, move to https://github.com/bitnami/charts/tree/master/bitnami/cassandra
