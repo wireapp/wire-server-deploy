@@ -12,4 +12,6 @@ self: super: {
   mirror-bionic = self.callPackage ./pkgs/mirror-bionic {};
 
   kubectl_1_14_10 = self.callPackage ./pkgs/kubectl_1_14_10.nix {};
+
+  mirror-bionic = self.callPackage ./pkgs/mirror-bionic {};
 }
