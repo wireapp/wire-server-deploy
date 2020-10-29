@@ -1,4 +1,4 @@
-# See defaults in https://github.com/kubernetes/charts/blob/master/incubator/cassandra/values.yaml
+# See defaults in https://github.com/wireapp/charts/blob/master/incubator/cassandra/values.yaml
 cassandra-ephemeral:
   persistence:
     enabled: false
