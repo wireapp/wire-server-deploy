@@ -25,9 +25,15 @@ FOO
 aptly="aptly -config=${aptly_config} "
 
 $aptly mirror create -ignore-signatures -architectures=amd64 -filter="${packages}" -filter-with-deps ubuntu http://de.archive.ubuntu.com/ubuntu/ bionic
-$aptly mirror -ignore-signatures update ubuntu
+$aptly mirror create -ignore-signatures -architectures=amd64 -filter="docker-ce (= 5:19.03.12~3-0~ubuntu-bionic)" -filter-with-deps docker https://download.docker.com/linux/ubuntu bionic
 
-$aptly snapshot create offline from mirror ubuntu
-$aptly publish snapshot -skip-signing offline
+$aptly mirror -ignore-signatures update ubuntu
+$aptly mirror -ignore-signatures update docker
+
+$aptly snapshot create offline-ubuntu from mirror ubuntu
+$aptly snapshot create offline-docker from mirror docker
+
+$aptly publish snapshot -skip-signing offline-ubuntu ubuntu
+$aptly publish snapshot -skip-signing offline-docker docker
 
 tar cvzf packages.tgz -C "$aptly_root"/public/ .
