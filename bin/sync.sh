@@ -75,6 +75,10 @@ helm repo add "$PUBLIC_DIR" "$S3_URL"
 helm repo add "$REPO_NAME" "$PUBLIC_URL"
 # This repo is mirroring the old https://kubernetes-charts.storage.googleapis.com
 helm repo add wire-googlestorage-mirror https://s3-eu-west-1.amazonaws.com/public.wire.com/charts-googlestorage-mirror
+# Other frequently used repos
+helm repo add bitnami https://charts.bitnami.com/bitnami
+helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+helm repo add minio https://helm.min.io
 
 rm ./*.tgz &> /dev/null || true # clean any packaged files, if any
 for chart in "${charts[@]}"; do
