@@ -1,4 +1,4 @@
-# See defaults in https://github.com/helm/charts/tree/master/stable/minio
+# See defaults in https://github.com/minio/charts/blob/master/minio/values.yaml
 minio:
   fullnameOverride: fake-aws-s3
   accessKey: dummykey
