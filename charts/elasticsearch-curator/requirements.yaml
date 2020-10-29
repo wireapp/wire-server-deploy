@@ -2,3 +2,7 @@ dependencies:
 - name: elasticsearch-curator
   version: 1.5.0
   repository: https://s3-eu-west-1.amazonaws.com/public.wire.com/charts-googlestorage-mirror
+# Source: https://github.com/wireapp/charts/blob/master/stable/elasticsearch-curator/README.md
+# TODO: This chart does not seem to longer be supported. For further upgrades, it's probably
+#       best to keep looking into https://github.com/helm/charts/blob/master/stable/elasticsearch-curator/README.md
+#       and https://github.com/elastic/curator

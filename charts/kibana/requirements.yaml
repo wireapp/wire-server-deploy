@@ -2,3 +2,5 @@ dependencies:
 - name: kibana
   version: 2.2.0
   repository: https://s3-eu-west-1.amazonaws.com/public.wire.com/charts-googlestorage-mirror
+# Source: https://github.com/wireapp/charts/blob/master/stable/kibana/README.md
+# TODO: For further upgrades, move to https://github.com/elastic/helm-charts/tree/master/kibana

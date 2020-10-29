@@ -2,3 +2,5 @@ dependencies:
 - name: nginx-ingress
   version: 1.33.3
   repository: https://s3-eu-west-1.amazonaws.com/public.wire.com/charts-googlestorage-mirror
+# Source: https://github.com/wireapp/charts/tree/master/stable/nginx-ingress
+# TODO: For further upgrades, https://github.com/kubernetes/ingress-nginx/tree/master/charts/ingress-nginx

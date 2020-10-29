@@ -2,3 +2,5 @@ dependencies:
 - name: metallb
   version: 0.8.0
   repository: https://s3-eu-west-1.amazonaws.com/public.wire.com/charts-googlestorage-mirror
+# Source: https://github.com/wireapp/charts/blob/master/stable/metallb/README.md
+# TODO: For further upgrades, move to https://github.com/bitnami/charts/tree/master/bitnami/metallb
