@@ -9,8 +9,9 @@
 
 
 # People should use the  group_vars/k8s-cluster/offline.yml as an example
-- hosts: k8s-cluster:children
-  when: offline
+- name: "Set up offline repositories"
+  hosts: all
+  tags: never
   tasks:
     - name: Register offline repo key
       apt_key:
@@ -21,35 +22,39 @@
         repo: "deb {{ ubuntu_repo_base_url }} bionic main"
         state: present
 
-- name: Do preinstall and bootstrap for offline
+- name: "Preinstall and bootstrap"
   import_playbook: roles-external/kubespray/cluster.yml
   tags:
     - preinstall
     - bootstrap-os
-  when: offline
 
-- hosts: k8s-cluster:children
-  tasks:
-    - name: install skopeo from static binary
-      …
-    - name: Create skopeo dump tempdir
-      tempfile:
-        state: directory
-        suffix: skopeo
-      register: tempfile_skopeo
-    - name: sync skopeo dump to each node
-      copy:
-        src: skopeo-dir
-        dest: "{{ tempfile_skopeo.path }}"
-    - name: skopeo sync
-      cmd: skopeo sync dir:/var/tmp/skopeo-dir docker-daemon://
-    - name: cleanup skopeo dir
-      file:
-        state: absent
-        path: "{{ tempfile_skopeo.path }}"
-  when: offline
+      #- name: "Prepare offline"
+      #  hosts: k8s-cluster:children
+      #  roles:
+      #    - role: prepare-offline
+      #      when: offline
+      # tasks:
+      #   - name: install skopeo from static binary
+      #   - name: Create skopeo dump tempdir
+      #     tempfile:
+      #       state: directory
+      #       suffix: skopeo
+      #     register: tempfile_skopeo
+      #   - name: sync skopeo dump to each node
+      #     copy:
+      #       src: skopeo-dir
+      #       dest: "{{ tempfile_skopeo.path }}"
+      #   - name: skopeo sync
+      #     cmd: skopeo sync dir:/var/tmp/skopeo-dir docker-daemon://
+      #   - name: cleanup skopeo dir
+      #     file:
+      #       state: absent
+      #       path: "{{ tempfile_skopeo.path }}"
+      # when: offline
 
-- import_playbook: roles-external/kubespray/cluster.yml
+- name: "Run bootstrap cluster"
+  import_playbook: roles-external/kubespray/cluster.yml
+  tags: never
 
 - hosts: etcd
   environment: "{{ proxy_env | default({}) }}"
