@@ -54,18 +54,18 @@ curl https://download.docker.com/linux/ubuntu/gpg | $gpg --import
 $gpg --list-keys --fingerprint --with-colons | sed -E -n -e 's/^fpr:::::::::([0-9A-F]+):$/\1:6:/p' | $gpg --import-ownertrust
 
 $aptly mirror create -architectures=amd64 -filter="${packages}" -filter-with-deps ubuntu http://de.archive.ubuntu.com/ubuntu/ bionic
-$aptly mirror create -architectures=amd64 -filter="docker-ce (= 5:19.03.12~3-0~ubuntu-bionic)" -filter-with-deps docker https://download.docker.com/linux/ubuntu bionic
+$aptly mirror create -architectures=amd64 -filter="docker-ce (= 5:19.03.12~3-0~ubuntu-bionic)" -filter-with-deps docker-ce https://download.docker.com/linux/ubuntu bionic
 
 $aptly mirror update ubuntu
-$aptly mirror update docker
+$aptly mirror update docker-ce
 
 $aptly snapshot create offline-ubuntu from mirror ubuntu
-$aptly snapshot create offline-docker from mirror docker
+$aptly snapshot create offline-docker-ce from mirror docker-ce
 
 $aptly publish snapshot offline-ubuntu ubuntu
-$aptly publish snapshot offline-docker docker
+$aptly publish snapshot offline-docker-ce docker-ce
 
-cp $GNUPGHOME/Release.key "$aptly_root"/public/ubuntu/
-cp $GNUPGHOME/Release.key "$aptly_root"/public/docker/
+cp $GNUPGHOME/Release.key "$aptly_root"/public/ubuntu/gpg
+cp $GNUPGHOME/Release.key "$aptly_root"/public/docker-ce/gpg
 
 tar cvzf packages.tgz -C "$aptly_root"/public/ .
