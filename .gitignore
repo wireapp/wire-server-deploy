@@ -22,3 +22,7 @@ values-init-done
 # Nix-created result symlinks
 result
 result-*
+
+# Terraform state
+terraform.tfstate
+terraform.tfstate.backup
