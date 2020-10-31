@@ -5,19 +5,21 @@ set -eou pipefail
 # a packages.tgz tarball, which can be statically served.
 
 usage() {
-  echo "usage: $0" >&2
-  echo " [ PACKAGE… ]" >&2
+  echo "usage: $0 OUTPUT-DIR [ PACKAGES … ]" >&2
   exit 1
 }
 
-[ $# -eq 0 ] && usage
+[ $# -lt 1 ] && usage
+aptly_root=$1
+rm -R $aptly_root || true
+mkdir -p $aptly_root
+shift
 
 packages=$(echo "$@" | sed 's/\s/ \| /g')
 
 export GNUPGHOME=$(mktemp -d)
-aptly_root=$(mktemp -d)
 aptly_config=$(mktemp)
-trap 'rm -f -- "$aptly_root $aptly_config $GNUPGHOME"' EXIT
+trap 'rm -f -- "$aptly_config $GNUPGHOME"' EXIT
 
 cat > "$aptly_config" <<FOO
 { "rootDir": "$aptly_root", "downloadConcurrency": 10 }
@@ -54,7 +56,7 @@ curl https://download.docker.com/linux/ubuntu/gpg | $gpg --import
 $gpg --list-keys --fingerprint --with-colons | sed -E -n -e 's/^fpr:::::::::([0-9A-F]+):$/\1:6:/p' | $gpg --import-ownertrust
 
 $aptly mirror create -architectures=amd64 -filter="${packages}" -filter-with-deps ubuntu http://de.archive.ubuntu.com/ubuntu/ bionic
-$aptly mirror create -architectures=amd64 -filter="docker-ce (= 5:19.03.12~3-0~ubuntu-bionic)" -filter-with-deps docker-ce https://download.docker.com/linux/ubuntu bionic
+$aptly mirror create -architectures=amd64 -filter="docker-ce (= 5:19.03.12~3-0~ubuntu-bionic) | docker-ce-cli (= 5:19.03.12~3-0~ubuntu-bionic) | containerd.io (=1.2.13-2)" -filter-with-deps docker-ce https://download.docker.com/linux/ubuntu bionic stable
 
 $aptly mirror update ubuntu
 $aptly mirror update docker-ce
@@ -67,5 +69,3 @@ $aptly publish snapshot offline-docker-ce docker-ce
 
 cp $GNUPGHOME/Release.key "$aptly_root"/public/ubuntu/gpg
 cp $GNUPGHOME/Release.key "$aptly_root"/public/docker-ce/gpg
-
-tar cvzf packages.tgz -C "$aptly_root"/public/ .

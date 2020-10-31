@@ -14,22 +14,28 @@ let
       export NIX_PATH=nixpkgs=${toString pkgs.path}
     '';
   };
+  inherit (pkgs) scripts;
 
 in {
-  inherit pkgs profileEnv;
+  inherit pkgs profileEnv scripts;
 
   env = pkgs.buildEnv{
     name = "wire-server-deploy";
     paths = [
+      scripts.create-container-dump
+      scripts.list-helm-containers
+      scripts.mirror-bionic
+
       profileEnv
       pkgs.ansible_with_libs
       pkgs.aptly
       pkgs.awscli
       pkgs.gnumake
       pkgs.gnupg
+      pkgs.just
+      pkgs.kubeadm
       pkgs.kubectl_1_14_10
       pkgs.kubernetes-helm
-      pkgs.mirror-bionic
       pkgs.moreutils
       pkgs.pythonForAnsible
       pkgs.skopeo

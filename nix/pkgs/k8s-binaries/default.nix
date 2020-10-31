@@ -46,5 +46,5 @@ runCommandNoCC "k8s-binaries"
   nativeBuildInputs = [ ];
 } ''
   mkdir -p $out
-   ${toString (lib.mapAttrsToList (k: v: "cp ${v} $out/${baseNameOf v.url}\n") srcs)}
+  ${toString (lib.mapAttrsToList (k: v: "cp ${v} $out/${baseNameOf v.url}\n") srcs)}
 ''
