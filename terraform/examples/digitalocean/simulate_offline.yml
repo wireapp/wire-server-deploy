@@ -1,0 +1,8 @@
+- name: Remove default route on all host except sebastion to emulate offline
+  hosts: all:!bastion
+  tasks:
+    - name: Remove default route
+      shell: "ip route del default || true"
+    - name: Remove default route
+      shell: "ip -6 route del default || true"
+
