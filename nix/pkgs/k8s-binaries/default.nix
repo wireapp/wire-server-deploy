@@ -4,7 +4,7 @@
 }:
 let
   image_arch = "amd64";
-  kube_version = "v1.18.9";
+  kube_version = "v1.18.10";
   etcd_version = "v3.4.3";
   cni_version = "v0.8.7";
   calico_version = "v3.15.2";
@@ -12,17 +12,17 @@ let
     kubelet = fetchurl rec {
       passthru.url = url;
       url = "https://storage.googleapis.com/kubernetes-release/release/${ kube_version }/bin/linux/${ image_arch }/kubelet";
-      sha256 = "02zjfcl4q36myw4sq79z7rlz2vlsinyyh40zhphf2f48irabca2h";
+      sha256 = "18c90pm54gw2mg3rqf19v3922jix0n78mjxnjc32qd4kk4rwvbld";
     };
     kubeadm = fetchurl rec {
       passthru.url = url;
       url = "https://storage.googleapis.com/kubernetes-release/release/${ kube_version }/bin/linux/${ image_arch }/kubeadm";
-      sha256 = "0glnlvrnas87lsx782dqxwvmf555gdfzhhsk6idkzr1xzvh62zrz";
+      sha256 = "13f1fz1ji4sxk2nim8hgvkl6q8xkgd8aq1fgdlnx855wfr96xx4v";
     };
     kubectl = fetchurl rec {
       passthru.url = url;
       url = "https://storage.googleapis.com/kubernetes-release/release/${ kube_version }/bin/linux/${ image_arch }/kubectl";
-      sha256 = "1vg8qkvdkcwr1r53wbxk535iyb5sjdjdw01byp8b811x5mm7as3a";
+      sha256 = "0mhlpailnfq5c6i9ka2ws5z8grylrq5va4qcb7g6icbandf48p5j";
     };
     calicoctl = fetchurl rec {
       passthru.url = url;
