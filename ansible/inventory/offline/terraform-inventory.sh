@@ -1,15 +1,17 @@
 #!/usr/bin/env bash
 
-if [[ -n "$TF_STATE" ]]; then
-  args="-state=$TF_STATE"
-else
-  args=""
-fi
+set -eou pipefail
+
 
 key="$1"
 case $key in
     --list)
-    terraform output "$args" -json ansible-inventory
+    if [[ -z "${TF_STATE:-}" ]]; then
+      terraform output -json ansible-inventory
+    else
+      terraform output -state="${TF_STATE}" -json ansible-inventory
+    fi
+
     ;;
     --host)
     echo "{}"

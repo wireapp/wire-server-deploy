@@ -1,0 +1,4 @@
+# Use the etcd version that kubeadm provides. Easier for offline as we use
+# kubeadm to decide what images are needed for bootstrap. Hardcoded for now =(
+#etcd_image_repo: "{{ kube_image_repo }}/etcd"
+#etcd_image_tag: "3.4.3-0"

@@ -1,0 +1,36 @@
+# The kube-master will host assets for the rest of the cluster
+assethost_hostname: "{{ hostvars['bastion'].ip }}:8080"
+# When set to true; will set up all the repos below before continuing
+# to bootstrap; such that no network access is needed
+offline: true
+
+# This is copied from kubespray. We need it here too, as we run commands on hosts via the bastion too
+ansible_ssh_common_args: "{% if 'bastion' in groups['all'] %} -o ProxyCommand='ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -W %h:%p {{ hostvars['bastion']['ansible_user'] }}@{{ hostvars['bastion']['ansible_host'] }} {% if ansible_ssh_private_key_file is defined %}-i {{ ansible_ssh_private_key_file }}{% endif %} ' {% endif %}"
+
+# This is used nowhere inside kubespray, only inside this file
+# and our own playbooks
+ubuntu_repos: "http://{{ assethost_hostname}}/debs/public"
+ubuntu_repo_base_url: "{{ ubuntu_repos }}/ubuntu"
+ubuntu_repo_gpgkey: "{{ ubuntu_repos }}/ubuntu/gpg"
+
+docker_ubuntu_repo_base_url: "{{ ubuntu_repos }}/docker-ce"
+docker_ubuntu_repo_gpgkey: "{{ ubuntu_repos }}/docker-ce/gpg"
+
+
+# TODO: replace with our static key from CI
+# TODO: Upstream this in kubespray/roles-container-engine/docker
+docker_repo_key_info:
+  pkg_key: apt_key
+  url: '{{ docker_ubuntu_repo_gpgkey }}'
+  repo_keys: [] # Empty on purpose; we pre-seed this key in another playbook.
+
+binaries_repo: "http://{{ assethost_hostname }}/binaries"
+
+kubeadm_download_url: "{{ binaries_repo }}/kubeadm"
+kubectl_download_url: "{{ binaries_repo }}/kubectl"
+kubelet_download_url: "{{ binaries_repo }}/kubelet"
+cni_download_url: "{{ binaries_repo }}/cni-plugins-linux-{{ image_arch }}-{{ cni_version }}.tgz"
+crictl_download_url: "{{ binaries_repo }}/crictl-{{ crictl_version }}-{{ ansible_system | lower }}-{{ image_arch }}.tar.gz"
+calicoctl_download_url: "{{ binaries_repo }}/calicoctl-linux-{{ image_arch }}"
+
+etcd_retries: 10
