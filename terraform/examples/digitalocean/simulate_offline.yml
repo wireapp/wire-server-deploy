@@ -5,4 +5,6 @@
       shell: "ip route del default || true"
     - name: Remove default route
       shell: "ip -6 route del default || true"
+    - name: Add default route via the internal link (to workaround calico pinhole nat issues)
+      shell: "ip r add default dev eth1 || true"
 
