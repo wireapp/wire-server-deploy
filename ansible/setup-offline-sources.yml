@@ -1,0 +1,44 @@
+---
+# - name: Run bastion-ssh-config
+#   hosts: bastion[0]
+#   gather_facts: false
+#   roles:
+#     - { role: kubespray/kubespray-defaults }
+#     - { role: kubespray/bastion-ssh-config, tags: ["localhost", "bastion"] }
+
+- name: Copy over the binaries and debs to the bastion host and host them
+  hosts: bastion[0]
+  tasks:
+    - file:
+        path: /opt/assets
+        state: directory
+    - unarchive:
+        src: ../static.tgz
+        dest: /opt/assets
+    - copy:
+        src: files/serve-assets.service
+        dest: /etc/systemd/system/serve-assets.service
+    - systemd:
+        name: serve-assets
+        state: restarted
+        enabled: yes
+        daemon-reload: yes
+
+- name: Set up offline repositories and remove online ones
+  hosts: k8s-cluster:etcd
+  tasks:
+    - name: Remove /etc/apt/sources.list to remove all online debian package repos
+      file:
+        path: /etc/apt/sources.list
+        state: absent
+    - name: Register offline repo key
+      apt_key:
+        url: "{{ ubuntu_repo_gpgkey }}"
+        state: present
+    - name: Register offline repo
+      apt_repository:
+        repo: "deb {{ ubuntu_repo_base_url  }} bionic main"
+        state: present
+    - name: Apt update
+      apt:
+        update_cache: yes
