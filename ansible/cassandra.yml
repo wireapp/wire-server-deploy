@@ -16,9 +16,12 @@
         - hostname
 
     - role: ansible-role-ntp
+      when: not offline
       tags:
         - ntp
 
+    # This role is fine for offline; doesn't need configuring. Only apt
+    # installs
     - role: ansible-role-java
       tags:
         - java
@@ -28,10 +31,11 @@
         - cassandra
 
     - role: ansible-ntp-verify
+      when: not offline
       tags:
         - ntp
   tasks:
-    # these are optional debug tasks to see that the cluser has come up sucessfully
+    # these are optional debug tasks to see that the cluster has come up sucessfully
     - shell: nodetool status
       register: nodetool_status
       tags:
