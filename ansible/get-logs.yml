@@ -3,9 +3,15 @@
     - name: get logs
       shell: journalctl -u {{ log_service }} --since {{ log_since }} --until {{ log_until }}
       register: the_logs
+    - name: create logs directory
+      delegate_to: localhost
+      become: no
+      file:
+        state: directory
+        path: "{{ log_dir | default('/tmp', true) }}"
     - name: save logs
       delegate_to: localhost
       become: no
       copy:
-        dest: /tmp/{{log_host}}-{{ log_service }}-{{ log_since }}-{{ log_until }}
+        dest: "{{ log_dir | default('/tmp', true) }}/{{log_host}}-{{ log_service }}-{{ log_since }}-{{ log_until }}.log"
         content: "{{ the_logs.stdout }}"
