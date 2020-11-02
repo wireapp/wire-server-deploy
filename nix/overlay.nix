@@ -14,7 +14,7 @@ self: super: {
   kubectl_1_14_10 = self.callPackage ./pkgs/kubectl_1_14_10.nix { };
   kubeadm = self.callPackage ./pkgs/kubeadm { };
 
-  k8s-binaries = self.callPackage ./pkgs/k8s-binaries { };
+  wire-binaries = self.callPackage ./pkgs/wire-binaries { };
 
   # These are some simple shell scripts invoked to assemble the offline package
   scripts = {

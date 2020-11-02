@@ -8,6 +8,8 @@ let
   etcd_version = "v3.4.3";
   cni_version = "v0.8.7";
   calico_version = "v3.15.2";
+  cassandra_version = "3.11.4";
+  jmx_prometheus_javaagent_version = "0.10";
   srcs = {
     kubelet = fetchurl rec {
       passthru.url = url;
@@ -39,9 +41,19 @@ let
       url = "https://github.com/containernetworking/plugins/releases/download/${ cni_version }/cni-plugins-linux-${ image_arch }-${ cni_version }.tgz";
       sha256 = "1a6hmzky6dz8iczfi5xxwxrnh2hh82xcp8x6gaiwfrsn5n9j8y4p";
     };
+    cassandra = fetchurl rec {
+      passthru.url = url;
+      url = "http://archive.apache.org/dist/cassandra/${ cassandra_version }/apache-cassandra-${ cassandra_version }-bin.tar.gz";
+      sha256 = "11wr0vcps8w8g2sd8qwp1yp8y873c4q32azc041xpi7zqciqwnax";
+    };
+    jmx_prometheus_javaagent = fetchurl rec {
+      passthru.url = url;
+      url = "https://repo1.maven.org/maven2/io/prometheus/jmx/jmx_prometheus_javaagent/${ jmx_prometheus_javaagent_version }/jmx_prometheus_javaagent-${ jmx_prometheus_javaagent_version }.jar";
+      sha256 = "0abyydm2dg5g57alpvigymycflgq4b3drw4qs7c65vn95yiaai5i";
+    };
   };
 in
-runCommandNoCC "k8s-binaries"
+runCommandNoCC "wire-binaries"
 {
   nativeBuildInputs = [ ];
 } ''
