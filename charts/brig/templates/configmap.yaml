@@ -202,5 +202,9 @@ data:
       {{- if .setRestrictUserCreation }}
       setRestrictUserCreation: {{ .setRestrictUserCreation }}
       {{- end }}
+      {{- if .setCustomerExtensions }}
+      setCustomerExtensions:
+        domainsBlockedForRegistration: {{ .setCustomerExtensions.domainsBlockedForRegistration }}
+      {{- end }}
     {{- end }}
   {{- end }}
