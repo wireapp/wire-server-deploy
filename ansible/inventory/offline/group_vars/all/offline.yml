@@ -24,13 +24,16 @@ docker_repo_key_info:
   url: '{{ docker_ubuntu_repo_gpgkey }}'
   repo_keys: [] # Empty on purpose; we pre-seed this key in another playbook.
 
-binaries_repo: "http://{{ assethost_hostname }}/binaries"
+binaries_url: "http://{{ assethost_hostname }}/binaries"
 
-kubeadm_download_url: "{{ binaries_repo }}/kubeadm"
-kubectl_download_url: "{{ binaries_repo }}/kubectl"
-kubelet_download_url: "{{ binaries_repo }}/kubelet"
-cni_download_url: "{{ binaries_repo }}/cni-plugins-linux-{{ image_arch }}-{{ cni_version }}.tgz"
-crictl_download_url: "{{ binaries_repo }}/crictl-{{ crictl_version }}-{{ ansible_system | lower }}-{{ image_arch }}.tar.gz"
-calicoctl_download_url: "{{ binaries_repo }}/calicoctl-linux-{{ image_arch }}"
+kubeadm_download_url: "{{ binaries_url }}/kubeadm"
+kubectl_download_url: "{{ binaries_url }}/kubectl"
+kubelet_download_url: "{{ binaries_url }}/kubelet"
+cni_download_url: "{{ binaries_url }}/cni-plugins-linux-{{ image_arch }}-{{ cni_version }}.tgz"
+crictl_download_url: "{{ binaries_url }}/crictl-{{ crictl_version }}-{{ ansible_system | lower }}-{{ image_arch }}.tar.gz"
+calicoctl_download_url: "{{ binaries_url }}/calicoctl-linux-{{ image_arch }}"
+
+cassandra_url: "{{ binaries_url }}/apache-cassandra-3.11.4-bin.tar.gz"
+prometheus_jmx_url: "{{ binaries_url }}/jmx_prometheus_javaagent-0.10.jar"
 
 etcd_retries: 10
