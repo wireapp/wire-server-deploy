@@ -38,8 +38,6 @@ brig:
       teamSettings: https://teams.example.com # change this (or unset if team settings are not used)
       teamCreatorWelcome: https://teams.example.com/login # change this
       teamMemberWelcome: https://wire.example.com/download # change this
-    optSettings:
-      setCookieDomain: example.com # change this
     emailSMS:
       general:
         emailSender: email@example.com # change this
