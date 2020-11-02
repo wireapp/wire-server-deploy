@@ -25,11 +25,31 @@ resource "digitalocean_droplet" "kube_node" {
   ssh_keys = [data.digitalocean_ssh_key.tmate.id]
 }
 
+resource "digitalocean_droplet" "cassandra" {
+  count    = 3
+  name     = "cassandra${count.index}"
+  image    = "ubuntu-18-04-x64"
+  region   = "ams3"
+  size     = "s-2vcpu-2gb"
+  ssh_keys = [data.digitalocean_ssh_key.tmate.id]
+}
+
+resource "digitalocean_droplet" "minio" {
+  count    = 3
+  name     = "minio${count.index}"
+  image    = "ubuntu-18-04-x64"
+  region   = "ams3"
+  size     = "s-2vcpu-2gb"
+  ssh_keys = [data.digitalocean_ssh_key.tmate.id]
+}
+
 locals {
   kube_node    = digitalocean_droplet.kube_node
   kube_master  = digitalocean_droplet.kube_node
   etcd         = digitalocean_droplet.kube_node
-  all_droplets = distinct(concat(local.kube_node, local.kube_master, local.etcd))
+  cassandra    = digitalocean_droplet.cassandra
+  minio        = digitalocean_droplet.minio
+  all_droplets = distinct(concat(local.kube_node, local.kube_master, local.etcd, local.cassandra, local.minio))
 }
 
 
@@ -58,6 +78,10 @@ output "ansible-inventory" {
     k8s-cluster = {
       children = ["kube-master", "kube-node"]
     }
+    cassandra   = [ for droplet in local.cassandra: droplet.name ]
+    minio       = [ for droplet in local.minio: droplet.name ]
+
+    cassandra_seed = [ local.cassandra[0].name ]
   }
 }
 
