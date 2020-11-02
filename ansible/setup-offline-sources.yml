@@ -25,7 +25,7 @@
         daemon-reload: yes
 
 - name: Set up offline repositories and remove online ones
-  hosts: k8s-cluster:etcd
+  hosts: all
   tasks:
     - name: Remove /etc/apt/sources.list to remove all online debian package repos
       file:
