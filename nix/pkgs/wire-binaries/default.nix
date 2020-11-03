@@ -10,6 +10,7 @@ let
   calico_version = "v3.15.2";
   cassandra_version = "3.11.4";
   jmx_prometheus_javaagent_version = "0.10";
+  elasticsearch_version = "6.6.0";
   srcs = {
     kubelet = fetchurl rec {
       passthru.url = url;
@@ -61,7 +62,11 @@ let
       url = "https://dl.min.io/client/mc/release/linux-amd64/archive/mc.RELEASE.2020-10-03T02-54-56Z";
       sha256 = "0lfyl4l1fa8fsnjy892s940y7m3vjyihs3vvhccqlfic9syq9qar";
     };
-
+    elasticsearch = fetchurl rec {
+      passthru.url = url;
+      url = "https://artifacts.elastic.co/downloads/elasticsearch/elasticsearch-oss-${elasticsearch_version}.deb";
+      sha256 = "02cz845cfpjg381lafjfc95ka1ra9h2wn4565aa1asj91by6i0j3";
+    };
   };
 in
 runCommandNoCC "wire-binaries"

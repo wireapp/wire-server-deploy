@@ -43,13 +43,23 @@ resource "digitalocean_droplet" "minio" {
   ssh_keys = [data.digitalocean_ssh_key.tmate.id]
 }
 
+resource "digitalocean_droplet" "elasticsearch" {
+  count    = 3
+  name     = "elasticsearch${count.index}"
+  image    = "ubuntu-18-04-x64"
+  region   = "ams3"
+  size     = "s-2vcpu-2gb"
+  ssh_keys = [data.digitalocean_ssh_key.tmate.id]
+}
+
 locals {
-  kube_node    = digitalocean_droplet.kube_node
-  kube_master  = digitalocean_droplet.kube_node
-  etcd         = digitalocean_droplet.kube_node
-  cassandra    = digitalocean_droplet.cassandra
-  minio        = digitalocean_droplet.minio
-  all_droplets = distinct(concat(local.kube_node, local.kube_master, local.etcd, local.cassandra, local.minio))
+  kube_node     = digitalocean_droplet.kube_node
+  kube_master   = digitalocean_droplet.kube_node
+  etcd          = digitalocean_droplet.kube_node
+  cassandra     = digitalocean_droplet.cassandra
+  minio         = digitalocean_droplet.minio
+  elasticsearch = digitalocean_droplet.elasticsearch
+  all_droplets  = distinct(concat(local.kube_node, local.kube_master, local.etcd, local.cassandra, local.minio, local.elasticsearch))
 }
 
 
@@ -65,11 +75,11 @@ output "ansible-inventory" {
           ip               = droplet.ipv4_address_private
           etcd_member_name = droplet.name # this is redundant for things outside etcd group; but doesn't hurt
         }
-        }, {bastion = {
-        ansible_user = "root"
-        ansible_host = digitalocean_droplet.bastion.ipv4_address
-        ip           = digitalocean_droplet.bastion.ipv4_address_private
-      }})
+        }, { bastion = {
+          ansible_user = "root"
+          ansible_host = digitalocean_droplet.bastion.ipv4_address
+          ip           = digitalocean_droplet.bastion.ipv4_address_private
+      } })
     }
     kube-master = [for droplet in local.kube_master : droplet.name]
     kube-node   = [for droplet in local.kube_node : droplet.name]
@@ -78,10 +88,13 @@ output "ansible-inventory" {
     k8s-cluster = {
       children = ["kube-master", "kube-node"]
     }
-    cassandra   = [ for droplet in local.cassandra: droplet.name ]
-    minio       = [ for droplet in local.minio: droplet.name ]
+    cassandra            = [for droplet in local.cassandra : droplet.name]
+    elasticsearch        = [for droplet in local.elasticsearch : droplet.name]
+    # These are all masters in our example
+    elasticsearch_master = [for droplet in local.elasticsearch : droplet.name]
+    minio                = [for droplet in local.minio : droplet.name]
 
-    cassandra_seed = [ local.cassandra[0].name ]
+    cassandra_seed = [local.cassandra[0].name]
   }
 }
 

@@ -9,7 +9,7 @@ ansible_ssh_common_args: "{% if 'bastion' in groups['all'] %} -o ProxyCommand='s
 
 # This is used nowhere inside kubespray, only inside this file
 # and our own playbooks
-ubuntu_repos: "http://{{ assethost_hostname}}/debs/public"
+ubuntu_repos: "http://{{ assethost_hostname }}/debs/public"
 ubuntu_repo_base_url: "{{ ubuntu_repos }}/ubuntu"
 ubuntu_repo_gpgkey: "{{ ubuntu_repos }}/ubuntu/gpg"
 
@@ -35,6 +35,14 @@ calicoctl_download_url: "{{ binaries_url }}/calicoctl-linux-{{ image_arch }}"
 
 cassandra_url: "{{ binaries_url }}/apache-cassandra-3.11.4-bin.tar.gz"
 prometheus_jmx_url: "{{ binaries_url }}/jmx_prometheus_javaagent-0.10.jar"
+
+# The elasticsearch role is turing-complete in determining the right repo,
+# and elastic.co doesn't seem to advertise their -oss repo anymore either
+# Just provide the .deb from the asset host
+es_install_java: false
+es_version: "6.6.0"
+es_use_repository: false
+es_custom_package_url: "{{ binaries_url }}/elasticsearch-oss-6.6.0.deb"
 
 minio_server_download_url: "{{ binaries_url }}/minio.RELEASE.2020-10-28T08-16-50Z"
 minio_client_download_url: "{{ binaries_url }}/mc.RELEASE.2020-10-03T02-54-56Z"
