@@ -36,9 +36,12 @@ aptly="aptly -config=${aptly_config} "
 # configure gpg to use a custom keyring, because aptly reads from it
 gpg="gpg --keyring=$GNUPGHOME/trustedkeys.gpg --no-default-keyring"
 
+if [[ -z "${GPG_PRIVATE_KEY:-}" ]]; then
+  echo "*** WARNING: GPG_PRIVATE_KEY not set, creating a ephemeral key***" >&2
+  GPG_PRIVATE_KEY=$(generate-gpg1-key)
+  export GPG_PRIVATE_KEY
+fi
 echo -e "$GPG_PRIVATE_KEY" | $gpg --import
-
-$gpg --export gpg@wire.com -a > "$GNUPGHOME"/Release.key
 
 # import the ubuntu and docker signing keys
 curl 'https://keyserver.ubuntu.com/pks/lookup?op=get&search=0x790bc7277767219c42c86f933b4fe6acc0b21f32' | $gpg --import
@@ -58,5 +61,6 @@ $aptly snapshot create offline-docker-ce from mirror docker-ce
 $aptly publish snapshot offline-ubuntu ubuntu
 $aptly publish snapshot offline-docker-ce docker-ce
 
+$gpg --export gpg@wire.com -a > "$GNUPGHOME"/Release.key
 cp "$GNUPGHOME"/Release.key "$aptly_root"/public/ubuntu/gpg
 cp "$GNUPGHOME"/Release.key "$aptly_root"/public/docker-ce/gpg

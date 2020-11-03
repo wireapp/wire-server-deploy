@@ -17,7 +17,7 @@ self: super: {
   wire-binaries = self.callPackage ./pkgs/wire-binaries { };
 
   # These are some simple shell scripts invoked to assemble the offline package
-  scripts = {
+  scripts = rec {
     create-container-dump = super.runCommandNoCC "create-container-dump"
       {
         nativeBuildInputs = [ super.makeWrapper ];
@@ -50,7 +50,7 @@ self: super: {
         } ''
         install -Dm755 ${./scripts/mirror-bionic.sh} $out/bin/mirror-bionic
         # we need to *--set* PATH here, otherwise aptly will pick the wrong gpg
-        wrapProgram $out/bin/mirror-bionic --set PATH '${super.lib.makeBinPath (with self; [ aptly bash coreutils curl gnupg1orig gnused gnutar ])}'
+        wrapProgram $out/bin/mirror-bionic --set PATH '${super.lib.makeBinPath (with self; [ aptly bash coreutils curl generate-gpg1-key gnupg1orig gnused gnutar ])}'
       '';
   };
 }
