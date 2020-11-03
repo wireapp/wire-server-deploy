@@ -1,9 +1,6 @@
 #!/usr/bin/env bash
 set -eou pipefail
 
-# Build and install the environment
-nix-env -f default.nix -iA env
-
 mkdir -p static
 
 # Build the debs and publish them to static/debs

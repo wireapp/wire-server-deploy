@@ -16,6 +16,8 @@ jobs:
      # TODO: shellcheck more
      - name: shellcheck
        run: $(nix-build --no-out-link -A pkgs.shellcheck)/bin/shellcheck ci.sh
+     - name: build and install the environment
+       run: nix-env -f default.nix -iA env
      - name: run ci.sh
        run: ./ci.sh
        env:
