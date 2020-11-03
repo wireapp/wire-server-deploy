@@ -15,7 +15,9 @@ usage() {
 
 [ $# -lt 1 ] && usage
 aptly_root=$1
-rm -R "$aptly_root" || true
+if [[ -d "$aptly_root" ]]; then
+  rm -Rf "$aptly_root"
+fi
 mkdir -p "$aptly_root"
 shift
 
