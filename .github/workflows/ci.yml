@@ -22,5 +22,5 @@ jobs:
          GPG_PRIVATE_KEY: '${{ secrets.GPG_PRIVATE_KEY }}'
      - uses: actions/upload-artifact@v2
        with:
-         name: static.tgz
+         name: static
          path: static/debs/*
