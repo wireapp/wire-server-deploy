@@ -18,6 +18,8 @@ jobs:
        run: $(nix-build --no-out-link -A pkgs.shellcheck)/bin/shellcheck ci.sh
      - name: run ci.sh
        run: ./ci.sh
+       env:
+         GPG_PRIVATE_KEY: '${{ secrets.GPG_PRIVATE_KEY }}'
      - uses: actions/upload-artifact@v2
        with:
          name: static.tgz
