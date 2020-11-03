@@ -15,7 +15,7 @@ mkdir -p $1
 while IFS= read -r image; do
     # sanitize the image file name, replace slashes with underscores, suffix with .tar
     image_filename=$(sed -r "s/[:\/]/_/g" <<< $image)
-    image_path=$(realpath $1)/${image_filename}
+    image_path=$(realpath $1)/${image_filename}.tar
     if [[ -e $image_path ]];then
       echo "Skipping $image_filename…"
     else
