@@ -34,6 +34,15 @@ self: super: {
       wrapProgram $out/bin/list-helm-containers --prefix PATH : '${super.lib.makeBinPath [ self.kubernetes-helm ]}'
     '';
 
+    generate-gpg1-key = super.runCommandNoCC "generate-gpg1-key"
+      {
+        nativeBuildInputs = [ super.makeWrapper ];
+      } ''
+      install -Dm755 ${./scripts/generate-gpg1-key.sh} $out/bin/generate-gpg1-key
+      # we *--set* PATH here, to ensure we don't pick wrong gpgs
+      wrapProgram $out/bin/generate-gpg1-key --set PATH '${super.lib.makeBinPath (with self; [ bash coreutils gnupg1orig ])}'
+    '';
+
     mirror-bionic =
       super.runCommandNoCC "mirror-bionic"
         {

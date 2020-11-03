@@ -4,6 +4,10 @@ set -eou pipefail
 # This will consume a list of ubuntu bionic packages (or queries), and produces
 # a packages.tgz tarball, which can be statically served.
 
+# It assumes a GPG_PRIVATE_KEY environment variable is set
+# containing a key with uid gpg@wire.com
+# This should contain an ascii-armoured gpg private key
+
 usage() {
   echo "usage: $0 OUTPUT-DIR [ PACKAGES … ]" >&2
   exit 1
@@ -11,13 +15,15 @@ usage() {
 
 [ $# -lt 1 ] && usage
 aptly_root=$1
-rm -R $aptly_root || true
-mkdir -p $aptly_root
+rm -R "$aptly_root" || true
+mkdir -p "$aptly_root"
 shift
 
+# shellcheck disable=SC2001
 packages=$(echo "$@" | sed 's/\s/ \| /g')
 
-export GNUPGHOME=$(mktemp -d)
+GNUPGHOME=$(mktemp -d)
+export GNUPGHOME
 aptly_config=$(mktemp)
 trap 'rm -f -- "$aptly_config $GNUPGHOME"' EXIT
 
@@ -30,24 +36,9 @@ aptly="aptly -config=${aptly_config} "
 # configure gpg to use a custom keyring, because aptly reads from it
 gpg="gpg --keyring=$GNUPGHOME/trustedkeys.gpg --no-default-keyring"
 
-# create a gpg signing key. This is temporary for now, in the future, there
-# will be a stable signing key and official releases for this.
-cat > $GNUPGHOME/keycfg <<EOF
-  %echo Generating a basic OpenPGP key
-  %no-protection
-  Key-Type: RSA
-  Key-Length: 2048
-  Subkey-Type: RSA
-  Subkey-Length: 2048
-  Name-Real: Foo
-  Name-Email: foo@wire.com
-  Expire-Date: 0
-  # Do a commit here, so that we can later print "done"
-  %commit
-  %echo done
-EOF
-$gpg --batch --gen-key --batch $GNUPGHOME/keycfg
-$gpg --export foo@wire.com -a > $GNUPGHOME/Release.key
+echo -e "$GPG_PRIVATE_KEY" | $gpg --import
+
+$gpg --export gpg@wire.com -a > "$GNUPGHOME"/Release.key
 
 # import the ubuntu and docker signing keys
 curl 'https://keyserver.ubuntu.com/pks/lookup?op=get&search=0x790bc7277767219c42c86f933b4fe6acc0b21f32' | $gpg --import
@@ -67,5 +58,5 @@ $aptly snapshot create offline-docker-ce from mirror docker-ce
 $aptly publish snapshot offline-ubuntu ubuntu
 $aptly publish snapshot offline-docker-ce docker-ce
 
-cp $GNUPGHOME/Release.key "$aptly_root"/public/ubuntu/gpg
-cp $GNUPGHOME/Release.key "$aptly_root"/public/docker-ce/gpg
+cp "$GNUPGHOME"/Release.key "$aptly_root"/public/ubuntu/gpg
+cp "$GNUPGHOME"/Release.key "$aptly_root"/public/docker-ce/gpg

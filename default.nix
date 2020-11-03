@@ -23,6 +23,7 @@ in {
     name = "wire-server-deploy";
     paths = [
       scripts.create-container-dump
+      scripts.generate-gpg1-key
       scripts.list-helm-containers
       scripts.mirror-bionic
 
