@@ -14,6 +14,8 @@ cp -R "$(nix-build --no-out-link -A pkgs.wire-binaries)/"* static/binaries/
 
 # Dump docker containers to static/containers
 (kubeadm config images list --kubernetes-version v1.18.10; cat ./kubespray_additional_containers.txt) | create-container-dump static/containers
+
+# create static/containers/index.txt
+(cd static/containers; for f in *.tar; do echo "$f";done) > static/containers/index.txt
+
 # TODO: add helm chart containers here
-# create an index
-(cd static/containers;find .) > static/containers/index.txt
