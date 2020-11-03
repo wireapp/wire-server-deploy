@@ -25,7 +25,7 @@ packages=$(echo "$@" | sed 's/\s/ \| /g')
 GNUPGHOME=$(mktemp -d)
 export GNUPGHOME
 aptly_config=$(mktemp)
-trap 'rm -f -- "$aptly_config $GNUPGHOME"' EXIT
+trap 'rm -Rf -- "$aptly_config $GNUPGHOME"' EXIT
 
 cat > "$aptly_config" <<FOO
 { "rootDir": "$aptly_root", "downloadConcurrency": 10 }
