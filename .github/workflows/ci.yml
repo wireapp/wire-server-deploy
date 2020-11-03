@@ -13,8 +13,12 @@ jobs:
          name: wire-server
          signingKey: '${{ secrets.CACHIX_SIGNING_KEY }}'
          authToken: '${{ secrets.CACHIX_AUTH_TOKEN }}'
-     - run: ./ci.sh
+     # TODO: shellcheck more
+     - name: shellcheck
+       run: $(nix-build --no-out-link -A pkgs.shellcheck)/bin/shellcheck ci.sh
+     - name: run ci.sh
+       run: ./ci.sh
      - uses: actions/upload-artifact@v2
        with:
-         name: debs
+         name: static.tgz
          path: static/debs/*
