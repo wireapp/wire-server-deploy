@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+set -eou pipefail
 
 # Build and install the environment
 nix-env -f default.nix -iA env
@@ -13,3 +14,9 @@ mirror-bionic static/debs \
 # Copy the binaries to static/binaries
 mkdir -p static/binaries
 cp -R "$(nix-build --no-out-link -A pkgs.wire-binaries)/"* static/binaries/
+
+# Dump docker containers to static/containers
+(kubeadm config images list --kubernetes-version v1.18.10; cat ./kubespray_additional_containers.txt) | create-container-dump static/containers
+# TODO: add helm chart containers here
+# create an index
+(cd static/containers;find .) > static/containers/index.txt
