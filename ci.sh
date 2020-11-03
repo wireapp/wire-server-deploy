@@ -3,6 +3,16 @@ set -eou pipefail
 
 mkdir -p static
 
+# Build the container image
+container_image=$(nix-build --no-out-link -A container)
+if [[ -n "${DOCKER_LOGIN:-}" ]];then
+  skopeo copy --dest-creds "$DOCKER_LOGIN" \
+    docker-archive:"$container_image" \
+    "docker://quay.io/wire/wire-server-deploy:$(git rev-parse HEAD)"
+else
+  echo "Skipping container upload, no DOCKER_LOGIN provided"
+fi
+
 # Build the debs and publish them to static/debs
 mirror-bionic static/debs \
   python-apt aufs-tools apt-transport-https software-properties-common conntrack ipvsadm ipset curl rsync socat unzip e2fsprogs xfsprogs ebtables python3-minimal \

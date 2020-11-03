@@ -16,8 +16,27 @@ let
   };
   inherit (pkgs) scripts;
 
-in {
+in rec {
   inherit pkgs profileEnv scripts;
+
+  container = pkgs.dockerTools.buildLayeredImage {
+    name = "wire-server-deploy";
+    maxLayers = 10;
+    # we don't want git or ssh or anything in here, the ansible folder is
+    # mounted into here.
+    contents = [
+      pkgs.cacert
+      pkgs.coreutils
+      pkgs.bashInteractive
+      env
+    ];
+    config = {
+      Volumes = {
+        "/wire-server-deploy" = {};
+      };
+      Workdir = "/wire-server-deploy";
+    };
+  };
 
   env = pkgs.buildEnv{
     name = "wire-server-deploy";

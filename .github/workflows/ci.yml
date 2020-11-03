@@ -21,6 +21,9 @@ jobs:
      - name: run ci.sh
        run: ./ci.sh
        env:
+         # TODO: we probably only want to upload this on pushes to master, not
+         # pseudo-merge commits
+         DOCKER_LOGIN: '${{ secrets.DOCKER_LOGIN }}'
          GPG_PRIVATE_KEY: '${{ secrets.GPG_PRIVATE_KEY }}'
      - uses: actions/upload-artifact@v2
        with:
