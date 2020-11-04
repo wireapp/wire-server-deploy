@@ -52,6 +52,15 @@ resource "digitalocean_droplet" "elasticsearch" {
   ssh_keys = [data.digitalocean_ssh_key.tmate.id]
 }
 
+resource "digitalocean_droplet" "restund" {
+  count    = 2
+  name     = "restund${count.index}"
+  image    = "ubuntu-18-04-x64"
+  region   = "ams3"
+  size     = "s-1vcpu-1gb"
+  ssh_keys = [data.digitalocean_ssh_key.tmate.id]
+}
+
 locals {
   kube_node     = digitalocean_droplet.kube_node
   kube_master   = digitalocean_droplet.kube_node
@@ -59,7 +68,8 @@ locals {
   cassandra     = digitalocean_droplet.cassandra
   minio         = digitalocean_droplet.minio
   elasticsearch = digitalocean_droplet.elasticsearch
-  all_droplets  = distinct(concat(local.kube_node, local.kube_master, local.etcd, local.cassandra, local.minio, local.elasticsearch))
+  restund       = digitalocean_droplet.restund
+  all_droplets  = distinct(concat(local.kube_node, local.kube_master, local.etcd, local.cassandra, local.minio, local.elasticsearch, local.restund))
 }
 
 
@@ -88,13 +98,14 @@ output "ansible-inventory" {
     k8s-cluster = {
       children = ["kube-master", "kube-node"]
     }
-    cassandra            = [for droplet in local.cassandra : droplet.name]
-    elasticsearch        = [for droplet in local.elasticsearch : droplet.name]
+    cassandra      = [for droplet in local.cassandra : droplet.name]
+    cassandra_seed = [local.cassandra[0].name]
+    elasticsearch  = [for droplet in local.elasticsearch : droplet.name]
     # These are all masters in our example
     elasticsearch_master = [for droplet in local.elasticsearch : droplet.name]
     minio                = [for droplet in local.minio : droplet.name]
+    restund              = [for droplet in local.restund : droplet.name]
 
-    cassandra_seed = [local.cassandra[0].name]
   }
 }
 
