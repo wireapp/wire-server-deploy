@@ -17,4 +17,19 @@
           docker load -i "$f"
         done
       when: offline
+- name: Seed docker daemon on restund
+  hosts:
+    - restund
+  tasks:
+    - name: sync container dump to each node
+      copy:
+        src: ../static/containers/quay.io_wire_restund_0.4.14w7b1.0.47.tar
+        dest: /var/tmp/containers/
+      when: offline
+    - name: seed docker daemon
+      shell: |
+        for f in /var/tmp/containers/*;do
+          docker load -i "$f"
+        done
+      when: offline
 

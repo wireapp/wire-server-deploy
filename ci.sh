@@ -25,6 +25,7 @@ cp -R "$(nix-build --no-out-link -A pkgs.wire-binaries)/"* static/binaries/
 function list-containers() {
   kubeadm config images list --kubernetes-version v1.18.10
   cat ./kubespray_additional_containers.txt
+  echo "quay.io/wire/restund:0.4.14w7b1.0.47"
   download-helm-charts static/charts | list-helm-containers
 }
 
