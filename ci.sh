@@ -22,10 +22,17 @@ mirror-bionic static/debs \
 mkdir -p static/binaries
 cp -R "$(nix-build --no-out-link -A pkgs.wire-binaries)/"* static/binaries/
 
+function list-containers() {
+  kubeadm config images list --kubernetes-version v1.18.10
+  cat ./kubespray_additional_containers.txt
+  download-helm-charts static/charts | list-helm-containers
+}
+
 # Dump docker containers to static/containers
-(kubeadm config images list --kubernetes-version v1.18.10; cat ./kubespray_additional_containers.txt) | create-container-dump static/containers
+list-containers | create-container-dump static/containers
 
 # create static/containers/index.txt
 (cd static/containers; for f in *.tar; do echo "$f";done) > static/containers/index.txt
 
-# TODO: add helm chart containers here
+# create static/charts/index.txt
+(cd static/charts; for f in *.tgz; do echo "$f";done) > static/charts/index.txt
