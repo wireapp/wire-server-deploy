@@ -11,6 +11,13 @@
 # for more info see https://github.com/hypnoglow/helm-s3
 
 set -eo pipefail
+set -x
+
+
+TODO: See new usage in https://github.com/hypnoglow/helm-s3/pull/122/files
+no need for public_dir stuff anymore. Adjust helm push and reindex commands to use --relative instead.
+
+
 
 USAGE="Sync helm charts to S3. Usage: $0 to sync all charts or $0 <chart-directory> to sync only a single one. --force-push can be used to override S3 artifacts. --reindex can be used to force a complete reindexing in case the index is malformed."
 
@@ -50,12 +57,11 @@ else
 fi
 
 # install s3 plugin if not present
-# See https://github.com/hypnoglow/helm-s3/pull/56 for reason to use fork
 s3_plugin_version=$(helm plugin list | grep "^s3 " | awk '{print $2}' || true)
-if [[ $s3_plugin_version != "0.9.0" ]]; then
-    echo "not version 0.9.0 from steven-sheehy fork, upgrading or installing plugin..."
+if [[ $s3_plugin_version != "0.10.0" ]]; then
+    echo "not version 0.10.0, upgrading or installing plugin..."
     helm plugin remove s3 || true
-    helm plugin install https://github.com/steven-sheehy/helm-s3.git --version v0.9.0
+    helm plugin install https://github.com/hypnoglow/helm-s3.git --version v0.10.0
 fi
 
 # index/sync charts to S3
