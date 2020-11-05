@@ -20,7 +20,12 @@ while IFS= read -r image; do
       echo "Skipping $image_filename…"
     else
       echo "Fetching $image_filename…"
-      skopeo copy docker://$image docker-archive:${image_path} --additional-tag $image
+      # If the image is tagless, just push it without a tag
+      if [[ $image =~ "@" ]]; then
+        skopeo copy docker://$image docker-archive:${image_path}
+      else
+        skopeo copy docker://$image docker-archive:${image_path} --additional-tag $image
+      fi
     fi
 done
 
