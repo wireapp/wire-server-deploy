@@ -76,5 +76,5 @@ spec:
             - "{{ .Values.cassandra.replicaCount }}"
       containers:
         - name: job-done
-          image: busybox
+          image: busybox:1.32.0
           command: ['sh', '-c', 'echo "gundeck, brig, galley, spar schema cassandra-migrations completed. See initContainers for details with e.g. kubectl logs ... -c gundeck-schema"']
