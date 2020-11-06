@@ -10,12 +10,17 @@ set -eou pipefail
 # Some of these images don't contain a "latest" tag. We don't to download /ALL/
 # of them, but only :latest in that case - it's bad enough there's no proper
 # versioning here.
-function optionally_tag() {
+function optionally_complain() {
   while IFS= read -r image; do
-    if [[ $image =~ ":" ]]; then
+    if [[ $image =~ ":latest" ]]; then
+      echo "Container $image with a latest tag found. Fix this chart. not compatible with offline. Components need explicit tags for that" >&2
+    elif [[ $image =~ ":" ]]; then
+      echo "$image"
+    elif [[ $image =~ "@" ]]; then
       echo "$image"
     else
-      echo "$image:latest"
+      echo "Container $image without a tag found or pin found. Aborting! Fix this chart. not compatible with offline. Components need explicit tags for that" >&2
+      exit 1
     fi
   done
 }
@@ -31,5 +36,7 @@ while IFS= read -r chart; do
     -f ./values/nginx-ingress-services/prod-values.example.yaml \
     -f ./values/nginx-ingress-services/prod-secrets.example.yaml \
     -f ./values/wire-server/prod-values.example.yaml \
-    -f ./values/wire-server/prod-secrets.example.yaml
-done  | yq -r '..|.image? | select(.)' | optionally_tag | sort -u
+    -f ./values/wire-server/prod-secrets.example.yaml | yq -r '..|.image? | select(.)' | optionally_complain | sort -u
+
+
+done | sort -u

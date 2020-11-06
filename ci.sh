@@ -20,20 +20,42 @@ mirror-bionic static/debs \
 
 # Copy the binaries to static/binaries
 mkdir -p static/binaries
-cp -R "$(nix-build --no-out-link -A pkgs.wire-binaries)/"* static/binaries/
+install -m755 "$(nix-build --no-out-link -A pkgs.wire-binaries)/"* static/binaries/
 
-function list-containers() {
+
+function list-system-containers() {
   kubeadm config images list --kubernetes-version v1.18.10
   cat ./kubespray_additional_containers.txt
-  echo "quay.io/wire/restund:0.4.14w7b1.0.47"
-  download-helm-charts static/charts | list-helm-containers
 }
 
-# Dump docker containers to static/containers
-list-containers | create-container-dump static/containers
+list-system-containers | create-container-dump static/system-containers
 
-# create static/containers/index.txt
-(cd static/containers; for f in *.tar; do echo "$f";done) > static/containers/index.txt
+echo "quay.io/wire/restund:0.4.14w7b1.0.47" | create-container-dump static/other-containers
 
-# create static/charts/index.txt
-(cd static/charts; for f in *.tgz; do echo "$f";done) > static/charts/index.txt
+charts=(
+  # backoffice
+  # commented out for now, points to a 2.90.0 container image which doesn't
+  # seem to exist on quay.io
+  nginx-ingress-controller
+  reaper
+  cassandra-external
+  databases-ephemeral
+  demo-smtp
+  elasticsearch-external
+  fake-aws
+  minio-external
+  nginx-ingress-services
+  wire-server
+  # Has a weird dependency on curl:latest. out of scope
+  # wire-server-metrics
+  # fluent-bit
+  # kibana
+)
+
+for f in charts/*; do
+  ./bin/update.sh $f
+done
+
+for chart in "${charts[@]}"; do
+  echo "charts/$chart"
+done | list-helm-containers | create-container-dump static/helm-containers

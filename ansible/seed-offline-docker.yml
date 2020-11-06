@@ -1,35 +1,8 @@
-# TODO: Move this into a role; so we can install different containers for
-# kube-master, kube-node and etcd. But this is a premature optimization as
-# these are all the same nodes in our offline deploy anyway
 - name: Seed docker daemon
-  hosts:
-    - k8s-cluster
-    - etcd
+  hosts: k8s-cluster:etcd:restund
   tasks:
-    - name: sync containers dump to each node
-      copy:
-        src: ../static/containers
-        dest: /var/tmp/
-      when: offline
     - name: seed docker daemon
       shell: |
-        for f in /var/tmp/containers/*;do
+        for f in /opt/containers/*; do
           docker load -i "$f"
         done
-      when: offline
-- name: Seed docker daemon on restund
-  hosts:
-    - restund
-  tasks:
-    - name: sync container dump to each node
-      copy:
-        src: ../static/containers/quay.io_wire_restund_0.4.14w7b1.0.47.tar
-        dest: /var/tmp/containers/
-      when: offline
-    - name: seed docker daemon
-      shell: |
-        for f in /var/tmp/containers/*;do
-          docker load -i "$f"
-        done
-      when: offline
-

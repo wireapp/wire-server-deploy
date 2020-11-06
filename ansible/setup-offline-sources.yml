@@ -8,16 +8,27 @@
 
 - name: Copy over the binaries and debs to the bastion host and host them
   hosts: bastion[0]
+  tags:
+    - debs
+    - binaries
   tasks:
     - file:
         path: /opt/assets
         state: directory
-    - unarchive:
-        src: ../static.tgz
-        dest: /opt/assets
-    - copy:
+    - name: Copy debs
+      synchronize:
+        src: ../static/debs
+        dest: /opt/assets/debs
+        use_ssh_args: true
+    - name: Copy binaries
+      synchronize:
+        src: ../static/binaries
+        dest: /opt/assets/binaries
+        use_ssh_args: true
+    - synchronize:
         src: files/serve-assets.service
         dest: /etc/systemd/system/serve-assets.service
+        use_ssh_args: true
     - systemd:
         name: serve-assets
         state: restarted
@@ -42,3 +53,34 @@
     - name: Apt update
       apt:
         update_cache: yes
+
+
+- name: Download system containers
+  hosts: k8s-cluster:etcd
+  tags: system-containers
+  tasks:
+    - name: sync containers dump to each node
+      synchronize:
+        src: ../static/system-containers/
+        dest: /opt/containers/
+        use_ssh_args: true
+
+- name: Download helm containers
+  hosts: k8s-cluster
+  tags: helm-containers
+  tasks:
+    - name: download containers
+      synchronize:
+        src: ../static/helm-containers/
+        dest: /opt/containers/
+        use_ssh_args: true
+
+- name: Download restund container
+  hosts: restund
+  tags: restund-containers
+  tasks:
+    - name: sync container dump to each node
+      synchronize:
+        src: ../static/other-containers/quay.io_wire_restund_0.4.14w7b1.0.47.tar
+        dest: /opt/containers/
+        use_ssh_args: true
