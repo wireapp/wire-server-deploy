@@ -17,7 +17,7 @@ config:
   cassandra:
     host: aws-cassandra
   redis:
-    host: redis-ephemeral
+    host: redis-ephemeral-master
     port: 6379
   bulkPush: false
   aws:
