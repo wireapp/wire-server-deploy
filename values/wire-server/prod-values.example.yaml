@@ -217,6 +217,7 @@ webapp:
       backendDomain: example.com
       backendTeamSettings: teams.example.com
       appHost: webapp.example.com
+  # See full list of available environment variables: https://github.com/wireapp/wire-webapp/blob/dev/server/config.ts
   envVars:
     APP_NAME: "Webapp"
     ENFORCE_HTTPS: "false"
@@ -231,6 +232,7 @@ webapp:
     URL_PRIVACY_POLICY: "https://www.example.com/terms-conditions"
     URL_SUPPORT_BASE: "https://www.example.com/support"
     URL_TEAMS_BASE: "https://teams.example.com"
+    URL_TEAMS_CREATE: "https://teams.example.com"
     URL_TERMS_OF_USE_PERSONAL: "https://www.example.com/terms-conditions"
     URL_TERMS_OF_USE_TEAMS: "https://www.example.com/terms-conditions"
     URL_WEBSITE_BASE: "https://www.example.com"
@@ -258,6 +260,7 @@ team-settings:
       backendWebsocket: nginz-ssl.example.com
       backendDomain: example.com
       appHost: teams.example.com
+  # See full list of available environment variables: https://github.com/wireapp/wire-team-settings/blob/dev/server/config.ts
   envVars:
     APP_NAME: "Team Settings"
     ENFORCE_HTTPS: "false"
@@ -290,6 +293,7 @@ account-pages:
       backendRest: nginz-https.example.com
       backendDomain: example.com
       appHost: account.example.com
+  # See full list of available environment variables: https://github.com/wireapp/wire-account/blob/dev/server/config.ts
   envVars:
     APP_NAME: "Wire Account Management"
     COMPANY_NAME: "YourCompany"
