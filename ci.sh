@@ -37,6 +37,7 @@ charts=(
   # commented out for now, points to a 2.90.0 container image which doesn't
   # seem to exist on quay.io
   nginx-ingress-controller
+  nginx-ingress-services
   reaper
   cassandra-external
   databases-ephemeral
@@ -44,7 +45,6 @@ charts=(
   elasticsearch-external
   fake-aws
   minio-external
-  nginx-ingress-services
   wire-server
   # Has a weird dependency on curl:latest. out of scope
   # wire-server-metrics
