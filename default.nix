@@ -15,26 +15,40 @@ let
     '';
   };
   inherit (pkgs) scripts;
+  # nix run nixpkgs.nix-prefetch-docker -c nix-prefetch-docker --image-name alpine
+  alpine = pkgs.dockerTools.pullImage {
+    imageName = "alpine";
+    imageDigest = "sha256:c0e9560cda118f9ec63ddefb4a173a2b2a0347082d7dff7dc14272e7841a5b5a";
+    sha256 = "04six60cs8w77jggbxyrdi3k8hczn653yiwlbmyh9xcjrxb8jk60";
+    finalImageName = "alpine";
+    finalImageTag = "latest";
+  };
 
 in rec {
   inherit pkgs profileEnv scripts;
 
-  container = pkgs.dockerTools.buildLayeredImage {
-    name = "wire-server-deploy";
-    maxLayers = 10;
+  container = pkgs.dockerTools.buildImage {
+    name = "quay.io/wire/wire-server-deploy";
+    fromImage = alpine;
     # we don't want git or ssh or anything in here, the ansible folder is
     # mounted into here.
     contents = [
       pkgs.cacert
       pkgs.coreutils
       pkgs.bashInteractive
+      pkgs.openssh # ansible needs this too, even with paramiko
       env
+      # provide /usr/bin/env and /tmp in the container too :-)
+      #(pkgs.runCommandNoCC "foo" {} "
+      #  mkdir -p $out/usr/bin $out/tmp
+      #  ln -sfn ${pkgs.coreutils}/bin/env $out/usr/bin/env
+      #")
     ];
     config = {
       Volumes = {
         "/wire-server-deploy" = {};
       };
-      Workdir = "/wire-server-deploy";
+      WorkingDir = "/wire-server-deploy";
     };
   };
 
