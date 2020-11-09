@@ -21,7 +21,7 @@ resource "digitalocean_droplet" "kube_node" {
   name     = "node${count.index}"
   image    = "ubuntu-18-04-x64"
   region   = "ams3"
-  size     = "s-2vcpu-2gb"
+  size     = "s-4vcpu-8gb"
   ssh_keys = [data.digitalocean_ssh_key.tmate.id]
 }
 
