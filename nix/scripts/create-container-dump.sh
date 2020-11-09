@@ -25,11 +25,10 @@ while IFS= read -r image; do
       # ship public tarballs containing these images.
       # ci.sh already honors DOCKER_LOGIN, so do the same here, otherwise
       # fallback to unauthorized fetching.
-      if [[ -n "${DOCKER_LOGIN:-}" ]];then
+      if [[ -n "${DOCKER_LOGIN:-}" && "$image" =~ quay.io/wire ]];then
         skopeo copy --src-creds "$DOCKER_LOGIN" \
           docker://$image docker-archive:${image_path} --additional-tag $image
       else
-        echo "No DOCKER_LOGIN provided, fetching anonymously"
         skopeo copy \
           docker://$image docker-archive:${image_path} --additional-tag $image
       fi
