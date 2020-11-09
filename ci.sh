@@ -59,3 +59,5 @@ done
 for chart in "${charts[@]}"; do
   echo "charts/$chart"
 done | list-helm-containers | create-container-dump static/helm-containers
+
+cp -R charts static/
