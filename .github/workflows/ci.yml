@@ -27,7 +27,11 @@ jobs:
          # pseudo-merge commits
          DOCKER_LOGIN: '${{ secrets.DOCKER_LOGIN }}'
          GPG_PRIVATE_KEY: '${{ secrets.GPG_PRIVATE_KEY }}'
-     - uses: actions/upload-artifact@v2
-       with:
-         name: static
-         path: static/*
+     - name: compress static/ folder into tarball
+       run: "tar cvzf static.tgz static"
+     - name: Copy static tarball to S3
+       run: "aws s3 cp static.tgz s3://public.wire.com/artifacts/wire-server-deploy-static-${{ github.sha }}.tgz"
+       env:
+         AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+         AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+         AWS_REGION: "eu-west-1"
