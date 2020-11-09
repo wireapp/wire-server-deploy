@@ -32,7 +32,7 @@ function optionally_complain() {
 while IFS= read -r chart; do
   echo "Running helm template on chart ${chart}…" >&2
   helm template "$chart" \
-    -f ./values/fake-aws/prod-values.example.yaml \
+    -f ./values/fake-aws/values.yaml \
     -f ./values/nginx-ingress-services/prod-values.example.yaml \
     -f ./values/nginx-ingress-services/prod-secrets.example.yaml \
     -f ./values/wire-server/prod-values.example.yaml \
