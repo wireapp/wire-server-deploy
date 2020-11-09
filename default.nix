@@ -64,6 +64,7 @@ in rec {
       profileEnv
       pkgs.ansible_with_libs
       pkgs.aptly
+      pkgs.rsync
       pkgs.awscli
       pkgs.gnumake
       pkgs.gnupg
