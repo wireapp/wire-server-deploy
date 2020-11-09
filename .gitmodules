@@ -1,6 +1,6 @@
 [submodule "ansible/roles-external/kubespray"]
 	path = ansible/roles-external/kubespray
-	url = https://github.com/kubernetes-sigs/kubespray.git
+	url = https://github.com/wireapp/kubespray.git
 [submodule "ansible/roles-external/elasticsearch"]
 	path = ansible/roles-external/elasticsearch
 	url = https://github.com/elastic/ansible-elasticsearch.git
