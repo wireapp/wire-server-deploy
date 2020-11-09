@@ -61,3 +61,5 @@ for chart in "${charts[@]}"; do
 done | list-helm-containers | create-container-dump static/helm-containers
 
 cp -R charts static/
+
+cp -R ansible static/
