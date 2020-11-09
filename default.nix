@@ -70,7 +70,7 @@ in rec {
       pkgs.gnupg
       pkgs.just
       pkgs.kubeadm
-      pkgs.kubectl_1_14_10
+      pkgs.kubectl
       pkgs.kubernetes-helm
       pkgs.moreutils
       pkgs.pythonForAnsible
