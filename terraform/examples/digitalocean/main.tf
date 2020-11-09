@@ -44,7 +44,7 @@ resource "digitalocean_droplet" "minio" {
 }
 
 resource "digitalocean_droplet" "elasticsearch" {
-  count    = 3
+  count    = 2
   name     = "elasticsearch${count.index}"
   image    = "ubuntu-18-04-x64"
   region   = "ams3"
