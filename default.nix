@@ -57,7 +57,6 @@ in rec {
     paths = [
       scripts.create-container-dump
       scripts.generate-gpg1-key
-      scripts.download-helm-charts
       scripts.list-helm-containers
       scripts.mirror-bionic
 

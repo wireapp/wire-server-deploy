@@ -27,14 +27,6 @@ self: super: {
       wrapProgram $out/bin/create-container-dump --prefix PATH : '${super.lib.makeBinPath [ self.skopeo ]}'
     '';
 
-    download-helm-charts = super.runCommandNoCC "download-helm-charts"
-      {
-        nativeBuildInputs = [ super.makeWrapper ];
-      } ''
-      install -Dm755 ${./scripts/download-helm-charts.sh} $out/bin/download-helm-charts
-      wrapProgram $out/bin/download-helm-charts --prefix PATH : '${super.lib.makeBinPath [ self.kubernetes-helm ]}'
-    '';
-
     list-helm-containers = super.runCommandNoCC "list-helm-containers"
       {
         nativeBuildInputs = [ super.makeWrapper ];

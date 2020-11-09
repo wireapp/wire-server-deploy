@@ -18,6 +18,7 @@ HELM_CONFIG_HOME=$(mktemp -d)
 export HELM_CONFIG_HOME
 HELM_DATA_HOME=$(mktemp -d)
 export HELM_DATA_HOME
+export KUBECONFIG=/dev/null
 
 trap 'rm -Rf -- "$HELM_CONFIG_HOME $HELM_DATA_HOME"' EXIT
 
