@@ -53,7 +53,7 @@ charts=(
 )
 
 for f in charts/*; do
-  ./bin/update.sh $f
+  ./bin/update.sh "$f"
 done
 
 for chart in "${charts[@]}"; do
