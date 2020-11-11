@@ -49,6 +49,9 @@ in rec {
         "/wire-server-deploy" = {};
       };
       WorkingDir = "/wire-server-deploy";
+      Env = [
+        "KUBECONFIG=/wire-server-deploy/ansible/kubeconfig"
+      ];
     };
   };
 
