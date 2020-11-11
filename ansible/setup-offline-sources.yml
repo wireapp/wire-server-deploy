@@ -16,19 +16,16 @@
         path: /opt/assets
         state: directory
     - name: Copy debs
-      synchronize:
-        src: ../static/debs
+      copy:
+        src: ../static/debs/
         dest: /opt/assets/debs
-        use_ssh_args: true
     - name: Copy binaries
-      synchronize:
-        src: ../static/binaries
+      copy:
+        src: ../static/binaries/
         dest: /opt/assets/binaries
-        use_ssh_args: true
-    - synchronize:
+    - copy:
         src: files/serve-assets.service
         dest: /etc/systemd/system/serve-assets.service
-        use_ssh_args: true
     - systemd:
         name: serve-assets
         state: restarted
@@ -60,20 +57,18 @@
   tags: system-containers
   tasks:
     - name: sync containers dump to each node
-      synchronize:
+      copy:
         src: ../static/system-containers/
         dest: /opt/containers/
-        use_ssh_args: true
 
 - name: Download helm containers
   hosts: k8s-cluster
   tags: helm-containers
   tasks:
     - name: download containers
-      synchronize:
+      copy:
         src: ../static/helm-containers/
         dest: /opt/containers/
-        use_ssh_args: true
 
 - name: Download restund container
   hosts: restund
