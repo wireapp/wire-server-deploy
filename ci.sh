@@ -13,7 +13,8 @@ else
   echo "Skipping container upload, no DOCKER_LOGIN provided"
 fi
 
-install -m755 "$container_image" assets/other-containers/
+mkdir -p assets/containers-{helm,other,system}
+install -m755 "$container_image" assets/containers-other/
 
 # Build the debs and publish them to assets/debs
 mirror-bionic assets/debs \
@@ -30,9 +31,9 @@ function list-system-containers() {
   cat ./kubespray_additional_containers.txt
 }
 
-list-system-containers | create-container-dump assets/system-containers
+list-system-containers | create-container-dump assets/containers-system
 
-echo "quay.io/wire/restund:0.4.14w7b1.0.47" | create-container-dump assets/other-containers
+echo "quay.io/wire/restund:0.4.14w7b1.0.47" | create-container-dump assets/containers-other
 
 charts=(
   # backoffice
@@ -60,7 +61,7 @@ done
 
 for chart in "${charts[@]}"; do
   echo "charts/$chart"
-done | list-helm-containers | create-container-dump assets/helm-containers
+done | list-helm-containers | create-container-dump assets/containers-helm
 
 cp ansible.cfg assets/
 cp -R charts assets/

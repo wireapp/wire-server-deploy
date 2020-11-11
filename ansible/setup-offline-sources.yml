@@ -58,16 +58,16 @@
   tasks:
     - name: sync containers dump to each node
       copy:
-        src: ../system-containers/
+        src: ../containers-system/
         dest: /opt/containers/
 
 - name: Download helm containers
   hosts: k8s-cluster
-  tags: helm-containers
+  tags: containers-helm
   tasks:
     - name: download containers
       copy:
-        src: ../helm-containers/
+        src: ../containers-helm/
         dest: /opt/containers/
 
 - name: Download restund container
@@ -76,6 +76,6 @@
   tasks:
     - name: sync container dump to each node
       synchronize:
-        src: ../other-containers/quay.io_wire_restund_0.4.14w7b1.0.47.tar
+        src: ../containers-other/quay.io_wire_restund_0.4.14w7b1.0.47.tar
         dest: /opt/containers/
         use_ssh_args: true
