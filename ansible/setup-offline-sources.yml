@@ -17,11 +17,11 @@
         state: directory
     - name: Copy debs
       copy:
-        src: ../static/debs/
+        src: ../debs/
         dest: /opt/assets/debs
     - name: Copy binaries
       copy:
-        src: ../static/binaries/
+        src: ../binaries/
         dest: /opt/assets/binaries
     - copy:
         src: files/serve-assets.service
@@ -58,7 +58,7 @@
   tasks:
     - name: sync containers dump to each node
       copy:
-        src: ../static/system-containers/
+        src: ../system-containers/
         dest: /opt/containers/
 
 - name: Download helm containers
@@ -67,7 +67,7 @@
   tasks:
     - name: download containers
       copy:
-        src: ../static/helm-containers/
+        src: ../helm-containers/
         dest: /opt/containers/
 
 - name: Download restund container
@@ -76,6 +76,6 @@
   tasks:
     - name: sync container dump to each node
       synchronize:
-        src: ../static/other-containers/quay.io_wire_restund_0.4.14w7b1.0.47.tar
+        src: ../other-containers/quay.io_wire_restund_0.4.14w7b1.0.47.tar
         dest: /opt/containers/
         use_ssh_args: true

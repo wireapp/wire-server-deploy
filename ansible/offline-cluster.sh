@@ -13,7 +13,7 @@ ansible-playbook -i ./inventory/offline ./kubernetes.yml --tags bastion,bootstra
 # install docker on restund role, such that we can seed
 ansible-playbook -i ./inventory/offline ./restund.yml --tags docker
 
-# Seed the containers from static/containers to all nodes
+# Seed the containers from containers to all nodes
 ansible-playbook -i ./inventory/offline ./seed-offline-docker.yml
 
 # Run the rest of kubespray

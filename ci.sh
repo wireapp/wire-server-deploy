@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -eou pipefail
 
-mkdir -p static
+mkdir -p assets
 
 # Build the container image
 container_image=$(nix-build --no-out-link -A container)
@@ -13,14 +13,16 @@ else
   echo "Skipping container upload, no DOCKER_LOGIN provided"
 fi
 
-# Build the debs and publish them to static/debs
-mirror-bionic static/debs \
+install -m755 "$container_image" assets/other-containers/
+
+# Build the debs and publish them to assets/debs
+mirror-bionic assets/debs \
   python-apt aufs-tools apt-transport-https software-properties-common conntrack ipvsadm ipset curl rsync socat unzip e2fsprogs xfsprogs ebtables python3-minimal \
   openjdk-8-jdk iproute2 procps libjemalloc1 # for kubespray, cassandra
 
-# Copy the binaries to static/binaries
-mkdir -p static/binaries
-install -m755 "$(nix-build --no-out-link -A pkgs.wire-binaries)/"* static/binaries/
+# Copy the binaries to assets/binaries
+mkdir -p assets/binaries
+install -m755 "$(nix-build --no-out-link -A pkgs.wire-binaries)/"* assets/binaries/
 
 
 function list-system-containers() {
@@ -28,9 +30,9 @@ function list-system-containers() {
   cat ./kubespray_additional_containers.txt
 }
 
-list-system-containers | create-container-dump static/system-containers
+list-system-containers | create-container-dump assets/system-containers
 
-echo "quay.io/wire/restund:0.4.14w7b1.0.47" | create-container-dump static/other-containers
+echo "quay.io/wire/restund:0.4.14w7b1.0.47" | create-container-dump assets/other-containers
 
 charts=(
   # backoffice
@@ -58,8 +60,11 @@ done
 
 for chart in "${charts[@]}"; do
   echo "charts/$chart"
-done | list-helm-containers | create-container-dump static/helm-containers
+done | list-helm-containers | create-container-dump assets/helm-containers
 
-cp -R charts static/
+cp ansible.cfg assets/
+cp -R charts assets/
+cp -R values assets/
+cp -R ansible assets/
 
-cp -R ansible static/
+echo "Done"
