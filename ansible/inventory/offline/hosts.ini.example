@@ -29,6 +29,10 @@
 # minio1 ansible_host=XXXX
 # minio2 ansible_host=XXXX
 # minio3 ansible_host=XXXX
+#
+# If you are in an offline environment, add an assethost here, from which
+# artifacts are served
+# assethost ansible_host=XXXX
 
 # If you need to tunnel ssh connections through a bastion host (because your
 # nodes are not directly reachable from the machine running ansible), define a
