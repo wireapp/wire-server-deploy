@@ -1,5 +1,5 @@
-# The kube-master will host assets for the rest of the cluster
-assethost_hostname: "{{ hostvars['bastion'].ip }}:8080"
+# The assethost will host assets other machines will download
+assethost_hostname: "{{ hostvars['assethost'].ansible_host }}:8080"
 # When set to true; will set up all the repos below before continuing
 # to bootstrap; such that no network access is needed
 offline: true
