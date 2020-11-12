@@ -1,5 +1,5 @@
 ---
-- name: Copy over the binaries and debs to the asset host and host them
+- name: Copy over binaries, debs and container images to the asset host and host them
   hosts: assethost
   tags:
     - debs
@@ -16,6 +16,18 @@
       copy:
         src: ../binaries/
         dest: /opt/assets/binaries
+    - name: Copy system containers
+      copy:
+        src: ../containers-system
+        dest: /opt/assets/
+    - name: Copy helm containers
+      copy:
+        src: ../containers-helm
+        dest: /opt/assets/
+    - name: Copy other containers
+      copy:
+        src: ../containers-other
+        dest: /opt/assets/
     - copy:
         src: files/serve-assets.service
         dest: /etc/systemd/system/serve-assets.service
@@ -44,31 +56,3 @@
       apt:
         update_cache: yes
 
-
-- name: Download system containers
-  hosts: k8s-cluster:etcd
-  tags: system-containers
-  tasks:
-    - name: sync containers dump to each node
-      copy:
-        src: ../containers-system/
-        dest: /opt/containers/
-
-- name: Download helm containers
-  hosts: k8s-cluster
-  tags: containers-helm
-  tasks:
-    - name: download containers
-      copy:
-        src: ../containers-helm/
-        dest: /opt/containers/
-
-- name: Download restund container
-  hosts: restund
-  tags: restund-containers
-  tasks:
-    - name: sync container dump to each node
-      synchronize:
-        src: ../containers-other/quay.io_wire_restund_0.4.14w7b1.0.47.tar
-        dest: /opt/containers/
-        use_ssh_args: true
