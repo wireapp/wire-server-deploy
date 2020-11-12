@@ -9,7 +9,7 @@ if [[ ! $# -eq 1 ]]; then
 fi
 
 mkdir -p $1
-# Download all the docker images into $1
+# Download all the docker images into $1, and append its name to an index.txt
 # If this errors out for you, copy default-policy.json from the skopeo repo to
 # /etc/containers/policy.json
 while IFS= read -r image; do
@@ -32,6 +32,7 @@ while IFS= read -r image; do
         skopeo copy \
           docker://$image docker-archive:${image_path} --additional-tag $image
       fi
+      echo "${image_filename}.tar" >> $(realpath "$1")/index.txt
     fi
 done
 
