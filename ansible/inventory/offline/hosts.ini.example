@@ -117,6 +117,10 @@
 kube-master
 kube-node
 
+[restund]
+# restund1
+# restund2
+
 [cassandra]
 # cassandra1
 # cassandra2
