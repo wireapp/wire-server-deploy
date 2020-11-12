@@ -25,6 +25,8 @@ ansible-playbook -i ./inventory/offline ./elasticsearch.yml
 
 ansible-playbook -i ./inventory/offline ./restund.yml
 
+ansible-playbook -i ./inventory/offline ./minio.yml
+
 # Write IPs of external databases; for helm chart rendering
 ansible-playbook -i ./inventory/offline helm_external.yml
 
