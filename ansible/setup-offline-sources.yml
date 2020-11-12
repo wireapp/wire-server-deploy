@@ -1,12 +1,5 @@
 ---
-# - name: Run bastion-ssh-config
-#   hosts: bastion[0]
-#   gather_facts: false
-#   roles:
-#     - { role: kubespray/kubespray-defaults }
-#     - { role: kubespray/bastion-ssh-config, tags: ["localhost", "bastion"] }
-
-- name: Copy over the binaries and debs to the bastion host and host them
+- name: Copy over the binaries and debs to the asset host and host them
   hosts: assethost
   tags:
     - debs
