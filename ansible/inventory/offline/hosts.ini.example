@@ -68,7 +68,7 @@
 
 [restund:vars]
 # restund_network_interface = enp1s0
-# restund_zrest_secret: REPLACEMEWITHSOMETHINGRANDOM42ALPHANUMERIC
+# restund_zrest_secret = REPLACEMEWITHSOMETHINGRANDOM42ALPHANUMERIC
 
 
 # For the following groups, add all nodes defined above to the sections below.
