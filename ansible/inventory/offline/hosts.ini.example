@@ -84,12 +84,12 @@
 # kubenode2
 # kubenode3
 
+# Configure 'ip' variable to bind kubernetes services on a different ip than
+# the default network interface. Otherwise the ansible_host is used which might be
+# your management IP
 # kubenode1 ip=YYYY
 # kubenode2 ip=YYYY
 # kubenode3 ip=YYYY
-
-# Configure 'ip' variable to bind kubernetes services on a different ip than
-# the default network interface.
 
 [etcd]
 # kubenode1 etcd_member_name=etcd1
