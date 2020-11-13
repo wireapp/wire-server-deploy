@@ -48,5 +48,3 @@ minio_server_download_url: "{{ binaries_url }}/minio.RELEASE.2020-10-28T08-16-50
 minio_client_download_url: "{{ binaries_url }}/mc.RELEASE.2020-10-03T02-54-56Z"
 
 etcd_retries: 10
-
-restund_zrest_secret: REPLACEMEWITHSOMETHINGRANDOM42ALPHANUMERIC
