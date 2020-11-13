@@ -15,5 +15,3 @@ minio:
     - name: public
       purge: false
       policy: public
-  environment:
-    MINIO_BROWSER: "off"
