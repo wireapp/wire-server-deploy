@@ -90,3 +90,9 @@ dependencies:
     - web
     - account-pages
     - private
+- name: legalhold
+  version: "0.124.0"
+  repository: "file://../legalhold"
+  tags:
+    - legalhold
+    - private
