@@ -43,7 +43,7 @@ charts=(
   nginx-ingress-services
   reaper
   cassandra-external
-  redis-ephemeral
+  databases-ephemeral
   demo-smtp
   elasticsearch-external
   fake-aws
