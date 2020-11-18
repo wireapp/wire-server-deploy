@@ -5,6 +5,8 @@ minio:
   secretKey: dummysecret
   persistence:
     enabled: false
+  environment:
+    MINIO_BROWSER: "off"
   buckets:
     - name: dummy-bucket
       purge: true
