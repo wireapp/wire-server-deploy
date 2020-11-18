@@ -87,7 +87,7 @@ for chart in "${charts[@]}"; do
         printf "\n--> pushed %s to S3\n\n" "$tgz"
     else
         if [[ $1 == *--force-push* || $2 == *--force-push* || $3 == *--force-push* ]]; then
-            helm s3 push "$tgz" "$PUBLIC_DIR" --force
+            helm s3 push --relative "$tgz" "$PUBLIC_DIR" --force
             printf "\n--> (!) force pushed %s to S3\n\n" "$tgz"
         else
             printf "\n--> %s not changed or not version bumped; doing nothing.\n\n" "$chart"
