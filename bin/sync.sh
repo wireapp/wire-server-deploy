@@ -13,12 +13,6 @@
 set -eo pipefail
 set -x
 
-
-TODO: See new usage in https://github.com/hypnoglow/helm-s3/pull/122/files
-no need for public_dir stuff anymore. Adjust helm push and reindex commands to use --relative instead.
-
-
-
 USAGE="Sync helm charts to S3. Usage: $0 to sync all charts or $0 <chart-directory> to sync only a single one. --force-push can be used to override S3 artifacts. --reindex can be used to force a complete reindexing in case the index is malformed."
 
 branch=$(git rev-parse --abbrev-ref HEAD)
@@ -89,7 +83,7 @@ for chart in "${charts[@]}"; do
     echo "syncing ${tgz}..."
     # Push the artifact only if it doesn't already exist
     if ! aws s3api head-object --bucket public.wire.com --key "$PUBLIC_DIR/${tgz}" &> /dev/null ; then
-        helm s3 push "$tgz" "$PUBLIC_DIR"
+        helm s3 push --relative "$tgz" "$PUBLIC_DIR"
         printf "\n--> pushed %s to S3\n\n" "$tgz"
     else
         if [[ $1 == *--force-push* || $2 == *--force-push* || $3 == *--force-push* ]]; then
@@ -105,11 +99,11 @@ done
 
 if [[ $1 == *--reindex* || $2 == *--reindex* || $3 == *--reindex* ]]; then
     printf "\n--> (!) Reindexing, this can take a few minutes...\n\n"
-    helm s3 reindex "$PUBLIC_DIR" --publish "$PUBLIC_URL"
+    helm s3 reindex --relative "$PUBLIC_DIR"
     # update local cache with newly pushed charts
     helm repo update
     # see all results
-    helm search "$REPO_NAME/" -l
+    helm search repo "$REPO_NAME/" -l
 else
     # update local cache with newly pushed charts
     helm repo update
