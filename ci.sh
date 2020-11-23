@@ -29,6 +29,7 @@ install -m755 "$(nix-build --no-out-link -A pkgs.wire-binaries)/"* assets/binari
 function list-system-containers() {
   kubeadm config images list --kubernetes-version v1.18.10
   cat ./kubespray_additional_containers.txt
+  echo "rancher/local-path-provisioner:v0.0.18"
 }
 
 list-system-containers | create-container-dump assets/containers-system
@@ -49,6 +50,7 @@ charts=(
   fake-aws
   minio-external
   wire-server
+  local-path-provisioner
   # Has a weird dependency on curl:latest. out of scope
   # wire-server-metrics
   # fluent-bit
