@@ -300,6 +300,9 @@ nginx_conf:
       envs:
       - all
       disable_zauth: true
+    - path: ~* ^/teams/([^/]*)/features
+      envs:
+      - all
     - path: ~* ^/teams/([^/]*)/features/([^/])*
       envs:
       - all
