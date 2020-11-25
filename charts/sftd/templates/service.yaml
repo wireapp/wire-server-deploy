@@ -1,0 +1,36 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "sftd.fullname" . | trunc 55 | trimSuffix "-" }}-headless
+  labels:
+    {{- include "sftd.labels" . | nindent 4 }}
+spec:
+  clusterIP: None
+  ports:
+    - port: 8585
+      targetPort: sft
+      name: sft
+    - port: 49090
+      targetPort: metrics
+      name: metrics
+  selector:
+    {{- include "sftd.selectorLabels" . | nindent 4 }}
+---
+# NOTE: I was not sure if Ingress could point to a headless service. That's why I added this
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "sftd.fullname" . }}
+  labels:
+    {{- include "sftd.labels" . | nindent 4 }}
+spec:
+  ports:
+    - port: 8585
+      targetPort: sft
+      name: sft
+    - port: 49090
+      targetPort: metrics
+      name: metrics
+  selector:
+    {{- include "sftd.selectorLabels" . | nindent 4 }}
