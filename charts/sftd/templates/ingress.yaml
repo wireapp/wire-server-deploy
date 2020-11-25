@@ -1,0 +1,21 @@
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: "{{ include "sftd.fullname" . }}"
+  labels:
+    {{- include "sftd.labels" . | nindent 4 }}
+  annotations:
+    kubernetes.io/ingress.class: nginx
+spec:
+  tls:
+  - hosts:
+      - "{{ required  "Must specify host" .Values.host }}"
+    secretName: "{{ include "sftd.fullname" . }}"
+  rules:
+    - host: "{{ .Values.host }}"
+      http:
+        paths:
+          - path: /
+            backend:
+              serviceName: "{{ include "sftd.fullname" . }}"
+              servicePort: sft
