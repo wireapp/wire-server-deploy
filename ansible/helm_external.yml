@@ -11,7 +11,6 @@
     - elasticsearch
     - cassandra
     - minio
-    - redis
   gather_facts: true
 
 - hosts: localhost
@@ -40,11 +39,3 @@
         server_type: cassandra
         network_interface: "{{ cassandra_network_interface | default('') }}"
       when: '"cassandra" in groups'
-
-    - name: Generate redis IPs for helm
-      include_tasks: tasks/helm_external.yml
-      vars:
-        external_dir_name: redis-external
-        server_type: redis
-        network_interface: "{{ redis_network_interface | default('') }}"
-      when: '"redis" in groups'
