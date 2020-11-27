@@ -21,6 +21,7 @@ disjoint set of nodes.
 In our example we have two environments, `staging` and `prod`.  And thus we
 create create node groups.
 
+
 ```
 kubectl label node node-0 wire.com/role=sftd-prod
 kubectl label node node-1 wire.com/role=sftd-prod
@@ -28,6 +29,17 @@ kubectl label node node-2 wire.com/role=sftd-prod
 
 kubectl label node node-3 wire.com/role=sftd-staging
 kubectl label node node-4 wire.com/role=sftd-staging
+```
+
+Or set them in your [ansible inventory](https://github.com/kubernetes-sigs/kubespray/blob/master/docs/vars.md#other-service-variables):
+
+```
+node-0 node_labels="wire.com/role=sftd-prod"
+node-1 node_labels="wire.com/role=sftd-prod"
+node-2 node_labels="wire.com/role=sftd-prod"
+
+node-3 node_labels="wire.com/role=sftd-staging"
+node-4 node_labels="wire.com/role=sftd-staging"
 ```
 
 If you look in `overlays/prod/statefulset.yaml` you see that we configure `sftd` to
