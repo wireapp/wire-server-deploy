@@ -1,3 +1,40 @@
+# NEXT
+
+## Features
+* The redis chart is now backed by https://github.com/bitnami/charts/tree/master/bitnami/redis
+
+## Update instructions
+
+The redis chart that we updated to exposes the redis service as
+`redis-ephemeral-master` instead of `redis-ephemeral`.
+
+**You should update your `values/wire-server/values.yaml` to point gundeck to the new service name**
+```diff
+       redis:
+-        host: redis-ephemeral
++        host: redis-ephemeral-master
+```
+
+If a gundeck crashes whilst deploying this release, it might not be able to
+reconnect to redis until the release is fully rolled out. However this risk is
+small.
+
+
+### If you installed the `wire/redis-ephemeral` chart directly:
+
+```
+helm upgrade redis-ephemeral wire/redis-ephemeral -f <values>
+helm upgrade wire-server wire/wire-server -f <values>
+```
+
+### If you installed the `wire/databases-ephemeral` chart:
+
+```
+helm upgrade databases-ephemeral wire/databases-ephemeral -f <values>
+helm upgrade wire-server wire/wire-server -f  <values>
+```
+
+
 # 2020-10-28
 
 ## Features
