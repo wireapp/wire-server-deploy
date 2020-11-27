@@ -1,0 +1,22 @@
+server {
+  listen 80;
+  listen [::]:80;
+
+
+  # This is only because nginx is insane and doesn't use nss and also doesn't
+  # parse /etc/resolv.conf Because of this it doesn't know about the pod's
+  # namespace (that's usually in the search entry on resolv.conf) so we pass
+  # that in as an environment variable
+  resolver kube-dns.kube-system.svc.cluster.local;
+
+
+  # initiate call. Use round-robin to assign an sft randomly
+  location / {
+    proxy_pass http://sftd.${POD_NAMESPACE}.svc.cluster.local;
+  }
+
+  # join existing call by directly contacting the pod
+  location ~ ^/([a-z0-9\-]+)/(.*)$ {
+    proxy_pass http://$1.sftd-headless.${POD_NAMESPACE}.svc.cluster.local:8585/$2;
+  }
+}

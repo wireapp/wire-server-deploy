@@ -1,0 +1,19 @@
+apiVersion: networking.k8s.io/v1beta1
+kind: Ingress
+metadata:
+  name: sftd
+  annotations:
+    kubernetes.io/ingress.class: nginx
+spec:
+  tls:
+  - hosts:
+    - $(SFTD_INGRESS_HOST)
+    secretName: sftd-tls
+  rules:
+  - host: $(SFTD_INGRESS_HOST)
+    http:
+      paths:
+        - path: /
+          backend:
+            serviceName: sftd-lb
+            servicePort: 80

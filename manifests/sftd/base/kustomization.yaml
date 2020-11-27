@@ -1,0 +1,21 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - service-sftd.yaml
+  - service-sftd-headless.yaml
+  - service-lb.yaml
+  - statefulset-sftd.yaml
+  - deployment-lb.yaml
+  - ingress.yaml
+configMapGenerator:
+  - name: sftd-nginx-lb-config
+    files:
+      - default.conf.template
+vars:
+  - name: SFTD_INGRESS_HOST
+    objRef:
+      apiVersion: networking.k8s.io/v1beta1
+      kind: Ingress
+      name: sftd
+    fieldRef:
+      fieldPath: metadata.annotations["wire.com/ingress-host"]

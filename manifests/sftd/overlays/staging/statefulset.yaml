@@ -1,0 +1,15 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: sftd
+spec:
+  replicas: 2
+  template:
+    spec:
+      # Makes sure these pods are only scheduled on specific sftd nodes.  the
+      # pods run in the hostNetwork; so we for example do not want staging and
+      # prod to mix; as there will be port conflicts and scheduling will be
+      # impossible.
+      nodeSelector:
+        wire.com/role: sftd-staging
+

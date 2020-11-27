@@ -1,0 +1,7 @@
+apiVersion: networking.k8s.io/v1beta1
+kind: Ingress
+metadata:
+  name: sftd
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    wire.com/ingress-host: sftd-prod.k8s.arianvp.me

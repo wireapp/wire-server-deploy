@@ -1,0 +1,63 @@
+# we _need_ a statefulset because we never want more pods than replicas, even
+# during roll-outs as due to hostNetwork they'll surged pods will be
+# unschedulable due to port binding conflict
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: sftd
+spec:
+  serviceName: sftd-headless
+  selector:
+    matchLabels:
+      app: sftd
+  template:
+    metadata:
+      labels:
+        app: sftd
+    spec:
+      hostNetwork: true
+      volumes:
+        - name: external-ip
+          emptyDir: {}
+      initContainers:
+        - name: external-ip
+          image: alpine
+          volumeMounts:
+            - mountPath: /external-ip
+              name: external-ip
+          command:
+            - /bin/sh
+            - -c
+            - |
+                set -e
+                # TODO: Re-add the get-external-ip logic? So this at least works on GKE
+                # requires us to set up a service-account
+                external_ip=$(ip route get 1 | awk '{print $7;exit}')
+                echo $external_ip
+                echo "export EXTERNAL_IP=$external_ip" >> /external-ip/env
+
+      containers:
+        - name: sftd
+          image: quay.io/wire/sftd
+          volumeMounts:
+            - mountPath: /external-ip
+              name: external-ip
+          ports:
+            - containerPort: 8585
+              name: sft
+          env:
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: POD_IP
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.podIP
+          command:
+            - /bin/sh
+            - -c
+            - |
+                set -e
+                . /external-ip/env
+                exec sftd -I $POD_IP -M $POD_IP -A $EXTERNAL_IP -u https://$(SFTD_INGRESS_HOST)/$POD_NAME

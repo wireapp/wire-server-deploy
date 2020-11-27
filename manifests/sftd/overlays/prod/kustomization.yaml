@@ -1,0 +1,19 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - namespace.yaml
+namespace: sftd-prod
+bases:
+  - ../../base
+patchesStrategicMerge:
+  - statefulset.yaml
+  - ingress.yaml
+
+# Uncomment when not using cert-manager, and you have certificates on disk you
+# want to use instead
+# secretGenerator:
+#   - name: sftd-tls
+#     type: kubernetes.io/tls
+#     files:
+#       - tls.crt
+#       - tls.key

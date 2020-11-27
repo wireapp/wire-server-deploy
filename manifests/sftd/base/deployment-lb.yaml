@@ -1,0 +1,38 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sftd-lb
+spec:
+  selector:
+    matchLabels:
+      app: sftd-lb
+  template:
+    metadata:
+      labels:
+        app: sftd-lb
+    spec:
+      volumes:
+        - name: sftd-nginx-lb-config
+          configMap:
+            name: sftd-nginx-lb-config
+      containers:
+        - name: nginx
+          image: nginx
+          ports:
+            - containerPort: 80
+          volumeMounts:
+            - mountPath: /etc/nginx/conf.d/default.conf.template
+              name: sftd-nginx-lb-config
+              subPath: default.conf.template
+          env:
+            - name: POD_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+          command:
+            - "/bin/sh"
+            - "-c"
+            - |
+              envsubst \${POD_NAMESPACE} < /etc/nginx/conf.d/default.conf.template | tee /dev/stderr > /etc/nginx/conf.d/default.conf
+              exec nginx -g 'daemon off;'
+

@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: sftd-headless
+spec:
+  clusterIP: None
+  selector:
+    app: sftd
+  ports:
+  - port: 80
+    targetPort: 8585
+

@@ -1,0 +1,22 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: sftd
+spec:
+  # Should be less or requal to the number of nodes
+  replicas: 3
+  template:
+    spec:
+      # sftd statefulset requires hostNetwork and needs a public IP.  You
+      # can use nodeSelector to only schedule sftd on nodes that fulfill
+      # these requirements
+      nodeSelector:
+        wire.com/role: sftd-prod
+      containers:
+        - name: sftd
+          resources:
+            requests:
+              cpu: 250m
+              memory: 100Mi
+
+
