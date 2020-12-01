@@ -19,16 +19,13 @@ terminationGracePeriodSeconds: 10
 
 podAnnotations: {}
 
-# This must be set explicitly by the end-user. SFTD might be behind 1-1 NAT; which is common
-# in on-prem and also on GCP; so we need to explicitly tell sftd what its public IP is that
-# it can hand out to clients to open WebRTC streams
-# mediaAddress: <external IP>
-
-podSecurityContext: {}
-  # fsGroup: 2000
+podSecurityContext:
+  fsGroup: 31337
 
 securityContext:
-  runAsUser: 1000
+  # Pick a high number that is unlikely to conflict with the host
+  # https://kubesec.io/basics/containers-securitycontext-runasuser/
+  runAsUser: 31337
   # capabilities:
   #   drop:
   #   - ALL

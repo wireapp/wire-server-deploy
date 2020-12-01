@@ -30,26 +30,45 @@ spec:
         {{- toYaml .Values.podSecurityContext | nindent 8 }}
       terminationGracePeriodSeconds: {{ .Values.terminationGracePeriodSeconds }}
       hostNetwork: true
+      volumes:
+        - name: external-ip
+          emptyDir: {}
+      initContainers:
+        - name: external-ip
+          image: alpine:3.12
+          volumeMounts:
+            - mountPath: /external-ip
+              name: external-ip
+          command:
+            - /bin/sh
+            - -c
+            - |
+                set -e
+                # TODO: Re-add the get-external-ip logic? So this at least works on GKE
+                # requires us to set up a service-account
+                external_ip=$(ip route get 1 | awk '{print $7;exit}')
+                echo $external_ip
+                echo "export EXTERNAL_IP=$external_ip" >> /external-ip/env
       containers:
         - name: {{ .Chart.Name }}
           securityContext:
             {{- toYaml .Values.securityContext | nindent 12 }}
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
+          volumeMounts:
+            - mountPath: /external-ip
+              name: external-ip
           env:
             - name: POD_IP
               valueFrom:
                 fieldRef:
                   fieldPath: status.podIP
-          args:
-            - "-I" # Address for HTTP requests
-            - "$(POD_IP)"
-            - "-M" # Address for metrics requests
-            - "$(POD_IP)"
-            - "-A" 
-            - "{{ required "Must specify mediaAddress" .Values.mediaAddress  }}"
-            - "-u" # External URI
-            - "https://{{ required "must specify host" .Values.host }}"
+          command:
+            - /bin/sh
+            - -c
+            - |
+              . /external-ip/env
+              exec sftd  -I ${POD_IP} -M ${POD_IP} -A ${EXTERNAL_IP} -u "https://{{ required "must specify host" .Values.host }}"
           ports:
             - name: sft
               containerPort: 8585
