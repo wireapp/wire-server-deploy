@@ -63,6 +63,30 @@ helm install sftd-prod charts/sftd    --set 'nodeSelector.wire\.com/role=sftd-pr
 helm install sftd-staging charts/sftd --set 'nodeSelector.wire\.com/role=sftd-staging' ...other-flags
 ```
 
+## No public IP on default interface
+
+Often on-prem or at certain cloud providers your nodes will not have directly routable public IP addresses
+but are deployed in 1:1 NAT.   This chart is able to auto-detect this scenario if your cloud providers adds
+an `ExternalIP` field to your kubernetes node objects.
+
+On on-prem you should set an `wire.com/external-ip` annotation on your kubernetes nodes so that sftd is aware
+of its external IP when it gets scheduled on a node.
+
+If you use our kubespray playbooks to bootstrap kubernetes, you simply have to
+set the `external_ip` field in your `group_vars`
+```yaml
+# inventory/group_vars/k8s-cluster
+node_annotations:
+  wire.com/external-ip: {{ access_ip }}
+```
+
+If you are hosting Kubernetes through other means you can annotate your nodes manually:
+```
+$ kubectl annotate node $HOSTNAME wire.com/external-ip=$EXTERNAL_IP
+```
+
+
+
 
 
 
