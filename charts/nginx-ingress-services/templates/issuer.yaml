@@ -4,7 +4,6 @@ kind: Issuer
 metadata:
   name: letsencrypt-http01
   namespace: {{ .Release.Namespace }}
-  docs: "https://cert-manager.io/docs/configuration/acme/"
   labels:
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
     release: "{{ .Release.Name }}"

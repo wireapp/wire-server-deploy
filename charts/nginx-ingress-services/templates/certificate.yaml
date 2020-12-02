@@ -4,7 +4,6 @@ kind: Certificate
 metadata:
   name: "{{ include "nginx-ingress-services.zone" . | replace "." "-" }}-csr"
   namespace: {{ .Release.Namespace }}
-  docs: "https://cert-manager.io/docs/usage/certificate"
   labels:
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
     release: "{{ .Release.Name }}"
