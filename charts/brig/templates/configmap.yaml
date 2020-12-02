@@ -193,6 +193,7 @@ data:
       setPropertyMaxKeyLen: {{ .setPropertyMaxKeyLen }}
       setPropertyMaxValueLen: {{ .setPropertyMaxValueLen }}
       setDeleteThrottleMillis: {{ .setDeleteThrottleMillis }}
+      setFederationDomain: {{ .setFederationDomain }}
       {{- if .setSearchSameTeamOnly }}
       setSearchSameTeamOnly: {{ .setSearchSameTeamOnly }}
       {{- end }}
