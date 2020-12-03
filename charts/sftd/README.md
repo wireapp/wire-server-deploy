@@ -84,3 +84,17 @@ If you are hosting Kubernetes through other means you can annotate your nodes ma
 ```
 $ kubectl annotate node $HOSTNAME wire.com/external-ip=$EXTERNAL_IP
 ```
+
+## Port conflicts and `hostNetwork`
+
+Kubernetes by default allocates node ports in the `30000-32768` range. This can
+be adjusted with the `--service-nodeport-range` flag.
+https://kubernetes.io/docs/concepts/services-networking/service/ SFTD asks the
+kernel for free ports, which by default are in the `32768-61000` range
+(https://ma.ttias.be/linux-increase-ip_local_port_range-tcp-port-range/).
+
+On a default installation these ranges do not overlap and sftd should never have
+conflicts with kubernetes components. You should however check that on your OS
+these ranges aren't configured differently.
+
+
