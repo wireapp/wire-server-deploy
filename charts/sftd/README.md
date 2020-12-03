@@ -84,10 +84,3 @@ If you are hosting Kubernetes through other means you can annotate your nodes ma
 ```
 $ kubectl annotate node $HOSTNAME wire.com/external-ip=$EXTERNAL_IP
 ```
-
-
-
-
-
-
-
