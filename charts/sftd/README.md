@@ -96,5 +96,3 @@ kernel for free ports, which by default are in the `32768-61000` range
 On a default installation these ranges do not overlap and sftd should never have
 conflicts with kubernetes components. You should however check that on your OS
 these ranges aren't configured differently.
-
-
