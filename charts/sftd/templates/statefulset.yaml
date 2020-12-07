@@ -74,10 +74,10 @@ spec:
             - |
               set -e
               EXTERNAL_IP=$(cat /external-ip/ip)
-              if [ -z "$ACCESS_IP" ]; then
+              if [ -z "${EXTERNAL_IP}" ]; then
                 ACCESS_ARGS=
               else
-                ACCESS_ARGS="-A $EXTERNAL_IP"
+                ACCESS_ARGS="-A ${EXTERNAL_IP}"
               fi
               exec sftd  -I "${POD_IP}" -M "${POD_IP}" ${ACCESS_ARGS} -u "https://{{ required "must specify host" .Values.host }}"
           ports:
