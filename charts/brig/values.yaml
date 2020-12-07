@@ -73,6 +73,11 @@ config:
     # setSearchSameTeamOnly: false|true
     # Set max number of user clients. Default: 7
     # setUserMaxPermClients: <int>
+    # Customer extensions.  If this is not part of your contract with wire, use at your own risk!
+    # Details: https://github.com/wireapp/wire-server/blob/3d5684023c54fe580ab27c11d7dae8f19a29ddbc/services/brig/src/Brig/Options.hs#L465-L503
+    # setCustomerExtensions:
+    #   domainsBlockedForRegistration:
+    #   - example.com
   smtp:
     passwordFile: /etc/wire/brig/secrets/smtp-password.txt
   proxy: {}

@@ -11,6 +11,7 @@
 # for more info see https://github.com/hypnoglow/helm-s3
 
 set -eo pipefail
+set -x
 
 USAGE="Sync helm charts to S3. Usage: $0 to sync all charts or $0 <chart-directory> to sync only a single one. --force-push can be used to override S3 artifacts. --reindex can be used to force a complete reindexing in case the index is malformed."
 
@@ -50,12 +51,11 @@ else
 fi
 
 # install s3 plugin if not present
-# See https://github.com/hypnoglow/helm-s3/pull/56 for reason to use fork
 s3_plugin_version=$(helm plugin list | grep "^s3 " | awk '{print $2}' || true)
-if [[ $s3_plugin_version != "0.9.0" ]]; then
-    echo "not version 0.9.0 from steven-sheehy fork, upgrading or installing plugin..."
+if [[ $s3_plugin_version != "0.10.0" ]]; then
+    echo "not version 0.10.0, upgrading or installing plugin..."
     helm plugin remove s3 || true
-    helm plugin install https://github.com/steven-sheehy/helm-s3.git --version v0.9.0
+    helm plugin install https://github.com/hypnoglow/helm-s3.git --version v0.10.0
 fi
 
 # index/sync charts to S3
@@ -83,11 +83,11 @@ for chart in "${charts[@]}"; do
     echo "syncing ${tgz}..."
     # Push the artifact only if it doesn't already exist
     if ! aws s3api head-object --bucket public.wire.com --key "$PUBLIC_DIR/${tgz}" &> /dev/null ; then
-        helm s3 push "$tgz" "$PUBLIC_DIR"
+        helm s3 push --relative "$tgz" "$PUBLIC_DIR"
         printf "\n--> pushed %s to S3\n\n" "$tgz"
     else
         if [[ $1 == *--force-push* || $2 == *--force-push* || $3 == *--force-push* ]]; then
-            helm s3 push "$tgz" "$PUBLIC_DIR" --force
+            helm s3 push --relative "$tgz" "$PUBLIC_DIR" --force
             printf "\n--> (!) force pushed %s to S3\n\n" "$tgz"
         else
             printf "\n--> %s not changed or not version bumped; doing nothing.\n\n" "$chart"
@@ -99,11 +99,11 @@ done
 
 if [[ $1 == *--reindex* || $2 == *--reindex* || $3 == *--reindex* ]]; then
     printf "\n--> (!) Reindexing, this can take a few minutes...\n\n"
-    helm s3 reindex "$PUBLIC_DIR" --publish "$PUBLIC_URL"
+    helm s3 reindex --relative "$PUBLIC_DIR"
     # update local cache with newly pushed charts
     helm repo update
     # see all results
-    helm search "$REPO_NAME/" -l
+    helm search repo "$REPO_NAME/" -l
 else
     # update local cache with newly pushed charts
     helm repo update

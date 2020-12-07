@@ -1,3 +1,59 @@
+# 2020-12-07
+
+## Update instructions
+
+The redis chart that we updated to exposes the redis service as
+`redis-ephemeral-master` instead of `redis-ephemeral`.
+
+**You should update your `values/wire-server/values.yaml` to point gundeck to the new service name**
+```diff
+       redis:
+-        host: redis-ephemeral
++        host: redis-ephemeral-master
+```
+
+If a gundeck crashes whilst deploying this release, it might not be able to
+reconnect to redis until the release is fully rolled out. However this risk is
+small.
+
+
+### If you installed the `wire/redis-ephemeral` chart directly:
+
+```
+helm upgrade redis-ephemeral wire/redis-ephemeral -f <values>
+helm upgrade wire-server wire/wire-server -f <values>
+```
+
+### If you installed the `wire/databases-ephemeral` chart:
+
+```
+helm upgrade databases-ephemeral wire/databases-ephemeral -f <values>
+helm upgrade wire-server wire/wire-server -f  <values>
+```
+
+## Features
+
+* The redis chart is now backed by https://github.com/bitnami/charts/tree/master/bitnami/redis (#380)
+* Bump versions for webapp to latest production (#375, #386)
+* Introduce helm chart for legalhold (#378)
+* Add features endpoint to galley (#381)
+* Add tracestate header to nginz logs (#376)
+* Allow configuring customer extensions in brig (#279)
+* Remove cookie domain configuration from brig (#239)
+
+## Bug fixes
+
+* Fix invalid ObjectMeta in nginx-ingress-services chart (#385)
+* Fix fake-aws chart on Helm 3 (#379)
+
+## Internal Changes
+
+* New config parameters for federation (#384)
+  NOTE: This is not used yet.
+* Update to newer version of helm s3 plugin (#373)
+* Pin image version in cassandra-migrations and demo-smtp charts (#374)
+* Ansible: Allow custom log dir when pulling logs from an instance (#372)
+
 # 2020-10-28
 
 ## Features

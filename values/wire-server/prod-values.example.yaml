@@ -1,6 +1,9 @@
 # CHANGEME-PROD: All values here should be changed/reviewed
 tags:
   proxy: false # enable if you want/need giphy/youtube/etc proxying
+  account-pages: true
+  team-settings: false # enable if you need team-settings. Requires a pullSecret
+  legalhold: false # Enable if you need legalhold
 
 cassandra-migrations:
 #  images:
@@ -38,8 +41,6 @@ brig:
       teamSettings: https://teams.example.com # change this (or unset if team settings are not used)
       teamCreatorWelcome: https://teams.example.com/login # change this
       teamMemberWelcome: https://wire.example.com/download # change this
-    optSettings:
-      setCookieDomain: example.com # change this
     emailSMS:
       general:
         emailSender: email@example.com # change this
@@ -66,10 +67,10 @@ brig:
       host: demo-smtp # change this if you want to use your own SMTP server
       port: 25        # change this
       connType: plain # change this. Possible values: plain|ssl|tls
-#    proxy: 
+#    proxy:
 #      httpProxy: "http://proxy.example.com"
 #      httpsProxy: "https://proxy.example.com"
-#      noProxyList: 
+#      noProxyList:
 #        - "local.example.com"
 #        - "10.23.0.0/16"
   turnStatic:
@@ -89,10 +90,10 @@ proxy:
 #  image:
 #    tag: some-tag (only override if you want a newer/different version than what is in the chart)
 #  config:
-#    proxy: 
+#    proxy:
 #      httpProxy: "http://proxy.example.com"
 #      httpsProxy: "https://proxy.example.com"
-#      noProxyList: 
+#      noProxyList:
 #        - "local.example.com"
 #        - "10.23.0.0/16"
 
@@ -114,10 +115,10 @@ cargohold:
       s3Bucket: assets
       s3Endpoint: http://minio-external:9000
       s3DownloadEndpoint: https://assets.example.com
-#    proxy: 
+#    proxy:
 #      httpProxy: "http://proxy.example.com"
 #      httpsProxy: "https://proxy.example.com"
-#      noProxyList: 
+#      noProxyList:
 #        - "local.example.com"
 #        - "10.23.0.0/16"
 
@@ -134,14 +135,16 @@ galley:
       # see #RefConfigOptions in `/docs/reference` (https://github.com/wireapp/wire-server/)
       featureFlags:
         sso: disabled-by-default
-        legalhold: disabled-by-default
+        # NOTE: Change this to "disabled-by-default" for legalhold support
+        # legalhold: disabled-by-default
+        legalhold: disabled-permanently
         teamSearchVisibility: disabled-by-default
     aws:
       region: "eu-west-1"
-#    proxy: 
+#    proxy:
 #      httpProxy: "http://proxy.example.com"
 #      httpsProxy: "https://proxy.example.com"
-#      noProxyList: 
+#      noProxyList:
 #        - "local.example.com"
 #        - "10.23.0.0/16"
 
@@ -160,10 +163,10 @@ gundeck:
       queueName: integration-gundeck-events
       sqsEndpoint: http://fake-aws-sqs:4568
       snsEndpoint: http://fake-aws-sns:4575
-#    proxy: 
+#    proxy:
 #      httpProxy: "http://proxy.example.com"
 #      httpsProxy: "https://proxy.example.com"
-#      noProxyList: 
+#      noProxyList:
 #        - "local.example.com"
 #        - "10.23.0.0/16"
 
@@ -201,10 +204,10 @@ spar:
     - type: ContactSupport
       company: YourCompany
       email: email:support@example.com
-#    proxy: 
+#    proxy:
 #      httpProxy: "http://proxy.example.com"
 #      httpsProxy: "https://proxy.example.com"
-#      noProxyList: 
+#      noProxyList:
 #        - "local.example.com"
 #        - "10.23.0.0/16"
 
@@ -219,6 +222,7 @@ webapp:
       backendDomain: example.com
       backendTeamSettings: teams.example.com
       appHost: webapp.example.com
+  # See full list of available environment variables: https://github.com/wireapp/wire-webapp/blob/dev/server/config.ts
   envVars:
     APP_NAME: "Webapp"
     ENFORCE_HTTPS: "false"
@@ -233,6 +237,7 @@ webapp:
     URL_PRIVACY_POLICY: "https://www.example.com/terms-conditions"
     URL_SUPPORT_BASE: "https://www.example.com/support"
     URL_TEAMS_BASE: "https://teams.example.com"
+    URL_TEAMS_CREATE: "https://teams.example.com"
     URL_TERMS_OF_USE_PERSONAL: "https://www.example.com/terms-conditions"
     URL_TERMS_OF_USE_TEAMS: "https://www.example.com/terms-conditions"
     URL_WEBSITE_BASE: "https://www.example.com"
@@ -260,12 +265,15 @@ team-settings:
       backendWebsocket: nginz-ssl.example.com
       backendDomain: example.com
       appHost: teams.example.com
+  # See full list of available environment variables: https://github.com/wireapp/wire-team-settings/blob/dev/server/config.ts
   envVars:
     APP_NAME: "Team Settings"
     ENFORCE_HTTPS: "false"
     FEATURE_CHECK_CONSENT: "false"
     FEATURE_ENABLE_DEBUG: "false"
     FEATURE_ENABLE_NEW_TEAM: "true"
+    # NOTE: Uncomment this for legalhold support in the Team-settings UI
+    # FEATURE_ENABLE_LEGAL_HOLD: "true"
     URL_ACCOUNT_BASE: "https://account.example.com"
     URL_WEBAPP_BASE: "https://webapp.example.com"
     URL_WEBSITE_BASE: "https://www.example.com"
@@ -292,6 +300,7 @@ account-pages:
       backendRest: nginz-https.example.com
       backendDomain: example.com
       appHost: account.example.com
+  # See full list of available environment variables: https://github.com/wireapp/wire-account/blob/dev/server/config.ts
   envVars:
     APP_NAME: "Wire Account Management"
     COMPANY_NAME: "YourCompany"
@@ -313,3 +322,8 @@ account-pages:
     CSP_EXTRA_PREFETCH_SRC: "https://*.example.com"
     CSP_EXTRA_STYLE_SRC: "https://*.example.com"
     CSP_EXTRA_WORKER_SRC: "https://*.example.com"
+
+# Only needed when legalhold is enabled
+legalhold:
+  host: "legalhold.example.com"
+  wireApiHost: "https://nginz-https.example.com"

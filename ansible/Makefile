@@ -71,7 +71,8 @@ endif
 		--extra-vars "log_host=${LOG_HOST}" \
 		--extra-vars "log_service=${LOG_SERVICE}" \
 		--extra-vars "log_since=${LOG_SINCE}" \
-		--extra-vars "log_until=${LOG_UNTIL}"
+		--extra-vars "log_until=${LOG_UNTIL}" \
+		--extra-vars "log_dir=${LOG_DIR}"
 
 .PHONY: ensure-env-dir
 ensure-env-dir:
