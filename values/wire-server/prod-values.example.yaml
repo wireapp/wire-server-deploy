@@ -17,7 +17,6 @@ elasticsearch-index:
     host: elasticsearch-external
   cassandra:
     host: cassandra-external
-
 brig:
   replicaCount: 3
 #  image:
@@ -73,6 +72,10 @@ brig:
 #      noProxyList:
 #        - "local.example.com"
 #        - "10.23.0.0/16"
+    optSettings:
+      # Sync the domain with the 'host' variable in the sftd chart
+      # uncomment this section if conference calling is not used
+      setSftStaticUrl: "https://sftd.example.om:443"
   turnStatic:
     v1:
       - "turn:turn01.example.com:80"
@@ -84,6 +87,7 @@ brig:
       - "turn:turn02.example.com:80?transport=tcp"
       - "turns:turn01.example.com:443?transport=tcp"
       - "turns:turn02.example.com:443?transport=tcp"
+
 
 proxy:
   replicaCount: 3
