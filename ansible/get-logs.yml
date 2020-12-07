@@ -1,7 +1,7 @@
 - hosts: "{{ log_host }}"
   tasks:
     - name: get logs
-      shell: journalctl -u {{ log_service }} --since {{ log_since }} --until {{ log_until }}
+      shell: journalctl -u {{ log_service }} --since '{{ log_since }}' --until '{{ log_until }}'
       register: the_logs
     - name: create logs directory
       delegate_to: localhost
