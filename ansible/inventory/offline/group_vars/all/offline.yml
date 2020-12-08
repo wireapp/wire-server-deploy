@@ -44,7 +44,13 @@ es_version: "6.6.0"
 es_use_repository: false
 es_custom_package_url: "{{ binaries_url }}/elasticsearch-oss-6.6.0.deb"
 
-minio_server_download_url: "{{ binaries_url }}/minio.RELEASE.2020-10-28T08-16-50Z"
-minio_client_download_url: "{{ binaries_url }}/mc.RELEASE.2020-10-03T02-54-56Z"
+minio_server_artifact_url: "{{ binaries_url }}/minio.RELEASE.2020-10-28T08-16-50Z"
+minio_server_artifact_checksum: sha256:2c7e6774a9befbba6a126791f363550f8f14e34008e100d0e0e57e2ad9b2ab8c
+minio_client_artifact_url: "{{ binaries_url }}/mc.RELEASE.2020-10-03T02-54-56Z"
+minio_client_artifact_checksum: sha256:59e184bd4e2c3a8a19837b0f0da3977bd4e301495a24e4a5d50e291728a1de51
+# COMPAT: default from the initial role version being used
+# COMMIT: https://github.com/wireapp/ansible-minio/commit/48964380da3a271f67e3871d482f9b6f30af8e1f
+minio_access_key: "root"
+minio_secret_key: "ihavenosecrets"
 
 etcd_retries: 10
