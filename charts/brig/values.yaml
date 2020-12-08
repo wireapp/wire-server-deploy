@@ -1,7 +1,7 @@
 replicaCount: 3
 image:
   repository: quay.io/wire/brig
-  tag: 2.93.0
+  tag: 2.93.10
 service:
   externalPort: 8080
   internalPort: 8080
@@ -78,6 +78,9 @@ config:
     # setCustomerExtensions:
     #   domainsBlockedForRegistration:
     #   - example.com
+    #
+    # Point to the SFT pod
+    # setSftStaticUrl: https://sftd.example.com:443
   smtp:
     passwordFile: /etc/wire/brig/secrets/smtp-password.txt
   proxy: {}
