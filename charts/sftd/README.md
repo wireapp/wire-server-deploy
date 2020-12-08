@@ -19,16 +19,6 @@ time. Helm will delete the `sftd` secret automatically and then cert-manager
 will create it instead.
 
 
-## DNS
-
-An SRV record needs to be present for the domain name defined in `host`.
-This is an artifact of the fact the wire backend currently uses public SRV
-records for service discovery. The record needs to be of the form:
-
-```
-_sft._tcp.{{ .Values.host }}  {{ .Values.host }} 443
-```
-
 ## Multiple sftd deployments in a single cluster
 Because sftd uses the `hostNetwork` and binds to the public IP of the node,
 there can only be one `sftd` pod running per node in the cluster.  Within a
