@@ -80,6 +80,14 @@ nginx_conf:
       envs:
       - all
       doc: true
+    - path: ~* ^/api/swagger.json$
+      disable_zauth: true
+      envs:
+      - all
+    - path: /api/swagger-ui
+      disable_zauth: true
+      envs:
+      - all
     - path: /self
       envs:
       - all
