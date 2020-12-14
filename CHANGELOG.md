@@ -1,3 +1,12 @@
+# NEXT
+
+A new mandatory option has been introduced to
+`brig` and `galley` which in the future will be used for Wire federation.  This domain name
+is *not* optional even if federation is not used.
+
+Please update your `values/wire-server/values.yaml` to set `brig.optSettings.setFederationDomain`
+and `galley.settings.federationDomain` (Note the slightly different option name).
+
 # 2020-12-07
 
 ## Update instructions

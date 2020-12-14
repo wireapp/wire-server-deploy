@@ -40,6 +40,8 @@ brig:
       teamSettings: https://teams.example.com # change this (or unset if team settings are not used)
       teamCreatorWelcome: https://teams.example.com/login # change this
       teamMemberWelcome: https://wire.example.com/download # change this
+    optSettings:
+      setFederationDomain: example.com # change this
     emailSMS:
       general:
         emailSender: email@example.com # change this
@@ -136,6 +138,7 @@ galley:
     settings:
       # prefix URI used when inviting users to a conversation by link
       conversationCodeURI: https://webapp.example.com/join/ # change this
+      federationDomain: example.com # change this
       # see #RefConfigOptions in `/docs/reference` (https://github.com/wireapp/wire-server/)
       featureFlags:
         sso: disabled-by-default
