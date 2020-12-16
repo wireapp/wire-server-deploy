@@ -2,6 +2,7 @@
 
 ## Deploy
 
+Replace `example.com` with your own domain here.
 
 Using your own certificates:
 
@@ -24,6 +25,13 @@ helm install sftd charts/std \
 You can switch between `cert-manager` and own-provided certificates at any
 time. Helm will delete the `sftd` secret automatically and then cert-manager
 will create it instead.
+
+It is important that `allowOrigin` is synced with the domain where the web app is hosted
+as configured in the `wire-server` chart or the webapp will not be able to contact the SFT
+server.
+
+You should configure `brig` to hand out the SFT server to clients by setting
+`brig.optSettings.setSftStaticUrl=https://sftd.example.com:443` on the `wire-server` chart
 
 
 ## Multiple sftd deployments in a single cluster
