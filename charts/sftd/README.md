@@ -89,7 +89,7 @@ set the `external_ip` field in your `group_vars`
 node_annotations:
   wire.com/external-ip: {{ external_ip }}
 ```
-And the `access_ip` is set in the inventory:
+And the `external_ip` is set in the inventory per node:
 ```
 node0 ansible_host=.... ip=...  external_ip=aaa.xxx.yyy.zzz
 ```
