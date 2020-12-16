@@ -87,11 +87,11 @@ set the `external_ip` field in your `group_vars`
 ```yaml
 # inventory/group_vars/k8s-cluster
 node_annotations:
-  wire.com/external-ip: {{ access_ip }}
+  wire.com/external-ip: {{ external_ip }}
 ```
 And the `access_ip` is set in the inventory:
 ```
-node0 ansible_host=.... ip=...  access_ip=...
+node0 ansible_host=.... ip=...  external_ip=aaa.xxx.yyy.zzz
 ```
 
 If you are hosting Kubernetes through other means you can annotate your nodes manually:
