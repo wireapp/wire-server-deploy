@@ -89,6 +89,10 @@ set the `external_ip` field in your `group_vars`
 node_annotations:
   wire.com/external-ip: {{ access_ip }}
 ```
+And the `access_ip` is set in the inventory:
+```
+node0 ansible_host=.... ip=...  access_ip=...
+```
 
 If you are hosting Kubernetes through other means you can annotate your nodes manually:
 ```
