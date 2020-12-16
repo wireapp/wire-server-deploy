@@ -22,6 +22,11 @@ helm install sftd charts/std \
   --set tls.issuerRef.name=letsencrypt-staging
 ```
 
+the `host` option will be used to set up an `Ingress` object.
+
+The domain in `host` must point to the public IP you have deployed to handle
+incoming traffic to your cluster. This is environment-specific.
+
 You can switch between `cert-manager` and own-provided certificates at any
 time. Helm will delete the `sftd` secret automatically and then cert-manager
 will create it instead.
