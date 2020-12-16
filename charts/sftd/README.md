@@ -7,7 +7,7 @@ Replace `example.com` with your own domain here.
 Using your own certificates:
 
 ```
-helm install sftd charts/std  \
+helm install sftd wire/sftd  \
   --set host=sftd.example.com \
   --set allowOrigin=https://webapp.example.com \
   --set-file tls.crt=/path/to/tls.crt \
@@ -16,7 +16,7 @@ helm install sftd charts/std  \
 
 Using Cert-manager:
 ```
-helm install sftd charts/std \
+helm install sftd wire/sftd \
   --set host=example.com \
   --set allowOrigin=https://webapp.example.com \
   --set tls.issuerRef.name=letsencrypt-staging
