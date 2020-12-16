@@ -7,6 +7,10 @@ is *not* optional even if federation is not used.
 Please update your `values/wire-server/values.yaml` to set `brig.optSettings.setFederationDomain`
 and `galley.settings.federationDomain` (Note the slightly different option name).
 
+**NOTE**: These changes apply to chart version **0.129.0** and later eventhough
+this release was made later than that **0.129.0** chart was published. We're sorry for the
+inconvenience.
+
 # 2020-12-07
 
 ## Update instructions
