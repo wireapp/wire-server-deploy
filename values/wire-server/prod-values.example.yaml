@@ -17,7 +17,6 @@ elasticsearch-index:
     host: elasticsearch-external
   cassandra:
     host: cassandra-external
-
 brig:
   replicaCount: 3
 #  image:
@@ -41,6 +40,8 @@ brig:
       teamSettings: https://teams.example.com # change this (or unset if team settings are not used)
       teamCreatorWelcome: https://teams.example.com/login # change this
       teamMemberWelcome: https://wire.example.com/download # change this
+    optSettings:
+      setFederationDomain: example.com # change this
     emailSMS:
       general:
         emailSender: email@example.com # change this
@@ -73,6 +74,10 @@ brig:
 #      noProxyList:
 #        - "local.example.com"
 #        - "10.23.0.0/16"
+    optSettings:
+      # Sync the domain with the 'host' variable in the sftd chart
+      # uncomment this section if conference calling is not used
+      setSftStaticUrl: "https://sftd.example.om:443"
   turnStatic:
     v1:
       - "turn:turn01.example.com:80"
@@ -84,6 +89,7 @@ brig:
       - "turn:turn02.example.com:80?transport=tcp"
       - "turns:turn01.example.com:443?transport=tcp"
       - "turns:turn02.example.com:443?transport=tcp"
+
 
 proxy:
   replicaCount: 3
@@ -132,6 +138,7 @@ galley:
     settings:
       # prefix URI used when inviting users to a conversation by link
       conversationCodeURI: https://webapp.example.com/join/ # change this
+      federationDomain: example.com # change this
       # see #RefConfigOptions in `/docs/reference` (https://github.com/wireapp/wire-server/)
       featureFlags:
         sso: disabled-by-default
