@@ -41,14 +41,13 @@ brig:
       teamMemberWelcome: https://wire.example.com/download # change this
     optSettings:
       setFederationDomain: example.com # change this
+      # Sync the domain with the 'host' variable in the sftd chart
+      # uncomment this section if conference calling is not used
+      setSftStaticUrl: "https://sftd.example.om:443"
     emailSMS:
       general:
         emailSender: email@example.com # change this
         smsSender: "insert-sms-sender-for-twilio" # change this if SMS support is desired
-    optSettings:
-      # Sync the domain with the 'host' variable in the sftd chart
-      # uncomment this section if conference calling is not used
-      setSftStaticUrl: "https://sftd.example.om:443"
     smtp:
       host: demo-smtp # change this if you want to use your own SMTP server
       port: 25        # change this
