@@ -51,6 +51,7 @@ charts=(
   minio-external
   wire-server
   local-path-provisioner
+  sftd
   # Has a weird dependency on curl:latest. out of scope
   # wire-server-metrics
   # fluent-bit
