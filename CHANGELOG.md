@@ -1,5 +1,6 @@
-# NEXT
+# 2020-12-17
 
+## Update instructions
 A new mandatory option has been introduced to
 `brig` and `galley` which in the future will be used for Wire federation.  This domain name
 is *not* optional even if federation is not used.
@@ -7,9 +8,16 @@ is *not* optional even if federation is not used.
 Please update your `values/wire-server/values.yaml` to set `brig.optSettings.setFederationDomain`
 and `galley.settings.federationDomain` (Note the slightly different option name).
 
+Because federation is not enabled yet the value of this option does not really
+matter at this point, but we advise you to set it to the base domain of your
+wire instalation.
+
 **NOTE**: These changes apply to chart version **0.129.0** and later eventhough
 this release was made later than that **0.129.0** chart was published. We're sorry for the
 inconvenience.
+
+## Features
+* A chart has been added for setting up a single-node conferencing server (Also known as *SFT*) (#382)
 
 # 2020-12-07
 
