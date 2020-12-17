@@ -16,33 +16,27 @@
       - "dummy-bucket"
       - "assets"
       - "public"
-    layouts:
+    minio_layouts:
       # The first minio instance on this server.
-      layout1:
-        servicename: "minio-server1"
-        minio_server_addr: ":9000"
-        minio_server_datadirs: "/var/lib/minio-server1"
-        minio_server_envfile: "/etc/default/minio-server1"
+      server1:
+        server_addr: ":9000"
       # The second minio instance on this server.
-      layout2:
-        servicename: "minio-server2"
-        minio_server_addr: ":9092"
-        minio_server_datadirs: "/var/lib/minio-server2"
-        minio_server_envfile: "/etc/default/minio-server2"
+      server2:
+        server_addr: ":9092"
   roles:
     - role: ansible-minio
-      layout: layout1
+      minio_layout: server1
       tags:
         - minio
     - role: ansible-minio
-      layout: layout2
+      minio_layout: server2
       tags:
         - minio
   tasks:
     - name: "check which buckets exists"
       shell: "mc ls def"
       environment:
-        MC_HOST_def: "http://{{ minio_access_key }}:{{ minio_secret_key }}@localhost{{ layouts.layout1.minio_server_addr }}"
+        MC_HOST_def: "http://{{ minio_access_key }}:{{ minio_secret_key }}@localhost{{ minio_layouts.server1.server_addr }}"
       run_once: true
       register: check_bucket
       tags: bucket-create
@@ -50,14 +44,14 @@
     - name: create bucket
       shell: "mc mb def/{{ item }}"
       environment:
-        MC_HOST_def: "http://{{ minio_access_key }}:{{ minio_secret_key }}@localhost{{ layouts.layout1.minio_server_addr }}"
+        MC_HOST_def: "http://{{ minio_access_key }}:{{ minio_secret_key }}@localhost{{ minio_layouts.server1.server_addr }}"
       run_once: true
       with_items: "{{ bucket_names }}"
       when: item not in check_bucket.stdout
       tags: bucket-create
 
     - name: "add 'local' mc config alias with correct credentials"
-      shell: "mc config host add local http://localhost{{ layouts.layout1.minio_server_addr }} {{ minio_access_key }} {{ minio_secret_key }}"
+      shell: "mc config host add local http://localhost{{ minio_layouts.server1.server_addr }} {{ minio_access_key }} {{ minio_secret_key }}"
       tags: mc-config
 
     - name: "make the 'public' bucket world-accessible"
