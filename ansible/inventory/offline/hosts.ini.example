@@ -108,7 +108,7 @@
 # kubenode1
 # kubenode2
 # This node will run sftd. It is important to make it aware of its public IP if it's behind 1:1 NAT!
-# kubenode3 node_labels="wire.com/role=sftd" node_annotations="{'wire.com/external-ip': 'XXXX'}"
+# kubenode3 node_labels="{'wire.com/role': 'sftd'}" node_annotations="{'wire.com/external-ip': 'XXXX'}"
 
 # leave this group as is
 [k8s-cluster:children]
