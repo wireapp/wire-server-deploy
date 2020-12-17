@@ -38,8 +38,45 @@ server.
 You should configure `brig` to hand out the SFT server to clients by setting
 `brig.optSettings.setSftStaticUrl=https://sftd.example.com:443` on the `wire-server` chart
 
+## No public IP on default interface
 
-## Multiple sftd deployments in a single cluster
+Often on-prem or at certain cloud providers your nodes will not have directly routable public IP addresses
+but are deployed in 1:1 NAT.   This chart is able to auto-detect this scenario if your cloud providers adds
+an `ExternalIP` field to your kubernetes node objects.
+
+On on-prem you should set an `wire.com/external-ip` annotation on your kubernetes nodes so that sftd is aware
+of its external IP when it gets scheduled on a node.
+
+```
+node0 ansible_host=.... ip=...  node_annotations="{'wire.com/external-ip': 'aaa.xxx.yyy.zzz'}"
+```
+
+If you are hosting Kubernetes through other means you can annotate your nodes manually:
+```
+$ kubectl annotate node $HOSTNAME wire.com/external-ip=$EXTERNAL_IP
+```
+
+If only a subset of your node has external IPs, you can annotate the subset of nodes
+
+
+## Limiting SFTD to certain nodes
+
+If in the previous section for example not all your nodes _have_ an external IP you can use
+`nodeSelector` to limit sftd to be deployed to only nodes that have the corresponding  role assigned.
+
+E.g. in youe ansible inventory you could have:
+```
+node0 node_annotations="{'wire.com/external-ip': 'xxxx'}" node_labels="wire.com/role=sftd"
+```
+
+Then when installing the chart you can limit it to only run on nodes with the `wire.com/role=sftd` label:
+```
+helm install sftd-prod charts/sftd    --set 'nodeSelector.wire\.com/role=sftd' ...other-flags
+```
+
+
+## Multiple SFTD deployments in a single cluster
+
 Because sftd uses the `hostNetwork` and binds to the public IP of the node,
 there can only be one `sftd` pod running per node in the cluster.  Within a
 single `StatefulSet` kubernetes will make sure no two pods are scheduled on the
@@ -71,32 +108,6 @@ Then we can make two `sftd` deployments and make sure Kubernetes schedules them 
 ```
 helm install sftd-prod charts/sftd    --set 'nodeSelector.wire\.com/role=sftd-prod' ...other-flags
 helm install sftd-staging charts/sftd --set 'nodeSelector.wire\.com/role=sftd-staging' ...other-flags
-```
-
-## No public IP on default interface
-
-Often on-prem or at certain cloud providers your nodes will not have directly routable public IP addresses
-but are deployed in 1:1 NAT.   This chart is able to auto-detect this scenario if your cloud providers adds
-an `ExternalIP` field to your kubernetes node objects.
-
-On on-prem you should set an `wire.com/external-ip` annotation on your kubernetes nodes so that sftd is aware
-of its external IP when it gets scheduled on a node.
-
-If you use our kubespray playbooks to bootstrap kubernetes, you simply have to
-set the `external_ip` field in your `group_vars`
-```yaml
-# inventory/group_vars/k8s-cluster
-node_annotations:
-  wire.com/external-ip: {{ external_ip }}
-```
-And the `external_ip` is set in the inventory per node:
-```
-node0 ansible_host=.... ip=...  external_ip=aaa.xxx.yyy.zzz
-```
-
-If you are hosting Kubernetes through other means you can annotate your nodes manually:
-```
-$ kubectl annotate node $HOSTNAME wire.com/external-ip=$EXTERNAL_IP
 ```
 
 ## Port conflicts and `hostNetwork`
