@@ -36,6 +36,7 @@ while IFS= read -r chart; do
     -f ./values/nginx-ingress-services/prod-values.example.yaml \
     -f ./values/nginx-ingress-services/prod-secrets.example.yaml \
     -f ./values/wire-server/prod-values.example.yaml \
+    --set allowOrigin=dummy --set host=dummy --set tls.key=dummy --set tls.crt=dummy \
     -f ./values/wire-server/prod-secrets.example.yaml | yq -r '..|.image? | select(.)' | optionally_complain | sort -u
 
 
