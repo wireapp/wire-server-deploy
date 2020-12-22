@@ -1,3 +1,9 @@
+# 2020-12-21
+
+* brig: Add setExpiredUserCleanupTimeout to configmap (#399) see also: https://github.com/wireapp/wire-server/pull/1264
+* [helm] Remove duplicate fields from brig section in the example value files (#398)
+* Add spar to the integration tests for brig (#397)
+
 # 2020-12-17
 
 ## Update instructions
