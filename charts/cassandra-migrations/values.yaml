@@ -1,7 +1,0 @@
-images:
-  tag: 2.94.0
-  gundeck: quay.io/wire/gundeck-schema
-  brig: quay.io/wire/brig-schema
-  galley: quay.io/wire/galley-schema
-  spar: quay.io/wire/spar-schema
-  galleyMigrateData: quay.io/wire/galley-migrate-data

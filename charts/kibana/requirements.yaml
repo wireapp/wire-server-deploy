@@ -1,4 +1,0 @@
-dependencies:
-- name: kibana
-  version: 2.2.0
-  repository: https://charts.helm.sh/stable
