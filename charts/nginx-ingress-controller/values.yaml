@@ -9,6 +9,11 @@ nginx-ingress:
       http2-max-header-size: 32k
       proxy-buffer-size: 16k
       proxy-body-size: 1024m
+
+      # set server-tokens to false to hide server version information as showing
+      # it makes exploiting possible vulnerabilities easier
+      server-tokens: "false"
+
 # Normally, NodePort will listen to traffic on all nodes, and uses kube-proxy
 # to redirect to the node that actually runs nginx-ingress-controller. However
 # one problem with this is that this traffic is NAT'ed. This means that nginx
@@ -28,7 +33,7 @@ nginx-ingress:
 # redirect them to the correct service, whilst maintaining the source ip
 # address.  The ingress controller is sort of taking over the role of what
 # kube-proxy was doing before.
-# More information: 
+# More information:
 #   https://kubernetes.io/docs/tutorials/services/source-ip/#source-ip-for-services-with-typenodeport
 #   https://kubernetes.github.io/ingress-nginx/deploy/baremetal/
 #
