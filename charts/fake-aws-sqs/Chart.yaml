@@ -1,4 +1,0 @@
-apiVersion: v1
-description: Dummy ephemeral SQS service
-name: fake-aws-sqs
-version: 0.130.0
