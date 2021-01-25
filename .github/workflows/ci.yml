@@ -1,0 +1,18 @@
+on:
+  pull_request:
+  push:
+jobs:
+  build:
+    name: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          submodules: true
+      - uses: cachix/install-nix-action@v12
+      - uses: cachix/cachix-action@v8
+        with:
+          name: wire-server
+          signingKey: "${{ secrets.CACHIX_SIGNING_KEY }}"
+          authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
+      - run: nix-build -A env
