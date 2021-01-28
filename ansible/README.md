@@ -117,7 +117,7 @@ For `sft_servers_green`, `srv_announcer_active` must be `false`.
    ```bash
    dig SRV _sft._tcp.<env>.<domain>
    ```
-   
+
    If an old server is found even after TTL for the record has expired, it must
    be taken care of manually. It is safe to delete all the SRV records, they
    should get re-populated within 20 seconds.

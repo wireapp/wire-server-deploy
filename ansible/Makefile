@@ -3,32 +3,9 @@ ANSIBLE_DIR:=$(shell dirname $(realpath $(firstword $(MAKEFILE_LIST))))
 CAILLEACH_DIR:=$(abspath ${ANSIBLE_DIR}/../../cailleach)
 SHELL:=/usr/bin/env bash -eo pipefail
 
-default: download
-
-.PHONY: download
-download: download-ansible-roles download-kubespray download-cli-binaries
-
-.PHONY: download-kubespray
-download-kubespray:
-	poetry run ansible-playbook -i localhost, -c local download_kubespray.yml
-
-.PHONY: download-cli-binaries
-download-cli-binaries: download-ansible-roles
-	# assumes /usr/local/bin is writable and on your PATH
-	# assumes amd64 (change variables if needed)
-	poetry run ansible-playbook -i localhost, -c local download_cli_binaries.yml
-
-.PHONY: download-ansible-roles
-download-ansible-roles:
-	poetry run ansible-galaxy install -r requirements.yml
-
-.PHONY: download-ansible-roles-force
-download-ansible-roles-force:
-	poetry run ansible-galaxy install -r requirements.yml --force
-
 .PHONY: provision-sft
 provision-sft: check-env
-	poetry run ansible-playbook ${ANSIBLE_DIR}/provision-sft.yml  \
+	ansible-playbook ${ANSIBLE_DIR}/provision-sft.yml  \
 		-i ${ENV_DIR}/gen/terraform-inventory.yml \
 		-i ${ENV_DIR}/inventory \
 		--private-key ${ENV_DIR}/operator-ssh.dec \
@@ -36,7 +13,7 @@ provision-sft: check-env
 
 .PHONY: bootstrap
 bootstrap: check-env
-	poetry run ansible-playbook ${ANSIBLE_DIR}/bootstrap.yml \
+	ansible-playbook ${ANSIBLE_DIR}/bootstrap.yml \
 		-i ${ENV_DIR}/gen/terraform-inventory.yml \
 		-i ${ENV_DIR}/inventory \
 		--private-key ${ENV_DIR}/operator-ssh.dec \
@@ -45,7 +22,7 @@ bootstrap: check-env
 # FUTUREWORK: https://github.com/zinfra/backend-issues/issues/1763
 .PHONY: kube-minio-static-files
 kube-minio-static-files: check-env
-	poetry run ansible-playbook ${ANSIBLE_DIR}/kube-minio-static-files.yml \
+	ansible-playbook ${ANSIBLE_DIR}/kube-minio-static-files.yml \
 		-i ${ENV_DIR}/gen/terraform-inventory.yml \
 		-i ${ENV_DIR}/inventory \
 		--private-key ${ENV_DIR}/operator-ssh.dec \
@@ -64,7 +41,7 @@ endif
 ifndef LOG_SINCE
 	$(error please define LOG_SINCE)
 endif
-	poetry run ansible-playbook ${ANSIBLE_DIR}/get-logs.yml \
+	ansible-playbook ${ANSIBLE_DIR}/get-logs.yml \
 		-i ${ENV_DIR}/gen/terraform-inventory.yml \
 		-i ${ENV_DIR}/inventory.yml \
 		--private-key ${ENV_DIR}/operator-ssh.dec \
