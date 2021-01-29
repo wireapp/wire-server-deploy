@@ -1,3 +1,21 @@
+# NEXT
+
+## Breaking changes
+
+* charts have been moved to wire-server. Chart lifecycle is now tied to
+  wire-server instead and is decoupled from the underlying platform. Charts in wire-server
+  should be installed with helm 3.
+
+* Our kubespray reference implementation has been bumped to kuberspray 2.14.2
+  and kubernetes 1.18.2. This allows us to use Kubespray's support for offline deployments
+  and new Kubernetes API features.
+
+  If you were using our reference playbooks for setting up kubernetes, there is
+  no direct upgrade path. Instead you should set up a new cluster; migrate the
+  deployments there, and then point to the new cluster. This is rather easy at
+  the moment as we only run stateless services in Kubernetes at this point.
+
+
 # 2020-12-17
 
 ## Update instructions
