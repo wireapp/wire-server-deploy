@@ -23,6 +23,6 @@ jobs:
           signingKey: "${{ secrets.CACHIX_SIGNING_KEY }}"
           authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
       - run: nix-build -A env
-      - run: terraform --version
+      - run: which terraform
       - name: Check terraform init 
-        run: cd terraform/environment && terraform init --backend=false
+        run: nix-shell default.nix -A env --command "cd terraform/environment && terraform init --backend=false"
