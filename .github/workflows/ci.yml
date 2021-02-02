@@ -1,6 +1,8 @@
 on:
-  pull_request:
   push:
+    branches: [master, develop]
+  pull_request:
+    branches: [master, develop]
 jobs:
   build:
     name: build
