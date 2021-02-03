@@ -21,7 +21,3 @@ variable "location" {
 variable "node_count"  {
   type = number
 }
-
-variable "root_domain" {
-  type = string
-}
