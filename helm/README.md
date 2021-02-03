@@ -5,7 +5,7 @@ but may or may not include *stateful* backing services (e.g. Cassandra or Elasti
 
 The respective Kubernetes objects are defined in Helm charts. This allows to template and transfer them. 
 The charts themselves are defined in [wire-server](https://github.com/wireapp/wire-server/tree/master/charts)
-and uploaded two the [release](https://s3-eu-west-1.amazonaws.com/public.wire.com/charts) or
+and uploaded to the [release](https://s3-eu-west-1.amazonaws.com/public.wire.com/charts) or
 [develop](https://s3-eu-west-1.amazonaws.com/public.wire.com/charts-develop) Helm repositories.
 
 To describe a deployment in a declarative fashion a tool called [*Helmfile*](https://github.com/roboll/helmfile) is
@@ -18,8 +18,7 @@ An 'environment' is supposed to represent all the setup required for the Wire
 platform to function.
 
 'Deploying' an environment means creating the respective Objects on top of Kubernetes
-to instantiate all the services that together represent the Wire backend.
-playbooks against servers specified in an inventory, resulting in a fully This action
+to instantiate all the services that together represent the Wire backend. This action
 can be re-run as often as you want (e.g. in case you change some variables or upgrade
 to new versions).
 

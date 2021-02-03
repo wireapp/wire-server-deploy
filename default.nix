@@ -26,6 +26,7 @@ in {
       pkgs.awscli
       pkgs.gnumake
       pkgs.gnupg
+      pkgs.helmfile
       pkgs.kubectl
       pkgs.kubernetes-helm
       pkgs.moreutils
