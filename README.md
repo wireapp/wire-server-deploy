@@ -20,7 +20,7 @@ All the documentation on how to make use of this repository is hosted on https:/
 
 ## Contents
 
-* `ansible/` contains ansible roles and playbooks to install kuberentes, cassandra, etc. See the [Administrator's Guide](https://docs.wire.com) for more info.
+* `ansible/` contains Ansible roles and playbooks to install Kubernetes, Cassandra, etc. See the [Administrator's Guide](https://docs.wire.com) for more info.
 * `charts/` contains helm charts that can be installed on kubernetes. The charts are mirroed to S3 and can be used with `helm repo add wire https://s3-eu-west-1.amazonaws.com/public.wire.com/charts`. See the [Administrator's Guide](https://docs.wire.com) for more info.
 * `terraform/` contains some examples for provisioning servers. See the [Administrator's Guide](https://docs.wire.com) for more info.
 * `bin/` contains some helper bash scripts. Some are used in the [Administrator's Guide](https://docs.wire.com) when installing wire-server, and some are used for developers/maintainers of this repository.
