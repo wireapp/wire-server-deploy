@@ -24,4 +24,4 @@ jobs:
           authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
       - run: nix-build -A env
       - name: Check terraform init 
-        run: $(nix-build -A env)/bin/terraform
+        run: cd terraform/environment && $(nix-build -A env)/bin/terraform init --backend=false
