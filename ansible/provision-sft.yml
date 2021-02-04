@@ -1,6 +1,7 @@
 # This role requires access to s3 buckets and has a few variables that need to
 # be set. When run with any variables missing, it will complain about those
 # variables.
+# To replace hosts: localhost as suggested in http://willthames.github.io/2018/07/01/connection-local-vs-delegate_to-localhost.html
 - hosts: fakehost
   connection: local
   vars:
