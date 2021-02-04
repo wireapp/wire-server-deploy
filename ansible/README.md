@@ -154,7 +154,7 @@ environment = "staging"
 1. Monitor `sft_calls` metric to make sure that there are no calls left.
 1. Setup instance for deletion by removing it from `sft_server_names_blue`:
    ```tfvars
-   sft_server_names_blue: ["2", 5"]
+   sft_server_names_blue: ["2", "5"]
    ```
 1. Run terraform (this will again wait for approval)
    ```bash
@@ -166,7 +166,7 @@ environment = "staging"
 1. Remove the server from `sft_server_names_blue` and add a new name by
    replacing the first line like this:
    ```tfvars
-   sft_server_names_blue: ["2", 5"]
+   sft_server_names_blue: ["2", "5"]
    ```
 1. Run terraform (this will wait for approval)
    ```bash
@@ -184,7 +184,7 @@ Assuming:
    sft_server_type_green = "cx21" # defaults to "cx11"
    environment = "staging"
    ```
-1. We want to make all th servers "cx31".
+1. We want to make all the servers "cx31".
 1. The blue group is active, green is not.
 
 We can do it like this:
