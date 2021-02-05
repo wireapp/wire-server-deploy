@@ -1,0 +1,29 @@
+on:
+  push:
+    branches: [master, develop]
+  pull_request:
+    branches: [master, develop]
+jobs:
+  mirror-apt:
+    name: Mirror apt repositories
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          submodules: true
+      - uses: cachix/install-nix-action@v12
+      - uses: cachix/cachix-action@v8
+        with:
+          name: wire-server
+          signingKey: "${{ secrets.CACHIX_SIGNING_KEY }}"
+          authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
+      - name: Install nix environment
+        run: nix-env -f default.nix -i -A env
+      - name: Mirror apt repository
+        run: mirror-apt apt-mirror
+        env:
+          GPG_PRIVATE_KEY: '${{ secrets.GPG_PRIVATE_KEY }}'
+      - name: Compress apt-mirror
+        run: tar cvzf apt-mirror.tgz apt-mirror
+
+

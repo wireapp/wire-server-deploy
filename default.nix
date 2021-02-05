@@ -41,6 +41,8 @@ in {
       sops
       terraform_0_13
       yq
+      mirror-apt
+      generate-gpg1-key
     ] ++ [ profileEnv];
   };
 }
