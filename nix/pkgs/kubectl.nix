@@ -2,16 +2,16 @@
 
 stdenv.mkDerivation rec {
   pname = "kubectl";
-  version = "1.18.10";
+  version = "1.19.7";
 
   src = {
     x86_64-linux = fetchurl {
       url = "https://storage.googleapis.com/kubernetes-release/release/v${version}/bin/linux/amd64/kubectl";
-      sha256 = "0mhlpailnfq5c6i9ka2ws5z8grylrq5va4qcb7g6icbandf48p5j";
+      sha256 = "15vjydl91h0igvps2zcxj9bjyksb88ckavdwxmmmnpjpwaxv6vnl";
     };
     x86_64-darwin = fetchurl {
       url = "https://storage.googleapis.com/kubernetes-release/release/v${version}/bin/darwin/amd64/kubectl";
-      sha256 = "0nz6f44qh16di6249qwczvr1mpmhvzbi0kd1himxlhsp34qfr993";
+      sha256 = "1gpn6l8l5zznkrvydjv5km906adniid4wpsqy3qpdzlmgpscx1ir";
     };
   }."${stdenv.targetPlatform.system}";
 
