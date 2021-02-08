@@ -2,11 +2,11 @@
 # when we need to.
 resource "hcloud_server" "node" {
   count       = var.node_count
-  name        = "${ var.environment }-kubenode${ format("%02d", count.index + 1 )}"
-  image       = var.image
-  server_type = var.server_type
+  name        = "${ var.cluster_name }-kubenode${ format("%02d", count.index + 1 )}"
+  image       = var.default_image
+  server_type = var.default_server_type
   ssh_keys    = var.ssh_keys
-  location    = var.location
+  location    = var.default_location
 
   labels = {
     # FUTUREWORK: This label name is very undecriptive and it should be renamed

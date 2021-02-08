@@ -1,20 +1,23 @@
-variable "environment" {
+variable "cluster_name" {
   type = string
 }
 
-variable "image" {
+variable "default_image" {
+  type = string
   default = "ubuntu-18.04"
 }
 
-variable "server_type" {
+variable "default_server_type" {
   type = string
+  default = "cx51"
 }
 
 variable "ssh_keys" {
   type = set(string)
 }
 
-variable "location" {
+variable "default_location" {
+  type = string
   default = "nbg1"
 }
 
