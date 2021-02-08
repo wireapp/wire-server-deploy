@@ -15,7 +15,7 @@ output "inventory" {
       "hosts" = { for instance in concat(local.sft_instances_blue, local.sft_instances_green): instance.hostname => {
         "ansible_host" = instance.ipaddress
         "sft_fqdn" = instance.fqdn
-        "srv_announcer_record_target": instance.fqdn
+        "srv_announcer_record_target" = instance.fqdn
         "srv_announcer_zone_domain" = var.root_domain
         "srv_announcer_aws_key_id" = module.sft[0].sft.aws_key_id
         "srv_announcer_aws_access_key" = module.sft[0].sft.aws_access_key
@@ -36,6 +36,10 @@ output "inventory" {
     "etcd" = {"hosts" = local.kubernetes_hosts}
     "minio" = {"hosts" = local.kubernetes_hosts}
     "k8s-cluster" = {
+      "children" = {
+        "kube-master" = {}
+        "kube-node" = {}
+      }
       "hosts" = {for node in local.kubernetes_nodes :
         node.hostname => {
           "ansible_host" = node.ipaddress
