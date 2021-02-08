@@ -25,7 +25,6 @@ module "hetzner_kubernetes" {
   source = "../modules/hetzner-kubernetes"
 
   environment = var.environment
-  root_domain = var.root_domain
   server_type = var.kubernetes_server_type
   ssh_keys = local.hcloud_ssh_keys
   node_count = var.kubernetes_node_count

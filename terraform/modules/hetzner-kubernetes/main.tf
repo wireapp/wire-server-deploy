@@ -15,13 +15,3 @@ resource "hcloud_server" "node" {
     member = "etcd${ format("%02d", count.index + 1 )}"
   }
 }
-
-module "dns_records" {
-  source = "../aws-dns-records"
-
-  environment = var.environment
-
-  zone_fqdn = var.root_domain
-  ips = [ for node in hcloud_server.node: node.ipv4_address ]
-  create_spf_record = true
-}

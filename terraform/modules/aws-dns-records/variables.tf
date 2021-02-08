@@ -1,9 +1,3 @@
-variable "environment" {
-  type        = string
-  description = "name of the environment as a scope for the created resources (default: 'dev'; example: 'prod', 'staging')"
-  default     = "dev"
-}
-
 variable "zone_fqdn" {
   type        = string
   description = "FQDN of the DNS zone root (required; example: example.com; will append: '.')"
@@ -11,27 +5,13 @@ variable "zone_fqdn" {
 
 variable "domain" {
   type        = string
-  description = "name of the sub-tree all given subdomains are append to (defaults to $environment; example: $subdomains[0].$domain.$zone_fqdn)"
+  description = "name of the sub-tree all given subdomains are append to (default: not set; example: $subdomains[0].$domain.$zone_fqdn)"
   default     = null
 }
 
 variable "subdomains" {
   type        = list(string)
-  description = "list of sub-domains that will be registered under the given root domain"
-  default = [
-    "nginz-https",
-    "nginz-ssl",
-    "webapp",
-    "assets",
-    "account",
-    "teams"
-  ]
-}
-
-variable "inject_addition_subtree" {
-  type        = bool
-  description = "flag to indicate whether an additional level of depth based on environment name is injected into the DNS tree (e.g. webapp.dev.example.com vs. webapp.example.com"
-  default     = true
+  description = "list of sub-domains that will be registered directly under the given zone or otherwise under domain if defined"
 }
 
 variable "ips" {
