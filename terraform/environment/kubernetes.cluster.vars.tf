@@ -7,7 +7,7 @@ variable "k8s_cluster" {
   #   load_balancer = optional(bool)
   #   machine_groups = list(object({
   #     group_name = string
-  #     machine_ids = list(string)
+  #     machine_count = optional(number)
   #     machine_type = string
   #     component_classes = list(string)
   #     volume = optional(object({

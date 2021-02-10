@@ -1,10 +1,10 @@
 locals {
   machines = flatten([
     for g in var.k8s_cluster.machine_groups : [
-      for mid in g.machine_ids : merge(
-        # NOTE: destruct group configuration and replace 'machine_ids' with 'machine_id'
-        { for k,v in g : k => v if k != "machine_ids" },
-        { machine_id = mid }
+      for mid in range(1, 1 + lookup(g, "machine_count", 1)) : merge(
+        # NOTE: destruct group configuration and removing 'machine_count'
+        { for k,v in g : k => v if k != "machine_count" },
+        { machine_id = format("%02d", mid) }
       )
     ]
   ])
