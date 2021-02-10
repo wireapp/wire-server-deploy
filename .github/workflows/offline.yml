@@ -1,0 +1,38 @@
+on:
+  push:
+    branches: [master, develop]
+  pull_request:
+    branches: [master, develop]
+jobs:
+  offline:
+    name: Prepare offline package
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          submodules: true
+      - uses: cachix/install-nix-action@v12
+      - uses: cachix/cachix-action@v8
+        with:
+          name: wire-server-deploy
+          signingKey: "${{ secrets.CACHIX_SIGNING_KEY }}"
+          authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
+
+      - name: Mirror apt repository
+        run: nix run -f default.nix pkgs.mirror-apt -c  mirror-apt assets/debs
+        env:
+          GPG_PRIVATE_KEY: '${{ secrets.GPG_PRIVATE_KEY }}'
+
+      - name: Compress assets
+        run: tar cvzf assets.tgz assets
+
+      - name: Build and upload offline docker image containing all dependencies
+        run: |
+          container=$(nix-build --no-out-link -A container)
+          skopeo copy --dest-creds "$DOCKER_LOGIN" \
+            docker-archive:"$container" \
+            "docker://quay.io/wire/wire-server-deploy$(git rev-parse HEAD)"
+        env:
+          DOCKER_LOGIN: '${{ secrets.DOCKER_LOGIN }}'
+
+

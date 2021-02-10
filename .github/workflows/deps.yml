@@ -1,0 +1,32 @@
+on:
+  schedule:
+    - cron: '0 8 * * *'
+  # Allow triggering dep update manually
+  workflow_dispatch:
+jobs:
+  update-dependencies:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - uses: cachix/install-nix-action@v12
+      with:
+        name: wire-server
+        signingKey: "${{ secrets.CACHIX_SIGNING_KEY }}"
+        authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
+    - name: Niv update
+      run: |
+        nix run -f . niv -c niv update
+    - name: Container update
+      run: |
+        nix run -f . nix-prefetch-docker -c nix-prefetch-docker alpine --image-tag 3 > ./nix/docker-alpine.nix
+    - name: Try build
+      run: nix-build -A env
+
+    # TODO: This won't trigger further CI runs yet unless we have a Personal
+    # Access Token. Github limitation. Hence we're running `nix-build -A env`
+    # as a simple smoke-test
+    - name: Create Pull Request if there was a change
+      uses: peter-evans/create-pull-request@v3.6.0
+      with:
+        title: "chore: update dependencies"
+        branch: "chore/update-dependencies"
