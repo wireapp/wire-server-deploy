@@ -1,10 +1,21 @@
-module "hetzner_kubernetes" {
-  count =  min(1, var.kubernetes_node_count)
+locals {
+  machines = flatten([
+    for g in var.k8s_cluster.machine_groups : [
+      for mid in g.machine_ids : merge(
+        # NOTE: destruct group configuration and replace 'machine_ids' with 'machine_id'
+        { for k,v in g : k => v if k != "machine_ids" },
+        { machine_id = mid }
+      )
+    ]
+  ])
+}
 
-  source = "../modules/hetzner-kubernetes"
+module "hetzner_k8s_cluster" {
+  for_each = toset(var.k8s_cluster.cloud == "hetzner" ? [var.environment] : [])
 
-  cluster_name = var.environment
-  default_server_type = var.kubernetes_server_type
+  source = "./../modules/hetzner-kubernetes"
+
+  cluster_name = each.key
+  machines = local.machines
   ssh_keys = local.hcloud_ssh_keys
-  node_count = var.kubernetes_node_count
 }

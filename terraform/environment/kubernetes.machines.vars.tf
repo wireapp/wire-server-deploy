@@ -1,15 +1,20 @@
-variable "kubernetes_node_count" {
-  type = number
-  default = 0
-  validation {
-    condition = (
-      var.kubernetes_node_count == 0 ||
-      var.kubernetes_node_count % 2 == 1
-    )
-    error_message = "The kubernetes_node_count must be 0 or an odd number. ETCD does not like even numbers."
-  }
-}
-
-variable "kubernetes_server_type" {
-  default = "cx51"
+# FUTUREWORK: replace 'any' by implementing https://www.terraform.io/docs/language/functions/defaults.html
+#
+variable "k8s_cluster" {
+  description = "represents Kubernetes cluster"
+  # type = object({
+  #   cloud = string
+  #   machine_groups = list(object({
+  #     group_name = string
+  #     machine_ids = list(string)
+  #     machine_type = string
+  #     component_classes = list(string)
+  #     volume = optional(object({
+  #       size = number
+  #       format = optional(string)
+  #     }))
+  #   }))
+  # })
+  type = any
+  default = {}
 }

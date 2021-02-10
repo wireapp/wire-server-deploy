@@ -1,24 +1,26 @@
 locals {
-  kubernetes_nodes = flatten(module.hetzner_kubernetes[*].nodes)
-  kubernetes_hosts = {for node in local.kubernetes_nodes : node.hostname => {}}
+  cluster_machines = length(module.hetzner_k8s_cluster) > 0 ? lookup(module.hetzner_k8s_cluster[var.environment], "machines", []) : []
 }
 
 locals {
   k8s_cluster_inventory = {
-    kube-master  = { hosts = local.kubernetes_hosts }
-    kube-node = { hosts = local.kubernetes_hosts }
-    etcd = { hosts = local.kubernetes_hosts }
-    minio = { hosts = local.kubernetes_hosts }
+    kube-master = { hosts = { for m in local.cluster_machines : m.hostname => {} if contains(m.component_classes, "controlplane" ) } }
+    kube-node = { hosts = { for m in local.cluster_machines : m.hostname => {} if contains(m.component_classes, "node" ) } }
+    etcd = { hosts = { for m in local.cluster_machines : m.hostname => {} if contains(keys(m), "etcd_member_name" ) } }
+    minio = { hosts = { for m in local.cluster_machines : m.hostname => {} if contains(m.component_classes, "minio" ) } }
     k8s-cluster = {
       children = {
         kube-master = {}
         kube-node = {}
       }
-      hosts = {for node in local.kubernetes_nodes :
-        node.hostname => {
-          ansible_host = node.ipaddress
-          etcd_member_name = node.etcd_member_name
-        }
+      hosts = {for m in local.cluster_machines :
+        m.hostname => merge(
+          {
+            ansible_host = m.public_ipv4
+            ip = m.private_ipv4
+          },
+          contains(keys(m), "etcd_member_name" ) ? { etcd_member_name = m.etcd_member_name } : {}
+        )
       }
       vars = {
         ansible_ssh_user = "root"
