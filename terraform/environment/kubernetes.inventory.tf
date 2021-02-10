@@ -1,6 +1,6 @@
 locals {
-  cluster_machines = length(module.hetzner_k8s_cluster) > 0 ? lookup(module.hetzner_k8s_cluster[var.environment], "machines", []) : []
-}
+  cluster_machines = length(module.hetzner_k8s_cluster) > 0 ? lookup(module.hetzner_k8s_cluster[var.environment], "machines", []) : tolist([])
+}                                                      # NOTE: TF weirdness - 'machines' is a list but '[]' appears to be a tuple  ----^
 
 locals {
   k8s_cluster_inventory = {

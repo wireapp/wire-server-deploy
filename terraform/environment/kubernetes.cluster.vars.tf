@@ -4,6 +4,7 @@ variable "k8s_cluster" {
   description = "represents Kubernetes cluster"
   # type = object({
   #   cloud = string
+  #   load_balancer = optional(bool)
   #   machine_groups = list(object({
   #     group_name = string
   #     machine_ids = list(string)

@@ -17,5 +17,6 @@ module "hetzner_k8s_cluster" {
 
   cluster_name = each.key
   machines = local.machines
+  with_load_balancer = lookup(var.k8s_cluster, "load_balancer", false)
   ssh_keys = local.hcloud_ssh_keys
 }

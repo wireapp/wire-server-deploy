@@ -6,8 +6,6 @@ module "kubernetes-dns-records" {
   zone_fqdn = var.root_domain
   domain = var.environment
   subdomains = var.sub_domains
-  ips = [
-    for m in local.cluster_machines : m.public_ipv4 if contains(m.component_classes, "node")
-  ]
+  ips = module.hetzner_k8s_cluster[var.environment].ips
   create_spf_record = var.create_spf_record
 }
