@@ -17,7 +17,10 @@ mkdir -p assets/containers-{helm,other,system}
 install -m755 "$container_image" assets/containers-other/
 
 # Build the debs and publish them to assets/debs
-# mirror-apt assets/debs
+mirror-apt assets/debs
+
+fingerprint=$(echo "$GPG_PRIVATE_KEY" | gpg --with-colons --import-options show-only --import --fingerprint  | awk -F: '$1 == "fpr" {print $10; exit}')
+
 
 # Copy the binaries to assets/binaries
 mkdir -p assets/binaries
@@ -86,6 +89,7 @@ charts=(
 # done | list-helm-containers | create-container-dump assets/containers-helm
 #
 # cp -R values assets/
-# cp -R ansible assets/
+cp -R ansible assets/
+echo "docker_ubuntu_repo_repokey: '${fingerprint}'" > assets/ansible/inventory/offline/group_vars/all/key.yml
 
 echo "Done"

@@ -7,11 +7,20 @@
 
 - import_playbook: roles-external/kubespray/cluster.yml
 
+- hosts: k8s-cluster
+  tasks:
+    - name: Annotate nodes
+      command: "kubectl annotate node --overwrite {{ inventory_hostname }} {{ item.key }}={{ item.value }}"
+      with_dict: "{{ node_annotations | default({}) }}"
+
+- import_playbook: kubernetes_logging.yml
+
 - name: 'Bringing kubeconfig in place'
   hosts: k8s-cluster
   become: no
   tasks:
     - delegate_to: localhost
+      when: not offline
       block:
       - name: "Checking if 'kubeconfig' file already exists"
         stat:
@@ -31,10 +40,3 @@
   roles:
     - etcd-helpers
 
-- hosts: k8s-cluster
-  tasks:
-    - name: Annotate nodes
-      command: "kubectl annotate node --overwrite {{ inventory_hostname }} {{ item.key }}={{ item.value }}"
-      with_dict: "{{ node_annotations | default({}) }}"
-
-- import_playbook: kubernetes_logging.yml

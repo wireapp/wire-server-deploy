@@ -1,0 +1,29 @@
+- name: Seed system containers
+  hosts: k8s-cluster:etcd
+  tags: system-containers
+  tasks:
+    - name: load containers
+      shell: |
+        for container in $(curl -q {{ assethost_host }}/containers-system/index.txt);do
+          curl -q "{{ assethost_host }}/containers-system/$container" | docker load
+        done
+
+- name: Download helm containers
+  hosts: k8s-cluster
+  tags: containers-helm
+  tasks:
+    - name: load containers
+      shell: |
+        for container in $(curl -q {{ assethost_host }}/containers-helm/index.txt);do
+          curl -q "{{ assethost_host }}/containers-helm/$container" | docker load
+        done
+
+- name: Download restund container
+  hosts: restund
+  tags: restund-containers
+  tasks:
+    - name: load containers
+      shell: |
+        for container in $(curl -q {{ assethost_host }}/containers-other/index.txt);do
+          curl -q "{{ assethost_host }}/containers-other/$container" | docker load
+        done
