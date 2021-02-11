@@ -19,12 +19,16 @@ install -m755 "$container_image" assets/containers-other/
 # Build the debs and publish them to assets/debs
 mirror-apt assets/debs
 
+(cd assets; tar czf debs.tgz debs)
+
 fingerprint=$(echo "$GPG_PRIVATE_KEY" | gpg --with-colons --import-options show-only --import --fingerprint  | awk -F: '$1 == "fpr" {print $10; exit}')
 
+echo "$fingerprint"
 
 # Copy the binaries to assets/binaries
 mkdir -p assets/binaries
 install -m755 "$(nix-build --no-out-link -A pkgs.wire-binaries)/"* assets/binaries/
+(cd assets; tar czf binaries.tgz binaries)
 
 
 function list-system-containers() {
@@ -51,9 +55,12 @@ EOF
 }
 
 list-system-containers | create-container-dump assets/containers-system
+(cd assets; tar czf containers-system.tgz containers-system)
 
 # Used for ansible-restund role
 echo "quay.io/wire/restund:0.4.14w7b1.0.47" | create-container-dump assets/containers-other
+(cd assets; tar czf containers-other.tgz containers-other)
+
 
 charts=(
   # backoffice
@@ -87,6 +94,8 @@ charts=(
 # for chart in "${charts[@]}"; do
 #   echo "wire/$chart"
 # done | list-helm-containers | create-container-dump assets/containers-helm
+# tar czf assets/containers-helm.tgz assets/containers-helm
+
 #
 # cp -R values assets/
 cp -R ansible assets/
