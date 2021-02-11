@@ -1,32 +1,42 @@
 - name: Copy over binaries, debs and container images to the asset host and host them
   hosts: assethost
-  tags:
-    - debs
-    - binaries
   tasks:
     - file:
         path: /opt/assets
         state: directory
     - name: Copy debs
-      copy:
-        src: ../debs/
-        dest: /opt/assets/debs
+      unarchive:
+        src: ../debs.tgz
+        dest: /opt/assets
+      tags:
+        - debs
     - name: Copy binaries
-      copy:
-        src: ../binaries/
-        dest: /opt/assets/binaries
+      unarchive:
+        src: ../binaries.tgz
+        dest: /opt/assets
+      tags:
+        - binaries
     - name: Copy system containers
-      copy:
-        src: ../containers-system
-        dest: /opt/assets/
+      unarchive:
+        src: ../containers-system.tgz
+        dest: /opt/assets
+      tags:
+        - containers-system
+        - containers
     - name: Copy helm containers
-      copy:
-        src: ../containers-helm
-        dest: /opt/assets/
+      unarchive:
+        src: ../containers-helm.tgz
+        dest: /opt/assets
+      tags:
+        - containers-helm
+        - containers
     - name: Copy other containers
-      copy:
-        src: ../containers-other
-        dest: /opt/assets/
+      unarchive:
+        src: ../containers-other.tgz
+        dest: /opt/assets
+      tags:
+        - containers-other
+        - containers
     - copy:
         src: files/serve-assets.service
         dest: /etc/systemd/system/serve-assets.service
