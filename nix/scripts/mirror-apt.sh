@@ -49,9 +49,13 @@ packages=(
 # shellcheck disable=SC2001
 packages_=$(echo "${packages[@]}" | sed 's/\s/ \| /g')
 
+echo "$packages_"
+
 # NOTE: kubespray pins the exact docker and containerd versions that it
 # installs. This is kept in sync with kubespray manually.
-docker_packages="docker-ce (% 5:19.03.15*) | docker-ce-cli (% 5:19.03.15*) | containerd.io (% 1.3.9*)"
+# See roles/container-engine/docker/vars/ubuntu.yml
+# See roles/container-engine/containerd-common/vars/ubuntu.yml
+docker_packages="docker-ce (= 5:19.03.14~3-0~ubuntu-bionic) | docker-ce-cli (= 5:19.03.14~3-0~ubuntu-bionic) | containerd.io (= 1.3.9-1)"
 
 GNUPGHOME=$(mktemp -d)
 export GNUPGHOME
@@ -77,8 +81,8 @@ $gpg --list-keys
 curl 'https://keyserver.ubuntu.com/pks/lookup?op=get&search=0x790bc7277767219c42c86f933b4fe6acc0b21f32' | $gpg --import
 curl https://download.docker.com/linux/ubuntu/gpg | $gpg --import
 
-$aptly mirror create -architectures=amd64 -filter="${packages_}" -filter-with-deps bionic http://de.archive.ubuntu.com/ubuntu/ bionic main
-$aptly mirror create -architectures=amd64 -filter="${packages_}" -filter-with-deps bionic-security http://de.archive.ubuntu.com/ubuntu/ bionic-security main
+$aptly mirror create -architectures=amd64 -filter="${packages_}" -filter-with-deps bionic http://de.archive.ubuntu.com/ubuntu/ bionic main universe
+$aptly mirror create -architectures=amd64 -filter="${packages_}" -filter-with-deps bionic-security http://de.archive.ubuntu.com/ubuntu/ bionic-security main universe
 $aptly mirror create -architectures=amd64 -filter="${docker_packages}" -filter-with-deps docker-ce https://download.docker.com/linux/ubuntu bionic stable
 
 $aptly mirror update bionic

@@ -42,8 +42,11 @@ rec {
       sops
       terraform_0_13
       yq
+      create-container-dump
+      list-helm-containers
       mirror-apt
       generate-gpg1-key
+      kubeadm
     ] ++ [ profileEnv];
   };
 
