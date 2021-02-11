@@ -1,0 +1,144 @@
+# In this section, add all machines in this installation.
+#
+# Set ansible_host=XXXX to their IP address. If you have internal and external
+# ip addresses, use the internal ones here.
+#
+# <hostname> ansible_host=<internal_ip>
+[all]
+# kubenode1 ansible_host=XXXX
+# kubenode2 ansible_host=XXXX
+# kubenode3 ansible_host=XXXX
+#
+# # only needed if you want to have separate etcd nodes.
+# # otherwise, just add the kubenodes to the etcd group
+# etcd1 ansible_host=XXXX
+# etcd2 ansible_host=XXXX
+# etcd3 ansible_host=XXXX
+#
+# restund1 ansible_host=XXXX
+# restund2 ansible_host=XXXX
+
+# cassandra1 ansible_host=XXXX
+# cassandra2 ansible_host=XXXX
+# cassandra3 ansible_host=XXXX
+
+# elasticsearch1 ansible_host=XXXX
+# elasticsearch2 ansible_host=XXXX
+# elasticsearch3 ansible_host=XXXX
+#
+# minio1 ansible_host=XXXX
+# minio2 ansible_host=XXXX
+# minio3 ansible_host=XXXX
+#
+# If you are in an offline environment, add an assethost here, from which
+# artifacts are served
+# assethost ansible_host=XXXX
+
+# If you need to tunnel ssh connections through a bastion host (because your
+# nodes are not directly reachable from the machine running ansible), define a
+# bastion host as well, and uncomment the [bastion] section below.
+#
+# bastion ansible_host=XXXX ansible_user=some_user
+
+
+# Below variables are set for all machines in the inventory.
+[all:vars]
+# If you need to ssh as a user that's not the same user as the one running ansible
+# set ansible_user=<some_user>
+# Keep in mind this user needs to be able to sudo passwordless.
+# ansible_user = root
+#
+# Usually, you want to have a separate keypair to ssh to these boxes,
+# and tell ansible where it is by setting `ansible_ssh_private_key_file`.
+# ansible_ssh_private_key_file = ./dot_ssh/id_ed25519
+# Note adding it to the ssh agent won't work in scenarios where ansible
+# execution is wrapped through a container, as the ssh-agent socket isn't
+# accessible there.
+
+# Uncomment the following lines when you have both a public and private network
+# and you want your databases to use the private one.
+[cassandra:vars]
+# cassandra_network_interface = enp1s0
+
+[elasticsearch:vars]
+# elasticsearch_network_interface = enp1s0
+
+[minio:vars]
+# minio_network_interface = enp1s0
+
+[restund:vars]
+# Uncomment if your public IP is not on the default gateway
+# restund_network_interface = enp1s0
+# Uncomment and set to the true public IP if you are behind 1:1 NAT
+# restund_peer_udp_advertise_addr = a.b.c.d
+# restund_zrest_secret = REPLACEMEWITHSOMETHINGRANDOM42ALPHANUMERIC
+
+
+# For the following groups, add all nodes defined above to the sections below.
+# Define any additional variables that should be set for these nodes.
+
+# Uncomment this is you use the bastion host
+# [bastion]
+# bastion
+
+# Add all nodes that should be the master
+[kube-master]
+# kubenode1
+# kubenode2
+# kubenode3
+
+# Configure 'ip' variable to bind kubernetes services on a different ip than
+# the default network interface. Otherwise the ansible_host is used which might be
+# your management IP
+# kubenode1 ip=YYYY
+# kubenode2 ip=YYYY
+# kubenode3 ip=YYYY
+
+[etcd]
+# kubenode1 etcd_member_name=etcd1
+# kubenode2 etcd_member_name=etcd2
+# kubenode3 etcd_member_name=etcd3
+#
+# etcd1 etcd_member_name=etcd1 # ip=XXXX
+# etcd2 etcd_member_name=etcd2 # ip=XXXX
+# etcd3 etcd_member_name=etcd3 # ip=XXXX
+
+# Add all worker nodes here
+[kube-node]
+# kubenode1
+# kubenode2
+# This node will run sftd. It is important to make it aware of its public IP if it's behind 1:1 NAT!
+# kubenode3 node_labels="{'wire.com/role': 'sftd'}" node_annotations="{'wire.com/external-ip': 'XXXX'}"
+
+# leave this group as is
+[k8s-cluster:children]
+kube-master
+kube-node
+
+[restund]
+
+# restund1
+# restund2
+
+[cassandra]
+# cassandra1
+# cassandra2
+# cassandra3
+
+# add a cassandra seed
+[cassandra_seed]
+# cassandra1
+
+[elasticsearch]
+# elasticsearch1
+# elasticsearch2
+# elasticsearch3
+
+# leave this as is
+[elasticsearch_master:children]
+elasticsearch
+
+[minio]
+# minio1
+# minio2
+# minio3

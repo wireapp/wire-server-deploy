@@ -1,0 +1,61 @@
+- name: Copy over binaries, debs and container images to the asset host and host them
+  hosts: assethost
+  tags:
+    - debs
+    - binaries
+  tasks:
+    - file:
+        path: /opt/assets
+        state: directory
+    - name: Copy debs
+      copy:
+        src: ../debs/
+        dest: /opt/assets/debs
+    - name: Copy binaries
+      copy:
+        src: ../binaries/
+        dest: /opt/assets/binaries
+    - name: Copy system containers
+      copy:
+        src: ../containers-system
+        dest: /opt/assets/
+    - name: Copy helm containers
+      copy:
+        src: ../containers-helm
+        dest: /opt/assets/
+    - name: Copy other containers
+      copy:
+        src: ../containers-other
+        dest: /opt/assets/
+    - copy:
+        src: files/serve-assets.service
+        dest: /etc/systemd/system/serve-assets.service
+    - systemd:
+        name: serve-assets
+        state: restarted
+        enabled: yes
+        daemon-reload: yes
+
+- name: Set up offline repositories and remove online ones
+  hosts: k8s-cluster:etcd:restund:cassandra:elasticsearch:minio
+  tasks:
+    - name: Remove /etc/apt/sources.list to remove all online debian package repos
+      file:
+        path: /etc/apt/sources.list
+        state: absent
+    - name: Remove /etc/apt/sources.list.d/ to remove all online debian package repos
+      file:
+        path: /etc/apt/sources.list.d/
+        state: absent
+    - name: Register offline repo key
+      apt_key:
+        url: "{{ ubuntu_repo_gpgkey }}"
+        state: present
+    - name: Register offline repo
+      apt_repository:
+        repo: "deb {{ ubuntu_repo_base_url  }} bionic main"
+        state: present
+    - name: Apt update
+      apt:
+        update_cache: yes
+

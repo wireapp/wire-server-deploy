@@ -1,0 +1,46 @@
+# The assethost will host assets other machines will download
+assethost_host: "{{ hostvars['assethost'].ansible_host }}:8080"
+# When set to true; will set up all the repos below before continuing
+# to bootstrap; such that no network access is needed
+offline: true
+
+# This is copied from kubespray. We need it here too, as we run commands on hosts via the bastion too
+ansible_ssh_common_args: "{% if 'bastion' in groups['all'] %} -o ProxyCommand='ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -W %h:%p {{ hostvars['bastion']['ansible_user'] }}@{{ hostvars['bastion']['ansible_host'] }} {% if ansible_ssh_private_key_file is defined %}-i {{ ansible_ssh_private_key_file }}{% endif %} ' {% endif %}"
+
+# This is used nowhere inside kubespray, only inside this file
+# and our own playbooks
+ubuntu_repos: "http://{{ assethost_host }}/debs/public"
+ubuntu_repo_base_url: "{{ ubuntu_repos }}"
+ubuntu_repo_gpgkey: "{{ ubuntu_repos }}/gpg"
+
+docker_ubuntu_repo_base_url: "{{ ubuntu_repos }}"
+docker_ubuntu_repo_gpgkey: "{{ ubuntu_repos }}/gpg"
+# docker_ubuntu_repo_repokey: "9DC858229FC7DD38854AE2D88D81803C0EBFCD88"
+
+
+binaries_url: "http://{{ assethost_host }}/binaries"
+
+kubeadm_download_url: "{{ binaries_url }}/kubeadm"
+kubectl_download_url: "{{ binaries_url }}/kubectl"
+kubelet_download_url: "{{ binaries_url }}/kubelet"
+cni_download_url: "{{ binaries_url }}/cni-plugins-linux-{{ image_arch }}-{{ cni_version }}.tgz"
+crictl_download_url: "{{ binaries_url }}/crictl-{{ crictl_version }}-{{ ansible_system | lower }}-{{ image_arch }}.tar.gz"
+calicoctl_download_url: "{{ binaries_url }}/calicoctl-linux-{{ image_arch }}"
+
+cassandra_url: "{{ binaries_url }}/apache-cassandra-3.11.4-bin.tar.gz"
+prometheus_jmx_url: "{{ binaries_url }}/jmx_prometheus_javaagent-0.10.jar"
+
+# The elasticsearch role is turing-complete in determining the right repo,
+# and elastic.co doesn't seem to advertise their -oss repo anymore either
+# Just provide the .deb from the asset host
+es_install_java: false
+es_version: "6.6.0"
+es_use_repository: false
+es_custom_package_url: "{{ binaries_url }}/elasticsearch-oss-6.6.0.deb"
+
+minio_server_artifact_url: "{{ binaries_url }}/minio.RELEASE.2020-10-28T08-16-50Z"
+minio_server_artifact_checksum: sha256:2c7e6774a9befbba6a126791f363550f8f14e34008e100d0e0e57e2ad9b2ab8c
+minio_client_artifact_url: "{{ binaries_url }}/mc.RELEASE.2020-10-03T02-54-56Z"
+minio_client_artifact_checksum: sha256:59e184bd4e2c3a8a19837b0f0da3977bd4e301495a24e4a5d50e291728a1de51
+
+kubeconfig_localhost: true
