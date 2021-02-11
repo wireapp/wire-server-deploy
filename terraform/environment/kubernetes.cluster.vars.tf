@@ -5,6 +5,14 @@ variable "k8s_cluster" {
   # type = object({
   #   cloud = string
   #   load_balancer = optional(bool)
+  #   load_balancer_ports = optional(list(
+  #     object({
+  #       name = string
+  #       protocol = string
+  #       listen = number
+  #       destination = number
+  #     })
+  #   ))
   #   machine_groups = list(object({
   #     group_name = string
   #     machine_count = optional(number)

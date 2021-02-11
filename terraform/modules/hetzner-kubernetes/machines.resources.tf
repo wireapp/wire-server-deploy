@@ -39,7 +39,7 @@ resource "hcloud_volume" "volumes" {
   name = "vol-${ var.cluster_name }-${ each.value.group_name }-${ each.value.machine_id }"
   size = each.value.volume.size
   automount = contains(keys(each.value.volume), "format")
-  format = contains(keys(each.value.volume), "format") ? each.value.volume.format : null
+  format = try(each.value.volume.format, null)
 
   server_id = hcloud_server.machines[each.key].id
 

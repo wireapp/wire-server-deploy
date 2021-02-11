@@ -27,7 +27,10 @@ resource "hcloud_load_balancer_network" "lb-nw" {
 
 
 resource "hcloud_load_balancer_service" "svcs" {
-  for_each = var.with_load_balancer ? { for pm in var.lb_port_mappings : pm.name => pm } : {}
+  for_each = var.with_load_balancer ? merge(
+    { for pm in local.LB_PORT_MAPPINGS : pm.name => pm },
+    { for pm in var.lb_port_mappings : pm.name => pm }
+  ) : {}
 
   load_balancer_id = hcloud_load_balancer.lb[0].id
 
