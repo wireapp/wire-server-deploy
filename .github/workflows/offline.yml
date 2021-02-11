@@ -29,9 +29,10 @@ jobs:
       - name: Build and upload offline docker image containing all dependencies
         run: |
           container=$(nix-build --no-out-link -A container)
-          skopeo copy --dest-creds "$DOCKER_LOGIN" \
-            docker-archive:"$container" \
-            "docker://quay.io/wire/wire-server-deploy$(git rev-parse HEAD)"
+
+          # skopeo copy --dest-creds "$DOCKER_LOGIN" \
+          #   docker-archive:"$container" \
+          #   "docker://quay.io/wire/wire-server-deploy$(git rev-parse HEAD)"
         env:
           DOCKER_LOGIN: '${{ secrets.DOCKER_LOGIN }}'
 
