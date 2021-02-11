@@ -1,8 +1,12 @@
 # This role requires access to s3 buckets and has a few variables that need to
 # be set. When run with any variables missing, it will complain about those
 # variables.
-- hosts: localhost
-  become: no
+# To replace hosts: localhost as suggested in http://willthames.github.io/2018/07/01/connection-local-vs-delegate_to-localhost.html
+- hosts: fakehost
+  connection: local
+  vars:
+    ansible_python_interpreter: "{{ ansible_playbook_python }}"
+  gather_facts: no
   roles:
     - role: sft-monitoring-certs
       when: "{{ (groups['sft_servers'] | length) > 0 }}"
@@ -26,8 +30,11 @@
         group: root
         state: link
 
-- hosts: localhost
-  become: no
+- hosts: fakehost
+  connection: local
+  vars:
+    ansible_python_interpreter: "{{ ansible_playbook_python }}"
+  gather_facts: no
   tasks:
     - when: "{{ (groups['sft_servers'] | length) > 0 }}"
       block:

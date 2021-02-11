@@ -10,7 +10,6 @@
   tasks:
     - name: Annotate nodes
       command: "kubectl annotate node --overwrite {{ inventory_hostname }} {{ item.key }}={{ item.value }}"
-      when: node_annotations is defined
-      with_dict: node_annotations
+      with_dict: "{{ node_annotations | default({}) }}"
 
 - import_playbook: kubernetes_logging.yml
