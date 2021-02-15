@@ -7,7 +7,7 @@
   should be installed with helm 3.
 
 * Our kubespray reference implementation has been bumped to kuberspray 2.15.0
-  and kubernetes 1.97.7. This allows us to use Kubespray's support for offline deployments
+  and kubernetes 1.19.7. This allows us to use Kubespray's support for offline deployments
   and new Kubernetes API features.
 
   If you were using our reference playbooks for setting up kubernetes, there is
