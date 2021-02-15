@@ -6,8 +6,8 @@
   wire-server instead and is decoupled from the underlying platform. Charts in wire-server
   should be installed with helm 3.
 
-* Our kubespray reference implementation has been bumped to kuberspray 2.14.2
-  and kubernetes 1.18.2. This allows us to use Kubespray's support for offline deployments
+* Our kubespray reference implementation has been bumped to kuberspray 2.15.0
+  and kubernetes 1.19.7. This allows us to use Kubespray's support for offline deployments
   and new Kubernetes API features.
 
   If you were using our reference playbooks for setting up kubernetes, there is
