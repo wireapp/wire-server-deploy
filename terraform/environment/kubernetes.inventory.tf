@@ -24,16 +24,13 @@ locals {
       }
       vars = merge(
         {
-          ansible_ssh_user = "root"
-          # NOTE: Maybe this is not required for ansible 2.9
-          ansible_python_interpreter = "/usr/bin/python3"
-
-          helm_enabled = true
-          kubeconfig_localhost = true
-          bootstrap_os = "ubuntu"
-          docker_dns_servers_strict = false
+          # NOTE: instead of setting static inventory variables here, please consider placing them
+          # instead in the inventory of the respective environment
         },
-        local.load_balancer_is_used ? { apiserver_loadbalancer_domain_name = module.hetzner_k8s_cluster[var.environment].ips[0] } : {}
+        local.load_balancer_is_used ? {
+          apiserver_loadbalancer_domain_name = module.hetzner_k8s_cluster[var.environment].ips[0]
+          loadbalancer_apiserver = { address = module.hetzner_k8s_cluster[var.environment].ips[0] }
+        } : tomap({})
       )
     }
   } : tomap({})
