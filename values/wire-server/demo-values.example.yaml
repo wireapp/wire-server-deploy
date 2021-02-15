@@ -2,6 +2,15 @@ tags:
   proxy: false # enable if you want/need giphy/youtube/etc proxying
   spar: false # enable if you want/need Single-Sign-On (SSO)
 
+sftd:
+  replicaCount: 1
+  host: sftd.example.com # change this  !! Needs to be in sync with brig.optSettings.setSftStaticUrl
+  allowOrigin: https://webapp.example.com # change this
+  tls:
+    issuerRef:
+      kind: ClusterIssuer
+      name: letsencrypt-prod
+
 cassandra-migrations:
 #  images:
 #    tag: some-tag (only override if you want a newer/different version than what is in the chart)

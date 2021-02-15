@@ -5,6 +5,17 @@ tags:
   team-settings: false # enable if you need team-settings. Requires a pullSecret
   legalhold: false # Enable if you need legalhold
 
+sftd:
+  replicaCount: 3
+  host: sftd.example.com # change this  !! Needs to be in sync with brig.optSettings.setSftStaticUrl
+  allowOrigin: https://webapp.example.com # change this
+  tls:
+    # !! comment out if using static certificates in prod-secrets.yaml, and not https://cert-manager.io
+    # Points to an existing
+    issuerRef:
+      kind: ClusterIssuer
+      name: letsencrypt-prod
+
 cassandra-migrations:
 #  images:
 #    tag: some-tag (only override if you want a newer/different version than what is in the chart)
