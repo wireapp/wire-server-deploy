@@ -30,5 +30,16 @@ To start with, the environment must contain a `helmfile.yaml` listing each *rele
 1. Ensure that `make bootstrap` has been run to create a Kubernetes cluster
 1. Ensure `$ENV_DIR/kubeconfig.dec` exists to authenticate against the kube-apiserver
    of the cluster in question. 
+1. Craft the Helm values according to your needs (see
+   [charts](https://github.com/wireapp/wire-server/blob/develop/charts) for available
+   configuration)
 1. Running `make deploy` from this directory will bootstrap the
    environment.
+
+
+## Using Helmfiles
+
+* similar to `helm` it is possible to also set `chart` to be a path in the local filesystem
+  (e.g. `./wire-server/charts/nginx-ingress-services`)
+* setting `installed: [true, false]` can help do get rid of a release or just comment out things,
+  also `force: true` might solve some weird states

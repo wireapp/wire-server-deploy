@@ -5,7 +5,7 @@ In a production environment, some parts of the wire-server infrastructure (such 
 This directory hosts a range of ansible playbooks to install kubernetes and databases necessary for wire-server. For documentation on usage, please refer to the [Administrator's Guide](https://docs.wire.com), notably the production installation.
 
 
-## Bootrap environment created by `terraform/environment`
+## Bootstrap environment created by `terraform/environment`
 
 An 'environment' is supposed to represent all the setup required for the Wire
 backend to function.
@@ -15,8 +15,8 @@ playbooks against servers specified in an inventory, resulting in a fully
 functional environment. This action can be re-run as often as you want (e.g. in
 case you change some variables or upgrade to new versions).
 
-To start with, the environment only has SFT servers; but more will be added here
-soon.
+At the moment, the environment can have SFT servers as well as machines on which
+Kubernetes can be deployed on; more will be added.
 
 1. Please ensure `ENV_DIR` or `ENV` are exported as specified in the [docs in
    the terraform folder](../terraform/README.md)
@@ -28,6 +28,17 @@ soon.
 1. Ensure all required variables are set in `$ENV_DIR/inventory/*.yml`
 1. Running `make bootstrap` from this directory will bootstrap the
    environment.
+
+## Bootstrap a Kubernetes cluster with Kubespray
+
+* while necessary Inventory hosts & groups are being defined/generated with Terraform
+  (see `terraform/environment/kubernetes.inventory.tf`), Kubespray Inventory variables
+  are supposed to be defined in `${ENV_DIR}/inventory/inventory.yml`
+* after bootstrapping Kubernetes, a plain-text version of the kubeconfig file should 
+  exist under `$ENV_DIR/kubeconfig.dec`<sup>[1]</sup>
+
+<sup>[1]</sup>For wire employees: Encrypt this file using the `sops` toolchain in
+*cailleach*.
 
 ## Operating SFT Servers
 
@@ -122,9 +133,9 @@ For `sft_servers_green`, `srv_announcer_active` must be `false`.
    be taken care of manually. It is safe to delete all the SRV records, they
    should get re-populated within 20 seconds.
 
-### Decomission one specific server
+### Decommission one specific server
 
-Assuming the terraform variables look like this and we have to take down server
+Assuming the Terraform variables look like this and we have to take down server
 `"1"`.
 ```tfvars
 sft_server_names_blue = ["1", "2"] # defaults to []

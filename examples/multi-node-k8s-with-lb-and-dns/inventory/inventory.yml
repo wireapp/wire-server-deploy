@@ -1,0 +1,27 @@
+all:
+  vars:
+    root_domain: 'CHANGE_ME'
+    environment_name: 'CHANGE_ME'
+
+    ansible_ssh_user: 'CHANGE_ME'
+
+
+k8s-cluster:
+  vars:
+    kube_version: 'CHANGE_ME'
+
+    container_manager: 'CHANGE_ME'
+    # NOTE: relax handling a list with more than 3 items
+    # CHANGE_ME:if-using-docker-and-hetzner
+    # docker_dns_servers_strict: false
+
+    # NOTE: Make sure that internal kube-apiserver requests are always traveling between cluster machines
+    #       directly, regardless whether an external load balancer exists
+    # DOCS: https://github.com/kubernetes-sigs/kubespray/blob/master/docs/ha-mode.md
+    loadbalancer_apiserver_localhost: true
+
+    # NOTE: Necessary for the Hetzner Cloud until Calico v3.17 arrives in Kubespray
+    calico_mtu: 1450
+    calico_veth_mtu: 1430
+
+    dashboard_enabled: false

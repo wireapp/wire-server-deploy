@@ -7,7 +7,6 @@ locals {
     kube-master = { hosts = { for m in local.cluster_machines : m.hostname => {} if contains(m.component_classes, "controlplane" ) } }
     kube-node = { hosts = { for m in local.cluster_machines : m.hostname => {} if contains(m.component_classes, "node" ) } }
     etcd = { hosts = { for m in local.cluster_machines : m.hostname => {} if contains(keys(m), "etcd_member_name" ) } }
-    minio = { hosts = { for m in local.cluster_machines : m.hostname => {} if contains(m.component_classes, "minio" ) } }
     k8s-cluster = {
       children = {
         kube-master = {}
