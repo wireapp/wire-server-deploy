@@ -1,5 +1,30 @@
----
+- hosts: k8s-cluster
+  tasks:
+    - set_fact:
+        kubeconfig_localhost: true
+        artifacts_dir: "{{ inventory_dir }}"
+
 - import_playbook: roles-external/kubespray/cluster.yml
+
+- name: 'Bringing kubeconfig.dec in place'
+  hosts: k8s-cluster
+  become: no
+  tasks:
+    - delegate_to: localhost
+      block:
+      - name: "Checking if 'admin.conf' file still exists"
+        stat:
+          path: "{{ artifacts_dir }}/admin.conf"
+        register: file_adminconf
+      - when: file_adminconf.stat.exists
+        block:
+        - name: 'Renaming kubeconfig file provided by Kubespray'
+          copy:
+            src: "{{ artifacts_dir }}/admin.conf"
+            dest: "{{ artifacts_dir }}/../kubeconfig.dec"
+        - file:
+            path: "{{ artifacts_dir }}/admin.conf"
+            state: absent
 
 - hosts: etcd
   environment: "{{ proxy_env | default({}) }}"
