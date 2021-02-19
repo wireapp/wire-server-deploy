@@ -165,6 +165,7 @@ webapp:
       backendRest: nginz-https.example.com
       backendWebsocket: nginz-ssl.example.com
       backendDomain: example.com
+      # When 'tags.team-settings: true'
       backendTeamSettings: teams.example.com
       appHost: webapp.example.com
   # See full list of available environment variables: https://github.com/wireapp/wire-webapp/blob/dev/server/config.ts
