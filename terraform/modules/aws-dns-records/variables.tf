@@ -32,7 +32,8 @@ variable "ttl" {
   default     = 60
 }
 
-variable "create_spf_record" {
-  type    = bool
-  default = false
+variable "spf_record_ips" {
+  type    = list(string)
+  description = "list of IPs converted into a list of 'ip4' mechanisms"
+  default = []
 }

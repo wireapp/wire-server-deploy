@@ -1,12 +1,4 @@
-variable "environment" {
-  type = string
-}
-
-variable "image" {
-  default = "ubuntu-18.04"
-}
-
-variable "server_type" {
+variable "cluster_name" {
   type = string
 }
 
@@ -14,10 +6,8 @@ variable "ssh_keys" {
   type = set(string)
 }
 
-variable "location" {
-  default = "nbg1"
-}
-
-variable "node_count"  {
-  type = number
+variable "with_load_balancer" {
+  description = "indicates whether a load balancer is being created and placed in front of all K8s machines"
+  type = bool
+  default = false
 }

@@ -1,0 +1,22 @@
+teamSettings:
+  enabled: false
+accountPages:
+  enabled: true
+tls:
+  enabled: true
+  useCertManager: true
+
+certManager:
+  # CHANGE_ME:to-get-valid-cert
+  # inTestMode: true
+  certmasterEmail: "CHANGE_ME:valid-email-address"
+
+# NOTE: corresponds to ./../../terraform.tfvars
+config:
+  dns:
+    https: nginz-https.CHANGE_ME:generic-name.CHANGE_ME:FQDN
+    ssl: nginz-ssl.CHANGE_ME:generic-name.CHANGE_ME:FQDN
+    webapp: webapp.CHANGE_ME:generic-name.CHANGE_ME:FQDN
+    fakeS3: assets.CHANGE_ME:generic-name.CHANGE_ME:FQDN
+    teamSettings: teams.CHANGE_ME:generic-name.CHANGE_ME:FQDN
+    accountPages: account.CHANGE_ME:generic-name.CHANGE_ME:FQDN

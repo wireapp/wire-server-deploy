@@ -1,0 +1,155 @@
+tags:
+  proxy: false
+  spar: false
+  team-settings: false
+  account-pages: true
+
+cassandra-migrations:
+  cassandra:
+    host: cassandra-ephemeral
+    replicaCount: 1
+
+elasticsearch-index:
+  elasticsearch:
+    host: elasticsearch-ephemeral
+  cassandra:
+    host: cassandra-ephemeral
+
+brig:
+  replicaCount: 1
+  config:
+    cassandra:
+      host: cassandra-ephemeral
+      replicaCount: 1
+    elasticsearch:
+      host: elasticsearch-ephemeral
+    useSES: false
+    aws:
+      sqsEndpoint: http://fake-aws-sqs:4568
+      dynamoDBEndpoint: http://fake-aws-dynamodb:4567
+      internalQueue: integration-brig-events-internal
+      prekeyTable: integration-brig-prekeys
+    externalUrls:
+      nginz: https://nginz-https.CHANGE_ME:generic-name.CHANGE_ME:FQDN
+      teamSettings: https://teams.CHANGE_ME:generic-name.CHANGE_ME:FQDN
+      teamCreatorWelcome: https://teams.CHANGE_ME:generic-name.CHANGE_ME:FQDN/login
+      teamMemberWelcome: https://teams.CHANGE_ME:generic-name.CHANGE_ME:FQDN/download
+    optSettings:
+      setFederationDomain: CHANGE_ME:generic-name.CHANGE_ME:FQDN
+    emailSMS:
+      general:
+        emailSender: email@CHANGE_ME:generic-name.CHANGE_ME:FQDN
+        smsSender: "insert-sms-sender-for-twilio" # change this if SMS support is desired
+    smtp:
+      host: demo-smtp
+      port: 25
+      connType: plain
+
+proxy:
+  replicaCount: 1
+
+cannon:
+  replicaCount: 1
+  drainTimeout: 10
+
+cargohold:
+  replicaCount: 1
+  config:
+    aws:
+      s3Bucket: dummy-bucket
+      s3Endpoint: http://fake-aws-s3:9000
+      s3DownloadEndpoint: https://assets.CHANGE_ME:generic-name.CHANGE_ME:FQDN
+
+galley:
+  replicaCount: 1
+  config:
+    cassandra:
+      host: cassandra-ephemeral
+      replicaCount: 1
+    settings:
+      conversationCodeURI: https://CHANGE_ME:generic-name.CHANGE_ME:FQDN/join/
+      featureFlags:
+        sso: enabled-by-default
+        teamSearchVisibility: disabled-by-default
+      enableIndexedBillingTeamMembers: true
+      federationDomain: CHANGE_ME:generic-name.CHANGE_ME:FQDN
+
+gundeck:
+  replicaCount: 1
+  config:
+    cassandra:
+      host: cassandra-ephemeral
+      replicaCount: 1
+    aws:
+      account: "123456789012"
+      region: eu-west-1
+      arnEnv: integration
+      queueName: integration-gundeck-events
+      sqsEndpoint: http://fake-aws-sqs:4568
+      snsEndpoint: http://fake-aws-sns:4575
+
+nginz:
+  replicaCount: 1
+  config:
+    ws:
+      useProxyProtocol: false
+  nginx_conf:
+    env: prod
+    external_env_domain: CHANGE_ME:generic-name.CHANGE_ME:FQDN
+  drainTimeout: 10
+  terminationGracePeriodSeconds: 30
+
+webapp:
+  replicaCount: 1
+  config:
+    externalUrls:
+      backendRest: nginz-https.CHANGE_ME:generic-name.CHANGE_ME:FQDN
+      backendWebsocket: nginz-ssl.CHANGE_ME:generic-name.CHANGE_ME:FQDN
+      backendDomain: CHANGE_ME:generic-name.CHANGE_ME:FQDN
+      appHost: webapp.CHANGE_ME:generic-name.CHANGE_ME:FQDN
+  envVars:
+    BRAND_NAME: "CHANGE_ME"
+    BACKEND_NAME: "QA - Fixed SSO"
+    FEATURE_CHECK_CONSENT: "false"
+    FEATURE_ENABLE_DEBUG: "false"
+    FEATURE_ENABLE_DOMAIN_DISCOVERY: "true"
+    FEATURE_ENABLE_PHONE_LOGIN: "false"
+    URL_ACCOUNT_BASE: "https://account.CHANGE_ME:generic-name.CHANGE_ME:FQDN"
+    URL_TEAMS_BASE: "https://teams.CHANGE_ME:generic-name.CHANGE_ME:FQDN"
+    URL_WEBSITE_BASE: "https://wire.link"
+    CSP_EXTRA_CONNECT_SRC: "https://*.CHANGE_ME:generic-name.CHANGE_ME:FQDN, wss://*.CHANGE_ME:generic-name.CHANGE_ME:FQDN"
+    CSP_EXTRA_IMG_SRC: "https://*.CHANGE_ME:generic-name.CHANGE_ME:FQDN"
+    CSP_EXTRA_SCRIPT_SRC: "https://*.CHANGE_ME:generic-name.CHANGE_ME:FQDN"
+    CSP_EXTRA_DEFAULT_SRC: "https://*.CHANGE_ME:generic-name.CHANGE_ME:FQDN"
+    CSP_EXTRA_FONT_SRC: "https://*.CHANGE_ME:generic-name.CHANGE_ME:FQDN"
+    CSP_EXTRA_FRAME_SRC: "https://*.CHANGE_ME:generic-name.CHANGE_ME:FQDN"
+    CSP_EXTRA_MANIFEST_SRC: "https://*.CHANGE_ME:generic-name.CHANGE_ME:FQDN"
+    CSP_EXTRA_OBJECT_SRC: "https://*.CHANGE_ME:generic-name.CHANGE_ME:FQDN"
+    CSP_EXTRA_MEDIA_SRC: "https://*.CHANGE_ME:generic-name.CHANGE_ME:FQDN"
+    CSP_EXTRA_PREFETCH_SRC: "https://*.CHANGE_ME:generic-name.CHANGE_ME:FQDN"
+    CSP_EXTRA_STYLE_SRC: "https://*.CHANGE_ME:generic-name.CHANGE_ME:FQDN"
+    CSP_EXTRA_WORKER_SRC: "https://*.CHANGE_ME:generic-name.CHANGE_ME:FQDN"
+
+account-pages:
+  replicaCount: 1
+  config:
+    externalUrls:
+      backendRest: nginz-https.CHANGE_ME:generic-name.CHANGE_ME:FQDN
+      backendDomain: CHANGE_ME:generic-name.CHANGE_ME:FQDN
+      appHost: account.CHANGE_ME:generic-name.CHANGE_ME:FQDN
+  envVars:
+    URL_ACCOUNT_BASE: "https://account.CHANGE_ME:generic-name.CHANGE_ME:FQDN"
+    URL_TEAMS_BASE: "https://teams.CHANGE_ME:generic-name.CHANGE_ME:FQDN"
+    URL_WEBSITE_BASE: "https://wire.link"
+    CSP_EXTRA_CONNECT_SRC: "https://*.CHANGE_ME:generic-name.CHANGE_ME:FQDN, wss://*.CHANGE_ME:generic-name.CHANGE_ME:FQDN"
+    CSP_EXTRA_IMG_SRC: "https://*.CHANGE_ME:generic-name.CHANGE_ME:FQDN"
+    CSP_EXTRA_SCRIPT_SRC: "https://*.CHANGE_ME:generic-name.CHANGE_ME:FQDN"
+    CSP_EXTRA_DEFAULT_SRC: "https://*.CHANGE_ME:generic-name.CHANGE_ME:FQDN"
+    CSP_EXTRA_FONT_SRC: "https://*.CHANGE_ME:generic-name.CHANGE_ME:FQDN"
+    CSP_EXTRA_FRAME_SRC: "https://*.CHANGE_ME:generic-name.CHANGE_ME:FQDN"
+    CSP_EXTRA_MANIFEST_SRC: "https://*.CHANGE_ME:generic-name.CHANGE_ME:FQDN"
+    CSP_EXTRA_OBJECT_SRC: "https://*.CHANGE_ME:generic-name.CHANGE_ME:FQDN"
+    CSP_EXTRA_MEDIA_SRC: "https://*.CHANGE_ME:generic-name.CHANGE_ME:FQDN"
+    CSP_EXTRA_PREFETCH_SRC: "https://*.CHANGE_ME:generic-name.CHANGE_ME:FQDN"
+    CSP_EXTRA_STYLE_SRC: "https://*.CHANGE_ME:generic-name.CHANGE_ME:FQDN"
+    CSP_EXTRA_WORKER_SRC: "https://*.CHANGE_ME:generic-name.CHANGE_ME:FQDN"
