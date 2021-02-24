@@ -6,9 +6,9 @@
 #
 # <hostname> ansible_host=<internal_ip>
 [all]
-kubenode1 ansible_host=100.89.110.8  ip=0.114.0.10
-kubenode2 ansible_host=100.154.219.107 ip=10.114.0.8
-kubenode3 ansible_host=100.227.143.169 ip=10.114.0.2
+# kubenode1 ansible_host=100.89.110.8  ip=0.114.0.10
+# kubenode2 ansible_host=100.154.219.107 ip=10.114.0.8
+# kubenode3 ansible_host=100.227.143.169 ip=10.114.0.2
 
 # restund1 ansible_host=XXXX
 # restund2 ansible_host=XXXX
@@ -27,7 +27,7 @@ kubenode3 ansible_host=100.227.143.169 ip=10.114.0.2
 #
 # If you are in an offline environment, add an assethost here, from which
 # artifacts are served
-assethost ansible_host=100.89.14.74 ip=10.114.0.9
+# assethost ansible_host=100.89.14.74 ip=10.114.0.9
 
 # If you need to tunnel ssh connections through a bastion host (because your
 # nodes are not directly reachable from the machine running ansible), define a
