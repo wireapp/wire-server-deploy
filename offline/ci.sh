@@ -5,17 +5,17 @@ mkdir -p assets
 
 # Build the container image
 container_image=$(nix-build --no-out-link -A container)
-if [[ -n "${DOCKER_LOGIN:-}" ]];then
-  skopeo copy --dest-creds "$DOCKER_LOGIN" \
-    docker-archive:"$container_image" \
-    "docker://quay.io/wire/wire-server-deploy" \
-    --aditional-tag "$(git rev-parse HEAD)"
-else
-  echo "Skipping container upload, no DOCKER_LOGIN provided"
-fi
+# if [[ -n "${DOCKER_LOGIN:-}" ]];then
+#   skopeo copy --dest-creds "$DOCKER_LOGIN" \
+#     docker-archive:"$container_image" \
+#     "docker://quay.io/wire/wire-server-deploy" \
+#     --aditional-tag "$(git rev-parse HEAD)"
+# else
+#   echo "Skipping container upload, no DOCKER_LOGIN provided"
+# fi
 
-mkdir -p assets/containers-{helm,other,system}
-install -m755 "$container_image" "assets/container-wire-server-deploy.tgz"
+mkdir -p assets/containers-{helm,other,system,adminhost}
+install -m755 "$container_image" "assets/containers-adminhost/container-wire-server-deploy.tgz"
 
 # Build the debs and publish them to assets/debs
 mirror-apt assets/debs
@@ -93,7 +93,10 @@ export HELM_HOME
 helm repo add wire https://s3-eu-west-1.amazonaws.com/public.wire.com/charts
 helm repo update
 
-wire_version=$(helm show chart wire/wire-server | yq .version)
+wire_version=$(helm show chart wire/wire-server | yq -r .version)
+
+# Download zauth; as it's needed to generate certificates
+echo "quay.io/wire/zauth:$wire_version" | create-container-dump assets/containers-adminhost
 
 mkdir -p assets/charts
 for chart in "${charts[@]}"; do
@@ -112,6 +115,6 @@ cp -R ansible assets/
 echo "docker_ubuntu_repo_repokey: '${fingerprint}'" > assets/ansible/inventory/offline/group_vars/all/key.yml
 
 
-# tar xzvf assets.tgz assets/debs.tgz "assets/containers-{system,other,helm}.tgz" assets/ansible
+(cd assets; tar xzvf assets.tgz debs.tgz "containers-{helm,system,other,adminhost}.tgz" ansible charts)
 
 echo "Done"
