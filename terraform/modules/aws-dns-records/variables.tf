@@ -39,13 +39,7 @@ variable "spf_record_ips" {
 }
 
 variable "srvs" {
-  type = object({
-    prefix          = string,
-    target_prefixes = list(string)
-  })
-  description = "..."
-  default = {
-    prefix          = "nginz-https",
-    target_prefixes = []
-  }
+  type        = map(list(string))
+  description = "map of SRV records and their list of targets. All strings (record and targets) get an automatic suffix of '.domain.zone_fqdn'. See module README for an example."
+  default     = {}
 }
