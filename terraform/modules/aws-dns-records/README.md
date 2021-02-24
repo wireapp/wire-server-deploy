@@ -34,6 +34,11 @@ module "dns_records" {
   # Optional
   spf_record_ips = [ "9.9.9.10", "23.42.23.42" ]
 
+  # Optional
+  srvs = {
+    prefix = "_wire-server._tcp"
+    target_prefixes = [ "0 10 443 nginz-https" ]
+  }
 }
 ```
 

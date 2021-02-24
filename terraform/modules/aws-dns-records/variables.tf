@@ -33,7 +33,19 @@ variable "ttl" {
 }
 
 variable "spf_record_ips" {
-  type    = list(string)
+  type        = list(string)
   description = "list of IPs converted into a list of 'ip4' mechanisms"
-  default = []
+  default     = []
+}
+
+variable "srvs" {
+  type = object({
+    prefix          = string,
+    target_prefixes = list(string)
+  })
+  description = "..."
+  default = {
+    prefix          = "nginz-https",
+    target_prefixes = []
+  }
 }
