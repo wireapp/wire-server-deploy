@@ -50,7 +50,7 @@ This creates entries for the following FQDNs:
 
 It also creates a TXT SPF record for your mail server on `staging.example.com` with a value `"v=spf1 ip4:9.9.9.10 ip4:23.42.23.42 -all"`
 
-As well as a SRV record `_wire-server._tcp.staging.example.com` pointing to `0 10 443 nginz-https.staging.example.com`
+As well as an SRV record `_wire-server._tcp.staging.example.com` pointing to `0 10 443 nginz-https.staging.example.com`
 
 These sub-domains represent the primary set of FQDNs used in a
 [`wire-server` installation](https://docs.wire.com/how-to/install/helm-prod.html#how-to-set-up-dns-records),
