@@ -17,6 +17,7 @@ locals {
           {
             ansible_host = m.public_ipv4
             ip = m.private_ipv4
+            access_ip = m.private_ipv4
           },
           contains(keys(m), "etcd_member_name" ) ? { etcd_member_name = m.etcd_member_name } : {}
         )
