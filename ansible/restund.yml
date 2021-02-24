@@ -26,14 +26,6 @@
     - restund_tcp_listen_port: 80
     - restund_tls_listen_port: 443
   roles:
-    - role: hostname
-      tags:
-        - hostname
-
-    - role: ansible-role-ntp
-      tags:
-        - ntp
-
     - role: ansible-restund
       tags:
         - restund
