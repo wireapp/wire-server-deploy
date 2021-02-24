@@ -29,7 +29,7 @@ create-inventory: check-env
 		terraform output -json inventory > ${ENV_DIR}/gen/terraform-inventory.yml
 
 .PHONY: apply plan console destroy
-apply plan console destroy:
+apply plan console destroy: check-env
 	source ${ENV_DIR}/hcloud-token.dec && \
 		terraform $@ -var-file=${ENV_DIR}/terraform.tfvars
 
