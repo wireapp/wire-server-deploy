@@ -26,17 +26,12 @@ function optionally_complain() {
 }
 
 # For each helm chart passed in from stdin, use the example values to
-# render the charts, and assemble the list of images this would fetch.  This
-# isn't perfect, users setting other values in their charts might produce
-# different containers, but this is a good approximation for now
+# render the charts, and assemble the list of images this would fetch.
 while IFS= read -r chart; do
   echo "Running helm template on chart ${chart}…" >&2
-  helm template "wire/$chart" \
-    -f ./values/$chart/prod-values.example.yaml \
-    -f ./values/nginx-ingress-services/prod-values.example.yaml \
-    -f ./values/nginx-ingress-services/prod-secrets.example.yaml \
-    -f ./values/wire-server/prod-values.example.yaml \
-    -f ./values/wire-server/prod-secrets.example.yaml \
-    --set allowOrigin=dummy --set host=dummy --set tls.key=dummy --set tls.crt=dummy \
+
+  helm template "$chart" \
+    $( [[ -f ./values/$(basename $chart)/prod-values.example.yaml ]] && echo "-f ./values/$(basename $chart)/prod-values.example.yaml" ) \
+    $( [[ -f ./values/$(basename $chart)/prod-secrets.example.yaml ]] && echo "-f ./values/$(basename $chart)/prod-secrets.example.yaml" ) \
     | yq -r '..|.image? | select(.)' | optionally_complain | sort -u
 done | sort -u
