@@ -9,7 +9,7 @@
       - spar
     # cassandra 3.11 doesn't support java 11 yet, use openjdk-8.
     java_packages:
-      - openjdk-8-jdk
+      - openjdk-8-jre-headless
   roles:
 
     - role: ansible-role-ntp
