@@ -8,13 +8,14 @@ container_image=$(nix-build --no-out-link -A container)
 if [[ -n "${DOCKER_LOGIN:-}" ]];then
   skopeo copy --dest-creds "$DOCKER_LOGIN" \
     docker-archive:"$container_image" \
-    "docker://quay.io/wire/wire-server-deploy:$(git rev-parse HEAD)"
+    "docker://quay.io/wire/wire-server-deploy" \
+    --aditional-tag "$(git rev-parse HEAD)"
 else
   echo "Skipping container upload, no DOCKER_LOGIN provided"
 fi
 
 mkdir -p assets/containers-{helm,other,system}
-install -m755 "$container_image" assets/containers-other/
+install -m755 "$container_image" "assets/container-wire-server-deploy.tgz"
 
 # Build the debs and publish them to assets/debs
 mirror-apt assets/debs
@@ -66,18 +67,18 @@ charts=(
   # backoffice
   # commented out for now, points to a 2.90.0 container image which doesn't
   # seem to exist on quay.io
-  nginx-ingress-controller
-  nginx-ingress-services
-  reaper
-  cassandra-external
-  databases-ephemeral
-  demo-smtp
-  elasticsearch-external
-  fake-aws
-  minio-external
-  wire-server
-  local-path-provisioner
-  sftd
+  wire/nginx-ingress-controller
+  wire/nginx-ingress-services
+  wire/reaper
+  wire/cassandra-external
+  wire/databases-ephemeral
+  wire/demo-smtp
+  wire/elasticsearch-external
+  wire/fake-aws
+  wire/minio-external
+  wire/wire-server
+  # local-path-provisioner
+  wire/sftd
   # Has a weird dependency on curl:latest. out of scope
   # wire-server-metrics
   # fluent-bit
@@ -86,19 +87,31 @@ charts=(
 
 # TODO: Awaiting some fixes in wire-server regarding tagless images
 
-# HELM_HOME=$(mktemp -d)
-# export HELM_HOME
-#
-# helm repo add wire https://s3-eu-west-1.amazonaws.com/public.wire.com/charts
-#
-# for chart in "${charts[@]}"; do
-#   echo "wire/$chart"
-# done | list-helm-containers | create-container-dump assets/containers-helm
-# tar czf assets/containers-helm.tgz assets/containers-helm
+HELM_HOME=$(mktemp -d)
+export HELM_HOME
+
+helm repo add wire https://s3-eu-west-1.amazonaws.com/public.wire.com/charts
+helm repo update
+
+wire_version=$(helm show chart wire/wire-server | yq .version)
+
+mkdir -p assets/charts
+for chart in "${charts[@]}"; do
+  (cd assets/charts; helm pull "$chart")
+done
+
+for chart in "${charts[@]}"; do
+  echo "$chart"
+done | list-helm-containers | create-container-dump assets/containers-helm
+
+tar czf assets/containers-helm.tgz assets/containers-helm
 
 #
 # cp -R values assets/
 cp -R ansible assets/
 echo "docker_ubuntu_repo_repokey: '${fingerprint}'" > assets/ansible/inventory/offline/group_vars/all/key.yml
+
+
+# tar xzvf assets.tgz assets/debs.tgz "assets/containers-{system,other,helm}.tgz" assets/ansible
 
 echo "Done"
