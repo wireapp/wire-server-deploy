@@ -27,6 +27,20 @@ jobs:
           GPG_PRIVATE_KEY: '${{ secrets.GPG_PRIVATE_KEY }}'
           DOCKER_LOGIN: '${{ secrets.DOCKER_LOGIN }}'
 
+      - name: Setup ssh-agent
+        run: |
+          mkdir -p ~/.ssh
+          ssh-agent -a $SSH_AUTH_SOCK > /dev/null
+          ssh-add - <<< "${{ secrets.SSH_PRIVATE_KEY }}"
+        env:
+            SSH_AUTH_SOCK: /tmp/ssh_agent.sock
+
+      - name: Deploy offline environment to hetzner
+        run: |
+          ./offline/cd.sh
+        env:
+          HCLOUD_TOKEN: '${{ secrets.HCLOUD_TOKEN }}'
+
       - name: Copy assets tarball to S3
         run: |
           aws s3 cp assets.tgz s3://public.wire.com/artifacts/wire-server-deploy-static-${{ github.sha }}.tgz
@@ -35,4 +49,3 @@ jobs:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           AWS_REGION: "eu-west-1"
-
