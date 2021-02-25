@@ -21,10 +21,10 @@
   vars:
     # This config will make restund run as root and listen on ports 80 and 443
     - restund_user: root
-    - restund_tls_certificate: "{{ lookup('file', '/tmp/tls_cert_and_priv_key.pem') }}"
+    # - restund_tls_certificate: "{{ lookup('file', '/tmp/tls_cert_and_priv_key.pem') }}"
     - restund_udp_listen_port: 80
     - restund_tcp_listen_port: 80
-    - restund_tls_listen_port: 443
+    # - restund_tls_listen_port: 443
   roles:
     - role: ansible-restund
       tags:
