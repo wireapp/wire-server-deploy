@@ -3,7 +3,12 @@
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 TOPLEVEL_DIR="$( cd "$SCRIPT_DIR/.." && pwd )"
 
-OUTPUT_DIR="$TOPLEVEL_DIR/secrets_cache"
+# Generates fresh zauth, TURN/restund, nginx/basic-auth and minio secrets as one-secret-per file. This can be useful in ansible-based deployments.
+# Then templates those secrets together in a secrets.yaml file for use in helm deployments.
+# USAGE:
+# ./bin/secrets.sh [ path-to-new-directory-for-secrets-output | default ./secrets_cache ]
+
+OUTPUT_DIR="${1:-"$TOPLEVEL_DIR/secrets_cache"}"
 
 mkdir -p "$OUTPUT_DIR"
 
