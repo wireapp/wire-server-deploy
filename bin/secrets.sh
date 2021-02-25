@@ -1,15 +1,24 @@
 #!/usr/bin/env bash
 
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-ANSIBLE_DIR="$( cd "$SCRIPT_DIR/../ansible" && pwd )"
+TOPLEVEL_DIR="$( cd "$SCRIPT_DIR/.." && pwd )"
 
-mkdir -p "$ANSIBLE_DIR/secrets"
+OUTPUT_DIR="$TOPLEVEL_DIR/secrets_cache"
 
-zrest="${ANSIBLE_DIR}/secrets/restund_zrest_secret.txt"
-zpub="${ANSIBLE_DIR}/secrets/zauth_public.txt"
-zpriv="${ANSIBLE_DIR}/secrets/zauth_private.txt"
-miniopub="${ANSIBLE_DIR}/secrets/minio_public.txt"
-miniopriv="${ANSIBLE_DIR}/secrets/minio_private.txt"
+mkdir -p "$OUTPUT_DIR"
+
+zrest="${OUTPUT_DIR}/restund_zrest_secret.txt"
+zpub="${OUTPUT_DIR}/zauth_public.txt"
+zpriv="${OUTPUT_DIR}/zauth_private.txt"
+miniopub="${OUTPUT_DIR}/minio_public.txt"
+miniopriv="${OUTPUT_DIR}/minio_private.txt"
+NGINZ_BASIC_CONFIG="${OUTPUT_DIR}/nginz_basic_auth_config.txt"
+NGINZ_BASIC_PW="${OUTPUT_DIR}/nginz_basic_auth_password.txt"
+NGINZ_BASIC_USER="${OUTPUT_DIR}/nginz_basic_auth_user.txt"
+
+command -v htpasswd >/dev/null 2>&1 || { echo >&2 "htpasswd is not installed, aborting. Maybe try the httpd-tools or apache-utils packages?"; exit 1; }
+command -v openssl >/dev/null 2>&1 || { echo >&2 "openssl is not installed, aborting."; exit 1; }
+command -v zauth >/dev/null 2>&1 || { echo >&2 "zauth is not installed, aborting. See wire-server and compile zauth, or try using \"docker run --rm quay.io/wire/alpine-intermediate /dist/zauth\" instead."; exit 1; }
 
 if [[ ! -f $miniopub || ! -f $miniopriv ]]; then
     echo "Generate a secret for minio (must match the cargohold AWS keys wire-server's secrets/values)..."
@@ -36,3 +45,74 @@ else
     echo "re-using existing public/private keys"
 fi
 
+
+if [[ ! -f $NGINZ_BASIC_PW || ! -f $NGINZ_BASIC_CONFIG || ! -f $NGINZ_BASIC_USER ]]; then
+    echo "creating basic auth password for nginz..."
+    echo basic-auth-user > "$NGINZ_BASIC_USER"
+    openssl rand -base64 64 | env LC_CTYPE=C tr -dc a-zA-Z0-9 | head -c 42 > "$NGINZ_BASIC_PW"
+    htpasswd -cb "$NGINZ_BASIC_CONFIG" "$(cat "$NGINZ_BASIC_USER")" "$(cat "$NGINZ_BASIC_PW")"
+else
+    echo "re-using basic auth password for nginz"
+fi
+
+echo ""
+echo "You could use the generated"
+echo "   $OUTPUT_DIR/secrets.yaml"
+echo "as a basis for your helm overrides (adjust as needed)"
+
+echo "
+# helm_vars/wire-server/secrets.yaml
+nginz:
+    secrets:
+        # Note: basicAuth on some internal endpoints only active if
+        # nginz.env == staging, otherwise no effect
+        basicAuth: $(cat "$NGINZ_BASIC_CONFIG")
+        zAuth:
+            publicKeys: $(cat "$zpub")
+brig:
+    secrets:
+        zAuth:
+            publicKeys: $(cat "$zpub")
+            privateKeys: $(cat "$zpriv")
+        turn:
+            secret: $(cat "$zrest")
+        smtpPassword: dummyPassword
+        # these only need to be changed if using real AWS services
+        awsKeyId: dummykey
+        awsSecretKey: dummysecret
+        # These are only necessary if you wish to support sign up via SMS/calls
+        # And require accounts at twilio.com / nexmo.com
+        setTwilio: |-
+            sid: dummy
+            token: dummy
+        setNexmo: |-
+            key: dummy
+            secret: dummy
+cargohold:
+    secrets:
+        awsKeyId: dummykey
+        awsSecretKey: dummysecret
+galley:
+    secrets:
+        awsKeyId: dummykey
+        awsSecretKey: dummysecret
+gundeck:
+    secrets:
+        awsKeyId: dummykey
+        awsSecretKey: dummysecret
+proxy:
+    secrets:
+        proxy_config: |-
+            secrets {
+                    youtube    = ...
+                    googlemaps = ...
+                    soundcloud = ...
+                    giphy      = ...
+                    spotify    = Basic ...
+            }
+team-settings:
+    secrets:
+        configJson: ewog...
+        # TODO: you need an access key from a Wire employee to enable team settings.
+        # configjson [ewog...end] corresponds to <TODO quay.io robot account name>
+" > "$OUTPUT_DIR/secrets.yaml"
