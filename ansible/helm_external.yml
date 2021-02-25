@@ -6,14 +6,7 @@
 # 1. run this playbook:
 #      ansible-playbook -i hosts.ini helm_external.yml -vv --diff
 # 2. re-run the helm upgrade specifying the override files.
-
-- hosts:
-    - elasticsearch
-    - cassandra
-    - minio
-  gather_facts: true
-
-- hosts: localhost
+- hosts: "elasticsearch"
   become: false
   tasks:
     - name: Generate elasticsearch IPs for helm
@@ -21,21 +14,24 @@
       vars:
         external_dir_name: elasticsearch-external
         server_type: elasticsearch
-        network_interface: "{{ elasticsearch_network_interface | default('') }}"
-      when: '"elasticsearch" in groups'
+        network_interface: "{{ elasticsearch_network_interface }}"
 
+- hosts: "minio"
+  become: false
+  tasks:
     - name: Generate minio IPs for helm
       include_tasks: tasks/helm_external.yml
       vars:
         external_dir_name: minio-external
         server_type: minio
-        network_interface: "{{ minio_network_interface | default('') }}"
-      when: '"minio" in groups'
+        network_interface: "{{ minio_network_interface }}"
 
+- hosts: "cassandra"
+  become: false
+  tasks:
     - name: Generate cassandra IPs for helm
       include_tasks: tasks/helm_external.yml
       vars:
         external_dir_name: cassandra-external
         server_type: cassandra
-        network_interface: "{{ cassandra_network_interface | default('') }}"
-      when: '"cassandra" in groups'
+        network_interface: "{{ cassandra_network_interface }}"

@@ -3,8 +3,10 @@
   file:
     state: directory
     path: "{{ playbook_dir }}/../values/{{ external_dir_name }}"
+  delegate_to: localhost
 
 - name: write IPs for helm
   template:
     src: templates/helm_external.yaml.j2
     dest: "{{ playbook_dir }}/../values/{{ external_dir_name }}/values.yaml"
+  delegate_to: localhost
