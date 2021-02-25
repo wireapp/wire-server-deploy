@@ -97,7 +97,7 @@ echo "quay.io/wire/zauth:$wire_version" | create-container-dump containers-admin
 
 mkdir -p charts
 for chart in "${charts[@]}"; do
-  (cd charts; helm pull "$chart")
+  (cd charts; helm pull --untar "$chart")
 done
 
 for chart in "${charts[@]}"; do
