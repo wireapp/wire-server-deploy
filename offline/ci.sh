@@ -1,8 +1,6 @@
 #!/usr/bin/env bash
 set -eou pipefail
 
-mkdir -p assets
-
 # Build the container image
 container_image=$(nix-build --no-out-link -A container)
 # if [[ -n "${DOCKER_LOGIN:-}" ]];then
@@ -14,22 +12,20 @@ container_image=$(nix-build --no-out-link -A container)
 #   echo "Skipping container upload, no DOCKER_LOGIN provided"
 # fi
 
-mkdir -p assets/containers-{helm,other,system,adminhost}
-install -m755 "$container_image" "assets/containers-adminhost/container-wire-server-deploy.tgz"
+mkdir -p containers-{helm,other,system,adminhost}
+install -m755 "$container_image" "containers-adminhost/container-wire-server-deploy.tgz"
 
-# Build the debs and publish them to assets/debs
-mirror-apt assets/debs
+mirror-apt debs
 
-(cd assets; tar czf debs.tgz debs)
+tar czf debs.tgz debs
 
 fingerprint=$(echo "$GPG_PRIVATE_KEY" | gpg --with-colons --import-options show-only --import --fingerprint  | awk -F: '$1 == "fpr" {print $10; exit}')
 
 echo "$fingerprint"
 
-# Copy the binaries to assets/binaries
-mkdir -p assets/binaries
-install -m755 "$(nix-build --no-out-link -A pkgs.wire-binaries)/"* assets/binaries/
-(cd assets; tar czf binaries.tgz binaries)
+mkdir -p binaries
+install -m755 "$(nix-build --no-out-link -A pkgs.wire-binaries)/"* binaries/
+tar czf binaries.tgz binaries
 
 
 function list-system-containers() {
@@ -55,12 +51,12 @@ docker.io/kubernetesui/metrics-scraper:v1.0.6
 EOF
 }
 
-list-system-containers | create-container-dump assets/containers-system
-(cd assets; tar czf containers-system.tgz containers-system)
+list-system-containers | create-container-dump containers-system
+tar czf containers-system.tgz containers-system
 
 # Used for ansible-restund role
-echo "quay.io/wire/restund:0.4.14w7b1.0.47" | create-container-dump assets/containers-other
-(cd assets; tar czf containers-other.tgz containers-other)
+echo "quay.io/wire/restund:0.4.14w7b1.0.47" | create-container-dump containers-other
+tar czf containers-other.tgz containers-other
 
 
 charts=(
@@ -97,25 +93,23 @@ helm repo update
 wire_version=$(helm show chart wire/wire-server | yq -r .version)
 
 # Download zauth; as it's needed to generate certificates
-echo "quay.io/wire/zauth:$wire_version" | create-container-dump assets/containers-adminhost
+echo "quay.io/wire/zauth:$wire_version" | create-container-dump containers-adminhost
 
-mkdir -p assets/charts
+mkdir -p charts
 for chart in "${charts[@]}"; do
-  (cd assets/charts; helm pull "$chart")
+  (cd charts; helm pull "$chart")
 done
 
 for chart in "${charts[@]}"; do
   echo "$chart"
-done | list-helm-containers | create-container-dump assets/containers-helm
+done | list-helm-containers | create-container-dump containers-helm
 
-(cd assets; tar czf containers-helm.tgz containers-helm)
+tar czf containers-helm.tgz containers-helm
 
 #
-# cp -R values assets/
-cp -R ansible values bin assets/
-echo "docker_ubuntu_repo_repokey: '${fingerprint}'" > assets/ansible/inventory/offline/group_vars/all/key.yml
+echo "docker_ubuntu_repo_repokey: '${fingerprint}'" > ansible/inventory/offline/group_vars/all/key.yml
 
 
-(cd assets; tar czvf assets.tgz debs.tgz binaries.tgz containers-adminhost containers-helm.tgz containers-other.tgz containers-system.tgz ansible charts values bin)
+tar czvf assets.tgz debs.tgz binaries.tgz containers-adminhost containers-helm.tgz containers-other.tgz containers-system.tgz ansible charts values bin
 
 echo "Done"
