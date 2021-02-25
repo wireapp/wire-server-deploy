@@ -17,11 +17,15 @@ values-init-done
 \#*\#
 
 # Envrc local overrides
-/.envrc.local
+.envrc.local
 
 # Nix-created result symlinks
 result
 result-*
+<<<<<<< HEAD
 
 # for bin/secrets.sh
 secrets_cache/
+
+terraform.tfstate
+terraform.tfstate.backup
