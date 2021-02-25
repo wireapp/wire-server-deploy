@@ -14,10 +14,6 @@
   become: yes
   any_errors_fatal: True
   environment: "{{ proxy_env | default({}) }}"
-  vars_prompt:
-      # More info to be found at the [demo-secrets.yaml](https://github.com/wireapp/wire-server-deploy/blob/master/values/wire-server/demo-secrets.example.yaml#L9-L12)"
-    - name: restund_zrest_secret
-      prompt: "Enter the restund_zrest_secret, which must match the brig.secrets.turn.secret in the helm configuration."
   vars:
     # This config will make restund run as root and listen on ports 80 and 443
     - restund_user: root
