@@ -75,7 +75,7 @@ charts=(
   wire/wire-server
   # local-path-provisioner
   # TODO: uncomment once its dependencies are pinned!
-  # wire/sftd
+  wire/sftd
   # Has a weird dependency on curl:latest. out of scope
   # wire-server-metrics
   # fluent-bit

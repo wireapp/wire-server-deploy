@@ -1,0 +1,5 @@
+allowOrigin: https://webapp.example.com
+host: sftd.example.com
+tls:
+  issuerRef:
+    name: letsencrypt-prod
