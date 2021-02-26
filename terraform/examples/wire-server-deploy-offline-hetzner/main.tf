@@ -13,10 +13,23 @@ locals {
   restund_count       = 2
   ssh_keys            = [hcloud_ssh_key.adminhost.name, hcloud_ssh_key.github_actions.name]
 
+  # TODO: IPv6
   disable_network_cfg = <<-EOF
   #cloud-config
   runcmd:
+
+    # Allow DNS
+    - iptables -A OUTPUT -o eth0 -p udp --dport 53  -j ACCEPT
+    - ip6tables -A OUTPUT -o eth0 -p udp --dport 53  -j ACCEPT
+
+    # Allow NTP
+    - iptables -A OUTPUT -o eth0 -p udp --dport 123 -j ACCEPT
+    - ip6tables -A OUTPUT -o eth0 -p udp --dport 123 -j ACCEPT
+
+    # Drop all other traffic
     - iptables -A OUTPUT -o eth0 -j DROP
+    - ip6tables -A OUTPUT -o eth0 -j DROP
+
   EOF
 }
 
