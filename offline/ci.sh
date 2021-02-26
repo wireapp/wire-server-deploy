@@ -17,7 +17,7 @@ install -m755 "$container_image" "containers-adminhost/container-wire-server-dep
 
 mirror-apt debs
 
-tar czf debs.tgz debs
+tar cf debs.tar debs
 
 fingerprint=$(echo "$GPG_PRIVATE_KEY" | gpg --with-colons --import-options show-only --import --fingerprint  | awk -F: '$1 == "fpr" {print $10; exit}')
 
@@ -25,7 +25,7 @@ echo "$fingerprint"
 
 mkdir -p binaries
 install -m755 "$(nix-build --no-out-link -A pkgs.wire-binaries)/"* binaries/
-tar czf binaries.tgz binaries
+tar cf binaries.tar binaries
 
 
 function list-system-containers() {
@@ -52,11 +52,11 @@ EOF
 }
 
 list-system-containers | create-container-dump containers-system
-tar czf containers-system.tgz containers-system
+tar cf containers-system.tar containers-system
 
 # Used for ansible-restund role
 echo "quay.io/wire/restund:0.4.14w7b1.0.47" | create-container-dump containers-other
-tar czf containers-other.tgz containers-other
+tar cf containers-other.tar containers-other
 
 
 charts=(
@@ -104,12 +104,12 @@ for chart in "${charts[@]}"; do
   echo "$chart"
 done | list-helm-containers | create-container-dump containers-helm
 
-tar czf containers-helm.tgz containers-helm
+tar cf containers-helm.tar containers-helm
 
 #
 echo "docker_ubuntu_repo_repokey: '${fingerprint}'" > ansible/inventory/offline/group_vars/all/key.yml
 
 
-tar czvf assets.tgz debs.tgz binaries.tgz containers-adminhost containers-helm.tgz containers-other.tgz containers-system.tgz ansible charts values bin
+tar czf assets.tgz debs.tar binaries.tar containers-adminhost containers-helm.tar containers-other.tar containers-system.tar ansible charts values bin
 
 echo "Done"

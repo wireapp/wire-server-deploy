@@ -6,33 +6,33 @@
         state: directory
     - name: Copy debs
       unarchive:
-        src: ../debs.tgz
+        src: ../debs.tar
         dest: /opt/assets
       tags:
         - debs
     - name: Copy binaries
       unarchive:
-        src: ../binaries.tgz
+        src: ../binaries.tar
         dest: /opt/assets
       tags:
         - binaries
     - name: Copy system containers
       unarchive:
-        src: ../containers-system.tgz
+        src: ../containers-system.tar
         dest: /opt/assets
       tags:
         - containers-system
         - containers
     - name: Copy helm containers
       unarchive:
-        src: ../containers-helm.tgz
+        src: ../containers-helm.tar
         dest: /opt/assets
       tags:
         - containers-helm
         - containers
     - name: Copy other containers
       unarchive:
-        src: ../containers-other.tgz
+        src: ../containers-other.tar
         dest: /opt/assets
       tags:
         - containers-other
