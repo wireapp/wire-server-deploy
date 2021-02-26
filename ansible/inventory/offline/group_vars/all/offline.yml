@@ -44,3 +44,7 @@ minio_client_artifact_url: "{{ binaries_url }}/mc.RELEASE.2020-10-03T02-54-56Z"
 minio_client_artifact_checksum: sha256:59e184bd4e2c3a8a19837b0f0da3977bd4e301495a24e4a5d50e291728a1de51
 
 kubeconfig_localhost: true
+
+# This defaults to true if http://169.254.169.254/latest/meta-data exists; which
+# is also available in non-AWS. e.g. in Hetzner. Lets not let this autodetect in offline
+is_aws_environment: False
