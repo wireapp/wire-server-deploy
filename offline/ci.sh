@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 set -eou pipefail
 
+INCREMENTAL="${INCREMENTAL:-0}"
+
 # Build the container image
 container_image=$(nix-build --no-out-link -A container)
 # if [[ -n "${DOCKER_LOGIN:-}" ]];then
@@ -16,8 +18,8 @@ mkdir -p containers-{helm,other,system,adminhost}
 install -m755 "$container_image" "containers-adminhost/container-wire-server-deploy.tgz"
 
 mirror-apt debs
-
 tar cf debs.tar debs
+rm -r debs
 
 fingerprint=$(echo "$GPG_PRIVATE_KEY" | gpg --with-colons --import-options show-only --import --fingerprint  | awk -F: '$1 == "fpr" {print $10; exit}')
 
@@ -26,6 +28,7 @@ echo "$fingerprint"
 mkdir -p binaries
 install -m755 "$(nix-build --no-out-link -A pkgs.wire-binaries)/"* binaries/
 tar cf binaries.tar binaries
+rm -r binaries
 
 
 function list-system-containers() {
@@ -53,10 +56,12 @@ EOF
 
 list-system-containers | create-container-dump containers-system
 tar cf containers-system.tar containers-system
+[[ "$INCREMENTAL" -eq 0 ]] && rm -r containers-system
 
 # Used for ansible-restund role
 echo "quay.io/wire/restund:0.4.14w7b1.0.47" | create-container-dump containers-other
 tar cf containers-other.tar containers-other
+[[ "$INCREMENTAL" -eq 0 ]] && rm -r containers-other
 
 
 charts=(
@@ -105,6 +110,7 @@ for chart in "${charts[@]}"; do
 done | list-helm-containers | create-container-dump containers-helm
 
 tar cf containers-helm.tar containers-helm
+[[ "$INCREMENTAL" -eq 0 ]] && rm -r containers-helm
 
 #
 echo "docker_ubuntu_repo_repokey: '${fingerprint}'" > ansible/inventory/offline/group_vars/all/key.yml
