@@ -2,7 +2,7 @@
 tags:
   proxy: false # enable if you want/need giphy/youtube/etc proxying
   account-pages: true
-  team-settings: false # enable if you need team-settings. Requires a pullSecret
+  team-settings: true # enable if you need team-settings. Requires a pullSecret
   legalhold: false # Enable if you need legalhold
 
 cassandra-migrations:
