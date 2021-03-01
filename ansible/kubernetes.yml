@@ -2,29 +2,29 @@
   tasks:
     - set_fact:
         kubeconfig_localhost: true
-        artifacts_dir: "{{ inventory_dir }}"
+        # NOTE: stick with the default but expose it outside of Kubespray
+        artifacts_dir: "{{ inventory_dir }}/artifacts"
 
 - import_playbook: roles-external/kubespray/cluster.yml
 
-- name: 'Bringing kubeconfig.dec in place'
+- name: 'Bringing kubeconfig in place'
   hosts: k8s-cluster
   become: no
   tasks:
     - delegate_to: localhost
       block:
-      - name: "Checking if 'admin.conf' file still exists"
+      - name: "Checking if 'kubeconfig' file already exists"
         stat:
-          path: "{{ artifacts_dir }}/admin.conf"
-        register: file_adminconf
-      - when: file_adminconf.stat.exists
+          path: "{{ inventory_dir }}/../kubeconfig"
+        register: file_kubeconfig
+      - when: not file_kubeconfig.stat.exists
         block:
         - name: 'Renaming kubeconfig file provided by Kubespray'
           copy:
             src: "{{ artifacts_dir }}/admin.conf"
-            dest: "{{ artifacts_dir }}/../kubeconfig.dec"
-        - file:
-            path: "{{ artifacts_dir }}/admin.conf"
-            state: absent
+            dest: "{{ inventory_dir }}/../kubeconfig.dec"
+        - debug:
+            msg: "TODO: Encrypt {{ inventory_dir }}/../kubeconfig.dec with sops"
 
 - hosts: etcd
   environment: "{{ proxy_env | default({}) }}"
