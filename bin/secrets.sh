@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+set -eu
+
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 TOPLEVEL_DIR="$( cd "$SCRIPT_DIR/.." && pwd )"
 
@@ -61,7 +63,8 @@ else
 fi
 
 echo ""
-echo "You could use the generated"
+echo "1. You can use the generated $OUTPUT_DIR/secrets_ansible.yaml file as part of your ansible group_vars/. Copy this to your inventory."
+echo "2. You could use the generated"
 echo "   $OUTPUT_DIR/secrets.yaml"
 echo "as a basis for your helm overrides (adjust as needed)"
 
@@ -121,3 +124,9 @@ team-settings:
         # TODO: you need an access key from a Wire employee to enable team settings.
         # configjson [ewog...end] corresponds to <TODO quay.io robot account name>
 " > "$OUTPUT_DIR/secrets.yaml"
+
+echo "
+restund_zrest_secret: \"$(cat "$zrest")\"
+minio_access_key: \"$(cat "$miniopub")\"
+minio_secret_key: \"$(cat "$miniopriv")\"
+" > "$OUTPUT_DIR/secrets_ansible.yaml"
