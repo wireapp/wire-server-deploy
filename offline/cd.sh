@@ -15,9 +15,9 @@ ssh_private_key=$(cd terraform/examples/wire-server-deploy-offline-hetzner ; ter
 eval `ssh-agent`
 ssh-add - <<< "$ssh_private_key"
 
-ssh "root@$adminhost" tar xzv < ./assets.tgz
+ssh -oStrictHostKeyChecking=accept-new -oConnectionAttempts=10 "root@$adminhost" tar xzv < ./assets.tgz
 
-(cd terraform/examples/wire-server-deploy-offline-hetzner; terraform output -json static-inventory)| ssh "root@$adminhost" tee ./wire-server-deploy/assets/inventory/offline/inventory.yml
+(cd terraform/examples/wire-server-deploy-offline-hetzner; terraform output -json static-inventory)| ssh "root@$adminhost" tee ./ansible/inventory/offline/inventory.yml
 
 # NOTE: Agent is forwarded; so that the adminhost can provision the other boxes
 ssh -A "root@$adminhost" ./bin/offline-deploy.sh
