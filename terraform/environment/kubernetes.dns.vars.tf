@@ -1,14 +1,19 @@
 variable "root_domain" {
-  type = string
+  type    = string
   default = null
 }
 
 variable "sub_domains" {
-  type = list(string)
+  type    = list(string)
   default = []
 }
 
 variable "create_spf_record" {
-  type = bool
+  type    = bool
   default = false
+}
+
+variable "srvs" {
+  type    = map(list(string))
+  default = {}
 }
