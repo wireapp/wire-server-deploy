@@ -11,6 +11,7 @@ TOPLEVEL_DIR="$( cd "$SCRIPT_DIR/.." && pwd )"
 # ./bin/secrets.sh [ path-to-new-directory-for-secrets-output | default ./secrets_cache ]
 
 OUTPUT_DIR="${1:-"$TOPLEVEL_DIR/secrets_cache"}"
+ZAUTH_CONTAINER="${ZAUTH_CONTAINER:-quay.io/wire/zauth:latest}"
 
 mkdir -p "$OUTPUT_DIR"
 
@@ -25,7 +26,7 @@ NGINZ_BASIC_USER="${OUTPUT_DIR}/nginz_basic_auth_user.txt"
 
 command -v htpasswd >/dev/null 2>&1 || { echo >&2 "htpasswd is not installed, aborting. Maybe try the httpd-tools or apache-utils packages?"; exit 1; }
 command -v openssl >/dev/null 2>&1 || { echo >&2 "openssl is not installed, aborting."; exit 1; }
-command -v zauth >/dev/null 2>&1 || { echo >&2 "zauth is not installed, aborting. See wire-server and compile zauth, or try using \"docker run --rm quay.io/wire/alpine-intermediate /dist/zauth\" instead."; exit 1; }
+command -v zauth >/dev/null 2>&1 || command -v docker >/dev/null 2>&1 || { echo >&2 "zauth is not installed, and docker is also not installed, aborting. See wire-server and compile zauth, or install docker and try using \"docker run --rm quay.io/wire/zauth:latest\" instead."; exit 1; }
 
 if [[ ! -f $miniopub || ! -f $miniopriv ]]; then
     echo "Generate a secret for minio (must match the cargohold AWS keys wire-server's secrets/values)..."
@@ -45,7 +46,8 @@ fi
 if [[ ! -f $zpriv || ! -f $zpub ]]; then
     echo "Generate private and public keys (used both by brig and nginz)..."
     TMP_KEYS=$(mktemp "/tmp/demo.keys.XXXXXXXXXXX")
-    zauth -m gen-keypair -i 1 > "$TMP_KEYS"
+    zauth -m gen-keypair -i 1 > "$TMP_KEYS" 2>/dev/null \
+        || docker run --rm "$ZAUTH_CONTAINER" -m gen-keypair -i 1 > "$TMP_KEYS"
     cat "$TMP_KEYS" | sed -n 's/public: \(.*\)/\1/p' > "$zpub"
     cat "$TMP_KEYS" | sed -n 's/secret: \(.*\)/\1/p' > "$zpriv"
 else
@@ -66,7 +68,7 @@ echo ""
 echo "1. You can use the generated $OUTPUT_DIR/secrets_ansible.yaml file as part of your ansible group_vars/. Copy this to your inventory."
 echo "2. You could use the generated"
 echo "   $OUTPUT_DIR/secrets.yaml"
-echo "as a basis for your helm overrides (adjust as needed)"
+echo "as a basis for your helm overrides (copy to location of your choosing then adjust as needed)"
 
 echo "
 # helm_vars/wire-server/secrets.yaml
