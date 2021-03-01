@@ -30,7 +30,7 @@ Run all commands from `terraform/environment` directory.
 
    Please refer to [s3 backend
    docs](https://www.terraform.io/docs/backends/types/s3.html) for details.
-1. Create token from hetzner cloud and put the following contents (including the export) 
+1. Create token from hetzner cloud and put the following contents (including the export)
     in a file called `$ENV_DIR/hcloud-token.dec`<sup>[1]</sup>:
    ```
    export HCLOUD_TOKEN=<token>
@@ -42,12 +42,21 @@ Run all commands from `terraform/environment` directory.
    ssh-keygen -o -a 100 -t ed25519 -f "$ENV_DIR/operator-ssh.dec" -C "example@example.com"
    # see footnote 2 if you're a wire employee
    ```
+1. (optional) encrypt files if collaborating using SOPS:
+   ```
+   sops -e "$ENV_DIR"/operator-ssh.dec > "$ENV_DIR"/operator-ssh
+   sops -e "$ENV_DIR"/hcloud-token.dec > "$ENV_DIR"/hcloud-token
+   ```
 1. Create variables for the environment in `$ENV_DIR/terraform.tfvars`, example:
    ```tf
    environment = <env>
    root_domain = "example.com"
-   operator_ssh_public_key = <public key from step above>
-   ...
+   operator_ssh_public_keys = {
+      terraform_managed = {
+        "<key name>" = "<public key from step above>"
+      }
+      preuploaded_key_names = []
+   }
    ```
    Delete operator-ssh.dec.pub.
    Please refer to variable definitions in `environment/*.vars.tf` in order to see which
