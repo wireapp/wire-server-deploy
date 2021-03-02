@@ -35,6 +35,7 @@ in {
       pkgs.sops
       pkgs.terraform_0_13
       pkgs.yq
+      pkgs.zauth
     ];
   };
 }
