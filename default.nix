@@ -23,6 +23,7 @@ in {
     paths = [
       profileEnv
       pkgs.ansible_with_libs
+      pkgs.apacheHttpd
       pkgs.awscli
       pkgs.gnumake
       pkgs.gnupg
@@ -30,6 +31,7 @@ in {
       pkgs.kubectl
       pkgs.kubernetes-helm
       pkgs.moreutils
+      pkgs.openssl
       pkgs.pythonForAnsible
       pkgs.skopeo
       pkgs.sops
