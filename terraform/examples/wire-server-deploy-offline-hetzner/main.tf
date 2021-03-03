@@ -1,9 +1,3 @@
-# In offline; we just set up 3 kubenodes; and they are all control-plane nodes
-resource "hcloud_ssh_key" "github_actions" {
-  name       = "github-actions"
-  public_key = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIPt32jJeOVLUKTn06ySR7cWrXuSGzgCSmtsfJFRiAonP github-actions@wireapp"
-}
-
 locals {
   rfc1918_cidr        = "10.0.0.0/8"
   kubenode_count      = 3
@@ -11,7 +5,7 @@ locals {
   elasticsearch_count = 2
   cassandra_count     = 3
   restund_count       = 2
-  ssh_keys            = [hcloud_ssh_key.adminhost.name, hcloud_ssh_key.github_actions.name]
+  ssh_keys            = [hcloud_ssh_key.adminhost.name]
 
   # TODO: IPv6
   disable_network_cfg = <<-EOF
@@ -53,14 +47,14 @@ resource "hcloud_network_subnet" "main" {
 resource "random_pet" "adminhost" {
 }
 
-resource "tls_private_key" "adminhost" {
+resource "tls_private_key" "admin" {
   algorithm   = "ECDSA"
   ecdsa_curve = "P256"
 }
 
 resource "hcloud_ssh_key" "adminhost" {
   name       = "adminhost-${random_pet.adminhost.id}"
-  public_key = tls_private_key.adminhost.public_key_openssh
+  public_key = tls_private_key.admin.public_key_openssh
 }
 
 # Connected to all other servers. Simulates the admin's "laptop"
@@ -80,11 +74,13 @@ resource "hcloud_server" "adminhost" {
   packages:
     - docker-ce
     - docker-ce-cli
-  write_files:
-    - content: "${base64encode(tls_private_key.adminhost.private_key_pem)}"
-      encoding: b64
-      path: /root/.ssh/id_ecdsa
-      permissions: '0600'
+  users:
+    - name: admin
+      groups:
+        - sudo
+      shell: /bin/bash
+      ssh_authorized_keys:
+        - "${tls_private_key.admin.public_key_openssh}"
   EOF
 }
 
