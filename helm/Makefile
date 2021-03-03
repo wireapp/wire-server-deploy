@@ -19,18 +19,93 @@ endif
 
 
 
-################################### HELM ###################################
+################################### HELMFILE ###################################
 
 .PHONY: deploy
 deploy: check-helm-inputs
+	source ${ENV_DIR}/hcloud-token.dec && \
 	KUBECONFIG=$(ENV_DIR)/kubeconfig.dec \
 	helmfile \
 		--file $(ENV_DIR)/helmfile.yaml \
 		sync \
 			--concurrency 1
 
+.PHONY: sync apply destroy
+sync apply destroy: check-helm-inputs
+	source ${ENV_DIR}/hcloud-token.dec && \
+	KUBECONFIG=$(ENV_DIR)/kubeconfig.dec \
+	helmfile \
+		--file $(ENV_DIR)/helmfile.yaml \
+		$@ \
+			--concurrency 1
 
+.PHONY: lint-%
+lint-%: check-helm-inputs
+	source ${ENV_DIR}/hcloud-token.dec && \
+	KUBECONFIG=$(ENV_DIR)/kubeconfig.dec \
+	helmfile \
+		--file $(ENV_DIR)/helmfile.yaml \
+		--selector name=$(*) \
+		lint \
+			--concurrency 1
 
+.PHONY: apply-%
+apply-%: check-helm-inputs
+	source ${ENV_DIR}/hcloud-token.dec && \
+	KUBECONFIG=$(ENV_DIR)/kubeconfig.dec \
+	helmfile \
+		--file $(ENV_DIR)/helmfile.yaml \
+		--selector name=$(*) \
+		apply \
+			--concurrency 1
+
+.PHONY: destroy-%
+destroy-%: check-helm-inputs
+	source ${ENV_DIR}/hcloud-token.dec && \
+	KUBECONFIG=$(ENV_DIR)/kubeconfig.dec \
+	helmfile \
+		--file $(ENV_DIR)/helmfile.yaml \
+		--selector name=$(*) \
+		destroy \
+			--concurrency 1
+
+.PHONY: template-%
+template-%: check-helm-inputs
+	source ${ENV_DIR}/hcloud-token.dec && \
+	KUBECONFIG=$(ENV_DIR)/kubeconfig.dec \
+	helmfile \
+		--file $(ENV_DIR)/helmfile.yaml \
+		--selector name=$(*) \
+		--log-level debug \
+		template \
+			--concurrency 1
+
+.PHONY: write-values-%
+write-values-%: check-helm-inputs
+	source ${ENV_DIR}/hcloud-token.dec && \
+	KUBECONFIG=$(ENV_DIR)/kubeconfig.dec \
+	helmfile \
+		--file $(ENV_DIR)/helmfile.yaml \
+		--selector name=$(*) \
+		--log-level debug \
+		write-values \
+			--concurrency 1
+
+.PHONY: build
+build: check-helm-inputs
+	source ${ENV_DIR}/hcloud-token.dec && \
+	KUBECONFIG=$(ENV_DIR)/kubeconfig.dec \
+	helmfile \
+		--file $(ENV_DIR)/helmfile.yaml \
+		$@ --embed-values
+
+.PHONY: list status write-values template
+list status write-values template: check-helm-inputs
+	source ${ENV_DIR}/hcloud-token.dec && \
+	KUBECONFIG=$(ENV_DIR)/kubeconfig.dec \
+	helmfile \
+		--file $(ENV_DIR)/helmfile.yaml \
+		$@
 ############################### CREDENTIALS ################################
 
 .PHONY: decrypt
