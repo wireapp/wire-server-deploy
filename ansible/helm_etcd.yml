@@ -1,0 +1,31 @@
+- name: Fetch etcd certs
+  gather_facts: true
+  hosts: etcd
+  tasks:
+    - slurp:
+        src: /etc/ssl/etcd/ssl/ca.pem
+      register: etcd_ca
+    - slurp:
+        src: /etc/ssl/etcd/ssl/node-{{ inventory_hostname }}.pem
+      register: etcd_client
+    - slurp:
+        src: /etc/ssl/etcd/ssl/node-{{ inventory_hostname }}-key.pem
+      register: etcd_client_key
+    - set_fact:
+        etcd_ca_content: "{{ etcd_ca.content }}"
+        etcd_client_content: "{{ etcd_client.content }}"
+        etcd_client_key_content: "{{ etcd_client_key.content }}"
+
+- hosts: localhost
+  become: false
+  tasks:
+    - name: Provide etcd certificates for helm
+      include_tasks: tasks/helm_etcd.yml
+      vars:
+        # FIXME only need data fron the first etcd node
+        etcd_ca: "{{ hostvars['cp-01'].etcd_ca_content }}"
+        etcd_client: "{{ hostvars['cp-01'].etcd_client_content }}"
+        etcd_client_key: "{{ hostvars['cp-01'].etcd_client_key_content }}"
+        # etcd_client_key: "{{ groups['etcd'] | map('extract', hostvars, 'etcd_client_key_content') | list | join('') }}"
+        server_type: etcd
+        network_interface: "{{ etcd_network_interface | default('') }}"

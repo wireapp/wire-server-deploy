@@ -1,0 +1,18 @@
+---
+- name: create etcd certs directory
+  file:
+    state: directory
+    path: "{{ lookup('env', 'ENV_DIR') }}/gen/helm_vars/etcd"
+
+- name: write etcd host IPs for helm
+  template:
+    src: templates/etcd_ips.yaml.j2
+    dest: "{{ lookup('env', 'ENV_DIR') }}/gen/helm_vars/etcd/ips.yaml"
+
+- name: write etcd certs for helm
+  template:
+    src: templates/ectd_certs.yaml.j2
+    dest: "{{ lookup('env', 'ENV_DIR') }}/gen/helm_vars/etcd/certs.yaml"
+
+- name: encrypt etcd certs with helm secret
+  shell: "helm secrets enc {{ lookup('env', 'ENV_DIR') }}/gen/helm_vars/etcd/certs.yaml"
