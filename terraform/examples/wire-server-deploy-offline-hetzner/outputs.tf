@@ -1,11 +1,14 @@
 output "ssh_private_key" {
+  sensitive = true
   value = tls_private_key.admin.private_key_pem
 }
 output "adminhost" {
+  sensitive = true
   value = hcloud_server.adminhost.ipv4_address
 }
 # output format that a static inventory file expects
 output "static-inventory" {
+  sensitive = true
   value = {
 
     assethost = {
