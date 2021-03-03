@@ -19,6 +19,23 @@ bootstrap: check-env
 		--private-key ${ENV_DIR}/operator-ssh.dec \
 		-vv
 
+.PHONY: play-%
+play-%: check-env
+	ansible-playbook ${ANSIBLE_DIR}/$(*).yml \
+		-i ${ENV_DIR}/gen/terraform-inventory.yml \
+		-i ${ENV_DIR}/inventory \
+		--private-key ${ENV_DIR}/operator-ssh.dec \
+		-vv
+
+.PHONY: upgrade-cluster
+upgrade-cluster: check-env
+	ansible-playbook ${ANSIBLE_DIR}/roles-external/kubespray/upgrade-cluster.yml \
+		-i ${ENV_DIR}/gen/terraform-inventory.yml \
+		-i ${ENV_DIR}/inventory \
+		--private-key ${ENV_DIR}/operator-ssh.dec \
+		-vv
+
+
 # FUTUREWORK: https://github.com/zinfra/backend-issues/issues/1763
 .PHONY: kube-minio-static-files
 kube-minio-static-files: check-env
