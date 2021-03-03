@@ -27,14 +27,6 @@ jobs:
           GPG_PRIVATE_KEY: '${{ secrets.GPG_PRIVATE_KEY }}'
           DOCKER_LOGIN: '${{ secrets.DOCKER_LOGIN }}'
 
-      - name: Setup ssh-agent
-        run: |
-          mkdir -p ~/.ssh
-          ssh-agent -a $SSH_AUTH_SOCK > /dev/null
-          ssh-add - <<< "${{ secrets.SSH_PRIVATE_KEY }}"
-        env:
-            SSH_AUTH_SOCK: /tmp/ssh_agent.sock
-
       - name: Deploy offline environment to hetzner
         run: |
           ./offline/cd.sh
