@@ -15,28 +15,31 @@ let
     '';
   };
 
+  helmWithPlugins = pkgs.wrapHelm pkgs.kubernetes-helm {
+    plugins = with pkgs.kubernetes-helmPlugins; [ helm-s3 helm-secrets helm-diff ];
+  };
+
 in {
   inherit pkgs profileEnv;
 
   env = pkgs.buildEnv{
     name = "wire-server-deploy";
-    paths = [
-      profileEnv
-      pkgs.ansible_with_libs
-      pkgs.apacheHttpd
-      pkgs.awscli
-      pkgs.gnumake
-      pkgs.gnupg
-      pkgs.helmfile
-      pkgs.kubectl
-      pkgs.kubernetes-helm
-      pkgs.moreutils
-      pkgs.openssl
-      pkgs.pythonForAnsible
-      pkgs.skopeo
-      pkgs.sops
-      pkgs.terraform_0_13
-      pkgs.yq
-    ];
+    paths = with pkgs; [
+      ansible_with_libs
+      apacheHttpd
+      awscli
+      gnumake
+      gnupg
+      helmfile
+      kubectl
+      openssl
+      moreutils
+      pythonForAnsible
+      rke
+      skopeo
+      sops
+      terraform_0_13
+      yq
+    ] ++ [ profileEnv helmWithPlugins ];
   };
 }
