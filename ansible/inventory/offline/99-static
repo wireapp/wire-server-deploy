@@ -4,13 +4,16 @@
 #
 # The machines talk to eachother on `ip`
 #
-# if `ip` is not provided, ansible will default to the IP of the default interface
+# !!! if `ip` is not provided, ansible will default to the IP of the default
+# interface. Which is probably not what you want
 #
 # <hostname> ansible_host=<internal_ip>
 [all]
 # kubenode1 ansible_host=100.89.110.8  ip=10.114.0.10
 # kubenode2 ansible_host=100.154.219.107 ip=10.114.0.8
 # kubenode3 ansible_host=100.227.143.169 ip=10.114.0.2
+# You could add more if capacity is needed
+# kubenode4 ....
 
 # restund1 ansible_host=XXXX
 # restund2 ansible_host=XXXX
@@ -68,8 +71,6 @@
 # restund_network_interface = enp1s0
 # Uncomment and set to the true public IP if you are behind 1:1 NAT
 # restund_peer_udp_advertise_addr = a.b.c.d
-# restund_zrest_secret = REPLACEMEWITHSOMETHINGRANDOM42ALPHANUMERIC
-
 
 # For the following groups, add all nodes defined above to the sections below.
 # Define any additional variables that should be set for these nodes.
@@ -84,28 +85,31 @@
 # kubenode2
 # kubenode3
 
-# Configure 'ip' variable to bind kubernetes services on a different ip than
-# the default network interface. Otherwise the ansible_host is used which might be
-# your management IP
-# kubenode1 ip=YYYY
-# kubenode2 ip=YYYY
-# kubenode3 ip=YYYY
-
 [etcd]
+# !!! There MUST be an UNEVEN amount of etcd servers
+#
+# Uncomment if etcd and kubernetes are colocated
+#
 # kubenode1 etcd_member_name=etcd1
 # kubenode2 etcd_member_name=etcd2
 # kubenode3 etcd_member_name=etcd3
 #
-# etcd1 etcd_member_name=etcd1 # ip=XXXX
-# etcd2 etcd_member_name=etcd2 # ip=XXXX
-# etcd3 etcd_member_name=etcd3 # ip=XXXX
+# Uncomment if etcd cluster is separately deployed from kubernetes masters
+# etcd1 etcd_member_name=etcd1
+# etcd2 etcd_member_name=etcd2
+# etcd3 etcd_member_name=etcd3
 
 # Add all worker nodes here
 [kube-node]
 # kubenode1
 # kubenode2
-# This node will run sftd. It is important to make it aware of its public IP if it's behind 1:1 NAT!
-# kubenode3 node_labels="{'wire.com/role': 'sftd'}" node_annotations="{'wire.com/external-ip': 'XXXX'}"
+# kubenode3
+
+# Additional worker nodes can be added
+# You can label and annotate nodes. E.g. when deploying SFT you might want to
+# deploy it only on certain nodes due to the public IP requirement.
+# kubenode4 node_labels="{'wire.com/role': 'sftd'}" node_annotations="{'wire.com/external-ip': 'XXXX'}"
+# kubenode5 node_labels="{'wire.com/role': 'sftd'}" node_annotations="{'wire.com/external-ip': 'XXXX'}"
 
 # leave this group as is
 [k8s-cluster:children]
