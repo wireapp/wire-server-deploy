@@ -78,16 +78,14 @@ brig:
 #        - "local.example.com"
 #        - "10.23.0.0/16"
   turnStatic:
-    v1:
-      - "turn:turn01.example.com:80"
-      - "turn:turn02.example.com:80"
+    v1: []
     v2:
-      - "turn:turn01.example.com:3478"
-      - "turn:turn02.example.com:3478"
-      - "turn:turn01.example.com:80?transport=tcp"
-      - "turn:turn02.example.com:80?transport=tcp"
-      - "turns:turn01.example.com:443?transport=tcp"
-      - "turns:turn02.example.com:443?transport=tcp"
+      - "turn:<IP of restund1>:80"
+      - "turn:<IP of restund2:80"
+      - "turn:<IP of restund1>:80?transport=tcp"
+      - "turn:<IP of restund2>:80?transport=tcp"
+      # - "turns:<IP of restund1>:443?transport=tcp"
+      # - "turns:<IP of restund2>:443?transport=tcp"
 
 
 proxy:
