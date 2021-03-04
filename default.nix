@@ -35,7 +35,6 @@ in {
       openssl
       moreutils
       pythonForAnsible
-      rke
       skopeo
       sops
       terraform_0_13
