@@ -11,8 +11,20 @@ provision-sft: check-env
 		--private-key ${ENV_DIR}/operator-ssh.dec \
 		-vv
 
+.PHONY: roles-override
+.SILENT: roles-override
+roles-override:
+	[ -e $(ENV_DIR)/kubespray.ref ] \
+	&& ( \
+		rm -rf ./roles-override; \
+		git clone https://github.com/kubernetes-sigs/kubespray ./roles-override/kubespray; \
+		cd ./roles-override/kubespray; \
+		git config advice.detachedHead false; \
+		git checkout "$$(cat $(ENV_DIR)/kubespray.ref)"; \
+	)
+
 .PHONY: bootstrap
-bootstrap: check-env
+bootstrap: check-env roles-override
 	ansible-playbook ${ANSIBLE_DIR}/bootstrap.yml \
 		-i ${ENV_DIR}/gen/terraform-inventory.yml \
 		-i ${ENV_DIR}/inventory \

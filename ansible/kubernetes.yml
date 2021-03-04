@@ -5,7 +5,7 @@
         # NOTE: stick with the default but expose it outside of Kubespray
         artifacts_dir: "{{ inventory_dir }}/artifacts"
 
-- import_playbook: roles-external/kubespray/cluster.yml
+- import_playbook: "{{ lookup('first_found', ['roles-override/kubespray/cluster.yml', 'roles-external/kubespray/cluster.yml']) }}"
 
 - name: 'Bringing kubeconfig in place'
   hosts: k8s-cluster
