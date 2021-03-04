@@ -27,11 +27,11 @@ jobs:
           GPG_PRIVATE_KEY: '${{ secrets.GPG_PRIVATE_KEY }}'
           DOCKER_LOGIN: '${{ secrets.DOCKER_LOGIN }}'
 
-      - name: Deploy offline environment to hetzner
-        run: |
-          ./offline/cd.sh
-        env:
-          HCLOUD_TOKEN: '${{ secrets.HCLOUD_TOKEN }}'
+      # - name: Deploy offline environment to hetzner
+      #   run: |
+      #     ./offline/cd.sh
+      #   env:
+      #     HCLOUD_TOKEN: '${{ secrets.HCLOUD_TOKEN }}'
 
       - name: Copy assets tarball to S3
         run: |
