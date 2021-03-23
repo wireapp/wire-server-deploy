@@ -22,7 +22,6 @@ values-init-done
 # Nix-created result symlinks
 result
 result-*
-<<<<<<< HEAD
 
 # for bin/secrets.sh
 secrets_cache/
