@@ -41,6 +41,7 @@ decrypt: kubeconfig.dec
 kubeconfig.dec: check-env-dir
 	@if [ ! -e $(ENV_DIR)/$(basename $(@)) ]; then exit 0; fi
 	sops -d $(ENV_DIR)/$(basename $(@)) > $(ENV_DIR)/$(@)
+	chmod 0600 $(ENV_DIR)/$(@)
 	@test -s $(ENV_DIR)/$(@) || (echo "[ERR] Failed decrypting kubeconfig" && exit 1)
 
 
