@@ -15,10 +15,6 @@ let
     '';
   };
 
-  helmWithPlugins = pkgs.wrapHelm pkgs.kubernetes-helm {
-    plugins = with pkgs.kubernetes-helmPlugins; [ helm-s3 helm-secrets helm-diff ];
-  };
-
 in {
   inherit pkgs profileEnv;
 
@@ -30,6 +26,9 @@ in {
       awscli
       gnumake
       gnupg
+      # Note: This is overriden in nix/overlay.nix to have plugins. This is
+      # required so that helmfile get's the correct version of helm in its PATH.
+      kubernetes-helm
       helmfile
       kubectl
       openssl
@@ -39,6 +38,6 @@ in {
       sops
       terraform_0_13
       yq
-    ] ++ [ profileEnv helmWithPlugins ];
+    ] ++ [ profileEnv];
   };
 }
