@@ -37,7 +37,7 @@ jobs:
           AWS_SECRET_ACCESS_KEY: (( s3.secret_access_key ))
           AWS_REGION: "eu-west-1"
         run:
-          path: bash
+          path: sh
           args:
           - -exc
           - |
