@@ -16,13 +16,13 @@ jobs:
         submodules: none
       trigger: true
 
-    - task: branch_name
+    - task: ci-cd
       config:
         platform: linux
         image_resource:
           type: registry-image
           source:
-            repository: ubuntu
+            repository: nixos/nix
         inputs:
           - name: wire-server-deploy
         outputs:
@@ -41,8 +41,7 @@ jobs:
           args:
           - -exc
           - |
-            # Install nix and cachix
-            sh <(curl -L https://nixos.org/nix/install) --no-daemon
+            # Install cachix
             nix-env -iA cachix -f https://cachix.org/api/v1/install
 
             cd wire-server-deploy
