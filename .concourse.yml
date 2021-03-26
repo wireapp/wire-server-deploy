@@ -4,6 +4,7 @@ resources:
   source:
     uri: https://github.com/wireapp/wire-server-deploy
     branch: ((branch))
+    ignore_paths: .concourse.yml
 
 jobs:
 
@@ -13,7 +14,6 @@ jobs:
     - get: wire-server-deploy
       params:
         depth: 1
-        submodules: none
       trigger: true
 
     - task: ci-cd
@@ -22,7 +22,7 @@ jobs:
         image_resource:
           type: registry-image
           source:
-            repository: nixos/nix
+            repository: ubuntu
         inputs:
           - name: wire-server-deploy
         outputs:
@@ -37,10 +37,57 @@ jobs:
           AWS_SECRET_ACCESS_KEY: (( s3.secret_access_key ))
           AWS_REGION: "eu-west-1"
         run:
-          path: sh
+          path: bash
           args:
           - -exc
-          - |
+          - | 
+            # Install nix (until we bake a base image)
+            # https://github.com/cachix/install-nix-action/blob/master/lib/install-nix.sh
+            if type -p nix &>/dev/null ; then
+              echo "Aborting: Nix is already installed at $(type -p nix)"
+              exit
+            fi
+
+            # Configure Nix
+            add_config() {
+              echo "$1" | sudo tee -a /tmp/nix.conf >/dev/null
+            }
+            # Set jobs to number of cores
+            add_config "max-jobs = auto"
+            # Allow binary caches for user
+            add_config "trusted-users = root $USER"
+            # Append extra nix configuration if provided
+            if [[ $INPUT_EXTRA_NIX_CONFIG != "" ]]; then
+              add_config "$INPUT_EXTRA_NIX_CONFIG"
+            fi
+
+            # Nix installer flags
+            installer_options=(
+              --daemon
+              --daemon-user-count 4
+              --no-channel-add
+              --darwin-use-unencrypted-nix-store-volume
+              --nix-extra-conf-file /tmp/nix.conf
+            )
+            if [[ $INPUT_INSTALL_OPTIONS != "" ]]; then
+              IFS=' ' read -r -a extra_installer_options <<< $INPUT_INSTALL_OPTIONS
+              installer_options=("${extra_installer_options[@]}" "${installer_options[@]}")
+            fi
+
+            echo "installer options: ${installer_options[@]}"
+            # On self-hosted runners we don't need to install more than once
+            if [[ ! -d /nix/store ]] 
+            then 
+              sh <(curl --retry 5 --retry-connrefused -L "${INPUT_INSTALL_URL:-https://nixos.org/nix/install}") "${installer_options[@]}"
+            fi
+
+            # Set paths
+            echo "/nix/var/nix/profiles/per-user/$USER/profile/bin" >> "$GITHUB_PATH"
+            echo "/nix/var/nix/profiles/default/bin" >> "$GITHUB_PATH"
+
+            if [[ $INPUT_NIX_PATH != "" ]]; then
+              echo "NIX_PATH=${INPUT_NIX_PATH}" >> "$GITHUB_ENV"
+            fi
             # Install cachix
             nix-env -iA cachix -f https://cachix.org/api/v1/install
 
