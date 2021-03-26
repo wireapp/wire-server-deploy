@@ -4,7 +4,7 @@ resources:
   source:
     uri: https://github.com/wireapp/wire-server-deploy
     branch: ((branch))
-    ignore_paths: .concourse.yml
+    # ignore_paths: .concourse.yml
 
 jobs:
 
