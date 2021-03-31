@@ -7,7 +7,11 @@ self: super: {
     ];
   }));
 
-  pythonForAnsible = (self.python3.withPackages (_: self.ansible.requiredPythonModules));
+  pythonForAnsible = (self.python3.withPackages (_: self.ansible.requiredPythonModules ++ [
+                                                                                             super.python3Packages.boto
+                                                                                             super.python3Packages.boto3
+                                                                                             super.python3Packages.six
+                                                                                           ] ));
 
   kubectl = self.callPackage ./pkgs/kubectl.nix { };
   kubernetes-helm = super.wrapHelm super.kubernetes-helm {
