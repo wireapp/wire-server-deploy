@@ -23,5 +23,7 @@ values-init-done
 result
 result-*
 
+.nix-env
+
 # for bin/secrets.sh
 secrets_cache/
