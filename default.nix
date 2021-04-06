@@ -15,13 +15,17 @@ let
     '';
   };
 
+  pythonForAnsible = pkgs.python3.withPackages (p: [ p.boto p.boto3 p.six p.cryptography ]);
+
+
 in {
   inherit pkgs profileEnv;
 
   env = pkgs.buildEnv{
     name = "wire-server-deploy";
     paths = with pkgs; [
-      ansible_with_libs
+      ansible_2_9
+      pythonForAnsible
       apacheHttpd
       awscli
       gnumake
@@ -33,7 +37,6 @@ in {
       kubectl
       openssl
       moreutils
-      pythonForAnsible
       skopeo
       sops
       terraform_0_13
