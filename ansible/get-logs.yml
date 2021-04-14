@@ -1,17 +1,33 @@
 - hosts: "{{ log_host }}"
   tasks:
+    - assert:
+        msg: "'log_host' must be set and not empty"
+        that:
+          - log_host is defined
+          - log_host | length > 0
+    - assert:
+        msg: "'log_service' must be set and not empty"
+        that:
+          - log_service is defined
+          - log_service | length > 0
+    - assert:
+        msg: "'log_since' must be set and not empty"
+        that:
+          - log_since is defined
+          - log_since | length > 0
+
     - name: get logs
-      shell: journalctl -u {{ log_service }} --since '{{ log_since }}' --until '{{ log_until }}'
+      shell: journalctl -u {{ log_service }} --since '{{ log_since }}' --until '{{ log_until | default('now', true) }}'
       register: the_logs
     - name: create logs directory
       delegate_to: localhost
       become: no
       file:
         state: directory
-        path: "{{ log_dir | default('/tmp', true) }}"
+        path: "{{ log_dir | default('./', true) }}"
     - name: save logs
       delegate_to: localhost
       become: no
       copy:
-        dest: "{{ log_dir | default('/tmp', true) }}/{{log_host}}-{{ log_service }}-{{ log_since }}-{{ log_until }}.log"
+        dest: "{{ log_dir | default('/tmp', true) }}/{{log_host}}-{{ log_service }}-{{ log_since }}-{{ log_until | default('now', true) }}.log"
         content: "{{ the_logs.stdout }}"
