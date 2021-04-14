@@ -28,9 +28,6 @@
 [submodule "ansible/roles-external/ansible-tinc"]
 	path = ansible/roles-external/ansible-tinc
 	url = https://github.com/wireapp/ansible-tinc.git
-[submodule "ansible/roles-external/ansible-helm"]
-	path = ansible/roles-external/ansible-helm
-	url = https://github.com/andrewrothstein/ansible-kubernetes-helm
 [submodule "ansible/roles-external/admin_users"]
 	path = ansible/roles-external/admin_users
 	url = https://github.com/cchurch/ansible-role-admin-users.git
