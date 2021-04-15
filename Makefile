@@ -35,14 +35,6 @@ $(TF_DATA_DIR):
 re-init: check-inputs-terraform
 	make --always-make $(TF_DATA_DIR)
 
-# NOTE: alias for 're-init'
-.PHONY: init
-.SILENT: init
-init:
-init:
-	echo "[WARN] 'make init' is deprecated. Please use re-init moving forward"
-	make re-init
-
 .PHONY: apply plan console destroy
 apply plan console destroy: check-inputs-terraform $(TF_DATA_DIR)
 	cd $(TERRAFORM_WORKING_DIR) \
@@ -160,7 +152,7 @@ kubeconfig.dec: check-env-dir
 		test -s $(ENV_DIR)/$(@) || (echo "[ERR] Decryption failed: $(basename $(@))" && exit 1) \
 	)
 
-.PHONY: clean
+.PHONY: clean-decrypt
 clean-decrypt: check-env-dir
 	rm $(ENV_DIR)/*.dec
 
