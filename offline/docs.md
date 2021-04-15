@@ -88,7 +88,7 @@ The following artifacts are provided:
    Also come as tarballs, and are seeded like the system containers.
  - `containers-other.tar`
    These are other container images, not deployed inside k8s. Currently, only
-   contains restund.
+   contains Restund.
  - `debs.tar`
    This acts as a self-contained dump of all packages required to install
    kubespray, as well as all other packages that are installed by ansible
@@ -123,19 +123,25 @@ additional nodes should only be added to the `[kube-node]` group.
 * Similarly `elasticsearch_network_interface` and `minio_network_interface`
   should be set to the private network interface to too.
 
-### Configuring restund
+### Configuring Restund
 
 Restund is deployed for NAT-hole punching and relaying. So that 1-to-1 calls
-can be established between Wire users.  Restund needs to be directly publicly
+can be established between Wire users. Restund needs to be directly publicly
 reachable on a public IP.
 
-If you need restund to listen on a different interface than the default gateway, set `restund_network_interface`
+If you need Restund to listen on a different interface than the default gateway, set `restund_network_interface`
 
-If the interface on which restund is listening does not know its own public IP
-(e.g. because it is behind NAT itself) extra configuration is neccessary. Please provide the public IP on which
-restund is available as `restund_peer_udp_advertise_addr`
+If the interface on which Restund is listening does not know its own public IP
+(e.g. because it is behind NAT itself) extra configuration is necessary. Please provide the public IP on which
+Restund is available as `restund_peer_udp_advertise_addr`.
+
+Due to this *NAT-hole punching* relay purpose and depending on where the Restund instance resides within your network
+topology, it could be used to access private services. We consider this to be unintended and thus set a couple
+of network rules on a Restund instance. If egress traffic to certain private network ranges should still
+be allowed, you may adjust `restund_allowed_private_network_cidrs` according to your setup.
 
 ### Marking kubenode for calling server (SFT)
+
 The SFT Calling server should be running on a kubernetes nodes that are connected to the public internet.
 If not all kubernetes nodes match these criteria, you should specifically label the nodes that do match
 these criteria, so that we're sure SFT is deployed correctly.
@@ -163,7 +169,7 @@ Please run:
 This should generate two files. `./ansible/inventory/group_vars/all/secrets.yaml` and `values/wire-server/secrets.yaml`.
 
 
-## Deploying kubernetes , restund and stateful services
+## Deploying Kubernetes, Restund and stateful services
 
 In order to deploy all the ansible-managed services you can run:
 ```
