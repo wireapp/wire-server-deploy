@@ -38,3 +38,4 @@
       with_dict: "{{ node_annotations | default({}) }}"
 
 - import_playbook: kubernetes_logging.yml
+- import_playbook: helm_etcd.yml

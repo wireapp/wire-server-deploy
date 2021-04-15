@@ -28,10 +28,26 @@ create-inventory: check-env
 	mkdir -p ${ENV_DIR}/gen && \
 		terraform output -json inventory > ${ENV_DIR}/gen/terraform-inventory.yml
 
-.PHONY: apply plan console destroy
-apply plan console destroy: check-env
+.PHONY: view-inventory
+view-inventory: check-env
+	@mkdir -p ${ENV_DIR}/gen && \
+		terraform output -json inventory
+
+.PHONY: apply plan console refresh
+apply plan console refresh:
 	source ${ENV_DIR}/hcloud-token.dec && \
 		terraform $@ -var-file=${ENV_DIR}/terraform.tfvars
+
+.PHONY: state-list
+state-list:
+	source ${ENV_DIR}/hcloud-token.dec && \
+		terraform state list 
+
+.PHONY: destroy
+destroy:
+	rm -rf ${ENV_DIR}/gen && \
+		source ${ENV_DIR}/hcloud-token.dec && \
+			terraform $@ -var-file=${ENV_DIR}/terraform.tfvars
 
 .PHONY: check-env
 check-env:
