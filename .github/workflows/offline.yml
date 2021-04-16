@@ -8,6 +8,8 @@ jobs:
     name: Prepare offline package
     runs-on: ubuntu-latest
     steps:
+      - name: "HACK: Free up 24GB of disk space"
+        run: sudo rm -rf /usr/share/dotnet
       - uses: actions/checkout@v2
         with:
           submodules: true
