@@ -1,8 +1,8 @@
 # Ansible-based deployment
 
-In a production environment, some parts of the wire-server infrastructure (such as e.g. cassandra databases) are best configured outside kubernetes. Additionally, kubernetes can be rapidly set up with a project called kubespray, via ansible.
+In a production environment, some parts of the wire-server infrastructure (such as e.g. cassandra databases) are best configured outside Kubernetes. Additionally, Kubernetes can be rapidly set up with a project called Kubespray, via Ansible.
 
-This directory hosts a range of ansible playbooks to install kubernetes and databases necessary for wire-server. For documentation on usage, please refer to the [Administrator's Guide](https://docs.wire.com), notably the production installation.
+This directory hosts a range of Ansible playbooks to install Kubernetes and databases necessary for wire-server. For documentation on usage, please refer to the [Administrator's Guide](https://docs.wire.com), notably the production installation.
 
 
 ## Bootstrap environment created by `terraform/environment`
@@ -22,7 +22,7 @@ Kubernetes can be deployed on; more will be added.
    the terraform folder](../terraform/README.md)
 1. Ensure `$ENV_DIR/operator-ssh.dec` exists and contains an ssh key for the
    environment.
-1. Ensure that `make apply` and `make create-inventory` have been run for the
+1. Ensure that `make apply` and `make generate-inventory` have been run for the
    environment. Please refer to the [docs in the terraform
    folder](../terraform/README.md) for details about how to run this.
 1. Ensure all required variables are set in `$ENV_DIR/inventory/*.yml`
@@ -32,8 +32,8 @@ Kubernetes can be deployed on; more will be added.
 ## Bootstrap a Kubernetes cluster with Kubespray
 
 * while necessary Inventory hosts & groups are being defined/generated with Terraform
-  (see `terraform/environment/kubernetes.inventory.tf`), Kubespray Inventory variables
-  are supposed to be defined in `${ENV_DIR}/inventory/inventory.yml`
+  (see `terraform/environment/*.inventory.tf`), Kubespray Inventory variables
+  are supposed to be defined in `${ENV_DIR}/inventory/` (e.g. `inventory.yml`)
 * after bootstrapping Kubernetes, a plain-text version of the kubeconfig file should 
   exist under `$ENV_DIR/kubeconfig.dec`<sup>[1]</sup>
 
@@ -86,23 +86,23 @@ sft_servers_blue:
 
 For `sft_servers_green`, `srv_announcer_active` must be `false`.
 
-1. Make sure all env variables like `ENV`, `ENV_DIR` are set.
+1. Make sure all env variables like `ENV` or `ENV_DIR` are set.
 1. Create terraform inventory (This section assumes all commands are executed
    from the root of this repository)
    ```bash
-   make -C terraform/environment create-inventory
+   make generate-inventory
    ```
 1. Setup green servers to have version 43 and become active:
    ```yaml
    sft_servers_green:
-   vars:
-     sft_artifact_file_url: "https://example.com/path/to/sftd_43.tar.gz"
-     sft_artifact_checksum: somechecksum_43
-     srv_announcer_active: true
+     vars:
+       sft_artifact_file_url: "https://example.com/path/to/sftd_43.tar.gz"
+       sft_artifact_checksum: somechecksum_43
+       srv_announcer_active: true
    ```
 1. Run ansible
-   ```yaml
-   make -C ansible provision-sft
+   ```bash
+   make provision-sft
    ```
 
    This will make sure that green SFT servers will have version 43 of sftd and
@@ -110,17 +110,17 @@ For `sft_servers_green`, `srv_announcer_active` must be `false`.
    active.
 1. Ensure that new servers function properly. If they don't you can set
    `srv_announcer_active` to `false` for the green group.
-1. If the servers are working properly, setup the old servers to be deactivated:
+1. If the servers are working properly, set up the old servers to be deactivated:
    ```yaml
    sft_servers_blue:
-   vars:
-     sft_artifact_file_url: "https://example.com/path/to/sftd_42.tar.gz"
-     sft_artifact_checksum: somechecksum_42
-     srv_announcer_active: false
+     vars:
+       sft_artifact_file_url: "https://example.com/path/to/sftd_42.tar.gz"
+       sft_artifact_checksum: somechecksum_42
+       srv_announcer_active: false
    ```
 1. Run ansible again
-   ```yaml
-   make -C ansible provision-sft
+   ```bash
+   make provision-sft
    ```
 1. There is a race condition in stopping SRV announcers, which will mean that
    sometimes a server will not get removed from the list. This can be found by
@@ -151,15 +151,15 @@ environment = "staging"
    ```tfvars
    sft_server_names_blue = ["1", "2", "5"] # These shouldn't overlap with the green ones
    ```
-1. Run terraform (this will wait for approval)
+1. Run Terraform (this will wait for approval)
    ```bash
-   make -C terraform/environment init apply create-inventory
+   make apply generate-inventory
    ```
 1. Set `srv_announcer_active` to `false` only for the host which is to be taken
    down. Here the ansible host name would be `staging-sft-1`
 1. Run ansible
    ```bash
-   make -C ansible provision-sft
+   make provision-sft
    ```
 1. Ensure that the SRV records don't contain `sft1`, same as last step of deployment procedure.
 1. Monitor `sft_calls` metric to make sure that there are no calls left.
@@ -167,9 +167,9 @@ environment = "staging"
    ```tfvars
    sft_server_names_blue: ["2", "5"]
    ```
-1. Run terraform (this will again wait for approval)
+1. Run Terraform (this will again wait for approval)
    ```bash
-   make -C terraform/environment apply
+   make apply
    ```
 
 #### When the server is not active
@@ -179,9 +179,9 @@ environment = "staging"
    ```tfvars
    sft_server_names_blue: ["2", "5"]
    ```
-1. Run terraform (this will wait for approval)
+1. Run Terraform (this will wait for approval)
    ```bash
-   make -C terraform/environment init apply
+   make apply
    ```
 
 ### Change server type of all servers
@@ -204,9 +204,9 @@ We can do it like this:
    ```
    sft_server_type_green = "cx31"
    ```
-1. Run terraform (will wait for approval)
+1. Run Terraform (will wait for approval)
    ```
-   make -C terraform/environment init apply create-inventory
+   make apply generate-inventory
    ```
 1. Deploy the same version as blue to green by following steps in the deployment
    procedure.

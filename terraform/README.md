@@ -1,6 +1,6 @@
 # Terraform for wire-server
 
-This directory contains (aspires to contain) all the Terraform required to se tup
+This directory contains (aspires to contain) all the Terraform required to set up
 wire-server. The `environment` directory is to be considered the "root"
 directory of Terraform.
 
@@ -9,17 +9,17 @@ directory of Terraform.
 Recommended: Use nix-shell from the root of this repository to ensure that you
 have the right version of terraform.
 
-Run all commands from `terraform/environment` directory.
+Run all commands from the top-level of this repository.
 
 1. Export `ENV_DIR` environment variable to a directory where you want to store
    data specific to an environment. Ensure that this directory exists.
 
-   For Wire employees, please create this directory in `cailleach/environments`.
-   If cailleach is not checked-out as a sibling directory to wire-server-deploy,
-   please export `CAILLEACH_DIR` as absolute path to the cailleach directory.
-   Additionally, export `ENV` as the name of the environment. For the rest of
-   this README, please consider `ENV_DIR` to be
-   `${CAILLEACH_DIR}/environments/${ENV}`.
+   For Wire employees, please create this directory in `cailleach/environments`
+   and export its name via `ENV`. If cailleach is no checked-out as a sibling
+   directory to wire-server-deploy, please instead export `ENV_DIR` as absolute
+   path to the environment directory that you created.
+   For the rest of this README, please consider `ENV_DIR` to be
+   `$(pwd)/../cailleach/environments/${ENV}`.
 1. Create backend-config in `"$ENV_DIR/backend.tfvars` which looks like this:
    ```tf
    region  = "<aws-region>"
@@ -30,7 +30,7 @@ Run all commands from `terraform/environment` directory.
 
    Please refer to [s3 backend
    docs](https://www.terraform.io/docs/backends/types/s3.html) for details.
-1. Create token from hetzner cloud and put the following contents (including the export)
+1. Create token from Hetzner cloud and put the following contents (including the export)
     in a file called `$ENV_DIR/hcloud-token.dec`<sup>[1]</sup>:
    ```
    export HCLOUD_TOKEN=<token>
@@ -61,18 +61,14 @@ Run all commands from `terraform/environment` directory.
    Delete operator-ssh.dec.pub.
    Please refer to variable definitions in `environment/*.vars.tf` in order to see which
    ones are available. Additional examples can be found in the `examples` folder at the
-   top-level of this repository.
-1. Initialize Terraform
-   ```
-   make init
-   ```
-1. Apply terraform
+   root of this repository.
+1. Initialize and apply Terraform
    ```
    make apply
    ```
 1. Create inventory
    ```
-   make create-inventory
+   make generate-inventory
    ```
 1. To bootstrap the nodes, please refer to the [Ansible README](../ansible/README.md)
 1. To deploy Wire on top, please refer to the [Helm README](../helm/README.md)

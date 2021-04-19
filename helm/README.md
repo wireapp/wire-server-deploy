@@ -33,13 +33,14 @@ To start with, the environment must contain a `helmfile.yaml` listing each *rele
 1. Craft the Helm values according to your needs (see
    [charts](https://github.com/wireapp/wire-server/blob/develop/charts) for available
    configuration)
-1. Running `make deploy` from this directory will bootstrap the
-   environment.
+1. Running `make deploy` from the root directory of this repository will install each
+   Helm release defined in `helmfile.yaml`
 
 
 ## Using Helmfiles
 
-* similar to `helm` it is possible to also set `chart` to be a path in the local filesystem
+* Similar to `helm` it is possible to also set `chart` to be a path in the local filesystem
   (e.g. `./wire-server/charts/nginx-ingress-services`)
-* setting `installed: [true, false]` can help do get rid of a release or just comment out things,
-  also `force: true` might solve some weird states
+* Setting `installed: [true, false]` can help do get rid of a release. Alternatively, you can 
+  run `make hf-destroy RELEASE=wire-server` or just comment out things, also `force: true`
+  might solve some weird states
