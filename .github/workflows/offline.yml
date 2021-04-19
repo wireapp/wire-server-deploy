@@ -29,17 +29,24 @@ jobs:
           GPG_PRIVATE_KEY: '${{ secrets.GPG_PRIVATE_KEY }}'
           DOCKER_LOGIN: '${{ secrets.DOCKER_LOGIN }}'
 
-      # - name: Deploy offline environment to hetzner
-      #   run: |
-      #     ./offline/cd.sh
-      #   env:
-      #     HCLOUD_TOKEN: '${{ secrets.HCLOUD_TOKEN }}'
+      - name: Deploy offline environment to hetzner
+        if:
+        run: |
+          ./offline/cd.sh
+        env:
+          HCLOUD_TOKEN: '${{ secrets.HCLOUD_TOKEN }}'
+
+      - name: Clean up hetzner environment; just in case
+        if: always()
+        run: (cd terraform/examples/wire-server-deploy-offline-hetzner ; terraform destroy -auto-approve)
+        env:
+          HCLOUD_TOKEN: '${{ secrets.HCLOUD_TOKEN }}'
 
       - name: Copy assets tarball to S3
         run: |
           aws s3 cp assets.tgz s3://public.wire.com/artifacts/wire-server-deploy-static-${{ github.sha }}.tgz
           echo "Uploaded to: https://s3-$AWS_REGION.amazonaws.com/public.wire.com/artifacts/wire-server-deploy-static-${{ github.sha }}.tgz"
         env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_ACCESS_KEY_ID: '${{ secrets.AWS_ACCESS_KEY_ID }}'
+          AWS_SECRET_ACCESS_KEY: '${{ secrets.AWS_SECRET_ACCESS_KEY }}'
           AWS_REGION: "eu-west-1"
