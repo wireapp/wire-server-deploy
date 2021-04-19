@@ -30,7 +30,6 @@ jobs:
           DOCKER_LOGIN: '${{ secrets.DOCKER_LOGIN }}'
 
       - name: Deploy offline environment to hetzner
-        if:
         run: |
           ./offline/cd.sh
         env:
