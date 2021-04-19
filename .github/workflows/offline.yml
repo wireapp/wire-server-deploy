@@ -48,10 +48,11 @@ jobs:
       - name: Get upload name
         id: upload_name
         run: |
-          SOURCE_TAG=${GITHUB_REF#refs/tags/}
-          echo ::set-output name=UPLOAD_NAME::${SOURCE_TAG:-$GITHUB_SHA}
+          # FIXME: Tag with a nice release name using the github tag...
+          # SOURCE_TAG=${GITHUB_REF#refs/tags/}
+          echo ::set-output name=UPLOAD_NAME::$GITHUB_SHA
+          # echo ::set-output name=UPLOAD_NAME::${SOURCE_TAG:-$GITHUB_SHA}
 
-      # TODO: Tag with a nice release name using the github tag...
       - name: Copy assets tarball to S3
         run: |
           aws s3 cp assets.tgz s3://public.wire.com/artifacts/wire-server-deploy-static-${{ steps.upload_name.outputs.UPLOAD_NAME }}.tgz
