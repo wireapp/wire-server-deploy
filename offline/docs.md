@@ -23,10 +23,8 @@ Create a fresh workspace to download the artifacts:
 $ cd ...  # you pick a good location!
 ```
 
-Obtain the latest artifacts from wire-server-deploy. Once
-https://github.com/wireapp/wire-server-deploy/pull/363 is finished, these will
-be in the "Releases" tab. Until then, go to the PRs "Checks" tab, and look for
-the URL of the "assets" tarball linked from CI.
+Obtain the latest airgrap artifact for wire-server-deploy. Please contact us to get it for now. We are
+working on publishing a list of airgap artifacts.
 
 Extract the above listed artifacts into your workspace:
 
