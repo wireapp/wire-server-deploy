@@ -35,8 +35,8 @@ $(TF_DATA_DIR):
 re-init: check-inputs-terraform
 	make --always-make $(TF_DATA_DIR)
 
-.PHONY: apply plan console destroy
-apply plan console destroy: check-inputs-terraform $(TF_DATA_DIR)
+.PHONY: apply plan console destroy refresh
+apply plan console destroy refresh: check-inputs-terraform $(TF_DATA_DIR)
 	cd $(TERRAFORM_WORKING_DIR) \
 	&& source $(ENV_DIR)/hcloud-token.dec \
 	&& terraform $(@) -var-file=$(ENV_DIR)/terraform.tfvars
@@ -48,18 +48,24 @@ ifndef LOCK_ID
 	$(error "[ERR] Undefined variable: LOCK_ID")
 endif
 	cd $(TERRAFORM_WORKING_DIR) \
-	&& terraform force-unlock $(LOCK_ID) $(MKFILE_DIR)
+	&& terraform $(@) $(LOCK_ID) $(MKFILE_DIR)
 
 .PHONY: output
 output: check-inputs-terraform $(TF_DATA_DIR)
 	cd $(TERRAFORM_WORKING_DIR) \
-	&& terraform output -json
+	&& terraform $(@) -json
 
-.PHONY: create-inventory
-create-inventory: check-inputs-terraform $(TF_DATA_DIR)
+.PHONY: state-list
+state-list: check-inputs-terraform $(TF_DATA_DIR)
+	cd $(TERRAFORM_WORKING_DIR) \
+	&& terraform state list
+
+.PHONY: generate-inventory
+generate-inventory: check-inputs-terraform $(TF_DATA_DIR)
 	mkdir -p $(ENV_DIR)/gen
 	cd $(TERRAFORM_WORKING_DIR) \
 	&& terraform output -json inventory > $(ENV_DIR)/gen/terraform-inventory.yml
+
 
 
 ######################################## ANSIBLE ###############################
@@ -67,8 +73,16 @@ ANSIBLE_DIR = $(MKFILE_DIR)/ansible
 export ANSIBLE_CONFIG = $(ANSIBLE_DIR)/ansible.cfg
 
 
+.PHONY: ansible-play-%
+ansible-play-%: ensure-dependencies-ansible check-inputs-ansible
+	ansible-playbook $(ANSIBLE_DIR)/$(*).yml \
+		-i $(ENV_DIR)/gen/terraform-inventory.yml \
+		-i $(ENV_DIR)/inventory \
+		--private-key $(ENV_DIR)/operator-ssh.dec \
+		-vv
+
 .PHONY: bootstrap
-bootstrap: check-inputs-ansible
+bootstrap: ensure-dependencies-ansible check-inputs-ansible
 	ansible-playbook $(ANSIBLE_DIR)/bootstrap.yml \
 		-i $(ENV_DIR)/gen/terraform-inventory.yml \
 		-i $(ENV_DIR)/inventory \
@@ -78,6 +92,14 @@ bootstrap: check-inputs-ansible
 .PHONY: provision-sft
 provision-sft: check-inputs-ansible
 	ansible-playbook $(ANSIBLE_DIR)/provision-sft.yml \
+		-i $(ENV_DIR)/gen/terraform-inventory.yml \
+		-i $(ENV_DIR)/inventory \
+		--private-key $(ENV_DIR)/operator-ssh.dec \
+		-vv
+
+.PHONY: upgrade-cluster
+upgrade-cluster: check-inputs-ansible
+	ansible-playbook $(ANSIBLE_DIR)/roles-external/kubespray/upgrade-cluster.yml \
 		-i $(ENV_DIR)/gen/terraform-inventory.yml \
 		-i $(ENV_DIR)/inventory \
 		--private-key $(ENV_DIR)/operator-ssh.dec \
@@ -107,14 +129,40 @@ get-logs: check-inputs-ansible
 		--extra-vars "log_dir=$(LOG_DIR)"
 
 
+.PHONY: ensure-dependencies-ansible
+ensure-dependencies-ansible: $(ANSIBLE_DIR)/roles-override
 
-######################################## HELM ##################################
+.PHONY: $(ANSIBLE_DIR)/roles-override
+.SILENT: $(ANSIBLE_DIR)/roles-override
+$(ANSIBLE_DIR)/roles-override:
+	[ -e $(ENV_DIR)/kubespray.ref ] \
+	&& ( \
+		rm -rf $(@); \
+		git clone https://github.com/kubernetes-sigs/kubespray $(@)/kubespray; \
+		cd $(@)/kubespray; \
+		git config advice.detachedHead false; \
+		git checkout "$$(cat $(ENV_DIR)/kubespray.ref)"; \
+	)
+
+
+
+######################################## HELMFILE ##############################
 .PHONY: deploy
 deploy: check-inputs-helm
+	make hf-sync
+
+.PHONY: hf-dev-%
+hf-dev-%: check-inputs-helm
+	make hf-$(*) OPTIONS='--debug --log-level=debug'
+
+.PHONY: hf-%
+hf-%: check-inputs-helm
 	KUBECONFIG=$(ENV_DIR)/kubeconfig.dec \
 	helmfile \
 		--file $(ENV_DIR)/helmfile.yaml \
-		sync \
+		$(if $(RELEASE),--selector name=$(RELEASE)) \
+		$(OPTIONS) \
+		$(*) \
 			--concurrency 1
 
 
