@@ -180,31 +180,31 @@ Copy over binaries and debs, serves assets from the asset host, and configure
 other hosts to fetch debs from it:
 
 ```
-d ansible-playbook -i ./ansible/offline/inventory ansible/setup-offline-sources.yml
+d ansible-playbook -i ./ansible/inventory/offline ansible/setup-offline-sources.yml
 ```
 
 Run kubespray until docker is installed and runs. This allows us to preseed the docker containers that
 are part of the offline bundle:
 
 ```
-d ansible-playbook -i ./ansible/offline/inventory ansible/kubernetes.yml --tags bastion,bootstrap-os,preinstall,container-engine
+d ansible-playbook -i ./ansible/inventory/offline ansible/kubernetes.yml --tags bastion,bootstrap-os,preinstall,container-engine
 ```
 
 Now; run the restund playbook until docker is installed:
 ```
-d ansible-playbook -i ./ansible/offline/inventory ansible/restund.yml --tags docker
+d ansible-playbook -i ./ansible/inventory/offline ansible/restund.yml --tags docker
 ```
 
 With docker being installed on all nodes that need it, seed all container images:
 
 ```
-d ansible-playbook -i ./ansible/offline/inventory ansible/seed-offline-docker.yml
+d ansible-playbook -i ./ansible/inventory/offline ansible/seed-offline-docker.yml
 ```
 
 Run the rest of kubespray. This should bootstrap a kubernetes cluster successfully:
 
 ```
-d ansible-playbook -i ./ansible/offline/inventory ansible/kubernetes.yml --skip-tags bootstrap-os,preinstall,container-engine
+d ansible-playbook -i ./ansible/inventory/offline ansible/kubernetes.yml --skip-tags bootstrap-os,preinstall,container-engine
 ```
 
 
@@ -218,10 +218,10 @@ They should all report ready.
 Now, deploy all other services which don't run in kubernetes.
 
 ```
-d ansible-playbook -i ./ansible/offline/inventory ansible/restund.yml
-d ansible-playbook -i ./ansible/offline/inventory ansible/cassandra.yml
-d ansible-playbook -i ./ansible/offline/inventory ansible/elasticsearch.yml
-d ansible-playbook -i ./ansible/offline/inventory ansible/minio.yml
+d ansible-playbook -i ./ansible/inventory/offline ansible/restund.yml
+d ansible-playbook -i ./ansible/inventory/offline ansible/cassandra.yml
+d ansible-playbook -i ./ansible/inventory/offline ansible/elasticsearch.yml
+d ansible-playbook -i ./ansible/inventory/offline ansible/minio.yml
 ```
 
 
@@ -229,7 +229,7 @@ d ansible-playbook -i ./ansible/offline/inventory ansible/minio.yml
 Afterwards, run the following playbook to create helm values that tell our helm charts
 what the IP addresses of cassandra, elasticsearch and minio are.
 ```
-d ansible-playbook -i ./ansible/offline/inventory ansible/helm_external.yml
+d ansible-playbook -i ./ansible/inventory/offline ansible/helm_external.yml
 ```
 
 
