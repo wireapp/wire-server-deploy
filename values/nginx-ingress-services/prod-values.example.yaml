@@ -1,7 +1,7 @@
 teamSettings:
-  enabled: false
+  enabled: true
 accountPages:
-  enabled: false
+  enabled: true
 tls:
   enabled: true
   # NOTE: enable to automate certificate issuing with jetstack/cert-manager instead of
