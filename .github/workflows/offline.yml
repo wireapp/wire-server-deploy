@@ -68,8 +68,7 @@ jobs:
 
           skopeo copy --dest-creds "$DOCKER_LOGIN" \
             docker-archive:"$container_image" \
-            "docker://quay.io/wire/wire-server-deploy" \
-            --additional-tag "${{ steps.upload_name.outputs.UPLOAD_NAME }}"
+            "docker://quay.io/wire/wire-server-deploy:${{ steps.upload_name.outputs.UPLOAD_NAME }}"
         env:
           DOCKER_LOGIN: '${{ secrets.DOCKER_LOGIN }}'
 
