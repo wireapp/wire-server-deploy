@@ -63,7 +63,7 @@ aptly_config=$(mktemp)
 trap 'rm -Rf -- "$aptly_config $GNUPGHOME"' EXIT
 
 cat > "$aptly_config" <<FOO
-{ "rootDir": "$aptly_root", "downloadConcurrency": 10 }
+{ "rootDir": "$aptly_root", "downloadConcurrency": 10, "gpgProvider": "internal" }
 FOO
 
 aptly="aptly -config=${aptly_config} "
