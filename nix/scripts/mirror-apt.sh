@@ -105,6 +105,6 @@ $aptly snapshot create docker-ce from mirror docker-ce
 
 $aptly snapshot merge wire bionic bionic-security docker-ce
 
-$aptly publish snapshot -distribution bionic wire
+$aptly publish snapshot -gpg-key="gpg@wire.com" -secret-keyring="$GNUPGHOME/secring.gpg" -distribution bionic wire
 
 gpg --export gpg@wire.com -a > "$aptly_root/public/gpg"
