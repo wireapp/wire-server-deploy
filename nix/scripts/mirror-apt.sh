@@ -80,6 +80,9 @@ $gpg --list-keys
 echo "Printing the secret key ids..."
 $gpg --list-secret-keys
 
+echo "What is in the GNUPGHOME"
+ls -la $GNUPGHOME
+
 # import the ubuntu and docker signing keys
 # TODO: Do we want to pin these better? Verify them?
 curl 'https://keyserver.ubuntu.com/pks/lookup?op=get&search=0x790bc7277767219c42c86f933b4fe6acc0b21f32' | $gpg --import
