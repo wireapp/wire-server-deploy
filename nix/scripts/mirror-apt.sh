@@ -68,6 +68,8 @@ FOO
 
 aptly="aptly -config=${aptly_config} "
 
+echo "GPG is at $(which gpg)"
+
 # configure gpg to use a custom keyring, because aptly reads from it
 gpg="gpg --keyring=$GNUPGHOME/trustedkeys.gpg --no-default-keyring"
 
