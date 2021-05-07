@@ -68,10 +68,9 @@ FOO
 
 aptly="aptly -config=${aptly_config} "
 
-echo "GPG is at $(which gpg)"
 
 # Import our signing key to our keyring
-echo -e "$GPG_PRIVATE_KEY" |  gpg --no-default-keyring --armor --keyring secring.gpg
+echo -e "$GPG_PRIVATE_KEY" |  gpg --no-default-keyring --import --armor --keyring secring.gpg
 
 echo "Printing the public key ids..."
 gpg --no-default-keyring --keyring secring.gpg --list-keys
