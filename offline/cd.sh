@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-set -eou pipefail
+set -euo pipefail
 
 function cleanup {
   (cd terraform/examples/wire-server-deploy-offline-hetzner ; terraform destroy -auto-approve)
