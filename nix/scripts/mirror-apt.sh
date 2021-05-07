@@ -82,7 +82,6 @@ gpg --list-keys
 echo "Printing the secret key ids..."
 gpg --list-secret-keys
 
-exit 1
 
 # import the ubuntu and docker signing keys
 # TODO: Do we want to pin these better? Verify them?
