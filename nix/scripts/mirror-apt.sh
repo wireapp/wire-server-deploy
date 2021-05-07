@@ -75,6 +75,8 @@ gpg="gpg --keyring=$GNUPGHOME/trustedkeys.gpg --no-default-keyring"
 echo -e "$GPG_PRIVATE_KEY" | $gpg --import
 
 $gpg --list-keys
+echo "Printing the secret key ids..."
+$gpg --list-secret-keys
 
 # import the ubuntu and docker signing keys
 # TODO: Do we want to pin these better? Verify them?
