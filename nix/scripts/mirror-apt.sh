@@ -68,19 +68,27 @@ FOO
 
 aptly="aptly -config=${aptly_config} "
 
+echo "Info"
+gpg --version
+gpg --fingerprint
+gpg --no-default-keyring --keyring trustedkeys.gpg --fingerprint
+
 
 # Import our signing key to our keyring
-echo -e "$GPG_PRIVATE_KEY" |  gpg --no-default-keyring --import --armor --keyring secring.gpg
+echo -e "$GPG_PRIVATE_KEY" |  gpg --import
 
 echo "Printing the public key ids..."
-gpg --no-default-keyring --keyring secring.gpg --list-keys
+gpg --list-keys
 echo "Printing the secret key ids..."
-gpg --no-default-keyring --keyring secring.gpg --list-secret-keys
+gpg --list-secret-keys
 
 # import the ubuntu and docker signing keys
 # TODO: Do we want to pin these better? Verify them?
 curl 'https://keyserver.ubuntu.com/pks/lookup?op=get&search=0x790bc7277767219c42c86f933b4fe6acc0b21f32' | gpg --no-default-keyring --keyring=trustedkeys.gpg --import
 curl https://download.docker.com/linux/ubuntu/gpg | gpg --no-default-keyring --keyring=trustedkeys.gpg --import
+
+echo "Trusted"
+gpg --list-keys --no-default-keyring --keyring=trustedkeys.gpg
 
 $aptly mirror create -architectures=amd64 -filter="${packages_}" -filter-with-deps bionic http://de.archive.ubuntu.com/ubuntu/ bionic main universe
 $aptly mirror create -architectures=amd64 -filter="${packages_}" -filter-with-deps bionic-security http://de.archive.ubuntu.com/ubuntu/ bionic-security main universe
@@ -98,4 +106,4 @@ $aptly snapshot merge wire bionic bionic-security docker-ce
 
 $aptly publish snapshot -distribution bionic wire
 
-$gpg --export gpg@wire.com -a > "$aptly_root/public/gpg"
+gpg --export gpg@wire.com -a > "$aptly_root/public/gpg"
