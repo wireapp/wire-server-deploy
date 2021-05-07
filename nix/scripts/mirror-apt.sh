@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-set -eou pipefail
+set -euo pipefail
 
 # This will consume a list of ubuntu bionic packages (or queries), and produces
 # a packages.tgz tarball, which can be statically served.
@@ -75,12 +75,14 @@ gpg --no-default-keyring --keyring trustedkeys.gpg --fingerprint
 
 
 # Import our signing key to our keyring
-echo -e "$GPG_PRIVATE_KEY" |  gpg --import
+echo -e "$GPG_PRIVATE_KEY" | gpg --import
 
 echo "Printing the public key ids..."
 gpg --list-keys
 echo "Printing the secret key ids..."
 gpg --list-secret-keys
+
+exit 1
 
 # import the ubuntu and docker signing keys
 # TODO: Do we want to pin these better? Verify them?
