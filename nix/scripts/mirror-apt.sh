@@ -80,7 +80,7 @@ gpg --no-default-keyring --keyring secring.gpg --list-secret-keys
 
 # import the ubuntu and docker signing keys
 # TODO: Do we want to pin these better? Verify them?
-curl 'https://keyserver.ubuntu.com/pks/lookup?op=get&search=0x790bc7277767219c42c86f933b4fe6acc0b21f32' | gpg --nodefault-keyring --keyring=trustedkeys.gpg --import
+curl 'https://keyserver.ubuntu.com/pks/lookup?op=get&search=0x790bc7277767219c42c86f933b4fe6acc0b21f32' | gpg --no-default-keyring --keyring=trustedkeys.gpg --import
 curl https://download.docker.com/linux/ubuntu/gpg | gpg --no-default-keyring --keyring=trustedkeys.gpg --import
 
 $aptly mirror create -architectures=amd64 -filter="${packages_}" -filter-with-deps bionic http://de.archive.ubuntu.com/ubuntu/ bionic main universe
