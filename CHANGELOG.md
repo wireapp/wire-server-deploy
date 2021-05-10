@@ -50,7 +50,7 @@
   the moment as we only run stateless services in Kubernetes at this point.
 
 * Restund role was bumped and uses `docker` instead of `rkt` now.
-  We advice brining up a fresh `restund` server; so that `rkt` is not installed.
+  We advice bringing up a fresh `restund` server; so that `rkt` is not installed.
   See https://github.com/wireapp/ansible-restund/commit/4db0bc066ded89cf0ae061e3ccac59f3738b33d9
 
   If you want to re-use your existing server we recommend:
