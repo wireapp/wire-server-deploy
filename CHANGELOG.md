@@ -1,4 +1,18 @@
+<!--
+
 # NEXT
+
+## Features
+
+## versions
+
+## Breaking changes
+
+-->
+
+
+
+# 2021-05-10
 
 ## Features
 
@@ -8,7 +22,7 @@
 
 ## Versions
 
-* wire version 2.104.0  when using the offline installer. However airgap
+* wire version 2.106.0  when using the offline installer. However airgap
   bundles for charts might be moved to wire-server repository in the future; to
   decouple wire-server releases from the base platform.
 * kubespray 2.15.0  (kubernetes 1.19.7)
