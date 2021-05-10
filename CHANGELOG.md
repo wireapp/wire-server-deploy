@@ -49,7 +49,7 @@
   deployments there, and then point to the new cluster. This is rather easy at
   the moment as we only run stateless services in Kubernetes at this point.
 
-* Restund role was bumped and uses `rkt` instead of `docker` now.
+* Restund role was bumped and uses `docker` instead of `rkt` now.
   We advice brining up a fresh `restund` server; so that `rkt` is not installed.
   See https://github.com/wireapp/ansible-restund/commit/4db0bc066ded89cf0ae061e3ccac59f3738b33d9
 
