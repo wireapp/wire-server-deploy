@@ -1,0 +1,59 @@
+helmDefaults:
+  wait: true
+  timeout: 600
+  devel: true
+
+repositories:
+  - name: wire
+    url: 'https://s3-eu-west-1.amazonaws.com/public.wire.com/charts'
+  - name: wire-develop
+    url: 'https://s3-eu-west-1.amazonaws.com/public.wire.com/charts-develop'
+  - name: jetstack
+    url: 'https://charts.jetstack.io'
+
+releases:
+  - name: 'fake-aws'
+    namespace: 'wire'
+    chart: 'wire/fake-aws'
+    version: 'CHANGE_ME'
+
+  - name: 'databases-ephemeral'
+    namespace: 'wire'
+    chart: 'wire/databases-ephemeral'
+    version: 'CHANGE_ME'
+
+  - name: 'demo-smtp'
+    namespace: 'wire'
+    chart: 'wire/demo-smtp'
+    version: 'CHANGE_ME'
+    values:
+      - './helm_vars/demo-smtp/values.yaml'
+
+  - name: 'wire-server'
+    namespace: 'wire'
+    chart: 'wire/wire-server'
+    version: 'CHANGE_ME'
+    values:
+      - './helm_vars/wire-server/values.yaml'
+    secrets:
+      - './helm_vars/wire-server/secrets.yaml'
+
+  - name: 'nginx-ingress-controller'
+    namespace: 'wire'
+    chart: 'wire/nginx-ingress-controller'
+    version: 'CHANGE_ME'
+
+  - name: 'cert-manager'
+    namespace: 'cert-manager'
+    chart: 'jetstack/cert-manager'
+    version: '1.1.0'
+    set:
+      - name: installCRDs
+        value: true
+
+  - name: 'nginx-ingress-services'
+    namespace: 'wire'
+    chart: 'wire/nginx-ingress-services'
+    version: 'CHANGE_ME'
+    values:
+      - './helm_vars/nginx-ingress-services/values.yaml'

@@ -1,8 +1,8 @@
 # Terraform for wire-server
 
-This directory contains (aspires to contain) all the terraform required to setup
+This directory contains (aspires to contain) all the Terraform required to se tup
 wire-server. The `environment` directory is to be considered the "root"
-directory of terraform.
+directory of Terraform.
 
 ## How to create a new environment
 
@@ -30,7 +30,7 @@ Run all commands from `terraform/environment` directory.
 
    Please refer to [s3 backend
    docs](https://www.terraform.io/docs/backends/types/s3.html) for details.
-1. Create token from hetzner cloud and put the following contents (including the export) 
+1. Create token from hetzner cloud and put the following contents (including the export)
     in a file called `$ENV_DIR/hcloud-token.dec`<sup>[1]</sup>:
    ```
    export HCLOUD_TOKEN=<token>
@@ -42,15 +42,27 @@ Run all commands from `terraform/environment` directory.
    ssh-keygen -o -a 100 -t ed25519 -f "$ENV_DIR/operator-ssh.dec" -C "example@example.com"
    # see footnote 2 if you're a wire employee
    ```
+1. (optional) encrypt files if collaborating using SOPS:
+   ```
+   sops -e "$ENV_DIR"/operator-ssh.dec > "$ENV_DIR"/operator-ssh
+   sops -e "$ENV_DIR"/hcloud-token.dec > "$ENV_DIR"/hcloud-token
+   ```
 1. Create variables for the environment in `$ENV_DIR/terraform.tfvars`, example:
    ```tf
    environment = <env>
-   sft_server_names = ["1", "2"]
    root_domain = "example.com"
-   operator_ssh_public_key = <public key from step above>
+   operator_ssh_public_keys = {
+      terraform_managed = {
+        "<key name>" = "<public key from step above>"
+      }
+      preuploaded_key_names = []
+   }
    ```
    Delete operator-ssh.dec.pub.
-1. Initialiaze terraform
+   Please refer to variable definitions in `environment/*.vars.tf` in order to see which
+   ones are available. Additional examples can be found in the `examples` folder at the
+   top-level of this repository.
+1. Initialize Terraform
    ```
    make init
    ```
@@ -62,10 +74,24 @@ Run all commands from `terraform/environment` directory.
    ```
    make create-inventory
    ```
-1. To bootstrap the nodes, please refer to the [ansible README](../ansible/README.md)
+1. To bootstrap the nodes, please refer to the [Ansible README](../ansible/README.md)
+1. To deploy Wire on top, please refer to the [Helm README](../helm/README.md)
 
 <sup>[1]</sup>For wire employees: Encrypt this file using `sops`, it will not
 work in the `nix-shell`, so change shell as needed.
 
 <sup>[2]</sup>For wire employees: Use "backend+${ENV}-operator@wire.com" as a
 convention.
+
+## Decommissioning machines
+
+### SFT
+
+Each SFT server has a unique identifier. Decommissioning is as easy as removing that
+identifier from one of the list - preferably from the non-active group.
+
+### Kubernetes
+
+Defining Kubernetes machines, is done by defining *group(s)* of machines. In order
+to destroy a single machine, one has to decommission the entire group - preferably
+after bringing up another group taking its place.

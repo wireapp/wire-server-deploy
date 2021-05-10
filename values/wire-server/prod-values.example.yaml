@@ -2,7 +2,7 @@
 tags:
   proxy: false # enable if you want/need giphy/youtube/etc proxying
   account-pages: true
-  team-settings: false # enable if you need team-settings. Requires a pullSecret
+  team-settings: true # enable if you need team-settings. Requires a pullSecret
   legalhold: false # Enable if you need legalhold
 
 cassandra-migrations:
@@ -27,11 +27,14 @@ brig:
     elasticsearch:
       host: elasticsearch-external
     useSES: false
+    # Set to false if you want to hand out DynamoDB to store prekeys
+    randomPrekeys: true
     aws:
       # change if using real AWS
       region: "eu-west-1"
       sqsEndpoint: http://fake-aws-sqs:4568
-      dynamoDBEndpoint: http://fake-aws-dynamodb:4567
+      # dynamoDBEndpoint: http://fake-aws-dynamodb:4567
+     
       # these must match the table names created on fake or real AWS services
       internalQueue: integration-brig-events-internal
       prekeyTable: integration-brig-prekeys
@@ -78,16 +81,14 @@ brig:
 #        - "local.example.com"
 #        - "10.23.0.0/16"
   turnStatic:
-    v1:
-      - "turn:turn01.example.com:80"
-      - "turn:turn02.example.com:80"
+    v1: []
     v2:
-      - "turn:turn01.example.com:3478"
-      - "turn:turn02.example.com:3478"
-      - "turn:turn01.example.com:80?transport=tcp"
-      - "turn:turn02.example.com:80?transport=tcp"
-      - "turns:turn01.example.com:443?transport=tcp"
-      - "turns:turn02.example.com:443?transport=tcp"
+      - "turn:<IP of restund1>:80"
+      - "turn:<IP of restund2:80"
+      - "turn:<IP of restund1>:80?transport=tcp"
+      - "turn:<IP of restund2>:80?transport=tcp"
+      # - "turns:<IP of restund1>:443?transport=tcp"
+      # - "turns:<IP of restund2>:443?transport=tcp"
 
 
 proxy:

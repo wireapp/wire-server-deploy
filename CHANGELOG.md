@@ -1,3 +1,65 @@
+<!--
+
+# NEXT
+
+## Features
+
+## versions
+
+## Breaking changes
+
+-->
+
+
+
+# 2021-05-10
+
+## Features
+
+* Airgap installer is available. See [./offline/docs.md] for rudimentary
+  instructions. We will integrate this into https://docs.wire.com/ over time
+* Switched to nix+direnv for installing all the required dependencies for wire-server-deploy. If you do not want to use these tools you can use the [`quay.io/wire/wire-server-deploy`](https://quay.io/wire/wire-server-deploy) container image and mount wire-server-deploy into it.
+
+## Versions
+
+* wire version 2.106.0  when using the offline installer. However airgap
+  bundles for charts might be moved to wire-server repository in the future; to
+  decouple wire-server releases from the base platform.
+* kubespray 2.15.0  (kubernetes 1.19.7)
+* ansible-restund v0.2.6 (restund version v0.4.16b1.0.53)
+* ansible-minio v2.1.0
+* ansible-cassandra version v0.1.3
+* ansible-elasticsearch 6.6.0
+
+
+## Breaking changes
+
+* Nix and direnv are used for installing all required tooling.
+
+* charts have been moved to wire-server. Chart lifecycle is now tied to
+  wire-server instead and is decoupled from the underlying platform. Charts in wire-server
+  should be installed with helm 3.
+
+* Our kubespray reference implementation has been bumped to kuberspray 2.15.0
+  and kubernetes 1.19.7. This allows us to use Kubespray's support for offline deployments
+  and new Kubernetes API features.
+
+  If you were using our reference playbooks for setting up kubernetes, there is
+  no direct upgrade path. Instead you should set up a new cluster; migrate the
+  deployments there, and then point to the new cluster. This is rather easy at
+  the moment as we only run stateless services in Kubernetes at this point.
+
+* Restund role was bumped and uses `docker` instead of `rkt` now.
+  We advice bringing up a fresh `restund` server; so that `rkt` is not installed.
+  See https://github.com/wireapp/ansible-restund/commit/4db0bc066ded89cf0ae061e3ccac59f3738b33d9
+
+  If you want to re-use your existing server we recommend:
+
+  1. ssh into your `restund` server.
+  2. `systemctl stop restund.service`
+  3. now outside again, run the `restund.yml` playbook.
+
+
 # 2020-12-21
 
 * brig: Add setExpiredUserCleanupTimeout to configmap (#399) see also: https://github.com/wireapp/wire-server/pull/1264

@@ -9,15 +9,13 @@
       - spar
     # cassandra 3.11 doesn't support java 11 yet, use openjdk-8.
     java_packages:
-      - openjdk-8-jdk
+      - openjdk-8-jre-headless
   roles:
-    - role: hostname
-      tags:
-        - hostname
 
     - role: ansible-role-ntp
       tags:
         - ntp
+      when: not offline
 
     - role: ansible-role-java
       tags:
@@ -30,6 +28,7 @@
     - role: ansible-ntp-verify
       tags:
         - ntp
+      when: not offline
   tasks:
     # these are optional debug tasks to see that the cluser has come up sucessfully
     - shell: nodetool status

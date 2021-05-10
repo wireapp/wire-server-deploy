@@ -1,0 +1,29 @@
+on:
+  push:
+    branches: [master, develop]
+  pull_request:
+    branches: [master, develop]
+jobs:
+  build:
+    name: build
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os:
+          - ubuntu-latest
+          - macos-latest
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          submodules: true
+      - uses: cachix/install-nix-action@v12
+      - uses: cachix/cachix-action@v8
+        with:
+          name: wire-server-deploy
+          signingKey: "${{ secrets.CACHIX_SIGNING_KEY }}"
+      - run: nix-build -A env
+      - name: Check terraform init 
+        run: | 
+          export PATH=$(nix-build -A env --no-out-link)/bin:$PATH
+          cd terraform/environment
+          terraform init --backend=false

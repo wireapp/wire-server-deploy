@@ -20,11 +20,28 @@ resource "aws_route53_record" "cname" {
 }
 
 resource "aws_route53_record" "spf" {
-  count = var.create_spf_record ? 1 : 0
+  count = length(var.spf_record_ips) > 0 ? 1 : 0
 
   zone_id = data.aws_route53_zone.rz.zone_id
   name    = join(".", local.name_suffix)
   type    = "TXT"
   ttl     = "60"
-  records = [ for ip in var.ips : "v=spf1 ip4:${ ip } -all" ]
+  records = [
+    join(" ", concat(
+      ["v=spf1"],
+      [for ip in var.spf_record_ips : "ip4:${ip}"],
+      ["-all"]
+    ))
+  ]
+}
+
+resource "aws_route53_record" "srv-server" {
+  for_each = var.srvs
+
+  zone_id = data.aws_route53_zone.rz.zone_id
+  name    = join(".", concat([each.key], local.name_suffix))
+  type    = "SRV"
+  ttl     = "60"
+
+  records = [for t in each.value : join(".", concat([t], local.name_suffix))]
 }
