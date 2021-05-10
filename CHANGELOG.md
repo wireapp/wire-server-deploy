@@ -1,4 +1,18 @@
+<!--
+
 # NEXT
+
+## Features
+
+## versions
+
+## Breaking changes
+
+-->
+
+
+
+# 2021-05-10
 
 ## Features
 
@@ -8,7 +22,7 @@
 
 ## Versions
 
-* wire version 2.104.0  when using the offline installer. However airgap
+* wire version 2.106.0  when using the offline installer. However airgap
   bundles for charts might be moved to wire-server repository in the future; to
   decouple wire-server releases from the base platform.
 * kubespray 2.15.0  (kubernetes 1.19.7)
@@ -35,8 +49,8 @@
   deployments there, and then point to the new cluster. This is rather easy at
   the moment as we only run stateless services in Kubernetes at this point.
 
-* Restund role was bumped and uses `rkt` instead of `docker` now.
-  We advice brining up a fresh `restund` server; so that `rkt` is not installed.
+* Restund role was bumped and uses `docker` instead of `rkt` now.
+  We advice bringing up a fresh `restund` server; so that `rkt` is not installed.
   See https://github.com/wireapp/ansible-restund/commit/4db0bc066ded89cf0ae061e3ccac59f3738b33d9
 
   If you want to re-use your existing server we recommend:
@@ -46,6 +60,11 @@
   3. now outside again, run the `restund.yml` playbook.
 
 
+# 2020-12-21
+
+* brig: Add setExpiredUserCleanupTimeout to configmap (#399) see also: https://github.com/wireapp/wire-server/pull/1264
+* [helm] Remove duplicate fields from brig section in the example value files (#398)
+* Add spar to the integration tests for brig (#397)
 
 # 2020-12-17
 
