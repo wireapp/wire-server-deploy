@@ -4,12 +4,26 @@
 
 ## Features
 
-## versions
+## Versions
 
 ## Breaking changes
 
 -->
 
+
+# 2021-05-26
+
+## Features
+
+- Fix update-dependencies pipeline (ec6eaf7d)
+
+## Versions
+
+n/a
+
+## Breaking changes
+
+n/a
 
 
 # 2021-05-10
