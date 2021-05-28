@@ -83,8 +83,8 @@ charts=(
   wire/sftd
   # Has a weird dependency on curl:latest. out of scope
   # wire-server-metrics
-  # fluent-bit
-  # kibana
+  fluent-bit
+  kibana
 )
 
 # TODO: Awaiting some fixes in wire-server regarding tagless images
