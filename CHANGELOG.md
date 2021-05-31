@@ -10,6 +10,22 @@
 
 -->
 
+# NEXT
+
+## Features
+
+* ansible-cassandra was bumped to fix https://github.com/wireapp/ansible-cassandra/pull/16
+
+## versions
+
+* wire version 2.106.0
+* kubespray 2.15.0  (kubernetes 1.19.7)
+* ansible-restund v0.2.6 (restund version v0.4.16b1.0.53)
+* ansible-minio v2.1.0
+* ansible-cassandra version v0.1.4
+* ansible-elasticsearch 6.6.0
+
+## Breaking changes
 
 
 # 2021-05-10
