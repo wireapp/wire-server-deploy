@@ -40,9 +40,6 @@
 [submodule "ansible/roles-external/sft"]
 	path = ansible/roles-external/sft
 	url = https://github.com/wireapp/ansible-sft.git
-[submodule "ansible/andrewrothstein.unarchive-deps"]
-	path = ansible/andrewrothstein.unarchive-deps
-	url = https://github.com/andrewrothstein/ansible-unarchive-deps
 [submodule "ansible/roles-external/andrewrothstein.unarchive-deps"]
 	path = ansible/roles-external/andrewrothstein.unarchive-deps
 	url = https://github.com/andrewrothstein/ansible-unarchive-deps
