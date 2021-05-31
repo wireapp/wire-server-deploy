@@ -5,7 +5,7 @@ updates:
     schedule:
       interval: "daily"
   - package-ecosystem: "gitsubmodule"
-    directory: "/ansible/roles-external"
+    directory: "/"
     schedule:
       interval: "daily"
 
