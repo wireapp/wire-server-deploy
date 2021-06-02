@@ -62,6 +62,7 @@ rec {
       pkgs.coreutils
       pkgs.bashInteractive
       pkgs.openssh # ansible needs this too, even with paramiko
+      pkgs.sshpass # needed for password login
 
       # The enivronment
       env
