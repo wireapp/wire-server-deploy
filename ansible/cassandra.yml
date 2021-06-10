@@ -15,7 +15,7 @@
     - role: ansible-role-ntp
       tags:
         - ntp
-      when: not offline
+      when: not (offline|default(false))
 
     - role: ansible-role-java
       tags:
@@ -28,7 +28,7 @@
     - role: ansible-ntp-verify
       tags:
         - ntp
-      when: not offline
+      when: not (offline|default(false))
   tasks:
     # these are optional debug tasks to see that the cluser has come up sucessfully
     - shell: nodetool status

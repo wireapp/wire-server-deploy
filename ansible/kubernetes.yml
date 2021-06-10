@@ -20,7 +20,6 @@
   become: no
   tasks:
     - delegate_to: localhost
-      when: not offline
       block:
       - name: "Checking if 'kubeconfig' file already exists"
         stat:
