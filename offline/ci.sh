@@ -101,19 +101,18 @@ wire_version="2.106.0"
 # Download zauth; as it's needed to generate certificates
 echo "quay.io/wire/zauth:$wire_version" | create-container-dump containers-adminhost
 
-mkdir -p charts
-for chart in "${charts[@]}"; do
-  (cd charts; helm pull --version "$wire_version" --untar "$chart")
+mkdir -p ./charts
+for chartName in "${charts[@]}"; do
+  (cd ./charts; helm pull --version "$wire_version" --untar "$chartName")
 done
 
-for chart in "${charts[@]}"; do
-  echo "$chart"
+for chartPath in "$(pwd)"/charts/*; do
+  echo "$chartPath"
 done | list-helm-containers | create-container-dump containers-helm
 
 tar cf containers-helm.tar containers-helm
 [[ "$INCREMENTAL" -eq 0 ]] && rm -r containers-helm
 
-#
 echo "docker_ubuntu_repo_repokey: '${fingerprint}'" > ansible/inventory/offline/group_vars/all/key.yml
 
 
