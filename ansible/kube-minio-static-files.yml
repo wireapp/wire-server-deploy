@@ -15,7 +15,7 @@
         tasks_from: install-client
 
     - name: "add 'local' mc config alias with correct credentials"
-      shell: "mc config host add local http://{{ service_cluster_ip }}:9000 {{ minio_access_key }} {{ minio_secret_key }}"
+      shell: "mc config host add local http://{{ service_cluster_ip }}:9000 '{{ minio_access_key }}' '{{ minio_secret_key }}'"
 
     - name: "create 'public' bucket"
       shell: "mc mb --ignore-existing local/public"
