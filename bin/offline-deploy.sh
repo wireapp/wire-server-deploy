@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
 
+set -euo pipefail
+
+
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
 # HACK: hack to stop ssh from idling the connection. Which it will do if there is no output. And ansible is not verbose enough
