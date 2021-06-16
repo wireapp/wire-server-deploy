@@ -12,6 +12,14 @@
 
 
 
+# 2021-06-10
+
+## Fixes
+
+* update Cassandra role (#455)
+* fix automated Ansible deployment (#468) 
+
+
 # 2021-05-10
 
 ## Features
