@@ -4,12 +4,21 @@
 
 ## Features
 
-## versions
+## Fixes
+
+## Versions
 
 ## Breaking changes
 
 -->
 
+
+# 2021-06-16
+
+## Fixes
+
+* [Ansible] Prevent Minio installation from breaking when access or secret key contains `$`
+* [CI] Ensure that the right version of wire-server is built into the air-gap bundle
 
 
 # 2021-06-10

@@ -51,7 +51,7 @@
       tags: bucket-create
 
     - name: "add 'local' mc config alias with correct credentials"
-      shell: "mc config host add local http://localhost{{ minio_layouts.server1.server_addr }} {{ minio_access_key }} {{ minio_secret_key }}"
+      shell: "mc config host add local http://localhost{{ minio_layouts.server1.server_addr }} '{{ minio_access_key }}' '{{ minio_secret_key }}'"
       tags: mc-config
 
     - name: "make the 'public' bucket world-accessible"
