@@ -314,7 +314,7 @@ you used at previous steps.
 If you want to restrict SFT to certain nodes, make sure that in your inventory
 you have annotated all the nodes that are able to run sftd workloads correctly.
 ```
-kubenode3 node_labels="wire.com/role=sftd" node_annotations="{'wire.com/external-ip': 'XXXX'}"
+kubenode3 node_labels="{'wire.com/role': 'sftd'}" node_annotations="{'wire.com/external-ip': 'XXXX'}"
 ```
 
 If these weren't already set; you should rerun :
