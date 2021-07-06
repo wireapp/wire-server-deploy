@@ -24,6 +24,15 @@ endif
 export TF_DATA_DIR = $(ENV_DIR)/.terraform
 TERRAFORM_WORKING_DIR = $(MKFILE_DIR)/terraform/environment
 
+# Since the variable directory and the terraform working directory are not the
+# same using a file custom.tf allows specifying additional terraform
+# instructions not (yet) covered by the terraform/environment functionality.  A
+# symlink is created before terraform init/apply/etc if such a file exists,
+# otherwise it is removed (in case it was created during a previous Makefile
+# invocation with a different ENV_DIR
+.PHONY: custom-terraform
+custom-terraform:
+	if [ -f $(ENV_DIR)/custom.tf ]; then ln -sf $(ENV_DIR)/custom.tf $(TERRAFORM_WORKING_DIR)/custom.tf; else rm -f $(TERRAFORM_WORKING_DIR)/custom.tf; fi
 
 # NOTE: leverage make's ability to noop if target already exists, but
 #       this also means that re-init must be triggered explicitly
@@ -32,11 +41,11 @@ $(TF_DATA_DIR):
 	&& terraform init -backend-config=$(ENV_DIR)/backend.tfvars
 
 .PHONY: re-init
-re-init: check-inputs-terraform
+re-init: check-inputs-terraform custom-terraform
 	make --always-make $(TF_DATA_DIR)
 
 .PHONY: apply plan console destroy
-apply plan console destroy: check-inputs-terraform $(TF_DATA_DIR)
+apply plan console destroy: check-inputs-terraform custom-terraform $(TF_DATA_DIR)
 	cd $(TERRAFORM_WORKING_DIR) \
 	&& source $(ENV_DIR)/hcloud-token.dec \
 	&& terraform $(@) -var-file=$(ENV_DIR)/terraform.tfvars
