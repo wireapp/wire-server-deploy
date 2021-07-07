@@ -107,7 +107,7 @@ galley:
     settings:
       federationDomain: example.com # change this
       # prefix URI used when inviting users to a conversation by link
-      conversationCodeURI: https://example.com/join/ # change this
+      conversationCodeURI: https://example.com/conversation-join/ # change this to poitn to your account pages.
     aws:
       region: "eu-west-1"
 #    proxy:
