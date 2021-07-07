@@ -284,6 +284,7 @@ team-settings:
     URL_ACCOUNT_BASE: "https://account.example.com"
     URL_WEBAPP_BASE: "https://webapp.example.com"
     URL_WEBSITE_BASE: "https://www.example.com"
+    WEBSITE_LABEL: "www.example.com"
     CSP_EXTRA_CONNECT_SRC: "https://*.example.com, wss://*.example.com"
     CSP_EXTRA_IMG_SRC: "https://*.example.com"
     CSP_EXTRA_SCRIPT_SRC: "https://*.example.com"
