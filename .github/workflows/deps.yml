@@ -22,7 +22,7 @@ jobs:
     # Access Token. Github limitation. Hence we're running `nix-build -A env`
     # as a simple smoke-test
     - name: Create Pull Request if there was a change
-      uses: peter-evans/create-pull-request@v3.6.0
+      uses: peter-evans/create-pull-request@v3.10.0
       with:
         title: "chore: update dependencies"
         branch: "chore/update-dependencies"
