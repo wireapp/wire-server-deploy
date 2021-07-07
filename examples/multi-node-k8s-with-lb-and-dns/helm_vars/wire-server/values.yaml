@@ -67,7 +67,7 @@ galley:
       host: cassandra-ephemeral
       replicaCount: 1
     settings:
-      conversationCodeURI: https://CHANGE_ME:generic-name.CHANGE_ME:FQDN/join/
+      conversationCodeURI: https://CHANGE_ME:generic-name.CHANGE_ME:FQDN/conversation-join/  # must point to account pages
       featureFlags:
         sso: enabled-by-default
         teamSearchVisibility: disabled-by-default
