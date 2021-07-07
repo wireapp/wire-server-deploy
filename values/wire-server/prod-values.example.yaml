@@ -47,7 +47,7 @@ brig:
       setFederationDomain: example.com # change this
       # Sync the domain with the 'host' variable in the sftd chart
       # uncomment this section if conference calling is not used
-      setSftStaticUrl: "https://sftd.example.om:443"
+      setSftStaticUrl: "https://sftd.example.com:443"
     emailSMS:
       general:
         emailSender: email@example.com # change this
