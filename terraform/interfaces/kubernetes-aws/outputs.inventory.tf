@@ -1,0 +1,5 @@
+output "inventory" {
+  value = {
+    # TODO
+  }
+}

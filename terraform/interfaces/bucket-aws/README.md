@@ -1,0 +1,1 @@
+Only meant as an example for an *interface module*.

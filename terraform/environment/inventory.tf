@@ -1,3 +1,7 @@
+# TODO: allow outputting multiple inventories (for each module instance returning an inventory)
+#       and/or merge them ('all', 'hosts', 'groups'). This might need to be solved on the 'make'
+#       level.
+
 # Generates an inventory file to be used by ansible. Ideally, we would generate
 # this outside terraform using outputs, but it is not possible to use 'terraform
 # output' when the init directory is different from the root code directory.
