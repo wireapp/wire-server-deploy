@@ -60,6 +60,8 @@ ansible 2.9.12
 
 ```
 
+## Artifacts provided in the deployment tarball.
+
 The following artifacts are provided:
 
  - `containers-adminhost/wire-server-deploy-*.tar`
