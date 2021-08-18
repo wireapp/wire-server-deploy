@@ -35,6 +35,13 @@ $ tar xvzf wire-server-deploy-static-<HASH>.tgz
 Where the HASH above is the hash of your deployment artifact, given to you by Wire, or acquired by looking at the above build job.
 Extract this tarball.
 
+The tarball is sizeable, if the machine is a bit slow and you want to be able to monitor the progress of the extraction, you can use the pv command for the extraction process:
+
+```
+$ sudo apt install pv
+$ pv wire-server-deploy-static-<HASH>.tgz | tar -xvzf   
+```
+
 Make sure that the admin host can `ssh` into all the machines that you want to provision. Our docker container will use the `.ssh` folder and the `ssh-agent` of the user running the scripts.
 
 There's also a docker image containing the tooling inside this repo.
