@@ -251,7 +251,6 @@ Next, we have 4 services that need to be deployed but need no additional configu
 ```
 d helm install fake-aws ./charts/fake-aws --values ./values/fake-aws/prod-values.example.yaml
 d helm install demo-smtp ./charts/demo-smtp --values ./values/demo-smtp/prod-values.example.yaml
-d helm install redis-ephemeral ./charts/redis-ephemeral
 d helm install reaper ./charts/reaper
 ```
 
