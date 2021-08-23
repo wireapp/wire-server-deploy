@@ -73,7 +73,7 @@
 # restund_peer_udp_advertise_addr = a.b.c.d
 
 # Explicitely specify the restund user id to be "root" to override the default of "997"
-restund_uid: root
+restund_uid = root
 
 # For the following groups, add all nodes defined above to the sections below.
 # Define any additional variables that should be set for these nodes.
