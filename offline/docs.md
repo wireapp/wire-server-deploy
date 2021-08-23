@@ -247,6 +247,12 @@ d helm install elasticsearch-external ./charts/elasticsearch-external --values .
 d helm install minio-external ./charts/minio-external --values ./values/minio-external/values.yaml
 ```
 
+Also copy the values file for `databases-ephemeral` as it is required for the next step:
+
+```
+cp values/databases-ephemeral/prod-values.example.yaml values/databases-ephemeral/values.yaml'
+```
+
 Next, we have 4 services that need to be deployed but need no additional configuration:
 ```
 d helm install fake-aws ./charts/fake-aws --values ./values/fake-aws/prod-values.example.yaml
