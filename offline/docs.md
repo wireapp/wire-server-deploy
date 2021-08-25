@@ -166,7 +166,7 @@ Please run:
 ./bin/offline-secrets.sh
 ```
 
-This should generate two files. `./ansible/inventory/group_vars/all/secrets.yaml` and `values/wire-server/secrets.yaml`.
+This should generate two files. `./ansible/inventory/offline/group_vars/all/secrets.yaml` and `values/wire-server/secrets.yaml`.
 
 
 ## Deploying Kubernetes, Restund and stateful services
