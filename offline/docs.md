@@ -60,6 +60,8 @@ ansible 2.9.12
 
 ```
 
+## Artifacts provided in the deployment tarball.
+
 The following artifacts are provided:
 
  - `containers-adminhost/wire-server-deploy-*.tar`
@@ -245,11 +247,17 @@ d helm install elasticsearch-external ./charts/elasticsearch-external --values .
 d helm install minio-external ./charts/minio-external --values ./values/minio-external/values.yaml
 ```
 
+Also copy the values file for `databases-ephemeral` as it is required for the next step:
+
+```
+cp values/databases-ephemeral/prod-values.example.yaml values/databases-ephemeral/values.yaml'
+```
+
 Next, we have 4 services that need to be deployed but need no additional configuration:
 ```
 d helm install fake-aws ./charts/fake-aws --values ./values/fake-aws/prod-values.example.yaml
 d helm install demo-smtp ./charts/demo-smtp --values ./values/demo-smtp/prod-values.example.yaml
-d helm install redis-ephemeral ./charts/redis-ephemeral
+d helm install databases-ephemeral ./charts/databases-ephemeral/ --values ./values/databases-ephemeral/values.yaml
 d helm install reaper ./charts/reaper
 ```
 

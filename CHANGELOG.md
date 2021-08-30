@@ -13,6 +13,18 @@
 -->
 
 
+# 2021-08-27
+
+## Fixes
+
+* [Documentation] Fix offline deploy redis installation instructions, and SFT node tagging.
+* [Wire-Server-Metrics] Fix spacing.
+
+## Features
+
+* [Operations] Add a custom terraform rule to the base Makefile, to improve deployment flexibility with terraform.
+
+
 # 2021-06-16
 
 ## Fixes
