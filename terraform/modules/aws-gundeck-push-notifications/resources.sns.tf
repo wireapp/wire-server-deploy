@@ -104,6 +104,8 @@ resource "aws_sns_platform_application" "apps" {
   # ^-- Topic to subscribe to
   event_endpoint_updated_topic_arn = aws_sns_topic.device_state_changed.arn
   # ^-- Topic to subscribe to
+
+  success_feedback_sample_rate = var.success_feedback_sample_rate
 }
 
 # Create topics and queues to publish push notifications
