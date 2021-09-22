@@ -1,0 +1,36 @@
+---
+# Configure using Rsyslog to monitor and forward log files to Qradar
+# ------------------------------------------------------------------
+# https://qradarinsights.com/2018/12/20/using-rsyslog-to-monitor-and-forward-log-files-to-qradar/
+# See https://wearezeta.atlassian.net/browse/JCT-62
+
+- name: Using Rsyslog to monitor and forward log files
+  connection: ansible.netcommon.network_cli
+  gather_facts: false
+  hosts: all
+  tasks:
+    - name: Copy the elastisearch config
+      become: true
+      template:
+        src: templates/elastisearch.conf.j2
+        dest: /etc/rsyslog.d/55-elasticsearch.conf
+
+    - name: Copy the qradar config
+      become: true
+      template:
+        src: templates/qradar.conf.j2
+        dest: /etc/rsyslog.d/rfc5424-remote.conf
+
+    # sudo chmod 775 /var/log/elasticsearch
+    - name: Change permissions of elastisearch log file
+      become: true
+      file:
+        path: /var/log/elasticsearch
+        mode: '0775'
+
+    # service syslog restart
+    - name: Restart the syslog service
+      become: true
+      service:
+        name: syslog
+        state: restarted
