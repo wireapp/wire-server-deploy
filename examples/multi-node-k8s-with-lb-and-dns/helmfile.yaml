@@ -29,6 +29,14 @@ releases:
     values:
       - './helm_vars/demo-smtp/values.yaml'
 
+  - name: 'cert-manager'
+    namespace: 'cert-manager'
+    chart: 'jetstack/cert-manager'
+    version: '1.5.2'
+    set:
+      - name: installCRDs
+        value: true
+
   - name: 'wire-server'
     namespace: 'wire'
     chart: 'wire/wire-server'
@@ -42,14 +50,6 @@ releases:
     namespace: 'wire'
     chart: 'wire/nginx-ingress-controller'
     version: 'CHANGE_ME'
-
-  - name: 'cert-manager'
-    namespace: 'cert-manager'
-    chart: 'jetstack/cert-manager'
-    version: '1.1.0'
-    set:
-      - name: installCRDs
-        value: true
 
   - name: 'nginx-ingress-services'
     namespace: 'wire'
