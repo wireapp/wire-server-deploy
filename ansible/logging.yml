@@ -1,5 +1,5 @@
 ---
-# Configure using Rsyslog to monitor and forward log files to Qradar
+# Configure using Rsyslog to monitor and forward log files to Qradar/remote logging
 # ------------------------------------------------------------------
 # https://qradarinsights.com/2018/12/20/using-rsyslog-to-monitor-and-forward-log-files-to-qradar/
 # See https://wearezeta.atlassian.net/browse/JCT-62
@@ -14,10 +14,10 @@
         src: templates/elastisearch.conf.j2
         dest: /etc/rsyslog.d/55-elasticsearch.conf
 
-    - name: Copy the qradar config
+    - name: Copy the logging config
       become: true
       template:
-        src: templates/qradar.conf.j2
+        src: templates/logging.conf.j2
         dest: /etc/rsyslog.d/rfc5424-remote.conf
 
     # sudo chmod 775 /var/log/elasticsearch
