@@ -74,7 +74,7 @@ traffic.
 
 Assuming blue servers are serving version 42 and we want to upgrade to version 43.
 
-We are going to be working on the group_vars files in the cailleach (https://github.com/zinfra/cailleach) repository, located under `environments/prod/inventory/group_vars/`
+We are going to be working on the `group_vars` files in the cailleach (https://github.com/zinfra/cailleach) repository, located under `environments/prod/inventory/group_vars/`
 
 In this case the initial group vars for the `sft_servers_blue` group would look
 like this:
@@ -89,7 +89,7 @@ sft_servers_blue:
 
 For `sft_servers_green`, `srv_announcer_active` must be `false`.
 
-1. Make sure all env variables like `ENV`, `ENV_DIR` are set.
+1. Make sure all env variables like `ENV`, `ENV_DIR` are set. Here we are working on the `prod` environment, so we do `ENV='prod'`
 1. Create terraform inventory (This section assumes all commands are executed
    from the root of this repository)
    ```bash
