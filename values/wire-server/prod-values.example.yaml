@@ -34,7 +34,7 @@ brig:
       region: "eu-west-1"
       sqsEndpoint: http://fake-aws-sqs:4568
       # dynamoDBEndpoint: http://fake-aws-dynamodb:4567
-     
+
       # these must match the table names created on fake or real AWS services
       internalQueue: integration-brig-events-internal
       prekeyTable: integration-brig-prekeys
@@ -137,7 +137,7 @@ galley:
       host: cassandra-external
     settings:
       # prefix URI used when inviting users to a conversation by link
-      conversationCodeURI: https://webapp.example.com/join/ # change this
+      conversationCodeURI: https://account.example.com/conversation-join/ # change this
       federationDomain: example.com # change this
       # see #RefConfigOptions in `/docs/reference` (https://github.com/wireapp/wire-server/)
       featureFlags:
