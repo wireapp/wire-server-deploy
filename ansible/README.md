@@ -74,8 +74,11 @@ traffic.
 
 Assuming blue servers are serving version 42 and we want to upgrade to version 43.
 
+We are going to be working on the `group_vars` files in the cailleach (https://github.com/zinfra/cailleach) repository, located under `environments/prod/inventory/group_vars/`
+
 In this case the initial group vars for the `sft_servers_blue` group would look
 like this:
+
 ```yaml
 sft_servers_blue:
   vars:
@@ -86,13 +89,13 @@ sft_servers_blue:
 
 For `sft_servers_green`, `srv_announcer_active` must be `false`.
 
-1. Make sure all env variables like `ENV`, `ENV_DIR` are set.
-1. Create terraform inventory (This section assumes all commands are executed
+1. Make sure all env variables like `ENV`, `ENV_DIR` are set. Here we are working on the `prod` environment, so we do `ENV='prod'`
+2. Create terraform inventory (This section assumes all commands are executed
    from the root of this repository)
    ```bash
    make -C terraform/environment create-inventory
    ```
-1. Setup green servers to have version 43 and become active:
+3. Setup green servers to have version 43 and become active:
    ```yaml
    sft_servers_green:
    vars:
@@ -100,7 +103,10 @@ For `sft_servers_green`, `srv_announcer_active` must be `false`.
      sft_artifact_checksum: somechecksum_43
      srv_announcer_active: true
    ```
-1. Run ansible
+4. At this point, you should create a Pull Request for the changes, and have it merged with `cailleach` once approved by the team.
+   The CI will now run ansible automatically, and the changes will take effect. The following lines are for reference only, and represent what the CI does, and what used to be done by hand at this point:
+
+   Run ansible in Wire Server Deploy
    ```yaml
    make -C ansible provision-sft
    ```
@@ -108,9 +114,9 @@ For `sft_servers_green`, `srv_announcer_active` must be `false`.
    This will make sure that green SFT servers will have version 43 of sftd and
    they are available. At this point we will have both blue green servers as
    active.
-1. Ensure that new servers function properly. If they don't you can set
-   `srv_announcer_active` to `false` for the green group.
-1. If the servers are working properly, setup the old servers to be deactivated:
+5. Ensure that new servers function properly. If they don't you can set
+   `srv_announcer_active` to `false` for the green group, and make a PR against `cailleach`.
+6. If the servers are working properly, setup the old servers to be deactivated:
    ```yaml
    sft_servers_blue:
    vars:
@@ -118,11 +124,12 @@ For `sft_servers_green`, `srv_announcer_active` must be `false`.
      sft_artifact_checksum: somechecksum_42
      srv_announcer_active: false
    ```
-1. Run ansible again
+7. At this point again, you should make and merge a Pull Request against `cailleach` with these changes, the following line represents what CI then does, and used to be done by hand:
+   Run ansible again
    ```yaml
    make -C ansible provision-sft
    ```
-1. There is a race condition in stopping SRV announcers, which will mean that
+7. There is a race condition in stopping SRV announcers, which will mean that
    sometimes a server will not get removed from the list. This can be found by
    running this command:
    ```bash
