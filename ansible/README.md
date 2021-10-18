@@ -74,6 +74,8 @@ traffic.
 
 Assuming blue servers are serving version 42 and we want to upgrade to version 43.
 
+Note: The releases/artifacts for SFT can be found at: https://github.com/wearezeta/avs-service/releases
+
 We are going to be working on the `group_vars` files in the cailleach (https://github.com/zinfra/cailleach) repository, located under `environments/prod/inventory/group_vars/`
 
 In this case the initial group vars for the `sft_servers_blue` group would look
