@@ -72,7 +72,7 @@ traffic.
 
 ### Deployment
 
-Assuming blue servers are serving version 42 and we want to upgrade to version 43.
+Assuming blue servers are serving version 42, green servers are serving version 43 and we want to upgrade to version 44.
 
 Note: The releases/artifacts for SFT can be found at: https://github.com/wearezeta/avs-service/releases
 
@@ -97,12 +97,12 @@ For `sft_servers_green`, `srv_announcer_active` must be `false`.
    ```bash
    make -C terraform/environment create-inventory
    ```
-3. Setup green servers to have version 43 and become active:
+3. Setup green servers to have version 44 and become active:
    ```yaml
    sft_servers_green:
    vars:
-     sft_artifact_file_url: "https://example.com/path/to/sftd_43.tar.gz"
-     sft_artifact_checksum: somechecksum_43
+     sft_artifact_file_url: "https://example.com/path/to/sftd_44.tar.gz"
+     sft_artifact_checksum: somechecksum_44
      srv_announcer_active: true
    ```
 4. At this point, you should create a Pull Request for the changes, and have it merged with `cailleach` once approved by the team.
