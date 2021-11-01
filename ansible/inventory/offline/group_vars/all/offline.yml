@@ -48,3 +48,6 @@ kubeconfig_localhost: true
 # This defaults to true if http://169.254.169.254/latest/meta-data exists; which
 # is also available in non-AWS. e.g. in Hetzner. Lets not let this autodetect in offline
 is_aws_environment: False
+
+# IP address for the logging (for example QRadar) server
+syslog_target_ip: 12.34.56.78
