@@ -65,6 +65,9 @@
 
 [minio:vars]
 # minio_network_interface = enp1s0
+prefix = "example-"
+domain = "example.com"
+deeplink_title = "example.com environment"
 
 [restund:vars]
 # Uncomment if your public IP is not on the default gateway
