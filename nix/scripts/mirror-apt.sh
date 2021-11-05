@@ -44,6 +44,9 @@ packages=(
   iproute2
   procps
   libjemalloc1
+  qrencode
+  texlive
+  latexmk
 )
 
 # shellcheck disable=SC2001
