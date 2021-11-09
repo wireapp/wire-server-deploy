@@ -156,6 +156,11 @@ kubenode4 node_labels="wire.com/role=sftd" node_annotations="{'wire.com/external
 If the node does not know its onw public IP (e.g. becuase it's behind NAT) then you should also set
 the `wire.com/external-ip` annotation to the public IP of the node.
 
+### Configuring MinIO
+
+In the `ansible/inventory/offline/99-static` file, edit the minio variables in `[minio:vars]` (`prefix`, `domain` and `deeplink_title`)
+by replacing `example.com` with your own domain.
+
 ## Generating secrets
 
 Minio and restund services have shared secrets with the `wire-server` helm chart. We have a utility
