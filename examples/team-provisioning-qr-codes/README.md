@@ -1,7 +1,7 @@
 EXAMPLE: Onboarding users with QR codes instead of emails
 =========================================================
 
-This example includes a bash script to automate provisioning of users in a Wire
+This example includes a bash script to automate the provisioning of users in a Wire
 team on a private server instance without users needing to be able to receive
 email.
 
@@ -10,11 +10,11 @@ link to each user's email address from the team settings page. When the user
 opens the invite link, they are then prompted to create a new account on the
 Wire server, which then becomes a member of the team.
 
-The script in this directory takes a user's email address, and extracts
+The script in this directory takes a user's email address and extracts
 the invite code which was generated for their email address from the server
 database. Then, it generates a PDF containing administrator-provided setup
 instructions, the email address they should use when creating their account,
-and QR codes for their invite link and the Wire server's deeplink (for
+and QR codes for their invite link, and the Wire server's deeplink (for
 configuring mobile clients to use the private instance instead of the public
 cloud instance).
 
@@ -69,8 +69,8 @@ The script reads configuration from a series of environment variables:
 In order to use the script to generate a PDF file for a user, the team
 administrator must first send an invitation link to that user's email
 address. The Wire server uses the email address to uniquely identify the user
-internally, however the email address in this case does not need to be able
-to receive email, and may be a placeholder value. The administrator must also
+internally, however, the email address, in this case, does not need to be able
+to receive email, and might be a placeholder value. The administrator must also
 write the setup instruction file, as described above.
 
 The PDF generation script may then be run with the user's email address as a
