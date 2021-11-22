@@ -47,7 +47,9 @@ rec {
       mirror-apt
       generate-gpg1-key
       kubeadm
-    ] ++ [ profileEnv];
+
+      niv
+    ] ++ [ profileEnv ];
   };
 
   # The container we use for offline deploys. Where people probably do not have

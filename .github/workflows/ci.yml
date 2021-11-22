@@ -21,9 +21,12 @@ jobs:
         with:
           name: wire-server-deploy
           signingKey: "${{ secrets.CACHIX_SIGNING_KEY }}"
-      - run: nix-build -A env
+
+      - name: Build the environment
+        run: nix-build -A env
+      - name: Install the environment
+        run: nix-env -f . -A env -i
       - name: Check terraform init
         run: |
-          export PATH=$(nix-build -A env --no-out-link)/bin:$PATH
           cd terraform/environment
           terraform init --backend=false

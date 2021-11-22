@@ -9,14 +9,16 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - uses: cachix/install-nix-action@v14.1
+    - name: Build the environment
+      run: nix-build -A env
+    - name: Install the environment
+      run: nix-env -f . -A env -i
     - name: Niv update
       run: |
-        nix run -f . niv -c niv update
+        niv update
     - name: Container update
       run: |
-        nix run -f . nix-prefetch-docker -c nix-prefetch-docker alpine --image-tag 3 > ./nix/docker-alpine.nix
-    - name: Try build
-      run: nix-build -A env
+        nix-prefetch-docker -c nix-prefetch-docker alpine --image-tag 3 > ./nix/docker-alpine.nix
 
     # TODO: This won't trigger further CI runs yet unless we have a Personal
     # Access Token. Github limitation. Hence we're running `nix-build -A env`
