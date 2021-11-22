@@ -18,7 +18,7 @@ jobs:
         niv update
     - name: Container update
       run: |
-        nix-prefetch-docker -c nix-prefetch-docker alpine --image-tag 3 > ./nix/docker-alpine.nix
+        nix-prefetch-docker alpine --image-tag 3 > ./nix/docker-alpine.nix
 
     # TODO: This won't trigger further CI runs yet unless we have a Personal
     # Access Token. Github limitation. Hence we're running `nix-build -A env`
