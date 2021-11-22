@@ -49,6 +49,7 @@ rec {
       kubeadm
 
       niv
+      nix-prefetch-docker
     ] ++ [ profileEnv ];
   };
 
