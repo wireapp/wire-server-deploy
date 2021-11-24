@@ -15,8 +15,6 @@ let
     '';
   };
 
-  pythonForAnsible = pkgs.python3.withPackages (p: [ p.boto p.boto3 p.six p.cryptography ]);
-
 
 in
 rec {
@@ -28,7 +26,7 @@ rec {
       ansible_2_9
       pythonForAnsible
       apacheHttpd
-      awscli
+      awscli2
       gnumake
       gnupg
       # Note: This is overriden in nix/overlay.nix to have plugins. This is

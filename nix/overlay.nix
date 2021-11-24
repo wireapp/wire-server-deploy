@@ -1,13 +1,14 @@
 self: super: {
-  ansible_with_libs = super.python3Packages.toPythonApplication (super.python3Packages.ansible.overridePythonAttrs (old: rec {
+  # boto seems to be broken with python 3.9
+  ansible_with_libs = super.python38Packages.toPythonApplication (super.python38Packages.ansible.overridePythonAttrs (old: rec {
     propagatedBuildInputs = old.propagatedBuildInputs or [ ] ++ [
-      super.python3Packages.boto
-      super.python3Packages.boto3
-      super.python3Packages.six
+      super.python38Packages.boto
+      super.python38Packages.boto3
+      super.python38Packages.six
     ];
   }));
 
-  pythonForAnsible = (self.python3.withPackages (_: self.ansible.requiredPythonModules));
+  pythonForAnsible = (self.python38.withPackages (_: self.ansible.requiredPythonModules));
 
   kubectl = self.callPackage ./pkgs/kubectl.nix { };
   kubernetes-helm = super.wrapHelm super.kubernetes-helm {
