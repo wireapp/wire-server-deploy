@@ -41,7 +41,7 @@ jobs:
 
       - name: Clean up hetzner environment; just in case
         if: always()
-        run: (cd terraform/examples/wire-server-deploy-offline-hetzner ; terraform destroy -auto-approve)
+        run: (cd terraform/examples/wire-server-deploy-offline-hetzner ; terraform init && terraform destroy -auto-approve)
         env:
           HCLOUD_TOKEN: '${{ secrets.HCLOUD_TOKEN }}'
 
