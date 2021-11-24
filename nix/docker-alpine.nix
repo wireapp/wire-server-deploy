@@ -1,7 +1,7 @@
 {
   imageName = "alpine";
-  imageDigest = "sha256:08d6ca16c60fe7490c03d10dc339d9fd8ea67c6466dea8d558526b1330a85930";
-  sha256 = "1fw1qzn07xf5isydnx8j1d5hb3ss94qs21mis29wqgb6dsn9hps5";
+  imageDigest = "sha256:635f0aa53d99017b38d1a0aa5b2082f7812b03e3cdb299103fe77b5c8a07f1d2";
+  sha256 = "0zfz3by9my10dpdgln0b0r6ra37731s7ddii90imqdp15i7mxkyq";
   finalImageName = "alpine";
   finalImageTag = "3";
 }
