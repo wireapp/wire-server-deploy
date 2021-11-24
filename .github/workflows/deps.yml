@@ -19,12 +19,9 @@ jobs:
     - name: Container update
       run: |
         nix-prefetch-docker alpine --image-tag 3 > ./nix/docker-alpine.nix
-
-    # TODO: This won't trigger further CI runs yet unless we have a Personal
-    # Access Token. Github limitation. Hence we're running `nix-build -A env`
-    # as a simple smoke-test
     - name: Create Pull Request if there was a change
       uses: peter-evans/create-pull-request@v3.6.0
       with:
         title: "chore: update dependencies"
+        token: ${{ secrets.PAT }} # needed so that this triggers further flows. not ideal.
         branch: "chore/update-dependencies"
