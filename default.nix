@@ -15,8 +15,6 @@ let
     '';
   };
 
-  pythonForAnsible = pkgs.python3.withPackages (p: [ p.boto p.boto3 p.six p.cryptography ]);
-
 
 in
 rec {
