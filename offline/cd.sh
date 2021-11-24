@@ -9,8 +9,8 @@ function cleanup {
 trap cleanup EXIT
 
 (cd terraform/examples/wire-server-deploy-offline-hetzner ; terraform init ; terraform apply -auto-approve )
-adminhost=$(cd terraform/examples/wire-server-deploy-offline-hetzner ; terraform output -raw adminhost)
-ssh_private_key=$(cd terraform/examples/wire-server-deploy-offline-hetzner ; terraform output -raw ssh_private_key)
+adminhost=$(cd terraform/examples/wire-server-deploy-offline-hetzner ; terraform output adminhost)
+ssh_private_key=$(cd terraform/examples/wire-server-deploy-offline-hetzner ; terraform output ssh_private_key)
 
 eval `ssh-agent`
 ssh-add - <<< "$ssh_private_key"
