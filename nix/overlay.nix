@@ -4,6 +4,7 @@ self: super: {
     propagatedBuildInputs = old.propagatedBuildInputs or [ ] ++ [
       super.python38Packages.boto
       super.python38Packages.boto3
+      super.python38Packages.cryptography
       super.python38Packages.six
     ];
   }));
