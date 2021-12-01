@@ -8,7 +8,7 @@
     es_heap_size: "1g"
 
     # Put a hold on the ES package.
-    # Updating ES to a different version than 6.6 currently breaks its integration with Wire.
+    # Updating ES to a different version 7.x currently breaks its integration with Wire.
     es_version: "6.8.18"
     es_version_lock: true
 
