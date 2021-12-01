@@ -14,8 +14,8 @@ provision-sft: check-env
 .PHONY: roles-override
 .SILENT: roles-override
 roles-override:
-	[ -e $(ENV_DIR)/kubespray.ref ] \
-	&& ( \
+	[ ! -e $(ENV_DIR)/kubespray.ref ] \
+	|| ( \
 		rm -rf ./roles-override; \
 		git clone https://github.com/kubernetes-sigs/kubespray ./roles-override/kubespray; \
 		cd ./roles-override/kubespray; \

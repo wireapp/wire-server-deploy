@@ -2,6 +2,7 @@
 # be set. When run with any variables missing, it will complain about those
 # variables.
 - hosts: localhost
+  become: false
   roles:
     - role: sft-monitoring-certs
       when: "{{ (groups['sft_servers'] | length) > 0 }}"
