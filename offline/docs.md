@@ -324,9 +324,9 @@ For full docs with details and explanations please see https://github.com/wireap
 First, make sure you have a certificate for `sftd.<yourdomain>`. This could be the same wildcard or SAN certificate
 you used at previous steps.
 
-Next, copy the values/sftd/prod-example-values.yaml to values/sftd/values.yaml, and change the contents accordingly. 
+Next, copy `values/sftd/prod-example-values.yaml` to `values/sftd/values.yaml`, and change the contents accordingly. 
 
- * If your turn servers can be reached on their public IP by the SFT service, Wire recommends you enable cooperation between TURN and SFT. add a line reading `turnDiscoveryEnabled: true` to your values file.
+ * If your turn servers can be reached on their public IP by the SFT service, Wire recommends you enable cooperation between turn and SFT. add a line reading `turnDiscoveryEnabled: true` to your values file.
 
 #### Deploying
 If you want to restrict SFT to certain nodes, make sure that in your inventory file you have annotated all of the nodes that are able to run sftd workloads with a node label indicating they are to be used, and their external IP, if they are behind a 1:1 firewall (Wire recommends this.).
@@ -339,7 +339,7 @@ If these values weren't already set earlier in the process you should rerun ansi
 d ansible-playbook -i ./ansible/inventory/offline ansible/kubernetes.yml --skip-tags bootstrap-os,preinstall,container-engine
 ```
 
-If you are restricting SFT to certain nodes, use `nodeSelector` to run on specific nodes (and of course **replace the example.com domains with yours**):
+If you are restricting SFT to certain nodes, use `nodeSelector` to run on specific nodes (**replacing the example.com domains with yours**):
 ```
 d helm upgrade --install sftd ./charts/sftd \
   --set 'nodeSelector.wire\.com/role=sftd' \

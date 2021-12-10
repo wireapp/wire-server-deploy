@@ -6,11 +6,11 @@ Your deployment artifact contains three things: the new chart, the new values fi
 
 ## Uploading the Image into Kubernetes hosts
 
-The image needs to be imported with 'docker load' on each of the kubernetes hosts.
+The image needs to be imported with `docker load` on each of the kubernetes hosts.
 
-Copy the sft image to the kubernetes hosts, and docker load it on each of the kubernetes hosts.
+Copy the sft image to the kubernetes hosts, and `docker load` it on each of the kubernetes hosts.
 
-To load into docker as root, you can "cat quay.io_wire_sftd_2.1.19.tar | docker load". If you are using a non-priviledged user, and sudo (wire's recommendation), you can use:
+To load into docker as root, you can `cat quay.io_wire_sftd_2.1.19.tar | docker load`. If you are using a non-priviledged user, and sudo (wire's recommendation), you can use:
 
 ```
 sudo bash -c "cat quay.io_wire_sftd_2.1.19.tar | docker load"
