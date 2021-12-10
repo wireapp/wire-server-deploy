@@ -1,8 +1,6 @@
 # How to upgrade wire (services only)
 
-We have a pipeline in  `wire-server-deploy` producing container images, static
-binaries, ansible playbooks, debian package sources and everything required to
-install Wire.
+We have a pipeline in `wire-server-deploy` producing container images, static binaries, ansible playbooks, debian package sources and everything required to install Wire.
 
 Create a fresh workspace to download the new artifacts:
 
