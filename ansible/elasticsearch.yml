@@ -16,6 +16,9 @@
     es_xpack_features: [] # disable features
     es_instance_name: "{{ ansible_hostname }}"
 
+    # Protect against potential information leak.  
+    # For details see https://docs.wire.com/security-responses/log4shell.html
+    #
     # Note: while elasticsearch stores some user provided data, it normally does
     # not log any user-provided data (it only logs events related to connectivity
     # with other nodes in the cluster).
