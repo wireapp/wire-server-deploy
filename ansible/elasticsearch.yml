@@ -16,6 +16,15 @@
     es_xpack_features: [] # disable features
     es_instance_name: "{{ ansible_hostname }}"
 
+    # Protect against potential information leak.
+    # For details see https://docs.wire.com/security-responses/log4shell.html
+    #
+    # FUTUREWORK: if we eventually upgrade to newer version of this role
+    # containing log4j >= 2.15 the following JVM parameter won't be necessary
+    # anymore.
+    es_jvm_custom_parameters:
+      - "-Dlog4j2.formatMsgNoLookups=True"
+
     # bind to both site IP and localhost, but publish only site IP:
     # netstat -antlp | grep LISTEN
     #   tcp        0      0 172.17.0.4:9200         0.0.0.0:*               LISTEN      8663/java
