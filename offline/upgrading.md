@@ -105,37 +105,30 @@ minio_deeplink_domain = prefix-
 
 # move the kubeconfig
 
-old versions of the package contained the kubeconfig at ansible/kubeconfig.
+old versions of the package contained the kubeconfig at ansible/kubeconfig. newer ones create a directory at ansible/inventory/offline/artifacts, and place the kubeconfig there, as 'admin.conf'
 
+If your deployment package uses the old style, then in the place where you are keeping your new package:
+```
 mkdir ansible/inventory/offline/artifacts
-cp ansible/kubeconfig ansible/inventory/offline/artifacts/admin.conf
-
-
-### Marking kubenode for calling server (SFT)
-
-The SFT Calling server should be running on a kubernetes nodes that are connected to the public internet.
-If not all kubernetes nodes match these criteria, you should specifically label the nodes that do match
-these criteria, so that we're sure SFT is deployed correctly.
-
-
-By using a `node_label` we can make sure SFT is only deployed on a certain node like `kubenode4`
-
-```
-kubenode4 node_labels="wire.com/role=sftd" node_annotations="{'wire.com/external-ip': 'XXXX'}"
+cp ../<OLD_PACKAGE_DIR/ansible/kubeconfig ansible/inventory/offline/artifacts/admin.conf
 ```
 
-If the node does not know its onw public IP (e.g. becuase it's behind NAT) then you should also set
-the `wire.com/external-ip` annotation to the public IP of the node.
+otherwise:
+```
+mkdir ansible/inventory/offline/artifacts
+cp ../<OLD_PACKAGE_DIR/ansible/inventory/offline/artifacts/admin.conf ansible/inventory/offline/artifacts/admin.conf
+```
 
-## Upgrading stateful services
+## Preparing to upgrade kubernetes services
 
-With docker being installed on all nodes that need it, seed all container images:
+Since docker is already installed on all nodes that need it, push the new container images to the assethost, and seed all container images:
 
 ```
+d ansible-playbook -i ./ansible/inventory/offline ansible/seed-offline-sources.yml --tags "containers-helm"
 d ansible-playbook -i ./ansible/inventory/offline ansible/seed-offline-docker.yml
 ```
 
-Ensure the cluster comes is healthy. The container also contains kubectl, so check the node status:
+Ensure the cluster is healthy. use kubectl to check the node health:
 
 ```
 d kubectl get nodes -owide
@@ -153,6 +146,22 @@ Now deploy `wire-server`:
 ```
 d helm install wire-server ./charts/wire-server --timeout=15m0s --values ./values/wire-server/values.yaml --values ./values/wire-server/secrets.yaml
 ```
+
+### Marking kubenode for calling server (SFT)
+
+The SFT Calling server should be running on a kubernetes nodes that are connected to the public internet.
+If not all kubernetes nodes match these criteria, you should specifically label the nodes that do match
+these criteria, so that we're sure SFT is deployed correctly.
+
+
+By using a `node_label` we can make sure SFT is only deployed on a certain node like `kubenode4`
+
+```
+kubenode4 node_labels="wire.com/role=sftd" node_annotations="{'wire.com/external-ip': 'XXXX'}"
+```
+
+If the node does not know its onw public IP (e.g. becuase it's behind NAT) then you should also set
+the `wire.com/external-ip` annotation to the public IP of the node.
 
 ### Upgradinging sftd
 
