@@ -9,7 +9,7 @@
 
     # Put a hold on the ES package.
     # Updating ES to a different version 7.x currently breaks its integration with Wire.
-    es_version: "6.8.18"
+    es_version: "6.8.21"
     es_version_lock: true
 
     es_enable_xpack: false
@@ -19,8 +19,11 @@
     # Protect against potential information leak.
     # For details see https://docs.wire.com/security-responses/log4shell.html
     #
+    # CVE-2021-44228
+    # CVE-2021-45046
+    #
     # FUTUREWORK: if we eventually upgrade to newer version of this role
-    # containing log4j >= 2.15 the following JVM parameter won't be necessary
+    # containing log4j >= 2.16 the following JVM parameter won't be necessary
     # anymore.
     es_jvm_custom_parameters:
       - "-Dlog4j2.formatMsgNoLookups=True"
