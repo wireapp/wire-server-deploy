@@ -7,6 +7,7 @@ self: super: {
     super.python38Packages.six
     # for packet debugging and reporting.
     super.python38Packages.pyshark
+    super.python38Packages.matplotlib
   ]));
 
   kubectl = self.callPackage ./pkgs/kubectl.nix { };
