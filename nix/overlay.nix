@@ -5,6 +5,8 @@ self: super: {
     super.python38Packages.boto3
     super.python38Packages.cryptography
     super.python38Packages.six
+    # for packet debugging and reporting.
+    super.python38Packages.pyshark
   ]));
 
   kubectl = self.callPackage ./pkgs/kubectl.nix { };

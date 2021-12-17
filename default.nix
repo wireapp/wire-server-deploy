@@ -45,6 +45,9 @@ rec {
       mirror-apt
       generate-gpg1-key
       kubeadm
+      # for RTP session debugging
+      wireshark
+      gnuplot
 
       niv
       nix-prefetch-docker
