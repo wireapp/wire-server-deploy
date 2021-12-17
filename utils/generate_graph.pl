@@ -7,7 +7,7 @@
 ##############################
 # General Usage
 #
-# once you have a report from analyse_rtp_streams.py saved to a file,
+# once you have a report from rtpstreams_graph.py saved to a file,
 # provide it to this utility, and get a graphical output.
 
 ##############################
