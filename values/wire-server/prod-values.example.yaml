@@ -121,6 +121,8 @@ cargohold:
       s3Bucket: assets
       s3Endpoint: http://minio-external:9000
       s3DownloadEndpoint: https://assets.example.com
+    settings:
+      federationDomain: example.com # change this
 #    proxy:
 #      httpProxy: "http://proxy.example.com"
 #      httpsProxy: "https://proxy.example.com"
