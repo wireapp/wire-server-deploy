@@ -15,7 +15,7 @@
 #
 # Next, copy this pcap file to a place where you have these tools, and run this command on a pcap file to find out what udp ports were seen during the capture:
 #
-# adminhost> ./analyse_rtp_streams.py testnumber.pcap
+# adminhost> ./rtpstreams_graph.py testnumber.pcap
 # usage: ./analyse_rtp_streams.py <pcap file> <port>
 # finding source ports for you, be patient...
 # pcap contains 21 packets with source port 37462
@@ -29,7 +29,7 @@
 #
 # Pick the port that has a lot of packets captured, as those are probably your calls.
 #
-# adminhost> ./analyse_rtp_streams.py testnumber.pcap 50996
+# adminhost> ./rtpstreams_graph.py testnumber.pcap 50996
 # capture file found. generating reports..
 # Processing session 220450815 with 4180 packets
 # <START REPORT>
@@ -51,7 +51,7 @@
 #
 # TL;dr: any packet delayed by more than 0:00:00.12 is problems. these will show as the red bars.
 # delayed packets can cause SFT to lose track of the stream, and wait for the next keyframe.
-
+# If there is no traffic shaping, the blue bars should be delayed corresponding to their packet sizes.
 
 ##################
 # Requirements:
