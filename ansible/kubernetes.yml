@@ -34,8 +34,15 @@
         - debug:
             msg: "TODO: Encrypt {{ inventory_dir }}/../kubeconfig.dec with sops"
 
+- hosts: k8s-cluster
+  tasks:
+    - name: "Install systemd-coredump"
+      when: install_systemd_coredump | bool
+      apt:
+        name: systemd-coredump
+        state: latest
+
 - hosts: etcd
   environment: "{{ proxy_env | default({}) }}"
   roles:
     - etcd-helpers
-
