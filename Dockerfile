@@ -2,7 +2,7 @@ FROM nixos/nix
 
 COPY . /wire-server-deploy
 
-RUN apk add -u bash git
+RUN nix-env -iA nixpkgs.bash nixpkgs.git
 
 RUN nix-build /wire-server-deploy/default.nix -A env --out-link /.nix-env
 
