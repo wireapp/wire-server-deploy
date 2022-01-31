@@ -30,7 +30,6 @@ install -m755 "$(nix-build --no-out-link -A pkgs.wire-binaries)/"* binaries/
 tar cf binaries.tar binaries
 rm -r binaries
 
-
 function list-system-containers() {
 # These are manually updated with values from
 # https://github.com/kubernetes-sigs/kubespray/blob/release-2.15/roles/download/defaults/main.yml
@@ -63,24 +62,23 @@ echo "quay.io/wire/restund:v0.4.16b1.0.53" | create-container-dump containers-ot
 tar cf containers-other.tar containers-other
 [[ "$INCREMENTAL" -eq 0 ]] && rm -r containers-other
 
-
 charts=(
   # backoffice
   # commented out for now, points to a 2.90.0 container image which doesn't
   # seem to exist on quay.io
-  wire/nginx-ingress-controller
-  wire/nginx-ingress-services
-  wire/reaper
-  wire/cassandra-external
-  wire/databases-ephemeral
-  wire/demo-smtp
-  wire/elasticsearch-external
-  wire/fake-aws
-  wire/minio-external
-  wire/wire-server
+  wire-develop/nginx-ingress-controller
+  wire-develop/nginx-ingress-services
+  wire-develop/reaper
+  wire-develop/cassandra-external
+  wire-develop/databases-ephemeral
+  wire-develop/demo-smtp
+  wire-develop/elasticsearch-external
+  wire-develop/fake-aws
+  wire-develop/minio-external
+  wire-develop/wire-server
   # local-path-provisioner
   # TODO: uncomment once its dependencies are pinned!
-  wire/sftd
+  wire-develop/sftd
   # Has a weird dependency on curl:latest. out of scope
   # wire-server-metrics
   # fluent-bit
@@ -95,6 +93,7 @@ export HELM_HOME
 
 helm repo add wire https://s3-eu-west-1.amazonaws.com/public.wire.com/charts
 helm repo update
+helm repo add wire-develop https://s3-eu-west-1.amazonaws.com/public.wire.com/charts-develop
 
 # wire_version=$(helm show chart wire/wire-server | yq -r .version)
 wire_version="4.23.0"
@@ -115,7 +114,6 @@ tar cf containers-helm.tar containers-helm
 [[ "$INCREMENTAL" -eq 0 ]] && rm -r containers-helm
 
 echo "docker_ubuntu_repo_repokey: '${fingerprint}'" > ansible/inventory/offline/group_vars/all/key.yml
-
 
 tar czf assets.tgz debs.tar binaries.tar containers-adminhost containers-helm.tar containers-other.tar containers-system.tar ansible charts values bin
 
