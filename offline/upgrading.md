@@ -11,7 +11,40 @@ $ cd ...  # you pick a good location!
 Obtain the latest airgrap artifact for wire-server-deploy. Please contact us to get it for now. We are
 working on publishing a list of airgap artifacts.
 
-Extract the above listed artifacts into your workspace:
+## Clean up enough disk space to operate:
+
+### AdminHost
+prune old containers that are generated during our 'd' invocations:
+```
+df
+sudo docker container prune
+```
+
+### Kubernetes hosts:
+Remove wire-server images from two releases ago, or from the current release that we know are unused. for instance, 
+
+```
+sudo docker image ls
+sudo docker image ls | grep -E "^quay.io/wire/" | grep "2.106.0" | sed "s/.*[ ]*\([0-9a-f]\{12\}\).*/sudo docker image rm \1/"
+
+```
+
+if you are running a DMZ deployment, prune the old wire-server images and their dependencies on the SFT kubernetes hosts...
+```
+sudo docker image ls | grep -E "^quay.io/wire/(team-settings|account|webapp|namshi-smtp)" | sed "s/.*[ ]*\([0-9a-f]\{12\}\).*/sudo docker image rm \1/"
+sudo docker image ls | grep -E "^bitnami/redis" | sed "s/.*[ ]*\([0-9a-f]\{12\}\).*/sudo docker image rm \1/"
+sudo docker image ls | grep -E "^airdock/fake-sqs" | sed "s/.*[ ]*\([0-9a-f]\{12\}\).*/sudo docker image rm \1/"
+sudo docker image ls | grep -E "^localstack/localstack" | sed "s/.*[ ]*\([0-9a-f]\{12\}\).*/sudo docker image rm \1/"
+sudo docker image rm 
+```
+and remove SFT images from the Wire kubernetes.
+```
+```
+
+## Preparing for deployment
+Verify you have the container images and configuration for the version of wire you are currently running.
+
+Extract the latest airgap artifact into your workspace:
 
 ```
 $ wget https://s3-eu-west-1.amazonaws.com/public.wire.com/artifacts/wire-server-deploy-static-<HASH>.tgz
@@ -22,7 +55,7 @@ Extract this tarball.
 
 There's also a docker image containing the tooling inside this repo.
 
-If you don't intend to develop *on wire-server-deploy itself*, you should source the following shell script.
+Source the following shell script.
 ```
 source ./bin/offline-env.sh
 ```
@@ -45,7 +78,7 @@ ansible 2.9.12
 
 ## Artifacts provided in the deployment tarball.
 
-The following artifacts are provided:
+The following is a list of important artifacts which are provided:
 
  - `containers-adminhost/wire-server-deploy-*.tar`
    A container image containing ansible, helm, and other tools and their
@@ -85,10 +118,11 @@ The following artifacts are provided:
 
 ## Comparing the inventory
 
+copy `ansible/inventory/offline/99-static` to `ansible/inventory/offline/hosts.ini`.
+
 Compare the inventory from your old install to the inventory of your new install.
 
-Open `ansible/inventory/offline/99-static`. Here you will describe the topology
-of your offline deploy.  There's instructions in the comments on how to set
+Here you will describe the topology of your offline deploy.  There's instructions in the comments on how to set
 everything up. You can also refer to extra information here.
 https://docs.wire.com/how-to/install/ansible-VMs.html
 
@@ -124,8 +158,8 @@ cp ../<OLD_PACKAGE_DIR/ansible/inventory/offline/artifacts/admin.conf ansible/in
 Since docker is already installed on all nodes that need it, push the new container images to the assethost, and seed all container images:
 
 ```
-d ansible-playbook -i ./ansible/inventory/offline ansible/seed-offline-sources.yml --tags "containers-helm"
-d ansible-playbook -i ./ansible/inventory/offline ansible/seed-offline-docker.yml
+d ansible-playbook -i ./ansible/inventory/offline/hosts.ini ansible/setup-offline-sources.yml --tags "containers-helm"
+d ansible-playbook -i ./ansible/inventory/offline/hosts.ini ansible/seed-offline-docker.yml
 ```
 
 Ensure the cluster is healthy. use kubectl to check the node health:
@@ -135,16 +169,49 @@ d kubectl get nodes -owide
 ```
 They should all report ready.
 
-## Deploying wire-server using helm
+If you are worried about disk space, removing unneeded images could be performed here.
 
-It's now time to upgrade the helm charts on top of kubernetes, upgrading the Wire platform.
+## Upgrading wire-server using helm
 
-inspect your values and secrets files, comparing them to the new defaults.
+### Upgrading non-wire components:
 
-Now deploy `wire-server`:
+Copy your external service definition values into place.
+```
+```
+
+First, upgrade the external service definitions, as those rarely change.
+```
+d helm upgrade cassandra-external ./charts/cassandra-external/ --values ./values/cassandra-external/values.yaml
+d helm upgrade elasticsearch-external ./charts/elasticsearch-external/ --values ./values/elasticsearch-external/values.yaml
+d helm upgrade minio-external ./charts/minio-external/ --values ./values/minio-external/values.yaml
+```
+
+Next, upgrade the internal non-wire services.
+```
+d helm upgrade fake-aws ./charts/fake-aws/ --values ./values/fake-aws/prod-values.example.yaml
+d helm upgrade databases-ephemeral ./charts/databases-ephemeral/ --values ./values/databases-ephemeral/values.yaml
+d helm upgrade reaper ./charts/reaper/
+```
+
+Finally, upgrade demo-smtp. note that you may have to look for a values.yaml, instead of a prod-values.example.yaml file, in the case that demo-smtp was configured. if it's not present, use prod-values.example.yaml.
+```
+d helm upgrade demo-smtp ./charts/demo-smtp/ --values ./values/demo-smtp/values.yaml
+```
+
+### Upgrading the NginX Ingress
+```
+d helm upgrade nginx-ingress-controller ./charts/nginx-ingress-controller/
+d helm upgrade nginx-ingress-services ./charts/nginx-ingress-services/ --values ./values/nginx-ingress-services/values.yaml  --values ./values/nginx-ingress-services/secrets.yaml
+```
+
+### Upgrading Wire itsself
+
+inspect your values and secrets files with diff comparing them to the new defaults.
+
+Now upgrade `wire-server`:
 
 ```
-d helm install wire-server ./charts/wire-server --timeout=15m0s --values ./values/wire-server/values.yaml --values ./values/wire-server/secrets.yaml
+d helm upgrade wire-server ./charts/wire-server --timeout=15m0s --values ./values/wire-server/values.yaml --values ./values/wire-server/secrets.yaml
 ```
 
 ### Marking kubenode for calling server (SFT)
@@ -160,7 +227,7 @@ By using a `node_label` we can make sure SFT is only deployed on a certain node 
 kubenode4 node_labels="wire.com/role=sftd" node_annotations="{'wire.com/external-ip': 'XXXX'}"
 ```
 
-If the node does not know its onw public IP (e.g. becuase it's behind NAT) then you should also set
+If the node does not know its own public IP (e.g. becuase it's behind NAT) then you should also set
 the `wire.com/external-ip` annotation to the public IP of the node.
 
 ### Upgradinging sftd
@@ -174,6 +241,8 @@ you have annotated all the nodes that are able to run sftd workloads correctly.
 ```
 kubenode3 node_labels="{'wire.com/role': 'sftd'}" node_annotations="{'wire.com/external-ip': 'XXXX'}"
 ```
+
+you may also want to look at the output of 'd kubectl get node' for each node, and to see if the node_sabel and the annotations are in order.
 
 If you are restricting SFT to certain nodes, use `nodeSelector` to run on specific nodes (of course **replace the domains with yours**):
 ```
