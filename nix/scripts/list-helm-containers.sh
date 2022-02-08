@@ -30,9 +30,8 @@ function optionally_complain() {
 while IFS= read -r chart; do
   echo "Running helm template on chart ${chart}…" >&2
 
-  helm template "$chart" \
+  helm template "$chart" --set stringArray secrets.zrestSecret=emptyString \
     $( [[ -f ./values/$(basename $chart)/prod-values.example.yaml ]] && echo "-f ./values/$(basename $chart)/prod-values.example.yaml" ) \
     $( [[ -f ./values/$(basename $chart)/prod-secrets.example.yaml ]] && echo "-f ./values/$(basename $chart)/prod-secrets.example.yaml" ) \
-    --set stringArray secrets.zrestSecret=emptyString \
     | yq -r '..|.image? | select(.)' | optionally_complain | sort -u
 done | sort -u
