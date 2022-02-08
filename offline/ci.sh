@@ -58,7 +58,7 @@ tar cf containers-system.tar containers-system
 [[ "$INCREMENTAL" -eq 0 ]] && rm -r containers-system
 
 # Used for ansible-restund role
-echo "quay.io/wire/restund:v0.4.16b1.0.53" | create-container-dump containers-other
+echo "quay.io/wire/restund:0." | create-container-dump containers-other
 tar cf containers-other.tar containers-other
 [[ "$INCREMENTAL" -eq 0 ]] && rm -r containers-other
 
@@ -76,14 +76,18 @@ charts=(
   wire-develop/fake-aws
   wire-develop/minio-external
   wire-develop/wire-server
-  # local-path-provisioner
   # TODO: uncomment once its dependencies are pinned!
-  wire-develop/sftd
+  # local-path-provisioner
   # Has a weird dependency on curl:latest. out of scope
   # wire-server-metrics
   # fluent-bit
   # kibana
   wire/federator
+)
+
+calling_charts=(
+  wire-develop/sftd
+  wire-develop/restund
 )
 
 # TODO: Awaiting some fixes in wire-server regarding tagless images
@@ -98,12 +102,17 @@ helm repo add wire-develop https://s3-eu-west-1.amazonaws.com/public.wire.com/ch
 # wire_version=$(helm show chart wire/wire-server | yq -r .version)
 wire_version="4.23.0"
 
+wire_calling_version="4.0.22"
+
 # Download zauth; as it's needed to generate certificates
 echo "quay.io/wire/zauth:$wire_version" | create-container-dump containers-adminhost
 
 mkdir -p ./charts
 for chartName in "${charts[@]}"; do
   (cd ./charts; helm pull --version "$wire_version" --untar "$chartName")
+done
+for chartName in "${calling_charts[@]}"; do
+  (cd ./charts; helm pull --version "$wire_calling_version" --untar "$chartName")
 done
 
 for chartPath in "$(pwd)"/charts/*; do
