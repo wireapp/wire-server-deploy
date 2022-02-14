@@ -7,7 +7,7 @@ cassandra-migrations:
 #    tag: some-tag (only override if you want a newer/different version than what is in the chart)
   cassandra:
     host: cassandra-ephemeral
-    replicaCount: 1
+    replicationFactor: 1
 
 elasticsearch-index:
   elasticsearch:
