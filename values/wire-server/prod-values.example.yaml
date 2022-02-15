@@ -81,15 +81,16 @@ brig:
 #        - "local.example.com"
 #        - "10.23.0.0/16"
   turnStatic:
+    # Historic. We don't need v1 turn servers anymore.
     v1: []
     v2:
       - "turn:<IP of restund1>:80"
-      - "turn:<IP of restund2:80"
+      - "turn:<IP of restund2>:80"
       - "turn:<IP of restund1>:80?transport=tcp"
       - "turn:<IP of restund2>:80?transport=tcp"
+      # - note: restund does not use TLS in the current configuration, so you should not need "turns" URLs.
       # - "turns:<IP of restund1>:443?transport=tcp"
       # - "turns:<IP of restund2>:443?transport=tcp"
-
 
 proxy:
   replicaCount: 3
