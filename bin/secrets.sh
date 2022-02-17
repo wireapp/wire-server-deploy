@@ -2,8 +2,8 @@
 
 set -eu
 
-SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-TOPLEVEL_DIR="$( cd "$SCRIPT_DIR/.." && pwd )"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+TOPLEVEL_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 
 # Generates fresh zauth, TURN/restund, nginx/basic-auth and minio secrets as one-secret-per file. This can be useful in ansible-based deployments.
 # Then templates those secrets together in a secrets.yaml file for use in helm deployments.
@@ -24,21 +24,30 @@ NGINZ_BASIC_CONFIG="${OUTPUT_DIR}/nginz_basic_auth_config.txt"
 NGINZ_BASIC_PW="${OUTPUT_DIR}/nginz_basic_auth_password.txt"
 NGINZ_BASIC_USER="${OUTPUT_DIR}/nginz_basic_auth_user.txt"
 
-command -v htpasswd >/dev/null 2>&1 || { echo >&2 "htpasswd is not installed, aborting. Maybe try the httpd-tools or apache-utils packages?"; exit 1; }
-command -v openssl >/dev/null 2>&1 || { echo >&2 "openssl is not installed, aborting."; exit 1; }
-command -v zauth >/dev/null 2>&1 || command -v docker >/dev/null 2>&1 || { echo >&2 "zauth is not installed, and docker is also not installed, aborting. See wire-server and compile zauth, or install docker and try using \"docker run --rm quay.io/wire/zauth:latest\" instead."; exit 1; }
+command -v htpasswd >/dev/null 2>&1 || {
+    echo >&2 "htpasswd is not installed, aborting. Maybe try the httpd-tools or apache-utils packages?"
+    exit 1
+}
+command -v openssl >/dev/null 2>&1 || {
+    echo >&2 "openssl is not installed, aborting."
+    exit 1
+}
+command -v zauth >/dev/null 2>&1 || command -v docker >/dev/null 2>&1 || {
+    echo >&2 "zauth is not installed, and docker is also not installed, aborting. See wire-server and compile zauth, or install docker and try using \"docker run --rm quay.io/wire/zauth:latest\" instead."
+    exit 1
+}
 
 if [[ ! -f $miniopub || ! -f $miniopriv ]]; then
     echo "Generate a secret for minio (must match the cargohold AWS keys wire-server's secrets/values)..."
-    openssl rand -base64 64 | env LC_CTYPE=C tr -dc a-zA-Z0-9 | head -c 42 > "$miniopriv"
-    openssl rand -base64 64 | env LC_CTYPE=C tr -dc a-zA-Z0-9 | head -c 20 > "$miniopub"
+    openssl rand -base64 64 | env LC_CTYPE=C tr -dc a-zA-Z0-9 | head -c 42 >"$miniopriv"
+    openssl rand -base64 64 | env LC_CTYPE=C tr -dc a-zA-Z0-9 | head -c 20 >"$miniopub"
 else
     echo "re-using existing minio secrets"
 fi
 
 if [[ ! -f $zrest ]]; then
     echo "Generate a secret for the restund servers (must match the turn.secret key in brig's config)..."
-    openssl rand -base64 64 | env LC_CTYPE=C tr -dc a-zA-Z0-9 | head -c 42 > "$zrest"
+    openssl rand -base64 64 | env LC_CTYPE=C tr -dc a-zA-Z0-9 | head -c 42 >"$zrest"
 else
     echo "re-using existing restund secret"
 fi
@@ -46,19 +55,18 @@ fi
 if [[ ! -f $zpriv || ! -f $zpub ]]; then
     echo "Generate private and public keys (used both by brig and nginz)..."
     TMP_KEYS=$(mktemp "/tmp/demo.keys.XXXXXXXXXXX")
-    zauth -m gen-keypair -i 1 > "$TMP_KEYS" 2>/dev/null \
-        || docker run --rm "$ZAUTH_CONTAINER" -m gen-keypair -i 1 > "$TMP_KEYS"
-    cat "$TMP_KEYS" | sed -n 's/public: \(.*\)/\1/p' > "$zpub"
-    cat "$TMP_KEYS" | sed -n 's/secret: \(.*\)/\1/p' > "$zpriv"
+    zauth -m gen-keypair -i 1 >"$TMP_KEYS" 2>/dev/null ||
+        docker run --rm "$ZAUTH_CONTAINER" -m gen-keypair -i 1 >"$TMP_KEYS"
+    cat "$TMP_KEYS" | sed -n 's/public: \(.*\)/\1/p' >"$zpub"
+    cat "$TMP_KEYS" | sed -n 's/secret: \(.*\)/\1/p' >"$zpriv"
 else
     echo "re-using existing public/private keys"
 fi
 
-
 if [[ ! -f $NGINZ_BASIC_PW || ! -f $NGINZ_BASIC_CONFIG || ! -f $NGINZ_BASIC_USER ]]; then
     echo "creating basic auth password for nginz..."
-    echo basic-auth-user > "$NGINZ_BASIC_USER"
-    openssl rand -base64 64 | env LC_CTYPE=C tr -dc a-zA-Z0-9 | head -c 42 > "$NGINZ_BASIC_PW"
+    echo basic-auth-user >"$NGINZ_BASIC_USER"
+    openssl rand -base64 64 | env LC_CTYPE=C tr -dc a-zA-Z0-9 | head -c 42 >"$NGINZ_BASIC_PW"
     htpasswd -cb "$NGINZ_BASIC_CONFIG" "$(cat "$NGINZ_BASIC_USER")" "$(cat "$NGINZ_BASIC_PW")"
 else
     echo "re-using basic auth password for nginz"
@@ -120,15 +128,10 @@ proxy:
                     giphy      = ...
                     spotify    = Basic ...
             }
-team-settings:
-    secrets:
-        configJson: ewog...
-        # TODO: you need an access key from a Wire employee to enable team settings.
-        # configjson [ewog...end] corresponds to <TODO quay.io robot account name>
-" > "$OUTPUT_DIR/secrets.yaml"
+" >"$OUTPUT_DIR/secrets.yaml"
 
 echo "
 restund_zrest_secret: \"$(cat "$zrest")\"
 minio_access_key: \"$(cat "$miniopub")\"
 minio_secret_key: \"$(cat "$miniopriv")\"
-" > "$OUTPUT_DIR/secrets_ansible.yaml"
+" >"$OUTPUT_DIR/secrets_ansible.yaml"
