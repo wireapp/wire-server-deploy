@@ -228,7 +228,7 @@ By using a `node_label` we can make sure SFT is only deployed on a certain node 
 kubenode4 node_labels="wire.com/role=sftd" node_annotations="{'wire.com/external-ip': 'XXXX'}"
 ```
 
-If the node does not know its own public IP (e.g. becuase it's behind NAT) then you should also set
+If the node does not know its own public IP (e.g. because it's behind NAT) then you should also set
 the `wire.com/external-ip` annotation to the public IP of the node.
 
 ### Upgradinging sftd
