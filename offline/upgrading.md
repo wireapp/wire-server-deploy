@@ -16,7 +16,7 @@ working on publishing a list of airgap artifacts.
 ### AdminHost
 Prune old containers that are generated during our 'd' invocations:
 ```
-df
+df -h
 sudo docker container prune
 ```
 
