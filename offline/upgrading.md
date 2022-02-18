@@ -123,7 +123,7 @@ Copy `ansible/inventory/offline/99-static` to `ansible/inventory/offline/hosts.i
 
 Compare the inventory from your old install to the inventory of your new install.
 
-Here you will describe the topology of your offline deploy.  There's instructions in the comments on how to set
+Here you will describe the topology of your offline deploy. There are instructions in the comments on how to set
 everything up. You can also refer to extra information here.
 https://docs.wire.com/how-to/install/ansible-VMs.html
 
