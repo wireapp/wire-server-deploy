@@ -21,7 +21,7 @@ sudo docker container prune
 ```
 
 ### Kubernetes hosts:
-Remove wire-server images from two releases ago, or from the current release that we know are unused. for instance, 
+Remove wire-server images from two releases ago, or from the current release that we know are unused. For instance, 
 
 ```
 sudo docker image ls
