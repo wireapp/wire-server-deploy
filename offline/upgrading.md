@@ -194,7 +194,7 @@ d helm upgrade databases-ephemeral ./charts/databases-ephemeral/ --values ./valu
 d helm upgrade reaper ./charts/reaper/
 ```
 
-Finally, upgrade demo-smtp. note that you may have to look for a values.yaml, instead of a prod-values.example.yaml file, in the case that demo-smtp was configured. if it's not present, use prod-values.example.yaml.
+Finally, upgrade demo-smtp. Note that you may have to look for a `values.yaml`, instead of a `prod-values.example.yaml` file, in the case that demo-smtp was configured. If it's not present, use `prod-values.example.yaml`.
 ```
 d helm upgrade demo-smtp ./charts/demo-smtp/ --values ./values/demo-smtp/values.yaml
 ```
