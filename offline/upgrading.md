@@ -243,7 +243,7 @@ you have annotated all the nodes that are able to run sftd workloads correctly.
 kubenode3 node_labels="{'wire.com/role': 'sftd'}" node_annotations="{'wire.com/external-ip': 'XXXX'}"
 ```
 
-you may also want to look at the output of 'd kubectl get node' for each node, and to see if the node_sabel and the annotations are in order.
+You may also want to look at the output of `d kubectl describe node` for each node, and to see if the node label, attribute and annotations are in order.
 
 If you are restricting SFT to certain nodes, use `nodeSelector` to run on specific nodes (of course **replace the domains with yours**):
 ```
