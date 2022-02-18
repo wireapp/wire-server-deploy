@@ -119,7 +119,7 @@ The following is a list of important artifacts which are provided:
 
 ## Comparing the inventory
 
-copy `ansible/inventory/offline/99-static` to `ansible/inventory/offline/hosts.ini`.
+Copy `ansible/inventory/offline/99-static` to `ansible/inventory/offline/hosts.ini`.
 
 Compare the inventory from your old install to the inventory of your new install.
 
