@@ -207,7 +207,7 @@ d helm upgrade nginx-ingress-services ./charts/nginx-ingress-services/ --values 
 
 ### Upgrading Wire itsself
 
-inspect your values and secrets files with diff comparing them to the new defaults.
+Inspect your `values.yaml` and `secrets.yaml` files with diff comparing them to the new defaults.
 
 Now upgrade `wire-server`:
 
