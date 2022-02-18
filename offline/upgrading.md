@@ -25,7 +25,8 @@ Remove wire-server images from two releases ago, or from the current release tha
 
 ```
 sudo docker image ls
-sudo docker image ls | grep -E "^quay.io/wire/" | grep "2.106.0" | sed "s/.*[ ]*\([0-9a-f]\{12\}\).*/sudo docker image rm \1/"
+VERSION="2.106.0"
+sudo docker image ls | grep -E "^quay.io/wire/" | grep $VERSION | sed "s/.*[ ]*\([0-9a-f]\{12\}\).*/sudo docker image rm \1/"
 
 ```
 
