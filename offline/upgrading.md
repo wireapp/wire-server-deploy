@@ -14,7 +14,7 @@ working on publishing a list of airgap artifacts.
 ## Clean up enough disk space to operate:
 
 ### AdminHost
-prune old containers that are generated during our 'd' invocations:
+Prune old containers that are generated during our 'd' invocations:
 ```
 df
 sudo docker container prune
