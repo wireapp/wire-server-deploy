@@ -38,7 +38,7 @@ sudo docker image ls | grep -E "^airdock/fake-sqs" | sed "s/.*[ ]*\([0-9a-f]\{12
 sudo docker image ls | grep -E "^localstack/localstack" | sed "s/.*[ ]*\([0-9a-f]\{12\}\).*/sudo docker image rm \1/"
 sudo docker image rm 
 ```
-and remove SFT images from the Wire kubernetes.
+and remove SFT images from the Wire Kubernetes.
 ```
 ```
 
