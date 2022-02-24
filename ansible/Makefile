@@ -85,10 +85,3 @@ ${ENV_DIR}/operator-ssh.dec:
 .PHONY: check-env
 check-env: ensure-env-dir ${ENV_DIR}/operator-ssh.dec ${ENV_DIR}/gen/terraform-inventory.yml ${ENV_DIR}/inventory
 
-.PHONY: renew-certs
-renew-certs: check-env
-	ansible-playbook ${ANSIBLE_DIR}/kubernetes-renew-certs.yml \
-		-i ${ENV_DIR}/gen/terraform-inventory.yml \
-		-i ${ENV_DIR}/inventory \
-		--private-key ${ENV_DIR}/operator-ssh.dec \
-		-vv
