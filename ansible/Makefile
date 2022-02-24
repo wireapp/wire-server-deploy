@@ -84,3 +84,4 @@ ${ENV_DIR}/operator-ssh.dec:
 
 .PHONY: check-env
 check-env: ensure-env-dir ${ENV_DIR}/operator-ssh.dec ${ENV_DIR}/gen/terraform-inventory.yml ${ENV_DIR}/inventory
+
