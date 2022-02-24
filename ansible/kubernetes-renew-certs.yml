@@ -1,0 +1,79 @@
+# See https://docs.wire.com/how-to/administrate/kubernetes/certificate-renewal/scenario-1_k8s-v1.14-kubespray.html
+#
+# Run "make renew-certs" to execute this playbook.
+#
+# Beware! This script only works if there a single control plane node!
+#
+# Comments:
+#
+# > Step 6. Make kubelet aware of the new certificate
+# Restarting kubelet doesn't seem to be necessary
+#
+# > Step 7. Copy certificates over to all the other nodes
+# This can be skipped in our case, too. It seems that non-cps files don't have these certificates.
+#
+# Also see https://github.com/kubernetes-sigs/kubespray/issues/5464#issuecomment-647022647
+
+- name: 'Renew certificates'
+  hosts: kube-master
+  tasks:
+    - name: fail if there is more than 1 master
+      fail:
+        msg: This playbook only works when there is one master node.
+      when: groups['kube-master'] | length > 1
+    - name: create backup dir
+      file:
+        dest: "/etc/kubernetes/backup-before-cert-renew/"
+        state: directory
+
+    - name: create backups
+      copy:
+        remote_src: true
+        src: "/etc/kubernetes/{{ item }}"
+        dest: "/etc/kubernetes/backup-before-cert-renew/{{ item }}"
+      with_items:
+        - ssl
+        - admin.conf
+        - controller-manager.conf
+        - kubelet.conf
+        - scheduler.conf
+
+    - name: renew certificates
+      register: command_output
+      args:
+        executable: /bin/bash
+      ansible.builtin.shell: |
+        set -eo pipefail
+
+        kubeadm alpha certs renew apiserver-kubelet-client
+        kubeadm alpha certs renew apiserver
+        kubeadm alpha certs renew front-proxy-client
+        kubeadm alpha kubeconfig user --client-name system:kube-controller-manager > /etc/kubernetes/controller-manager.conf
+        kubeadm alpha kubeconfig user --client-name system:kube-scheduler > /etc/kubernetes/scheduler.conf
+        kubeadm alpha kubeconfig user --client-name system:node:$(hostname) --org system:nodes --apiserver-advertise-address={{ apiserver_loadbalancer_domain_name }} > /etc/kubernetes/kubelet.conf
+
+        kubeadm alpha kubeconfig user --client-name kubernetes-admin --org system:masters > /etc/kubernetes/admin.conf
+
+    - debug:
+        var: command_output.stdout_lines
+
+    - name: restart processes
+      args:
+        executable: /bin/bash
+      ansible.builtin.shell: |
+        set -eo pipefail
+
+        kill -s SIGHUP $(pidof kube-apiserver)
+        kill -s SIGHUP $(pidof kube-controller-manager)
+        kill -s SIGHUP $(pidof kube-scheduler)
+
+    - name: download kubeconfig
+      ansible.builtin.fetch:
+        src: /etc/kubernetes/admin.conf
+        dest: ./kubeconfig.new
+        flat: true
+
+    - name: notify user about kubeconfig
+      ansible.builtin.debug:
+        msg:
+          - "./kubeconfig.new has been downloaded to your machine"
