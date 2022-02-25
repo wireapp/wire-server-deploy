@@ -64,7 +64,7 @@ Run all commands from `terraform/environment` directory.
    top-level of this repository.
 1. Initialize Terraform
    ```
-   make init
+   make re-init
    ```
 1. Apply terraform
    ```
