@@ -1,0 +1,5 @@
+# Default install_systemd_coredump to False, as Debian makes it unnecessarily
+# hard to ship this in an aptly offline bundle.
+#
+# Environments can explicitly set this to true in their inventory.
+install_systemd_coredump: no
