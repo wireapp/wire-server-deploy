@@ -8,11 +8,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
+    - uses: cachix/install-nix-action@v14.1
     - uses: cachix/cachix-action@v10
       with:
         name: wire-server
         signingKey: "${{ secrets.CACHIX_SIGNING_KEY }}"
-    - uses: cachix/install-nix-action@v14.1
     - name: Build the environment
       run: nix-build -A env
     - name: Install the environment
