@@ -1,6 +1,5 @@
 self: super: {
-  # boto seems to be broken with python 3.9
-  pythonForAnsible = (self.python38.withPackages (_: self.ansible.requiredPythonModules ++ [
+  pythonForAnsible = (self.python3.withPackages (_: self.ansible.requiredPythonModules ++ [
     super.python38Packages.boto
     super.python38Packages.boto3
     super.python38Packages.cryptography
