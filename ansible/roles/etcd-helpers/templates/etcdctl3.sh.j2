@@ -7,4 +7,7 @@ export ETCDCTL_CA_FILE=/etc/ssl/etcd/ssl/ca.pem
 export ETCDCTL_CERT=/etc/ssl/etcd/ssl/member-$HOST.pem
 export ETCDCTL_KEY=/etc/ssl/etcd/ssl/member-$HOST-key.pem
 
+#to support etcdctl 3.14
+export ETCDCTL_CACERT=/etc/ssl/etcd/ssl/ca.pem
+
 /usr/local/bin/etcdctl "$@"
