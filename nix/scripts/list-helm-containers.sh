@@ -30,7 +30,7 @@ function optionally_complain() {
 while IFS= read -r chart; do
   echo "Running helm template on chart ${chart}…" >&2
 
-  helm template "$chart" --set secrets.zrestSecret=emptyString \
+  helm template "$chart" --set secrets.zrestSecret=emptyString --set federate.dtls.tls.issuerRef=emptyString \
     $( [[ -f ./values/$(basename $chart)/prod-values.example.yaml ]] && echo "-f ./values/$(basename $chart)/prod-values.example.yaml" ) \
     $( [[ -f ./values/$(basename $chart)/prod-secrets.example.yaml ]] && echo "-f ./values/$(basename $chart)/prod-secrets.example.yaml" ) \
     | yq -r '..|.image? | select(.)' | optionally_complain | sort -u
