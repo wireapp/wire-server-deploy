@@ -34,6 +34,7 @@ while IFS= read -r chart; do
     --set secrets.zrestSecret=emptyString \
     --set federate.dtls.tls.issuerRef=emptyString \
     --set federate.dtls.tls.certificate.labels=emptyString \
+    --set federate.dtls.tls.certificate.dnsNames=emptyString \
     $( [[ -f ./values/$(basename $chart)/prod-values.example.yaml ]] && echo "-f ./values/$(basename $chart)/prod-values.example.yaml" ) \
     $( [[ -f ./values/$(basename $chart)/prod-secrets.example.yaml ]] && echo "-f ./values/$(basename $chart)/prod-secrets.example.yaml" ) \
     | yq -r '..|.image? | select(.)' | optionally_complain | sort -u
