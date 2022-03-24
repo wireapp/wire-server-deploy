@@ -115,6 +115,9 @@ for chartName in "${calling_charts[@]}"; do
   (cd ./charts; helm pull --version "$wire_calling_version" --untar "$chartName")
 done
 
+# HACK!
+sed -i -Ee 's/2022-02-08-production\.0-v0\.29\.2-0-4d437bb/2022-02-22-federation-cbbb781/' "$(pwd)"/charts/wire-server/charts/webapp/values.yaml
+
 for chartPath in "$(pwd)"/charts/*; do
   echo "$chartPath"
 done | list-helm-containers | create-container-dump containers-helm
