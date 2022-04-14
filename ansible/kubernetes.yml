@@ -22,10 +22,11 @@
     - delegate_to: localhost
       block:
       - name: "Checking if 'kubeconfig' file already exists"
+        when: skip_kubeconfig_copying is undefined or skip_kubeconfig_copying == false
         stat:
           path: "{{ inventory_dir }}/../kubeconfig"
         register: file_kubeconfig
-      - when: not file_kubeconfig.stat.exists
+      - when: (skip_kubeconfig_copying is undefined or skip_kubeconfig_copying == false) and (not file_kubeconfig.stat.exists)
         block:
         - name: 'Renaming kubeconfig file provided by Kubespray'
           copy:
