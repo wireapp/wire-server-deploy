@@ -1,13 +1,12 @@
 self: super: {
-  # boto seems to be broken with python 3.9
-  pythonForAnsible = (self.python38.withPackages (_: self.ansible.requiredPythonModules ++ [
-    super.python38Packages.boto
-    super.python38Packages.boto3
-    super.python38Packages.cryptography
-    super.python38Packages.six
+  pythonForAnsible = (self.python3.withPackages (_: self.ansible.requiredPythonModules ++ [
+    super.python3Packages.boto
+    super.python3Packages.boto3
+    super.python3Packages.cryptography
+    super.python3Packages.six
     # for packet debugging and reporting.
-    super.python38Packages.pyshark
-    super.python38Packages.matplotlib
+    super.python3Packages.pyshark
+    super.python3Packages.matplotlib
   ]));
 
   kubectl = self.callPackage ./pkgs/kubectl.nix { };

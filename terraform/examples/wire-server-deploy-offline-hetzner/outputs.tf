@@ -53,6 +53,8 @@ output "static-inventory" {
       vars = {
         calico_mtu      = 1450
         calico_veth_mtu = 1430
+        # NOTE: relax handling a list with more than 3 items; required on Hetzner
+        docker_dns_servers_strict: false
       }
     }
     cassandra = {
