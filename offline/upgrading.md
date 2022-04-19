@@ -20,7 +20,14 @@ df -h
 sudo docker container prune
 ```
 
+Prune old security update deployment archives:
+```
+sudo apt clean
+```
+
 ### Kubernetes hosts:
+
+#### Wire
 Remove wire-server images from two releases ago, or from the current release that we know are unused. For instance, 
 
 ```
@@ -30,16 +37,17 @@ sudo docker image ls | grep -E "^quay.io/wire/" | grep $VERSION | sed "s/.*[ ]*\
 
 ```
 
+If you are not running SFT in your main cluster (for example, do not use SFT, or have SFT in a separate DMZ'd cluster).. then remove SFT images from the Wire Kubernetes.
+```
+sudo docker image ls | grep -E "^quay.io/wire/sftd" | sed "s/.*[ ]*\([0-9a-f]\{12\}\).*/sudo docker image rm \1/"
+```
+
+#### SFT
 If you are running a DMZ deployment, prune the old wire-server images and their dependencies on the SFT kubernetes hosts...
 ```
 sudo docker image ls | grep -E "^quay.io/wire/(team-settings|account|webapp|namshi-smtp)" | sed "s/.*[ ]*\([0-9a-f]\{12\}\).*/sudo docker image rm \1/"
-sudo docker image ls | grep -E "^bitnami/redis" | sed "s/.*[ ]*\([0-9a-f]\{12\}\).*/sudo docker image rm \1/"
-sudo docker image ls | grep -E "^airdock/fake-sqs" | sed "s/.*[ ]*\([0-9a-f]\{12\}\).*/sudo docker image rm \1/"
-sudo docker image ls | grep -E "^localstack/localstack" | sed "s/.*[ ]*\([0-9a-f]\{12\}\).*/sudo docker image rm \1/"
+sudo docker image ls | grep -E "^(bitnami/redis|airdock/fake-sqs|localstack/localstack)" | sed "s/.*[ ]*\([0-9a-f]\{12\}\).*/sudo docker image rm \1/"
 sudo docker image rm 
-```
-and remove SFT images from the Wire Kubernetes.
-```
 ```
 
 ## Preparing for deployment
@@ -151,7 +159,7 @@ cp ../<OLD_PACKAGE_DIR/ansible/kubeconfig ansible/inventory/offline/artifacts/ad
 otherwise:
 ```
 mkdir ansible/inventory/offline/artifacts
-cp ../<OLD_PACKAGE_DIR/ansible/inventory/offline/artifacts/admin.conf ansible/inventory/offline/artifacts/admin.conf
+sudo cp ../<OLD_PACKAGE_DIR>/ansible/inventory/offline/artifacts/admin.conf ansible/inventory/offline/artifacts/admin.conf
 ```
 
 ## Preparing to upgrade kubernetes services
@@ -170,37 +178,84 @@ d kubectl get nodes -owide
 ```
 They should all report ready.
 
-If you are worried about disk space, removing unneeded images could be performed here.
-
 ## Upgrading wire-server using helm
 
 ### Upgrading non-wire components:
 
-Copy your external service definition values into place.
+#### External Service Definitions:
+
+Compare your external service definition files, and decide whether you need to change them or not.
 ```
+diff -u ../<OLD_PACKAGE_DIR>/values/cassandra-external/values.yaml values/cassandra-external/prod-values.example.yaml
+diff -u ../<OLD_PACKAGE_DIR>/values/elasticsearch-external/values.yaml values/elasticsearch-external/prod-values.example.yaml
+diff -u ../<OLD_PACKAGE_DIR>/values/minio-external/values.yaml values/minio-external/prod-values.example.yaml
 ```
 
-First, upgrade the external service definitions, as those rarely change.
+If there are only IP addresses in the diff output, copy these files into your new tree.
+```
+cp ../<OLD_PACKAGE_DIR>/values/cassandra-external/values.yaml values/cassandra-external/values.yaml
+cp ../<OLD_PACKAGE_DIR>/values/elasticsearch-external/values.yaml values/elasticsearch-external/values.yaml
+cp ../<OLD_PACKAGE_DIR>/values/minio-external/values.yaml values/minio-external/values.yaml
+```
+
+If not, examine differences between the values files for the old service definitions and the new service definitions
+
+When you are satisfied with the results of the above, upgrade the external service definitions.
 ```
 d helm upgrade cassandra-external ./charts/cassandra-external/ --values ./values/cassandra-external/values.yaml
 d helm upgrade elasticsearch-external ./charts/elasticsearch-external/ --values ./values/elasticsearch-external/values.yaml
 d helm upgrade minio-external ./charts/minio-external/ --values ./values/minio-external/values.yaml
 ```
 
+#### Non-Wire Services
+
+Compare your non-wire service definition files, and decide whether you need to change them or not.
+```
+diff -u ../<OLD_PACKAGE_DIR>/values/fake-aws/prod-values.example.yaml values/cassandra-external/prod-values.example.yaml
+diff -u ../<OLD_PACKAGE_DIR>/values/databases-ephemeral/values.yaml values/databases-ephemeral/prod-values.example.yaml
+```
+
+If there are no differences, copy these files into your new tree.
+```
+cp ../<OLD_PACKAGE_DIR>/values/fake-aws/prod-values.example.yaml values/cassandra-external/values.yaml
+cp ../<OLD_PACKAGE_DIR>/values/databases-ephemeral/values.yaml values/databases-ephemeral/values.yaml
+```
+
 Next, upgrade the internal non-wire services.
 ```
-d helm upgrade fake-aws ./charts/fake-aws/ --values ./values/fake-aws/prod-values.example.yaml
+d helm upgrade fake-aws ./charts/fake-aws/ --values ./values/fake-aws/values.yaml
 d helm upgrade databases-ephemeral ./charts/databases-ephemeral/ --values ./values/databases-ephemeral/values.yaml
 d helm upgrade reaper ./charts/reaper/
 ```
 
-Finally, upgrade demo-smtp. Note that you may have to look for a `values.yaml`, instead of a `prod-values.example.yaml` file, in the case that demo-smtp was configured. If it's not present, use `prod-values.example.yaml`.
+#### Demo-SMTP service
+
+Compare your demo-smtp configuration files, and decide whether you need to change them or not.
+```
+diff -u ../<OLD_PACKAGE_DIR>/values/demo-smtp/values.yaml values/demo-smtp/values.yaml
+```
+
+If there are no differences, copy these files into your new tree.
+```
+cp ../<OLD_PACKAGE_DIR>/values/demo-smtp/values.yaml values/demo-smtp/values.yaml
+```
+
 ```
 d helm upgrade demo-smtp ./charts/demo-smtp/ --values ./values/demo-smtp/values.yaml
 ```
 
-### Upgrading the NginX Ingress
+#### Upgrading the NginX Ingress
+
+Compare your demo-smtp configuration files, and decide whether you need to change them or not.
 ```
+diff -u ../<OLD_PACKAGE_DIR>/values/ngin-ingress-services/values.yaml values/nginx-ingress-services/prod-values.example.yaml
+```
+
+If there are no differences, copy these files into your new tree.
+```
+cp ../<OLD_PACKAGE_DIR>/values/nginx-ingress-services/values.yaml values/nginx-ingress-services/values.yaml
+```
+
 d helm upgrade nginx-ingress-controller ./charts/nginx-ingress-controller/
 d helm upgrade nginx-ingress-services ./charts/nginx-ingress-services/ --values ./values/nginx-ingress-services/values.yaml  --values ./values/nginx-ingress-services/secrets.yaml
 ```
@@ -212,7 +267,7 @@ Inspect your `values.yaml` and `secrets.yaml` files with diff comparing them to 
 Now upgrade `wire-server`:
 
 ```
-d helm upgrade wire-server ./charts/wire-server --timeout=15m0s --values ./values/wire-server/values.yaml --values ./values/wire-server/secrets.yaml
+d helm upgrade wire-server ./charts/wire-server/ --timeout=15m0s --values ./values/wire-server/values.yaml --values ./values/wire-server/secrets.yaml
 ```
 
 ### Marking kubenode for calling server (SFT)
