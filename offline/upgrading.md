@@ -137,7 +137,7 @@ https://docs.wire.com/how-to/install/ansible-VMs.html
 
 ### updates to the inventory
 
-make sure your inventory sets:
+Make sure your inventory sets:
 
 # Explicitely specify the restund user id to be "root" to override the default of "997"
 restund_uid = root
@@ -148,7 +148,7 @@ minio_deeplink_domain = prefix-
 
 # move the kubeconfig
 
-old versions of the package contained the kubeconfig at ansible/kubeconfig. newer ones create a directory at ansible/inventory/offline/artifacts, and place the kubeconfig there, as 'admin.conf'
+Old versions of the package contained the kubeconfig at ansible/kubeconfig. newer ones create a directory at ansible/inventory/offline/artifacts, and place the kubeconfig there, as 'admin.conf'
 
 If your deployment package uses the old style, then in the place where you are keeping your new package:
 ```
@@ -164,7 +164,7 @@ sudo cp ../<OLD_PACKAGE_DIR>/ansible/inventory/offline/artifacts/admin.conf ansi
 
 ## Preparing to upgrade kubernetes services
 
-Log into the assethost, and verify the 'serve-assets' systemd component is running by looking at netstat -an, and checking for `8080`. If it's not:
+Log into the assethost, and verify the 'serve-assets' systemd component is running by looking at `netstat -an`, and checking for `8080`. If it's not:
 ```
 sudo service serve-assets start
 ```
