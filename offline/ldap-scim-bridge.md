@@ -1,33 +1,37 @@
 # How to deploy the ldap-scim-bridge
 
-copy your values and charts folders into the Wire-Server directory you're using.
+Copy your values and charts folders into the `wire-server` directory you're using.
 
-pre-seed the docker container for ldap-scim-bridge onto all of your kubernetes hosts.
+Pre-seed the docker container for `ldap-scim-bridge` onto all of your kubernetes hosts.
 
-## get the Active Directory root authority's public certificate
+## Get the Active Directory root authority's public certificate
 
-ask the remote team to provide this.
+Ask the remote team to provide this.
 
-## create a configmap for the Public Certificate
+## Create a configmap for the Public Certificate
 
-first, see if there's a configmap already in place.
+First, see if there's a configmap already in place.
+
 ```
 d kubectl get configmaps
 ```
 
 If not, create a configmap for this certificate.
+
 ```
 d kubectl create configmap ca-ad-pemstore ad-public-root.crt
 ```
 
 ## Create a kubernetes patch
 
-create a patch, which forces the ldap-scim-bridge to use the AD public certificate.
+Create a patch, which forces the `ldap-scim-bridge` to use the AD public certificate.
+
 ```
 cat >> add_ad_ca.patch
 ```
 
-place the following contents in the file:
+Place the following contents in the file:
+
 ```
 spec:
   jobTemplate:
@@ -49,14 +53,16 @@ spec:
 
 ## Copy the values
 
-Since the ldap-scim-bridge needs to be configured at least once per team, we must copy the values
+Since the `ldap-scim-bridge` needs to be configured at least once per team, we must copy the values.
 
-edit the values. 
-Set the schedule to "*/10 * * * *" for every 10 minutes.
+Edit the values. 
 
-### set the ldap source.
+Set the schedule to `"*/10 * * * *"` for every 10 minutes.
 
-for AD:
+### Set the ldap source.
+
+For active Directory:
+
 ```
 ldapSource:
   tls: true
@@ -68,7 +74,8 @@ ldapSource:
 
 ### Pick your users
 
-select the user group you want to sync. for example, to find all of the people in the engineering department of the example.com AD domain:
+Select the user group you want to sync. for example, to find all of the people in the engineering department of the example.com AD domain:
+
 ```
 search:
   base: ~DC=com,DC=example"
@@ -76,8 +83,10 @@ search:
   memberOf "CN=WireTeam1,OU=engineering,DC=com,DC=example"
 ```
 
-### pick the user mapping
+### Pick the user mapping
+
 An example mapping for AD is:
+
 ```
 DisplayName: "displayName~
 userNome: "mailNickname"
@@ -86,15 +95,18 @@ email: "mail"
 ```
 
 ### Authorize the sync engine
-add a `Bearer <secret>` token for ScimTarget's target attribute.
+
+Add a `Bearer <secret>` token for ScimTarget's target attribute.
 
 
 ### Deploy the sync engine
+
 ```
 d helm install ldap-scim-bridge-team-1 charts/ldap-scim-bridge/ --values values/ldap-scim-bridge_team-1/values.yaml
 ```
 
 ### Patch the sync engine.
+
 ```
 d kubectl patch cronjob ldap-scim-bridge-team-1 -p "$(cat add_ad_ca.patch)"
 ```
