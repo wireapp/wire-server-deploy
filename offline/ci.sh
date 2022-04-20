@@ -58,7 +58,7 @@ tar cf containers-system.tar containers-system
 [[ "$INCREMENTAL" -eq 0 ]] && rm -r containers-system
 
 # Used for ansible-restund role
-echo "quay.io/wire/restund:v0.6.0-rc.1" | create-container-dump containers-other
+echo "quay.io/wire/restund:v0.6.0-rc.2" | create-container-dump containers-other
 tar cf containers-other.tar containers-other
 [[ "$INCREMENTAL" -eq 0 ]] && rm -r containers-other
 
@@ -102,7 +102,7 @@ helm repo update
 # wire_version=$(helm show chart wire/wire-server | yq -r .version)
 wire_version="4.23.0"
 
-wire_calling_version="4.7.7"
+wire_calling_version="4.9.37"
 
 # Download zauth; as it's needed to generate certificates
 echo "quay.io/wire/zauth:$wire_version" | create-container-dump containers-adminhost
@@ -115,8 +115,10 @@ for chartName in "${calling_charts[@]}"; do
   (cd ./charts; helm pull --version "$wire_calling_version" --untar "$chartName")
 done
 
-# HACK!
-sed -i -Ee 's/2022-02-08-production\.0-v0\.29\.2-0-4d437bb/2022-02-22-federation-cbbb781/' "$(pwd)"/charts/wire-server/charts/webapp/values.yaml
+# HACKS!
+sed -i -Ee 's/2022-03-30-production\.0-v0\.29\.2-0-d144552/2022-04-19-federation-5b44b66db/' "$(pwd)"/charts/wire-server/charts/webapp/values.yaml
+sed -i -Ee 's/v0\.6\.0-rc\.1/v0.6.0-rc.2/' "$(pwd)"/charts/restund/Chart.yaml
+sed -i -Ee 's/2\.1\.19/3.1.3/' "$(pwd)"/charts/sftd/Chart.yaml
 
 for chartPath in "$(pwd)"/charts/*; do
   echo "$chartPath"
