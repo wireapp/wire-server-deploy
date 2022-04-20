@@ -58,7 +58,7 @@ tar cf containers-system.tar containers-system
 [[ "$INCREMENTAL" -eq 0 ]] && rm -r containers-system
 
 # Used for ansible-restund role
-echo "quay.io/wire/restund:v0.6.0-rc.1" | create-container-dump containers-other
+echo "quay.io/wire/restund:v0.6.0-rc.2" | create-container-dump containers-other
 tar cf containers-other.tar containers-other
 [[ "$INCREMENTAL" -eq 0 ]] && rm -r containers-other
 
@@ -102,7 +102,7 @@ helm repo update
 # wire_version=$(helm show chart wire/wire-server | yq -r .version)
 wire_version="4.26.0"
 
-wire_calling_version="4.7.7"
+wire_calling_version="4.9.37"
 
 # Download zauth; as it's needed to generate certificates
 echo "quay.io/wire/zauth:$wire_version" | create-container-dump containers-adminhost
