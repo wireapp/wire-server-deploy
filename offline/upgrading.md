@@ -164,7 +164,7 @@ sudo cp ../<OLD_PACKAGE_DIR>/ansible/inventory/offline/artifacts/admin.conf ansi
 
 ## Preparing to upgrade kubernetes services
 
-log into the assethost, and verify the 'serve-assets' systemd component is running by looking at netstat -an, and checking for `8080`. If it's not:
+Log into the assethost, and verify the 'serve-assets' systemd component is running by looking at netstat -an, and checking for `8080`. If it's not:
 ```
 sudo service serve-assets start
 ```
