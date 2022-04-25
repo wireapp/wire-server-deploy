@@ -95,6 +95,17 @@ renew-certs: check-inputs-ansible
 		-vv
 	mv $(ANSIBLE_DIR)/kubeconfig.new ${ENV_DIR}/
 
+# Usage: ENV=bella make create-inventory fetch-kubeconfig
+# Then encrypt the new kubeconfig with sops
+.PHONY: fetch-kubeconfig
+fetch-kubeconfig: check-inputs-ansible
+	ansible-playbook ${ANSIBLE_DIR}/kubernetes-fetch-kubeconfig.yml \
+		-i ${ENV_DIR}/gen/terraform-inventory.yml \
+		-i ${ENV_DIR}/inventory \
+		--private-key ${ENV_DIR}/operator-ssh.dec \
+		-vv
+	mv $(ANSIBLE_DIR)/kubeconfig.new ${ENV_DIR}/
+
 .PHONY: provision-sft
 provision-sft: check-inputs-ansible
 	ansible-playbook $(ANSIBLE_DIR)/provision-sft.yml \
