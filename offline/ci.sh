@@ -96,7 +96,7 @@ helm repo add wire https://s3-eu-west-1.amazonaws.com/public.wire.com/charts
 helm repo update
 
 # wire_version=$(helm show chart wire/wire-server | yq -r .version)
-wire_version="4.10.0"
+wire_version="4.11.0"
 
 # Download zauth; as it's needed to generate certificates
 echo "quay.io/wire/zauth:$wire_version" | create-container-dump containers-adminhost
