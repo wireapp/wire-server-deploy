@@ -116,7 +116,7 @@ for chartName in "${calling_charts[@]}"; do
 done
 
 # HACKS!
-sed -i -Ee 's/2022-03-30-production\.0-v0\.29\.2-0-d144552/2022-04-19-federation-5b44b66db/' "$(pwd)"/charts/wire-server/charts/webapp/values.yaml
+sed -i -Ee 's/2022-03-30-production\.0-v0\.29\.2-0-d144552/2022-05-04-production.0-v0.29.7-0-a6f2ded/' "$(pwd)"/charts/wire-server/charts/webapp/values.yaml
 sed -i -Ee 's/v0\.6\.0-rc\.1/v0.6.0-rc.2/' "$(pwd)"/charts/restund/Chart.yaml
 sed -i -Ee 's/2\.1\.19/3.1.3/' "$(pwd)"/charts/sftd/Chart.yaml
 
