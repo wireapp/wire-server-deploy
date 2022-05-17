@@ -8,9 +8,11 @@ BRIDGEBROADCAST=172.16.0.255
 
 # 0 for true.
 # manage ISC DHCPD
-USEDHCP=0
+#USEDHCP=0
 # manage BIND
-USEDNS=0
+#USEDNS=0
+# manage DNSMASQ
+USEDNSMASQ=0
 
 # Whether to assign an IP and use ufw to provide internet to the VMs using HOSTBRIDGE.
 HOSTROUTE=0
