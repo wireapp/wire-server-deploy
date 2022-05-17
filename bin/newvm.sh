@@ -4,14 +4,16 @@ usage() { echo "Usage: $0 usage:" && grep ") \#" $0 && echo "        <VM name>" 
 
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
-while getopts ":hm:d:" o; do
+while getopts ":hqm:d:" o; do
     case "${o}" in
 	d) # set amount of disk, in gigabytes
 	    d=${OPTARG}
 	    ;;
-	m) # set amount of memory, in gigabytes
+	m) # set amount of memory, in megabytes
 	    m=${OPTARG}
 	    ;;
+	q) # use qemu instead of kvm.
+	    q=1
     esac
 done
 shift $((OPTIND-1))
@@ -21,14 +23,15 @@ if [ -z "${d}" ] || [ -z "${m}" ]; then
     usage
 fi
 
-echo "disk size = ${d} gigabytes"
-echo "memory = ${m} gigabytes"
-echo "hostname: " $1
-
 VM_NAME=$1
 
 if [ ! -z $2 ]; then
     echo "ERROR: too many arguments!" 1>&2
+    usage
+fi
+
+if [ -z "$VM_NAME" ]; then
+    echo "ERROR: no VM name specified?" 1>&2
     usage
 fi
 
@@ -48,4 +51,26 @@ if [ -d $VM_NAME ]; then
     echo "ERROR: directory for vm $VM_NAME already exists." 1>&2
     echo "no actions performed."
     exit 1
+fi
+
+echo "disk size = ${d} gigabytes"
+echo "memory = ${m} megabytes"
+echo "hostname: $VM_NAME"
+if [ "$q" -eq 1 ]; then
+    echo "USE QEMU"
+fi
+
+# exit 0
+
+mkdir "$VM_NAME"
+cp ./kvmhelpers/* "$VM_NAME"/
+qemu-img create "$VM_NAME"/drive-c.img ${d}G
+sed -i "s/MEM=.*/MEM=${m}/" "$VM_NAME"/start_kvm.sh
+sed -i "s@CDROM=.*@CDROM=../ubuntu.iso@" "$VM_NAME"/start_kvm.sh
+sed -i "s/^eth1=/#eth1=/" "$VM_NAME"/start_kvm.sh
+sed -i 's/\(.*\)CURSES=.*/\1CURSES="-nographic -device sga"/' "$VM_NAME"/start_kvm.sh
+
+if [ "$q" -eq 1 ]; then
+    echo "forcing QEMU."
+    sed -i "s=/usr/bin/kvm=/usr/bin/qemu-system-x86_64=" "$VM_NAME"/start_kvm.sh
 fi

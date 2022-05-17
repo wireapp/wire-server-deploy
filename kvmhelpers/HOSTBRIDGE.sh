@@ -24,6 +24,9 @@ else
 	$SUDO $IP link set $1 up promisc on
         $SUDO $BRCTL addif $BRIDGE $1
         $SUDO $IP link set $BRIDGE up
+	if [ "$USEDNSMASQ" -eq "0" ] ; then
+	    $SUDO service dnsmasq restart
+	fi
         if [ "$USEDHCP" -eq "0" ] ; then 
             $SUDO service isc-dhcp-server stop
             $SUDO service isc-dhcp-server start

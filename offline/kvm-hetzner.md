@@ -9,7 +9,7 @@ This document also gives instructions for creating a TURN calling server on a se
 
 ## use the hetzner robot console to create a new server.
 
-select ubuntu 18.04, on an ax41-nvme dedicated server. 
+select ubuntu 18.04, on an ax41-nvme dedicated server.
 
 returned IP: 167.235.249.105
 
@@ -54,7 +54,6 @@ ssh -i ~/.ssh/id_ed25519 demo@167.235.249.105 -o serveraliveinterval=60
 ```
 
 ### download offline artifact.
-
 ```
 curl https://s3-eu-west-1.amazonaws.com/public.wire.com/artifacts/wire-server-deploy-static-03fad4ff6d9a67eb56668fb259a0c1571cabcac4.tgz -o wire-server-deploy-static-03fad4ff6d9a67eb56668fb259a0c1571cabcac4.tgz
 ```
@@ -173,7 +172,8 @@ sudo service dnsmasq restart
 ```
 
 ### start node
-when qemu starts hit escape. at the " oot:" prompt, type 'expert console=ttyS0,9600n8', and hit enter.
+when qemu starts hit escape.
+at the " oot:" prompt, type 'expert console=ttyS0,9600n8', and hit enter.
 
 ### install node
 select 'choose language'
@@ -250,19 +250,10 @@ select "Finish the installation"
  * hit escape if you want to see the boot menu.
  
 
-### configure zram?
-```
-sudo apt install zram-config
-```
-
 ### fix local DNS?
 ```
 sudo bash -c 'echo "nameserver 8.8.8.8" > /etc/resolv.conf'
 ```
-
-### install kubenodes
-
-
 
 ### add static IPs for VMs.
 ```
@@ -280,4 +271,10 @@ sudo service dnsmasq restart
 ```
 source ./bin/offline-env.sh
 ```
+
+### configure zram?
+```
+sudo apt install zram-config
+```
+
 
