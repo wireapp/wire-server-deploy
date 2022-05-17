@@ -22,7 +22,7 @@ cat > "$GNUPGHOME"/keycfg <<EOF
   Subkey-Length: 2048
   Name-Real: Wire Swiss GmbH
   Name-Email: gpg@wire.com
-  Expire-Date: 6m
+  Expire-Date: 2y
   # Do a commit here, so that we can later print "done"
   %commit
   %echo done
