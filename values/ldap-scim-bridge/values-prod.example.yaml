@@ -13,7 +13,7 @@ config:
       base: "DC=example,DC=com"
       objectClass: "person"
       memberOf "CN=people,OU=engineering,DC=example,DC=com"
-    codec: "utf-8"
+    codec: "utf8"
     #    deleteOnAttribute:  # optional, related to delete-from-directory.
     #      key: "deleted"
     #      value: "true"
