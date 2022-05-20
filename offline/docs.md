@@ -107,6 +107,14 @@ of your offline deploy.  There's instructions in the comments on how to set
 everything up. You can also refer to extra information here.
 https://docs.wire.com/how-to/install/ansible-VMs.html
 
+
+If you are using username/password to log into and sudo up, in the vars:all section, add:
+```
+ansible_user=<USERNAME>
+ansible_password=<PASSWORD>
+ansible_become_password=<PASSWORD>
+```
+
 ### Configuring kubernetes and etcd
 
 You'll need at least 3 `kubenode`s.  3 of them should be added to the
