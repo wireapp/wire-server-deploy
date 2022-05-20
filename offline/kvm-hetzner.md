@@ -21,6 +21,14 @@ returned IP: 167.235.249.105
 ssh -i ~/.ssh/id_ed25519 root@167.235.249.105 -o serveraliveinterval=60
 ```
 
+### update OS
+```
+sudo apt update
+sudo apt upgrade -y
+sudo reboot
+```
+
+
 ### create demo user
 
 ```
@@ -43,14 +51,14 @@ echo "demo ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/10-demo_user
 chmod 440 /etc/sudoers.d/10-demo_user
 ```
 
-### add the demo user to the kvm group
-```
-sudo usermod -a -G kvm demo
-```
-
 ## ssh in as demo user.
 ```
 ssh -i ~/.ssh/id_ed25519 demo@167.235.249.105 -o serveraliveinterval=60
+```
+
+### (personal) install screen
+```
+sudo apt install screen
 ```
 
 ### download offline artifact.
@@ -86,8 +94,9 @@ We're going to install dnsmasq in order to provide DNS to virtual machines, and 
 ```
 sudo apt update
 sudo systemctl disable systemd-resolved
-sudo systemctl stop systemd-resolved
 sudo apt install dnsmasq ufw -y
+sudo systemctl stop systemd-resolved
+sudo systemctl restart dnsmasq
 sudo ufw allow 22/tcp
 sudo ufw allow from 172.16.0.0/24 proto udp to any port 53
 sudo ufw allow in on br0 from any proto udp to any port 67
@@ -95,34 +104,48 @@ sudo ufw allow in on br0 from 0.0.0.0 proto udp to any port 67
 sudo ufw enable
 ```
 
-### (security) install fail2ban
+### Tell dnsmasq to provide DNS locally.
 ```
-sudo apt install fail2ban
+sudo bash -c 'echo "listen-address=127.0.0.53" > /etc/dnsmasq.d/00-lo-systemd-resolvconf'
+sudo bash -c 'echo "no-resolv" >> /etc/dnsmasq.d/00-lo-systemd-resolvconf'
+sudo bash -c 'echo "server=8.8.8.8" >> /etc/dnsmasq.d/00-lo-systemd-resolvconf'
 ```
 
 ### (temporary) copy helper scripts from wire-server-deploy-networkless
 
 ```
 sudo apt install git -y
-git clone https://github.com/wireapp/wire-server-deploy-networkless.git
-cp -a wire-server-deploy-networkless/kvmhelpers/ ./
+git clone https://github.com/wireapp/wire-server-deploy.git
+cd wire-server-deploy
+git checkout kvm_support
+cd ..
+cp -a wire-server-deploy/kvmhelpers/ ./
+cp -a wire-server-deploy/bin/newvm.sh ./bin
+chmod 770 ./bin/newvm.sh
 ```
 
-### (temporary) install qemu-kvm
+### (rewrite) install qemu-kvm
 KVM is the virtualization system we're using.
 ```
-sudo apt install qemu-kvm qemu-utils -y
+sudo apt install qemu-kvm qemu-utils sgabios -y
 ```
 
-### (temporary) install bridge-utils
+### add the demo user to the kvm group
+```
+sudo usermod -a -G kvm demo
+```
+
+### log out, and back in.
+
+### install bridge-utils
 So that we can manage the virtual network.
 ```
-sudo apt install bridge-utils
+sudo apt install bridge-utils -y
 ```
 
 ### (personal) install emacs
 ```
-sudo apt install emacs-nox
+sudo apt install emacs-nox -y
 ```
 
 ### (temporary) acquire ubuntu 18.04 server installation CD (netboot).
@@ -134,7 +157,7 @@ curl http://archive.ubuntu.com/ubuntu/dists/bionic-updates/main/installer-amd64/
 ### tell DnsMasq to provide DHCP to our KVM VMs.
 ```
 sudo bash -c 'echo "listen-address=172.16.0.1" > /etc/dnsmasq.d/10-br0-dhcp'
-sudo bash -c 'echo "dhcp-range=172.16.0.2-172.16.0.127,10m" >> /etc/dnsmasq.d/10-br0-dhcp'
+sudo bash -c 'echo "dhcp-range=172.16.0.2,172.16.0.127,10m" >> /etc/dnsmasq.d/10-br0-dhcp'
 sudo service dnsmasq restart
 ```
 
@@ -144,36 +167,64 @@ sudo sed -i "s/.*net.ipv4.ip_forward.*/net.ipv4.ip_forward=1/" /etc/sysctl.conf
 sudo sysctl -p
 ```
 
-### enable network masquerading
+### enable network masquerading (make sure to change eth0!)
 ```
 sudo sed -i 's/.*DEFAULT_FORWARD_POLICY=.*/DEFAULT_FORWARD_POLICY="ACCEPT"/' /etc/default/ufw
-sudo sed -i '1i *nat\n:POSTROUTING ACCEPT [0:0]\n-A POSTROUTING -s 172.16.0.0/24 -o eth0 -j MASQUERADE\nCOMMIT' /etc/ufw/before.rules
+sudo sed -i '1i *nat\n:POSTROUTING ACCEPT [0:0]\n-A POSTROUTING -s 172.16.0.0/24 -o enp41s0 -j MASQUERADE\nCOMMIT' /etc/ufw/before.rules
+sudo service dnsmasq restart
+```
+
+### add static IPs for VMs.
+```
+sudo bash -c 'echo "dhcp-host=assethost,172.16.0.128,10h" > /etc/dnsmasq.d/20-hosts'
+sudo bash -c 'echo "dhcp-host=kubenode1,172.16.0.129,10h" >> /etc/dnsmasq.d/20-hosts'
+sudo bash -c 'echo "dhcp-host=kubenode2,172.16.0.130,10h" >> /etc/dnsmasq.d/20-hosts'
+sudo bash -c 'echo "dhcp-host=kubenode3,172.16.0.131,10h" >> /etc/dnsmasq.d/20-hosts'
+sudo bash -c 'echo "dhcp-host=ansnode1,172.16.0.132,10h" >> /etc/dnsmasq.d/20-hosts'
+sudo bash -c 'echo "dhcp-host=ansnode2,172.16.0.133,10h" >> /etc/dnsmasq.d/20-hosts'
+sudo bash -c 'echo "dhcp-host=ansnode3,172.16.0.134,10h" >> /etc/dnsmasq.d/20-hosts'
 sudo service dnsmasq restart
 ```
 
 ### create assethost
 ```
-./bin/newvm.sh -d 40 -m 1024 -q assethost
+./bin/newvm.sh -d 40 -m 1024 -c 1 assethost
 ```
 
 ### create kubenode1
 ```
-./bin/newvm.sh -d 80 -m 8192 -q kubenode1
+./bin/newvm.sh -d 80 -m 8192 -c 6 kubenode1
 ```
 
 ### create kubenode2
 ```
-./bin/newvm.sh -d 80 -m 8192 -q kubenode2
+./bin/newvm.sh -d 80 -m 8192 -c 6 kubenode2
 ```
 
 ### create kubenode3
 ```
-./bin/newvm.sh -d 80 -m 8192 -q kubenode3
+./bin/newvm.sh -d 80 -m 8192 -c 6 kubenode3
 ```
+
+### create ansnode1
+```
+./bin/newvm.sh -d 80 -m 8192 -c 6 ansnode1
+```
+
+### create ansnode2
+```
+./bin/newvm.sh -d 80 -m 8192 -c 6 ansnode2
+```
+
+### create ansnode3
+```
+./bin/newvm.sh -d 80 -m 8192 -c 6 ansnode3
+```
+
 
 ### start node
 when qemu starts hit escape.
-at the " oot:" prompt, type 'expert console=ttyS0,9600n8', and hit enter.
+at the " oot:" prompt, type 'expert console=ttyS0', and hit enter.
 
 ### install node
 select 'choose language'
@@ -234,7 +285,7 @@ select 'Configure the package manager'
 select 'Select and install software'
  * select "Install security updates automatically"
  * select "OpenSSH Server", and hit continue.
-select "Install the grub bootloader on the firs"
+select "Install the GRUB bootloader on a first disk"
  * install the GRUB bootloader to the master boot record? yes.
  * select only device displayed (/dev/sda).
  * no to installing Extra EFI just-in-case.
@@ -248,33 +299,11 @@ select "Finish the installation"
  * run 'poweroff' to power down the VM.
  * run "DRIVE=c ./start_kvm.sh"
  * hit escape if you want to see the boot menu.
- 
 
-### fix local DNS?
-```
-sudo bash -c 'echo "nameserver 8.8.8.8" > /etc/resolv.conf'
-```
 
-### add static IPs for VMs.
-```
-sudo bash -c 'echo "dhcp-host=assethost,172.16.0.128,10h" > /etc/dnsmasq.d/20-hosts'
-sudo bash -c 'echo "dhcp-host=kubenode1,172.16.0.129,10h" >> /etc/dnsmasq.d/20-hosts'
-sudo bash -c 'echo "dhcp-host=kubenode2,172.16.0.130,10h" >> /etc/dnsmasq.d/20-hosts'
-sudo bash -c 'echo "dhcp-host=kubenode3,172.16.0.131,10h" >> /etc/dnsmasq.d/20-hosts'
-sudo bash -c 'echo "dhcp-host=ansiblehost1,172.16.0.132,10h" >> /etc/dnsmasq.d/20-hosts'
-sudo bash -c 'echo "dhcp-host=ansiblehost2,172.16.0.133,10h" >> /etc/dnsmasq.d/20-hosts'
-sudo bash -c 'echo "dhcp-host=ansiblehost3,172.16.0.134,10h" >> /etc/dnsmasq.d/20-hosts'
-sudo service dnsmasq restart
-```
+### Intsall GPG
+Make sure GPG is installed BEFORE running through our install directions.
 
-### Load tools into Docker
-```
-source ./bin/offline-env.sh
-```
 
-### configure zram?
-```
-sudo apt install zram-config
-```
 
 
