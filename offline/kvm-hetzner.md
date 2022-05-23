@@ -32,7 +32,7 @@ sudo reboot
 ### create demo user
 
 ```
-adduser --disabled-password demo
+adduser --disabled-password --gecos "" demo
 ```
 
 ### copy ssh key to demo user
