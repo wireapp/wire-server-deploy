@@ -72,7 +72,7 @@ qemu-img create "$VM_NAME"/drive-c.img ${d}G
 sed -i "s/MEM=.*/MEM=${m}/" "$VM_NAME"/start_kvm.sh
 sed -i "s@CDROM=.*@CDROM=../ubuntu.iso@" "$VM_NAME"/start_kvm.sh
 sed -i "s/^eth1=/#eth1=/" "$VM_NAME"/start_kvm.sh
-sed -i "s/^CPUS=/CPUS=${c}/" "$VM_NAME"/start_kvm.sh
+sed -i "s/^CPUS=.*/CPUS=${c}/" "$VM_NAME"/start_kvm.sh
 sed -i 's/\(.*\)CURSES=.*/\1CURSES="-nographic -device sga"/' "$VM_NAME"/start_kvm.sh
 
 if [ ! -z "$q" ]; then
