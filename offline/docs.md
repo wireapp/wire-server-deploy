@@ -181,7 +181,6 @@ Please run:
 
 This should generate two files. `./ansible/inventory/group_vars/all/secrets.yaml` and `values/wire-server/secrets.yaml`.
 
-
 ## Deploying Kubernetes, Restund and stateful services
 
 In order to deploy all the ansible-managed services you can run:
@@ -222,7 +221,6 @@ Run the rest of kubespray. This should bootstrap a kubernetes cluster successful
 d ansible-playbook -i ./ansible/inventory/offline ansible/kubernetes.yml --skip-tags bootstrap-os,preinstall,container-engine
 ```
 
-
 Ensure the cluster comes up healthy. The container also contains kubectl, so check the node status:
 
 ```
@@ -239,14 +237,11 @@ d ansible-playbook -i ./ansible/inventory/offline ansible/elasticsearch.yml
 d ansible-playbook -i ./ansible/inventory/offline ansible/minio.yml
 ```
 
-
-
 Afterwards, run the following playbook to create helm values that tell our helm charts
 what the IP addresses of cassandra, elasticsearch and minio are.
 ```
 d ansible-playbook -i ./ansible/inventory/offline ansible/helm_external.yml
 ```
-
 
 ## Deploying wire-server using helm
 
@@ -298,16 +293,19 @@ Now deploy `wire-server`:
 d helm install wire-server ./charts/wire-server --timeout=15m0s --values ./values/wire-server/values.yaml --values ./values/wire-server/secrets.yaml
 ```
 
+## Directing Traffic to Wire
 
-## Configuring ingress
+### Deploy nginx-ingress-controller
 
-First, install the `nginx-ingress-controller`. This requires no configuration:
+This component requires no configuration:
 
 ```
 d helm install nginx-ingress-controller ./charts/nginx-ingress-controller
 ```
 
-Next, move the example values for `nginx-ingress-services`:
+### Deploy nginx-ingress-services
+
+Move the example values for `nginx-ingress-services`:
 ```
 mv ./values/nginx-ingress-services/{prod-values.example.yaml,values.yaml}
 mv ./values/nginx-ingress-services/{prod-secrets.example.yaml,secrets.yaml}
@@ -316,16 +314,13 @@ mv ./values/nginx-ingress-services/{prod-secrets.example.yaml,secrets.yaml}
 Change the domains in `values.yaml` to your domain. And add your wildcard or SAN certificate that is valid for all these
 domains to the `secrets.yaml` file.
 
-
-Now install the ingress:
+Now install the service with helm:
 
 ```
 d helm install nginx-ingress-services ./charts/nginx-ingress-services --values ./values/nginx-ingress-services/values.yaml  --values ./values/nginx-ingress-services/secrets.yaml
 ```
 
-
-
-### Installing sftd
+## Installing sftd
 
 For full docs with details and explanations please see https://github.com/wireapp/wire-server-deploy/blob/d7a089c1563089d9842aa0e6be4a99f6340985f2/charts/sftd/README.md
 
