@@ -6,7 +6,45 @@ https://temp-rhc-jun.s3.eu-west-1.amazonaws.com/ldap-scim-bridge%3A0.4.tar.bz2
 
 the helm chart is in wire-server.
 
-the values file is in wire-server-deploy.
+Create a values file
+mkdir values/ldap-scim-bridge_team-0
+the values file looks like the following:
+```
+# one a minute.
+schedule: "*/5 * * * *"
+# https://github.com/wireapp/ldap-scim-bridge
+config:
+  logLevel: "Debug"  # one of Trace,Debug,Info,Warn,Error,Fatal; Fatal is least noisy, Trace most.
+  ldapSource:
+    tls: true
+    host: "dc1.example.com"
+    port: 636
+    dn: "CN=Read Only User,CN=users,DC=example,DC=com"
+    password: "READONLYPASSWORD"
+    search:
+      base: "DC=example,DC=com"
+      objectClass: "person"
+      memberOf: "CN=VIP,OU=Engineering,DC=example,DC=com"
+    codec: "utf8"
+#    deleteOnAttribute:  # optional, related to delete-from-directory.
+#      key: "deleted"
+#      value: "true"
+#    deleteFromDirectory:  # optional; ok to use together with delete-on-attribute if you use both.
+#      base: "ou=DeletedPeople,DC=example,DC=com"
+#      objectClass: "account"
+  scimTarget:
+    tls: false
+    host: "spar"
+    port: 8080
+    path: "/scim/v2"
+    token: "Bearer <BEARER-TOKEN-HERE>"
+  mapping:
+    displayName: "displayName"
+    userName: "mailNickname"
+    externalId: "mail"
+    email: "mail"
+```
+
 
 When you get the package:
 
@@ -65,6 +103,10 @@ spec:
 ## Copy the values
 
 Since the `ldap-scim-bridge` needs to be configured at least once per team, we must copy the values.
+```
+cp values/ldap-scim-bridge/ values/ldap-scim-bridge-team-<UNIQUE_IDENTIFIER>
+```
+
 
 Edit the values. 
 
