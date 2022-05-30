@@ -11,14 +11,14 @@ This document also gives instructions for creating a TURN calling server on a se
 
 select ubuntu 18.04, on an ax41-nvme dedicated server.
 
-returned IP: 167.235.249.105
+returned IP: 65.21.197.76
 
 ## Create demo user.
 
 ### log in as root.
 
 ```
-ssh -i ~/.ssh/id_ed25519 root@167.235.249.105 -o serveraliveinterval=60
+ssh -i ~/.ssh/id_ed25519 root@65.21.197.76 -o serveraliveinterval=60
 ```
 
 ### update OS
@@ -32,7 +32,7 @@ sudo reboot
 ### create demo user
 
 ```
-adduser --disabled-password demo
+adduser --disabled-password --gecos "" demo
 ```
 
 ### copy ssh key to demo user
@@ -53,12 +53,13 @@ chmod 440 /etc/sudoers.d/10-demo_user
 
 ## ssh in as demo user.
 ```
-ssh -i ~/.ssh/id_ed25519 demo@167.235.249.105 -o serveraliveinterval=60
+ssh -i ~/.ssh/id_ed25519 demo@65.21.197.76 -o serveraliveinterval=60
 ```
 
 ### (personal) install screen
 ```
 sudo apt install screen
+screen
 ```
 
 ### download offline artifact.
@@ -109,10 +110,10 @@ sudo ufw enable
 sudo bash -c 'echo "listen-address=127.0.0.53" > /etc/dnsmasq.d/00-lo-systemd-resolvconf'
 sudo bash -c 'echo "no-resolv" >> /etc/dnsmasq.d/00-lo-systemd-resolvconf'
 sudo bash -c 'echo "server=8.8.8.8" >> /etc/dnsmasq.d/00-lo-systemd-resolvconf'
+sudo service dnsmasq restart
 ```
 
-### (temporary) copy helper scripts from wire-server-deploy-networkless
-
+### (temporary) copy helper scripts from wire-server-deploy
 ```
 sudo apt install git -y
 git clone https://github.com/wireapp/wire-server-deploy.git
@@ -135,7 +136,12 @@ sudo apt install qemu-kvm qemu-utils sgabios -y
 sudo usermod -a -G kvm demo
 ```
 
-### log out, and back in.
+### log out, log back in, and return to Wire-Server.
+```
+logout
+ssh -i ~/.ssh/id_ed25519 demo@65.21.197.76 -o serveraliveinterval=60
+cd Wire-Server/
+```
 
 ### install bridge-utils
 So that we can manage the virtual network.
@@ -146,12 +152,6 @@ sudo apt install bridge-utils -y
 ### (personal) install emacs
 ```
 sudo apt install emacs-nox -y
-```
-
-### (temporary) acquire ubuntu 18.04 server installation CD (netboot).
-For the purposes of our text-only demo, we are going to use one of the netboot ISOs. this allows us to control the install from an SSH prompt.
-```
-curl http://archive.ubuntu.com/ubuntu/dists/bionic-updates/main/installer-amd64/current/images/netboot/mini.iso -o ubuntu.iso
 ```
 
 ### tell DnsMasq to provide DHCP to our KVM VMs.
@@ -184,6 +184,12 @@ sudo bash -c 'echo "dhcp-host=ansnode1,172.16.0.132,10h" >> /etc/dnsmasq.d/20-ho
 sudo bash -c 'echo "dhcp-host=ansnode2,172.16.0.133,10h" >> /etc/dnsmasq.d/20-hosts'
 sudo bash -c 'echo "dhcp-host=ansnode3,172.16.0.134,10h" >> /etc/dnsmasq.d/20-hosts'
 sudo service dnsmasq restart
+```
+
+### (temporary) acquire ubuntu 18.04 server installation CD (netboot).
+For the purposes of our text-only demo, we are going to use one of the netboot ISOs. this allows us to control the install from an SSH prompt.
+```
+curl http://archive.ubuntu.com/ubuntu/dists/bionic-updates/main/installer-amd64/current/images/netboot/mini.iso -o ubuntu.iso
 ```
 
 ### create assethost
@@ -221,8 +227,9 @@ sudo service dnsmasq restart
 ./bin/newvm.sh -d 80 -m 8192 -c 6 ansnode3
 ```
 
-
 ### start node
+cd <nodename>
+
 when qemu starts hit escape.
 at the " oot:" prompt, type 'expert console=ttyS0', and hit enter.
 
@@ -241,6 +248,7 @@ select 'Configure the network'
  * supply the hostname.
    * for the assethost, type assethost
    * for the first kubernenes node, type 'kubenode1'.
+   * ... etc
  * supply the domain name
    * domain name: fake.domain
 Select "Choose a mirror of the ubuntu archive"
@@ -301,8 +309,6 @@ select "Finish the installation"
  * hit escape if you want to see the boot menu.
 
 
-### Intsall GPG
-Make sure GPG is installed BEFORE running through our install directions.
 
 
 
