@@ -117,8 +117,8 @@ ansible_become_password=<PASSWORD>
 
 ### Configuring kubernetes and etcd
 
-You'll need at least 3 `kubenode`s.  3 of them should be added to the
-`[kube-master]`, `[etcd]`  and `[kube-node]` groups of the inventory file.  Any
+You'll need at least 3 `kubenode`s.  3 of them should be added to the`
+[kube-master]`, `[etcd]`  and `[kube-node]` groups of the inventory file.  Any
 additional nodes should only be added to the `[kube-node]` group.
 
 ### Setting up databases and kubernetes to talk over the correct (private) interface
@@ -129,7 +129,7 @@ additional nodes should only be added to the `[kube-node]` group.
   the kubenodes can reach cassandra and on which the cassandra nodes
   communicate among eachother. Your private network.
 * Similarly `elasticsearch_network_interface` and `minio_network_interface`
-  should be set to the private network interface to too.
+  should be set to the private network interface to too. 
 
 ### Configuring Restund
 
