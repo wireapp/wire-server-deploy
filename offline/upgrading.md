@@ -57,6 +57,8 @@ Extract the latest airgap artifact into your workspace:
 
 ```
 $ wget https://s3-eu-west-1.amazonaws.com/public.wire.com/artifacts/wire-server-deploy-static-<HASH>.tgz
+$ mkdir Wire-Server
+$ cd Wire-Server
 $ tar xvzf wire-server-deploy-static-<HASH>.tgz
 ```
 Where the HASH above is the hash of your deployment artifact, given to you by Wire, or acquired by looking at the above build job.
@@ -130,6 +132,9 @@ The following is a list of important artifacts which are provided:
 Copy `ansible/inventory/offline/99-static` to `ansible/inventory/offline/hosts.ini`.
 
 Compare the inventory from your old install to the inventory of your new install.
+```
+diff -u ../<OLD_PACKAGE_DIR>/ansible/inventory/offline/hosts.ini ansible/inventory/offline/hosts.ini
+```
 
 Here you will describe the topology of your offline deploy. There are instructions in the comments on how to set
 everything up. You can also refer to extra information here.
@@ -146,17 +151,17 @@ restund_uid = root
 minio_deeplink_prefix = domainname.com
 minio_deeplink_domain = prefix-
 
-# move the kubeconfig
+# migrate the kubeconfig
 
 Old versions of the package contained the kubeconfig at ansible/kubeconfig. newer ones create a directory at ansible/inventory/offline/artifacts, and place the kubeconfig there, as 'admin.conf'
 
 If your deployment package uses the old style, then in the place where you are keeping your new package:
 ```
 mkdir ansible/inventory/offline/artifacts
-cp ../<OLD_PACKAGE_DIR/ansible/kubeconfig ansible/inventory/offline/artifacts/admin.conf
+cp ../<OLD_PACKAGE_DIR>/ansible/kubeconfig ansible/inventory/offline/artifacts/admin.conf
 ```
 
-otherwise:
+Otherwise:
 ```
 mkdir ansible/inventory/offline/artifacts
 sudo cp ../<OLD_PACKAGE_DIR>/ansible/inventory/offline/artifacts/admin.conf ansible/inventory/offline/artifacts/admin.conf
@@ -164,7 +169,7 @@ sudo cp ../<OLD_PACKAGE_DIR>/ansible/inventory/offline/artifacts/admin.conf ansi
 
 ## Preparing to upgrade kubernetes services
 
-Log into the assethost, and verify the 'serve-assets' systemd component is running by looking at `netstat -an`, and checking for `8080`. If it's not:
+Log into the assethost, and verify the 'serve-assets' systemd component is running by looking at `sudo lsof -i -P -n | grep LISTEN`, and checking for `8080`. If it's not:
 ```
 sudo service serve-assets start
 ```
@@ -172,7 +177,7 @@ sudo service serve-assets start
 Since docker is already installed on all nodes that need it, push the new container images to the assethost, and seed all container images:
 
 ```
-d ansible-playbook -i ./ansible/inventory/offline/hosts.ini ansible/setup-offline-sources.yml --tags "containers-helm"
+d ansible-playbook -i ./ansible/inventory/offline/hosts.ini ansible/setup-offline-sources.yml --tags "debs,containers-helm"
 d ansible-playbook -i ./ansible/inventory/offline/hosts.ini ansible/seed-offline-docker.yml
 ```
 
@@ -261,6 +266,8 @@ If there are no differences, copy these files into your new tree.
 cp ../<OLD_PACKAGE_DIR>/values/nginx-ingress-services/values.yaml values/nginx-ingress-services/values.yaml
 ```
 
+Re-deploy your ingress, to direct traffic into your cluster with the new version of nginx.
+```
 d helm upgrade nginx-ingress-controller ./charts/nginx-ingress-controller/
 d helm upgrade nginx-ingress-services ./charts/nginx-ingress-services/ --values ./values/nginx-ingress-services/values.yaml  --values ./values/nginx-ingress-services/secrets.yaml
 ```
@@ -277,7 +284,7 @@ d helm upgrade wire-server ./charts/wire-server/ --timeout=15m0s --values ./valu
 
 ### Marking kubenode for calling server (SFT)
 
-The SFT Calling server should be running on a kubernetes nodes that are connected to the public internet.
+The SFT Calling server should be running on a set of kubernetes nodes that have traffic directed to them from the public internet.
 If not all kubernetes nodes match these criteria, you should specifically label the nodes that do match
 these criteria, so that we're sure SFT is deployed correctly.
 
