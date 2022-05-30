@@ -45,14 +45,15 @@ config:
     email: "mail"
 ```
 
-
 When you get the package:
 
 Copy your values and charts folders into the `Wire-Server` directory you're using.
 
+Copy the container image to all of the kubernetes hosts in your cluster.
+
 Pre-seed the docker container for `ldap-scim-bridge` onto all of your kubernetes hosts.
 ```
-sudo bash -c "cat ldap-scim-bridge-0.4.tar.bz2 | docker load"
+sudo bash -c "cat ldap-scim-bridge:0.4.tar.bz2 | docker load"
 ```
 
 ## Get the Active Directory root authority's public certificate
@@ -100,14 +101,15 @@ spec:
    	          name: ca-ad-pemstore
 ```
 
+the cronjob may have run between the time you installed it, and the time you patched it.
+in these cases, you will get a "Error_Protocol (\"certificate has unknown CA\",True,UnknownCA)" in the kubectl logs
+
 ## Copy the values
 
 Since the `ldap-scim-bridge` needs to be configured at least once per team, we must copy the values.
 ```
 cp values/ldap-scim-bridge/ values/ldap-scim-bridge-team-<UNIQUE_IDENTIFIER>
 ```
-
-
 Edit the values. 
 
 Set the schedule to `"*/10 * * * *"` for every 10 minutes.
