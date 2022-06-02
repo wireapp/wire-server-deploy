@@ -79,9 +79,9 @@
 # Otherwise, trust the repo.
 #############################
     - name: Register offline repo key
-       apt_key:
-         url: "{{ ubuntu_repo_gpgkey }}"
-         state: present
+      apt_key:
+        url: "{{ ubuntu_repo_gpgkey }}"
+        state: present
 
     - name: Register offline repo
       apt_repository:
