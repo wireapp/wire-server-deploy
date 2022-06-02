@@ -170,8 +170,8 @@ sudo sysctl -p
 ### enable network masquerading (make sure to change eth0!)
 ```
 sudo sed -i 's/.*DEFAULT_FORWARD_POLICY=.*/DEFAULT_FORWARD_POLICY="ACCEPT"/' /etc/default/ufw
-sudo sed -i '1i *nat\n:POSTROUTING ACCEPT [0:0]\n-A POSTROUTING -s 172.16.0.0/24 -o enp41s0 -j MASQUERADE\nCOMMIT' /etc/ufw/before.rules
-sudo service dnsmasq restart
+sudo sed -i '1i *nat\n:POSTROUTING ACCEPT [0:0]\n-A POSTROUTING -s 172.16.0.0/24 -o eno1 -j MASQUERADE\nCOMMIT' /etc/ufw/before.rules
+sudo service ufw restart
 ```
 
 ### add static IPs for VMs.
@@ -227,10 +227,13 @@ curl http://archive.ubuntu.com/ubuntu/dists/bionic-updates/main/installer-amd64/
 ./bin/newvm.sh -d 80 -m 8192 -c 6 ansnode3
 ```
 
-### start node
+### Start a node
+```
 cd <nodename>
+./start_kvm.sh
+```
 
-when qemu starts hit escape.
+when qemu starts (you see H Peter Anvlin's name), hit escape.
 at the " oot:" prompt, type 'expert console=ttyS0', and hit enter.
 
 ### install node
