@@ -9,7 +9,7 @@ This document also gives instructions for creating a TURN calling server on a se
 
 ## use the hetzner robot console to create a new server.
 
-select ubuntu 18.04, on an ax41-nvme dedicated server.
+select ubuntu 18.04 or ubuntu 20.04 on an ax101 dedicated server.
 
 returned IP: 65.21.197.76
 
@@ -23,11 +23,15 @@ ssh -i ~/.ssh/id_ed25519 root@65.21.197.76 -o serveraliveinterval=60
 
 ### update OS
 ```
-sudo apt update
-sudo apt upgrade -y
-sudo reboot
+apt update
+apt upgrade -y
+reboot
 ```
 
+### log back in
+```
+while (sleep 15) ; do { ssh -i ~/.ssh/id_ed25519 root@5.9.84.121 -o serveraliveinterval=60 && break ; } done
+```
 
 ### create demo user
 
@@ -53,10 +57,11 @@ chmod 440 /etc/sudoers.d/10-demo_user
 
 ## ssh in as demo user.
 ```
+logout
 ssh -i ~/.ssh/id_ed25519 demo@65.21.197.76 -o serveraliveinterval=60
 ```
 
-### (personal) install screen
+### Install screen
 ```
 sudo apt install screen
 screen
@@ -80,11 +85,12 @@ tar -xzf ../wire-server-deploy-static-*.tgz
 tar -xf debs.tar
 ```
 
-### Install Docker from debian archive.
+### (FIXME: add iptables) Install Docker from debian archive.
 ```
-sudo dpkg -i debs/public/pool/main/d/docker-ce/docker-ce_*.deb
+sudo apt install iptables
 sudo dpkg -i debs/public/pool/main/d/docker-ce/docker-ce-cli_*.deb
 sudo dpkg -i debs/public/pool/main/c/containerd.io/containerd.io_*.deb 
+sudo dpkg -i debs/public/pool/main/d/docker-ce/docker-ce_*.deb
 sudo dpkg --configure -a
 ```
 
@@ -93,16 +99,9 @@ sudo dpkg --configure -a
 ### (rewrite) Install networking tools
 We're going to install dnsmasq in order to provide DNS to virtual machines, and DHCP to virtual machines. networking will be handled by ufw.
 ```
-sudo apt update
 sudo systemctl disable systemd-resolved
 sudo apt install dnsmasq ufw -y
 sudo systemctl stop systemd-resolved
-sudo systemctl restart dnsmasq
-sudo ufw allow 22/tcp
-sudo ufw allow from 172.16.0.0/24 proto udp to any port 53
-sudo ufw allow in on br0 from any proto udp to any port 67
-sudo ufw allow in on br0 from 0.0.0.0 proto udp to any port 67
-sudo ufw enable
 ```
 
 ### Tell dnsmasq to provide DNS locally.
@@ -111,6 +110,14 @@ sudo bash -c 'echo "listen-address=127.0.0.53" > /etc/dnsmasq.d/00-lo-systemd-re
 sudo bash -c 'echo "no-resolv" >> /etc/dnsmasq.d/00-lo-systemd-resolvconf'
 sudo bash -c 'echo "server=8.8.8.8" >> /etc/dnsmasq.d/00-lo-systemd-resolvconf'
 sudo service dnsmasq restart
+```
+
+### Configure Firewall
+```
+sudo ufw allow 22/tcp
+sudo ufw allow from 172.16.0.0/24 proto udp to any port 53
+sudo ufw allow in on br0 from any proto udp to any port 67
+sudo ufw enable
 ```
 
 ### (temporary) copy helper scripts from wire-server-deploy
@@ -173,10 +180,17 @@ sudo sed -i "s/.*net.ipv4.ip_forward.*/net.ipv4.ip_forward=1/" /etc/sysctl.conf
 sudo sysctl -p
 ```
 
-### enable network masquerading (make sure to change eth0!)
+### enable network masquerading
+Here, you should check the ethernet interface name for your outbound IP.
+
+```
+ip ro | sed -n "/default/s/.* dev \([enps0-9]*\) .*/OUTBOUNDINTERFACE=\1/p"
+```
+This will return a shell command setting a variable to your default interface. copy and paste it, then run the following
+
 ```
 sudo sed -i 's/.*DEFAULT_FORWARD_POLICY=.*/DEFAULT_FORWARD_POLICY="ACCEPT"/' /etc/default/ufw
-sudo sed -i '1i *nat\n:POSTROUTING ACCEPT [0:0]\n-A POSTROUTING -s 172.16.0.0/24 -o eno1 -j MASQUERADE\nCOMMIT' /etc/ufw/before.rules
+sudo sed -i "1i *nat\n:POSTROUTING ACCEPT [0:0]\n-A POSTROUTING -s 172.16.0.0/24 -o $OUTBOUNDINTERFACE -j MASQUERADE\nCOMMIT" /etc/ufw/before.rules
 sudo service ufw restart
 ```
 
@@ -234,12 +248,13 @@ curl http://archive.ubuntu.com/ubuntu/dists/bionic-updates/main/installer-amd64/
 ```
 
 ### Start a node
+Specify NOREBOOT, so the VM powers off after the install.
 ```
 cd <nodename>
-./start_kvm.sh
+NOREBOOT=1 ./start_kvm.sh
 ```
 
-when qemu starts (you see H Peter Anvlin's name), hit escape.
+when qemu starts (you see H Peter Anvin's name), hit escape.
 at the " oot:" prompt, type 'expert console=ttyS0', and hit enter.
 
 ### install node
