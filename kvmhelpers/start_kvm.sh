@@ -121,8 +121,17 @@ else
     echo "Booting from hard disk."
 fi
 
+if [ -z "" ] ; then
+    echo "Booting normally. A reboot will reboot, and keep the VM running."
+else
+    echo "Booting in single shot mode. a reboot will return you to your shell prompt, powering off the VM."
+    NOREBOOT=-no-reboot
+fi
+
+sleep 5
+
 # Actually launch qemu-kvm.
-/usr/bin/kvm -m $MEM -boot $DRIVE -drive file=$DISK,index=0,media=disk,format=raw -drive file=$CDROM,index=1,media=cdrom -rtc base=localtime $NETWORK $PROCESSORS $CURSES
+/usr/bin/kvm -m $MEM -boot $DRIVE -drive file=$DISK,index=0,media=disk,format=raw -drive file=$CDROM,index=1,media=cdrom -rtc base=localtime $NETWORK $PROCESSORS $CURSES $NOREBOOT
 
 # VM has shut down, remove all of the taps.
 for each in $ASSIGNED_TAPS; do
