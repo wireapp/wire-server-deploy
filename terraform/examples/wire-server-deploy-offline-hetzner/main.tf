@@ -31,6 +31,7 @@ locals {
 resource "random_pet" "main" {
 }
 
+# TODO: these need to be unique across all runs, too
 resource "hcloud_network" "main" {
   name     = "main-${random_pet.main.id}"
   ip_range = cidrsubnet(local.rfc1918_cidr, 8, 1)
