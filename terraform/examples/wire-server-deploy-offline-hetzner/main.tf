@@ -27,14 +27,23 @@ locals {
   EOF
 }
 
-
+# Create a random pet name, which will be prefixed to all server names
+# This should allow running multiple invocations of these in parallel,
+# assuming they come up with different pet names.
 resource "random_pet" "main" {
 }
 
-# TODO: these need to be unique across all runs, too
+# We need to pick a network range out of local.rfc1918_cidr.
+# While we can't be sure this prefix isn't currently taken by another run of
+# this test, using some randomness will make things less likely to clash.
+resource "random_integer" "netnum" {
+  min = 1
+  max = 255
+}
+
 resource "hcloud_network" "main" {
   name     = "main-${random_pet.main.id}"
-  ip_range = cidrsubnet(local.rfc1918_cidr, 8, 1)
+  ip_range = cidrsubnet(local.rfc1918_cidr, 8, random_integer.netnum.result)
 }
 
 resource "hcloud_network_subnet" "main" {
