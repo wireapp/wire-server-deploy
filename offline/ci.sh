@@ -5,14 +5,6 @@ INCREMENTAL="${INCREMENTAL:-0}"
 
 # Build the container image
 container_image=$(nix-build --no-out-link -A container)
-# if [[ -n "${DOCKER_LOGIN:-}" ]];then
-#   skopeo copy --dest-creds "$DOCKER_LOGIN" \
-#     docker-archive:"$container_image" \
-#     "docker://quay.io/wire/wire-server-deploy" \
-#     --aditional-tag "$(git rev-parse HEAD)"
-# else
-#   echo "Skipping container upload, no DOCKER_LOGIN provided"
-# fi
 
 mkdir -p containers-{helm,other,system,adminhost}
 install -m755 "$container_image" "containers-adminhost/container-wire-server-deploy.tgz"
