@@ -32,18 +32,6 @@ jobs:
           GPG_PRIVATE_KEY: '${{ secrets.GPG_PRIVATE_KEY }}'
           DOCKER_LOGIN: '${{ secrets.DOCKER_LOGIN }}'
 
-      - name: Deploy offline environment to hetzner
-        run: |
-          ./offline/cd.sh
-        env:
-          HCLOUD_TOKEN: '${{ secrets.HCLOUD_TOKEN }}'
-
-      - name: Clean up hetzner environment; just in case
-        if: always()
-        run: (cd terraform/examples/wire-server-deploy-offline-hetzner ; terraform init && terraform destroy -auto-approve)
-        env:
-          HCLOUD_TOKEN: '${{ secrets.HCLOUD_TOKEN }}'
-
       - name: Get upload name
         id: upload_name
         run: |
@@ -70,5 +58,17 @@ jobs:
             "docker://quay.io/wire/wire-server-deploy:${{ steps.upload_name.outputs.UPLOAD_NAME }}"
         env:
           DOCKER_LOGIN: '${{ secrets.DOCKER_LOGIN }}'
+
+      - name: Deploy offline environment to hetzner
+        run: |
+          ./offline/cd.sh
+        env:
+          HCLOUD_TOKEN: '${{ secrets.HCLOUD_TOKEN }}'
+
+      - name: Clean up hetzner environment; just in case
+        if: always()
+        run: (cd terraform/examples/wire-server-deploy-offline-hetzner ; terraform init && terraform destroy -auto-approve)
+        env:
+          HCLOUD_TOKEN: '${{ secrets.HCLOUD_TOKEN }}'
 
 
