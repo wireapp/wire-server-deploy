@@ -98,8 +98,8 @@ curl https://download.docker.com/linux/ubuntu/gpg | gpg --no-default-keyring --k
 echo "Trusted"
 gpg --list-keys --no-default-keyring --keyring=trustedkeys.gpg
 
-$aptly mirror create -architectures=amd64 -filter="${packages_}" -filter-with-deps bionic http://de.archive.ubuntu.com/ubuntu/ bionic main universe
-$aptly mirror create -architectures=amd64 -filter="${packages_}" -filter-with-deps bionic-security http://de.archive.ubuntu.com/ubuntu/ bionic-security main universe
+$aptly mirror create -architectures=amd64 -filter="${packages_}" -filter-with-deps bionic https://mirror.us.leaseweb.net/ubuntu/ bionic main universe
+$aptly mirror create -architectures=amd64 -filter="${packages_}" -filter-with-deps bionic-security https://mirror.us.leaseweb.net/ubuntu/ bionic-security main universe
 $aptly mirror create -architectures=amd64 -filter="${docker_packages_adminhost}" -filter-with-deps docker-ce-adminhost https://download.docker.com/linux/ubuntu bionic stable
 $aptly mirror create -architectures=amd64 -filter="${docker_packages_kubespray}" -filter-with-deps docker-ce-kubespray https://download.docker.com/linux/ubuntu bionic stable
 
