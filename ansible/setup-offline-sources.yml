@@ -66,7 +66,10 @@
 # If your offline repo's debian key has expired, uncomment this block.
 #############
 # If you had to uncomment this block, comment out the docker-ce repo logic in
+# that starts at line 56 of
 # roles-external/kubespray/roles/container-engine/docker/tasks/main.yml
+# . comment out the 'ensure docker-ce repository public key is installed', and
+# the 'ensure docker-ce repository is enabled' blocks.
 #######################################################################
 #    - name: trust anything
 #      copy:
