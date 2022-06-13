@@ -23,14 +23,11 @@ self: super: {
       nativeBuildInputs = [ super.makeWrapper ];
     }
     ''
-      # This key isn't a secret (it's built and uploaded to the binary cache after all ;-) )
-      # It's created out of the necessity that apt wants to verify against a
-      # key
-      # It's set to expire 2y after its creation,
-      # or whenever this derivation is built again without having the result in the binary cache.
+      # This script is used to produce a gpg key with gpg1.
+      # The private part was stored as a GH Action Secret.
+      # Things like mirror-apt.sh pick it from GPG_PRIVATE_KEY env var.
       # The public part of the key is shipped with the offline bundle
       # ($aptly_root/public/gpg).
-      # Bump the following timestamp to force a recreation: 2022-05-17
 
       install -Dm755 ${./scripts/generate-gpg1-key.sh} $out/bin/generate-gpg1-key
       # we *--set* PATH here, to ensure we don't pick wrong gpgs
