@@ -54,13 +54,7 @@ packages_=$(echo "${packages[@]}" | sed 's/\s/ \| /g')
 
 echo "$packages_"
 
-# NOTE: kubespray pins the exact docker and containerd versions that it
-# installs. This is kept in sync with kubespray manually.
-# See roles/container-engine/docker/vars/ubuntu.yml
-# See roles/container-engine/containerd-common/vars/ubuntu.yml
-docker_packages_kubespray="docker-ce (= 5:19.03.14~3-0~ubuntu-bionic) | docker-ce-cli (= 5:19.03.14~3-0~ubuntu-bionic) | containerd.io (= 1.3.9-1)"
-
-# also ship a newer virsion of docker, for running our container image.
+# Ship a new version of docker, to run our container image on the adminhost.
 docker_packages_adminhost="docker-ce (= 5:docker-ce_20.10.17~3-0~ubuntu-bionic) | docker-ce-cli (= 5:20.10.17~3-0~ubuntu-bionic) | containerd.io (>= 1.4.1)"
 
 
@@ -101,7 +95,6 @@ gpg --list-keys --no-default-keyring --keyring=trustedkeys.gpg
 $aptly mirror create -architectures=amd64 -filter="${packages_}" -filter-with-deps bionic https://mirror.us.leaseweb.net/ubuntu/ bionic main universe
 $aptly mirror create -architectures=amd64 -filter="${packages_}" -filter-with-deps bionic-security https://mirror.us.leaseweb.net/ubuntu/ bionic-security main universe
 $aptly mirror create -architectures=amd64 -filter="${docker_packages_adminhost}" -filter-with-deps docker-ce-adminhost https://download.docker.com/linux/ubuntu bionic stable
-$aptly mirror create -architectures=amd64 -filter="${docker_packages_kubespray}" -filter-with-deps docker-ce-kubespray https://download.docker.com/linux/ubuntu bionic stable
 
 $aptly mirror update bionic
 $aptly mirror update bionic-security
