@@ -33,6 +33,7 @@ rec {
       # required so that helmfile get's the correct version of helm in its PATH.
       kubernetes-helm
       helmfile
+      k9s
       kubectl
       openssl
       moreutils
