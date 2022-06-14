@@ -37,7 +37,7 @@ quay.io/calico/node:v3.22.3
 quay.io/calico/cni:v3.22.3
 quay.io/calico/kube-controllers:v3.22.3
 docker.io/library/nginx:1.21.4
-k8s.gcr.io/coredns:v1.8.6
+coredns/coredns:1.8.6
 k8s.gcr.io/dns/k8s-dns-node-cache:1.21.1
 k8s.gcr.io/cpa/cluster-proportional-autoscaler-amd64:1.8.5
 k8s.gcr.io/pause:3.3
