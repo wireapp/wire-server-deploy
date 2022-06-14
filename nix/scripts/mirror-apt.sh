@@ -99,14 +99,12 @@ $aptly mirror create -architectures=amd64 -filter="${docker_packages_adminhost}"
 $aptly mirror update bionic
 $aptly mirror update bionic-security
 $aptly mirror update docker-ce-adminhost
-$aptly mirror update docker-ce-kubespray
 
 $aptly snapshot create bionic from mirror bionic
 $aptly snapshot create bionic-security from mirror bionic-security
 $aptly snapshot create docker-ce-adminhost from mirror docker-ce-adminhost
-$aptly snapshot create docker-ce-kubespray from mirror docker-ce-kubespray
 
-$aptly snapshot merge wire bionic bionic-security docker-ce-adminhost docker-ce-kubespray
+$aptly snapshot merge wire bionic bionic-security docker-ce-adminhost
 
 $aptly publish snapshot -gpg-key="gpg@wire.com" -secret-keyring="$GNUPGHOME/secring.gpg" -distribution bionic wire
 

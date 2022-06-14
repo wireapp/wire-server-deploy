@@ -21,6 +21,9 @@ docker_ubuntu_repo_gpgkey: "{{ ubuntu_repos }}/gpg"
 coredns_version: "v1.8.6"
 coredns_image_repo: "coredns/coredns"
 
+# Use containerd, not runc
+container_manager: "containerd"
+
 binaries_url: "http://{{ assethost_host }}/binaries"
 
 kubelet_download_url: "{{ binaries_url }}/kubelet"
