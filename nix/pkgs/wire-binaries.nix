@@ -38,6 +38,11 @@ let
       url = "https://github.com/projectcalico/calicoctl/releases/download/${ calico_version }/calicoctl-linux-${ image_arch }";
       sha256 = "sha256-m4IjBEbUdJoQQ93djUZtJ1pGDlcKQS5s7QAzaKucctg=";
     };
+    crictl = fetchurl rec {
+      passthru.url = url;
+      url = "https://github.com/kubernetes-sigs/cri-tools/releases/download/v1.23.0/crictl-v1.23.0-linux-amd64.tar.gz";
+      sha256 = "sha256-t1T4PICs3HX5OroZH/Jp2mvkXQ/C0/QHlwTn0UJPHKg=";
+    };
     etcd = fetchurl rec {
       passthru.url = url;
       url = "https://github.com/coreos/etcd/releases/download/${ etcd_version }/etcd-${ etcd_version }-linux-${ image_arch }.tar.gz";
