@@ -211,12 +211,6 @@ Now; run the restund playbook until docker is installed:
 d ansible-playbook -i ./ansible/inventory/offline ansible/restund.yml --tags docker
 ```
 
-With docker being installed on all nodes that need it, seed all container images:
-
-```
-d ansible-playbook -i ./ansible/inventory/offline ansible/seed-offline-docker.yml
-```
-
 Run the rest of kubespray. This should bootstrap a kubernetes cluster successfully:
 
 ```
