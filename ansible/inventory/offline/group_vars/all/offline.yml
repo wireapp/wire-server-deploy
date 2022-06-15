@@ -24,6 +24,9 @@ coredns_image_repo: "coredns/coredns"
 # Use containerd, not runc
 container_manager: "containerd"
 
+# Don't use the custom download container image logic in kubespray. We already seed the nodes with the images ourselves
+download_container: false
+
 binaries_url: "http://{{ assethost_host }}/binaries"
 
 kubelet_download_url: "{{ binaries_url }}/kubelet"
