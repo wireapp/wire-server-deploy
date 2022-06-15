@@ -19,7 +19,7 @@ docker_ubuntu_repo_gpgkey: "{{ ubuntu_repos }}/gpg"
 
 # HACK: k8s.gcr.io/coredns:v1.8.6 doesn't seem to exist (?)
 coredns_version: "v1.8.6"
-coredns_image_repo: "coredns/coredns"
+#coredns_image_repo: "coredns/coredns"
 
 # Use containerd, not runc
 container_manager: "containerd"
