@@ -4,17 +4,6 @@ We have a pipeline in  `wire-server-deploy` producing container images, static
 binaries, ansible playbooks, debian package sources and everything required to
 install Wire.
 
-On your machine (we call this the "admin host"), you need to have `docker`
-installed (or any other compatible container runtime really, even though
-instructions may need to be modified). See [how to install
-docker](https://docker.com) for instructions.
-
-On ubuntu 18.04, connected to the internet:
-
-```
-apt install docker.io
-```
-
 Ensure the user you are using for the install has permission to run docker, or add 'sudo' to the docker commands below.
 
 Create a fresh workspace to download the artifacts:
@@ -34,6 +23,26 @@ $ tar xvzf wire-server-deploy-static-<HASH>.tgz
 ```
 Where the HASH above is the hash of your deployment artifact, given to you by Wire, or acquired by looking at the above build job.
 Extract this tarball.
+
+
+Ensure you have Docker >= 20.10.14 installed, as the glibc version used is
+incompatible with older container runtimes.
+
+Your Distro might ship an older version, so best see
+[how to install docker](https://docker.com).
+
+Currently our Debian offline bundle also ships a recent-enough docker-ce
+version, so something like the following (using the extracted offline bundle)
+might work:
+
+```
+sudo apt install iptables # required by docker
+sudo dpkg -i debs/public/pool/main/d/docker-ce/docker-ce-cli_*.deb
+sudo dpkg -i debs/public/pool/main/c/containerd.io/containerd.io_*.deb
+sudo dpkg -i debs/public/pool/main/d/docker-ce/docker-ce_*.deb
+sudo dpkg --configure -a
+```
+
 
 Make sure that the admin host can `ssh` into all the machines that you want to provision. Our docker container will use the `.ssh` folder and the `ssh-agent` of the user running the scripts.
 
