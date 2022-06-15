@@ -1,27 +1,65 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-INCREMENTAL="${INCREMENTAL:-0}"
+# CONTAINER-ARCHIVES
+# Populate the `container-archives` folder.
+# It contains all the containers that we need to directly load into our container runtime.
+mkdir -p container-archives
 
-# Build the container image
-container_image=$(nix-build --no-out-link -A container)
+# wire-server-deploy
+install -m755 $(nix-build --no-out-link -A container) "container-archives/wire-server-deploy.tgz"
 
-mkdir -p containers-{helm,other,system,adminhost}
-install -m755 "$container_image" "containers-adminhost/container-wire-server-deploy.tgz"
+# registry
+skopeo copy --insecure-policy --dest-compress \
+  docker://registry:2.8.1 \
+  docker-archive:container-archives/registry.tgz
 
+
+# DEBS
+# Create a debian mirror. We need to provide a bunch of packages that are used
+# by the playbooks, as well as docker-ce, so we can run the containers we need
+# to run the tooling and the registry itself.
 mirror-apt debs
 tar cf debs.tar debs
 rm -r debs
-
 fingerprint=$(echo "$GPG_PRIVATE_KEY" | gpg --with-colons --import-options show-only --import --fingerprint  | awk -F: '$1 == "fpr" {print $10; exit}')
-
 echo "$fingerprint"
+echo "docker_ubuntu_repo_repokey: '${fingerprint}'" > ansible/inventory/offline/group_vars/all/key.yml
 
+
+# BINARIES
+# The tooling expects to be able to download some binaries.
+# These are built by our wire-binaries Nix derivation.
 mkdir -p binaries
 install -m755 "$(nix-build --no-out-link -A pkgs.wire-binaries)/"* binaries/
 tar cf binaries.tar binaries
 rm -r binaries
 
+# REGISTRY CONTENTS
+# All other container images get served by a local container registry, usually
+# served from the assethost.
+# We temporarily spin up a registry in CI, push all the container images to it,
+# and later put its state dir into the CI artifact.
+
+mkdir -p registry-contents
+# start the registry
+docker run -d -p 5000:5000 \
+  --restart always \
+  --name registry \
+  -v $PWD/registry-contents:/var/lib/registry \
+  registry:2.8.1
+
+function push-to-registry() {
+  while IFS= read -r image;do
+    echo "At image ${image}"
+    echo skopeo copy --insecure-policy --dest-compress \
+      docker://$image \
+      docker://registry:5000/$image
+    skopeo copy --insecure-policy --dest-compress \
+      docker://$image \
+      docker://registry:5000/$image
+  done
+}
 
 function list-system-containers() {
 # These are manually updated with values from
@@ -48,15 +86,10 @@ docker.io/kubernetesui/metrics-scraper:v1.0.7
 EOF
 }
 
-list-system-containers | create-container-dump containers-system
-tar cf containers-system.tar containers-system
-[[ "$INCREMENTAL" -eq 0 ]] && rm -r containers-system
+list-system-containers | push-to-registry
 
 # Used for ansible-restund role
-echo "quay.io/wire/restund:v0.4.16b1.0.53" | create-container-dump containers-other
-tar cf containers-other.tar containers-other
-[[ "$INCREMENTAL" -eq 0 ]] && rm -r containers-other
-
+echo "quay.io/wire/restund:v0.4.16b1.0.53" | push-to-registry
 
 charts=(
   # backoffice
@@ -93,7 +126,7 @@ helm repo update
 wire_version="4.12.0"
 
 # Download zauth; as it's needed to generate certificates
-echo "quay.io/wire/zauth:$wire_version" | create-container-dump containers-adminhost
+echo "quay.io/wire/zauth:$wire_version" | push-to-registry
 
 mkdir -p ./charts
 for chartName in "${charts[@]}"; do
@@ -102,14 +135,13 @@ done
 
 for chartPath in "$(pwd)"/charts/*; do
   echo "$chartPath"
-done | list-helm-containers | create-container-dump containers-helm
+done | list-helm-containers | push-to-registry
 
-tar cf containers-helm.tar containers-helm
-[[ "$INCREMENTAL" -eq 0 ]] && rm -r containers-helm
-
-echo "docker_ubuntu_repo_repokey: '${fingerprint}'" > ansible/inventory/offline/group_vars/all/key.yml
+docker stop registry
 
 
-tar czf assets.tgz debs.tar binaries.tar containers-adminhost containers-helm.tar containers-other.tar containers-system.tar ansible charts values bin
+# PACKAGING
+# Package up all from above.
+tar czf assets.tgz debs.tar binaries.tar ansible bin container-archives charts registry-contents values
 
 echo "Done"
