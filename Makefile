@@ -64,6 +64,12 @@ output: check-inputs-terraform $(TF_DATA_DIR)
 	cd $(TERRAFORM_WORKING_DIR) \
 	&& terraform output -json
 
+# Usage: ENV=your-env TF_CMD="state show" make tf-cmd
+.PHONY: tf-cmd
+tf-cmd: check-inputs-terraform $(TF_DATA_DIR)
+	cd $(TERRAFORM_WORKING_DIR) \
+	&& terraform $(TF_CMD)
+
 .PHONY: create-inventory
 create-inventory: check-inputs-terraform $(TF_DATA_DIR)
 	mkdir -p $(ENV_DIR)/gen
