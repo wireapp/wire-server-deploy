@@ -22,15 +22,10 @@ ssh -i ~/.ssh/id_ed25519 root@65.21.197.76 -o serveraliveinterval=60
 ```
 
 ### update OS
+when prompted about the ssh config, just accept the maintainer's version.
 ```
 apt update
 apt upgrade -y
-reboot
-```
-
-### log back in
-```
-while (sleep 15) ; do { ssh -i ~/.ssh/id_ed25519 root@5.9.84.121 -o serveraliveinterval=60 && break ; } done
 ```
 
 ### create demo user
@@ -58,6 +53,16 @@ chmod 440 /etc/sudoers.d/10-demo_user
 ## ssh in as demo user.
 ```
 logout
+ssh -i ~/.ssh/id_ed25519 demo@65.21.197.76 -o serveraliveinterval=60
+```
+
+### reboot to apply security patches
+```
+sudo reboot
+```
+
+## ssh in as demo user.
+```
 ssh -i ~/.ssh/id_ed25519 demo@65.21.197.76 -o serveraliveinterval=60
 ```
 
