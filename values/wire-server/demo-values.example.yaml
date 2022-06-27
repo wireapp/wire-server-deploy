@@ -206,6 +206,8 @@ team-settings:
   replicaCount: 1
 #  image:
 #    tag: some-tag (only override if you want a newer/different version than what is in the chart)
+  envVars:
+    IS_SELF_HOSTED: "true"
   config:
     externalUrls:
       backendRest: nginz-https.example.com
@@ -217,6 +219,8 @@ account-pages:
   replicaCount: 1
 #  image:
 #    tag: some-tag (only override if you want a newer/different version than what is in the chart)
+  envVars:
+    IS_SELF_HOSTED: "true"
   config:
     externalUrls:
       backendRest: nginz-https.example.com

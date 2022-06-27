@@ -268,6 +268,7 @@ team-settings:
   replicaCount: 1
 #  image:
 #    tag: some-tag (only override if you want a newer/different version than what is in the chart)
+
   config:
     externalUrls:
       backendRest: nginz-https.example.com
@@ -299,6 +300,7 @@ team-settings:
     CSP_EXTRA_PREFETCH_SRC: "https://*.example.com"
     CSP_EXTRA_STYLE_SRC: "https://*.example.com"
     CSP_EXTRA_WORKER_SRC: "https://*.example.com"
+    IS_SELF_HOSTED: "true"
 
 # NOTE: Only relevant if you want account-pages
 account-pages:
@@ -332,6 +334,7 @@ account-pages:
     CSP_EXTRA_PREFETCH_SRC: "https://*.example.com"
     CSP_EXTRA_STYLE_SRC: "https://*.example.com"
     CSP_EXTRA_WORKER_SRC: "https://*.example.com"
+    IS_SELF_HOSTED: "true"
 
 # Only needed when legalhold is enabled
 legalhold:
