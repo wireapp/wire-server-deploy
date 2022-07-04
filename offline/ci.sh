@@ -102,7 +102,7 @@ helm repo update
 # wire_version=$(helm show chart wire/wire-server | yq -r .version)
 wire_version="4.26.0"
 
-wire_calling_version="4.9.36"
+wire_calling_version="4.9.36-hotfix.11"
 
 # Download zauth; as it's needed to generate certificates
 echo "quay.io/wire/zauth:$wire_version" | create-container-dump containers-adminhost
