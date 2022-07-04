@@ -66,16 +66,16 @@ charts=(
   # backoffice
   # commented out for now, points to a 2.90.0 container image which doesn't
   # seem to exist on quay.io
-  wire-develop/nginx-ingress-controller
-  wire-develop/nginx-ingress-services
-  wire-develop/reaper
-  wire-develop/cassandra-external
-  wire-develop/databases-ephemeral
-  wire-develop/demo-smtp
-  wire-develop/elasticsearch-external
-  wire-develop/fake-aws
-  wire-develop/minio-external
-  wire-develop/wire-server
+  wire/nginx-ingress-controller
+  wire/nginx-ingress-services
+  wire/reaper
+  wire/cassandra-external
+  wire/databases-ephemeral
+  wire/demo-smtp
+  wire/elasticsearch-external
+  wire/fake-aws
+  wire/minio-external
+  wire/wire-server
   # TODO: uncomment once its dependencies are pinned!
   # local-path-provisioner
   # Has a weird dependency on curl:latest. out of scope
@@ -86,8 +86,8 @@ charts=(
 )
 
 calling_charts=(
-  wire-develop/sftd
-  wire-develop/restund
+  wire/sftd
+  wire/restund
 )
 
 # TODO: Awaiting some fixes in wire-server regarding tagless images
