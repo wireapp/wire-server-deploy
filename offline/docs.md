@@ -102,8 +102,8 @@ The following artifacts are provided:
 
 ## Editing the inventory
 
-Open `ansible/inventory/offline/99-static`. Here you will describe the topology
-of your offline deploy.  There's instructions in the comments on how to set
+Copy `ansible/inventory/offline/99-static`  to `ansible/inventory/offline/hosts.ini`, and remove the original. 
+Here you will describe the topology of your offline deploy.  There's instructions in the comments on how to set
 everything up. You can also refer to extra information here.
 https://docs.wire.com/how-to/install/ansible-VMs.html
 
@@ -193,33 +193,38 @@ However we now explain each step of the script step by step too. For better unde
 Copy over binaries and debs, serves assets from the asset host, and configure
 other hosts to fetch debs from it:
 
+fails: gpg.
+
 ```
-d ansible-playbook -i ./ansible/inventory/offline ansible/setup-offline-sources.yml
+d ansible-playbook -i ./ansible/inventory/offline/hosts.ini ansible/setup-offline-sources.yml
 ```
 
 Run kubespray until docker is installed and runs. This allows us to preseed the docker containers that
 are part of the offline bundle:
 
 ```
-d ansible-playbook -i ./ansible/inventory/offline ansible/kubernetes.yml --tags bastion,bootstrap-os,preinstall,container-engine
+d ansible-playbook -i ./ansible/inventory/offline/hosts.ini ansible/kubernetes.yml --tags bastion,bootstrap-os,preinstall,container-engine
 ```
 
 Now; run the restund playbook until docker is installed:
 ```
-d ansible-playbook -i ./ansible/inventory/offline ansible/restund.yml --tags docker
+d ansible-playbook -i ./ansible/inventory/offline/hosts.ini ansible/restund.yml --tags docker
 ```
 
 With docker being installed on all nodes that need it, seed all container images:
 
 ```
-d ansible-playbook -i ./ansible/inventory/offline ansible/seed-offline-docker.yml
+d ansible-playbook -i ./ansible/inventory/offline/hosts.ini ansible/seed-offline-docker.yml
 ```
 
 Run the rest of kubespray. This should bootstrap a kubernetes cluster successfully:
 
 ```
-d ansible-playbook -i ./ansible/inventory/offline ansible/kubernetes.yml --skip-tags bootstrap-os,preinstall,container-engine
+d ansible-playbook -i ./ansible/inventory/offline/hosts.ini ansible/kubernetes.yml --skip-tags bootstrap-os,preinstall,container-engine
 ```
+
+--skip-tags debs,binaries,containers,containers-helm,containers-other
+
 
 Ensure the cluster comes up healthy. The container also contains kubectl, so check the node status:
 
@@ -231,16 +236,16 @@ They should all report ready.
 Now, deploy all other services which don't run in kubernetes.
 
 ```
-d ansible-playbook -i ./ansible/inventory/offline ansible/restund.yml
-d ansible-playbook -i ./ansible/inventory/offline ansible/cassandra.yml
-d ansible-playbook -i ./ansible/inventory/offline ansible/elasticsearch.yml
-d ansible-playbook -i ./ansible/inventory/offline ansible/minio.yml
+d ansible-playbook -i ./ansible/inventory/offline/hosts.ini ansible/restund.yml
+d ansible-playbook -i ./ansible/inventory/offline/hosts.ini ansible/cassandra.yml
+d ansible-playbook -i ./ansible/inventory/offline/hosts.ini ansible/elasticsearch.yml
+d ansible-playbook -i ./ansible/inventory/offline/hosts.ini ansible/minio.yml
 ```
 
 Afterwards, run the following playbook to create helm values that tell our helm charts
 what the IP addresses of cassandra, elasticsearch and minio are.
 ```
-d ansible-playbook -i ./ansible/inventory/offline ansible/helm_external.yml
+d ansible-playbook -i ./ansible/inventory/offline/hosts.ini ansible/helm_external.yml
 ```
 
 ## Deploying wire-server using helm
@@ -339,7 +344,7 @@ kubenode3 node_labels="{'wire.com/role': 'sftd'}" node_annotations="{'wire.com/e
 
 If these values weren't already set earlier in the process you should rerun ansible to set them:
 ```
-d ansible-playbook -i ./ansible/inventory/offline ansible/kubernetes.yml --skip-tags bootstrap-os,preinstall,container-engine
+d ansible-playbook -i ./ansible/inventory/offline/hosts.ini ansible/kubernetes.yml --skip-tags bootstrap-os,preinstall,container-engine
 ```
 
 If you are restricting SFT to certain nodes, use `nodeSelector` to run on specific nodes (**replacing the example.com domains with yours**):
