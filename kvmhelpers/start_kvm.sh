@@ -121,7 +121,7 @@ else
     echo "Booting from hard disk."
 fi
 
-if [ -z "" ] ; then
+if [ -z "$NOREBOOT" ] ; then
     echo "Booting normally. A reboot will reboot, and keep the VM running."
 else
     echo "Booting in single shot mode. a reboot will return you to your shell prompt, powering off the VM."
