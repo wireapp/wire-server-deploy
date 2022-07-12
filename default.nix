@@ -49,6 +49,9 @@ rec {
       wireshark
       gnuplot
 
+      # Linting
+      shellcheck
+
       niv
       nix-prefetch-docker
     ] ++ [ profileEnv ];
