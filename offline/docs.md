@@ -183,9 +183,15 @@ This should generate two files. `./ansible/inventory/group_vars/all/secrets.yaml
 
 ## Deploying Kubernetes, Restund and stateful services
 
-Some debian archives we use have an outdated signature. Some modifications are required to be able to install everything properly
+### WORKAROUND: old debian key
+All of our debian archives up to version 4.11.0 used a now-outdated signature. Some modifications are required to be able to install everything properly
 
-First, copy setup-offline-sources.yaml
+First, gather a copy of the wire-server repo:
+```
+git clone https://github.com/wireapp/wire-server-deploy.git
+```
+
+Then copy the new setup-offline-sources.yaml
 
 ```
 cp wire-server-deploy/ansible/setup-offline-sources.yml ansible/setup-offline-sources.yml
@@ -204,17 +210,21 @@ ansible/roles/external/kubespray/roles/container-engine/docker/tasks/main.yml
 
 Now you are ready to start deploying services.
 
+#### WORKAROUND: dependency
+some ubuntu systems do not have GPG by default. 4.11.0 and earlyier assume this is already present. ensure you have gpg installed on all of your nodes before running the next step.
+
+### Deploying with Ansible
+
+
 In order to deploy all the ansible-managed services you can run:
 ```
 d ./bin/offline-cluster.sh
 ```
 
-However we now explain each step of the script step by step too. For better understanding.
+However we now explain each step of the script step by step, for better understanding.
 
 Copy over binaries and debs, serves assets from the asset host, and configure
 other hosts to fetch debs from it:
-
-fails: gpg.
 
 ```
 d ansible-playbook -i ./ansible/inventory/offline/hosts.ini ansible/setup-offline-sources.yml
@@ -269,7 +279,7 @@ what the IP addresses of cassandra, elasticsearch and minio are.
 d ansible-playbook -i ./ansible/inventory/offline/hosts.ini ansible/helm_external.yml
 ```
 
-## Deploying wire-server using helm
+### Deploying wire-server using helm
 
 It's now time to deploy the helm charts on top of kubernetes, installing the Wire platform.
 
@@ -298,7 +308,7 @@ d helm install reaper ./charts/reaper
 Next, move `./values/wire-server/prod-values.example.yaml` to `./values/wire-server/values.yaml`.
 Inspect all the values and adjust domains to your domains where needed.
 
-Add the IPs of your `restund` servers to the `turnStatic.v2` list.:
+Add the IPs of your `restund` servers to the `turnStatic.v2` list:
 ```yaml
   turnStatic:
     v1: []
@@ -354,6 +364,8 @@ d helm install nginx-ingress-services ./charts/nginx-ingress-services --values .
 
 ### Forwarding traffic to your cluster
 
+#### Through the AdminHost
+
 To make the server forward all 443 and 80 requests to kubernetes cluster to be able to access online services (webapp, teams etc.). Make the following configuration in adminhost for each kubenode
 
 ```
@@ -362,7 +374,7 @@ sudo iptables -t nat -A PREROUTING -d your.public.ip.address -i OUTBOUNDINTERFAC
 ```
 * your.public.ip.address (you should know this)
 * OUTBOUNDINTERFACE will be bound if you followed that direction in the documentation, otherwise find it in adminhost with ip addr or ifconfig
-* kube.node.ip.addresses will be (if you followed the instructions exactly, 172.16.0.129-131)
+* kube.node.ip.addresses will be the addresses of your kubernetes nodes
 
 Then ssh into each kubenode and make the following configuration:
 ```
@@ -370,6 +382,8 @@ iptables -t nat -A PREROUTING -p tcp --dport 443 -j REDIRECT --to-port 31773
 iptables -t nat -A PREROUTING -p tcp --dport 80 -j REDIRECT --to-port 31772
 ```
 
+
+#### Name Services via manual hosts entries
 You should have a public DNS at this point already, if not (you are doing this for demo purpose) you can point the IP manually in your "client" hosts file by appending:
 ```
 your.public.ip.address nginz-https.<domain> nginz-ssl.<domain> assets.<domain> webapp.<domain> teams.<domain> account.<domain> sftd.<domain> restund01.<domain> restund02.<domain> federator.<domain>
