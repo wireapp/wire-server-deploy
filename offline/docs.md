@@ -345,7 +345,7 @@ This component requires no configuration:
 d helm install nginx-ingress-controller ./charts/nginx-ingress-controller
 ```
 
-### Deploy nginx-ingress-services
+### Preparing to deploy nginx-ingress-services
 
 Move the example values for `nginx-ingress-services`:
 ```
@@ -353,13 +353,25 @@ mv ./values/nginx-ingress-services/{prod-values.example.yaml,values.yaml}
 mv ./values/nginx-ingress-services/{prod-secrets.example.yaml,secrets.yaml}
 ```
 
+#### bring your own certificates
 Change the domains in `values.yaml` to your domain. And add your wildcard or SAN certificate that is valid for all these
 domains to the `secrets.yaml` file.
 
 Now install the service with helm:
 
 ```
-d helm install nginx-ingress-services ./charts/nginx-ingress-services --values ./values/nginx-ingress-services/values.yaml  --values ./values/nginx-ingress-services/secrets.yaml
+d helm install nginx-ingress-services ./charts/nginx-ingress-services --values ./values/nginx-ingress-services/values.yaml --values ./values/nginx-ingress-services/secrets.yaml
+```
+
+#### Untrusted CA creation
+
+
+
+Now install the service with helm:
+
+```
+d helm install nginx-ingress-services ./charts/nginx-ingress-services --values ./values/nginx-ingress-services/values.yaml --set-file secrets.tlsWildcardCert=/path/to/certificate.pem --set-file secrets.tlsWildcardKey=/path/to/key.pem
+
 ```
 
 ### Forwarding traffic to your cluster
@@ -384,7 +396,7 @@ iptables -t nat -A PREROUTING -p tcp --dport 80 -j REDIRECT --to-port 31772
 
 
 #### Name Services via manual hosts entries
-You should have a public DNS at this point already, if not (you are doing this for demo purpose) you can point the IP manually in your "client" hosts file by appending:
+You should have a public DNS at this point already, if not (you are doing this for demo purpose) you can point to the IP manually in your "client" hosts file by adding the following:
 ```
 your.public.ip.address nginz-https.<domain> nginz-ssl.<domain> assets.<domain> webapp.<domain> teams.<domain> account.<domain> sftd.<domain> restund01.<domain> restund02.<domain> federator.<domain>
 ```
@@ -431,3 +443,4 @@ d helm upgrade --install sftd ./charts/sftd \
   --set-file tls.key=/path/to/tls.key \
   --values values/sftd/values.yaml
 ```
+
