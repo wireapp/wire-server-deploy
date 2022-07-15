@@ -183,6 +183,27 @@ This should generate two files. `./ansible/inventory/group_vars/all/secrets.yaml
 
 ## Deploying Kubernetes, Restund and stateful services
 
+Some debian archives we use have an outdated signature. Some modifications are required to be able to install everything properly
+
+First, copy setup-offline-sources.yaml
+
+```
+cp wire-server-deploy/ansible/setup-offline-sources.yml ansible/setup-offline-sources.yml
+```
+
+Open it with your prefered text editor and edit the following:
+* find a big block of comments and uncomment everything in it (-name: trust everything...)
+* after the block you will find the next (-name: Register offline repo key...) and comment out that segment (do not comment out the part with -name: Register offline repo!)
+
+Then disable checking for outdated signatures by editing the following file:
+```
+ansible/roles/external/kubespray/roles/container-engine/docker/tasks/main.yml
+```
+* comment out the block with -name: ensure docker-ce repository public key is installed...
+* comment out the next block -name: ensure docker-ce repository is enabled
+
+Now you are ready to start deploying services.
+
 In order to deploy all the ansible-managed services you can run:
 ```
 d ./bin/offline-cluster.sh
@@ -292,6 +313,12 @@ Open up `./values/wire-server/secrets.yaml` and inspect the values. In theory
 this file should have only generated secrets, and no additional secrets have to
 be added, unless additional options have been enabled.
 
+Open up `./values/wire-server/values.yaml` and replace example.com and other domains and subdomain with your domain. You can do it with:
+
+```
+sed -i 's/example.com/<your-domain>/g' values.yaml
+```
+
 Now deploy `wire-server`:
 
 ```
@@ -323,6 +350,29 @@ Now install the service with helm:
 
 ```
 d helm install nginx-ingress-services ./charts/nginx-ingress-services --values ./values/nginx-ingress-services/values.yaml  --values ./values/nginx-ingress-services/secrets.yaml
+```
+
+### Forwarding traffic to your cluster
+
+To make the server forward all 443 and 80 requests to kubernetes cluster to be able to access online services (webapp, teams etc.). Make the following configuration in adminhost for each kubenode
+
+```
+sudo iptables -t nat -A PREROUTING -d your.public.ip.address -i OUTBOUNDINTERFACE -p tcp --dport 80 -j DNAT --to-destination kube.node.ip.address:80
+sudo iptables -t nat -A PREROUTING -d your.public.ip.address -i OUTBOUNDINTERFACE -p tcp --dport 443 -j DNAT --to-destination kube.node.ip.address:443
+```
+* your.public.ip.address (you should know this)
+* OUTBOUNDINTERFACE will be bound if you followed that direction in the documentation, otherwise find it in adminhost with ip addr or ifconfig
+* kube.node.ip.addresses will be (if you followed the instructions exactly, 172.16.0.129-131)
+
+Then ssh into each kubenode and make the following configuration:
+```
+iptables -t nat -A PREROUTING -p tcp --dport 443 -j REDIRECT --to-port 31773
+iptables -t nat -A PREROUTING -p tcp --dport 80 -j REDIRECT --to-port 31772
+```
+
+You should have a public DNS at this point already, if not (you are doing this for demo purpose) you can point the IP manually in your "client" hosts file by appending:
+```
+your.public.ip.address nginz-https.<domain> nginz-ssl.<domain> assets.<domain> webapp.<domain> teams.<domain> account.<domain> sftd.<domain> restund01.<domain> restund02.<domain> federator.<domain>
 ```
 
 ## Installing sftd
