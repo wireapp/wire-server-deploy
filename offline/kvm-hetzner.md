@@ -22,14 +22,13 @@ ssh -i ~/.ssh/id_ed25519 root@65.21.197.76 -o serveraliveinterval=60
 ```
 
 ### update OS
-when prompted about the ssh config, just accept the maintainer's version.
+When prompted about the ssh config, just accept the maintainer's version.
 ```
 apt update
 apt upgrade -y
 ```
 
-### create demo user
-
+### create our 'demo' user
 ```
 adduser --disabled-password --gecos "" demo
 ```
@@ -51,12 +50,17 @@ chmod 440 /etc/sudoers.d/10-demo_user
 ```
 
 ## ssh in as demo user.
+on the remote machine:
 ```
 logout
+```
+on the local machine:
+```
 ssh -i ~/.ssh/id_ed25519 demo@65.21.197.76 -o serveraliveinterval=60
 ```
 
-### reboot to apply security patches
+### use the demo user to reboot to apply security patches
+This step ensures sudo is working, before you reboot the machine.
 ```
 sudo reboot
 ```
@@ -69,12 +73,16 @@ ssh -i ~/.ssh/id_ed25519 demo@65.21.197.76 -o serveraliveinterval=60
 ### Install screen
 ```
 sudo apt install screen
+```
+
+### Start a screen session
+```
 screen
 ```
 
 ### download offline artifact.
 ```
-curl https://s3-eu-west-1.amazonaws.com/public.wire.com/artifacts/wire-server-deploy-static-03fad4ff6d9a67eb56668fb259a0c1571cabcac4.tgz -o wire-server-deploy-static-03fad4ff6d9a67eb56668fb259a0c1571cabcac4.tgz
+wget https://s3-eu-west-1.amazonaws.com/public.wire.com/artifacts/wire-server-deploy-static-03fad4ff6d9a67eb56668fb259a0c1571cabcac4.tgz
 ```
 
 ### extract offline artifact.
@@ -90,7 +98,7 @@ tar -xzf ../wire-server-deploy-static-*.tgz
 tar -xf debs.tar
 ```
 
-### (FIXME: add iptables) Install Docker from debian archive.
+### (FIXME: add iptables to the repo) Install Docker from debian archive.
 ```
 sudo apt install iptables
 sudo dpkg -i debs/public/pool/main/d/docker-ce/docker-ce-cli_*.deb
@@ -103,6 +111,8 @@ sudo dpkg --configure -a
 
 ### (rewrite) Install networking tools
 We're going to install dnsmasq in order to provide DNS to virtual machines, and DHCP to virtual machines. networking will be handled by ufw.
+
+Note that dnsmasq always fails when it installs. the failures (red stuff) is normal.
 ```
 sudo systemctl disable systemd-resolved
 sudo apt install dnsmasq ufw -y
@@ -134,7 +144,8 @@ git checkout kvm_support
 cd ..
 cp -a wire-server-deploy/kvmhelpers/ ./
 cp -a wire-server-deploy/bin/newvm.sh ./bin
-chmod 770 ./bin/newvm.sh
+cp -a wire-server-deploy/ansible/setup-offline-sources.sh ./ansible
+chmod 550 ./bin/newvm.sh
 ```
 
 ### (rewrite) install qemu-kvm
@@ -157,6 +168,9 @@ sudo usermod -a -G kvm demo
 ### log out, log back in, and return to Wire-Server.
 ```
 logout
+```
+
+```
 ssh -i ~/.ssh/id_ed25519 demo@65.21.197.76 -o serveraliveinterval=60
 cd Wire-Server/
 ```
@@ -211,7 +225,7 @@ sudo bash -c 'echo "dhcp-host=ansnode3,172.16.0.134,10h" >> /etc/dnsmasq.d/20-ho
 sudo service dnsmasq restart
 ```
 
-### (temporary) acquire ubuntu 18.04 server installation CD (netboot).
+### Acquire ubuntu 18.04 server installation CD (netboot).
 For the purposes of our text-only demo, we are going to use one of the netboot ISOs. this allows us to control the install from an SSH prompt.
 ```
 curl http://archive.ubuntu.com/ubuntu/dists/bionic-updates/main/installer-amd64/current/images/netboot/mini.iso -o ubuntu.iso
@@ -331,14 +345,17 @@ select "Finish the installation"
  * select continue to reboot.
 
 ### first boot
- * boot into the installer again.
- * request a command line
- * run 'poweroff' to power down the VM.
  * run "DRIVE=c ./start_kvm.sh"
  * hit escape if you want to see the boot menu.
 
 
+### From this point:
+
+switch to docs.md.
+
+skip to the step where we source the offline environment.
 
 
+when editing the inventory, create 'ansnode' entries.
 
 
