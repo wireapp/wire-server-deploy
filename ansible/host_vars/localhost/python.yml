@@ -1,1 +1,0 @@
-ansible_python_interpreter: "{{ lookup('env','LOCALHOST_PYTHON') }}"

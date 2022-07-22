@@ -23,7 +23,7 @@ rec {
   env = pkgs.buildEnv {
     name = "wire-server-deploy";
     paths = with pkgs; [
-      ansible_2_9
+      ansible_2_12
       pythonForAnsible
       apacheHttpd
       awscli2
@@ -33,6 +33,7 @@ rec {
       # required so that helmfile get's the correct version of helm in its PATH.
       kubernetes-helm
       helmfile
+      k9s
       kubectl
       openssl
       moreutils
@@ -84,7 +85,6 @@ rec {
       Env = [
         "KUBECONFIG=/wire-server-deploy/ansible/inventory/offline/artifacts/admin.conf"
         "ANSIBLE_CONFIG=/wire-server-deploy/ansible/ansible.cfg"
-        "LOCALHOST_PYTHON=${env}/bin/python"
       ];
     };
   };

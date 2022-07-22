@@ -169,11 +169,10 @@ Log into the assethost, and verify the 'serve-assets' systemd component is runni
 sudo service serve-assets start
 ```
 
-Since docker is already installed on all nodes that need it, push the new container images to the assethost, and seed all container images:
+Since docker is already installed on all nodes that need it, push the new container images to the assethost (which also acts as a container registry):
 
 ```
 d ansible-playbook -i ./ansible/inventory/offline/hosts.ini ansible/setup-offline-sources.yml --tags "containers-helm"
-d ansible-playbook -i ./ansible/inventory/offline/hosts.ini ansible/seed-offline-docker.yml
 ```
 
 Ensure the cluster is healthy. use kubectl to check the node health:

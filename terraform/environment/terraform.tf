@@ -7,8 +7,7 @@ terraform {
       version = "~> 2.58"
     }
     hcloud = {
-      source  = "terraform-providers/hcloud"
-      version = "~> 1.19"
+      source  = "hetznercloud/hcloud"
     }
   }
 

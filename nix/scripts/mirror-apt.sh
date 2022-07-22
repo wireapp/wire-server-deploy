@@ -54,11 +54,9 @@ packages_=$(echo "${packages[@]}" | sed 's/\s/ \| /g')
 
 echo "$packages_"
 
-# NOTE: kubespray pins the exact docker and containerd versions that it
-# installs. This is kept in sync with kubespray manually.
-# See roles/container-engine/docker/vars/ubuntu.yml
-# See roles/container-engine/containerd-common/vars/ubuntu.yml
-docker_packages="docker-ce (= 5:19.03.14~3-0~ubuntu-bionic) | docker-ce-cli (= 5:19.03.14~3-0~ubuntu-bionic) | containerd.io (= 1.3.9-1)"
+# Ship a new version of docker, to run our container image on the adminhost.
+docker_packages_adminhost="docker-ce (= 5:docker-ce_20.10.17~3-0~ubuntu-bionic) | docker-ce-cli (= 5:20.10.17~3-0~ubuntu-bionic) | containerd.io (>= 1.4.1)"
+
 
 GNUPGHOME=$(mktemp -d)
 export GNUPGHOME
@@ -94,19 +92,19 @@ curl https://download.docker.com/linux/ubuntu/gpg | gpg --no-default-keyring --k
 echo "Trusted"
 gpg --list-keys --no-default-keyring --keyring=trustedkeys.gpg
 
-$aptly mirror create -architectures=amd64 -filter="${packages_}" -filter-with-deps bionic http://de.archive.ubuntu.com/ubuntu/ bionic main universe
-$aptly mirror create -architectures=amd64 -filter="${packages_}" -filter-with-deps bionic-security http://de.archive.ubuntu.com/ubuntu/ bionic-security main universe
-$aptly mirror create -architectures=amd64 -filter="${docker_packages}" -filter-with-deps docker-ce https://download.docker.com/linux/ubuntu bionic stable
+$aptly mirror create -architectures=amd64 -filter="${packages_}" -filter-with-deps bionic https://mirror.us.leaseweb.net/ubuntu/ bionic main universe
+$aptly mirror create -architectures=amd64 -filter="${packages_}" -filter-with-deps bionic-security https://mirror.us.leaseweb.net/ubuntu/ bionic-security main universe
+$aptly mirror create -architectures=amd64 -filter="${docker_packages_adminhost}" -filter-with-deps docker-ce-adminhost https://download.docker.com/linux/ubuntu bionic stable
 
 $aptly mirror update bionic
 $aptly mirror update bionic-security
-$aptly mirror update docker-ce
+$aptly mirror update docker-ce-adminhost
 
 $aptly snapshot create bionic from mirror bionic
 $aptly snapshot create bionic-security from mirror bionic-security
-$aptly snapshot create docker-ce from mirror docker-ce
+$aptly snapshot create docker-ce-adminhost from mirror docker-ce-adminhost
 
-$aptly snapshot merge wire bionic bionic-security docker-ce
+$aptly snapshot merge wire bionic bionic-security docker-ce-adminhost
 
 $aptly publish snapshot -gpg-key="gpg@wire.com" -secret-keyring="$GNUPGHOME/secring.gpg" -distribution bionic wire
 
