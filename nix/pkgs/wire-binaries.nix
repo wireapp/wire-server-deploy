@@ -16,7 +16,7 @@ let
 
   cassandra_version = "3.11.4";
   jmx_prometheus_javaagent_version = "0.10";
-  elasticsearch_version = "6.6.0";
+  elasticsearch_version = "6.8.23";
   srcs = {
     kubelet = fetchurl rec {
       passthru.url = url;
