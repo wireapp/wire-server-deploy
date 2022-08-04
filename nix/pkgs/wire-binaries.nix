@@ -13,7 +13,7 @@ let
   cni_version = "v0.9.0";
   calico_version = "v3.16.6";
 
-
+  # Note: to generate a checksum manually, run: nix-hash --flat --base32 --type sha256 elasticsearch-oss-6.8.23.deb
   cassandra_version = "3.11.4";
   jmx_prometheus_javaagent_version = "0.10";
   elasticsearch_version = "6.8.23";
@@ -71,7 +71,8 @@ let
     elasticsearch = fetchurl rec {
       passthru.url = url;
       url = "https://artifacts.elastic.co/downloads/elasticsearch/elasticsearch-oss-${elasticsearch_version}.deb";
-      sha256 = "02cz845cfpjg381lafjfc95ka1ra9h2wn4565aa1asj91by6i0j3";
+      sha256 = "0s7m49rvg5n6mrjzg5snbg3092mq0n661qs9209phjzka1lqajvb";
+      
     };
   };
 in
