@@ -13,7 +13,7 @@ let
   cni_version = "v0.9.0";
   calico_version = "v3.16.6";
 
-  # Note: to generate a checksum manually, run: nix-hash --flat --base32 --type sha256 elasticsearch-oss-6.8.23.deb
+  # Note: If you change a version, replace the checksum with zeros, run « nix-build --no-out-link -A pkgs.wire-binaries », it will complain and give you the right checksum, use that checksum in this file, run it again and it should build without complaining.
   cassandra_version = "3.11.4";
   jmx_prometheus_javaagent_version = "0.10";
   elasticsearch_version = "6.8.23";
