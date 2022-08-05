@@ -71,7 +71,7 @@ let
     elasticsearch = fetchurl rec {
       passthru.url = url;
       url = "https://artifacts.elastic.co/downloads/elasticsearch/elasticsearch-oss-${elasticsearch_version}.deb";
-      sha256 = "0s7m49rvg5n6mrjzg5snbg3092mq0n661qs9209phjzka1lqajvb";
+      sha256 = "sha256:0s7m49rvg5n6mrjzg5snbg3092mq0n661qs9209phjzka1lqajvb";
       
     };
   };
