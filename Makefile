@@ -228,3 +228,9 @@ check-inputs-helm: $(ENV_DIR)/kubeconfig.dec
 
 $(ENV_DIR)/kubeconfig.dec:
 	$(error "[ERR] File does not exist: $(@) - Ensure that Kubernetes is installed")
+
+######################################## Lint ##################################
+
+.PHONY: shellcheck
+shellcheck:
+	./bin/shellcheck.sh
