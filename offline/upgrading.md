@@ -137,21 +137,49 @@ Compare the inventory from your old install to the inventory of your new install
 diff -u ../<OLD_PACKAGE_DIR>/ansible/inventory/offline/99-static ansible/inventory/offline/hosts.ini
 ```
 
-Here you will describe the topology of your offline deploy. There are instructions in the comments on how to set everything up. You can also refer to extra information here.
-https://docs.wire.com/how-to/install/ansible-VMs.html
 
-### updates to the inventory
+Your old install may use a `hosts.ini` instead of `99-static`.
+check to see if a hosts.ini is present:
+```
+ls ../<OLD_PACKAGE_DIR>/ansible/inventory/offline/hosts.ini
+```
 
-Make sure your inventory sets:
+If you get "cannot access ..... No such file or directory", compare the 99-static from the old install.
+```
+diff -u ../<OLD_PACKAGE_DIR>/ansible/inventory/offline/99-static ansible/inventory/offline/hosts.ini
+```
 
+otherwise, compare hosts.ini from both installation directories.
+```
+diff -u ../<OLD_PACKAGE_DIR>/ansible/inventory/offline/hosts.ini ansible/inventory/offline/hosts.ini
+```
+
+Diff outputs differences between the two files. lines that start with `@@` specify a position. lines with `-` are from the old file, lines with `+` are from the new inventory, and lines starting with ` ` are the same in both files.
+
+Using a text editor, make sure your new hosts.ini has all of the work you did on the first installation.
+
+There are instructions in the comments on how to set everything up. You can also refer to extra information at https://docs.wire.com/how-to/install/ansible-VMs.html .
+
+### TURN
+If you are using restund calling services, make sure your inventory sets:
+
+```
 # Explicitely specify the restund user id to be "root" to override the default of "997"
 restund_uid = root
+```
 
+### Deeplink
+If you are using the old deeplink process (deprecated!), set:
+```
 [minio:vars]
 minio_deeplink_prefix = domainname.com
 minio_deeplink_domain = prefix-
+```
 
-# migrate the kubeconfig
+### SFT
+If you have SFT on the same cluster as your wire cluster, read the `Marking kubenode for calling server (SFT)` section below.
+
+# Migrate the kubeconfig
 
 Old versions of the package contained the kubeconfig at ansible/kubeconfig. newer ones create a directory at ansible/inventory/offline/artifacts, and place the kubeconfig there, as 'admin.conf'
 
@@ -191,7 +219,7 @@ Open it with your prefered text editor and edit the following:
 * find a big block of comments and uncomment everything in it `- name: trust everything...`
 * after the block you will find `- name: Register offline repo key...`. Comment out that segment (do not comment out the part with `- name: Register offline repo`!)
 
-Then disable checking for outdated signatures by editing the following file:
+If you are doing anything with kubernetes itsself (unlikely!), disable checking for outdated signatures by editing the following file:
 ```
 ansible/roles/external/kubespray/roles/container-engine/docker/tasks/main.yml
 ```
