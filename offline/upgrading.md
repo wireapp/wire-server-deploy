@@ -133,6 +133,10 @@ The following is a list of important artifacts which are provided:
 Copy `ansible/inventory/offline/99-static` to `ansible/inventory/offline/hosts.ini`.
 
 Compare the inventory from your old install to the inventory of your new install.
+```
+diff -u ../<OLD_PACKAGE_DIR>/ansible/inventory/offline/99-static ansible/inventory/offline/hosts.ini
+```
+
 
 Your old install may use a `hosts.ini` instead of `99-static`.
 check to see if a hosts.ini is present:
