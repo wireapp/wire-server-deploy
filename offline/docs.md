@@ -220,7 +220,6 @@ In order to deploy all the ansible-managed services you can run:
 ```
 ... However a conservitave approach is to perform each step of the script step by step, for better understanding, and better handling of errors..
 
-
 #### Populate the assethost, and prepare to install images from it.
 
 Copy over binaries and debs, serves assets from the asset host, and configure
@@ -429,15 +428,7 @@ mv ./values/nginx-ingress-services/{prod-secrets.example.yaml,secrets.yaml}
 
 #### Bring your own certificates
 
-##### In your nginx config
-Change the domains in `values.yaml` to your domain. And add your wildcard or SAN certificate that is valid for all these
-domains to the `secrets.yaml` file.
-
-Now install the service with helm:
-
-```
-d helm install nginx-ingress-services ./charts/nginx-ingress-services --values ./values/nginx-ingress-services/values.yaml --values ./values/nginx-ingress-services/secrets.yaml
-```
+if you generated your SSL certificates yourself, there are two ways to give these to wire:
 
 ##### From the command line
 if you have the certificate and it's corresponding key available on the filesystem, copy them into the root of the Wire-Server directory, and:
@@ -447,6 +438,16 @@ d helm install nginx-ingress-services ./charts/nginx-ingress-services --values .
 ```
 
 Do not try to use paths to refer to the certificates, as the 'd' command messes with file paths outside of Wire-Server.
+
+##### In your nginx config
+Change the domains in `values.yaml` to your domain. And add your wildcard or SAN certificate that is valid for all these
+domains to the `secrets.yaml` file.
+
+Now install the service with helm:
+
+```
+d helm install nginx-ingress-services ./charts/nginx-ingress-services --values ./values/nginx-ingress-services/values.yaml --values ./values/nginx-ingress-services/secrets.yaml
+```
 
 #### Use letsencrypt generated certificates
 
