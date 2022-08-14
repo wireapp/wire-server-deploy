@@ -5,7 +5,8 @@ We have a pipeline in `wire-server-deploy` producing container images, static bi
 Create a fresh workspace to download the new artifacts:
 
 ```
-$ cd ...  # you pick a good location!
+$ mkdir ... # you pick a good location!
+$ cd ... 
 ```
 
 Obtain the latest airgrap artifact for wire-server-deploy. Please contact us to get it for now. We are
@@ -27,36 +28,38 @@ sudo apt clean
 
 ### Kubernetes hosts:
 
-#### Wire
+#### Wire Cluster
 Remove wire-server images from two releases ago, or from the current release that we know are unused. For instance, 
 
 ```
 sudo docker image ls
+# look at the output of the last command, to find 
 VERSION="2.106.0"
-sudo docker image ls | grep -E "^quay.io/wire/" | grep $VERSION | sed "s/.*[ ]*\([0-9a-f]\{12\}\).*/sudo docker image rm \1/"
+sudo docker image ls | grep -E "^quay.io/wire/([bcg]|spar|nginz)" | grep $VERSION | sed "s/.*[ ]*\([0-9a-f]\{12\}\).*/sudo docker image rm \1/"
 
 ```
 
-If you are not running SFT in your main cluster (for example, do not use SFT, or have SFT in a separate DMZ'd cluster).. then remove SFT images from the Wire Kubernetes.
+If you are not running SFT in your main cluster (for example, do not use SFT, or have SFT in a separate DMZ'd cluster).. then remove SFT images from the Wire Kubernetes cluster.
 ```
 sudo docker image ls | grep -E "^quay.io/wire/sftd" | sed "s/.*[ ]*\([0-9a-f]\{12\}\).*/sudo docker image rm \1/"
 ```
 
-#### SFT
+#### SFT Cluster
 If you are running a DMZ deployment, prune the old wire-server images and their dependencies on the SFT kubernetes hosts...
 ```
 sudo docker image ls | grep -E "^quay.io/wire/(team-settings|account|webapp|namshi-smtp)" | sed "s/.*[ ]*\([0-9a-f]\{12\}\).*/sudo docker image rm \1/"
 sudo docker image ls | grep -E "^(bitnami/redis|airdock/fake-sqs|localstack/localstack)" | sed "s/.*[ ]*\([0-9a-f]\{12\}\).*/sudo docker image rm \1/"
-sudo docker image rm 
 ```
 
 ## Preparing for deployment
 Verify you have the container images and configuration for the version of wire you are currently running.
 
-Extract the latest airgap artifact into your workspace:
+Extract the latest airgap artifact into a NEW workspace:
 
 ```
 $ wget https://s3-eu-west-1.amazonaws.com/public.wire.com/artifacts/wire-server-deploy-static-<HASH>.tgz
+$ mkdir New-Wire-Server
+$ cd New-Wire-Server
 $ tar xvzf wire-server-deploy-static-<HASH>.tgz
 ```
 Where the HASH above is the hash of your deployment artifact, given to you by Wire, or acquired by looking at the above build job.
@@ -130,9 +133,11 @@ The following is a list of important artifacts which are provided:
 Copy `ansible/inventory/offline/99-static` to `ansible/inventory/offline/hosts.ini`.
 
 Compare the inventory from your old install to the inventory of your new install.
+```
+diff -u ../<OLD_PACKAGE_DIR>/ansible/inventory/offline/99-static ansible/inventory/offline/hosts.ini
+```
 
-Here you will describe the topology of your offline deploy. There are instructions in the comments on how to set
-everything up. You can also refer to extra information here.
+Here you will describe the topology of your offline deploy. There are instructions in the comments on how to set everything up. You can also refer to extra information here.
 https://docs.wire.com/how-to/install/ansible-VMs.html
 
 ### updates to the inventory
@@ -146,17 +151,17 @@ restund_uid = root
 minio_deeplink_prefix = domainname.com
 minio_deeplink_domain = prefix-
 
-# move the kubeconfig
+# migrate the kubeconfig
 
 Old versions of the package contained the kubeconfig at ansible/kubeconfig. newer ones create a directory at ansible/inventory/offline/artifacts, and place the kubeconfig there, as 'admin.conf'
 
 If your deployment package uses the old style, then in the place where you are keeping your new package:
 ```
 mkdir ansible/inventory/offline/artifacts
-cp ../<OLD_PACKAGE_DIR/ansible/kubeconfig ansible/inventory/offline/artifacts/admin.conf
+cp ../<OLD_PACKAGE_DIR>/ansible/kubeconfig ansible/inventory/offline/artifacts/admin.conf
 ```
 
-otherwise:
+Otherwise:
 ```
 mkdir ansible/inventory/offline/artifacts
 sudo cp ../<OLD_PACKAGE_DIR>/ansible/inventory/offline/artifacts/admin.conf ansible/inventory/offline/artifacts/admin.conf
@@ -164,17 +169,49 @@ sudo cp ../<OLD_PACKAGE_DIR>/ansible/inventory/offline/artifacts/admin.conf ansi
 
 ## Preparing to upgrade kubernetes services
 
-Log into the assethost, and verify the 'serve-assets' systemd component is running by looking at `netstat -an`, and checking for `8080`. If it's not:
+Log into the assethost, and verify the 'serve-assets' systemd component is running by looking at `sudo lsof -i -P -n | grep LISTEN`, and checking for `8080`. If it's not:
 ```
 sudo service serve-assets start
 ```
 
+### WORKAROUND: old debian key
+All of our debian archives up to version 4.12.0 used a now-outdated debian repository signature. Some modifications are required to be able to install everything properly.
+
+First, gather a copy of the 'setup-offline-sources.yml' file from: https://raw.githubusercontent.com/wireapp/wire-server-deploy/kvm_support/ansible/setup-offline-sources.yml .
+```
+wget https://raw.githubusercontent.com/wireapp/wire-server-deploy/kvm_support/ansible/setup-offline-sources.yml
+```
+copy it into the ansible/ directory:
+```
+cp ansible/setup-offline-sources.yml ansible/setup-offline-sources.yml.backup
+cp setup-offline-sources.yml ansible/
+```
+
+Open it with your prefered text editor and edit the following:
+* find a big block of comments and uncomment everything in it `- name: trust everything...`
+* after the block you will find `- name: Register offline repo key...`. Comment out that segment (do not comment out the part with `- name: Register offline repo`!)
+
+Then disable checking for outdated signatures by editing the following file:
+```
+ansible/roles/external/kubespray/roles/container-engine/docker/tasks/main.yml
+```
+* comment out the block with -name: ensure docker-ce repository public key is installed...
+* comment out the next block -name: ensure docker-ce repository is enabled
+
+Now you are ready to start deploying services.
+
+#### WORKAROUND: dependency
+some ubuntu systems do not have GPG by default. wire assumes this is already present. ensure you have gpg installed on all of your nodes before continuing to the next step.
+
+#### Populate the assethost, and prepare to install images from it.
 Since docker is already installed on all nodes that need it, push the new container images to the assethost, and seed all container images:
 
 ```
-d ansible-playbook -i ./ansible/inventory/offline/hosts.ini ansible/setup-offline-sources.yml --tags "containers-helm"
+d ansible-playbook -i ./ansible/inventory/offline/hosts.ini ansible/setup-offline-sources.yml
 d ansible-playbook -i ./ansible/inventory/offline/hosts.ini ansible/seed-offline-docker.yml
 ```
+
+#### Ensuring kubernetes is healthy.
 
 Ensure the cluster is healthy. use kubectl to check the node health:
 
@@ -249,11 +286,11 @@ cp ../<OLD_PACKAGE_DIR>/values/demo-smtp/values.yaml values/demo-smtp/values.yam
 d helm upgrade demo-smtp ./charts/demo-smtp/ --values ./values/demo-smtp/values.yaml
 ```
 
-#### Upgrading the NginX Ingress
+#### Upgrading the demo SMTP service
 
 Compare your demo-smtp configuration files, and decide whether you need to change them or not.
 ```
-diff -u ../<OLD_PACKAGE_DIR>/values/ngin-ingress-services/values.yaml values/nginx-ingress-services/prod-values.example.yaml
+diff -u ../<OLD_PACKAGE_DIR>/values/nginx-ingress-services/values.yaml values/nginx-ingress-services/prod-values.example.yaml
 ```
 
 If there are no differences, copy these files into your new tree.
@@ -261,8 +298,11 @@ If there are no differences, copy these files into your new tree.
 cp ../<OLD_PACKAGE_DIR>/values/nginx-ingress-services/values.yaml values/nginx-ingress-services/values.yaml
 ```
 
+#### Upgrading nginx-ingress-controller
+
+Re-deploy your ingress, to direct traffic into your cluster with the new version of nginx.
+```
 d helm upgrade nginx-ingress-controller ./charts/nginx-ingress-controller/
-d helm upgrade nginx-ingress-services ./charts/nginx-ingress-services/ --values ./values/nginx-ingress-services/values.yaml  --values ./values/nginx-ingress-services/secrets.yaml
 ```
 
 ### Upgrading Wire itsself
@@ -275,9 +315,43 @@ Now upgrade `wire-server`:
 d helm upgrade wire-server ./charts/wire-server/ --timeout=15m0s --values ./values/wire-server/values.yaml --values ./values/wire-server/secrets.yaml
 ```
 
+#### Bring your own certificates
+
+If you generated your own SSL certificates, there are two ways to give these to wire:
+
+##### From the command line
+if you have the certificate and it's corresponding key available on the filesystem, copy them into the root of the Wire-Server directory, and:
+
+```
+d helm install nginx-ingress-services ./charts/nginx-ingress-services --values ./values/nginx-ingress-services/values.yaml --set-file secrets.tlsWildcardCert=certificate.pem --set-file secrets.tlsWildcardKey=key.pem
+```
+
+Do not try to use paths to refer to the certificates, as the 'd' command messes with file paths outside of Wire-Server.
+
+##### In your nginx config
+This is the more error prone process, due to having to edit yaml files.
+
+Change the domains in `values.yaml` to your domain. And add your wildcard or SAN certificate that is valid for all these
+domains to the `secrets.yaml` file.
+
+Now install the service with helm:
+```
+d helm install nginx-ingress-services ./charts/nginx-ingress-services --values ./values/nginx-ingress-services/values.yaml --values ./values/nginx-ingress-services/secrets.yaml
+```
+
+#### Use letsencrypt generated certificates
+
+UNDER CONSTRUCTION:
+If your machine has internet access to letsencrypt's servers, you can configure cert-manager to generate certificates, and load them for you.
+```
+d kubectl create namespace cert-manager-ns
+d helm upgrade --install -n cert-manager-ns --set 'installCRDs=true' cert-manager charts/cert-manager
+d helm upgrade --install nginx-ingress-services charts/nginx-ingress-services -f values/nginx-ingress-services/values.yaml
+```
+
 ### Marking kubenode for calling server (SFT)
 
-The SFT Calling server should be running on a kubernetes nodes that are connected to the public internet.
+The SFT Calling server should be running on a set of kubernetes nodes that have traffic directed to them from the public internet.
 If not all kubernetes nodes match these criteria, you should specifically label the nodes that do match
 these criteria, so that we're sure SFT is deployed correctly.
 

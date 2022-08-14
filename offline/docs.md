@@ -102,10 +102,18 @@ The following artifacts are provided:
 
 ## Editing the inventory
 
-Open `ansible/inventory/offline/99-static`. Here you will describe the topology
-of your offline deploy.  There's instructions in the comments on how to set
+Copy `ansible/inventory/offline/99-static`  to `ansible/inventory/offline/hosts.ini`, and remove the original. 
+Here you will describe the topology of your offline deploy.  There's instructions in the comments on how to set
 everything up. You can also refer to extra information here.
 https://docs.wire.com/how-to/install/ansible-VMs.html
+
+
+If you are using username/password to log into and sudo up, in the vars:all section, add:
+```
+ansible_user=<USERNAME>
+ansible_password=<PASSWORD>
+ansible_become_password=<PASSWORD>
+```
 
 ### Configuring kubernetes and etcd
 
@@ -121,7 +129,7 @@ additional nodes should only be added to the `[kube-node]` group.
   the kubenodes can reach cassandra and on which the cassandra nodes
   communicate among eachother. Your private network.
 * Similarly `elasticsearch_network_interface` and `minio_network_interface`
-  should be set to the private network interface to too.
+  should be set to the private network interface as well.
 
 ### Configuring Restund
 
@@ -173,47 +181,85 @@ Please run:
 
 This should generate two files. `./ansible/inventory/group_vars/all/secrets.yaml` and `values/wire-server/secrets.yaml`.
 
-
 ## Deploying Kubernetes, Restund and stateful services
+
+### WORKAROUND: old debian key
+All of our debian archives up to version 4.12.0 used a now-outdated debian repository signature. Some modifications are required to be able to install everything properly.
+
+First, gather a copy of the 'setup-offline-sources.yml' file from: https://raw.githubusercontent.com/wireapp/wire-server-deploy/kvm_support/ansible/setup-offline-sources.yml .
+```
+wget https://raw.githubusercontent.com/wireapp/wire-server-deploy/kvm_support/ansible/setup-offline-sources.yml
+```
+copy it into the ansible/ directory:
+```
+cp ansible/setup-offline-sources.yml ansible/setup-offline-sources.yml.backup
+cp setup-offline-sources.yml ansible/
+```
+
+Open it with your prefered text editor and edit the following:
+* find a big block of comments and uncomment everything in it `- name: trust everything...`
+* after the block you will find `- name: Register offline repo key...`. Comment out that segment (do not comment out the part with `- name: Register offline repo`!)
+
+Then disable checking for outdated signatures by editing the following file:
+```
+ansible/roles/external/kubespray/roles/container-engine/docker/tasks/main.yml
+```
+* comment out the block with -name: ensure docker-ce repository public key is installed...
+* comment out the next block -name: ensure docker-ce repository is enabled
+
+Now you are ready to start deploying services.
+
+#### WORKAROUND: dependency
+some ubuntu systems do not have GPG by default. wire assumes this is already present. ensure you have gpg installed on all of your nodes before continuing to the next step.
+
+### Deploying with Ansible
 
 In order to deploy all the ansible-managed services you can run:
 ```
-d ./bin/offline-cluster.sh
+# d ./bin/offline-cluster.sh
 ```
+... However a conservitave approach is to perform each step of the script step by step, for better understanding, and better handling of errors..
 
-However we now explain each step of the script step by step too. For better understanding.
+#### Populate the assethost, and prepare to install images from it.
 
 Copy over binaries and debs, serves assets from the asset host, and configure
 other hosts to fetch debs from it:
 
 ```
-d ansible-playbook -i ./ansible/inventory/offline ansible/setup-offline-sources.yml
+d ansible-playbook -i ./ansible/inventory/offline/hosts.ini ansible/setup-offline-sources.yml
 ```
+If this step fails partway, and you know that parts of it completed, the `--skip-tags debs,binaries,containers,containers-helm,containers-other` tags may come in handy.
 
+#### Kubernetes, part 1
 Run kubespray until docker is installed and runs. This allows us to preseed the docker containers that
 are part of the offline bundle:
 
 ```
-d ansible-playbook -i ./ansible/inventory/offline ansible/kubernetes.yml --tags bastion,bootstrap-os,preinstall,container-engine
+d ansible-playbook -i ./ansible/inventory/offline/hosts.ini ansible/kubernetes.yml --tags bastion,bootstrap-os,preinstall,container-engine
 ```
 
+#### Restund
 Now; run the restund playbook until docker is installed:
 ```
-d ansible-playbook -i ./ansible/inventory/offline ansible/restund.yml --tags docker
+d ansible-playbook -i ./ansible/inventory/offline/hosts.ini ansible/restund.yml --tags docker
 ```
 
+
+#### Pushing docker containers to kubenodes, and restund nodes.
 With docker being installed on all nodes that need it, seed all container images:
 
 ```
-d ansible-playbook -i ./ansible/inventory/offline ansible/seed-offline-docker.yml
+d ansible-playbook -i ./ansible/inventory/offline/hosts.ini ansible/seed-offline-docker.yml
 ```
 
+#### Kubernetes, part 2
 Run the rest of kubespray. This should bootstrap a kubernetes cluster successfully:
 
 ```
-d ansible-playbook -i ./ansible/inventory/offline ansible/kubernetes.yml --skip-tags bootstrap-os,preinstall,container-engine
+d ansible-playbook -i ./ansible/inventory/offline/hosts.ini ansible/kubernetes.yml --skip-tags bootstrap-os,preinstall,container-engine
 ```
 
+#### Ensuring kubernetes is healthy.
 
 Ensure the cluster comes up healthy. The container also contains kubectl, so check the node status:
 
@@ -222,28 +268,28 @@ d kubectl get nodes -owide
 ```
 They should all report ready.
 
+
+#### Non-kubernetes services (restund, cassandra, elasticsearch, minio)
 Now, deploy all other services which don't run in kubernetes.
 
 ```
-d ansible-playbook -i ./ansible/inventory/offline ansible/restund.yml
-d ansible-playbook -i ./ansible/inventory/offline ansible/cassandra.yml
-d ansible-playbook -i ./ansible/inventory/offline ansible/elasticsearch.yml
-d ansible-playbook -i ./ansible/inventory/offline ansible/minio.yml
+d ansible-playbook -i ./ansible/inventory/offline/hosts.ini ansible/restund.yml
+d ansible-playbook -i ./ansible/inventory/offline/hosts.ini ansible/cassandra.yml
+d ansible-playbook -i ./ansible/inventory/offline/hosts.ini ansible/elasticsearch.yml
+d ansible-playbook -i ./ansible/inventory/offline/hosts.ini ansible/minio.yml
 ```
-
-
 
 Afterwards, run the following playbook to create helm values that tell our helm charts
 what the IP addresses of cassandra, elasticsearch and minio are.
 ```
-d ansible-playbook -i ./ansible/inventory/offline ansible/helm_external.yml
+d ansible-playbook -i ./ansible/inventory/offline/hosts.ini ansible/helm_external.yml
 ```
 
-
-## Deploying wire-server using helm
+### Deploying Wire
 
 It's now time to deploy the helm charts on top of kubernetes, installing the Wire platform.
 
+#### Finding the stateful services
 First.  Make kubernetes aware of where alll the external stateful services are by running:
 
 ```
@@ -258,6 +304,7 @@ Also copy the values file for `databases-ephemeral` as it is required for the ne
 cp values/databases-ephemeral/prod-values.example.yaml values/databases-ephemeral/values.yaml
 ```
 
+#### Deploying stateless dependencies
 Next, we have 4 services that need to be deployed but need no additional configuration:
 ```
 d helm install fake-aws ./charts/fake-aws --values ./values/fake-aws/prod-values.example.yaml
@@ -266,10 +313,12 @@ d helm install databases-ephemeral ./charts/databases-ephemeral/ --values ./valu
 d helm install reaper ./charts/reaper
 ```
 
+#### Preparing your values
+
 Next, move `./values/wire-server/prod-values.example.yaml` to `./values/wire-server/values.yaml`.
 Inspect all the values and adjust domains to your domains where needed.
 
-Add the IPs of your `restund` servers to the `turnStatic.v2` list.:
+Add the IPs of your `restund` servers to the `turnStatic.v2` list:
 ```yaml
   turnStatic:
     v1: []
@@ -284,40 +333,132 @@ Open up `./values/wire-server/secrets.yaml` and inspect the values. In theory
 this file should have only generated secrets, and no additional secrets have to
 be added, unless additional options have been enabled.
 
+Open up `./values/wire-server/values.yaml` and replace example.com and other domains and subdomain with your domain. You can do it with:
+
+```
+sed -i 's/example.com/<your-domain>/g' values.yaml
+```
+
+
+#### Deploying Wire-Server
+
 Now deploy `wire-server`:
 
 ```
 d helm install wire-server ./charts/wire-server --timeout=15m0s --values ./values/wire-server/values.yaml --values ./values/wire-server/secrets.yaml
 ```
 
+## Directing Traffic to Wire
 
-## Configuring ingress
+### Deploy nginx-ingress-controller
 
-First, install the `nginx-ingress-controller`. This requires no configuration:
-
+This component requires no configuration, and is a requirement for all of the methods we support for getting traffic into your cluster:
 ```
 d helm install nginx-ingress-controller ./charts/nginx-ingress-controller
 ```
 
-Next, move the example values for `nginx-ingress-services`:
+### Forwarding traffic to your cluster
+
+#### Using network services
+
+Most enterprises have network service teams to forward traffic appropriately. Ask that your network team forward TCP port 443 to each one of the kubernetes servers on port 31773. ask the same for port 80, directing it to 31772.
+
+If they ask for clarification, a longer way of explaining it is "wire expects https traffic to be on port 31773, and http traffic to go to port 80. a load balancing rule needs to be in place, so that no matter which kubernetes host is up or down, the router will direct traffic to one of the operational kubernetes nodes. any node that accepts connections on port 31773 and 31772 can be considered as operational."
+
+#### Through an IP Masquerading Firewall
+
+Your ip masquerading firewall must forward port 443 and port 80 to one of the kubernetes nodes (which must always remain online).
+Additionally, if you want to use letsEncrypt CA certificates, items behind your firewall must be redirected to your kubernetes node, when the cluster is attempting to contact the outside IP.
+
+The following instructions are given only as an example. 
+Properly configuring IP Masquerading requires a seasoned linux administrator with deep knowledge of networking. 
+They assume all traffic destined to your wire cluster is going through a single IP masquerading firewall, running some modern version of linux.
+
+
+##### Incoming Traffic
+
+Here, you should check the ethernet interface name for your outbound IP.
+```
+ip ro | sed -n "/default/s/.* dev \([enps0-9]*\) .*/export OUTBOUNDINTERFACE=\1/p"
+```
+
+This will return a shell command setting a variable to your default interface. copy and paste it. next, supply your outside IP address:
+```
+export PUBLICADDRESS=<your.ip.address.here>
+```
+
+Select one of your kubernetes nodes that you are fine with losing service if it is offline:
+```
+export KUBENODE1IP=<your.kubernetes.node.ip>
+```
+
+then run the following:
+```
+sudo iptables -t nat -A PREROUTING -d $PUBLICIPADDRESS -i $OUTBOUNDINTERFACE -p tcp --dport 80 -j DNAT --to-destination $KUBENODE1IP:80
+sudo iptables -t nat -A PREROUTING -d $PUBLICIPADDRESS -i $OUTBOUNDINTERFACE -p tcp --dport 443 -j DNAT --to-destination $KUBENODE1IP:443
+```
+or add an appropriate rule to a config file (for UFW, /etc/ufw/before.rules)
+
+Then ssh into each kubenode and make the following configuration:
+```
+sudo iptables -t nat -A PREROUTING -p tcp --dport 443 -j REDIRECT --to-port 31773
+sudo iptables -t nat -A PREROUTING -p tcp --dport 80 -j REDIRECT --to-port 31772
+```
+
+##### Mirroring the public IP
+
+cert-manager has a requirement on being able to reach the kubernetes on it's external IP. this is trouble, because in most security concious environments, the external IP is not owned by any of the kubernetes hosts.
+
+on an IP Masquerading router, you can redirect outgoing traffic from your cluster, that is to say, when the cluster asks to connect to your external IP, you can instead choose to send it to a kubernetes node inside of the cluster.
+```
+sudo iptables -t nat -A PREROUTING -i $INTERNALINTERFACE -d $PUBLICIPADDRESS -p tcp -m multiport --dports 80,443 -j DNAT --to-destination $KUBENODE1IP
+```
+
+### Acquiring / Deploying SSL Certificates:
+
+SSL certificates are required by the nginx-ingress-services helm chart. You can either register and provide your own, or use cert-manager to request certificates from LetsEncrypt.
+
+##### Prepare to deploy nginx-ingress-services
+
+Move the example values for `nginx-ingress-services`:
 ```
 mv ./values/nginx-ingress-services/{prod-values.example.yaml,values.yaml}
 mv ./values/nginx-ingress-services/{prod-secrets.example.yaml,secrets.yaml}
 ```
 
+#### Bring your own certificates
+
+if you generated your SSL certificates yourself, there are two ways to give these to wire:
+
+##### From the command line
+if you have the certificate and it's corresponding key available on the filesystem, copy them into the root of the Wire-Server directory, and:
+
+```
+d helm install nginx-ingress-services ./charts/nginx-ingress-services --values ./values/nginx-ingress-services/values.yaml --set-file secrets.tlsWildcardCert=certificate.pem --set-file secrets.tlsWildcardKey=key.pem
+```
+
+Do not try to use paths to refer to the certificates, as the 'd' command messes with file paths outside of Wire-Server.
+
+##### In your nginx config
 Change the domains in `values.yaml` to your domain. And add your wildcard or SAN certificate that is valid for all these
 domains to the `secrets.yaml` file.
 
-
-Now install the ingress:
+Now install the service with helm:
 
 ```
-d helm install nginx-ingress-services ./charts/nginx-ingress-services --values ./values/nginx-ingress-services/values.yaml  --values ./values/nginx-ingress-services/secrets.yaml
+d helm install nginx-ingress-services ./charts/nginx-ingress-services --values ./values/nginx-ingress-services/values.yaml --values ./values/nginx-ingress-services/secrets.yaml
 ```
 
+#### Use letsencrypt generated certificates
 
+UNDER CONSTRUCTION:
+```
+d kubectl create namespace cert-manager-ns
+d helm upgrade --install -n cert-manager-ns --set 'installCRDs=true' cert-manager charts/cert-manager
+d helm upgrade --install nginx-ingress-services charts/nginx-ingress-services -f values/nginx-ingress-services/values.yaml
+```
 
-### Installing sftd
+## Installing sftd
 
 For full docs with details and explanations please see https://github.com/wireapp/wire-server-deploy/blob/d7a089c1563089d9842aa0e6be4a99f6340985f2/charts/sftd/README.md
 
@@ -336,7 +477,7 @@ kubenode3 node_labels="{'wire.com/role': 'sftd'}" node_annotations="{'wire.com/e
 
 If these values weren't already set earlier in the process you should rerun ansible to set them:
 ```
-d ansible-playbook -i ./ansible/inventory/offline ansible/kubernetes.yml --skip-tags bootstrap-os,preinstall,container-engine
+d ansible-playbook -i ./ansible/inventory/offline/hosts.ini ansible/kubernetes.yml --skip-tags bootstrap-os,preinstall,container-engine
 ```
 
 If you are restricting SFT to certain nodes, use `nodeSelector` to run on specific nodes (**replacing the example.com domains with yours**):
