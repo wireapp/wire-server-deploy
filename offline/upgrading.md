@@ -135,12 +135,9 @@ Diff outputs differences between the two files. lines that start with `@@` speci
 Copy `ansible/inventory/offline/99-static` to `ansible/inventory/offline/hosts.ini`.
 
 Compare the inventory from your old install to the inventory of your new install.
-```
-diff -u ../<OLD_PACKAGE_DIR>/ansible/inventory/offline/99-static ansible/inventory/offline/hosts.ini
-```
 
 Your old install may use a `hosts.ini` instead of `99-static`.
-check to see if a hosts.ini is present:
+Check to see if a hosts.ini is present:
 ```
 ls ../<OLD_PACKAGE_DIR>/ansible/inventory/offline/hosts.ini
 ```
@@ -154,6 +151,8 @@ otherwise, compare hosts.ini from both installation directories.
 ```
 diff -u ../<OLD_PACKAGE_DIR>/ansible/inventory/offline/hosts.ini ansible/inventory/offline/hosts.ini
 ```
+
+HINT: Diff outputs differences between the two files. lines that start with `@@` specify a position. lines with `-` are from the old file, lines with `+` are from the new inventory, and lines starting with ` ` are the same in both files.
 
 Using a text editor, make sure your new hosts.ini has all of the work you did on the first installation.
 
