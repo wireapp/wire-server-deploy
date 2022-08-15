@@ -34,9 +34,9 @@ prometheus_jmx_url: "{{ binaries_url }}/jmx_prometheus_javaagent-0.10.jar"
 # and elastic.co doesn't seem to advertise their -oss repo anymore either
 # Just provide the .deb from the asset host
 es_install_java: false
-es_version: "6.6.0"
+es_version: "6.8.23"
 es_use_repository: false
-es_custom_package_url: "{{ binaries_url }}/elasticsearch-oss-6.6.0.deb"
+es_custom_package_url: "{{ binaries_url }}/elasticsearch-oss-6.8.23.deb"
 
 minio_server_artifact_url: "{{ binaries_url }}/minio.RELEASE.2020-10-28T08-16-50Z"
 minio_server_artifact_checksum: sha256:2c7e6774a9befbba6a126791f363550f8f14e34008e100d0e0e57e2ad9b2ab8c

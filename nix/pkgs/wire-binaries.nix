@@ -13,10 +13,10 @@ let
   cni_version = "v0.9.0";
   calico_version = "v3.16.6";
 
-
+  # Note: If you change a version, replace the checksum with zeros, run « nix-build --no-out-link -A pkgs.wire-binaries », it will complain and give you the right checksum, use that checksum in this file, run it again and it should build without complaining.
   cassandra_version = "3.11.4";
   jmx_prometheus_javaagent_version = "0.10";
-  elasticsearch_version = "6.6.0";
+  elasticsearch_version = "6.8.23";
   srcs = {
     kubelet = fetchurl rec {
       passthru.url = url;
@@ -71,7 +71,7 @@ let
     elasticsearch = fetchurl rec {
       passthru.url = url;
       url = "https://artifacts.elastic.co/downloads/elasticsearch/elasticsearch-oss-${elasticsearch_version}.deb";
-      sha256 = "02cz845cfpjg381lafjfc95ka1ra9h2wn4565aa1asj91by6i0j3";
+      sha256 = "sha256:0s7m49rvg5n6mrjzg5snbg3092mq0n661qs9209phjzka1lqajvb";
     };
   };
 in
