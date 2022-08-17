@@ -1,0 +1,58 @@
+#
+# Follow the guidelines described on the wiki
+# https://github.com/zinfra/backend-wiki/wiki/Cassandra-Cluster-upgrade
+#
+- name: Pre preparation
+  gather_facts: no
+  hosts: localhost
+  vars_prompt:
+    - name: cluster
+      prompt: "Enter the cluster name you plan to upgrade, like galley. cassandra and cassandra_seed will be added"
+      private: no
+  tasks:
+    - set_fact:
+        cluster_name: "{{ cluster }}"
+        cassandra_role: "cassandra_{{ cluster }}"
+
+- name: Ensure no ongoing repairs on any node and stop cronjobs
+  hosts: "{{ hostvars['localhost']['cassandra_role'] }}_seed:{{ hostvars['localhost']['cassandra_role'] }}"
+  gather_facts: yes
+
+  vars_files:
+    - roles/cassandra/defaults/main.yml
+
+  vars:
+    cluster_name: "{{ hostvars['localhost']['cluster_name'] }}"
+
+  tasks:
+    - action: ec2_metadata_facts
+    # First let's ensure that are no repairs on _any_ nodes
+    - include: tasks/cassandra_remove_cron.yml
+      vars:
+        cassandra_cluster_name: "{{ cluster_name }}"
+    - include: tasks/cassandra_wait_ongoing_repair.yml
+
+- name: Prepare the nodes
+  hosts: "{{ hostvars['localhost']['cassandra_role'] }}_seed:{{ hostvars['localhost']['cassandra_role'] }}"
+
+  any_errors_fatal: yes
+  gather_facts: no
+  serial: 1
+
+  vars:
+    cluster_name: "{{ hostvars['localhost']['cluster_name'] }}"
+    cassandra_role: "{{ hostvars['localhost']['cassandra_role'] }}"
+
+  tasks:
+    - action: ec2_metadata_facts
+
+    - name: 'Cassandra: first upgrade sstables'
+      shell: nodetool upgradesstables
+
+    - name: 'Cassandra: run repairs'
+      shell: nodetool repair -full -pr 2>&1 | svlogd -tt /var/log/cassandra_repair
+
+    - include: tasks/cassandra_cluster_healthy.yml
+
+    - name: 'Cassandra: backup the data'
+      shell: /usr/local/bin/cassandra_backup_{{ cluster_name }} 2>&1 | svlogd -tt /var/log/cassandra_daily_backup

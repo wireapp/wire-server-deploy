@@ -1,0 +1,46 @@
+#
+# Example:
+# khan playbook -e staging elasticsearch_joined.yml -- -e "elasticsearch_role=elasticsearch_kibana" -e "ip_to_check=1.2.3.4"
+#
+- name: Wait for a given new node to join the cluster and shard relocations to settle
+  hosts: '{{ elasticsearch_role }}'
+  gather_facts: no
+  any_errors_fatal: yes
+  tasks:
+    - fail:
+        msg: You need to specify ip_to_check. See comment at the top of the playbook for usage.
+      when: not ip_to_check
+
+    - name: 'Elasticsearch: Wait for HTTP port'
+      wait_for: port={{ routing_table[elasticsearch_role].http.exposed }}
+
+    - name: 'Elasticsearch: Wait for node discovery'
+      shell: >
+        set -o pipefail;
+        curl -sSf http://localhost:{{ routing_table[elasticsearch_role].http.exposed }}/_nodes|jq ".nodes|keys|length"
+      args:
+        executable: /bin/bash
+      register: num_nodes
+      until: 'num_nodes.stdout|int == groups[elasticsearch_role]|length'
+      retries: 60
+      delay: 5
+
+    - name: 'check ip_to_check={{ ip_to_check }} is part of the cluster'
+      shell: >
+        set -o pipefail;
+        curl -sSf 'http://localhost:{{ routing_table[elasticsearch_role].http.exposed }}/_cat/nodes?v&h=ip' | grep "{{ ip_to_check }}"
+      args:
+        executable: /bin/bash
+
+    - include: tasks/elasticsearch_cluster_healthy.yml
+
+    - name: 'Elasticsearch: Wait for shard relocation to finish'
+      shell: >
+        set -o pipefail;
+        curl -sSf http://localhost:{{ routing_table[elasticsearch_role].http.exposed }}/_cluster/health | jq .relocating_shards
+      args:
+        executable: /bin/bash
+      register: num_shards
+      until: 'num_shards.stdout|int == 0'
+      retries: 60
+      delay: 15

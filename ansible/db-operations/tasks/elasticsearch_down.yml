@@ -1,0 +1,3 @@
+---
+- include: elasticsearch_shard_allocation.yml exclude={{ ansible_default_ipv4.address }}
+- command: sv down elasticsearch

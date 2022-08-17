@@ -1,0 +1,34 @@
+# khan playbook -e staging cassandra_rolling_repair.yml \
+#     -- -e"cassandra_role_name=gundeck" -vv
+#
+# Remove repair crons on all nodes at once
+- name: 'Rolling repair'
+  vars_prompt:
+    name: cassandra_role_name
+    prompt: "enter name for database without prefix, e.g. 'gundeck' or 'galley'"
+    private: no
+  vars:
+    cassandra_role: "cassandra_{{ cassandra_role_name }}"
+  hosts: "{{ cassandra_role }}_seed:{{ cassandra_role }}"
+  any_errors_fatal: yes
+  tasks:
+    - action: ec2_metadata_facts
+
+    # First let's ensure that are no repairs on _any_ nodes
+    - include: tasks/cassandra_remove_repair_and_daily_backup_cron.yml
+      vars:
+        cassandra_cluster_name: "{{ cassandra_role_name }}"
+    - include: tasks/cassandra_wait_ongoing_repair.yml
+
+# do a rolling repair
+- name: 'Rolling repair'
+  vars:
+    cassandra_role: "cassandra_{{ cassandra_role_name }}"
+  hosts: "{{ cassandra_role }}_seed:{{ cassandra_role }}"
+  any_errors_fatal: yes
+  serial: 1
+  tasks:
+    - include: tasks/cassandra_manual_repair.yml
+
+# run actual playbook again to re-enable cron jobs.
+- import_playbook: "cassandra_{{ cassandra_role_name }}.yml"

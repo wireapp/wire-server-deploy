@@ -1,0 +1,39 @@
+#
+# Patches elasticsearch for CVE-2021-44228 (and in doing so does a rolling restart)
+#
+# Example:
+# khan playbook -e staging elasticsearch_log4shell_mitigation.yml -- -e "elasticsearch_role=elasticsearch_kibana"
+#
+- name: Log4shell mitigation
+  vars_prompt:
+    - name: elasticsearch_role
+      prompt: "Enter the Elasticsearch role of the cluster to restart"
+      private: no
+
+  hosts: '{{ elasticsearch_role }}'
+
+  serial: 1
+  any_errors_fatal: yes
+
+  tasks:
+    - name: install zip for next command
+      apt:
+        name:
+        - zip
+        - unzip
+        state: present
+
+    # the following mitigation patch works on log4j <2.10 (we use 2.7 at the time of writing this)
+    - name: "remove JndiLookup Class from log4j-core jar file to avoid a possible abuse from log4shell' CVE-2021-44228 "
+      shell: >
+        EXISTS=$(unzip -l /opt/elasticsearch/lib/log4j-core-*.jar | grep -i jndilookup);
+        if [ ! -z $EXISTS ]; then
+          zip -q -d /opt/elasticsearch/lib/log4j-core-*.jar org/apache/logging/log4j/core/lookup/JndiLookup.class;
+        else
+          echo "JndiLookup not found; already deleted by a previous run most likely.";
+        fi
+
+    # next, restart the elasticsearch process to unload this class from the process.
+    - include: tasks/elasticsearch_cluster_healthy.yml
+    - include: tasks/elasticsearch_down.yml
+    - include: tasks/elasticsearch_up.yml

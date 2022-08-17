@@ -1,0 +1,20 @@
+---
+- name: restart cassandra nodes
+  vars_prompt:
+    - name: 'cassandra_role'
+      prompt: "Enter the Cassandra role you'd like to rolling restart, like cassandra_galley. _seed suffix roles will be added"
+      private: no
+
+  # This has the side-effect of running _seed hosts last. If it's going to fail, it better not be the seed node.
+  hosts: "{{ cassandra_role }}:{{ cassandra_role }}_seed"
+
+  any_errors_fatal: yes
+  gather_facts: no
+  serial: 1
+
+  tasks:
+    - action: ec2_metadata_facts
+
+    - include: tasks/cassandra_cluster_healthy.yml
+    - include: tasks/cassandra_down.yml
+    - include: tasks/cassandra_up.yml

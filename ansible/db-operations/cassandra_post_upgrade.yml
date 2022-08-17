@@ -1,0 +1,33 @@
+#
+# Follow the guidelines described on the wiki
+# https://github.com/zinfra/backend-wiki/wiki/Cassandra-Cluster-upgrade
+#
+- name: Re-add the removed cronjobs, if the cluster is healthy
+  vars_prompt:
+    - name: 'cluster_name'
+      prompt: "Enter the cluster name you plan to upgrade, like galley. cassandra and cassandra_seed will be added"
+      private: no
+
+  hosts: "cassandra_{{ cluster_name }}_seed:cassandra_{{ cluster_name }}"
+
+  any_errors_fatal: yes
+  gather_facts: no
+  serial: 1
+
+  vars_files:
+    - roles/cassandra/defaults/main.yml
+
+  tasks:
+    - action: ec2_metadata_facts
+    - include: tasks/cassandra_cluster_healthy.yml
+      vars:
+        cassandra_role: "cassandra_{{ cluster_name }}"
+        # TODO: Adjust this value accordingly!
+        expected_num_schemas: 1
+
+    - name: 'Cassandra: upgrade sstables'
+      shell: nodetool upgradesstables
+
+    - include: roles/cassandra/tasks/cron.yml
+      vars:
+        cassandra_cluster_name: "{{ cluster_name }}"

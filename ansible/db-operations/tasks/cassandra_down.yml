@@ -1,0 +1,9 @@
+- name: 'Cassandra: draining node...'
+  shell: nodetool drain
+
+- name: 'Cassandra: mark service as down'
+  command: sv once cassandra
+
+- name: 'Cassandra: stopping the daemon'
+  shell: nodetool stopdaemon 2>/dev/null
+  ignore_errors: true

@@ -1,0 +1,8 @@
+---
+- name: 'Elasticsearch: toggle shard allocation'
+  shell: >
+    curl -sSf -XPUT http://localhost:{{ routing_table[elasticsearch_role].http.exposed }}/_cluster/settings -d '{
+        "transient" : {
+            "cluster.routing.allocation.exclude._ip": {% if exclude is defined %}"{{ exclude }}"{% else %}null{% endif %}
+        }
+    }'

@@ -1,0 +1,25 @@
+---
+#
+# Does a rolling restart of the specified elasticsearch cluster. I did
+# not manage to use registered facts in the 'hosts' line of a play,
+# hence the role needs to be specified on the command line for the time
+# being.
+#
+# Example:
+# khan playbook -e bn elasticsearch_restart.yml -- -e "elasticsearch_role=elasticsearch_kibana"
+#
+- name: Restart Elasticsearch Cluster
+  vars_prompt:
+    - name: elasticsearch_role
+      prompt: "Enter the Elasticsearch role of the cluster to restart"
+      private: no
+
+  hosts: '{{ elasticsearch_role }}'
+
+  serial: 1
+  any_errors_fatal: yes
+
+  tasks:
+    - include: tasks/elasticsearch_cluster_healthy.yml
+    - include: tasks/elasticsearch_down.yml
+    - include: tasks/elasticsearch_up.yml

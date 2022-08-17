@@ -1,0 +1,47 @@
+#
+# You will need to define:
+#  - path_to_backup_folders (as defined by http://man7.org/linux/man-pages/man1/find.1.html)
+#
+- name: Show disk size before at /mnt
+  shell: df -h /mnt
+  register: df_size
+
+- name: Show current disk state
+  debug:
+    msg: "{{ df_size.stdout_lines }}"
+
+- name: Gather size before
+  # -c simply gives you a grand total, just to have an idea of the difference
+  # in size.
+  # The last line will look like: "<size> total"
+  shell: du -c {{ path_to_backup_folders }} | tail -n 1 | awk '{ print $1 }'
+  register: backup_folders_size
+
+- debug:
+    msg: "Size of backup folder = {{ backup_folders_size.stdout }}"
+
+- name: Find all files in the backup folder
+  shell: >
+    find {{ path_to_backup_folders }} -type f
+  register: files_to_delete
+  ignore_errors: yes
+  # If there are no files/directory, this fails but that's OK. Returns `[]`
+  # python is hard but: https://docs.ansible.com/ansible/2.7/user_guide/playbooks_error_handling.html
+
+- name: Show files to be deleted
+  debug:
+    msg: "{{ files_to_delete.stdout_lines }}"
+
+- name: Delete all files
+  file:
+    path: "{{ item }}"
+    state: absent
+  with_items: "{{ files_to_delete.stdout_lines }}"
+
+- name: Gather size after
+  # -c simply gives you a grand total, just to have an idea of the difference
+  shell: du -c {{ path_to_backup_folders }} | tail -n 1 | awk '{ print $1 }'
+  register: backup_folders_size
+
+- debug:
+    msg: "Size of backup folders = {{ backup_folders_size.stdout }}"
