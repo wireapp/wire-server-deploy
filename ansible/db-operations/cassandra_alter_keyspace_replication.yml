@@ -2,21 +2,16 @@
 # See https://docs.k8ssandra.io/tasks/migrate/
 - name: 'alter keyspace replication'
   vars_prompt:
-    - name: cassandra_role_name
-      prompt: "enter name for database without prefix, e.g. 'gundeck' or 'galley'"
+    - name: old
+      promt: "name of old datacenter"
       private: no
-
+    - name: k8ssandra_dc_name
+      promt: "name of new datacenter in k8ssandra"
+      private: no
     - name: phase
       prompt: "enter phase: BEFORE (before connecting to k8ssandra), TWO (for replicating to two datacentres once they are alreay connected)"
       private: no
-      # Note, a third phase, DRAIN-EC2CLASSIC (once you wish to stop writing
-      # data to ec2classic) could be added; though probably it should be run
-      # against a node inside k8ssandra so we can't use ansible for that.
-  vars:
-    cassandra_role: "cassandra_{{ cassandra_role_name }}"
-    k8ssandra_dc_name: "{{ cassandra_role_name }}-eks"
-    main_keyspace: "{{ cassandra_role_name }}"
-  hosts: "{{ cassandra_role }}_seed[0]"
+  hosts: cassandra
   any_errors_fatal: yes
   tasks:
     - name: phase check
@@ -29,12 +24,15 @@
     - when: phase == "BEFORE"
       name: alter keyspace BEFORE
       shell: >
-        /opt/cassandra/bin/cqlsh $(hostname) -e "ALTER KEYSPACE {{ item }} WITH replication = {'class': 'NetworkTopologyStrategy', 'eu-west': 3}"
+        /opt/cassandra/bin/cqlsh $(hostname) -e "ALTER KEYSPACE {{ item }} WITH replication = {'class': 'NetworkTopologyStrategy', '{{ old }}': 3}"
       loop:
         - "system_auth"
         - "system_traces"
         - "system_distributed"
-        - "{{ main_keyspace }}" # the main keyspace already has NetworkTopologyStrategy set; but we include it here again so a rollback from TWO->BEFORE is possible
+        - "spar"
+        - "brig"
+        - "gundeck"
+        - "galley"
 
     - when: phase == "BEFORE"
       debug:
@@ -43,7 +41,7 @@
     - when: phase == "TWO"
       name: alter keyspace to replicate to TWO datacentres
       shell: >
-        /opt/cassandra/bin/cqlsh $(hostname) -e "ALTER KEYSPACE {{ item }} WITH replication = {'class': 'NetworkTopologyStrategy', 'eu-west': 3, '{{ k8ssandra_dc_name }}': 3}"
+        /opt/cassandra/bin/cqlsh $(hostname) -e "ALTER KEYSPACE {{ item }} WITH replication = {'class': 'NetworkTopologyStrategy', '{{ old }}': 3, '{{ k8ssandra_dc_name }}': 3}"
       loop:
         - "system_auth"
         - "system_traces"

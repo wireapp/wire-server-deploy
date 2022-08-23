@@ -1,15 +1,7 @@
 # Only checks if a given cassandra cluster is healthy
 #
-# Usage example:
-#
-#   khan playbook -e staging cassandra_healthy.yml -- -e cassandra_role=cassandra_spar
-
 - name: Check cluster is healthy
-  vars_prompt:
-    - name: 'cassandra_role'
-      prompt: "Enter the Cassandra role you'd like to check for health, like cassandra_galley. _seed suffix will be added"
-      private: no
-  hosts: "{{ cassandra_role }}:{{ cassandra_role }}_seed"
+  hosts: cassandra
   any_errors_fatal: yes
   gather_facts: no
   tasks:

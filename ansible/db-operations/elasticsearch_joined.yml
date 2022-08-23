@@ -1,9 +1,8 @@
 #
-# Example:
-# khan playbook -e staging elasticsearch_joined.yml -- -e "elasticsearch_role=elasticsearch_kibana" -e "ip_to_check=1.2.3.4"
+# ansible-playbook elasticsearch_joined.yml -e "ip_to_check=1.2.3.4"
 #
 - name: Wait for a given new node to join the cluster and shard relocations to settle
-  hosts: '{{ elasticsearch_role }}'
+  hosts: elasticsearch
   gather_facts: no
   any_errors_fatal: yes
   tasks:
