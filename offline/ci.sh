@@ -68,21 +68,21 @@ charts=(
   # seem to exist on quay.io
   wire-develop/nginx-ingress-controller
   wire-develop/nginx-ingress-services
-  wire/reaper
-  wire/cassandra-external
-  wire/databases-ephemeral
-  wire/demo-smtp
-  wire/elasticsearch-external
-  wire/fake-aws
-  wire/minio-external
-  wire/wire-server
+  wire-develop/reaper
+  wire-develop/cassandra-external
+  wire-develop/databases-ephemeral
+  wire-develop/demo-smtp
+  wire-develop/elasticsearch-external
+  wire-develop/fake-aws
+  wire-develop/minio-external
+  wire-develop/wire-server
   # TODO: uncomment once its dependencies are pinned!
   # local-path-provisioner
   # Has a weird dependency on curl:latest. out of scope
   # wire-server-metrics
   # fluent-bit
   # kibana
-  # wire/federator
+  wire-develop/federator
 )
 
 calling_charts=(
