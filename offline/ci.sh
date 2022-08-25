@@ -85,6 +85,7 @@ charts=(
   # wire-server-metrics
   # fluent-bit
   # kibana
+  wire/federator
 )
 
 # TODO: Awaiting some fixes in wire-server regarding tagless images
