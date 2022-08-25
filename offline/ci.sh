@@ -100,9 +100,9 @@ helm repo add wire-develop https://s3-eu-west-1.amazonaws.com/public.wire.com/ch
 helm repo update
 
 # wire_version=$(helm show chart wire/wire-server | yq -r .version)
-wire_version="4.9.36-hotfix.11"
+wire_version="4.9.36-hotfix.15"
 
-wire_calling_version="4.9.36-hotfix.11"
+wire_calling_version="4.9.36-hotfix.15"
 
 # Download zauth; as it's needed to generate certificates
 echo "quay.io/wire/zauth:$wire_version" | create-container-dump containers-adminhost
@@ -116,7 +116,6 @@ for chartName in "${calling_charts[@]}"; do
 done
 
 # HACKS!
-sed -i -Ee 's/2022-05-04-production\.0-v0\.29\.7-0-a6f2ded/2022-06-29-RC/' "$(pwd)"/charts/wire-server/charts/webapp/values.yaml
 sed -i -Ee 's/v0\.6\.0-rc\.1/v0.6.0-rc.2/' "$(pwd)"/charts/restund/Chart.yaml
 sed -i -Ee 's/2\.1\.19/3.1.3/' "$(pwd)"/charts/sftd/Chart.yaml
 
