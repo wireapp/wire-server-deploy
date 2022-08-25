@@ -86,8 +86,8 @@ charts=(
 )
 
 calling_charts=(
-  wire/sftd
-  wire/restund
+  wire-develop/sftd
+  wire-develop/restund
 )
 
 # TODO: Awaiting some fixes in wire-server regarding tagless images
