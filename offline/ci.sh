@@ -82,7 +82,7 @@ charts=(
   # wire-server-metrics
   # fluent-bit
   # kibana
-  wire-develop/federator
+  # wire-develop/federator
 )
 
 calling_charts=(
