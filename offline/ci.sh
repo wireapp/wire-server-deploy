@@ -85,7 +85,6 @@ charts=(
   # wire-server-metrics
   # fluent-bit
   # kibana
-  wire/federator
 )
 
 # TODO: Awaiting some fixes in wire-server regarding tagless images
@@ -106,6 +105,11 @@ mkdir -p ./charts
 for chartName in "${charts[@]}"; do
   (cd ./charts; helm pull --version "$wire_version" --untar "$chartName")
 done
+
+echo "Patching wire-server to include federator... (if this fails, most likely the Helm chart's files changed)"
+sed -i -Ee 's/federator: false/federator: true/' "$(pwd)"/charts/wire-server/values.yaml
+sed -i -Ee 's/useSharedFederatorSecret: false/useSharedFederatorSecret: true/' "$(pwd)"/charts/wire-server/charts/federator/values.yaml
+echo "Done with patching."
 
 for chartPath in "$(pwd)"/charts/*; do
   echo "$chartPath"
