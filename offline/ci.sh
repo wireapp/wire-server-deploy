@@ -119,6 +119,8 @@ done
 # This is needed to bundle it's image.
 sed -i -Ee 's/federator: false/federator: true/' "$(pwd)"/values/wire-server/prod-values.example.yaml
 
+cat  "$(pwd)"/charts/wire-server/values.yaml
+
 for chartPath in "$(pwd)"/charts/*; do
   echo "$chartPath"
 done | list-helm-containers | create-container-dump containers-helm
