@@ -120,7 +120,8 @@ sed -i -Ee 's/v0\.6\.0-rc\.1/v0.6.0-rc.2/' "$(pwd)"/charts/restund/Chart.yaml
 sed -i -Ee 's/2\.1\.19/3.1.3/' "$(pwd)"/charts/sftd/Chart.yaml
 
 #echo "Patching wire-server to include federator"
-#sed -i -Ee 's/federator: false/federator: true/' "$(pwd)"/charts/wire-server/values.yaml
+sed -i -Ee 's/federator: false/federator: true/' "$(pwd)"/charts/wire-server/values.yaml
+sed -i -Ee 's/useSharedFederatorSecret: false/useSharedFederatorSecret: true/' "$(pwd)"/charts/wire-server/charts/federator/values.yaml
 
 cat  "$(pwd)"/charts/wire-server/values.yaml
 
