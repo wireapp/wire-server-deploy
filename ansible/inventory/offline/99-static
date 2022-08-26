@@ -45,6 +45,8 @@
 [all:vars]
 # If you need to ssh as a user that's not the same user as the one running ansible
 # set ansible_user=<some_user>
+# set ansible_pass=<some password>
+# set ansible_sudo_pass=<some password>
 # Keep in mind this user needs to be able to sudo passwordless.
 # ansible_user = root
 #
