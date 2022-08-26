@@ -9,6 +9,9 @@
 
     # Put a hold on the ES package.
     # Updating ES to a different version 7.x currently breaks its integration with Wire.
+    #
+    # Keep this version aligned with that of wire-server/charts/elasticsearch-ephemeral.
+    # Otherwise, the usage of this version would be completely untested!
     es_version: "6.8.23"
     es_version_lock: true
 
