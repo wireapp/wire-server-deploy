@@ -83,10 +83,10 @@ brig:
   turnStatic:
     v1: []
     v2:
-      - "turn:<IP of restund1>:80"
-      - "turn:<IP of restund2:80"
-      - "turn:<IP of restund1>:80?transport=tcp"
-      - "turn:<IP of restund2>:80?transport=tcp"
+      # - "turn:<IP of restund1>:80"
+      # - "turn:<IP of restund2:80"
+      # - "turn:<IP of restund1>:80?transport=tcp"
+      # - "turn:<IP of restund2>:80?transport=tcp"
       # - "turns:<IP of restund1>:443?transport=tcp"
       # - "turns:<IP of restund2>:443?transport=tcp"
 
@@ -268,7 +268,6 @@ team-settings:
   replicaCount: 1
 #  image:
 #    tag: some-tag (only override if you want a newer/different version than what is in the chart)
-
   config:
     externalUrls:
       backendRest: nginz-https.example.com
