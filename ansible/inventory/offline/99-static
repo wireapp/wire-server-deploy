@@ -129,6 +129,7 @@ kube-node
 # restund1
 # restund2
 
+# Add all cassandra nodes here
 [cassandra]
 # cassandra1
 # cassandra2
@@ -138,6 +139,7 @@ kube-node
 [cassandra_seed]
 # cassandra1
 
+# Add all elasticsearch nodes here
 [elasticsearch]
 # elasticsearch1
 # elasticsearch2
@@ -147,6 +149,7 @@ kube-node
 [elasticsearch_master:children]
 elasticsearch
 
+# Add all minio nodes here
 [minio]
 # minio1
 # minio2
