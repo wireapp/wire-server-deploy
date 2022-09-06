@@ -13,7 +13,7 @@ select ubuntu 18.04 or ubuntu 20.04 on an ax101 dedicated server.
 
 returned IP: 65.21.197.76
 
-## Create demo user.
+## tighten security.
 
 ### log in as root.
 
@@ -27,6 +27,38 @@ When prompted about the ssh config, just accept the maintainer's version.
 apt update
 apt upgrade -y
 ```
+
+### Reboot
+reboot to load a new, patched kernel.
+```
+reboot
+```
+
+### Disable password login for sshd
+
+Make sure the following values are configured in /etc/ssh/sshd_config:
+```
+# this is the important value
+PasswordAuthentication no
+
+# make sure PAM and Challenge Response is also disabled
+ChallengeResponseAuthentication no
+UsePAM no
+
+# don't allow root to login via password
+PermitRootLogin prohibit-password
+```
+### re-start SSH
+```
+service ssh restart
+```
+
+### Install fail2ban
+```
+apt install fail2ban
+```
+
+## Create demo user.
 
 ### create our 'demo' user
 ```
@@ -50,24 +82,28 @@ chmod 440 /etc/sudoers.d/10-demo_user
 ```
 
 ## ssh in as demo user.
+
 on the remote machine:
 ```
 logout
 ```
+
 on the local machine:
 ```
 ssh -i ~/.ssh/id_ed25519 demo@65.21.197.76 -o serveraliveinterval=60
 ```
 
-### use the demo user to reboot to apply security patches
-This step ensures sudo is working, before you reboot the machine.
+## disable root login via ssh
+
+use sudo to edit /etc/ssh/sshd_config, and set the following:
 ```
-sudo reboot
+# even better: don't allow to login as root via ssh at all
+PermitRootLogin no
 ```
 
-## ssh in as demo user.
+### re-start SSH
 ```
-ssh -i ~/.ssh/id_ed25519 demo@65.21.197.76 -o serveraliveinterval=60
+sudo service ssh restart
 ```
 
 ### Install screen
@@ -94,13 +130,15 @@ tar -xzf ../wire-server-deploy-static-*.tgz
 ```
 
 ### extract debian archive
+We'll use the docker that is in the archive.
+
 ```
 tar -xf debs.tar
 ```
 
 ### (FIXME: add iptables to the repo) Install Docker from debian archive.
 ```
-sudo apt install iptables
+sudo apt -y install iptables
 sudo dpkg -i debs/public/pool/main/d/docker-ce/docker-ce-cli_*.deb
 sudo dpkg -i debs/public/pool/main/c/containerd.io/containerd.io_*.deb 
 sudo dpkg -i debs/public/pool/main/d/docker-ce/docker-ce_*.deb
@@ -139,12 +177,9 @@ sudo ufw enable
 ```
 sudo apt install git -y
 git clone https://github.com/wireapp/wire-server-deploy.git
-cd wire-server-deploy
-git checkout kvm_support
-cd ..
 cp -a wire-server-deploy/kvmhelpers/ ./
 cp -a wire-server-deploy/bin/newvm.sh ./bin
-cp -a wire-server-deploy/ansible/setup-offline-sources.sh ./ansible
+cp -a wire-server-deploy/ansible/setup-offline-sources.yml ./ansible
 chmod 550 ./bin/newvm.sh
 ```
 
@@ -166,13 +201,17 @@ sudo usermod -a -G kvm demo
 ```
 
 ### log out, log back in, and return to Wire-Server.
+
+you have to logout twice, once to get out of screen, once to get out of the machine.
 ```
+logout
 logout
 ```
 
 ```
 ssh -i ~/.ssh/id_ed25519 demo@65.21.197.76 -o serveraliveinterval=60
 cd Wire-Server/
+screen
 ```
 
 ### install bridge-utils
@@ -283,11 +322,11 @@ select 'choose language'
  * united states
  * no additional.
 select 'Detect network hardware'
- * select 'Continue' to let it install usb-storage.
+ * use tab and enter to select 'Continue' to let it install usb-storage.
 select 'Configure the network'
  * no, no vlan trunking.
  * yes, Auto-configure networking.
- * hit 'Continue' to select the (default) 3 seconds to detect a link.
+ * use tab and enter to hit 'Continue' to select the (default) 3 seconds to detect a link.
  * supply the hostname.
    * for the assethost, type assethost
    * for the first kubernenes node, type 'kubenode1'.
@@ -298,12 +337,12 @@ Select "Choose a mirror of the ubuntu archive"
  * select http
  * select united states
  * select us.archive.ubuntu.com
- * select 'Continue' for no http proxy information
+ * use tab and enter to select 'Continue' for no http proxy information
 select "Download installer components"
- * select no components, hit "Continue"
+ * use tab and enter to continue, selecting no components
 select "Set up Users and Passwords"
- * enable shadow passwords
- * do not allow root login.
+ * yes, enable shadow passwords
+ * no, do not allow root login.
  * full name: demo
  * username: demo
  * password: (given by julia, same for all VMs)
@@ -315,7 +354,7 @@ select 'configure the clock'
  * yes, a berlin timezone is correct.
 select 'detect disks'
 select 'partition disks'
- * guided, use entire disk and set up LVM.
+ * hit down and enter to use 'guided, use entire disk and set up LVM'.
  * pick the only option they give you for disks.
  * select 'All files in one partition'
  * yes, write the changes to disk.
@@ -323,8 +362,8 @@ select 'partition disks'
  * select 'Continue' to consume the entire disk.
  * yes, write the changes to disk.
 select 'Install the base system'
- * install the 'linux generic' kernel.
- * chose 'generic' to install all of the available drivers.
+ * hit enter to install the 'linux generic' kernel.
+ * hit enter to chose 'generic' to install all of the available drivers.
 select 'Configure the package manager'
  * Use restricted software? Yes
  * Use software from the "Universe" component? yes
@@ -334,9 +373,9 @@ select 'Configure the package manager'
  * enable source repositories? No.
  * Select continue to use security archive.
 select 'Select and install software'
- * select "Install security updates automatically"
- * select "OpenSSH Server", and hit continue.
-select "Install the GRUB bootloader on a first disk"
+ * use down and enter to select "Install security updates automatically"
+ * scroll to the second to last item, and use space to select "OpenSSH Server", and hit continue.
+select "Install the GRUB bootloader on a hard disk"
  * install the GRUB bootloader to the master boot record? yes.
  * select only device displayed (/dev/sda).
  * no to installing Extra EFI just-in-case.
@@ -356,5 +395,3 @@ switch to docs.md.
 skip to the step where we source the offline environment.
 
 when editing the inventory, create 'ansnode' entries, rather than separate cassandra, elasticsearch, and minio nodes.
-
-
