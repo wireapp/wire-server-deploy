@@ -429,7 +429,7 @@ mv ./values/nginx-ingress-services/{prod-secrets.example.yaml,secrets.yaml}
 
 #### Bring your own certificates
 
-if you generated your SSL celsrtificates yourself, there are two ways to give these to wire:
+if you generated your SSL certificates yourself, there are two ways to give these to wire:
 
 ##### From the command line
 if you have the certificate and it's corresponding key available on the filesystem, copy them into the root of the Wire-Server directory, and:
