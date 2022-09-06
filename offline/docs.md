@@ -384,7 +384,7 @@ ip ro | sed -n "/default/s/.* dev \([enps0-9]*\) .*/export OUTBOUNDINTERFACE=\1/
 
 This will return a shell command setting a variable to your default interface. copy and paste it. next, supply your outside IP address:
 ```
-export PUBLICADDRESS=<your.ip.address.here>
+export PUBLICIPADDRESS=<your.ip.address.here>
 ```
 
 Select one of your kubernetes nodes that you are fine with losing service if it is offline:
@@ -411,6 +411,7 @@ cert-manager has a requirement on being able to reach the kubernetes on it's ext
 
 on an IP Masquerading router, you can redirect outgoing traffic from your cluster, that is to say, when the cluster asks to connect to your external IP, you can instead choose to send it to a kubernetes node inside of the cluster.
 ```
+export INTERNALINTERFACE=br0
 sudo iptables -t nat -A PREROUTING -i $INTERNALINTERFACE -d $PUBLICIPADDRESS -p tcp -m multiport --dports 80,443 -j DNAT --to-destination $KUBENODE1IP
 ```
 
@@ -451,12 +452,48 @@ d helm install nginx-ingress-services ./charts/nginx-ingress-services --values .
 
 #### Use letsencrypt generated certificates
 
+first, download cert manager, and place it in the appropriate location:
+```
+wget https://charts.jetstack.io/charts/cert-manager-v1.9.1.tgz
+mkdir tmp
+cd tmp
+tar -xzf ../cert-manager-*.tgz
+ls
+cd ..
+ mv tmp/cert-manager/ charts/
+rm -rf tmp
+```
+
+edit values/nginx-ingress-services/values.yaml , to tell ingress-ingress-services to use cert-manager:
+ * set useCertManager: true
+ * set certmasterEmail: your.email.address
+
+set your domain name with sed:
+```
+sed -i "s/example.com/YOURDOMAINHERE/" values/nginx-ingress-services/values.yaml
+```
+
 UNDER CONSTRUCTION:
 ```
 d kubectl create namespace cert-manager-ns
 d helm upgrade --install -n cert-manager-ns --set 'installCRDs=true' cert-manager charts/cert-manager
 d helm upgrade --install nginx-ingress-services charts/nginx-ingress-services -f values/nginx-ingress-services/values.yaml
 ```
+
+#### Old wire-server releases
+
+on older wire-server releases, nginx-ingress-services may fail to deploy. some version numbers of services have changed. make the following changes, and try to re-deploy till it works.
+
+certificate.yaml:
+v1alpha2 -> v1
+remove keyAlgorithm keySize keyEncoding
+
+certificate-federator.yaml:
+v1alpha2 -> v1
+remove keyAlgorithm keySize keyEncoding
+
+issuer:
+v1alpha2 -> v1
 
 ## Installing sftd
 
