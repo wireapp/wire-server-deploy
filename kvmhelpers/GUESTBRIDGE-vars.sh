@@ -1,3 +1,5 @@
+#!/bin/sh
+
 # The bridge shared by all VMs. if you change this, you should probably reboot.
 BRIDGE=br1
 
