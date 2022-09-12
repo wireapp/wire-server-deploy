@@ -2,7 +2,7 @@
 
 sh ./GUESTBRIDGE-vars.sh
 
-$SUDO $IP link set $1 down promisc off
+$SUDO "$IP" link set "$1" down promisc off
 #$SUDO $IFCONFIG $1 0.0.0.0 promisc down
 
 # remove ourself from the bridge.
