@@ -78,7 +78,7 @@ sed -i "s/^eth1=/#eth1=/" "$VM_NAME"/start_kvm.sh
 sed -i "s/^CPUS=.*/CPUS=${c}/" "$VM_NAME"/start_kvm.sh
 sed -i 's/\(.*\)CURSES=.*/\1CURSES="-nographic -device sga"/' "$VM_NAME"/start_kvm.sh
 
-if [ ! -z "$q" ]; then
+if [ -n "$q" ]; then
     echo "forcing QEMU."
     sed -i "s=/usr/bin/kvm=/usr/bin/qemu-system-x86_64=" "$VM_NAME"/start_kvm.sh
 fi
