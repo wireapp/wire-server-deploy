@@ -6,7 +6,7 @@ $SUDO "$IP" link set "$1" down promisc off
 #$SUDO $IFCONFIG $1 0.0.0.0 promisc down
 
 # remove ourself from the bridge.
-$SUDO $BRCTL delif $BRIDGE $1
+$SUDO "$BRCTL" delif "$BRIDGE" "$1"
 
 # this script is not responsible for destroying the tap device.
 #ip tuntap del dev $1
