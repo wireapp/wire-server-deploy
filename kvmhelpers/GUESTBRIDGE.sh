@@ -10,8 +10,8 @@ USER=$(whoami)
 
     if [ -n "$BRIDGEDEV" ]; then
         {
-            $SUDO $BRCTL addif $BRIDGE $1
-            $SUDO $IP link set $1 up promisc on
+            $SUDO "$BRCTL" addif "$BRIDGE" "$1"
+            $SUDO "$IP" link set "$1" up promisc on
         }
     else
         {
