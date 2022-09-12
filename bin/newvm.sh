@@ -1,6 +1,6 @@
 #!/bin/bash
 
-usage() { echo "Usage: $0 usage:" && grep ") \#" $0 && echo "        <VM name>" ; 1>&2; exit 1; }
+usage() { echo "Usage: $0 usage:" && grep ") \#" "$0" && echo "        <VM name>" 1>&2; exit 1; }
 
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
