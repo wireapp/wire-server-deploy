@@ -11,7 +11,7 @@ $SUDO "$BRCTL" delif "$BRIDGE" "$1"
 # this script is not responsible for destroying the tap device.
 #ip tuntap del dev $1
 
-BRIDGEDEV=$($SUDO $BRCTL show | grep -E ^"$BRIDGE" | grep tap)
+BRIDGEDEV=$($SUDO "$BRCTL" show | grep -E ^"$BRIDGE" | grep tap)
 
 if [ -z "$BRIDGEDEV" ]; then
     {
