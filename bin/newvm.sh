@@ -17,6 +17,9 @@ while getopts ":qm:d:c:" o; do
 	    ;;
 	q) # use qemu instead of kvm.
 	    q=1
+    *) # un-handled cases
+        usage 
+        ;;
     esac
 done
 shift $((OPTIND-1))
