@@ -43,4 +43,4 @@ USER=$(whoami)
     fi
 
     echo "Bridge ifup completed."
-} 2>&1 >tapbridge.ifup
+} > tapbridge.ifup 2>&1 
