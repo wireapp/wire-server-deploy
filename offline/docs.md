@@ -576,3 +576,34 @@ d helm upgrade --install sftd ./charts/sftd \
   --set-file tls.key=/path/to/tls.key \
   --values values/sftd/values.yaml
 ```
+
+### (Optional) Health-Check deployed k8s cluster
+There might be possibility that the provided compute resources does not match the requried resources for deploying whole application, that might lead to cluster being in unhealthy state. Some of the healh checks are -
+
+-> Check if enough resources are available on the worker nodes -
+```
+d kubectl describe node <node_name>
+```
+
+For each node make sure the Allocated resources(last section returned from the above command) have Limits less than 100%, if not, get all the deployments
+```
+d kubectl get deployments
+```
+Edit the resources section and decrese the Limits for deployments having higher resource allocation.
+```
+d kubectl edit deployment <deployment_name>
+```
+
+-> Check if cluster control-plane is in healthy state
+```
+d kubectl get cs
+```
+The above command should not return any error message on the component's status
+
+In case Readiness and Startup probes are failing for the kube-schedular or controller-manger pods.
+In each master node, remove the ```--port=0``` argument from
+```/etc/kubernetes/manifests/kube-scheduler.yaml``` and ```/etc/kubernetes/manifests/kube-controller-manager.yaml``` file and restart kubelet service
+
+```
+sudo systemctl restart kubelet.service
+```
