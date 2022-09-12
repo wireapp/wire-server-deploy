@@ -4,7 +4,7 @@ usage() { echo "Usage: $0 usage:" && grep ") \#" "$0" && echo "        <VM name>
 
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
-while getopts ":hqm:d:c:" o; do
+while getopts ":qm:d:c:" o; do
     case "${o}" in
 	d) # set amount of disk, in gigabytes
 	    d=${OPTARG}
