@@ -16,8 +16,8 @@ BRIDGEDEV=$($SUDO "$BRCTL" show | grep -E ^"$BRIDGE" | grep tap)
 if [ -z "$BRIDGEDEV" ]; then
     {
         # we are the last one out. burn the bridge.
-        $SUDO $IFCONFIG $BRIDGE down
-        $SUDO $BRCTL delif $BRIDGE $1
-        $SUDO $BRCTL delbr $BRIDGE
+        $SUDO "$IFCONFIG" "$BRIDGE" down
+        $SUDO "$BRCTL" delif "$BRIDGE" "$1"
+        $SUDO "$BRCTL" delbr "$BRIDGE"
     }
 fi
