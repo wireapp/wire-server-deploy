@@ -63,7 +63,7 @@ echo "disk size = ${d} gigabytes"
 echo "memory = ${m} megabytes"
 echo "CPUs: ${c}"
 echo "hostname: $VM_NAME"
-if [ ! -z "$q" ]; then
+if [ -n "$q" ]; then
     echo "USE QEMU"
 fi
 
