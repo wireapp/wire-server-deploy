@@ -31,7 +31,7 @@ fi
 
 VM_NAME=$1
 
-if [ ! -z $2 ]; then
+if [ -n $2 ]; then
     echo "ERROR: too many arguments!" 1>&2
     usage
 fi
