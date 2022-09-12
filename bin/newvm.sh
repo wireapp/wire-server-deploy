@@ -53,7 +53,7 @@ if [ ! -d "./kvmhelpers" ]; then
     exit 1
 fi
 
-if [ -d $VM_NAME ]; then
+if [ -d "$VM_NAME" ]; then
     echo "ERROR: directory for vm $VM_NAME already exists." 1>&2
     echo "no actions performed."
     exit 1
