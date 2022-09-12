@@ -15,15 +15,15 @@ USER=$(whoami)
         }
     else
         {
-            $SUDO $BRCTL addbr $BRIDGE
+            $SUDO "$BRCTL" addbr "$BRIDGE"
             if [ "$HOSTROUTE" -eq "0" ]; then
-                $SUDO $IP addr add $BRIDGEIP/24 broadcast $BRIDGEBROADCAST dev $BRIDGE
+                $SUDO "$IP" addr add "$BRIDGEIP"/24 broadcast "$BRIDGEBROADCAST" dev "$BRIDGE"
             fi
-            $SUDO $BRCTL stp $BRIDGE off
+            $SUDO "$BRCTL" stp "$BRIDGE" off
             #	$SUDO $IP tuntap add dev $1 mode tap user $USER
-            $SUDO $IP link set $1 up promisc on
-            $SUDO $BRCTL addif $BRIDGE $1
-            $SUDO $IP link set $BRIDGE up
+            $SUDO "$IP" link set "$1" up promisc on
+            $SUDO "$BRCTL" addif "$BRIDGE" "$1"
+            $SUDO "$IP" link set "$BRIDGE" up
             if [ "$USEDHCP" -eq "0" ]; then
                 $SUDO service isc-dhcp-server stop
                 $SUDO service isc-dhcp-server start
