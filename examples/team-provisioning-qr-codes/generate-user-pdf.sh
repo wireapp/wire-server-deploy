@@ -1,12 +1,17 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
-# The following environment variables must be set in order to query invite
-# codes from the database and generate invite and deeplink QR codes:
+# The following environment variables must be set in order to query invitations
+# links via teams API and generate invite and deeplink QR codes:
 #
-# TEAM_URL='https://teams.wire.example.com'
-# DEEPLINK_URL='https://assets.wire.example.com/public/deeplink.html
-# CQLSH='ssh admin@cassandra.example.com cqlsh'
+# TEAM_ADMIN_EMAIL="gCkzC3AP@example.com"
+# TEAM_ADMIN_PASSWORD="tIFfm5Hw"
+# TEAM_ID="9cabf984-7a35-4cd5-9891-850c64f9195a"
+# NGINZ_HOST="nginz-https.wire.example.com"
+# DEEPLINK_URL="https://assets.wire.example.com/public/deeplink.html"
 # INSTRUCTIONS=./instructions.txt
+#
+# This script is called with the email address of the user to create:
+# ./generate-user-pdf.sh john.doe@nonexistent-domain.example
 
 old_ifs="$IFS"
 
@@ -24,12 +29,16 @@ error() {
     exit 1
 }
 
-if [ -z "$TEAM_URL" ]; then
-    error 'TEAM_URL is not set'
+if [ -z "$TEAM_ADMIN_EMAIL" ]; then
+    error 'TEAM_ADMIN_EMAIL is not set'
+elif [ -z "$TEAM_ADMIN_PASSWORD" ]; then
+    error 'TEAM_ADMIN_PASSWORD is not set'
+elif [ -z "$NGINZ_HOST" ]; then
+    error 'NGINZ_HOST is not set'
+elif [ -z "$TEAM_ID" ]; then
+    error 'TEAM_ID is not set'
 elif [ -z "$DEEPLINK_URL" ]; then
     error 'DEEPLINK_URL is not set'
-elif [ -z "$CQLSH" ]; then
-    error 'CQLSH is not set'
 elif [ -z "$INSTRUCTIONS" ]; then
     error 'INSTRUCTIONS is not set'
 elif [ ! -f "$INSTRUCTIONS" ] || [ ! -r "$INSTRUCTIONS" ]; then
@@ -53,34 +62,43 @@ if echo "$user_email" | grep -Fq "'"; then
     error 'email address contains invalid character'
 fi
 
-cql_query='select code from brig.team_invitation_email where email = '"'$user_email'"';'
+echo "info: get access token by logging in"
+access_token=$(curl --location --request POST "https://$NGINZ_HOST/login" \
+--header 'Content-Type: application/json' \
+--data-raw "{
+    \"email\": \"$TEAM_ADMIN_EMAIL\",
+    \"password\": \"$TEAM_ADMIN_PASSWORD\"
+}" | jq -r .access_token)
 
-# perform cassandra query
-cass_output="$($CQLSH -e "$cql_query")"
-
-if [ "$?" -ne 0 ]; then
-    error 'error when executing cassandra query!'
+if [ "$access_token" = "null" ] ; then
+    error "Cannot login. Are the credentials correct?"
 fi
 
-# strip formatting from cqlsh output
-setsep ''
-cass_results=$(echo -n "$cass_output" | sed -Ee '1,3d' -e '/^$/,$d' -e 's/^ //')
-resetsep
+echo "info: enable feature"
+feature_status=$(curl --location --request PUT "https://$NGINZ_HOST/teams/$TEAM_ID/features/exposeInvitationURLsToTeamAdmin" \
+--header "Authorization: Bearer $access_token" \
+--header 'Content-Type: application/json' \
+--data-raw '{
+    "status": "enabled"
+}' | jq -r .status)
 
-# split output
-setsep $'\n'
-cass_rows=($(echo -n "$cass_results"))
-resetsep
-
-if [ "${#cass_rows[@]}" -gt 1 ]; then
-    error 'email address is associated with more than one invite code'
-elif [ "${#cass_rows[@]}" -eq 0 ]; then
-    error 'email address is not associated with any invite codes'
+if [ "$feature_status" != "enabled" ] ; then
+    error "Cannot set feature status. Please check server configuration."
 fi
 
-# assemble output data
-invite_code="$cass_rows"
-invite_url="$TEAM_URL"'/join/?team-link='"$invite_code"
+echo "info: create account and get invitation url"
+invite_url=$(curl --location --request POST "https://$NGINZ_HOST/teams/$TEAM_ID/invitations" \
+--header "Authorization: Bearer $access_token" \
+--header 'Content-Type: application/json' \
+--data-raw "{
+    \"email\": \"$user_email\"
+}" | jq -r .url)
+
+if [ "$invite_url" = "null" ] ; then
+    error "Cannot create invitation url. Is this email address already registered?"
+fi
+
+echo "info invitation url to be encoded: $invite_url"
 
 set -e
 

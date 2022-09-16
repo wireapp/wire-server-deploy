@@ -10,20 +10,18 @@ link to each user's email address from the team settings page. When the user
 opens the invite link, they are then prompted to create a new account on the
 Wire server, which then becomes a member of the team.
 
-The script in this directory takes a user's email address and extracts
-the invite code which was generated for their email address from the server
-database. Then, it generates a PDF containing administrator-provided setup
-instructions, the email address they should use when creating their account,
-and QR codes for their invite link, and the Wire server's deeplink (for
-configuring mobile clients to use the private instance instead of the public
-cloud instance).
+The script in this directory takes a user's email address and extracts the
+invite code which was generated for their email address from the
+`teams/{tid}/invitations` API. Then, it generates a PDF containing
+administrator-provided setup instructions, the email address they should use
+when creating their account, and QR codes for their invite link, and the Wire
+server's deeplink (for configuring mobile clients to use the private instance
+instead of the public cloud instance).
 
 ## Usage
 
-This script assumes that the private Wire server instance is deployed and
-functioning correctly. The operator requires shell access to one of the
-Cassandra nodes backing the server instance, as the script reads users' invite
-codes directly from the database.
+This script assumes that the Wire server instance is deployed and
+functioning correctly. The operator requires needs to add the *team id* (which can be found on the `team-settings` webapp under the menu item `Customization`) to the galley server configuration setting `exposeInvitationURLsTeamAllowlist`.
 
 The `qrencode` command line tool is used for generating the URL QR codes,
 and a LaTeX toolchain and the `latexmk` script are used for generating the
@@ -45,20 +43,20 @@ the private server instance.
 
 The script reads configuration from a series of environment variables:
 
-- `TEAM_URL`: the URL for the private Wire server's team management
-  page. Example: `https://teams.wire.example.com`.
+- `TEAM_ADMIN_EMAIL`: the eMail address of the team admin account.
+
+- `TEAM_ADMIN_PASSWORD`: the password of the team admin account
+
+- `NGINZ_HOST`: the fully qualified domain name of the nginz host. For the Wire
+    cloud it's `prod-nginz-https.wire.com`. error 'NGINZ_HOST is not set'
+
+- `TEAM_ID`: Team Id. This can be found in the `team-settings` webapp under
+  `Customization`.
 
 - `DEEPLINK_URL`: the URL for the private Wire server's deeplink. See [this
   page](https://docs.wire.com/how-to/associate/deeplink.html) for further
   information on using deeplinks with private Wire instances. Example:
   `https://assets.wire.example.com/public/deeplink.html`.
-
-- `CQLSH`: a shell command to run to invoke the `cqlsh` command against the
-  Cassandra database in use by the Wire server. If the Cassandra host is
-  accessible over SSH, this could look like `ssh admin@cassandra.example.com
-  cqlsh`; alternatively, if you're running Cassandra on Kubernetes, the command
-  could look like `kubectl -n cassandra-namespace exec cassandra-pod-0 --
-  cqlsh`.
 
 - `INSTRUCTIONS`: path to a file containing administrator-provided setup
   instructions to be included in the generated PDF. The contents of this file
@@ -80,6 +78,7 @@ working directory.
 
 An example invocation of the script could look like this:
 
+``` sh
     $ cat > instructions.txt <<EOF
     These are instructions for onboarding into example.com's private Wire
     server. Please scan the invite QR code on your mobile device, and create an
@@ -89,12 +88,15 @@ An example invocation of the script could look like this:
     example.com's Wire server.
     EOF
     $
-    $ export TEAM_URL="https://teams.wire.example.com"
+    $ export TEAM_ADMIN_EMAIL="gCkzC3AP@example.com"
+    $ export TEAM_ADMIN_PASSWORD="tIFfm5Hw"
+    $ export TEAM_ID="9cabf984-7a35-4cd5-9891-850c64f9195a"
+    $ export NGINZ_HOST="nginz-https.wire.example.com"
     $ export DEEPLINK_URL="https://assets.wire.example.com/public/deeplink.html"
-    $ export CQLSH="ssh admin@cassandra.example.com cqlsh"
     $ export INSTRUCTIONS=./instructions.txt
     $
     $ ./generate-user-pdf.sh john.doe@nonexistent-domain.example
+```
 
 The generated PDF file for this user would then be
 `john.doe@nonexistent-domain.example.pdf`.
