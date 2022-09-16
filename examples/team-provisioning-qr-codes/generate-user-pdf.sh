@@ -3,8 +3,8 @@
 # The following environment variables must be set in order to query invitations
 # links via teams API and generate invite and deeplink QR codes:
 #
-# TEAM_ADMIN_EMAIL="gCkzC3AP@example.com"
-# TEAM_ADMIN_PASSWORD="tIFfm5Hw"
+# TEAM_ADMIN_EMAIL="someone@example.com"
+# TEAM_ADMIN_PASSWORD="password"
 # TEAM_ID="9cabf984-7a35-4cd5-9891-850c64f9195a"
 # NGINZ_HOST="nginz-https.wire.example.com"
 # DEEPLINK_URL="https://assets.wire.example.com/public/deeplink.html"

@@ -1,9 +1,9 @@
 EXAMPLE: Onboarding users with QR codes instead of emails
 =========================================================
 
-This example includes a bash script to automate the provisioning of users in a Wire
-team on a private server instance without users needing to be able to receive
-email.
+This example includes a bash script to automate the provisioning of users in a
+Wire team on a private server instance without users needing to be able to
+receive email.
 
 New users are invited to a team by a team administrator, who sends an invite
 link to each user's email address from the team settings page. When the user
@@ -20,8 +20,10 @@ instead of the public cloud instance).
 
 ## Usage
 
-This script assumes that the Wire server instance is deployed and
-functioning correctly. The operator requires needs to add the *team id* (which can be found on the `team-settings` webapp under the menu item `Customization`) to the galley server configuration setting `exposeInvitationURLsTeamAllowlist`.
+This script assumes that the Wire server instance is deployed and functioning
+correctly. The operator requires needs to add the *team id* (which can be found
+on the `team-settings` webapp under the menu item `Customization`) to the galley
+server configuration setting `exposeInvitationURLsTeamAllowlist`.
 
 The `qrencode` command line tool is used for generating the URL QR codes,
 and a LaTeX toolchain and the `latexmk` script are used for generating the
@@ -88,8 +90,8 @@ An example invocation of the script could look like this:
     example.com's Wire server.
     EOF
     $
-    $ export TEAM_ADMIN_EMAIL="gCkzC3AP@example.com"
-    $ export TEAM_ADMIN_PASSWORD="tIFfm5Hw"
+    $ export TEAM_ADMIN_EMAIL="someone@example.com"
+    $ export TEAM_ADMIN_PASSWORD="password"
     $ export TEAM_ID="9cabf984-7a35-4cd5-9891-850c64f9195a"
     $ export NGINZ_HOST="nginz-https.wire.example.com"
     $ export DEEPLINK_URL="https://assets.wire.example.com/public/deeplink.html"
@@ -100,5 +102,4 @@ An example invocation of the script could look like this:
 
 The generated PDF file for this user would then be
 `john.doe@nonexistent-domain.example.pdf`.
-
 
