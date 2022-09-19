@@ -1,6 +1,6 @@
 #
 # Example:
-# khan playbook -e staging elasticsearch_stop.yml -- -e "ip_to_stop=1.2.3.4" -e elasticsearch_role=elasticsearch_kibana
+# ansible-playbook elasticsearch_stop.yml -e "ip_to_stop=1.2.3.4"
 #
 - name: checks
   hosts: localhost
@@ -24,7 +24,7 @@
     - name: 'Elasticsearch: Wait for shard relocation to finish'
       shell: >
         set -o pipefail;
-        curl -sSf http://localhost:{{ routing_table[elasticsearch_role].http.exposed }}/_cluster/health | jq .relocating_shards
+        curl -sSf http://localhost:9200/_cluster/health | jq .relocating_shards
       args:
         executable: /bin/bash
       register: num_shards
@@ -32,4 +32,4 @@
       retries: 200
       delay: 15
 
-    - command: sv down elasticsearch
+    - command: systemctl stop elasticsearch

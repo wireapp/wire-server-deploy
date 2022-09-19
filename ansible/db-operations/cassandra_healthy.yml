@@ -1,5 +1,3 @@
-# Only checks if a given cassandra cluster is healthy
-#
 - name: Check cluster is healthy
   hosts: cassandra
   any_errors_fatal: yes

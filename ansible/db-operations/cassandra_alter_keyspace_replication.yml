@@ -1,5 +1,4 @@
-# See https://wearezeta.atlassian.net/browse/BM-12
-# See https://docs.k8ssandra.io/tasks/migrate/
+# See e.g. https://docs.k8ssandra.io/tasks/migrate/
 - name: 'alter keyspace replication'
   vars_prompt:
     - name: old
@@ -46,4 +45,7 @@
         - "system_auth"
         - "system_traces"
         - "system_distributed"
-        - "{{ main_keyspace }}"
+        - "spar"
+        - "brig"
+        - "gundeck"
+        - "galley"
