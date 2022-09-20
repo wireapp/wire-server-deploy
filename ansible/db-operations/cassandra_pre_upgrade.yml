@@ -21,9 +21,9 @@
       shell: nodetool upgradesstables
 
     - name: 'Cassandra: run repairs'
-      shell: nodetool repair -full -pr 2>&1 | svlogd -tt /var/log/cassandra_repair
+      shell: nodetool repair -full -pr 2>&1 | systemd-cat -t cassandra_repair
 
     - include: tasks/cassandra_cluster_healthy.yml
 
     - name: 'Cassandra: backup the data'
-      shell: /usr/local/bin/cassandra_backup_{{ cluster_name }} 2>&1 | svlogd -tt /var/log/cassandra_daily_backup
+      shell: /usr/local/bin/cassandra_backup_{{ cluster_name }} 2>&1 | systemd-cat -t cassandra_daily_backup
