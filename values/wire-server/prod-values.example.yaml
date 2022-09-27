@@ -4,6 +4,7 @@ tags:
   account-pages: true
   team-settings: true # enable if you need team-settings. Requires a pullSecret
   legalhold: false # Enable if you need legalhold
+  federator: false
 
 cassandra-migrations:
 #  images:
