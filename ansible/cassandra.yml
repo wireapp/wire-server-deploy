@@ -31,7 +31,7 @@
       when: not (offline|default(false))
   tasks:
     # these are optional debug tasks to see that the cluser has come up sucessfully
-    - shell: nodetool status
+    - shell: nodetool -Dcom.sun.jndi.rmiURLParsing=legacy status
       register: nodetool_status
       tags:
         - cassandra
