@@ -1,0 +1,10 @@
+---
+- name: 'Elasticsearch: wait for the cluster to become green'
+  shell: >
+    curl -sSf http://localhost:{{ routing_table[elasticsearch_role].http.exposed }}/_cluster/health \
+    | jq ".status"
+  register: health
+  until: '"green" in health.stdout'
+  retries: 120
+  delay: 10
+  when: dry_run is not defined

@@ -1,0 +1,19 @@
+# Note that HintedHandoff is cassandra 3.x only while HintsDispatcher is cassandra 2.x
+# which is why the output of these will always be just 3
+# c.f.: 
+#   http://docs.datastax.com/en/cassandra/latest/cassandra/operations/opsRepairNodesTOC.html
+#   http://docs.datastax.com/en/cassandra/latest/cassandra/tools/toolsTPstats.html
+- name: 'Cassandra: ensure that there are no repair operations by thread pool (cassandra 2.x and 3.x)'
+  shell: nodetool tpstats | grep -E 'HintedHandoff|HintsDispatcher|ReadRepairStage|AntiEntropyStage' | awk '{print $2,$3}'
+  register: repair_operations
+  until: repair_operations.stdout == "0 0\n0 0\n0 0"
+  retries: 30
+  delay: 30
+
+# Fail if there are still ongoing repairs
+- name: 'Cassandra: ensure that there are no ongoing repairs (cassandra 2.x and 3.x)'
+  shell: '! (nodetool tpstats | grep Repair#)'
+  register: ongoing_repair
+  until: ongoing_repair.rc == 0 and ongoing_repair.stdout == ""
+  retries: 30
+  delay: 30

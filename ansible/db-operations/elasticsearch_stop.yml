@@ -1,0 +1,35 @@
+#
+# Example:
+# ansible-playbook elasticsearch_stop.yml -e "ip_to_stop=1.2.3.4"
+#
+- name: checks
+  hosts: localhost
+  tasks:
+    - fail:
+        msg: "You need to specify ip_to_stop, it needs to be a valid ipv4. invalid:[{{ ip_to_stop }}] See comment at the top of the playbook for usage."
+      when: not ip_to_stop | ipaddr
+
+- name: Stop elasticsearch node
+  hosts: '{{ ip_to_stop }}'
+  any_errors_fatal: yes
+  serial: 1
+  tasks:
+    - include: tasks/elasticsearch_shard_allocation.yml
+      vars:
+        exclude: "{{ ansible_default_ipv4.address }}"
+
+    - pause:
+        seconds: 5
+
+    - name: 'Elasticsearch: Wait for shard relocation to finish'
+      shell: >
+        set -o pipefail;
+        curl -sSf http://localhost:9200/_cluster/health | jq .relocating_shards
+      args:
+        executable: /bin/bash
+      register: num_shards
+      until: 'num_shards.stdout|int == 0'
+      retries: 200
+      delay: 15
+
+    - command: systemctl stop elasticsearch

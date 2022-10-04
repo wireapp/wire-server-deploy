@@ -1,0 +1,8 @@
+---
+- name: 'Remove cassandra cronjobs'
+  cron:
+    name: "{{ item }}"
+    state: absent
+  with_items:
+    - "cassandra_repair_{{ cassandra_cluster_name }}"
+    - "cassandra_backup_{{ cassandra_cluster_name }}"

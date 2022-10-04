@@ -1,0 +1,21 @@
+# Remove repair crons on all nodes at once
+- name: 'Rolling repair'
+  hosts: cassandra
+  any_errors_fatal: yes
+  tasks:
+    # First let's ensure that are no repairs on _any_ nodes
+    - include: tasks/cassandra_remove_repair_and_daily_backup_cron.yml
+      vars:
+        cluster_name: default
+    - include: tasks/cassandra_wait_ongoing_repair.yml
+
+# do a rolling repair
+- name: 'Rolling repair'
+  hosts: cassandra
+  any_errors_fatal: yes
+  serial: 1
+  tasks:
+    - include: tasks/cassandra_manual_repair.yml
+
+# run actual playbook again to re-enable cron jobs.
+- import_playbook: "cassandra.yml"
