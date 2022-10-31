@@ -1,17 +1,18 @@
-BRCTL=/sbin/brctl
-BRIDGE=br1
-MGMT_DIR=/var/local/createvm
+#!/bin/bash
+export BRCTL=/sbin/brctl
+export BRIDGE=br1
+export MGMT_DIR=/var/local/createvm
 
 # The physical interface we bind to.
-PHYSIF=enxf4f951f090bb
+export PHYSIF=enxf4f951f090bb
 
 # 0 for true.
-USEDHCP=1
-USEDNS=1
-HOSTROUTE=1
+export USEDHCP=1
+export USEDNS=1
+export HOSTROUTE=1
 
 # 0 if the interface is shared with the OS, 1 if the OS does not manage the physical interface.
-SHAREDIF=1
+export SHAREDIF=1
 
 # only matters if HOSTROUTE is 0.
-BRIDGEIP=172.16.0.1
+export BRIDGEIP=172.16.0.1

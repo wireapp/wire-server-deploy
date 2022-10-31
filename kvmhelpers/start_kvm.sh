@@ -17,8 +17,8 @@ DISK=drive-c.img
 #  GUESTBRIDGE talks only to other VMs.
 #  PRIVATEPORT talks to other VMs and a physical port on the host.
 #  SHAREDPORT talks to other VMs and a physical port on the host, which also uses that port for internet access.
-eth0=HOSTBRIDGE
-eth1=GUESTBRIDGE
+export eth0=HOSTBRIDGE
+export eth1=GUESTBRIDGE
 
 # Where the global configuration is at. stores global settings, like whether to use graphics or text.
 #config_file="start_kvm-vars.sh"
@@ -33,7 +33,7 @@ eth1=GUESTBRIDGE
 # Load an optional configuration file.
 if [ -n "${config_file+x}" ]; then
     echo "loading config file: ${config_file}"
-    source ${config_file}
+    source "${config_file}"
 fi
 
 # Create parameters from the CPUS setting above
@@ -48,7 +48,7 @@ if [ -z "${DISPLAY+x}" ]; then
 else
     if [ -n "${CURSES+x}" ]; then
         echo "Disabling graphical display."
-        unset $DISPLAY
+        unset "$DISPLAY"
     fi
 fi
 
@@ -73,14 +73,14 @@ function claim_tap() {
     TAPDEVCOUNT=$(echo -n "$TAPDEVS" | $WC -l)
     # First, try to fill in any gaps.
     LASTTAP=$(echo -n "$TAPDEVS" | $SED "s/t..//" | $SORT -g | $TAIL -n 1)
-    for each in $($SEQ 0 $LASTTAP); do
-        if [ $(($TAPSTRIED + $TAPDEVCOUNT)) == $LASTTAP ]; then
+    for each in $($SEQ 0 "$LASTTAP"); do
+        if [ $(($TAPSTRIED + $TAPDEVCOUNT)) == "$LASTTAP" ]; then
             break
         fi
-        if [ -z "$($IP tuntap | $GREP -E ^tap$each)" ]; then
-            $SUDO $IP tuntap add dev tap$each mode tap user $USER
+        if [ -z "$($IP tuntap | $GREP -E ^tap"$each")" ]; then
+            $SUDO $IP tuntap add dev tap"$each" mode tap user "$USER"
             if [ $? -eq 0 ]; then
-                echo tap$each
+                echo tap"$each"
                 return 0
             fi
             TAPSTRIED=$(($TAPSTRIED + 1))
@@ -89,9 +89,9 @@ function claim_tap() {
 
     # Then, try to claim one on the end. up to 99
     for each in $($SEQ $(($LASTTAP + 1)) 99); do
-        $SUDO $IP tuntap add dev tap$each mode tap user $USER
+        $SUDO $IP tuntap add dev tap"$each" mode tap user "$USER"
         if [ $? -eq 0 ]; then
-            echo tap$each
+            echo tap"$each"
             return 0
         fi
     done
@@ -101,8 +101,8 @@ function claim_tap() {
 for each in ${!eth*}; do
     TAPDEV=$(claim_tap)
     ASSIGNED_TAPS="$ASSIGNED_TAPS $TAPDEV"
-    MACADDR="52:54:00:12:34:$(printf '%02g' $(echo $TAPDEV | sed 's/tap//'))"
-    echo Setting up tap $TAPDEV for device $each with mac address $MACADDR
+    MACADDR="52:54:00:12:34:$(printf '%02g' $(echo "$TAPDEV" | sed 's/tap//'))"
+    echo Setting up tap "$TAPDEV" for device "$each" with mac address "$MACADDR"
     if [ "${!each}" == "HOSTBRIDGE" ]; then
         NETWORK="$NETWORK -netdev tap,id=$each,ifname=$TAPDEV,script=HOSTBRIDGE.sh,downscript=HOSTBRIDGE-down.sh -device rtl8139,netdev=$each,mac=$MACADDR"
     else
@@ -130,12 +130,12 @@ fi
 sleep 5
 
 # Actually launch qemu-kvm.
-/usr/bin/kvm -m $MEM -boot $DRIVE -drive file=$DISK,index=0,media=disk,format=raw -drive file=$CDROM,index=1,media=cdrom -rtc base=utc $NETWORK $PROCESSORS $CURSES $NOREBOOT
+/usr/bin/kvm -m $MEM -boot $DRIVE -drive file=$DISK,index=0,media=disk,format=raw -drive file=$CDROM,index=1,media=cdrom -rtc base=utc "$NETWORK" "$PROCESSORS" $CURSES $NOREBOOT
 
 # VM has shut down, remove all of the taps.
 for each in $ASSIGNED_TAPS; do
     {
-        $SUDO ip tuntap del dev $each mode tap
+        $SUDO ip tuntap del dev "$each" mode tap
     }
 done
 

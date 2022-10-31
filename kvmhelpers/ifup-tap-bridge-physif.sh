@@ -1,7 +1,7 @@
 #!/bin/sh
 
 IP="/sbin/ip"
-IFCONFIG="/sbin/ifconfig"
+export IFCONFIG="/sbin/ifconfig"
 SUDO="/usr/bin/sudo"
 DHCLIENT="/sbin/dhclient"
 
@@ -13,26 +13,26 @@ DHCLIENT="/sbin/dhclient"
 
     if [ -n "$BRIDGEDEV" ]; then
         {
-            $SUDO $BRCTL addif $BRIDGE $1
-            $SUDO $IP link set $1 up promisc on
+            $SUDO "$BRCTL" addif "$BRIDGE" "$1"
+            $SUDO $IP link set "$1" up promisc on
         }
     else
         {
-            $SUDO $BRCTL addbr $BRIDGE
+            $SUDO "$BRCTL" addbr "$BRIDGE"
             if [ "$HOSTROUTE" -eq "0" ]; then
-                $SUDO $IP addr add $BRIDGEIP/24 broadcast $BRIDGEBROADCAST dev $BRIDGE
+                $SUDO $IP addr add "$BRIDGEIP"/24 broadcast "$BRIDGEBROADCAST" dev "$BRIDGE"
             fi
-            $SUDO $BRCTL stp $BRIDGE off
-            $SUDO $IP link set $1 up promisc on
-            $SUDO $BRCTL addif $BRIDGE $1
-            $SUDO $BRCTL addif $BRIDGE $PHYSIF
+            $SUDO "$BRCTL" stp "$BRIDGE" off
+            $SUDO $IP link set "$1" up promisc on
+            $SUDO "$BRCTL" addif "$BRIDGE" "$1"
+            $SUDO "$BRCTL" addif "$BRIDGE" "$PHYSIF"
             if [ "$SHAREDIF" -eq "0" ]; then
                 # FIXME: assumes DHCP, assumes all kind of things.
-                $SUDO $DHCLIENT -r $PHYSIF
-                $SUDO $DHCLIENT -i $BRIDGE
+                $SUDO $DHCLIENT -r "$PHYSIF"
+                $SUDO $DHCLIENT -i "$BRIDGE"
             fi
-            $SUDO $IP link set $PHYSIF up
-            $SUDO $IP link set $BRIDGE up
+            $SUDO $IP link set "$PHYSIF" up
+            $SUDO $IP link set "$BRIDGE" up
             if [ "$USEDHCP" -eq "0" ]; then
                 $SUDO service isc-dhcp-server stop
                 $SUDO service isc-dhcp-server start
