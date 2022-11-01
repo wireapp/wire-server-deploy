@@ -1,4 +1,5 @@
 #!/bin/bash
+# shellcheck disable=SC2181,SC2001,SC1090,SC2046,SC2154
 
 # How much memory to allocate to this VM.
 MEM=2048
@@ -74,7 +75,7 @@ function claim_tap() {
     # First, try to fill in any gaps.
     LASTTAP=$(echo -n "$TAPDEVS" | $SED "s/t..//" | $SORT -g | $TAIL -n 1)
     for each in $($SEQ 0 "$LASTTAP"); do
-        if [ $(($TAPSTRIED + $TAPDEVCOUNT)) == "$LASTTAP" ]; then
+        if [ $((TAPSTRIED + TAPDEVCOUNT)) == "$LASTTAP" ]; then
             break
         fi
         if [ -z "$($IP tuntap | $GREP -E ^tap"$each")" ]; then
@@ -83,12 +84,12 @@ function claim_tap() {
                 echo tap"$each"
                 return 0
             fi
-            TAPSTRIED=$(($TAPSTRIED + 1))
+            TAPSTRIED=$((TAPSTRIED + 1))
         fi
     done
 
     # Then, try to claim one on the end. up to 99
-    for each in $($SEQ $(($LASTTAP + 1)) 99); do
+    for each in $($SEQ $((LASTTAP + 1)) 99); do
         $SUDO $IP tuntap add dev tap"$each" mode tap user "$USER"
         if [ $? -eq 0 ]; then
             echo tap"$each"

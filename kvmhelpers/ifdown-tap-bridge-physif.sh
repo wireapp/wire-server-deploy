@@ -1,4 +1,6 @@
 #!/bin/sh
+# shellcheck disable=SC1091
+
 IP="/sbin/ip"
 IFCONFIG="/sbin/ifconfig"
 SUDO="/usr/bin/sudo"

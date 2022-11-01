@@ -1,4 +1,5 @@
 #!/bin/sh
+# shellcheck disable=SC1091
 
 USER=$(whoami)
 
@@ -46,4 +47,4 @@ USER=$(whoami)
     fi
 
     echo "Bridge ifup completed."
-} 2>&1 >tapbridge.ifup
+}  >tapbridge.ifup 2>&1

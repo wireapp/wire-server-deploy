@@ -1,4 +1,5 @@
 #!/bin/sh
+# shellcheck disable=SC1091
 
 IP="/sbin/ip"
 export IFCONFIG="/sbin/ifconfig"
@@ -52,4 +53,4 @@ DHCLIENT="/sbin/dhclient"
     fi
 
     echo "Bridge ifup completed."
-} 2>&1 >tapbridgephysif.ifup
+} >tapbridgephysif.ifup 2>&1
