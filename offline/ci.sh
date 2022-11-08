@@ -111,9 +111,11 @@ done
 # This is needed to bundle it's image.
 sed -i -Ee 's/federator: false/federator: true/' "$(pwd)"/values/wire-server/prod-values.example.yaml
 
+# Get and dump required containers from Helm charts. Omit integration test
+# containers (e.g. `quay.io_wire_galley-integration_4.22.0`.)
 for chartPath in "$(pwd)"/charts/*; do
   echo "$chartPath"
-done | list-helm-containers | create-container-dump containers-helm
+done | list-helm-containers | grep -v "\-integration:" | create-container-dump containers-helm
 
 # Undo changes on wire-server values.yaml
 sed -i -Ee 's/federator: true/federator: false/' "$(pwd)"/values/wire-server/prod-values.example.yaml
