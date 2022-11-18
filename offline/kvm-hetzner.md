@@ -197,6 +197,7 @@ sudo service dnsmasq restart
 ```
 sudo ufw allow 22/tcp
 sudo ufw allow from 172.16.0.0/24 proto udp to any port 53
+sudo ufw allow from 127.0.0.0/24 proto udp to any port 53
 sudo ufw allow in on br0 from any proto udp to any port 67
 sudo ufw enable
 ```
@@ -209,6 +210,7 @@ cp -a wire-server-deploy/kvmhelpers/ ./
 cp -a wire-server-deploy/bin/newvm.sh ./bin
 cp -a wire-server-deploy/ansible/setup-offline-sources.yml ./ansible
 chmod 550 ./bin/newvm.sh
+chmod 550 ./kvmhelpers/*.sh
 ```
 
 ### (rewrite) install qemu-kvm
@@ -253,6 +255,13 @@ sudo apt install bridge-utils -y
 sudo apt install emacs-nox -y
 ```
 
+### (temporary) manually create bridge device.
+This is the interface we are going to use to talk to the virtual machines.
+```
+sudo brctl addbr br0
+sudo ifconfig br0 172.16.0.1 netmask 255.255.255.0 up
+```
+
 ### tell DnsMasq to provide DHCP to our KVM VMs.
 ```
 sudo bash -c 'echo "listen-address=172.16.0.1" > /etc/dnsmasq.d/10-br0-dhcp'
@@ -270,9 +279,9 @@ sudo sysctl -p
 Here, you should check the ethernet interface name for your outbound IP.
 
 ```
-ip ro | sed -n "/default/s/.* dev \([enps0-9]*\) .*/OUTBOUNDINTERFACE=\1/p"
+ip ro | sed -n "/default/s/.* dev \([enps0-9]*\) .*/export OUTBOUNDINTERFACE=\1/p"
 ```
-This will return a shell command setting a variable to your default interface. copy and paste it, then run the following
+This will return a shell command setting a variable to your default interface. copy and paste it into the command prompt, hit enter to run it, then run the following
 
 ```
 sudo sed -i 's/.*DEFAULT_FORWARD_POLICY=.*/DEFAULT_FORWARD_POLICY="ACCEPT"/' /etc/default/ufw

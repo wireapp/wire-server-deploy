@@ -374,8 +374,7 @@ The following instructions are given only as an example.
 Properly configuring IP Masquerading requires a seasoned linux administrator with deep knowledge of networking. 
 They assume all traffic destined to your wire cluster is going through a single IP masquerading firewall, running some modern version of linux.
 
-
-##### Incoming Traffic
+##### Incoming SSL Traffic
 
 Here, you should check the ethernet interface name for your outbound IP.
 ```
@@ -405,7 +404,7 @@ sudo iptables -t nat -A PREROUTING -p tcp --dport 443 -j REDIRECT --to-port 3177
 sudo iptables -t nat -A PREROUTING -p tcp --dport 80 -j REDIRECT --to-port 31772
 ```
 
-##### Mirroring the public IP
+###### Mirroring the public IP
 
 cert-manager has a requirement on being able to reach the kubernetes on it's external IP. this is trouble, because in most security concious environments, the external IP is not owned by any of the kubernetes hosts.
 
@@ -414,6 +413,32 @@ on an IP Masquerading router, you can redirect outgoing traffic from your cluste
 export INTERNALINTERFACE=br0
 sudo iptables -t nat -A PREROUTING -i $INTERNALINTERFACE -d $PUBLICIPADDRESS -p tcp -m multiport --dports 80,443 -j DNAT --to-destination $KUBENODE1IP
 ```
+
+### Incoming Calling Traffic
+
+Here, you should check the ethernet interface name for your outbound IP.
+```
+ip ro | sed -n "/default/s/.* dev \([enps0-9]*\) .*/export OUTBOUNDINTERFACE=\1/p"
+```
+
+This will return a shell command setting a variable to your default interface. copy and paste it. next, supply your outside IP address:
+```
+export PUBLICIPADDRESS=<your.ip.address.here>
+```
+
+Select one of your kubernetes nodes that you are fine with losing service if it is offline:
+```
+export RESTUND01IP=<your.restund.ip>
+```
+
+then run the following:
+```
+sudo iptables -t nat -A PREROUTING -d $PUBLICIPADDRESS -i $OUTBOUNDINTERFACE -p tcp --dport 80 -j DNAT --to-destination $RESTUND01IP:80
+sudo iptables -t nat -A PREROUTING -d $PUBLICIPADDRESS -i $OUTBOUNDINTERFACE -p udp --dport 80 -j DNAT --to-destination $RESTUND01IP:80
+sudo iptables -t nat -A PREROUTING -d $PUBLICIPADDRESS -i $OUTBOUNDINTERFACE -p udp -m udp --dport 32768:60999 -j DNAT --to-destination $RESTUND01IP
+```
+or add an appropriate rule to a config file (for UFW, /etc/ufw/before.rules)
+
 
 ### Acquiring / Deploying SSL Certificates:
 
@@ -499,23 +524,35 @@ v1alpha2 -> v1
 
 For full docs with details and explanations please see https://github.com/wireapp/wire-server-deploy/blob/d7a089c1563089d9842aa0e6be4a99f6340985f2/charts/sftd/README.md
 
-First, make sure you have a certificate for `sftd.<yourdomain>`. This could be the same wildcard or SAN certificate
-you used at previous steps.
+First, make sure you have a certificate for `sftd.<yourdomain>`, or you are using letsencrypt certificate. 
+for bring-your-own-certificate, this could be the same wildcard or SAN certificate you used at previous steps.
 
 Next, copy `values/sftd/prod-example-values.yaml` to `values/sftd/values.yaml`, and change the contents accordingly. 
 
  * If your turn servers can be reached on their public IP by the SFT service, Wire recommends you enable cooperation between turn and SFT. add a line reading `turnDiscoveryEnabled: true` to your values file.
 
+edit values/sftd/values.yaml, and select whether you want lets-encrypt certificates, and ensure the alloworigin and the host point to the appropriate domains.
+
 #### Deploying
+
+##### Node Annotations and External IPs:
 If you want to restrict SFT to certain nodes, make sure that in your inventory file you have annotated all of the nodes that are able to run sftd workloads with a node label indicating they are to be used, and their external IP, if they are behind a 1:1 firewall (Wire recommends this.).
 ```
 kubenode3 node_labels="{'wire.com/role': 'sftd'}" node_annotations="{'wire.com/external-ip': 'XXXX'}"
 ```
 
+d kubectl annotate node kubenode1 wire.com/external-ip=178.63.60.45
+d kubectl label node kubenode1 wire.com/role=sftd
+
+
 If these values weren't already set earlier in the process you should rerun ansible to set them:
 ```
 d ansible-playbook -i ./ansible/inventory/offline/hosts.ini ansible/kubernetes.yml --skip-tags bootstrap-os,preinstall,container-engine
 ```
+
+remove the --set-file
+
+
 
 If you are restricting SFT to certain nodes, use `nodeSelector` to run on specific nodes (**replacing the example.com domains with yours**):
 ```
