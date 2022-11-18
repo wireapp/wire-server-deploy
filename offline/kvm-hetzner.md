@@ -222,7 +222,7 @@ sudo apt install qemu-kvm qemu-utils -y
 #### Ubuntu 18
 If you are using ubuntu 18, you have to install the sgabios package:
 ```
-sude apt install sgabios -y
+sudo apt install sgabios -y
 ```
 
 ### add the demo user to the kvm group
@@ -279,7 +279,7 @@ sudo sysctl -p
 Here, you should check the ethernet interface name for your outbound IP.
 
 ```
-ip ro | sed -n "/default/s/.* dev \([enps0-9]*\) .*/export OUTBOUNDINTERFACE=\1/p"
+ip ro | sed -n "/default/s/.* dev \([en\(ps|o)0-9]*\) .*/export OUTBOUNDINTERFACE=\1/p"
 ```
 This will return a shell command setting a variable to your default interface. copy and paste it into the command prompt, hit enter to run it, then run the following
 
@@ -357,7 +357,7 @@ select 'choose language'
  * english
  * united states
  * united states
- * no additional.
+ * hit tab and enter to add no additional locales.
 select 'Detect network hardware'
  * use tab and enter to select 'Continue' to let it install usb-storage.
 select 'Configure the network'
@@ -421,14 +421,54 @@ select "Finish the installation"
  * select continue to reboot.
 
 ### first boot
+In order to 'step back' if something goes wrong later in the install, i recommend copying the empty VMs after they have shut down:
+```
+cp -a assethost assethost-new
+cp -a ansnode1 ansnode1-new
+cp -a ansnode2 ansnode2-new
+cp -a ansnode3 ansnode3-new
+cp -a kubenode1 kubenode1-new
+cp -a kubenode2 kubenode2-new
+cp -a kubenode3 kubenode3-new
+```
+
+You must have each of the virtual machines running, while installing and using wire.
+I recommend using screen, and performing the following step for each image:
+ * change directory to the location your VM is deployed in.
  * run "DRIVE=c ./start_kvm.sh"
  * hit escape if you want to see the boot menu.
-
 
 ### From this point:
 
 switch to docs.md.
 
-skip to the step where we source the offline environment.
+skip down to 'Making tooling available in your environment'
 
 when editing the inventory, create 'ansnode' entries, rather than separate cassandra, elasticsearch, and minio nodes.
+
+Add all three ansnode entries into the `cassandra` `elasticsearch`, and `minio` sections.
+
+add two of the ansnode entries into the `restund` section
+
+add one of the ansnode entries into the `cassandra_seed` section.
+
+
+ERROR: after you install restund, the restund firewall will fail to start.
+delete the out rule to 172.16.0.0/12
+
+cassandra:
+sudo ufw allow 9042/tcp
+sudo ufw allow 9160/tcp
+sudo ufw allow 7000/tcp
+sudo ufw allow 7199/tcp
+
+elasticsearch:
+sudo ufw allow 9300/tcp
+sudo ufw allow 9200/tcp
+
+minio:
+sudo ufw allow 9000/tcp
+sudo ufw allow 9092/tcp
+
+
+install turn pointing to 8080
