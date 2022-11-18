@@ -85,7 +85,7 @@ charts=(
   # wire-server-metrics
   # fluent-bit
   # kibana
-  wire/federator
+  # wire/federator
 )
 
 # TODO: Awaiting some fixes in wire-server regarding tagless images
@@ -97,7 +97,7 @@ helm repo add wire https://s3-eu-west-1.amazonaws.com/public.wire.com/charts
 helm repo update
 
 # wire_version=$(helm show chart wire/wire-server | yq -r .version)
-wire_version="4.22.0"
+wire_version="4.26.0"
 
 # Download zauth; as it's needed to generate certificates
 echo "quay.io/wire/zauth:$wire_version" | create-container-dump containers-adminhost
@@ -107,9 +107,16 @@ for chartName in "${charts[@]}"; do
   (cd ./charts; helm pull --version "$wire_version" --untar "$chartName")
 done
 
+# Patch wire-server values.yaml to include federator
+# This is needed to bundle it's image.
+sed -i -Ee 's/federator: false/federator: true/' "$(pwd)"/values/wire-server/prod-values.example.yaml
+
 for chartPath in "$(pwd)"/charts/*; do
   echo "$chartPath"
 done | list-helm-containers | create-container-dump containers-helm
+
+# Undo changes on wire-server values.yaml
+sed -i -Ee 's/federator: true/federator: false/' "$(pwd)"/values/wire-server/prod-values.example.yaml
 
 tar cf containers-helm.tar containers-helm
 [[ "$INCREMENTAL" -eq 0 ]] && rm -r containers-helm

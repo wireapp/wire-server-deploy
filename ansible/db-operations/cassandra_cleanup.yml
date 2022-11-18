@@ -1,0 +1,10 @@
+- name: 'Run "nodetool cleanup" serially (only necessary once after adding nodes to a cluster)'
+  hosts: "cassandra"
+  any_errors_fatal: yes
+  serial: 1
+  tasks:
+    - include: tasks/cassandra_cluster_healthy.yml
+    - name: Run nodetool cleanup - wait for up to 1h, poll every 10 sec
+      shell: nodetool cleanup
+      async: 3600
+      poll: 10

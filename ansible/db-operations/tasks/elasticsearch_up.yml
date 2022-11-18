@@ -1,0 +1,20 @@
+---
+- include: runit_up.yml service=elasticsearch
+
+- name: 'Elasticsearch: Wait for HTTP port'
+  wait_for: port={{ routing_table[elasticsearch_role].http.exposed }}
+
+- name: 'Elasticsearch: Wait for node discovery'
+  shell: >
+    set -o pipefail;
+    curl -sSf http://localhost:{{ routing_table[elasticsearch_role].http.exposed }}/_nodes|jq ".nodes|keys|length"
+  args:
+    executable: /bin/bash
+  register: num_nodes
+  until: 'num_nodes.stdout|int == groups.{{ elasticsearch_role }}|length'
+  retries: 60
+  delay: 5
+  when: dry_run is not defined
+
+- include: elasticsearch_shard_allocation.yml
+- include: elasticsearch_cluster_healthy.yml
