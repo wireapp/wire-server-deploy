@@ -4,14 +4,18 @@ This document gives exact instructions for performing an offline installation of
 
 This document also gives instructions for creating a TURN calling server on a separate VM.
 
-## create an SSH key pair.
+## Use the hetzner robot console to create a new server.
 
+Select Ubuntu 18.04 or Ubuntu 20.04 on an ax101 dedicated server.
 
-## use the hetzner robot console to create a new server.
+If not using Hetzner, for reference, the specs of the ax101 server are:
 
-select ubuntu 18.04 or ubuntu 20.04 on an ax101 dedicated server.
+* AMD Ryzen™ 9 5950X
+* 128 GB DDR4 ECC RAM
+* 2 x 3.84 TB NVMe SSD Datacenter Edition (software RAID 1) 
+* 1 GBit/s port
 
-returned IP: 65.21.197.76
+In our example, the returned IP when creating the server was: 65.21.197.76
 
 ## Pre-requisites
 
