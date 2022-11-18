@@ -131,7 +131,9 @@ fi
 sleep 5
 
 # Actually launch qemu-kvm.
-/usr/bin/kvm -m $MEM -boot $DRIVE -drive file=$DISK,index=0,media=disk,format=raw -drive file=$CDROM,index=1,media=cdrom -rtc base=utc "$NETWORK" "$PROCESSORS" $CURSES $NOREBOOT
+COMMAND="/usr/bin/kvm -m $MEM -boot $DRIVE -drive file=$DISK,index=0,media=disk,format=raw -drive file=$CDROM,index=1,media=cdrom -rtc base=utc $NETWORK $PROCESSORS $CURSES $NOREBOOT"
+echo "executing:\n$COMMAND"
+$COMMAND
 
 # VM has shut down, remove all of the taps.
 for each in $ASSIGNED_TAPS; do
