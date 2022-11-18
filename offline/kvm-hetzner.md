@@ -18,7 +18,7 @@ returned IP: 65.21.197.76
 First off, generate a ssh key if you do not have one already.
 
 ```
-ssh-keygen
+ssh-keygen -t ed25519
 ```
 
 ## tighten security.
