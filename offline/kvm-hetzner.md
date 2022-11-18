@@ -13,7 +13,7 @@ select ubuntu 18.04 or ubuntu 20.04 on an ax101 dedicated server.
 
 returned IP: 65.21.197.76
 
-## Pre-requisite
+## Pre-requisites
 
 First off, generate a ssh key if you do not have one already.
 
@@ -35,6 +35,22 @@ When prompted about the ssh config, just accept the maintainer's version.
 apt update
 apt upgrade -y
 ```
+
+### Install tmate
+
+Tmate is a terminal sharing service, which you might need in order for more than one person to collaborate on solving issues, Wire might ask you for a tmate session when debugging any problem you encounter.
+
+```
+sudo apt install tmate
+```
+
+If asked, to start a tmate session, you would simply then do:
+
+```
+tmate
+```
+
+And copy/paste the links that are generated, which would then result in the terminal session being shared with whomever you shared the links with.
 
 ### Reboot
 reboot to load a new, patched kernel.
