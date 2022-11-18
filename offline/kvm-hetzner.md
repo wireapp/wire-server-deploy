@@ -13,6 +13,14 @@ select ubuntu 18.04 or ubuntu 20.04 on an ax101 dedicated server.
 
 returned IP: 65.21.197.76
 
+## Pre-requisite
+
+First off, generate a ssh key if you do not have one already.
+
+```
+ssh-keygen
+```
+
 ## tighten security.
 
 ### log in as root.
