@@ -336,7 +336,7 @@ select 'Configure the package manager'
 select 'Select and install software'
  * select "Install security updates automatically"
  * select "OpenSSH Server", and hit continue.
-select "Install the GRUB bootloader on a first disk"
+select "Install the GRUB bootloader on a hard disk"
  * install the GRUB bootloader to the master boot record? yes.
  * select only device displayed (/dev/sda).
  * no to installing Extra EFI just-in-case.
