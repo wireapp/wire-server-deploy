@@ -208,7 +208,7 @@ Open it with your prefered text editor and edit the following:
 
 Then disable checking for outdated signatures by editing the following file:
 ```
-ansible/roles/external/kubespray/roles/container-engine/docker/tasks/main.yml
+ansible/roles-external/kubespray/roles/container-engine/docker/tasks/main.yml
 ```
 * comment out the block with -name: ensure docker-ce repository public key is installed...
 * comment out the next block -name: ensure docker-ce repository is enabled
