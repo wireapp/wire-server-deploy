@@ -59,7 +59,7 @@ tar cf containers-system.tar containers-system
 [[ "$INCREMENTAL" -eq 0 ]] && rm -r containers-system
 
 # Used for ansible-restund role
-echo "quay.io/wire/restund:v0.4.16b1.0.53" | create-container-dump containers-other
+echo "quay.io/wire/restund:v0.6.0-rc.2" | create-container-dump containers-other
 tar cf containers-other.tar containers-other
 [[ "$INCREMENTAL" -eq 0 ]] && rm -r containers-other
 
@@ -68,19 +68,20 @@ charts=(
   # backoffice
   # commented out for now, points to a 2.90.0 container image which doesn't
   # seem to exist on quay.io
-  wire/nginx-ingress-controller
-  wire/nginx-ingress-services
-  wire/reaper
-  wire/cassandra-external
-  wire/databases-ephemeral
-  wire/demo-smtp
-  wire/elasticsearch-external
-  wire/fake-aws
-  wire/minio-external
-  wire/wire-server
+  wire-develop/nginx-ingress-controller
+  wire-develop/nginx-ingress-services
+  wire-develop/reaper
+  wire-develop/cassandra-external
+  wire-develop/databases-ephemeral
+  wire-develop/demo-smtp
+  wire-develop/elasticsearch-external
+  wire-develop/fake-aws
+  wire-develop/minio-external
+  wire-develop/wire-server
   # local-path-provisioner
   # TODO: uncomment once its dependencies are pinned!
-  wire/sftd
+  wire-develop/restund
+  wire-develop/sftd
   # Has a weird dependency on curl:latest. out of scope
   # wire-server-metrics
   # fluent-bit
@@ -94,10 +95,11 @@ HELM_HOME=$(mktemp -d)
 export HELM_HOME
 
 helm repo add wire https://s3-eu-west-1.amazonaws.com/public.wire.com/charts
+helm repo add wire-develop https://s3-eu-west-1.amazonaws.com/public.wire.com/charts-develop
 helm repo update
 
 # wire_version=$(helm show chart wire/wire-server | yq -r .version)
-wire_version="4.26.0"
+wire_version="4.26.1"
 
 # Download zauth; as it's needed to generate certificates
 echo "quay.io/wire/zauth:$wire_version" | create-container-dump containers-adminhost
@@ -106,6 +108,12 @@ mkdir -p ./charts
 for chartName in "${charts[@]}"; do
   (cd ./charts; helm pull --version "$wire_version" --untar "$chartName")
 done
+
+# HACKS!
+sed -i -Ee 's/v0\.6\.0-rc\.1/v0.6.0-rc.2/' "$(pwd)"/charts/restund/Chart.yaml
+sed -i -Ee 's/2\.1\.19/3.1.3/' "$(pwd)"/charts/sftd/Chart.yaml
+sed -i -Ee 's/2.2.1-v0.28.21-0-6bfd7c5/2.5.0-v0.29.7-0-7de724c/' "$(pwd)"/charts/wire-server/charts/account-pages/values.yaml
+sed -i -Ee 's/2022-11-02-production.0-v0.31.9-0-337e400/2022-10-25-M4-RC-BUND/' "$(pwd)"/charts/wire-server/charts/webapp/values.yaml
 
 # Patch wire-server values.yaml to include federator
 # This is needed to bundle it's image.
