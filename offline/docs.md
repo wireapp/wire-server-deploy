@@ -576,3 +576,39 @@ d helm upgrade --install sftd ./charts/sftd \
   --set-file tls.key=/path/to/tls.key \
   --values values/sftd/values.yaml
 ```
+
+
+## Appendixes
+  
+### Install ntpdate
+  
+The nodes running cassandra (`kubenode` 1, 2 and 3) require precise synchronization of their clock.
+  
+But `ntpdate` is not (yet) included in the assethost.
+  
+To install `ntpdate` go to this link: https://packages.ubuntu.com/bionic/net/ntpdate
+  
+Select the `amd64` architecture, which leads you to : https://packages.ubuntu.com/bionic/amd64/ntpdate/download
+  
+And there take note of the download link in the middle of the page, in our example http://security.ubuntu.com/ubuntu/pool/universe/n/ntp/ntpdate_4.2.8p10+dfsg-5ubuntu7.3_amd64.deb
+  
+Download this link on each of the kubenodes:
+  
+```
+wget http://security.ubuntu.com/ubuntu/pool/universe/n/ntp/ntpdate_4.2.8p10+dfsg-5ubuntu7.3_amd64.deb
+```
+  
+Then install the package:
+  
+```
+sudo dpkg -i ntpdate_4.2.8p10+dfsg-5ubuntu7.3_amd64.deb
+```
+  
+Finally run ntpdate:
+  
+```
+sudo ntpdate -v 0.ubuntu.pool.ntp.org
+```
+
+Do this on each of the nodes, and they should all have their clocks in sync.
+
