@@ -1,0 +1,18 @@
+---
+- name: Fix Secure port for Liveness and Readiness probes on control plane components
+  serial: 1
+  hosts: kube-master
+  any_errors_fatal: true
+  become: true
+  tasks:
+    - name: Update kube-schedular.yaml
+      command: sed -i 's/    - --port=0//' /etc/kubernetes/manifests/kube-scheduler.yaml
+
+    - name: Update kube-controller-manager.yaml
+      command: sed -i 's/    - --port=0//' /etc/kubernetes/manifests/kube-controller-manager.yaml
+
+    - name: Restart kubelet services
+      command: systemctl restart kubelet.service
+
+    - name: Wait 10s before moving to next host, to not restart all kubelet services at once
+      command: sleep 10

@@ -600,10 +600,7 @@ d kubectl get cs
 ```
 The above command should not return any error message on the component's status
 
-In case Readiness and Startup probes are failing for the kube-schedular or controller-manger pods.
-In each master node, remove the ```--port=0``` argument from
-```/etc/kubernetes/manifests/kube-scheduler.yaml``` and ```/etc/kubernetes/manifests/kube-controller-manager.yaml``` file and restart kubelet service
-
+In case Readiness and Startup probes are failing for the kube-schedular or controller-manager pods, disable their secure port access -
 ```
-sudo systemctl restart kubelet.service
+d ansible-playbook -i ansible/inventory/offline/hosts.ini ansible/k8s-disable-secure-port.yml
 ```
