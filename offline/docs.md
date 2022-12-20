@@ -4,6 +4,7 @@ We have a pipeline in  `wire-server-deploy` producing container images, static
 binaries, ansible playbooks, debian package sources and everything required to
 install Wire.
 
+## Installing docker
 On your machine (we call this the "admin host"), you need to have `docker`
 installed (or any other compatible container runtime really, even though
 instructions may need to be modified). See [how to install
@@ -17,6 +18,8 @@ apt install docker.io
 
 Ensure the user you are using for the install has permission to run docker, or add 'sudo' to the docker commands below.
 
+
+## Downloading and extracting the artifact
 Create a fresh workspace to download the artifacts:
 
 ```
@@ -38,6 +41,8 @@ Extract this tarball.
 Make sure that the admin host can `ssh` into all the machines that you want to provision. Our docker container will use the `.ssh` folder and the `ssh-agent` of the user running the scripts.
 
 There's also a docker image containing the tooling inside this repo.
+
+## Making tooling available in your environment.
 
 If you don't intend to develop *on wire-server-deploy itself*, you should source the following shell script.
 ```
@@ -103,16 +108,18 @@ The following artifacts are provided:
 ## Editing the inventory
 
 Copy `ansible/inventory/offline/99-static`  to `ansible/inventory/offline/hosts.ini`, and remove the original. 
-Here you will describe the topology of your offline deploy.  There's instructions in the comments on how to set
-everything up. You can also refer to extra information here.
-https://docs.wire.com/how-to/install/ansible-VMs.html
 
+Edit `ansible/inventory/offline/hosts.ini`.
+Here, you will describe the topology of your offline deploy.  There's instructions in the comments on how to set
+everything up. You can also refer to extra information here. https://docs.wire.com/how-to/install/ansible-VMs.html
 
-If you are using username/password to log into and sudo up, in the vars:all section, add:
+Add one entry in the `all` section of this file for each machine you are managing via ansible. This will be all of the machines in your Wire cluster.
+
+If you are using username/password to log into and sudo up, in the `all:vars` section, add:
 ```
 ansible_user=<USERNAME>
 ansible_password=<PASSWORD>
-ansible_become_password=<PASSWORD>
+ansible_become_pass=<PASSWORD>
 ```
 
 ### Configuring kubernetes and etcd
@@ -166,8 +173,7 @@ the `wire.com/external-ip` annotation to the public IP of the node.
 
 ### Configuring MinIO
 
-In the `ansible/inventory/offline/99-static` file, edit the minio variables in `[minio:vars]` (`prefix`, `domain` and `deeplink_title`)
-by replacing `example.com` with your own domain.
+In order to automatically generate deeplinks, Edit the minio variables in `[minio:vars]` (`prefix`, `domain` and `deeplink_title`) by replacing `example.com` with your own domain.
 
 ## Generating secrets
 
@@ -202,7 +208,7 @@ Open it with your prefered text editor and edit the following:
 
 Then disable checking for outdated signatures by editing the following file:
 ```
-ansible/roles/external/kubespray/roles/container-engine/docker/tasks/main.yml
+ansible/roles-external/kubespray/roles/container-engine/docker/tasks/main.yml
 ```
 * comment out the block with -name: ensure docker-ce repository public key is installed...
 * comment out the next block -name: ensure docker-ce repository is enabled
@@ -281,6 +287,7 @@ d ansible-playbook -i ./ansible/inventory/offline/hosts.ini ansible/minio.yml
 
 Afterwards, run the following playbook to create helm values that tell our helm charts
 what the IP addresses of cassandra, elasticsearch and minio are.
+
 ```
 d ansible-playbook -i ./ansible/inventory/offline/hosts.ini ansible/helm_external.yml
 ```
@@ -378,7 +385,7 @@ They assume all traffic destined to your wire cluster is going through a single 
 
 Here, you should check the ethernet interface name for your outbound IP.
 ```
-ip ro | sed -n "/default/s/.* dev \([enps0-9]*\) .*/export OUTBOUNDINTERFACE=\1/p"
+ip ro | sed -n "/default/s/.* dev \([enpso0-9]*\) .*/export OUTBOUNDINTERFACE=\1/p"
 ```
 
 This will return a shell command setting a variable to your default interface. copy and paste it. next, supply your outside IP address:
@@ -398,7 +405,7 @@ sudo iptables -t nat -A PREROUTING -d $PUBLICIPADDRESS -i $OUTBOUNDINTERFACE -p 
 ```
 or add an appropriate rule to a config file (for UFW, /etc/ufw/before.rules)
 
-Then ssh into each kubenode and make the following configuration:
+Then ssh into the first kubenode and make the following configuration:
 ```
 sudo iptables -t nat -A PREROUTING -p tcp --dport 443 -j REDIRECT --to-port 31773
 sudo iptables -t nat -A PREROUTING -p tcp --dport 80 -j REDIRECT --to-port 31772
@@ -438,6 +445,12 @@ sudo iptables -t nat -A PREROUTING -d $PUBLICIPADDRESS -i $OUTBOUNDINTERFACE -p 
 sudo iptables -t nat -A PREROUTING -d $PUBLICIPADDRESS -i $OUTBOUNDINTERFACE -p udp -m udp --dport 32768:60999 -j DNAT --to-destination $RESTUND01IP
 ```
 or add an appropriate rule to a config file (for UFW, /etc/ufw/before.rules)
+
+### Changing the TURN port.
+
+FIXME: ansibleize this!
+turn's connection port for incoming clients is set to 80 by default. to change it:
+on the restund nodes, edit /etc/restund.conf, and replace ":80" with your desired port. for instance, 8080 like above.
 
 
 ### Acquiring / Deploying SSL Certificates:
@@ -524,10 +537,10 @@ v1alpha2 -> v1
 
 For full docs with details and explanations please see https://github.com/wireapp/wire-server-deploy/blob/d7a089c1563089d9842aa0e6be4a99f6340985f2/charts/sftd/README.md
 
-First, make sure you have a certificate for `sftd.<yourdomain>`, or you are using letsencrypt certificate. 
+First, make sure you have a certificate for `sftd.<yourdomain>`, or you are using letsencrypt certificate.
 for bring-your-own-certificate, this could be the same wildcard or SAN certificate you used at previous steps.
 
-Next, copy `values/sftd/prod-example-values.yaml` to `values/sftd/values.yaml`, and change the contents accordingly. 
+Next, copy `values/sftd/prod-values.example.yaml` to `values/sftd/values.yaml`, and change the contents accordingly. 
 
  * If your turn servers can be reached on their public IP by the SFT service, Wire recommends you enable cooperation between turn and SFT. add a line reading `turnDiscoveryEnabled: true` to your values file.
 
@@ -535,41 +548,30 @@ edit values/sftd/values.yaml, and select whether you want lets-encrypt certifica
 
 #### Deploying
 
-##### Node Annotations and External IPs:
+##### Node Annotations and External IPs.
 If you want to restrict SFT to certain nodes, make sure that in your inventory file you have annotated all of the nodes that are able to run sftd workloads with a node label indicating they are to be used, and their external IP, if they are behind a 1:1 firewall (Wire recommends this.).
 ```
 kubenode3 node_labels="{'wire.com/role': 'sftd'}" node_annotations="{'wire.com/external-ip': 'XXXX'}"
 ```
 
+If you failed to perform the above step during the ansible deployment of your sft services, you can perform then manually:
+```
 d kubectl annotate node kubenode1 wire.com/external-ip=178.63.60.45
 d kubectl label node kubenode1 wire.com/role=sftd
-
-
-If these values weren't already set earlier in the process you should rerun ansible to set them:
-```
-d ansible-playbook -i ./ansible/inventory/offline/hosts.ini ansible/kubernetes.yml --skip-tags bootstrap-os,preinstall,container-engine
 ```
 
-remove the --set-file
-
-
-
+##### A selected group of kubernetes nodes:
 If you are restricting SFT to certain nodes, use `nodeSelector` to run on specific nodes (**replacing the example.com domains with yours**):
 ```
 d helm upgrade --install sftd ./charts/sftd \
   --set 'nodeSelector.wire\.com/role=sftd' \
-  --set host=sftd.example.com \
-  --set allowOrigin=https://webapp.example.com \
-  --set-file tls.crt=/path/to/tls.crt \
-  --set-file tls.key=/path/to/tls.key \
   --values values/sftd/values.yaml
 ```
 
+##### All kubernetes nodes.
 If you are not doing that, omit the `nodeSelector` argument:
 ```
 d helm upgrade --install sftd ./charts/sftd \
-  --set host=sftd.example.com \
-  --set allowOrigin=https://webapp.example.com \
   --set-file tls.crt=/path/to/tls.crt \
   --set-file tls.key=/path/to/tls.key \
   --values values/sftd/values.yaml
