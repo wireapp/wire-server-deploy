@@ -78,6 +78,7 @@ charts=(
   wire/fake-aws
   wire/minio-external
   wire/wire-server
+  wire/inbucket
   # local-path-provisioner
   # TODO: uncomment once its dependencies are pinned!
   wire/sftd
