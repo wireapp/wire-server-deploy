@@ -1,0 +1,17 @@
+- hosts: cassandra
+  any_errors_fatal: true
+  become: true
+  vars:
+    ntp_server: ntp.ubuntu.com # specify NTP server you wish to use here
+  tasks:
+    - name: Install NTP
+      apt:
+        name: ntp
+        state: present
+
+    - name: Deploy ntp.conf
+      template: 
+        src=ntp.conf.j2
+        dest=/etc/ntp.conf
+        owner=root
+        mode=0644
