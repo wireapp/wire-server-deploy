@@ -15,3 +15,14 @@
         dest=/etc/ntp.conf
         owner=root
         mode=0644
+
+    - name: Restart ntp service
+      service: 
+        name=ntp
+        state=restarted
+
+    - name: Make sure NTP is started
+      service: 
+        name=ntp
+        state=started
+        enabled=yes
