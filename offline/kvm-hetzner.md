@@ -48,6 +48,12 @@ Tmate is a terminal sharing service, which you might need in order for more than
 sudo apt install tmate
 ```
 
+Also generate the keys for the demo user, as tmate will complain if they do not exist:
+
+```
+ssh-keygen -t ed25519
+```
+
 If asked, to start a tmate session, you would simply then do:
 
 ```
