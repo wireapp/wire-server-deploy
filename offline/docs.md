@@ -129,9 +129,14 @@ You'll need at least 3 `kubenode`s.  3 of them should be added to the
 additional nodes should only be added to the `[kube-node]` group.
 
 ### Setting up databases and kubernetes to talk over the correct (private) interface
+If you are deploying wire on servers that are expected to use one interface to talk to the public, and a separate interface to talk amongst themselves, you will need to add "ip=" declarations for the private interface of each node. for instance, if the first kubenode was expected to talk to the world on 172.16.0.129, but speak to other wire services (kubernetes, databases, etc) on 192.168.0.2, you should edit its entry like the following:
+```
+kubenode1 ansible_host=172.16.0.129 ip=192.168.0.2
+```
+Do this for all of the instances.
 
-* For `kubenode`s make sure that `ip` is set to the IP on which the nodes should talk among eachother.
-* Make sure that `assethost` is present in the inventory file with the correct `ansible_host` and `ip` values
+### Setting up Database network interfaces.
+* Make sure that `assethost` is present in the inventory file with the correct `ansible_host` (and `ip` values if required)
 * Make sure that `cassandra_network_interface` is set to the interface on which
   the kubenodes can reach cassandra and on which the cassandra nodes
   communicate among eachother. Your private network.
@@ -400,16 +405,10 @@ export KUBENODE1IP=<your.kubernetes.node.ip>
 
 then run the following:
 ```
-sudo iptables -t nat -A PREROUTING -d $PUBLICIPADDRESS -i $OUTBOUNDINTERFACE -p tcp --dport 80 -j DNAT --to-destination $KUBENODE1IP:80
-sudo iptables -t nat -A PREROUTING -d $PUBLICIPADDRESS -i $OUTBOUNDINTERFACE -p tcp --dport 443 -j DNAT --to-destination $KUBENODE1IP:443
+sudo iptables -t nat -A PREROUTING -d $PUBLICIPADDRESS -i $OUTBOUNDINTERFACE -p tcp --dport 80 -j DNAT --to-destination $KUBENODE1IP:31772
+sudo iptables -t nat -A PREROUTING -d $PUBLICIPADDRESS -i $OUTBOUNDINTERFACE -p tcp --dport 443 -j DNAT --to-destination $KUBENODE1IP:31773
 ```
 or add an appropriate rule to a config file (for UFW, /etc/ufw/before.rules)
-
-Then ssh into the first kubenode and make the following configuration:
-```
-sudo iptables -t nat -A PREROUTING -p tcp --dport 443 -j REDIRECT --to-port 31773
-sudo iptables -t nat -A PREROUTING -p tcp --dport 80 -j REDIRECT --to-port 31772
-```
 
 ###### Mirroring the public IP
 
@@ -418,7 +417,8 @@ cert-manager has a requirement on being able to reach the kubernetes on it's ext
 on an IP Masquerading router, you can redirect outgoing traffic from your cluster, that is to say, when the cluster asks to connect to your external IP, you can instead choose to send it to a kubernetes node inside of the cluster.
 ```
 export INTERNALINTERFACE=br0
-sudo iptables -t nat -A PREROUTING -i $INTERNALINTERFACE -d $PUBLICIPADDRESS -p tcp -m multiport --dports 80,443 -j DNAT --to-destination $KUBENODE1IP
+sudo iptables -t nat -A PREROUTING -i $INTERNALINTERFACE -d $PUBLICIPADDRESS -p tcp --dport 80 -j DNAT --to-destination $KUBENODE1IP:31772
+sudo iptables -t nat -A PREROUTING -i $INTERNALINTERFACE -d $PUBLICIPADDRESS -p tcp --dport 443 -j DNAT --to-destination $KUBENODE1IP:31773
 ```
 
 ### Incoming Calling Traffic
@@ -478,7 +478,7 @@ d helm install nginx-ingress-services ./charts/nginx-ingress-services --values .
 
 Do not try to use paths to refer to the certificates, as the 'd' command messes with file paths outside of Wire-Server.
 
-##### In your nginx config
+##### In your nginx-ingress-services values file
 Change the domains in `values.yaml` to your domain. And add your wildcard or SAN certificate that is valid for all these
 domains to the `secrets.yaml` file.
 
@@ -516,6 +516,11 @@ UNDER CONSTRUCTION:
 d kubectl create namespace cert-manager-ns
 d helm upgrade --install -n cert-manager-ns --set 'installCRDs=true' cert-manager charts/cert-manager
 d helm upgrade --install nginx-ingress-services charts/nginx-ingress-services -f values/nginx-ingress-services/values.yaml
+```
+
+Watch the output of the following command to know how your request is going:
+```
+d kubectl get certificate
 ```
 
 #### Old wire-server releases
@@ -576,3 +581,4 @@ d helm upgrade --install sftd ./charts/sftd \
   --set-file tls.key=/path/to/tls.key \
   --values values/sftd/values.yaml
 ```
+
