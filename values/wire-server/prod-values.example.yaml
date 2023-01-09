@@ -192,6 +192,19 @@ nginz:
     # using prod means mostly that some internal endpoints are not exposed
     env: prod
     external_env_domain: example.com
+    deeplink:
+      endpoints:
+        backendURL: "https://nginz-https.example.com"
+        backendWSURL: "https://nginz-ssl.example.com"
+        teamsURL: "https://teams.example.com"
+        accountsURL: "https://account.example.com"
+        blackListURL: "https://clientblacklist.wire.com/prod"
+        websiteURL: "https://wire.com"
+      apiProxy: # (optional)
+        host: "socks5.proxy.com"
+        port: 1080
+        needsAuthentication: true
+      title: "My Custom Wire Backend"
   # For demo mode only, we don't need to keep websocket connections open on upgrade:
   drainTimeout: 10
   terminationGracePeriodSeconds: 30
