@@ -170,7 +170,7 @@ these criteria, so that we're sure SFT is deployed correctly.
 By using a `node_label` we can make sure SFT is only deployed on a certain node like `kubenode4`
 
 ```
-kubenode4 node_labels="wire.com/role=sftd" node_annotations="{'wire.com/external-ip': 'XXXX'}"
+kubenode4 node_labels="{'wire.com/role': 'sftd'}" node_annotations="{'wire.com/external-ip': 'a.b.c.d'}"
 ```
 
 If the node does not know its onw public IP (e.g. becuase it's behind NAT) then you should also set
