@@ -403,12 +403,25 @@ Select one of your kubernetes nodes that you are fine with losing service if it 
 export KUBENODE1IP=<your.kubernetes.node.ip>
 ```
 
-then run the following:
+then, if your box owns the public IP (you can see the IP in 'ip addr'), run the following:
 ```
 sudo iptables -t nat -A PREROUTING -d $PUBLICIPADDRESS -i $OUTBOUNDINTERFACE -p tcp --dport 80 -j DNAT --to-destination $KUBENODE1IP:31772
 sudo iptables -t nat -A PREROUTING -d $PUBLICIPADDRESS -i $OUTBOUNDINTERFACE -p tcp --dport 443 -j DNAT --to-destination $KUBENODE1IP:31773
 ```
-or add an appropriate rule to a config file (for UFW, /etc/ufw/before.rules)
+
+If your box is being forwarded traffic from another firewall (you do not see the IP in 'ip addr'), run the following:
+```
+sudo iptables -t nat -A PREROUTING -i $OUTBOUNDINTERFACE -p tcp --dport 80 -j DNAT --to-destination $KUBENODE1IP:31772
+sudo iptables -t nat -A PREROUTING -i $OUTBOUNDINTERFACE -p tcp --dport 443 -j DNAT --to-destination $KUBENODE1IP:31773
+```
+
+If you are running a UFW firewall, make sure to allow inbound traffic on 443 and 80:
+```
+sudo ufw allow in on $OUTBOUNDINTERFACE proto tcp to any port 443
+sudo ufw allow in on $OUTBOUNDINTERFACE proto tcp to any port 80
+```
+
+if you are running a UFW firewall, make sure to add the above iptables rules to /etc/ufw/before.rules, so they persist after a reboot.
 
 ###### Mirroring the public IP
 
@@ -547,7 +560,7 @@ for bring-your-own-certificate, this could be the same wildcard or SAN certifica
 
 Next, copy `values/sftd/prod-values.example.yaml` to `values/sftd/values.yaml`, and change the contents accordingly. 
 
- * If your turn servers can be reached on their public IP by the SFT service, Wire recommends you enable cooperation between turn and SFT. add a line reading `turnDiscoveryEnabled: true` to your values file.
+ * If your turn servers can be reached on their public IP by the SFT service, Wire recommends you enable cooperation between turn and SFT. add a line reading `turnDiscoveryEnabled: true` to `values/sftd/values.yaml`.
 
 edit values/sftd/values.yaml, and select whether you want lets-encrypt certificates, and ensure the alloworigin and the host point to the appropriate domains.
 
