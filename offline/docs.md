@@ -56,12 +56,13 @@ E.g.:
 
 ```
 $ d ansible --version
-ansible 2.9.12
-  config file = /home/arian/.ansible.cfg
-  configured module search path = ['/home/arian/.ansible/plugins/modules', '/usr/share/ansible/plugins/modules']
-  ansible python module location = /nix/store/gfrhkj3j53znj0vyvkqkbn56n2mh708k-python3.8-ansible-2.9.12/lib/python3.8/site-packages/ansible
-  executable location = /nix/store/gfrhkj3j53znj0vyvkqkbn56n2mh708k-python3.8-ansible-2.9.12/bin/ansible
-  python version = 3.8.7 (default, Dec 21 2020, 17:18:55) [GCC 10.2.0]
+ansible 2.9.27
+  config file = /wire-server-deploy/ansible/ansible.cfg
+  configured module search path = ['/root/.ansible/plugins/modules', '/usr/share/ansible/plugins/modules']
+  ansible python module location = /nix/store/vmz21km0crjx8j21bhd77vzwkpiiq9w0-python3.9-ansible-2.9.27/lib/python3.9/site-packages/ansible
+  executable location = /nix/store/vmz21km0crjx8j21bhd77vzwkpiiq9w0-python3.9-ansible-2.9.27/bin/ansible
+  python version = 3.9.10 (main, Jan 13 2022, 23:32:03) [GCC 10.3.0]
+
 
 ```
 
