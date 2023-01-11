@@ -110,6 +110,11 @@ The following artifacts are provided:
 
 Copy `ansible/inventory/offline/99-static`  to `ansible/inventory/offline/hosts.ini`, and remove the original. 
 
+```
+cp ansible/inventory/offline/99-static ansible/inventory/offline/hosts.ini
+mv ansible/inventory/offline/99-static ansible/inventory/offline/orig.99-static
+```
+
 Edit `ansible/inventory/offline/hosts.ini`.
 Here, you will describe the topology of your offline deploy.  There's instructions in the comments on how to set
 everything up. You can also refer to extra information here. https://docs.wire.com/how-to/install/ansible-VMs.html
