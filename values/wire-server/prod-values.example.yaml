@@ -200,12 +200,12 @@ nginz:
         accountsURL: "https://account.example.com"
         blackListURL: "https://clientblacklist.wire.com/prod"
         websiteURL: "https://wire.com"
+      title: "My Custom Wire Backend"
       apiProxy: # (optional)
         ##### Uncomment these if you want to direct your users into using a proxy
         #host: "socks5.proxy.com"
         #port: 1080
         #needsAuthentication: true
-      title: "My Custom Wire Backend"
   # For demo mode only, we don't need to keep websocket connections open on upgrade:
   drainTimeout: 10
   terminationGracePeriodSeconds: 30
