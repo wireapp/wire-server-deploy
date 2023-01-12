@@ -403,13 +403,13 @@ Select one of your kubernetes nodes that you are fine with losing service if it 
 export KUBENODE1IP=<your.kubernetes.node.ip>
 ```
 
-then, if your box owns the public IP (you can see the IP in 'ip addr'), run the following:
+then, if your box owns the public IP (you can see the IP in `ip addr`), run the following:
 ```
 sudo iptables -t nat -A PREROUTING -d $PUBLICIPADDRESS -i $OUTBOUNDINTERFACE -p tcp --dport 80 -j DNAT --to-destination $KUBENODE1IP:31772
 sudo iptables -t nat -A PREROUTING -d $PUBLICIPADDRESS -i $OUTBOUNDINTERFACE -p tcp --dport 443 -j DNAT --to-destination $KUBENODE1IP:31773
 ```
 
-If your box is being forwarded traffic from another firewall (you do not see the IP in 'ip addr'), run the following:
+If your box is being forwarded traffic from another firewall (you do not see the IP in `ip addr`), run the following:
 ```
 sudo iptables -t nat -A PREROUTING -i $OUTBOUNDINTERFACE -p tcp --dport 80 -j DNAT --to-destination $KUBENODE1IP:31772
 sudo iptables -t nat -A PREROUTING -i $OUTBOUNDINTERFACE -p tcp --dport 443 -j DNAT --to-destination $KUBENODE1IP:31773
