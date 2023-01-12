@@ -203,7 +203,6 @@ nginz:
       title: "My Custom Wire Backend"
       # Optional -- Uncomment these if you want to direct all of your mobile users to use the same proxy.
       #apiProxy:
-        ##### Uncomment these if you want to direct your users into using a proxy
         #host: "socks5.proxy.com"
         #port: 1080
         #needsAuthentication: true
