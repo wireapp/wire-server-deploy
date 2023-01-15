@@ -163,7 +163,7 @@ sudo apt install qemu-kvm qemu-utils -y
 #### Ubuntu 18
 If you are using ubuntu 18, you have to install the sgabios package:
 ```
-sude apt install sgabios -y
+sudo apt install sgabios -y
 ```
 
 ### add the demo user to the kvm group
