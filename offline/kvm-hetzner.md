@@ -28,6 +28,12 @@ apt update
 apt upgrade -y
 ```
 
+If at any point after this, the `apt` complaints about `grub-efi-amd64-signed` and returns an error, run:
+
+```
+sudo apt remove grub-efi-amd64-signed
+```
+
 ### create our 'demo' user
 ```
 adduser --disabled-password --gecos "" demo
