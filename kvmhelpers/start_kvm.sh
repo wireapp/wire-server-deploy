@@ -50,6 +50,21 @@ DISK=drive-c.img
 export eth0=HOSTBRIDGE
 export eth1=GUESTBRIDGE
 
+# Set the prefix of the tap interface(s) on the host for this kvm.
+# On the host the interface names are:
+# "${TAP_PREFIX}_host"      for a HOSTBRIDGE
+# "${TAP_PREFIX}_guest"     for a GUESTBRIDGE
+# "${TAP_PREFIX}_privport"  for a PRIVATEPORT (not yet supported)
+# "${TAP_PREFIX}_shareport" for a SHAREDPORT  (not yet supported)
+TAP_PREFIX=tap_node
+
+# Set the decimal value of the last octet of the MAC address for first interface for
+# this kvm.  For example if the value is 12 and there are two interfaces for this kvm,
+# the MAC addresses will end in '0c' and '0d' respectively.
+# WARNING: the MAC addresses cannot overlap with those of another kvm operating at the
+# same time!
+NEXT_MAC_SEQ=0
+
 # Where the global configuration is at. stores global settings, like whether to use graphics or text.
 #config_file="start_kvm-vars.sh"
 
@@ -96,50 +111,28 @@ SED="/bin/sed"
 # The user who is running this script.
 USER=$(${WHOAMI})
 
-# Claim a tap device, and use it.
-function claim_tap() {
-
-    TAPDEVS=$($IP tuntap | $GREP -E ^tap | $SED "s/:.*//")
-    TAPDEVCOUNT=$(echo -n "$TAPDEVS" | $WC -l)
-    # First, try to fill in any gaps.
-    LASTTAP=$(echo -n "$TAPDEVS" | $SED "s/t..//" | $SORT -g | $TAIL -n 1)
-    for each in $($SEQ 0 "$LASTTAP"); do
-        if [ $((TAPSTRIED + TAPDEVCOUNT)) == "$LASTTAP" ]; then
-            break
-        fi
-        if [ -z "$($IP tuntap | $GREP -E ^tap"$each")" ]; then
-            $SUDO $IP tuntap add dev tap"$each" mode tap user "$USER"
-            if [ $? -eq 0 ]; then
-                echo tap"$each"
-                return 0
-            fi
-            TAPSTRIED=$((TAPSTRIED + 1))
-        fi
-    done
-
-    # Then, try to claim one on the end. up to 99
-    for each in $($SEQ $((LASTTAP + 1)) 99); do
-        $SUDO $IP tuntap add dev tap"$each" mode tap user "$USER"
-        if [ $? -eq 0 ]; then
-            echo tap"$each"
-            return 0
-        fi
-    done
-}
-
 # set up networking.
 for each in ${!eth*}; do
-    TAPDEV=$(claim_tap)
-    ASSIGNED_TAPS="$ASSIGNED_TAPS $TAPDEV"
-    MACADDR="52:54:00:12:34:$(printf '%02g' $(echo "$TAPDEV" | sed 's/tap//'))"
-    echo Setting up tap "$TAPDEV" for device "$each" with mac address "$MACADDR"
+    MACADDR="52:54:00:12:34:$(printf '%02x' $NEXT_MAC_SEQ)"
     if [ "${!each}" == "HOSTBRIDGE" ]; then
+        TAPDEV="${TAP_PREFIX}_host"
         NETWORK="$NETWORK -netdev tap,id=$each,ifname=$TAPDEV,script=HOSTBRIDGE.sh,downscript=HOSTBRIDGE-down.sh -device rtl8139,netdev=$each,mac=$MACADDR"
     else
         if [ "${!each}" == "GUESTBRIDGE" ]; then
+            TAPDEV="${TAP_PREFIX}_guest"
             NETWORK="$NETWORK -netdev tap,id=$each,ifname=$TAPDEV,script=GUESTBRIDGE.sh,downscript=GUESTBRIDGE-down.sh -device rtl8139,netdev=$each,mac=$MACADDR"
+        else
+            # SHAREDPORT and PRIVATEPORT not currently supported
+            TAPDEV=""
         fi
     fi
+    if [ -n "$TAPDEV" ]; then
+        echo Setting up tap "$TAPDEV" for device "$each" with mac address "$MACADDR"
+        $SUDO $IP tuntap add dev "$TAPDEV" mode tap user "$USER"
+    fi
+    # keep track of the interfaces created to delete after the kvm closes
+    ASSIGNED_TAPS="$ASSIGNED_TAPS $TAPDEV"
+    NEXT_MAC_SEQ=$(($NEXT_MAC_SEQ + 1))
 done
 
 # boot from the CDROM if the user did not specify to boot from the disk on the command line (DRIVE=c ./start_kvm.sh).
@@ -174,7 +167,7 @@ $COMMAND
 # VM has shut down, remove all of the taps.
 for each in $ASSIGNED_TAPS; do
     {
-        $SUDO ip tuntap del dev "$each" mode tap
+        $SUDO $IP tuntap del dev "$each" mode tap
     }
 done
 
