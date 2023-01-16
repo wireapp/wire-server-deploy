@@ -1,6 +1,35 @@
 #!/bin/bash
 # shellcheck disable=SC2181,SC2001,SC1090,SC2046,SC2154
 
+if [ -n "$AUTOINSTALL" ]; then
+    WEBROOT=/home/demo/Wire-Server/autoinstall
+    KERNEL_PATH=/mnt/iso/linux
+    INITRD_PATH=../initrd
+    if [ -f "$KERNEL_PATH" && -f "$INITRD_PATH" ]; then
+        NODE=$(basename $(dirname $(readlink -f "$0")))
+    else
+        echo "Autoinstall requested, but $KERNEL_PATH (linux) or $INITRD_PATH (initrd) missing"
+    fi
+    PRESEED="d-i/bionic/${NODE}.cfg"
+    PRESEED_FILE="${WEBROOT}/${PRESEED}"
+    if [ -f "$PRESEED_FILE" ]; then
+        $SUDO debconf-set-selections -c "${PRESEED_FILE}"
+        PRESEED_MD5=$(md5sum "${PRESEED_FILE}" | cut -c 1-32)
+        echo "Autoinstall requested for ${NODE} using preseed file ${PRESEED_FILE}."
+        URL="url=http://172.16.0.1/${PRESEED}"
+        APPEND_PARAMS="'console=ttyS0 auto=true priority=critical locale=en_US ${URL} preseed-md5=${PRESEED_MD5}'"
+        APPEND="-kernel ${KERNEL_PATH} -initrd ${INITRD_PATH} -append ${APPEND_PARAMS}"
+        unset DRIVE
+        NOREBOOT=-no-reboot
+    else
+        echo "Autoinstall requested, but preseed file ${PRESEED_FILE} missing. Exiting."
+        exit
+    fi
+else
+    unset APPEND
+fi
+echo $APPEND
+
 # How much memory to allocate to this VM.
 MEM=2048
 
@@ -133,7 +162,7 @@ sleep 5
 # Actually launch qemu-kvm.
 
 # Create the qemu-kvm command
-COMMAND="/usr/bin/kvm -m $MEM -boot $DRIVE -drive file=$DISK,index=0,media=disk,format=raw -drive file=$CDROM,index=1,media=cdrom -rtc base=utc $NETWORK $PROCESSORS $CURSES $NOREBOOT"
+COMMAND="/usr/bin/kvm -m $MEM -boot $DRIVE -drive file=$DISK,index=0,media=disk,format=raw -drive file=$CDROM,index=1,media=cdrom -rtc base=utc $NETWORK $PROCESSORS $CURSES $NOREBOOT ${APPEND}"
 
 # Display the qemu-kvm command
 echo "executing:"
