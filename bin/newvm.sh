@@ -4,7 +4,7 @@ usage() { echo "Usage: $0 usage:" && grep ") \#" "$0" && echo "        <VM name>
 
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
-while getopts ":qm:d:c:" o; do
+while getopts ":qm:d:c:t:M:" o; do
     case "${o}" in
 	d) # set amount of disk, in gigabytes
 	    d=${OPTARG}
@@ -14,6 +14,12 @@ while getopts ":qm:d:c:" o; do
 	    ;;
 	c) # set amount of CPU cores.
 	    c=${OPTARG}
+	    ;;
+	t) # set tap interface prefix (ex: tap_node).
+	    t=${OPTARG}
+	    ;;
+	M) # set sequence number for MAC address (in decimal).
+	    M=${OPTARG}
 	    ;;
 	q) # use qemu instead of kvm.
 	    q=1
@@ -28,6 +34,16 @@ shift $((OPTIND-1))
 if [ -z "${d}" ] || [ -z "${m}" ]; then
     echo "here"
     usage
+fi
+
+if [ -z "${t}" ]; then
+    t=tap_node
+    echo "Warning: using the default tap name. Make sure this is the first or only kvm."
+fi
+
+if [ -z "${M}" ]; then
+    M=0
+    echo "Warning: starting with MAC prefix of zero. Make sure this is the first or only kvm."
 fi
 
 VM_NAME=$1
@@ -63,6 +79,8 @@ fi
 echo "disk size = ${d} gigabytes"
 echo "memory = ${m} megabytes"
 echo "CPUs: ${c}"
+echo "tap prefix: ${t}"
+echo "MAC sequence: ${M}"
 echo "hostname: $VM_NAME"
 if [ -n "$q" ]; then
     echo "USE QEMU"
@@ -74,6 +92,8 @@ mkdir "$VM_NAME"
 cp ./kvmhelpers/* "$VM_NAME"/
 qemu-img create "$VM_NAME"/drive-c.img "${d}"G
 sed -i "s/MEM=.*/MEM=${m}/" "$VM_NAME"/start_kvm.sh
+sed -i "s/TAP_PREFIX=.*/TAP_PREFIX=${t}/" "$VM_NAME"/start_kvm.sh
+sed -i "s/FIRST_MAC_SEQ=.*/FIRST_MAC_SEQ=${M}/" "$VM_NAME"/start_kvm.sh
 sed -i "s@CDROM=.*@CDROM=../ubuntu.iso@" "$VM_NAME"/start_kvm.sh
 sed -i "s/^export eth1=/#export eth1=/" "$VM_NAME"/start_kvm.sh
 sed -i "s/^CPUS=.*/CPUS=${c}/" "$VM_NAME"/start_kvm.sh
