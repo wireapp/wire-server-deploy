@@ -63,7 +63,7 @@ TAP_PREFIX=tap_node
 # the MAC addresses will end in '0c' and '0d' respectively.
 # WARNING: the MAC addresses cannot overlap with those of another kvm operating at the
 # same time!
-NEXT_MAC_SEQ=0
+FIRST_MAC_SEQ=0
 
 # Where the global configuration is at. stores global settings, like whether to use graphics or text.
 #config_file="start_kvm-vars.sh"
@@ -112,8 +112,9 @@ SED="/bin/sed"
 USER=$(${WHOAMI})
 
 # set up networking.
+MAC_SEQ=$FIRST_MAC_SEQ
 for each in ${!eth*}; do
-    MACADDR="52:54:00:12:34:$(printf '%02x' $NEXT_MAC_SEQ)"
+    MACADDR="52:54:00:12:34:$(printf '%02x' $MAC_SEQ)"
     if [ "${!each}" == "HOSTBRIDGE" ]; then
         TAPDEV="${TAP_PREFIX}_host"
         NETWORK="$NETWORK -netdev tap,id=$each,ifname=$TAPDEV,script=HOSTBRIDGE.sh,downscript=HOSTBRIDGE-down.sh -device rtl8139,netdev=$each,mac=$MACADDR"
@@ -132,7 +133,7 @@ for each in ${!eth*}; do
     fi
     # keep track of the interfaces created to delete after the kvm closes
     ASSIGNED_TAPS="$ASSIGNED_TAPS $TAPDEV"
-    NEXT_MAC_SEQ=$(($NEXT_MAC_SEQ + 1))
+    MAC_SEQ=$(($MAC_SEQ + 1))
 done
 
 if [ -z "$NOREBOOT" ]; then
