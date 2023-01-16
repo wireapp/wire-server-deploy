@@ -135,19 +135,35 @@ for each in ${!eth*}; do
     NEXT_MAC_SEQ=$(($NEXT_MAC_SEQ + 1))
 done
 
-# boot from the CDROM if the user did not specify to boot from the disk on the command line (DRIVE=c ./start_kvm.sh).
-if [ -z "$DRIVE" ]; then
-    echo "Booting from CD. run with \"DRIVE=c $0\" in order to boot from the hard disk."
-    DRIVE=d
-else
-    echo "Booting from hard disk."
-fi
-
 if [ -z "$NOREBOOT" ]; then
     echo "Booting normally. A reboot will reboot, and keep the VM running."
 else
     echo "Booting in single shot mode. a reboot will return you to your shell prompt, powering off the VM."
     NOREBOOT=-no-reboot
+fi
+
+# If a DRIVE is specified, boot from that device, otherwise
+# if AUTOINSTALL, NOREBOOT are specified without a DRIVE, boot from the CDROM;
+# if none of these are specified, boot from the C drive as if DRIVE=c ./start_kvm.sh was specified.
+if [ -z "$DRIVE" ]; then
+    if [ -n "$AUTOINSTALL" || -n "$NOREBOOT"]
+        # Boot from CD
+        DRIVE=d
+    else
+        # Boot from Hard Drive
+        DRIVE=c
+    fi
+fi
+
+if [ "$DRIVE" == "c" ]; then
+    echo "Booting from hard disk."
+else
+    if [ "$DRIVE" == "d" ]; then
+        echo "Booting from CD. run with \"DRIVE=c $0\" in order to boot from the hard disk."
+    else
+        echo "Invalid drive: $DRIVE specified. Exiting"
+        exit
+    fi
 fi
 
 sleep 5
