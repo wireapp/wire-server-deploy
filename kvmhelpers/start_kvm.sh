@@ -5,7 +5,7 @@ if [ -n "$AUTOINSTALL" ]; then
     WEBROOT=/home/demo/Wire-Server/autoinstall
     KERNEL_PATH=/mnt/iso/linux
     INITRD_PATH=../initrd
-    if [ -f "$KERNEL_PATH" && -f "$INITRD_PATH" ]; then
+    if [ -f "$KERNEL_PATH" ] && [ -f "$INITRD_PATH" ]; then
         NODE=$(basename $(dirname $(readlink -f "$0")))
     else
         echo "Autoinstall requested, but $KERNEL_PATH (linux) or $INITRD_PATH (initrd) missing"
@@ -147,7 +147,7 @@ fi
 # if AUTOINSTALL, NOREBOOT are specified without a DRIVE, boot from the CDROM;
 # if none of these are specified, boot from the C drive as if DRIVE=c ./start_kvm.sh was specified.
 if [ -z "$DRIVE" ]; then
-    if [ -n "$AUTOINSTALL" || -n "$NOREBOOT"]
+    if [ -n "$AUTOINSTALL" ] || [ -n "$NOREBOOT" ]; then
         # Boot from CD
         DRIVE=d
     else
