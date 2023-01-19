@@ -56,12 +56,13 @@ E.g.:
 
 ```
 $ d ansible --version
-ansible 2.9.12
-  config file = /home/arian/.ansible.cfg
-  configured module search path = ['/home/arian/.ansible/plugins/modules', '/usr/share/ansible/plugins/modules']
-  ansible python module location = /nix/store/gfrhkj3j53znj0vyvkqkbn56n2mh708k-python3.8-ansible-2.9.12/lib/python3.8/site-packages/ansible
-  executable location = /nix/store/gfrhkj3j53znj0vyvkqkbn56n2mh708k-python3.8-ansible-2.9.12/bin/ansible
-  python version = 3.8.7 (default, Dec 21 2020, 17:18:55) [GCC 10.2.0]
+ansible 2.9.27
+  config file = /wire-server-deploy/ansible/ansible.cfg
+  configured module search path = ['/root/.ansible/plugins/modules', '/usr/share/ansible/plugins/modules']
+  ansible python module location = /nix/store/vmz21km0crjx8j21bhd77vzwkpiiq9w0-python3.9-ansible-2.9.27/lib/python3.9/site-packages/ansible
+  executable location = /nix/store/vmz21km0crjx8j21bhd77vzwkpiiq9w0-python3.9-ansible-2.9.27/bin/ansible
+  python version = 3.9.10 (main, Jan 13 2022, 23:32:03) [GCC 10.3.0]
+
 
 ```
 
@@ -109,6 +110,11 @@ The following artifacts are provided:
 
 Copy `ansible/inventory/offline/99-static`  to `ansible/inventory/offline/hosts.ini`, and remove the original. 
 
+```
+cp ansible/inventory/offline/99-static ansible/inventory/offline/hosts.ini
+mv ansible/inventory/offline/99-static ansible/inventory/offline/orig.99-static
+```
+
 Edit `ansible/inventory/offline/hosts.ini`.
 Here, you will describe the topology of your offline deploy.  There's instructions in the comments on how to set
 everything up. You can also refer to extra information here. https://docs.wire.com/how-to/install/ansible-VMs.html
@@ -129,9 +135,14 @@ You'll need at least 3 `kubenode`s.  3 of them should be added to the
 additional nodes should only be added to the `[kube-node]` group.
 
 ### Setting up databases and kubernetes to talk over the correct (private) interface
+If you are deploying wire on servers that are expected to use one interface to talk to the public, and a separate interface to talk amongst themselves, you will need to add "ip=" declarations for the private interface of each node. for instance, if the first kubenode was expected to talk to the world on 172.16.0.129, but speak to other wire services (kubernetes, databases, etc) on 192.168.0.2, you should edit its entry like the following:
+```
+kubenode1 ansible_host=172.16.0.129 ip=192.168.0.2
+```
+Do this for all of the instances.
 
-* For `kubenode`s make sure that `ip` is set to the IP on which the nodes should talk among eachother.
-* Make sure that `assethost` is present in the inventory file with the correct `ansible_host` and `ip` values
+### Setting up Database network interfaces.
+* Make sure that `assethost` is present in the inventory file with the correct `ansible_host` (and `ip` values if required)
 * Make sure that `cassandra_network_interface` is set to the interface on which
   the kubenodes can reach cassandra and on which the cassandra nodes
   communicate among eachother. Your private network.
@@ -165,7 +176,7 @@ these criteria, so that we're sure SFT is deployed correctly.
 By using a `node_label` we can make sure SFT is only deployed on a certain node like `kubenode4`
 
 ```
-kubenode4 node_labels="wire.com/role=sftd" node_annotations="{'wire.com/external-ip': 'XXXX'}"
+kubenode4 node_labels="{'wire.com/role': 'sftd'}" node_annotations="{'wire.com/external-ip': 'a.b.c.d'}"
 ```
 
 If the node does not know its onw public IP (e.g. becuase it's behind NAT) then you should also set
@@ -398,18 +409,25 @@ Select one of your kubernetes nodes that you are fine with losing service if it 
 export KUBENODE1IP=<your.kubernetes.node.ip>
 ```
 
-then run the following:
+then, if your box owns the public IP (you can see the IP in `ip addr`), run the following:
 ```
-sudo iptables -t nat -A PREROUTING -d $PUBLICIPADDRESS -i $OUTBOUNDINTERFACE -p tcp --dport 80 -j DNAT --to-destination $KUBENODE1IP:80
-sudo iptables -t nat -A PREROUTING -d $PUBLICIPADDRESS -i $OUTBOUNDINTERFACE -p tcp --dport 443 -j DNAT --to-destination $KUBENODE1IP:443
+sudo iptables -t nat -A PREROUTING -d $PUBLICIPADDRESS -i $OUTBOUNDINTERFACE -p tcp --dport 80 -j DNAT --to-destination $KUBENODE1IP:31772
+sudo iptables -t nat -A PREROUTING -d $PUBLICIPADDRESS -i $OUTBOUNDINTERFACE -p tcp --dport 443 -j DNAT --to-destination $KUBENODE1IP:31773
 ```
-or add an appropriate rule to a config file (for UFW, /etc/ufw/before.rules)
 
-Then ssh into the first kubenode and make the following configuration:
+If your box is being forwarded traffic from another firewall (you do not see the IP in `ip addr`), run the following:
 ```
-sudo iptables -t nat -A PREROUTING -p tcp --dport 443 -j REDIRECT --to-port 31773
-sudo iptables -t nat -A PREROUTING -p tcp --dport 80 -j REDIRECT --to-port 31772
+sudo iptables -t nat -A PREROUTING -i $OUTBOUNDINTERFACE -p tcp --dport 80 -j DNAT --to-destination $KUBENODE1IP:31772
+sudo iptables -t nat -A PREROUTING -i $OUTBOUNDINTERFACE -p tcp --dport 443 -j DNAT --to-destination $KUBENODE1IP:31773
 ```
+
+If you are running a UFW firewall, make sure to allow inbound traffic on 443 and 80:
+```
+sudo ufw allow in on $OUTBOUNDINTERFACE proto tcp to any port 443
+sudo ufw allow in on $OUTBOUNDINTERFACE proto tcp to any port 80
+```
+
+if you are running a UFW firewall, make sure to add the above iptables rules to /etc/ufw/before.rules, so they persist after a reboot.
 
 ###### Mirroring the public IP
 
@@ -418,7 +436,8 @@ cert-manager has a requirement on being able to reach the kubernetes on it's ext
 on an IP Masquerading router, you can redirect outgoing traffic from your cluster, that is to say, when the cluster asks to connect to your external IP, you can instead choose to send it to a kubernetes node inside of the cluster.
 ```
 export INTERNALINTERFACE=br0
-sudo iptables -t nat -A PREROUTING -i $INTERNALINTERFACE -d $PUBLICIPADDRESS -p tcp -m multiport --dports 80,443 -j DNAT --to-destination $KUBENODE1IP
+sudo iptables -t nat -A PREROUTING -i $INTERNALINTERFACE -d $PUBLICIPADDRESS -p tcp --dport 80 -j DNAT --to-destination $KUBENODE1IP:31772
+sudo iptables -t nat -A PREROUTING -i $INTERNALINTERFACE -d $PUBLICIPADDRESS -p tcp --dport 443 -j DNAT --to-destination $KUBENODE1IP:31773
 ```
 
 ### Incoming Calling Traffic
@@ -478,7 +497,7 @@ d helm install nginx-ingress-services ./charts/nginx-ingress-services --values .
 
 Do not try to use paths to refer to the certificates, as the 'd' command messes with file paths outside of Wire-Server.
 
-##### In your nginx config
+##### In your nginx-ingress-services values file
 Change the domains in `values.yaml` to your domain. And add your wildcard or SAN certificate that is valid for all these
 domains to the `secrets.yaml` file.
 
@@ -518,6 +537,11 @@ d helm upgrade --install -n cert-manager-ns --set 'installCRDs=true' cert-manage
 d helm upgrade --install nginx-ingress-services charts/nginx-ingress-services -f values/nginx-ingress-services/values.yaml
 ```
 
+Watch the output of the following command to know how your request is going:
+```
+d kubectl get certificate
+```
+
 #### Old wire-server releases
 
 on older wire-server releases, nginx-ingress-services may fail to deploy. some version numbers of services have changed. make the following changes, and try to re-deploy till it works.
@@ -542,7 +566,7 @@ for bring-your-own-certificate, this could be the same wildcard or SAN certifica
 
 Next, copy `values/sftd/prod-values.example.yaml` to `values/sftd/values.yaml`, and change the contents accordingly. 
 
- * If your turn servers can be reached on their public IP by the SFT service, Wire recommends you enable cooperation between turn and SFT. add a line reading `turnDiscoveryEnabled: true` to your values file.
+ * If your turn servers can be reached on their public IP by the SFT service, Wire recommends you enable cooperation between turn and SFT. add a line reading `turnDiscoveryEnabled: true` to `values/sftd/values.yaml`.
 
 edit values/sftd/values.yaml, and select whether you want lets-encrypt certificates, and ensure the alloworigin and the host point to the appropriate domains.
 
@@ -576,3 +600,4 @@ d helm upgrade --install sftd ./charts/sftd \
   --set-file tls.key=/path/to/tls.key \
   --values values/sftd/values.yaml
 ```
+

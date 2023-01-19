@@ -47,6 +47,8 @@ packages=(
   qrencode
   texlive
   latexmk
+  libopts25
+  ntp
 )
 
 # shellcheck disable=SC2001

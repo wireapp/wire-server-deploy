@@ -444,31 +444,90 @@ switch to docs.md.
 
 skip down to 'Making tooling available in your environment'
 
-when editing the inventory, create 'ansnode' entries, rather than separate cassandra, elasticsearch, and minio nodes.
+#### Editing the ansible inventory
 
-Add all three ansnode entries into the `cassandra` `elasticsearch`, and `minio` sections.
+##### Adding host entries
+when editing the inventory, we only need seven entries in the '[all]' section. one entry for each of the VMs we are running.
+Edit the 'kubenode' entries, and the 'assethost' entry like normal.
 
-add two of the ansnode entries into the `restund` section
+Instead of creating separate cassandra, elasticsearch, and minio entries, create three 'ansnode' entries, similar to the following:
+```
+ansnode1 ansible_host=172.16.0.132
+ansnode2 ansible_host=172.16.0.133
+ansnode3 ansible_host=172.16.0.134
+```
 
-add one of the ansnode entries into the `cassandra_seed` section.
+##### Updating Group Membership
+Afterwards, we need to update the lists of what nodes belong to which group, so ansible knows what to install on these nodes.
+
+Add all three ansnode entries into the `cassandra` `elasticsearch`, and `minio` sections. They should look like the following:
+```
+[elasticsearch]
+# elasticsearch1
+# elasticsearch2
+# elasticsearch3
+ansnode1
+ansnode2
+ansnode3
 
 
-ERROR: after you install restund, the restund firewall will fail to start.
-delete the out rule to 172.16.0.0/12
+[minio]
+# minio1
+# minio2
+# minio3
+ansnode1
+ansnode2
+ansnode3
 
+[cassandra]
+# cassandra1
+# cassandra2
+# cassandra3
+```
+
+Add two of the ansnode entries into the `restund` section
+```
+[restund]
+ansnode1
+ansnode2
+```
+
+Add one of the ansnode entries into the `cassandra_seed` section.
+```
+[cassandra_seed]
+ansnode1
+```
+
+### ERROR: after you install restund, the restund firewall will fail to start.
+
+delete the outbound rule to 172.16.0.0/12
+```
+sudo ufw status numbered
+sudo ufw delete <right number>
+```
+
+#### enable the ports colocated services run on:
 cassandra:
+```
 sudo ufw allow 9042/tcp
 sudo ufw allow 9160/tcp
 sudo ufw allow 7000/tcp
 sudo ufw allow 7199/tcp
+```
 
 elasticsearch:
+```
 sudo ufw allow 9300/tcp
 sudo ufw allow 9200/tcp
+```
 
 minio:
+```
 sudo ufw allow 9000/tcp
 sudo ufw allow 9092/tcp
+```
+
+#### install turn pointing to port 8080
 
 
-install turn pointing to 8080
+
