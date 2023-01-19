@@ -57,10 +57,13 @@ chmod 440 /etc/sudoers.d/10-demo_user
 
 ## ssh in as demo user.
 on the remote machine:
+
 ```
-logout
+exit
 ```
+
 on the local machine:
+
 ```
 ssh -i ~/.ssh/id_ed25519 demo@65.21.197.76 -o serveraliveinterval=60
 ```
@@ -172,8 +175,9 @@ sudo usermod -a -G kvm demo
 ```
 
 ### log out, log back in, and return to Wire-Server.
+
 ```
-logout
+exit
 ```
 
 ```
