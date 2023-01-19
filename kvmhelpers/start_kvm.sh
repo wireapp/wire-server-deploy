@@ -18,7 +18,7 @@ if [ -n "$AUTOINSTALL" ]; then
         echo "Autoinstall requested for ${NODE} using preseed file ${PRESEED_FILE}."
         URL="url=http://172.16.0.1/${PRESEED}"
         APPEND_PARAMS="'console=ttyS0 auto=true priority=critical locale=en_US ${URL} preseed-md5=${PRESEED_MD5}'"
-        APPEND="-kernel ${KERNEL_PATH} -initrd ${INITRD_PATH} -append ${APPEND_PARAMS}"
+        APPEND="-kernel ${KERNEL_PATH} -initrd ${INITRD_PATH} -append"
         unset DRIVE
         NOREBOOT=-no-reboot
     else
@@ -26,9 +26,8 @@ if [ -n "$AUTOINSTALL" ]; then
         exit
     fi
 else
-    unset APPEND
+    unset APPEND_PARAMS
 fi
-echo $APPEND
 
 # How much memory to allocate to this VM.
 MEM=2048
@@ -176,10 +175,10 @@ COMMAND="/usr/bin/kvm -m $MEM -boot $DRIVE -drive file=$DISK,index=0,media=disk,
 
 # Display the qemu-kvm command
 echo "executing:"
-echo "$COMMAND"
+echo "$COMMAND" "${APPEND_PARAMS}"
 
 # Execute the qemu-kvm command
-$COMMAND
+$COMMAND "${APPEND_PARAMS}"
 
 # VM has shut down, remove all of the taps.
 for each in $ASSIGNED_TAPS; do
