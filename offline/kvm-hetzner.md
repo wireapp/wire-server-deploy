@@ -208,7 +208,7 @@ sudo apt install git -y
 git clone https://github.com/wireapp/wire-server-deploy.git
 cp -a wire-server-deploy/kvmhelpers/ ./
 cp -a wire-server-deploy/bin/newvm.sh ./bin
-cp -a wire-server-deploy/ansible/setup-offline-sources.yml ./ansible
+cp -a wire-server-deploy/ansible/setup-offline-sources.yml ./ansible # see https://github.com/wireapp/wire-server-deploy/blob/kvm_support/offline/docs.md#workaround-old-debian-key 
 chmod 550 ./bin/newvm.sh
 chmod 550 ./kvmhelpers/*.sh
 ```
