@@ -46,7 +46,7 @@ if result.returncode != 0:
 f = open(preseed_file, 'rb')
 md5 = hashlib.md5(f.read()).hexdigest()
 
-url = f"url=http://172.16.0.1/d-i/bionic/{NODE}.cfg"
+url = f"url=http://172.16.0.1:8008/d-i/bionic/{NODE}.cfg"
 ## FUTUREWORK: Generate the pre-seed file and verify mini-webserver is running
 
 append = [
