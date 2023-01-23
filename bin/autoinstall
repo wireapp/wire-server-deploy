@@ -1,0 +1,105 @@
+#!/usr/bin/env python3
+
+import argparse
+import subprocess
+import os
+import hashlib
+
+# Parse command line arguments
+parser = argparse.ArgumentParser(
+                    prog = 'autoinstall',
+                    description = 'Noninteractively install Ubuntu server on a kvm for Wire demo backend')
+
+parser.add_argument('-d', metavar='DISK_SIZE', required=False, help='Disk size in G')
+parser.add_argument('-m', metavar='MEM', required=True, help='Memory in MB')
+parser.add_argument('-c', metavar='CPUS', required=True, help='Number of CPUs')
+parser.add_argument('-t', metavar='TAP_PREFIX', required=True, help='Tap interface prefix (ex:"tap_node")')
+parser.add_argument('-M', metavar='MAC_SEQ', required=True, type=int, help='Unique MAC sequence number for last octet (ex: 12)')
+args = parser.parse_args()
+DISK_SIZE = args.d
+MEM = args.m
+CPUS = args.c
+TAP_PREFIX = args.t
+MAC_SEQ = args.M
+
+
+# Make sure Ubuntu CD is mounted and linux and initrd are accessible
+CDROM = '../ubuntu.iso'
+MOUNT_PATH = '/mnt/iso'
+KERNEL_PATH = MOUNT_PATH + '/linux'
+INITRD_PATH = '../initrd'
+
+kernel = [ '-kernel', KERNEL_PATH, '-initrd', INITRD_PATH ]
+
+# Preseed file
+WEBROOT = '/home/demo/Wire-Server/autoinstall'
+NODE = os.path.basename(os.getcwd())
+preseed_file = f"{WEBROOT}/d-i/bionic/{NODE}.cfg"
+
+## check syntax of preseed file
+result = subprocess.run(['sudo', 'debconf-set-selections', '-c', preseed_file ])
+if result.returncode != 0: 
+    print(f"preseed file: {preseed_file} not valid")
+    exit
+
+## get md5sum of pre-seed file
+f = open(preseed_file, 'rb')
+md5 = hashlib.md5(f.read()).hexdigest()
+
+url = f"url=http://172.16.0.1/d-i/bionic/{NODE}.cfg"
+## FUTUREWORK: Generate the pre-seed file and verify mini-webserver is running
+
+append = [
+    '-append',
+    f"console=ttyS0 auto=true priority=critical locale=en_US {url} preseed-md5={md5}"
+  ]
+
+# The drive file 
+DISK = 'drive-c.img'
+# FUTUREWORK: Create the hard drive if it doesn't exist yet
+
+# Networking
+
+## Calculate the tap interface name and MAC address
+TAPDEV = f"{TAP_PREFIX}_host"
+MAC = f"52:54:00:12:34:{MAC_SEQ:02x}"
+
+## Add the taptun interface
+add_tap = [ 'sudo', 'ip', 'tuntap', 'add', 'dev', TAPDEV, 'mode', 'tap', 'user', 'demo' ]
+del_tap = [ 'sudo', 'ip', 'tuntap', 'del', 'dev', TAPDEV, 'mode', 'tap' ]
+
+completed = subprocess.run(add_tap)
+if completed.returncode !=0:
+    print(f"Could not add tap {TAPDEV}.")
+
+## Set network qemu params
+network = [
+    '-netdev',
+    f"tap,id=eth0,ifname={TAPDEV},script=HOSTBRIDGE.sh,downscript=HOSTBRIDGE-down.sh",
+    '-device',
+    f"rtl8139,netdev=eth0,mac={MAC}"
+  ]
+
+# Create the kvm command
+CURSES = ['-nographic', '-device', 'sga']
+core = ['-m', MEM, '-smp', f"cores={CPUS}", '-rtc', 'base=utc'] + CURSES
+disk = ['-drive', f"file={DISK},index=0,media=disk,format=raw"]
+cdrom = ['-boot', 'd', '-drive', f"file={CDROM},index=1,media=cdrom", '-no-reboot']
+
+command = ['/usr/bin/kvm'] + core + disk + cdrom + network + kernel + append
+
+# Run the autoinstall
+print("Executing: ")
+print(' '.join(command))
+completed = subprocess.run(command)
+
+if completed.returncode == 0:
+  print('Command completed OK')
+else:
+  print(f"Returned error: {completed.returncode}")
+
+
+# Remove the tuntap interface
+completed = subprocess.run(del_tap)
+if completed.returncode !=0:
+    print(f"Could not remove tap {TAPDEV}.")
