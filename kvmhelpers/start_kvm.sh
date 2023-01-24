@@ -178,7 +178,11 @@ echo "executing:"
 echo "$COMMAND" "${APPEND_PARAMS}"
 
 # Execute the qemu-kvm command
-$COMMAND "${APPEND_PARAMS}"
+if [ -n "$AUTOINSTALL" ]; then
+    $COMMAND "${APPEND_PARAMS}"
+else
+    $COMMAND
+fi
 
 # VM has shut down, remove all of the taps.
 for each in $ASSIGNED_TAPS; do
