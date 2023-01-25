@@ -66,7 +66,7 @@ sed -i -re 's/^(UsePAM)(.+)/\1 no/' /etc/ssh/sshd_config
 sed -i -re 's/^(PermitRootLogin)(.+)/\1 prohibit-password/' /etc/ssh/sshd_config
 service ssh restart
 adduser --disabled-password --gecos "" demo
-mkdir ~demo/.ssh ~demo/Wire-Server
+mkdir -p ~demo/.ssh ~demo/Wire-Server
 cp ~/.ssh/authorized_keys /home/demo/.ssh/
 chown -R demo:demo ~demo/
 chmod 700 ~demo/.ssh
@@ -80,7 +80,7 @@ reboot
 Copy the site.ini file to the host:
 
 ```
-scp -i ~/.ssh/id_ed25519 site.ini "demo@${HOST_IP}:Wire-Server/"
+scp -i ~/.ssh/id_ed25519 site.ini "demo@${HOST_IP}:Wire-Server"
 ```
 
 Login to the host as the demo user:
@@ -92,8 +92,8 @@ ssh -i ~/.ssh/id_ed25519 "demo@${HOST_IP}" -o serveraliveinterval=60
 Run these commands on the host (as demo):
 
 ```
-sed -i -re 's/^(PermitRootLogin)(.+)/\1 no/' /etc/ssh/sshd_config
-service ssh restart
+sudo sed -i -re 's/^(PermitRootLogin)(.+)/\1 no/' /etc/ssh/sshd_config
+sudo service ssh restart
 sudo apt install -y git
 cd ~/Wire-Server
 git clone https://github.com/wireapp/wire-server-deploy.git
