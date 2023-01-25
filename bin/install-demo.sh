@@ -174,12 +174,12 @@ screen -wipe
 
 echo "****** Start each KVM in it's own detached screen ******"
 cd assethost    && screen -S assethost -d -m ./start_kvm.sh
-cd ../kubehost1 && screen -S kubehost1 -d -m ./start_kvm.sh
-cd ../kubehost2 && screen -S kubehost2 -d -m ./start_kvm.sh
-cd ../kubehost3 && screen -S kubehost3 -d -m ./start_kvm.sh
-cd ../anshost1  && screen -S anshost1  -d -m ./start_kvm.sh
-cd ../anshost2  && screen -S anshost2  -d -m ./start_kvm.sh
-cd ../anshost3  && screen -S anshost3  -d -m ./start_kvm.sh
+cd ../kubenode1 && screen -S kubenode1 -d -m ./start_kvm.sh
+cd ../kubenode2 && screen -S kubenode2 -d -m ./start_kvm.sh
+cd ../kubenode3 && screen -S kubenode3 -d -m ./start_kvm.sh
+cd ../ansnode1  && screen -S ansnode1  -d -m ./start_kvm.sh
+cd ../ansnode2  && screen -S ansnode2  -d -m ./start_kvm.sh
+cd ../ansnode3  && screen -S ansnode3  -d -m ./start_kvm.sh
 cd ..
 
 echo "****** More networking ******"
