@@ -66,10 +66,13 @@ cp wire-server-deploy/offline/kvm-demo-hosts.ini hosts.ini
 chmod 550 ./bin/newvm.sh ./bin/autoinstall ./kvmhelpers/*.sh
 
 echo "****** Download Ubuntu Server CD ******"
-curl https://releases.ubuntu.com/18.04.6/ubuntu-18.04.6-live-server-amd64.iso -o ubuntu.iso
+curl http://archive.ubuntu.com/ubuntu/dists/bionic-updates/main/installer-amd64/current/images/netboot/mini.iso -o ubuntu.iso
+#curl https://releases.ubuntu.com/18.04.6/ubuntu-18.04.6-live-server-amd64.iso -o ubuntu.iso
 # WARNING: check that the instructions still work for this image, or find the mini.iso.
 sudo mkdir -p /mnt/iso
 sudo mount -r ubuntu.iso /mnt/iso
+cp /mnt/iso/initrd.gz .
+gunzip initrd.gz
 
 echo "****** Setup autoinstall web server ******"
 mkdir -p ~/Wire-Server/autoinstall/d-i/bionic
