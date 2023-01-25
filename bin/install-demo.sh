@@ -4,18 +4,20 @@
 echo "***** Reading variables from site.ini ******"
 source ~/Wire-Server/site.ini
 
-echo "***** Installing packages ******"
-sudo systemctl disable systemd-resolved
-sudo apt install -y dnsmasq ufw qemu-kvm qemu-utils sgabios bridge-utils docker.io
-sudo systemctl stop systemd-resolved
-
-echo "****** Configuring networking on host ******"
+echo "****** Configuring DNS on host ******"
 # service DNS requests locally via dnsmasq
+sudo systemctl disable systemd-resolved
+sudo apt install -y dnsmasq
+sudo systemctl stop systemd-resolved
 sudo bash -c 'echo "listen-address=127.0.0.53" > /etc/dnsmasq.d/00-lo-systemd-resolvconf'
 sudo bash -c 'echo "no-resolv" >> /etc/dnsmasq.d/00-lo-systemd-resolvconf'
 sudo bash -c 'echo "server=8.8.8.8" >> /etc/dnsmasq.d/00-lo-systemd-resolvconf'
 sudo service dnsmasq restart
 
+echo "***** Installing packages ******"
+sudo apt install -y ufw qemu-kvm qemu-utils sgabios bridge-utils screen docker.io
+
+echo "****** Configuring networking on host ******"
 # configure firewall
 sudo ufw allow 22/tcp
 sudo ufw allow from 172.16.0.0/24 proto udp to any port 53
@@ -38,7 +40,7 @@ sudo sed -i "s/.*net.ipv4.ip_forward.*/net.ipv4.ip_forward=1/" /etc/sysctl.conf
 sudo sysctl -p
 
 # masquerading
-OUTBOUNDINTERFACE=`ip ro | grep ^default | egrep -o 'en[ps0-9a-f]+'`
+OUTBOUNDINTERFACE=`ip ro | grep ^default | egrep -o 'en[0-9a-fops]+'`
 sudo sed -i 's/.*DEFAULT_FORWARD_POLICY=.*/DEFAULT_FORWARD_POLICY="ACCEPT"/' /etc/default/ufw
 sudo sed -i "1i *nat\n:POSTROUTING ACCEPT [0:0]\n-A POSTROUTING -s 172.16.0.0/24 -o $OUTBOUNDINTERFACE -j MASQUERADE\nCOMMIT" /etc/ufw/before.rules
 sudo service ufw restart
@@ -47,36 +49,44 @@ echo "****** Fetching Wire-Server artifact ******"
 wget "${ARTIFACT_URL}"
 
 echo "****** Extracting Wire-Server artifact ******"
-tar -xzf ../wire-server-deploy-static-*.tgz
+tar -xzf wire-server-deploy-static-*.tgz
 tar -xf debs.tar
-sudo dpkg -i debs/public/pool/main/d/docker-ce/docker-ce-cli_*.deb
-sudo dpkg -i debs/public/pool/main/c/containerd.io/containerd.io_*.deb 
-sudo dpkg -i debs/public/pool/main/d/docker-ce/docker-ce_*.deb
-sudo dpkg --configure -a
+#sudo dpkg -i debs/public/pool/main/d/docker-ce/docker-ce-cli_*.deb
+#sudo dpkg -i debs/public/pool/main/c/containerd.io/containerd.io_*.deb 
+#sudo dpkg -i debs/public/pool/main/d/docker-ce/docker-ce_*.deb
+#sudo dpkg --configure -a
 
 echo "****** Copy deployment scripts ******"
 cp -a wire-server-deploy/kvmhelpers/ ./
 cp -a wire-server-deploy/bin/newvm.sh ./bin
+cp -a wire-server-deploy/bin/autoinstall ./bin
 cp -a wire-server-deploy/ansible/setup-offline-sources.yml ./ansible # see https://github.com/wireapp/wire-server-deploy/blob/kvm_support/offline/docs.md#workaround-old-debian-key 
 cp wire-server-deploy/offline/kvm-demo-hosts.ini hosts.ini
-cp wire-server-deploy/offline/kvm-demo-host.json .
+#cp wire-server-deploy/offline/kvm-demo-host.json .
 chmod 550 ./bin/newvm.sh ./bin/autoinstall ./kvmhelpers/*.sh
 
 echo "****** Download Ubuntu Server CD ******"
-curl https://releases.ubuntu.com/18.04.3/ubuntu-18.04.3-live-server-amd64.iso -o ubuntu.iso
-# TODO: update to 18.04.6 by updating this script and autoinstall script for
-#         correct location of linux and initrd
-#curl https://releases.ubuntu.com/18.04.3/ubuntu-18.04.3-live-server-amd64.iso -o ubuntu.iso
+curl https://releases.ubuntu.com/18.04.6/ubuntu-18.04.6-live-server-amd64.iso -o ubuntu.iso
 # WARNING: check that the instructions still work for this image, or find the mini.iso.
 sudo mkdir -p /mnt/iso
 sudo mount -r ubuntu.iso /mnt/iso
-cp /mnt/iso/initrd.gz .
-gunzip initrd.gz
 
 echo "****** Setup autoinstall web server ******"
 mkdir -p ~/Wire-Server/autoinstall/d-i/bionic
-cp wire-server-deploy/offline/preseed-template.cfg autoinstall/
-(cd ~/Wire-Server/autoinstall && screen -S autoinstall_web -d -m 'python3 -m http.server 8008')
+cp wire-server-deploy/preseed_files/preseed_template.cfg autoinstall/
+cd ~/Wire-Server/autoinstall
+screen -S autoinstall_web -d -m python3 -m http.server 8008
+
+echo "****** Create pre-seed files for each host ******"
+cd ~/Wire-Server/autoinstall/d-i/bionic/
+sed -e "s/NODENAME/assethost.${WIRE_DOMAIN}/" ../../preseed_template.cfg >assethost.cfg
+sed -e "s/NODENAME/kubenode1.${WIRE_DOMAIN}/" ../../preseed_template.cfg >kubenode1.cfg
+sed -e "s/NODENAME/kubenode2.${WIRE_DOMAIN}/" ../../preseed_template.cfg >kubenode2.cfg
+sed -e "s/NODENAME/kubenode3.${WIRE_DOMAIN}/" ../../preseed_template.cfg >kubenode3.cfg
+sed -e "s/NODENAME/ansnode1.${WIRE_DOMAIN}/" ../../preseed_template.cfg >ansnode1.cfg
+sed -e "s/NODENAME/ansnode2.${WIRE_DOMAIN}/" ../../preseed_template.cfg >ansnode2.cfg
+sed -e "s/NODENAME/ansnode3.${WIRE_DOMAIN}/" ../../preseed_template.cfg >ansnode3.cfg
+cd ~/Wire-Server
 
 echo "****** Configure KVM ******"
 # add demo to kvm group
