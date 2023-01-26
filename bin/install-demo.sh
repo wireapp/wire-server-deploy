@@ -82,6 +82,8 @@ screen -S autoinstall_web -d -m python3 -m http.server 8008
 
 echo "****** Create pre-seed files for each host ******"
 cd ~/Wire-Server/autoinstall/d-i/bionic/
+#../../../bin/each_node run "sed -e 's/NODENAME/{nodename}.${WIRE_DOMAIN}/' ../../preseed_template.cfg >{nodename}.cfg"
+
 sed -e "s/NODENAME/assethost.${WIRE_DOMAIN}/" ../../preseed_template.cfg >assethost.cfg
 sed -e "s/NODENAME/kubenode1.${WIRE_DOMAIN}/" ../../preseed_template.cfg >kubenode1.cfg
 sed -e "s/NODENAME/kubenode2.${WIRE_DOMAIN}/" ../../preseed_template.cfg >kubenode2.cfg
@@ -96,6 +98,8 @@ echo "****** Configure KVM ******"
 sudo usermod -a -G kvm demo
 
 # assign each host a static DHCP address
+#sudo bin/each_node print "dhcp-host={nodename},172.16.0.{ip},10h" > /etc/dnsmasq.d/20-hosts
+
 sudo bash -c 'echo "dhcp-host=assethost,172.16.0.128,10h" > /etc/dnsmasq.d/20-hosts'
 sudo bash -c 'echo "dhcp-host=kubenode1,172.16.0.129,10h" >> /etc/dnsmasq.d/20-hosts'
 sudo bash -c 'echo "dhcp-host=kubenode2,172.16.0.130,10h" >> /etc/dnsmasq.d/20-hosts'
@@ -112,7 +116,9 @@ sudo service dnsmasq restart
 
 echo "****** Create KVMs and Install ubuntu"
 
-# Create kvm directories manually
+# Create kvm directories for each node
+#bin/each_node run "../bin/newvm.sh -d {disk} -m {mem*1024} -c {cpus} -t tap_{short} -M {mac} {nodename}"
+
 ./bin/newvm.sh -d 40 -m 1024 -c 1 -t tap_asset -M 0 assethost
 ./bin/newvm.sh -d 80 -m 8192 -c 6 -t tap_kube1 -M 1 kubenode1
 ./bin/newvm.sh -d 80 -m 8192 -c 6 -t tap_kube2 -M 2 kubenode2
@@ -122,6 +128,8 @@ echo "****** Create KVMs and Install ubuntu"
 ./bin/newvm.sh -d 80 -m 8192 -c 6 -t tap_ans3 -M 6 ansnode3
 
 # Run the autoinstall script for each node
+#bin/each_node run "cd {nodename}\n../bin/autoinstall -m {mem*1024} -c {cpus} -t tap_{short} -M {mac}\ncd .."
+
 cd assethost
 ../bin/autoinstall -d 40 -m 1024 -c 1 -t tap_asset -M 0
 cd ../kubenode1
@@ -139,6 +147,8 @@ cd ../ansnode3
 cd ..
 
 # Backup freshly installed kvms
+#bin/each_node run "cp -a {nodename} {nodename}-new"
+
 cp -a assethost assethost-new
 cp -a ansnode1 ansnode1-new
 cp -a ansnode2 ansnode2-new
@@ -173,6 +183,8 @@ kill -KILL `screen -list | grep '.autoinstall_web' | cut -d . -f 1 | egrep -o '[
 screen -wipe
 
 echo "****** Start each KVM in it's own detached screen ******"
+#bin/each_node run "cd {nodename}\nscreen -S {nodename} -d -m ./start_kvm.sh\ncd .."
+
 cd assethost    && screen -S assethost -d -m ./start_kvm.sh
 cd ../kubenode1 && screen -S kubenode1 -d -m ./start_kvm.sh
 cd ../kubenode2 && screen -S kubenode2 -d -m ./start_kvm.sh
