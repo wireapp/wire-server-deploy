@@ -33,8 +33,8 @@ Add your local ssh public key as an authorized key on the host (if not already d
 Either do via the robot or (if you have a root password) with these commands:
 
 ```
-scp ~/.ssh/id_ed25519.pub "root@{HOST_IP}:"
-ssh "root@{HOST_IP}" '/bin/bash -c "mkdir -p ~/.ssh/ && chmod 700 ~/.ssh/ && cat id_ed25519.pub >> ~/.ssh/authorized_keys && chmod 600 ~/.ssh/authorized_keys && rm ~/id_ed25519.pub"'
+scp ~/.ssh/id_ed25519.pub "root@${HOST_IP}:"
+ssh "root@${HOST_IP}" '/bin/bash -c "mkdir -p ~/.ssh/ && chmod 700 ~/.ssh/ && cat id_ed25519.pub >> ~/.ssh/authorized_keys && chmod 600 ~/.ssh/authorized_keys && rm ~/id_ed25519.pub"'
 ```
 
 Create a `site.ini` file locally. Populate it with the demo installation's actual
