@@ -1,4 +1,7 @@
-self: super: {
+self:
+let helm-mapkubeapis = self.callPackage ./pkgs/helm-mapkubeapis.nix { };
+in
+super: {
   pythonForAnsible = (self.python3.withPackages (_: self.ansible.requiredPythonModules ++ [
     super.python3Packages.boto
     super.python3Packages.boto3
@@ -11,7 +14,7 @@ self: super: {
 
   kubectl = self.callPackage ./pkgs/kubectl.nix { };
   kubernetes-helm = super.wrapHelm super.kubernetes-helm {
-    plugins = with super.kubernetes-helmPlugins; [ helm-s3 helm-secrets helm-diff ];
+    plugins = with super.kubernetes-helmPlugins; [ helm-s3 helm-secrets helm-diff helm-mapkubeapis ];
   };
 
   kubeadm = self.runCommandNoCC "kubeadm" { } "install -Dm0775 ${self.wire-binaries}/kubeadm $out/bin/kubeadm";
