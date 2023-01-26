@@ -127,9 +127,15 @@ on the local machine:
 ssh -i ~/.ssh/id_ed25519 demo@65.21.197.76 -o serveraliveinterval=60
 ```
 
-## disable root login via ssh
+## Disable root login via ssh
 
-use sudo to edit /etc/ssh/sshd_config, and set the following:
+Use sudo to edit `/etc/ssh/sshd_config`
+
+```
+sudo nano /etc/ssh/sshd_config
+```
+
+And set the following:
 ```
 # even better: don't allow to login as root via ssh at all
 PermitRootLogin no
