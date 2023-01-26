@@ -15,7 +15,7 @@ sudo bash -c 'echo "server=8.8.8.8" >> /etc/dnsmasq.d/00-lo-systemd-resolvconf'
 sudo service dnsmasq restart
 
 echo "***** Installing packages ******"
-sudo apt install -y ufw qemu-kvm qemu-utils sgabios bridge-utils screen docker.io
+sudo apt install -y ufw qemu-kvm qemu-utils sgabios bridge-utils screen
 
 echo "****** Configuring networking on host ******"
 # configure firewall
@@ -51,10 +51,10 @@ wget "${ARTIFACT_URL}"
 echo "****** Extracting Wire-Server artifact ******"
 tar -xzf wire-server-deploy-static-*.tgz
 tar -xf debs.tar
-#sudo dpkg -i debs/public/pool/main/d/docker-ce/docker-ce-cli_*.deb
-#sudo dpkg -i debs/public/pool/main/c/containerd.io/containerd.io_*.deb 
-#sudo dpkg -i debs/public/pool/main/d/docker-ce/docker-ce_*.deb
-#sudo dpkg --configure -a
+sudo dpkg -i debs/public/pool/main/d/docker-ce/docker-ce-cli_*.deb
+sudo dpkg -i debs/public/pool/main/c/containerd.io/containerd.io_*.deb 
+sudo dpkg -i debs/public/pool/main/d/docker-ce/docker-ce_*.deb
+sudo dpkg --configure -a
 
 echo "****** Copy deployment scripts ******"
 cp -a wire-server-deploy/kvmhelpers/ ./
@@ -67,8 +67,6 @@ chmod 550 ./bin/newvm.sh ./bin/autoinstall ./kvmhelpers/*.sh
 
 echo "****** Download Ubuntu Server CD ******"
 curl http://archive.ubuntu.com/ubuntu/dists/bionic-updates/main/installer-amd64/current/images/netboot/mini.iso -o ubuntu.iso
-#curl https://releases.ubuntu.com/18.04.6/ubuntu-18.04.6-live-server-amd64.iso -o ubuntu.iso
-# WARNING: check that the instructions still work for this image, or find the mini.iso.
 sudo mkdir -p /mnt/iso
 sudo mount -r ubuntu.iso /mnt/iso
 cp /mnt/iso/initrd.gz .
@@ -128,7 +126,7 @@ echo "****** Create KVMs and Install ubuntu"
 ./bin/newvm.sh -d 80 -m 8192 -c 6 -t tap_ans3 -M 6 ansnode3
 
 # Run the autoinstall script for each node
-#bin/each_node run "cd {nodename}\n../bin/autoinstall -m {mem*1024} -c {cpus} -t tap_{short} -M {mac}\ncd .."
+#bin/each_node run "../bin/autoinstall -m {mem*1024} -c {cpus} -t tap_{short} -M {mac}" nodename
 
 cd assethost
 ../bin/autoinstall -d 40 -m 1024 -c 1 -t tap_asset -M 0
@@ -157,25 +155,6 @@ cp -a kubenode1 kubenode1-new
 cp -a kubenode2 kubenode2-new
 cp -a kubenode3 kubenode3-new
 
-# TODO
-#for each one
-#for host in hostparams:
-#  (nodename, short, cpus, mem, disk, ip, mac_seq, nets) = host
-#  tap_prefix = 'tap_' + short
-#  setup_dhcp(nodename, "172.16.0." + ip)
-#  create_kvm(nodename, disk, cpus, mem, mac_seq, tap_prefix)
-#  install_ubuntu(nodename, cpus, mem, mac_seq, tap_prefix)
-#  backup_ubuntu(nodename)
-#  start_in_detached_screen(nodename)
-
-# create kvms 
-# f"bin/newvm -d {disk} -m {mem} -c {cpus} -t {tap_prefix} -M {mac_seq} {nodename}"
-# autoinstall kvms
-# f"(cd {nodename} && ../bin/autoinstall -m {mem} -c {cpus} -t {tap_prefix} -M {mac_seq})"
-# backup freshly installed kvm
-# cp -a {nodename} {nodename}-new
-# start each kvm in it's own detached screen
-# f"cd {nodename} && screen -S {nodename} -d -m ./start_kvm.sh"
 
 echo "****** Stop autoinstall web server ******"
 # gotta be a better way
@@ -183,7 +162,7 @@ kill -KILL `screen -list | grep '.autoinstall_web' | cut -d . -f 1 | egrep -o '[
 screen -wipe
 
 echo "****** Start each KVM in it's own detached screen ******"
-#bin/each_node run "cd {nodename}\nscreen -S {nodename} -d -m ./start_kvm.sh\ncd .."
+#bin/each_node run "screen -S {nodename} -d -m ./start_kvm.sh" nodename
 
 cd assethost    && screen -S assethost -d -m ./start_kvm.sh
 cd ../kubenode1 && screen -S kubenode1 -d -m ./start_kvm.sh
@@ -258,7 +237,7 @@ sed -i "s/DOMAIN/${WIRE_DOMAIN}/g" ansible/inventory/offline/hosts.ini
 mv ansible/inventory/offline/99-static ansible/inventory/offline/orig.99-static
 
 echo "****** Fix restund configuration ******"
-# TODO:
+# TODO: set port numbers correctly
 
 
 echo "****** First phase of the install is complete ******"
