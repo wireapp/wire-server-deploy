@@ -1,0 +1,12 @@
+{
+  "hostparams" : [
+    ["assethost", "asset", 1, 2, 40, 128, 0, "host"],
+    ["kubehost1", "kube1", 6, 8, 80, 129, 1, "host"],
+    ["kubehost2", "kube2", 6, 8, 80, 130, 2, "host"],
+    ["kubehost3", "kube3", 6, 8, 80, 131, 3, "host"],
+    ["anshost1",  "ans1",  6, 8, 80, 132, 4, "host"],
+    ["anshost2",  "ans2",  6, 8, 80, 133, 5, "host"],
+    ["anshost3",  "ans3",  6, 8, 80, 134, 6, "host"]
+  ]
+}
+
