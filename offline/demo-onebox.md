@@ -4,7 +4,7 @@ This document gives exact instructions for performing an offline installation of
 
 ## Use the hetzner robot console to create a new server.
 
-Select Ubuntu 18.04 or Ubuntu 20.04 on an ax101 dedicated server.
+Select Ubuntu 20.04 on an ax101 dedicated server.
 
 If not using Hetzner, for reference, the specs of the ax101 server are:
 
