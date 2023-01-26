@@ -259,7 +259,7 @@ screen
 ### install bridge-utils
 So that we can manage the virtual network.
 ```
-sudo apt install bridge-utils -y
+sudo apt install bridge-utils net-tools -y
 ```
 
 ### (personal) install emacs
