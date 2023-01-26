@@ -18,7 +18,12 @@ sudo service dnsmasq restart
 sudo bash -c 'echo "nameserver 127.0.0.53" > /etc/resolv.conf'
 
 echo "***** Installing packages ******"
-sudo apt install -y ufw qemu-kvm qemu-utils sgabios bridge-utils screen
+sudo apt update
+sudo dpkg --configure -a
+sudo apt -f install
+sudo apt update
+sudo apt install -y ufw sgabios bridge-utils screen
+sudo apt install -y qemu-kvm qemu-utils
 
 echo "****** Configuring networking on host ******"
 # configure firewall
@@ -94,10 +99,7 @@ sed -e "s/NODENAME/ansnode2.${WIRE_DOMAIN}/" ../../preseed_template.cfg >ansnode
 sed -e "s/NODENAME/ansnode3.${WIRE_DOMAIN}/" ../../preseed_template.cfg >ansnode3.cfg
 cd ~/Wire-Server
 
-echo "****** Configure KVM ******"
-# add demo to kvm group
-sudo usermod -a -G kvm demo
-
+echo "****** Setup static DHCP ******"
 # assign each host a static DHCP address
 #sudo bin/each_node print "dhcp-host={nodename},172.16.0.{ip},10h" > /etc/dnsmasq.d/20-hosts
 
@@ -110,13 +112,7 @@ sudo bash -c 'echo "dhcp-host=ansnode2,172.16.0.133,10h" >> /etc/dnsmasq.d/20-ho
 sudo bash -c 'echo "dhcp-host=ansnode3,172.16.0.134,10h" >> /etc/dnsmasq.d/20-hosts'
 sudo service dnsmasq restart
 
-# TODO: walk through kvm-demo-host.json instead
-# sudo python3 setup-dhcp kvm-demo-host.json
-#    read/parse the json file
-#    for each host, print(f"dhcp-host={nodename},172.16.0.{ip},10h") into /etc/dnsmasq.d/20-hosts
-
 echo "****** Create KVMs and Install ubuntu"
-
 # Create kvm directories for each node
 #bin/each_node run "../bin/newvm.sh -d {disk} -m {mem*1024} -c {cpus} -t tap_{short} -M {mac} {nodename}"
 
@@ -181,14 +177,14 @@ echo "****** More networking ******"
 
 # TODO ??
 EXTERNALIPADDRESS=`ip ro | grep ^default | egrep -o 'via [0-9]+\.[0-9]+\.[0-9]+\.[0-9]+' | egrep -o '[0-9.]+'`
-# get PUBLICIPADDRESS from site.ini and compare
+# FUTUREWORK: get PUBLICIPADDRESS from site.ini and compare
 PUBLICIPADDRESS=$EXTERNALIPADDRESS
 IP_IS_PUBLIC=1
 
 
 KUBENODE1IP=172.16.0.129
 RESTUND01IP=172.16.0.132
-#  TODO: fetch the KUBENODE1IP from nodes.params
+# FUTUREWORK: fetch the KUBENODE1IP from nodes.params
 #KUBENODE1IP=``
 #RESTUND01IP=``
 
