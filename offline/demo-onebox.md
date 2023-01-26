@@ -94,10 +94,11 @@ Run these commands on the host (as demo):
 ```
 sudo sed -i -re 's/^(PermitRootLogin)(.+)/\1 no/' /etc/ssh/sshd_config
 sudo service ssh restart
+sudo usermod -a -G kvm demo
 sudo apt install -y git
 cd ~/Wire-Server
-git clone https://github.com/wireapp/wire-server-deploy.git
-wire-server-deploy/bin/install-demo
+git clone -b rohan/autoinstall https://github.com/wireapp/wire-server-deploy.git
+wire-server-deploy/bin/install-demo.sh
 ```
 
 
