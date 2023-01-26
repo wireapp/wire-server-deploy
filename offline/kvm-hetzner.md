@@ -64,6 +64,12 @@ reboot
 
 ### Disable password login for sshd
 
+Install `nano` or your favorite text editor:
+
+```
+sudo apt install nano -y
+```
+
 Make sure the following values are configured in /etc/ssh/sshd_config:
 ```
 # this is the important value
