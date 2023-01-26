@@ -70,6 +70,7 @@ mkdir -p ~demo/.ssh ~demo/Wire-Server
 cp ~/.ssh/authorized_keys /home/demo/.ssh/
 chown -R demo:demo ~demo/
 chmod 700 ~demo/.ssh
+usermod -a -G kvm demo
 echo "demo ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/10-demo_user
 chmod 440 /etc/sudoers.d/10-demo_user
 reboot
@@ -94,7 +95,6 @@ Run these commands on the host (as demo):
 ```
 sudo sed -i -re 's/^(PermitRootLogin)(.+)/\1 no/' /etc/ssh/sshd_config
 sudo service ssh restart
-sudo usermod -a -G kvm demo
 sudo apt install -y git
 cd ~/Wire-Server
 git clone -b rohan/autoinstall https://github.com/wireapp/wire-server-deploy.git
