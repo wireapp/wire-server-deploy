@@ -7,12 +7,15 @@ source ~/Wire-Server/site.ini
 echo "****** Configuring DNS on host ******"
 # service DNS requests locally via dnsmasq
 sudo systemctl disable systemd-resolved
-sudo apt install -y dnsmasq
 sudo systemctl stop systemd-resolved
+sudo unlink /etc/resolv.conf
+sudo bash -c 'echo "nameserver 8.8.8.8" > /etc/resolv.conf'
+sudo apt install -y dnsmasq
 sudo bash -c 'echo "listen-address=127.0.0.53" > /etc/dnsmasq.d/00-lo-systemd-resolvconf'
 sudo bash -c 'echo "no-resolv" >> /etc/dnsmasq.d/00-lo-systemd-resolvconf'
 sudo bash -c 'echo "server=8.8.8.8" >> /etc/dnsmasq.d/00-lo-systemd-resolvconf'
 sudo service dnsmasq restart
+sudo bash -c 'echo "nameserver 127.0.0.53" > /etc/resolv.conf'
 
 echo "***** Installing packages ******"
 sudo apt install -y ufw qemu-kvm qemu-utils sgabios bridge-utils screen
