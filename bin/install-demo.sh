@@ -32,7 +32,7 @@ sudo ufw allow from 172.16.0.0/24 proto udp to any port 53
 sudo ufw allow from 127.0.0.0/24 proto udp to any port 53
 sudo ufw allow in on br0 from any proto udp to any port 67
 sudo ufw allow from 172.16.0.0/24 proto tcp to 172.16.0.1 port 8008
-sudo ufw enable
+yes | sudo ufw enable
 
 # create bridge interface
 sudo brctl addbr br0
