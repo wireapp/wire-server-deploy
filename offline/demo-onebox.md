@@ -107,7 +107,7 @@ wire-server-deploy/bin/install-demo.sh
 
 switch to docs.md.
 
-skip down to 'Making tooling available in your environment'
+skip down to [Making tooling available in your environment](https://github.com/wireapp/wire-server-deploy/blob/rohan/autoinstall/offline/docs.md#making-tooling-available-in-your-environment), and follow this instructions from there.
 
 ### ERROR: after you install restund, the restund firewall will fail to start.
 
