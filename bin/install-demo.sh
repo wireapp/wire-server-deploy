@@ -219,11 +219,14 @@ sudo iptables -t nat -A PREROUTING -d $PUBLICIPADDRESS -i $OUTBOUNDINTERFACE -p 
 #sudo ufw delete <right number>
 
 echo "****** Install certmanager ******"
+# these steps are specified in docs.md
 wget https://charts.jetstack.io/charts/cert-manager-v1.9.1.tgz
 mkdir tmp
 (cd tmp && tar -xzf ../cert-manager-*.tgz)
 mv tmp/cert-manager/ charts/
 rm -rf tmp
+cp values/nginx-ingress-services/prod-values.example.yaml values/nginx-ingress-services/values.yaml
+#cp values/nginx-ingress-services/prod-secrets.example.yaml values/nginx-ingress-services/secrets.yaml
 sed -i "s/  useCertManager: false/  useCertManager: true/" values/nginx-ingress-services/values.yaml
 sed -i "s/(  certmasterEmail:)/\1 ${INSTALL_EMAIL}/" values/nginx-ingress-services/values.yaml
 sed -i "s/example.com/${WIRE_DOMAIN}/" values/nginx-ingress-services/values.yaml
