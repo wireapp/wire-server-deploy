@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# This will consume a list of ubuntu bionic packages (or queries), and produces
+# This will consume a list of ubuntu jammy packages (or queries), and produces
 # a packages.tgz tarball, which can be statically served.
 
 # It assumes a GPG_PRIVATE_KEY environment variable is set
@@ -49,6 +49,8 @@ packages=(
   latexmk
   libopts25
   ntp
+  libc6
+  libseccomp2
 )
 
 # shellcheck disable=SC2001
@@ -60,8 +62,7 @@ echo "$packages_"
 # installs. This is kept in sync with kubespray manually.
 # See roles/container-engine/docker/vars/ubuntu.yml
 # See roles/container-engine/containerd-common/vars/ubuntu.yml
-docker_packages="docker-ce (= 5:19.03.14~3-0~ubuntu-bionic) | docker-ce-cli (= 5:19.03.14~3-0~ubuntu-bionic) | containerd.io (= 1.3.9-1)"
-
+docker_packages="docker-ce (= 5:20.10.14~3-0~ubuntu-jammy) | docker-ce-cli (= 5:20.10.14~3-0~ubuntu-jammy) | containerd.io (= 1.5.10-1)"
 GNUPGHOME=$(mktemp -d)
 export GNUPGHOME
 aptly_config=$(mktemp)
@@ -96,20 +97,20 @@ curl https://download.docker.com/linux/ubuntu/gpg | gpg --no-default-keyring --k
 echo "Trusted"
 gpg --list-keys --no-default-keyring --keyring=trustedkeys.gpg
 
-$aptly mirror create -architectures=amd64 -filter="${packages_}" -filter-with-deps bionic http://de.archive.ubuntu.com/ubuntu/ bionic main universe
-$aptly mirror create -architectures=amd64 -filter="${packages_}" -filter-with-deps bionic-security http://de.archive.ubuntu.com/ubuntu/ bionic-security main universe
-$aptly mirror create -architectures=amd64 -filter="${docker_packages}" -filter-with-deps docker-ce https://download.docker.com/linux/ubuntu bionic stable
+$aptly mirror create -architectures=amd64 -filter="${packages_}" -filter-with-deps jammy http://de.archive.ubuntu.com/ubuntu/ jammy main universe
+$aptly mirror create -architectures=amd64 -filter="${packages_}" -filter-with-deps jammy-security http://de.archive.ubuntu.com/ubuntu/ jammy-security main universe
+$aptly mirror create -architectures=amd64 -filter="${docker_packages}" -filter-with-deps docker-ce https://download.docker.com/linux/ubuntu jammy stable
 
-$aptly mirror update bionic
-$aptly mirror update bionic-security
+$aptly mirror update jammy
+$aptly mirror update jammy-security
 $aptly mirror update docker-ce
 
-$aptly snapshot create bionic from mirror bionic
-$aptly snapshot create bionic-security from mirror bionic-security
+$aptly snapshot create jammy from mirror jammy
+$aptly snapshot create jammy-security from mirror jammy-security
 $aptly snapshot create docker-ce from mirror docker-ce
 
-$aptly snapshot merge wire bionic bionic-security docker-ce
+$aptly snapshot merge wire jammy jammy-security docker-ce
 
-$aptly publish snapshot -gpg-key="gpg@wire.com" -secret-keyring="$GNUPGHOME/secring.gpg" -distribution bionic wire
+$aptly publish snapshot -gpg-key="gpg@wire.com" -secret-keyring="$GNUPGHOME/secring.gpg" -distribution jammy wire
 
 gpg --export gpg@wire.com -a > "$aptly_root/public/gpg"
