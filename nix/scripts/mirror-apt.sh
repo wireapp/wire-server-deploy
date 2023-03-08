@@ -43,7 +43,7 @@ packages=(
   openjdk-8-jdk-headless
   iproute2
   procps
-  libjemalloc1
+  libjemalloc2
   qrencode
   texlive
   latexmk
