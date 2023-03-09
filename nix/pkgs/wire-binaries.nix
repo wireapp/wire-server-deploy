@@ -41,7 +41,7 @@ let
     };
     calicoctl = fetchurl rec {
       passthru.url = url;
-      url = "https://github.com/projectcalico/calicoctl/releases/download/${ calico_version }/calicoctl-linux-${ image_arch }";
+      url = "https://github.com/projectcalico/calico/releases/download/${ calico_version }/calicoctl-linux-${ image_arch }";
       sha256 = "a9e5f6bad4ad8c543f6bdcd21d3665cdd23edc780860d8e52a87881a7b3e203c";
     };
     etcd = fetchurl rec {
