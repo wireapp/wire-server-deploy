@@ -36,7 +36,7 @@ let
     };
     crictl = fetchurl rec {
       passthru.url = url;
-      url = "https://github.com/kubernetes-sigs/cri-tools/releases/download/{{ crictl_version }}/crictl-{{ crictl_version }}-linux-{{ image_arch }}.tar.gz";
+      url = "https://github.com/kubernetes-sigs/cri-tools/releases/download/${ crictl_version }/crictl-${ crictl_version }-linux-${ image_arch }.tar.gz";
       sha256 = "b754f83c80acdc75f93aba191ff269da6be45d0fc2d3f4079704e7d1424f1ca8";
     };
     calicoctl = fetchurl rec {
