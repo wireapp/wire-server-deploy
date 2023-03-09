@@ -36,14 +36,14 @@ function list-system-containers() {
 # https://github.com/kubernetes-sigs/kubespray/blob/release-2.15/roles/download/defaults/main.yml
 # TODO: Automate this. This is very wieldy :)
   cat <<EOF
-k8s.gcr.io/kube-apiserver:v1.19.7
-k8s.gcr.io/kube-controller-manager:v1.19.7
-k8s.gcr.io/kube-scheduler:v1.19.7
-k8s.gcr.io/kube-proxy:v1.19.7
-quay.io/coreos/etcd:v3.4.13
-quay.io/calico/node:v3.16.6
-quay.io/calico/cni:v3.16.6
-quay.io/calico/kube-controllers:v3.16.6
+k8s.gcr.io/kube-apiserver:v1.23.7
+k8s.gcr.io/kube-controller-manager:v1.23.7
+k8s.gcr.io/kube-scheduler:v1.23.7
+k8s.gcr.io/kube-proxy:v1.23.7
+quay.io/coreos/etcd:v3.5.3
+quay.io/calico/node:v3.22.3
+quay.io/calico/cni:v3.22.3
+quay.io/calico/kube-controllers:v3.22.3
 docker.io/library/nginx:1.19
 k8s.gcr.io/coredns:1.7.0
 k8s.gcr.io/dns/k8s-dns-node-cache:1.16.0
