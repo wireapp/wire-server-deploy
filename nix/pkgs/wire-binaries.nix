@@ -13,6 +13,10 @@ let
   cni_version = "v1.1.1";
   calico_version = "v3.22.3";
   crictl_version = "v1.23.0";
+  runc_version = "v1.1.1";
+  nerdctl_version = "0.19.0"
+  containerd_version = "1.6.4"
+
 
   # Note: If you change a version, replace the checksum with zeros, run « nix-build --no-out-link -A pkgs.wire-binaries », it will complain and give you the right checksum, use that checksum in this file, run it again and it should build without complaining.
   cassandra_version = "3.11.4";
@@ -38,6 +42,21 @@ let
       passthru.url = url;
       url = "https://github.com/kubernetes-sigs/cri-tools/releases/download/${ crictl_version }/crictl-${ crictl_version }-linux-${ image_arch }.tar.gz";
       sha256 = "b754f83c80acdc75f93aba191ff269da6be45d0fc2d3f4079704e7d1424f1ca8";
+    };
+    containerd = fetchurl rec {
+      passthru.url = url;
+      url = ""https://github.com/containerd/containerd/releases/download/v${ containerd_version }/containerd-${ containerd_version }-linux-${ image_arch }.tar.gz";
+      sha256 = "f23c8ac914d748f85df94d3e82d11ca89ca9fe19a220ce61b99a05b070044de0";
+    };
+    runc = fetchurl rec {
+      passthru.url = url;
+      url = "https://github.com/opencontainers/runc/releases/download/${ runc_version }/runc.${ image_arch }";
+      sha256 = "5798c85d2c8b6942247ab8d6830ef362924cd72a8e236e77430c3ab1be15f080";
+    };
+    nerdctl = fetchurl rec {
+      passthru.url = url;
+      url = "https://github.com/containerd/nerdctl/releases/download/v${ nerdctl_version }/nerdctl-${ nerdctl_version }-linux-${ image_arch }.tar.gz";
+      sha256 = "9cf4d1a2b18baf0c713d7746f896fd6a9d18a130ea8f590c6ed11474748b1733";
     };
     calicoctl = fetchurl rec {
       passthru.url = url;
