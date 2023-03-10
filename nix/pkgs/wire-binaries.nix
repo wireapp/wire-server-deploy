@@ -14,8 +14,8 @@ let
   calico_version = "v3.22.3";
   crictl_version = "v1.23.0";
   runc_version = "v1.1.1";
-  nerdctl_version = "0.19.0"
-  containerd_version = "1.6.4"
+  nerdctl_version = "0.19.0";
+  containerd_version = "1.6.4";
 
 
   # Note: If you change a version, replace the checksum with zeros, run « nix-build --no-out-link -A pkgs.wire-binaries », it will complain and give you the right checksum, use that checksum in this file, run it again and it should build without complaining.
