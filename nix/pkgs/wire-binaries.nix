@@ -53,6 +53,11 @@ let
       url = "https://github.com/opencontainers/runc/releases/download/${ runc_version }/runc.${ image_arch }";
       sha256 = "5798c85d2c8b6942247ab8d6830ef362924cd72a8e236e77430c3ab1be15f080";
     };
+    calico_crds = fetchurl rec {
+      passthru.url = url;
+      url = "https://github.com/projectcalico/calico/archive/${ calico_version }.tar.gz";
+      sha256 = "55ece01da00f82c62619b82b6bfd6442a021acc6fd915a753735e6ebceabaa21";
+    };
     nerdctl = fetchurl rec {
       passthru.url = url;
       url = "https://github.com/containerd/nerdctl/releases/download/v${ nerdctl_version }/nerdctl-${ nerdctl_version }-linux-${ image_arch }.tar.gz";
