@@ -47,7 +47,8 @@ quay.io/calico/kube-controllers:v3.22.3
 quay.io/calico/pod2daemon-flexvol:v3.22.3
 quay.io/calico/typha:v3.22.3
 quay.io/calico/apiserver:v3.22.3
-docker.io/library/nginx:1.19
+docker.io/library/nginx:1.21.4
+k8s.gcr.io/ingress-nginx/controller:v1.2.1
 k8s.gcr.io/coredns:1.7.0
 k8s.gcr.io/coredns/coredns:v1.8.6
 k8s.gcr.io/dns/k8s-dns-node-cache:1.21.1
