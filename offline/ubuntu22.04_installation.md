@@ -349,7 +349,7 @@ sudo service dnsmasq restart
 
 ```
 curl https://releases.ubuntu.com/jammy/ubuntu-22.04.2-live-server-amd64.iso -o ubuntu.iso
-sudo setfacl -m u:libvirt-qemu:--x /home/demo
+sudo chmod o+rx /home/demo/
 ```
 
 ## Create 7 vms for deployment
