@@ -322,36 +322,51 @@ sudo mkdir -p /var/kvm/images/ # place to store the drive images for vms
 sudo virt-install --name assethost --ram 1024 --disk path=/var/kvm/images/assethost.img,size=100 --vcpus 1 --network bridge=br0 --graphics none --console pty,target_type=serial --location /home/demo/Wire-Server/ubuntu.iso,kernel=casper/vmlinuz,initrd=casper/initrd --extra-args 'console=ttyS0,115200n8'
 
 
-Continue in Basic Mode\n
-Layout - English, Variant -> English --> Done\n
-Ubuntu Server --> Done\n
-Network connections --> Make suere you get something like "DHCPv4  172.16.0.8/24" --> Done\n
-Proxy Address - dont change anything --> Done\n
-Mirror Address - dont change anything --> Done\n
-Guided Storage configuration - dont change anything --> Done\n
-Storage Configuration - dont change anything --> Done\n
-File System Summary --> Continue\n
- * Your name: assethost # This will be kubenode1, kubenode2 and so on for other vms..\n
- * Your server's name --> same as above\n
- * Pick a username --> demo\n
- * Choose a password --> # create password\n
- * Confirm your password --> # create a password\n
+Continue in Basic Mode
 
-Upgrade to Ubuntu pro - dont change anything --> Continue\n
-Install OpenSSH server press Space button to enable this --> Done\n
-Featured Server snaps - dont change anything press Tab --> Done\n
+Layout - English, Variant -> English --> Done
+
+Ubuntu Server --> Done
+
+Network connections --> Make suere you get something like "DHCPv4  172.16.0.8/24" --> Done
+
+Proxy Address - dont change anything --> Done
+
+Mirror Address - dont change anything --> Done
+
+Guided Storage configuration - dont change anything --> Done
+
+Storage Configuration - dont change anything --> Done
+
+File System Summary --> Continue
+
+ * Your name: assethost # This will be kubenode1, kubenode2 and so on for other vms..
+ * Your server's name --> same as above
+ * Pick a username --> demo
+ * Choose a password --> # create password
+ * Confirm your password --> # create a password
+
+Upgrade to Ubuntu pro - dont change anything --> Continue
+
+Install OpenSSH server press Space button to enable this --> Done
+
+Featured Server snaps - dont change anything press Tab --> Done
 
 
-Now installation will start, might take 5-10 minutes. Mean while you can open another tab in the screen session to create more vms in the parallel."press ctrl+a than c"\n
+Now installation will start, might take 5-10 minutes. Mean while you can open another tab in the screen session to create more vms in the parallel."press ctrl+a than c"
 
-After installation --> select Reboot now --> Press Enter on seeeing message " [FAILED] Failed unmounting /cdrom."\n
-Again press Enter until you reach the login prompt\n
+After installation --> select Reboot now --> Press Enter on seeeing message " [FAILED] Failed unmounting /cdrom."
+
+Again press Enter until you reach the login prompt
 
 once logged in...do
+
 ```
 ip address
 ```
+
 to get the ip address of this vm, this will return something like - 
+
 ```
 2: enp1s0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc fq_codel state UP group default qlen 1000
     link/ether 52:54:00:d8:30:ee brd ff:ff:ff:ff:ff:ff
@@ -360,6 +375,7 @@ to get the ip address of this vm, this will return something like -
     inet6 fe80::5054:ff:fed8:30ee/64 scope link 
        valid_lft forever preferred_lft forever
 ```
+
 Here 172.16.0.128 is the ip address of this vm, we will need this to configure in our ansible hosts.
 Sometimes these ips are auto assigned and are not in proper range, so we make sure with above command.
 
@@ -368,22 +384,40 @@ You can create multiple screen terminals with ctrl+b than press c to install mul
 
 
 ### Create kubenode1
+
+```
 sudo virt-install --name kubenode1 --ram 8192 --disk path=/var/kvm/images/kubenode1.img,size=120 --vcpus 6 --network bridge=br0 --graphics none --console pty,target_type=serial --location /home/demo/Wire-Server/ubuntu.iso,kernel=casper/vmlinuz,initrd=casper/initrd --extra-args 'console=ttyS0,115200n8'
+```
 
 ### Create kubenode2
+
+```
 sudo virt-install --name kubenode2 --ram 8192 --disk path=/var/kvm/images/kubenode2.img,size=120 --vcpus 6 --network bridge=br0 --graphics none --console pty,target_type=serial --location /home/demo/Wire-Server/ubuntu.iso,kernel=casper/vmlinuz,initrd=casper/initrd --extra-args 'console=ttyS0,115200n8'
+```
 
 ### Create kubenode3
+
+```
 sudo virt-install --name kubenode3 --ram 8192 --disk path=/var/kvm/images/kubenode3.img,size=120 --vcpus 6 --network bridge=br0 --graphics none --console pty,target_type=serial --location /home/demo/Wire-Server/ubuntu.iso,kernel=casper/vmlinuz,initrd=casper/initrd --extra-args 'console=ttyS0,115200n8'
+```
 
 ### Create ansnode1
+
+```
 sudo virt-install --name ansnode1 --ram 8192 --disk path=/var/kvm/images/ansnode1.img,size=80 --vcpus 6 --network bridge=br0 --graphics none --console pty,target_type=serial --location /home/demo/Wire-Server/ubuntu.iso,kernel=casper/vmlinuz,initrd=casper/initrd --extra-args 'console=ttyS0,115200n8'
+```
 
 ### Create ansnode2
+
+```
 sudo virt-install --name ansnode2 --ram 8192 --disk path=/var/kvm/images/ansnode2.img,size=80 --vcpus 6 --network bridge=br0 --graphics none --console pty,target_type=serial --location /home/demo/Wire-Server/ubuntu.iso,kernel=casper/vmlinuz,initrd=casper/initrd --extra-args 'console=ttyS0,115200n8'
+```
 
 ### Create ansnode3
+
+```
 sudo virt-install --name ansnode4 --ram 8192 --disk path=/var/kvm/images/ansnode4.img,size=20 --vcpus 6 --network bridge=br0 --graphics none --console pty,target_type=serial --location /home/demo/Wire-Server/ubuntu.iso,kernel=casper/vmlinuz,initrd=casper/initrd --extra-args 'console=ttyS0,115200n8'
+```
 
 ### From this point:
 
