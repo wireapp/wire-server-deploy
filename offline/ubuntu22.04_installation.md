@@ -322,30 +322,30 @@ sudo mkdir -p /var/kvm/images/ # place to store the drive images for vms
 sudo virt-install --name assethost --ram 1024 --disk path=/var/kvm/images/assethost.img,size=100 --vcpus 1 --network bridge=br0 --graphics none --console pty,target_type=serial --location /home/demo/Wire-Server/ubuntu.iso,kernel=casper/vmlinuz,initrd=casper/initrd --extra-args 'console=ttyS0,115200n8'
 
 
-Continue in Basic Mode
-Layout - English, Variant -> English --> Done
-Ubuntu Server --> Done
-Network connections --> Make suere you get something like "DHCPv4  172.16.0.8/24" --> Done
-Proxy Address - dont change anything --> Done
-Mirror Address - dont change anything --> Done
-Guided Storage configuration - dont change anything --> Done
-Storage Configuration - dont change anything --> Done
-File System Summary --> Continue
- Your name: assethost # This will be kubenode1, kubenode2 and so on for other vms..
- Your server's name --> same as above
- Pick a username --> demo
- Choose a password --> # create password
- Confirm your password --> # create a password
+Continue in Basic Mode\n
+Layout - English, Variant -> English --> Done\n
+Ubuntu Server --> Done\n
+Network connections --> Make suere you get something like "DHCPv4  172.16.0.8/24" --> Done\n
+Proxy Address - dont change anything --> Done\n
+Mirror Address - dont change anything --> Done\n
+Guided Storage configuration - dont change anything --> Done\n
+Storage Configuration - dont change anything --> Done\n
+File System Summary --> Continue\n
+ * Your name: assethost # This will be kubenode1, kubenode2 and so on for other vms..\n
+ * Your server's name --> same as above\n
+ * Pick a username --> demo\n
+ * Choose a password --> # create password\n
+ * Confirm your password --> # create a password\n
 
-Upgrade to Ubuntu pro - dont change anything --> Continue
-Install OpenSSH server press Space button to enable this --> Done
-Featured Server snaps - dont change anything press Tab --> Done
+Upgrade to Ubuntu pro - dont change anything --> Continue\n
+Install OpenSSH server press Space button to enable this --> Done\n
+Featured Server snaps - dont change anything press Tab --> Done\n
 
 
-Now installation will start, might take 5-10 minutes. Mean while you can open another tab in the screen session to create more vms in the parallel."press ctrl+a than c"
+Now installation will start, might take 5-10 minutes. Mean while you can open another tab in the screen session to create more vms in the parallel."press ctrl+a than c"\n
 
-After installation --> select Reboot now --> Press Enter on seeeing message " [FAILED] Failed unmounting /cdrom."
-Again press Enter until you reach the login prompt
+After installation --> select Reboot now --> Press Enter on seeeing message " [FAILED] Failed unmounting /cdrom."\n
+Again press Enter until you reach the login prompt\n
 
 once logged in...do
 ```
@@ -473,12 +473,6 @@ minio:
 sudo ufw allow 9000/tcp
 sudo ufw allow 9092/tcp
 ```
-
-#### install turn pointing to port 8080
-
-
-
-
 ## disable internet access to the vms
 
 sudo vi /etc/nftables.conf 
@@ -503,8 +497,15 @@ table inet filter {
 
 sudo systemctl restart nftables
 
-restart libvirt --> sudo systemctl start libvirtd
+ssh into a vm and see if you can access the internet - 
+```
+ping 8.8.8.
+```
+the above command shouldn't receive the packets, in case internet is working than - 
+restart libvirt from host machine --> sudo systemctl start libvirtd
 ssh into each vm and restart them
+
+and check again, until internet is disabled on the vms.
 
 
 In rare case, if we want to enable internet access on the vms for some test related purpose, 
@@ -513,3 +514,5 @@ from nftables.conf and restart these services
 ```
 sudo systemctl restart nftables libvirtd systemd-machined qemu-kvm.service ufw
 ```
+
+#### install turn pointing to port 8080
