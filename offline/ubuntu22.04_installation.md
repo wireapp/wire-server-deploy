@@ -225,7 +225,7 @@ cp -a wire-server-deploy/ansible/setup-offline-sources.yml ./ansible # see https
 ### Install libvirt and dependencies
 We will install libvirt to create the vms for deployment
 ```
-sudo apt install qemu qemu-kvm qemu-utils libvirt-clients libvirt-daemon-system virtinst bridge-utils virt-manager
+sudo apt install -y qemu qemu-kvm qemu-utils libvirt-clients libvirt-daemon-system virtinst bridge-utils virt-manager
 sudo systemctl enable libvirtd
 sudo systemctl start libvirtd
 ```
