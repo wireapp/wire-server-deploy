@@ -158,7 +158,7 @@ screen
 
 ### download offline artifact.
 ```
-wget https://s3-eu-west-1.amazonaws.com/public.wire.com/artifacts/wire-server-deploy-static-03fad4ff6d9a67eb56668fb259a0c1571cabcac4.tgz
+curl https://s3-eu-west-1.amazonaws.com/public.wire.com/artifacts/wire-server-deploy-static-03fad4ff6d9a67eb56668fb259a0c1571cabcac4.tgz
 ```
 
 ### extract offline artifact.
