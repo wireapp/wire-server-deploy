@@ -419,94 +419,6 @@ sudo virt-install --name ansnode2 --ram 8192 --disk path=/var/kvm/images/ansnode
 sudo virt-install --name ansnode4 --ram 8192 --disk path=/var/kvm/images/ansnode4.img,size=20 --vcpus 6 --network bridge=br0 --graphics none --console pty,target_type=serial --location /home/demo/Wire-Server/ubuntu.iso,kernel=casper/vmlinuz,initrd=casper/initrd --extra-args 'console=ttyS0,115200n8'
 ```
 
-### From this point:
-
-switch to docs_ubuntu_22.04.md.
-
-skip down to 'Making tooling available in your environment'
-
-#### Editing the ansible inventory
-
-##### Adding host entries
-when editing the inventory, we only need seven entries in the '[all]' section. one entry for each of the VMs we are running.
-Edit the 'kubenode' entries, and the 'assethost' entry like normal.
-
-Instead of creating separate cassandra, elasticsearch, and minio entries, create three 'ansnode' entries, similar to the following:
-```
-ansnode1 ansible_host=172.16.0.132
-ansnode2 ansible_host=172.16.0.133
-ansnode3 ansible_host=172.16.0.134
-```
-
-##### Updating Group Membership
-Afterwards, we need to update the lists of what nodes belong to which group, so ansible knows what to install on these nodes.
-
-Add all three ansnode entries into the `cassandra` `elasticsearch`, and `minio` sections. They should look like the following:
-```
-[elasticsearch]
-# elasticsearch1
-# elasticsearch2
-# elasticsearch3
-ansnode1
-ansnode2
-ansnode3
-
-
-[minio]
-# minio1
-# minio2
-# minio3
-ansnode1
-ansnode2
-ansnode3
-
-[cassandra]
-# cassandra1
-# cassandra2
-# cassandra3
-```
-
-Add two of the ansnode entries into the `restund` section
-```
-[restund]
-ansnode1
-ansnode2
-```
-
-Add one of the ansnode entries into the `cassandra_seed` section.
-```
-[cassandra_seed]
-ansnode1
-```
-
-### ERROR: after you install restund, the restund firewall will fail to start.
-
-delete the outbound rule to 172.16.0.0/12
-```
-sudo ufw status numbered
-sudo ufw delete <right number>
-```
-
-#### enable the ports colocated services run on:
-cassandra:
-```
-sudo ufw allow 9042/tcp
-sudo ufw allow 9160/tcp
-sudo ufw allow 7000/tcp
-sudo ufw allow 7199/tcp
-```
-
-elasticsearch:
-```
-sudo ufw allow 9300/tcp
-sudo ufw allow 9200/tcp
-```
-
-minio:
-```
-sudo ufw allow 9000/tcp
-sudo ufw allow 9092/tcp
-```
 ## disable internet access to the vms
 
 sudo vi /etc/nftables.conf 
@@ -549,4 +461,11 @@ from nftables.conf and restart these services
 sudo systemctl restart nftables libvirtd systemd-machined qemu-kvm.service ufw
 ```
 
+<<<<<<< Updated upstream
 #### install turn pointing to port 8080
+=======
+
+### From this point:
+
+switch to docs_ubuntu_22.04.md.
+>>>>>>> Stashed changes
