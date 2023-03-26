@@ -421,7 +421,7 @@ sudo virt-install --name ansnode4 --ram 8192 --disk path=/var/kvm/images/ansnode
 
 ## disable internet access to the vms
 
-Edit ntftables.conf
+Replace all of ntftables.conf
 
 ```
 sudo nano /etc/nftables.conf 
@@ -430,6 +430,8 @@ sudo nano /etc/nftables.conf
 With this content:
 
 ```
+#!/usr/sbin/nft -f
+
 flush ruleset
 
 table inet filter {
