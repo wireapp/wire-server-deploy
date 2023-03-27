@@ -130,7 +130,7 @@ The following artifacts are provided:
  - `containers-other.tar`
    These are other container images, not deployed inside k8s. Currently, only
    contains Restund.
- - `debs.tar`
+ - `debs-jammy.tar`
    This acts as a self-contained dump of all packages required to install
    kubespray, as well as all other packages that are installed by ansible
    playbooks on nodes that don't run kubernetes.

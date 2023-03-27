@@ -17,10 +17,12 @@ container_image=$(nix-build --no-out-link -A container)
 mkdir -p containers-{helm,other,system,adminhost}
 install -m755 "$container_image" "containers-adminhost/container-wire-server-deploy.tgz"
 
-mirror-apt-bionic debs
-mirror-apt-jammy debs
-tar cf debs.tar debs
-rm -r debs
+mirror-apt-bionic debs-bionic
+mirror-apt-jammy debs-jammy
+tar cf debs-bionic.tar debs-bionic
+tar cf debs-jammy.tar debs-jammy
+rm -r debs-bionic
+rm -r debs-jammy
 
 fingerprint=$(echo "$GPG_PRIVATE_KEY" | gpg --with-colons --import-options show-only --import --fingerprint  | awk -F: '$1 == "fpr" {print $10; exit}')
 
@@ -132,6 +134,6 @@ tar cf containers-helm.tar containers-helm
 echo "docker_ubuntu_repo_repokey: '${fingerprint}'" > ansible/inventory/offline/group_vars/all/key.yml
 
 
-tar czf assets.tgz debs.tar binaries.tar containers-adminhost containers-helm.tar containers-other.tar containers-system.tar ansible charts values bin
+tar czf assets.tgz debs-bionic.tar debs-jammy.tar binaries.tar containers-adminhost containers-helm.tar containers-other.tar containers-system.tar ansible charts values bin
 
 echo "Done"
