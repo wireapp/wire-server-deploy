@@ -51,6 +51,8 @@ packages=(
   ntp
   libc6
   libseccomp2
+  libc6
+  libseccomp2
 )
 
 # shellcheck disable=SC2001
