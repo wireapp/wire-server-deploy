@@ -106,6 +106,7 @@ helm repo add wire https://s3-eu-west-1.amazonaws.com/public.wire.com/charts-dev
 helm repo update
 
 # wire_version=$(helm show chart wire/wire-server | yq -r .version)
+
 wire_version="4.34.0-hotfix.4"
 
 # Download zauth; as it's needed to generate certificates
