@@ -17,7 +17,8 @@ container_image=$(nix-build --no-out-link -A container)
 mkdir -p containers-{helm,other,system,adminhost}
 install -m755 "$container_image" "containers-adminhost/container-wire-server-deploy.tgz"
 
-mirror-apt debs
+mirror-apt-bionic debs
+mirror-apt-jammy debs
 tar cf debs.tar debs
 rm -r debs
 
