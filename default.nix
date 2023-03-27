@@ -42,7 +42,8 @@ rec {
       yq
       create-container-dump
       list-helm-containers
-      mirror-apt
+      mirror-apt-bionic
+      mirror-apt-jammy
       generate-gpg1-key
       kubeadm
       # for RTP session debugging
