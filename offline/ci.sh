@@ -77,7 +77,7 @@ charts=(
   # commented out for now, points to a 2.90.0 container image which doesn't
   # seem to exist on quay.io
   wire/nginx-ingress-controller
-  wire/ingress-nginx-controller
+  #wire/ingress-nginx-controller
   wire/nginx-ingress-services
   wire/reaper
   wire/cassandra-external
