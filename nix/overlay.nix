@@ -40,14 +40,23 @@ super: {
       wrapProgram $out/bin/generate-gpg1-key --set PATH '${super.lib.makeBinPath (with self; [ bash coreutils gnupg1orig ])}'
     '';
 
-  mirror-apt = super.runCommandNoCC "mirror-apt"
+  mirror-apt-bionic = super.runCommandNoCC "mirror-apt-bionic"
     {
       nativeBuildInputs = [ super.makeWrapper ];
     }
     ''
-      install -Dm755 ${./scripts/mirror-apt.sh} $out/bin/mirror-apt
+      install -Dm755 ${./scripts/mirror-apt-bionic.sh} $out/bin/mirror-apt-bionic
       # we need to *--set* PATH here, otherwise aptly will pick the wrong gpg
-      wrapProgram $out/bin/mirror-apt --set PATH '${super.lib.makeBinPath (with self; [ aptly bash coreutils curl gnupg1orig gnused gnutar ])}'
+      wrapProgram $out/bin/mirror-apt-bionic --set PATH '${super.lib.makeBinPath (with self; [ aptly bash coreutils curl gnupg1orig gnused gnutar ])}'
+    '';
+  mirror-apt-jammy = super.runCommandNoCC "mirror-apt-jammy"
+    {
+      nativeBuildInputs = [ super.makeWrapper ];
+    }
+    ''
+      install -Dm755 ${./scripts/mirror-apt-jammy.sh} $out/bin/mirror-apt-jammy
+      # we need to *--set* PATH here, otherwise aptly will pick the wrong gpg
+      wrapProgram $out/bin/mirror-apt-jammy --set PATH '${super.lib.makeBinPath (with self; [ aptly bash coreutils curl gnupg1orig gnused gnutar ])}'
     '';
 
   create-container-dump = super.runCommandNoCC "create-container-dump"
