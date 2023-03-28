@@ -23,7 +23,7 @@ rec {
   env = pkgs.buildEnv {
     name = "wire-server-deploy";
     paths = with pkgs; [
-      ansible_2_9
+      ansible_2_13
       pythonForAnsible
       apacheHttpd
       awscli2
