@@ -325,11 +325,11 @@ If there are no differences, copy these files into your new tree.
 cp ../<OLD_PACKAGE_DIR>/values/nginx-ingress-services/values.yaml values/nginx-ingress-services/values.yaml
 ```
 
-#### Upgrading nginx-ingress-controller
+#### Upgrading ingress-nginx-controller
 
 Re-deploy your ingress, to direct traffic into your cluster with the new version of nginx.
 ```
-d helm upgrade nginx-ingress-controller ./charts/nginx-ingress-controller/
+d helm upgrade ingress-nginx-controller ./charts/ingress-nginx-controller/
 ```
 
 ### Upgrading Wire itsself
