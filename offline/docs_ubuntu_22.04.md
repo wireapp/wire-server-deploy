@@ -478,11 +478,11 @@ d helm install wire-server ./charts/wire-server --timeout=15m0s --values ./value
 
 ## Directing Traffic to Wire
 
-### Deploy nginx-ingress-controller
+### Deploy ingress-nginx-controller
 
 This component requires no configuration, and is a requirement for all of the methods we support for getting traffic into your cluster:
 ```
-d helm install nginx-ingress-controller ./charts/nginx-ingress-controller
+d helm install ingress-nginx-controller ./charts/ingress-nginx-controller
 ```
 
 ### Forwarding traffic to your cluster
