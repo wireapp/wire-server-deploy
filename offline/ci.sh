@@ -59,6 +59,7 @@ k8s.gcr.io/cpa/cluster-proportional-autoscaler-amd64:1.8.5
 k8s.gcr.io/pause:3.3
 docker.io/kubernetesui/dashboard-amd64:v2.1.0
 docker.io/kubernetesui/metrics-scraper:v1.0.6
+registry.k8s.io/ingress-nginx/controller:v1.6.4
 EOF
 }
 
