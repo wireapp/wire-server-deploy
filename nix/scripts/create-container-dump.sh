@@ -12,6 +12,7 @@ mkdir -p $1
 # Download all the docker images into $1, and append its name to an index.txt
 # If this errors out for you, copy default-policy.json from the skopeo repo to
 # /etc/containers/policy.json
+skopeo --version
 while IFS= read -r image; do
     # sanitize the image file name, replace slashes with underscores, suffix with .tar
     image_filename=$(sed -r "s/[:\/]/_/g" <<< $image)
