@@ -12,7 +12,6 @@ mkdir -p $1
 # Download all the docker images into $1, and append its name to an index.txt
 # If this errors out for you, copy default-policy.json from the skopeo repo to
 # /etc/containers/policy.json
-skopeo --version
 while IFS= read -r image; do
     # sanitize the image file name, replace slashes with underscores, suffix with .tar
     image_filename=$(sed -r "s/[:\/]/_/g" <<< $image)
@@ -27,9 +26,13 @@ while IFS= read -r image; do
       # ci.sh already honors DOCKER_LOGIN, so do the same here, otherwise
       # fallback to unauthorized fetching.
       if [[ -n "${DOCKER_LOGIN:-}" && "$image" =~ quay.io/wire ]];then
+        echo "skopeo copy --insecure-policy --src-creds FOO_BAR_BAZ \
+          docker://$image docker-archive:${image_path} --additional-tag $image"
         skopeo copy --insecure-policy --src-creds "$DOCKER_LOGIN" \
           docker://$image docker-archive:${image_path} --additional-tag $image
       else
+        echo "skopeo copy --insecure-policy \
+          docker://$image docker-archive:${image_path} --additional-tag $image"
         skopeo copy --insecure-policy \
           docker://$image docker-archive:${image_path} --additional-tag $image
       fi
