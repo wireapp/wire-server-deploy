@@ -29,10 +29,10 @@ function optionally_complain() {
 # render the charts, and assemble the list of images this would fetch.
 while IFS= read -r chart; do
   echo "Running helm template on chart ${chart}…" >&2
-  # The sed command removes the tag value from images that have BOTH a tag and a digest, as skopeo doesn't support that currently.
+  # The sed command removes the digest from images that have BOTH a tag and a digest, as skopeo doesn't support that currently.
   # The image values are left as-is
   helm template "$chart" \
     $( [[ -f ./values/$(basename $chart)/prod-values.example.yaml ]] && echo "-f ./values/$(basename $chart)/prod-values.example.yaml" ) \
     $( [[ -f ./values/$(basename $chart)/prod-secrets.example.yaml ]] && echo "-f ./values/$(basename $chart)/prod-secrets.example.yaml" ) \
-    | yq -r '..|.image? | select(.)' | optionally_complain | sed -E 's/(.+)(:.+(@.+))/\1\3/' | sort -u
+    | yq -r '..|.image? | select(.)' | optionally_complain | sed -E 's/(.+)((:.+)@.+)/\1\3/' | sort -u
 done | sort -u
