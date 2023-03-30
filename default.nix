@@ -23,7 +23,7 @@ rec {
   env = pkgs.buildEnv {
     name = "wire-server-deploy";
     paths = with pkgs; [
-      ansible_2_13
+      ansible_2_9
       pythonForAnsible
       apacheHttpd
       awscli2
@@ -38,7 +38,7 @@ rec {
       moreutils
       skopeo
       sops
-      terraform
+      terraform_0_13
       yq
       create-container-dump
       list-helm-containers
