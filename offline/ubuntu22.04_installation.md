@@ -158,14 +158,14 @@ screen
 
 ### download offline artifact.
 ```
-curl https://s3-eu-west-1.amazonaws.com/public.wire.com/artifacts/wire-server-deploy-static-03fad4ff6d9a67eb56668fb259a0c1571cabcac4.tgz
+wget https://s3-eu-west-1.amazonaws.com/public.wire.com/artifacts/wire-server-deploy-static-5e34a0a98c8ef79e0b91818fa577da682cfae2fe.tgz
 ```
 
 ### extract offline artifact.
 
 ```
-mkdir Wire-Server
-cd Wire-Server
+mkdir wire-Server-deploy
+cd wire-Server-deploy
 tar -xzf ../wire-server-deploy-static-*.tgz
 ```
 
@@ -180,9 +180,9 @@ tar -xf debs-jammy.tar
 ### (FIXME: add iptables to the repo) Install Docker from debian archive.
 ```
 sudo apt -y install iptables
-sudo dpkg -i debs/public/pool/main/d/docker-ce/docker-ce-cli_*.deb
-sudo dpkg -i debs/public/pool/main/c/containerd.io/containerd.io_*.deb 
-sudo dpkg -i debs/public/pool/main/d/docker-ce/docker-ce_*.deb
+sudo dpkg -i debs-jammy/public/pool/main/d/docker-ce/docker-ce-cli_*.deb
+sudo dpkg -i debs-jammy/public/pool/main/c/containerd.io/containerd.io_*.deb 
+sudo dpkg -i debs-jammy/public/pool/main/d/docker-ce/docker-ce_*.deb
 sudo dpkg --configure -a
 ```
 
@@ -216,12 +216,6 @@ sudo ufw allow Openssh
 sudo ufw enable
 ```
 
-### (temporary) copy helper scripts from wire-server-deploy
-```
-sudo apt install git -y
-git clone https://github.com/wireapp/wire-server-deploy.git -b update_to_ubuntu_22
-cp -a wire-server-deploy/ansible/setup-offline-sources.yml ./ansible # see https://github.com/wireapp/wire-server-deploy/blob/kvm_support/offline/docs.md#workaround-old-debian-key 
-```
 
 ### Install libvirt and dependencies
 We will install libvirt to create the vms for deployment
@@ -247,7 +241,7 @@ logout
 
 ```
 ssh -i ~/.ssh/id_ed25519 demo@65.21.197.76 -o serveraliveinterval=60
-cd Wire-Server/
+cd wire-server-deploy/
 screen
 ```
 
@@ -320,7 +314,7 @@ sudo mkdir -p /var/kvm/images/ # place to store the drive images for vms
 ```
 
 ### Create Assethost
-sudo virt-install --name assethost --ram 1024 --disk path=/var/kvm/images/assethost.img,size=100 --vcpus 1 --network bridge=br0 --graphics none --console pty,target_type=serial --location /home/demo/Wire-Server/ubuntu.iso,kernel=casper/vmlinuz,initrd=casper/initrd --extra-args 'console=ttyS0,115200n8'
+sudo virt-install --name assethost --ram 1024 --disk path=/var/kvm/images/assethost.img,size=100 --vcpus 1 --network bridge=br0 --graphics none --console pty,target_type=serial --location /home/demo/wire-server-deploy/ubuntu.iso,kernel=casper/vmlinuz,initrd=casper/initrd --extra-args 'console=ttyS0,115200n8'
 
 
 Continue in Basic Mode
@@ -387,37 +381,37 @@ You can create multiple screen terminals with ctrl+b than press c to install mul
 ### Create kubenode1
 
 ```
-sudo virt-install --name kubenode1 --ram 8192 --disk path=/var/kvm/images/kubenode1.img,size=120 --vcpus 6 --network bridge=br0 --graphics none --console pty,target_type=serial --location /home/demo/Wire-Server/ubuntu.iso,kernel=casper/vmlinuz,initrd=casper/initrd --extra-args 'console=ttyS0,115200n8'
+sudo virt-install --name kubenode1 --ram 8192 --disk path=/var/kvm/images/kubenode1.img,size=120 --vcpus 6 --network bridge=br0 --graphics none --console pty,target_type=serial --location /home/demo/wire-server-deploy/ubuntu.iso,kernel=casper/vmlinuz,initrd=casper/initrd --extra-args 'console=ttyS0,115200n8'
 ```
 
 ### Create kubenode2
 
 ```
-sudo virt-install --name kubenode2 --ram 8192 --disk path=/var/kvm/images/kubenode2.img,size=120 --vcpus 6 --network bridge=br0 --graphics none --console pty,target_type=serial --location /home/demo/Wire-Server/ubuntu.iso,kernel=casper/vmlinuz,initrd=casper/initrd --extra-args 'console=ttyS0,115200n8'
+sudo virt-install --name kubenode2 --ram 8192 --disk path=/var/kvm/images/kubenode2.img,size=120 --vcpus 6 --network bridge=br0 --graphics none --console pty,target_type=serial --location /home/demo/wire-server-deploy/ubuntu.iso,kernel=casper/vmlinuz,initrd=casper/initrd --extra-args 'console=ttyS0,115200n8'
 ```
 
 ### Create kubenode3
 
 ```
-sudo virt-install --name kubenode3 --ram 8192 --disk path=/var/kvm/images/kubenode3.img,size=120 --vcpus 6 --network bridge=br0 --graphics none --console pty,target_type=serial --location /home/demo/Wire-Server/ubuntu.iso,kernel=casper/vmlinuz,initrd=casper/initrd --extra-args 'console=ttyS0,115200n8'
+sudo virt-install --name kubenode3 --ram 8192 --disk path=/var/kvm/images/kubenode3.img,size=120 --vcpus 6 --network bridge=br0 --graphics none --console pty,target_type=serial --location /home/demo/wire-server-deploy/ubuntu.iso,kernel=casper/vmlinuz,initrd=casper/initrd --extra-args 'console=ttyS0,115200n8'
 ```
 
 ### Create ansnode1
 
 ```
-sudo virt-install --name ansnode1 --ram 8192 --disk path=/var/kvm/images/ansnode1.img,size=80 --vcpus 6 --network bridge=br0 --graphics none --console pty,target_type=serial --location /home/demo/Wire-Server/ubuntu.iso,kernel=casper/vmlinuz,initrd=casper/initrd --extra-args 'console=ttyS0,115200n8'
+sudo virt-install --name ansnode1 --ram 8192 --disk path=/var/kvm/images/ansnode1.img,size=80 --vcpus 6 --network bridge=br0 --graphics none --console pty,target_type=serial --location /home/demo/wire-server-deploy/ubuntu.iso,kernel=casper/vmlinuz,initrd=casper/initrd --extra-args 'console=ttyS0,115200n8'
 ```
 
 ### Create ansnode2
 
 ```
-sudo virt-install --name ansnode2 --ram 8192 --disk path=/var/kvm/images/ansnode2.img,size=80 --vcpus 6 --network bridge=br0 --graphics none --console pty,target_type=serial --location /home/demo/Wire-Server/ubuntu.iso,kernel=casper/vmlinuz,initrd=casper/initrd --extra-args 'console=ttyS0,115200n8'
+sudo virt-install --name ansnode2 --ram 8192 --disk path=/var/kvm/images/ansnode2.img,size=80 --vcpus 6 --network bridge=br0 --graphics none --console pty,target_type=serial --location /home/demo/wire-server-deploy/ubuntu.iso,kernel=casper/vmlinuz,initrd=casper/initrd --extra-args 'console=ttyS0,115200n8'
 ```
 
 ### Create ansnode3
 
 ```
-sudo virt-install --name ansnode4 --ram 8192 --disk path=/var/kvm/images/ansnode4.img,size=20 --vcpus 6 --network bridge=br0 --graphics none --console pty,target_type=serial --location /home/demo/Wire-Server/ubuntu.iso,kernel=casper/vmlinuz,initrd=casper/initrd --extra-args 'console=ttyS0,115200n8'
+sudo virt-install --name ansnode3 --ram 8192 --disk path=/var/kvm/images/ansnode3.img,size=20 --vcpus 6 --network bridge=br0 --graphics none --console pty,target_type=serial --location /home/demo/wire-server-deploy/ubuntu.iso,kernel=casper/vmlinuz,initrd=casper/initrd --extra-args 'console=ttyS0,115200n8'
 ```
 
 ## disable internet access to the vms
@@ -477,11 +471,8 @@ from nftables.conf and restart these services
 sudo systemctl restart nftables libvirtd systemd-machined qemu-kvm.service ufw
 ```
 
-<<<<<<< Updated upstream
 #### install turn pointing to port 8080
-=======
 
 ### From this point:
 
 switch to docs_ubuntu_22.04.md.
->>>>>>> Stashed changes
