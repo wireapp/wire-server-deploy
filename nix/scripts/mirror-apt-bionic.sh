@@ -62,7 +62,7 @@ echo "$packages_"
 # installs. This is kept in sync with kubespray manually.
 # See roles/container-engine/docker/vars/ubuntu.yml
 # See roles/container-engine/containerd-common/vars/ubuntu.yml
-docker_packages="docker-ce (= 5:20.10.20~3-0~ubuntu-bionic) | docker-ce-cli (= 5:20.10.20~3-0~ubuntu-bionic) | containerd.io (= 1.6.4-1)"
+docker_packages="docker-ce (= 5:20.10.20~3-0~ubuntu-bionic) | docker-ce-cli (= 5:20.10.20~3-0~ubuntu-bionic) | containerd.io (= 1.6.8-1)"
 GNUPGHOME=$(mktemp -d)
 export GNUPGHOME
 aptly_config=$(mktemp)

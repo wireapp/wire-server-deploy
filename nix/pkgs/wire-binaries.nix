@@ -11,11 +11,11 @@ let
   kube_version = "v1.23.7";
   etcd_version = "v3.5.3";
   cni_version = "v1.1.1";
-  calico_version = "v3.22.3";
+  calico_version = "v3.23.3";
   crictl_version = "v1.23.0";
-  runc_version = "v1.1.1";
-  nerdctl_version = "0.19.0";
-  containerd_version = "1.6.4";
+  runc_version = "v1.1.4";
+  nerdctl_version = "0.22.2";
+  containerd_version = "1.6.8";
 
 
   # Note: If you change a version, replace the checksum with zeros, run « nix-build --no-out-link -A pkgs.wire-binaries », it will complain and give you the right checksum, use that checksum in this file, run it again and it should build without complaining.
@@ -46,27 +46,27 @@ let
     containerd = fetchurl rec {
       passthru.url = url;
       url = "https://github.com/containerd/containerd/releases/download/v${ containerd_version }/containerd-${ containerd_version }-linux-${ image_arch }.tar.gz";
-      sha256 = "f23c8ac914d748f85df94d3e82d11ca89ca9fe19a220ce61b99a05b070044de0";
+      sha256 = "3a1322c18ee5ff4b9bd5af6b7b30c923a3eab8af1df05554f530ef8e2b24ac5e";
     };
     runc = fetchurl rec {
       passthru.url = url;
       url = "https://github.com/opencontainers/runc/releases/download/${ runc_version }/runc.${ image_arch }";
-      sha256 = "5798c85d2c8b6942247ab8d6830ef362924cd72a8e236e77430c3ab1be15f080";
+      sha256 = "db772be63147a4e747b4fe286c7c16a2edc4a8458bd3092ea46aaee77750e8ce";
     };
     calico_crds = fetchurl rec {
       passthru.url = url;
       url = "https://github.com/projectcalico/calico/archive/${ calico_version }.tar.gz";
-      sha256 = "55ece01da00f82c62619b82b6bfd6442a021acc6fd915a753735e6ebceabaa21";
+      sha256 = "d25f5c9a3adeba63219f3c8425a8475ebfbca485376a78193ec1e4c74e7a6115";
     };
     nerdctl = fetchurl rec {
       passthru.url = url;
       url = "https://github.com/containerd/nerdctl/releases/download/v${ nerdctl_version }/nerdctl-${ nerdctl_version }-linux-${ image_arch }.tar.gz";
-      sha256 = "9cf4d1a2b18baf0c713d7746f896fd6a9d18a130ea8f590c6ed11474748b1733";
+      sha256 = "15fc3f992b59d6fbadca9c71e0337dab77cdfb08d79c925502449180a13d94a4";
     };
     calicoctl = fetchurl rec {
       passthru.url = url;
       url = "https://github.com/projectcalico/calico/releases/download/${ calico_version }/calicoctl-linux-${ image_arch }";
-      sha256 = "a9e5f6bad4ad8c543f6bdcd21d3665cdd23edc780860d8e52a87881a7b3e203c";
+      sha256 = "d9c04ab15bad9d8037192abd2aa4733a01b0b64a461c7b788118a0d6747c1737";
     };
     etcd = fetchurl rec {
       passthru.url = url;
