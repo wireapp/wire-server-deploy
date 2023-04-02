@@ -91,12 +91,15 @@ E.g.:
 
 ```
 $ d ansible --version
-ansible 2.9.27
+ansible [core 2.11.6] 
   config file = /wire-server-deploy/ansible/ansible.cfg
   configured module search path = ['/root/.ansible/plugins/modules', '/usr/share/ansible/plugins/modules']
-  ansible python module location = /nix/store/vmz21km0crjx8j21bhd77vzwkpiiq9w0-python3.9-ansible-2.9.27/lib/python3.9/site-packages/ansible
-  executable location = /nix/store/vmz21km0crjx8j21bhd77vzwkpiiq9w0-python3.9-ansible-2.9.27/bin/ansible
+  ansible python module location = /nix/store/yqrs358szd85iapw6xpsh1q852f5r8wd-python3.9-ansible-core-2.11.6/lib/python3.9/site-packages/ansible
+  ansible collection location = /root/.ansible/collections:/usr/share/ansible/collections
+  executable location = /nix/store/yqrs358szd85iapw6xpsh1q852f5r8wd-python3.9-ansible-core-2.11.6/bin/ansible
   python version = 3.9.10 (main, Jan 13 2022, 23:32:03) [GCC 10.3.0]
+  jinja version = 3.0.3
+  libyaml = True
 
 
 ```
@@ -342,8 +345,8 @@ d ansible-playbook -i ./ansible/inventory/offline/hosts.ini ansible/restund.yml 
 ```
 
 
-#### Pushing docker containers to kubenodes, and restund nodes.
-With docker being installed on all nodes that need it, seed all container images:
+#### Pushing container images to kubenodes, restund nodes and load them into containerd.
+With ctr being installed on all nodes that need it, seed all container images:
 
 ```
 d ansible-playbook -i ./ansible/inventory/offline/hosts.ini ansible/seed-offline-containerd.yaml
