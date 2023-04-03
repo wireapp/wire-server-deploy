@@ -89,7 +89,7 @@ service ssh restart
 
 ### Install fail2ban
 ```
-apt install fail2ban
+apt install fail2ban -y
 ```
 
 ## Create demo user.
@@ -157,15 +157,16 @@ screen
 ```
 
 ### download offline artifact.
+Use the HASH provided by the wire
 ```
-wget https://s3-eu-west-1.amazonaws.com/public.wire.com/artifacts/wire-server-deploy-static-5e34a0a98c8ef79e0b91818fa577da682cfae2fe.tgz
+wget https://s3-eu-west-1.amazonaws.com/public.wire.com/artifacts/wire-server-deploy-static-<HASH>.tgz
 ```
 
 ### extract offline artifact.
 
 ```
 mkdir wire-Server-deploy
-cd wire-Server-deploy
+cd wire-server-deploy
 tar -xzf ../wire-server-deploy-static-*.tgz
 ```
 
@@ -173,7 +174,7 @@ tar -xzf ../wire-server-deploy-static-*.tgz
 We'll use the docker that is in the archive.
 
 ```
-tar -xf debs-bionic.tar
+tar -xf debs-bionic.tar # Under construction
 tar -xf debs-jammy.tar
 ```
 
@@ -314,8 +315,9 @@ sudo mkdir -p /var/kvm/images/ # place to store the drive images for vms
 ```
 
 ### Create Assethost
+```
 sudo virt-install --name assethost --ram 1024 --disk path=/var/kvm/images/assethost.img,size=100 --vcpus 1 --network bridge=br0 --graphics none --console pty,target_type=serial --location /home/demo/wire-server-deploy/ubuntu.iso,kernel=casper/vmlinuz,initrd=casper/initrd --extra-args 'console=ttyS0,115200n8'
-
+```
 
 Continue in Basic Mode
 
