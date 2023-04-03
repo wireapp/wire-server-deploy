@@ -339,11 +339,11 @@ d ansible-playbook -i ./ansible/inventory/offline/hosts.ini ansible/kubernetes.y
 ```
 
 #### Restund
+
 Now; run the restund playbook until docker is installed:
 ```
 d ansible-playbook -i ./ansible/inventory/offline/hosts.ini ansible/restund.yml --tags docker
 ```
-
 
 #### Pushing container images to kubenodes, restund nodes and load them into containerd.
 With ctr being installed on all nodes that need it, seed all container images:
