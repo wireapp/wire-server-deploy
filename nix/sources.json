@@ -22,5 +22,17 @@
         "type": "tarball",
         "url": "https://github.com/NixOS/nixpkgs/archive/2c6ad38a20c99c72a54d2e471a6a5690d039687f.tar.gz",
         "url_template": "https://github.com/<owner>/<repo>/archive/<rev>.tar.gz"
+    },
+    "master": {
+        "branch": "master",
+        "description": "A read-only mirror of NixOS/nixpkgs tracking the released channels. Send issues and PRs to",
+        "homepage": "https://github.com/NixOS/nixpkgs",
+        "owner": "NixOS",
+        "repo": "nixpkgs",
+        "rev": "cfe5833be50b3f0a3c77cb03b43483f139c9ec04",
+        "sha256": "sha256:1qmzzjkz5w4ccg1vqrmrfy961nfpmn8vmzqr6fmq9sam2vxzzal7",
+        "type": "tarball",
+        "url": "https://github.com/NixOS/nixpkgs/archive/cfe5833be50b3f0a3c77cb03b43483f139c9ec04.tar.gz",
+        "url_template": "https://github.com/<owner>/<repo>/archive/<rev>.tar.gz"
     }
 }
