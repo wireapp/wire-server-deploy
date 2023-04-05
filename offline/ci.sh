@@ -59,7 +59,6 @@ registry.k8s.io/cpa/cluster-proportional-autoscaler-amd64:1.8.5
 registry.k8s.io/pause:3.6
 docker.io/kubernetesui/dashboard-amd64:v2.6.1
 docker.io/kubernetesui/metrics-scraper:v1.0.8
-registry.k8s.io/ingress-nginx/controller:v1.6.4
 EOF
 }
 
