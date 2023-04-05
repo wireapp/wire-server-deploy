@@ -11,7 +11,7 @@ set -euo pipefail
 usage() {
   echo "usage: GPG_PRIVATE_KEY= $0 OUTPUT-DIR" >&2
   echo "You can generate a private key as follows:" >&2
-  echo "GPG_PRIVATE_KEY=\$($(dirname "$0")/generate-gpg1-key.sh)" >&2
+  echo "GPG_PRIVATE_KEY=\$(generate-gpg1-key)" >&2
   echo "export GPG_PRIVATE_KEY" >&2
   exit 1
 }
