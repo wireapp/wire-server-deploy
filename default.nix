@@ -6,11 +6,6 @@ let
       (import ./nix/overlay.nix)
     ];
   };
-  masterPkgs = import sources.master {
-    config = { };
-    overlays = [
-    ];
-  };
   profileEnv = pkgs.writeTextFile {
     name = "profile-env";
     destination = "/.profile";
@@ -41,7 +36,7 @@ rec {
       kubectl
       openssl
       moreutils
-      masterPkgs.skopeo
+      skopeo
       sops
       terraform_0_13
       yq
