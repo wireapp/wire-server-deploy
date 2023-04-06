@@ -34,6 +34,7 @@ rec {
       kubernetes-helm
       helmfile
       kubectl
+      containerd
       openssl
       moreutils
       skopeo
