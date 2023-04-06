@@ -16,43 +16,8 @@ On ubuntu 22.04, connected to the internet:
 apt install docker.io
 ```
 
-## Making sure you have the right docker rights.
-
 Ensure the user you are using for the install has permission to run docker, or add 'sudo' to the docker commands below.
 
-If you get a permission error when running 
-
-```docker version```
-
-Do the following:
-
-```
-sudo usermod -aG docker $USER
-```
-
-This will grant your user permission to access the Docker daemon socket without using sudo.
-
-Log out and log back in to apply the group membership changes.
-
-If step 1 does not resolve the issue, check the permissions on the /var/run/docker.sock file:
-
-```
-ls -l /var/run/docker.sock
-```
-
-Make sure that the file is owned by the docker group and that the group has read and write permissions. If the permissions are incorrect, you can modify them using the following command:
-
-```
-sudo chmod 666 /var/run/docker.sock
-```
-
-Note that modifying the permissions on the Docker daemon socket can potentially create security risks, so be cautious and only modify the permissions if you understand the implications.
-
-```
-sudo systemctl restart docker
-```
-
-This will apply any changes you made to the permissions on the Docker daemon socket and ensure that the Docker daemon is running properly.
 
 ## Downloading and extracting the artifact
 Create a fresh workspace to download the artifacts:
@@ -467,7 +432,7 @@ be added, unless additional options have been enabled.
 Open up `./values/wire-server/values.yaml` and replace example.com and other domains and subdomain with your domain. You can do it with:
 
 ```
-sed -i 's/example.com/<your-domain>/g' values.yaml
+sed -i 's/example.com/<your-domain>/g' ./values/wire-server/values.yaml
 ```
 
 
