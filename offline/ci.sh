@@ -131,6 +131,8 @@ done | list-helm-containers | grep -v "\-integration:" | create-container-dump c
 # Undo changes on wire-server values.yaml
 sed -i -Ee 's/federator: true/federator: false/' "$(pwd)"/values/wire-server/prod-values.example.yaml
 
+patch-container-images "$(pwd)"
+
 tar cf containers-helm.tar containers-helm
 [[ "$INCREMENTAL" -eq 0 ]] && rm -r containers-helm
 
