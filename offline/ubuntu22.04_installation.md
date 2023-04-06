@@ -165,7 +165,7 @@ wget https://s3-eu-west-1.amazonaws.com/public.wire.com/artifacts/wire-server-de
 ### extract offline artifact.
 
 ```
-mkdir wire-Server-deploy
+mkdir wire-server-deploy
 cd wire-server-deploy
 tar -xzf ../wire-server-deploy-static-*.tgz
 ```
@@ -234,9 +234,9 @@ sudo usermod -a -G kvm demo
 
 ### log out, log back in, and return to Wire-Server.
 
-you have to logout twice, once to get out of screen, once to get out of the machine.
+you have to exit screen, and logout
 ```
-logout
+exit
 logout
 ```
 
@@ -459,9 +459,12 @@ ssh into a vm and see if you can access the internet -
 ping 8.8.8.8
 ```
 
-the above command shouldn't receive the packets, in case internet is working than - 
-restart libvirt from host machine --> sudo systemctl start libvirtd
-ssh into each vm and restart them
+the above command shouldn't receive the packets,
+in case internet is working than - restart libvirt from host machine
+```
+sudo systemctl start libvirtd
+```
+ssh into each vm and reboot them
 
 and check again, until internet is disabled on the vms.
 
