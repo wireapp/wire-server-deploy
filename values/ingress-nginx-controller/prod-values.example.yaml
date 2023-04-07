@@ -1,0 +1,11 @@
+ingress-nginx:
+  controller:
+    image:
+      tag: "v1.6.4"
+      digest: ""
+      digestChroot: ""
+    admissionWebhooks:
+      patch:
+        image:
+          tag: "v20220916-gd32f8c343"
+          digest: ""
