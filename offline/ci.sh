@@ -52,6 +52,9 @@ quay.io/calico/kube-controllers:v3.23.3
 quay.io/calico/pod2daemon-flexvol:v3.23.3
 quay.io/calico/typha:v3.23.3
 quay.io/calico/apiserver:v3.23.3
+quay.io/jetstack/cert-manager-webhook:v1.9.1
+quay.io/jetstack/cert-manager-controller:v1.9.1
+quay.io/jetstack/cert-manager-cainjector:v1.9.1
 docker.io/library/nginx:1.23.0-alpine
 registry.k8s.io/ingress-nginx/controller:v1.2.1
 registry.k8s.io/coredns:1.7.0
