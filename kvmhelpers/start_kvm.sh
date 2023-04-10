@@ -74,20 +74,23 @@ function claim_tap() {
     TAPDEVCOUNT=$(echo -n "$TAPDEVS" | $WC -l)
     # First, try to fill in any gaps.
     LASTTAP=$(echo -n "$TAPDEVS" | $SED "s/t..//" | $SORT -g | $TAIL -n 1)
-    for each in $($SEQ 0 "$LASTTAP"); do
-        if [ $((TAPSTRIED + TAPDEVCOUNT)) == "$LASTTAP" ]; then
-            break
-        fi
-        if [ -z "$($IP tuntap | $GREP -E ^tap"$each")" ]; then
-            $SUDO $IP tuntap add dev tap"$each" mode tap user "$USER"
-            if [ $? -eq 0 ]; then
-                echo tap"$each"
-                return 0
-            fi
-            TAPSTRIED=$((TAPSTRIED + 1))
-        fi
-    done
-
+    if [ -n "$LASTTAP" ]; then
+       for each in $($SEQ 0 "$LASTTAP"); do
+           if [ $((TAPSTRIED + TAPDEVCOUNT)) == "$LASTTAP" ]; then
+               break
+           fi
+           if [ -z "$($IP tuntap | $GREP -E ^tap"$each")" ]; then
+               $SUDO $IP tuntap add dev tap"$each" mode tap user "$USER"
+               if [ $? -eq 0 ]; then
+                   echo tap"$each"
+                   return 0
+               fi
+               TAPSTRIED=$((TAPSTRIED + 1))
+           fi
+       done
+    else
+	LASTTAP=-1
+    fi
     # Then, try to claim one on the end. up to 99
     for each in $($SEQ $((LASTTAP + 1)) 99); do
         $SUDO $IP tuntap add dev tap"$each" mode tap user "$USER"
