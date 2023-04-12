@@ -1,5 +1,0 @@
-federate:
-  dtls:
-    tls:
-      key: ""
-      crt: ""
