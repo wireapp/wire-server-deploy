@@ -596,6 +596,22 @@ d helm install nginx-ingress-services ./charts/nginx-ingress-services --values .
 
 #### Use letsencrypt generated certificates
 
+If you are using a single external IP and no route than you need to make sure that the cert-manger pods are not deployed on the same node as ingress-nginx-controller node.
+
+To do that...check where ingress-nginx-controller pod is running on -
+
+```
+d kubectl get pods -o wide
+```
+
+For e.g. .. if it is kubenode1
+
+than taint the kubenode1:
+
+```
+d kubectl cordon kubenode1
+```
+
 first, download cert manager, and place it in the appropriate location:
 ```
 wget https://charts.jetstack.io/charts/cert-manager-v1.9.1.tgz
@@ -621,6 +637,16 @@ UNDER CONSTRUCTION:
 ```
 d kubectl create namespace cert-manager-ns
 d helm upgrade --install -n cert-manager-ns --set 'installCRDs=true' cert-manager charts/cert-manager
+```
+
+Uncordon the node you cordonned earlier:
+```
+d kubectl uncordon kubenode1
+```
+
+Then run:
+
+```
 d helm upgrade --install nginx-ingress-services charts/nginx-ingress-services -f values/nginx-ingress-services/values.yaml
 ```
 
