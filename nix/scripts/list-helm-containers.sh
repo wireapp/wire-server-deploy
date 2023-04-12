@@ -31,7 +31,7 @@ while IFS= read -r chart; do
   echo "Running helm template on chart ${chart}…" >&2
   # The sed command removes the digest from images that have BOTH a tag and a digest, as skopeo doesn't support that currently.
   # The image values are left as-is
-  helm template --debug "$chart" \
+  helm template "$chart" \
     --set secrets.zrestSecret=emptyString \
     --set federate.dtls.tls.key=emptyString \
     --set federate.dtls.tls.crt=emptyString \
