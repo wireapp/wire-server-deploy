@@ -490,22 +490,22 @@ Make sure it is the same pod on which ingress-nginx is running:
 1. Run `d kubectl get nodes -owide`
 2. See on which node `ingress-nginx` is running
 3. Get the IP of this node by running `ip address` on that pod
-4. Use that IP for $KUBENODE1IP
+4. Use that IP for $KUBENODEIP
 
 ```
-export KUBENODE1IP=<your.kubernetes.node.ip>
+export KUBENODEIP=<your.kubernetes.node.ip>
 ```
 
 then, if your box owns the public IP (you can see the IP in `ip addr`), run the following:
 ```
-sudo iptables -t nat -A PREROUTING -d $PUBLICIPADDRESS -i $OUTBOUNDINTERFACE -p tcp --dport 80 -j DNAT --to-destination $KUBENODE1IP:31772
-sudo iptables -t nat -A PREROUTING -d $PUBLICIPADDRESS -i $OUTBOUNDINTERFACE -p tcp --dport 443 -j DNAT --to-destination $KUBENODE1IP:31773
+sudo iptables -t nat -A PREROUTING -d $PUBLICIPADDRESS -i $OUTBOUNDINTERFACE -p tcp --dport 80 -j DNAT --to-destination $KUBENODEIP:31772
+sudo iptables -t nat -A PREROUTING -d $PUBLICIPADDRESS -i $OUTBOUNDINTERFACE -p tcp --dport 443 -j DNAT --to-destination $KUBENODEIP:31773
 ```
 
 If your box is being forwarded traffic from another firewall (you do not see the IP in `ip addr`), run the following:
 ```
-sudo iptables -t nat -A PREROUTING -i $OUTBOUNDINTERFACE -p tcp --dport 80 -j DNAT --to-destination $KUBENODE1IP:31772
-sudo iptables -t nat -A PREROUTING -i $OUTBOUNDINTERFACE -p tcp --dport 443 -j DNAT --to-destination $KUBENODE1IP:31773
+sudo iptables -t nat -A PREROUTING -i $OUTBOUNDINTERFACE -p tcp --dport 80 -j DNAT --to-destination $KUBENODEIP:31772
+sudo iptables -t nat -A PREROUTING -i $OUTBOUNDINTERFACE -p tcp --dport 443 -j DNAT --to-destination $KUBENODEIP:31773
 ```
 
 If you are running a UFW firewall, make sure to allow inbound traffic on 443 and 80:
@@ -523,8 +523,8 @@ cert-manager has a requirement on being able to reach the kubernetes on it's ext
 on an IP Masquerading router, you can redirect outgoing traffic from your cluster, that is to say, when the cluster asks to connect to your external IP, you can instead choose to send it to a kubernetes node inside of the cluster.
 ```
 export INTERNALINTERFACE=br0
-sudo iptables -t nat -A PREROUTING -i $INTERNALINTERFACE -d $PUBLICIPADDRESS -p tcp --dport 80 -j DNAT --to-destination $KUBENODE1IP:31772
-sudo iptables -t nat -A PREROUTING -i $INTERNALINTERFACE -d $PUBLICIPADDRESS -p tcp --dport 443 -j DNAT --to-destination $KUBENODE1IP:31773
+sudo iptables -t nat -A PREROUTING -i $INTERNALINTERFACE -d $PUBLICIPADDRESS -p tcp --dport 80 -j DNAT --to-destination $KUBENODEIP:31772
+sudo iptables -t nat -A PREROUTING -i $INTERNALINTERFACE -d $PUBLICIPADDRESS -p tcp --dport 443 -j DNAT --to-destination $KUBENODEIP:31773
 ```
 
 ### Incoming Calling Traffic
