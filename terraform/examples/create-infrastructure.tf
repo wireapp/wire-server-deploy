@@ -20,7 +20,7 @@ resource "hcloud_ssh_key" "default" {
 resource "hcloud_server" "node" {
   count       = 3
   name        = "node${count.index}"
-  image       = "ubuntu-18.04"
+  image       = "ubuntu-22.04"
   server_type = "cx41"
   ssh_keys    = ["hetznerssh-key"]
   allow_deprecated_images = true
@@ -32,7 +32,7 @@ resource "hcloud_server" "node" {
 resource "hcloud_server" "etcd" {
   count       = 3
   name        = "etcd${count.index}"
-  image       = "ubuntu-18.04"
+  image       = "ubuntu-22.04"
   server_type = "cx41"
   ssh_keys    = ["hetznerssh-key"]
   allow_deprecated_images = true
@@ -44,7 +44,7 @@ resource "hcloud_server" "etcd" {
 resource "hcloud_server" "redis" {
   count       = 0
   name        = "redis${count.index}"
-  image       = "ubuntu-18.04"
+  image       = "ubuntu-22.04"
   server_type = "cx11"
   ssh_keys    = ["hetznerssh-key"]
   allow_deprecated_images = true
@@ -56,7 +56,7 @@ resource "hcloud_server" "redis" {
 resource "hcloud_server" "restund" {
   count       = 2
   name        = "restund${count.index}"
-  image       = "ubuntu-18.04"
+  image       = "ubuntu-22.04"
   server_type = "cx11"
   ssh_keys    = ["hetznerssh-key"]
   allow_deprecated_images = true
@@ -68,7 +68,7 @@ resource "hcloud_server" "restund" {
 resource "hcloud_server" "minio" {
   count       = 3
   name        = "minio${count.index}"
-  image       = "ubuntu-18.04"
+  image       = "ubuntu-22.04"
   server_type = "cx11"
   ssh_keys    = ["hetznerssh-key"]
   allow_deprecated_images = true
@@ -80,7 +80,7 @@ resource "hcloud_server" "minio" {
 resource "hcloud_server" "cassandra" {
   count       = 3
   name        = "cassandra${count.index}"
-  image       = "ubuntu-18.04"
+  image       = "ubuntu-22.04"
   server_type = "cx21"
   ssh_keys    = ["hetznerssh-key"]
   allow_deprecated_images = true
@@ -92,7 +92,7 @@ resource "hcloud_server" "cassandra" {
 resource "hcloud_server" "elasticsearch" {
   count       = 3
   name        = "elasticsearch${count.index}"
-  image       = "ubuntu-18.04"
+  image       = "ubuntu-22.04"
   server_type = "cx11"
   ssh_keys    = ["hetznerssh-key"]
   allow_deprecated_images = true
