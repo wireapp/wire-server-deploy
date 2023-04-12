@@ -61,7 +61,7 @@ resource "hcloud_ssh_key" "adminhost" {
 resource "hcloud_server" "adminhost" {
   location    = "nbg1"
   name        = "adminhost-${random_pet.adminhost.id}"
-  image       = "ubuntu-18.04"
+  image       = "ubuntu-22.04"
   ssh_keys    = local.ssh_keys
   server_type = "cx41"
   user_data   = <<-EOF
@@ -96,7 +96,7 @@ resource "random_pet" "assethost" {
 resource "hcloud_server" "assethost" {
   location    = "nbg1"
   name        = "assethost-${random_pet.assethost.id}"
-  image       = "ubuntu-18.04"
+  image       = "ubuntu-22.04"
   ssh_keys    = local.ssh_keys
   server_type = "cx41"
   user_data   = local.disable_network_cfg
@@ -116,7 +116,7 @@ resource "hcloud_server" "restund" {
   count       = local.restund_count
   location    = "nbg1"
   name        = "restund-${random_pet.restund[count.index].id}"
-  image       = "ubuntu-18.04"
+  image       = "ubuntu-22.04"
   ssh_keys    = local.ssh_keys
   server_type = "cx11"
   user_data   = local.disable_network_cfg
@@ -137,7 +137,7 @@ resource "hcloud_server" "kubenode" {
   count       = local.kubenode_count
   location    = "nbg1"
   name        = "kubenode-${random_pet.kubenode[count.index].id}"
-  image       = "ubuntu-18.04"
+  image       = "ubuntu-22.04"
   ssh_keys    = local.ssh_keys
   server_type = "cx41"
   user_data   = local.disable_network_cfg
@@ -158,7 +158,7 @@ resource "hcloud_server" "cassandra" {
   count       = local.cassandra_count
   location    = "nbg1"
   name        = "cassandra-${random_pet.cassandra[count.index].id}"
-  image       = "ubuntu-18.04"
+  image       = "ubuntu-22.04"
   ssh_keys    = local.ssh_keys
   server_type = "cx11"
   user_data   = local.disable_network_cfg
@@ -179,7 +179,7 @@ resource "hcloud_server" "elasticsearch" {
   count       = local.elasticsearch_count
   location    = "nbg1"
   name        = "elasticsearch-${random_pet.elasticsearch[count.index].id}"
-  image       = "ubuntu-18.04"
+  image       = "ubuntu-22.04"
   ssh_keys    = local.ssh_keys
   server_type = "cx11"
   user_data   = local.disable_network_cfg
@@ -200,7 +200,7 @@ resource "hcloud_server" "minio" {
   count       = local.minio_count
   location    = "nbg1"
   name        = "minio-${random_pet.minio[count.index].id}"
-  image       = "ubuntu-18.04"
+  image       = "ubuntu-22.04"
   ssh_keys    = local.ssh_keys
   server_type = "cx11"
   user_data   = local.disable_network_cfg
