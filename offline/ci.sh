@@ -94,6 +94,7 @@ charts=(
   # local-path-provisioner
   # TODO: uncomment once its dependencies are pinned!
   wire/sftd
+  wire/restund
   # Has a weird dependency on curl:latest. out of scope
   # wire-server-metrics
   # fluent-bit
