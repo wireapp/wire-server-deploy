@@ -483,7 +483,7 @@ This will return a shell command setting a variable to your default interface. c
 export PUBLICIPADDRESS=<your.ip.address.here>
 ```
 
-Select one of your kubernetes nodes that you are fine with losing service if it is offline:
+Select one of your kubernetes nodes that you are fine with losing service if it is offline (for example kubenode3):
 ```
 export KUBENODE1IP=<your.kubernetes.node.ip>
 ```
