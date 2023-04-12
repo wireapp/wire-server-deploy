@@ -489,8 +489,8 @@ Make sure it is the same pod on which ingress-nginx is running:
 
 1. Run `d kubectl get nodes -owide`
 2. See on which node `ingress-nginx` is running
-3. Get the IP of this pod by running `ip address` on that pod
-4. Use that IP for $KUBENODEIP
+3. Get the IP of this node by running `ip address` on that pod
+4. Use that IP for $KUBENODE1IP
 
 ```
 export KUBENODE1IP=<your.kubernetes.node.ip>
