@@ -484,6 +484,14 @@ export PUBLICIPADDRESS=<your.ip.address.here>
 ```
 
 Select one of your kubernetes nodes that you are fine with losing service if it is offline (for example kubenode3):
+
+Make sure it is the same pod on which ingress-nginx is running:
+
+1. Run `d kubectl get nodes -owide`
+2. See on which node `ingress-nginx` is running
+3. Get the IP of this pod by running `ip address` on that pod
+4. Use that IP for $KUBENODEIP
+
 ```
 export KUBENODE1IP=<your.kubernetes.node.ip>
 ```
