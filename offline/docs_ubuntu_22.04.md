@@ -487,7 +487,7 @@ Select one of your kubernetes nodes that you are fine with losing service if it 
 
 Make sure it is the same pod on which ingress-nginx is running:
 
-1. Run `d kubectl get nodes -owide`
+1. Run `d kubectl get pods -o wide`
 2. See on which node `ingress-nginx` is running
 3. Get the IP of this node by running `ip address` on that node
 4. Use that IP for $KUBENODEIP
