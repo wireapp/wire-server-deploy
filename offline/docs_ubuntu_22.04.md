@@ -521,6 +521,11 @@ d helm install reaper ./charts/reaper
 #### Preparing your values
 
 Next, move `./values/wire-server/prod-values.example.yaml` to `./values/wire-server/values.yaml`.
+
+```
+cp ./values/wire-server/prod-values.example.yaml ./values/wire-server/values.yaml
+```
+
 Inspect all the values and adjust domains to your domains where needed.
 
 Add the IPs of your `restund` servers to the `turnStatic.v2` list:
