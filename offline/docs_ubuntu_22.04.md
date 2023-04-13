@@ -563,8 +563,9 @@ d helm install wire-server ./charts/wire-server --timeout=15m0s --values ./value
 ### Deploy ingress-nginx-controller
 
 This component requires no configuration, and is a requirement for all of the methods we support for getting traffic into your cluster:
+
 ```
-mv ./values/ingress-nginx-controller/{prod-values.example.yaml,values.yaml}
+mv ./values/ingress-nginx-controller/prod-values.example.yaml ./values/ingress-nginx-controller/values.yaml
 d helm install ingress-nginx-controller ./charts/ingress-nginx-controller --values ./values/ingress-nginx-controller/values.yaml
 ```
 
@@ -680,9 +681,10 @@ SSL certificates are required by the nginx-ingress-services helm chart. You can 
 ##### Prepare to deploy nginx-ingress-services
 
 Move the example values for `nginx-ingress-services`:
+
 ```
-mv ./values/nginx-ingress-services/{prod-values.example.yaml,values.yaml}
-mv ./values/nginx-ingress-services/{prod-secrets.example.yaml,secrets.yaml}
+mv ./values/nginx-ingress-services/prod-values.example.yaml ./values/nginx-ingress-services/values.yaml
+mv ./values/nginx-ingress-services/prod-secrets.example.yaml ./values/nginx-ingress-services/secrets.yaml
 ```
 
 #### Bring your own certificates
