@@ -20,6 +20,30 @@ sudo systemctl start docker
 
 Ensure the user you are using for the install has permission to run docker, or add 'sudo' to the docker commands below.
 
+### Ensuring you can run docker without sudo:
+
+Run the following command to add your user to the docker group:
+
+```
+sudo usermod -aG docker $USER
+```
+
+Note: Replace $USER with your actual username as needed.
+
+Log out and log back in to apply the changes. Alternatively, you can run the following command to activate the changes in your current shell session:
+
+```
+newgrp docker
+```
+
+Verify that you can run Docker without sudo by running the following command:
+
+```
+docker run hello-world
+```
+
+If you see the message "Hello from Docker!", it means that Docker is now configured to run without sudo.
+
 
 ## Downloading and extracting the artifact
 Create a fresh workspace to download the artifacts:
