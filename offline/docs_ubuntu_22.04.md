@@ -230,6 +230,87 @@ Do this for all of the instances.
   communicate among eachother. Your private network.
 * Similarly `elasticsearch_network_interface` and `minio_network_interface`
   should be set to the private network interface as well.
+  
+### Example hosts.ini
+
+Here is an example `hosts.ini` file that was used in a succesfull example deployment, for reference. It might not be exactly what is needed for your deployment, but it should work for the KVM 7-machine deploy:
+
+```
+[all]
+kubenode1 ansible_host=172.16.0.129
+kubenode2 ansible_host=172.16.0.130
+kubenode3 ansible_host=172.16.0.131
+ansnode1 ansible_host=172.16.0.132
+ansnode2 ansible_host=172.16.0.133
+ansnode3 ansible_host=172.16.0.134
+assethost ansible_host=172.16.0.128
+
+[all:vars]
+ansible_user = demo
+ansible_password = fai
+ansible_become_password = fai
+
+[cassandra:vars]
+cassandra_network_interface = enp1s0
+
+[elasticsearch:vars]
+elasticsearch_network_interface = enp1s0
+
+[minio:vars]
+minio_network_interface = enp1s0
+prefix = ""
+domain = "kiwee.world"
+deeplink_title = "wire demo environment, kiwee.world"
+
+[restund:vars]
+restund_uid = root
+
+[kube-master]
+kubenode1
+kubenode2
+kubenode3
+
+[etcd]
+
+kubenode1 etcd_member_name=etcd1
+kubenode2 etcd_member_name=etcd2
+kubenode3 etcd_member_name=etcd3
+
+[kube-node]
+kubenode1
+kubenode2
+kubenode3
+
+
+[k8s-cluster:children]
+kube-master
+kube-node
+
+[restund]
+ansnode1
+ansnode2
+
+[cassandra]
+ansnode1
+ansnode2
+ansnode3
+
+[cassandra_seed]
+ansnode1
+
+[elasticsearch]
+ansnode1
+ansnode2
+ansnode3
+
+[elasticsearch_master:children]
+elasticsearch
+
+[minio]
+ansnode1
+ansnode2
+ansnode3
+```
 
 ### Configuring Restund
 
