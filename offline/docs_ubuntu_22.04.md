@@ -39,10 +39,10 @@ newgrp docker
 Verify that you can run Docker without sudo by running the following command:
 
 ```
-docker run hello-world
+docker version
 ```
 
-If you see the message "Hello from Docker!", it means that Docker is now configured to run without sudo.
+If you see the curent docker version and no error, it means that Docker is now configured to run without sudo.
 
 
 ## Downloading and extracting the artifact
