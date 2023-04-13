@@ -231,6 +231,45 @@ Do this for all of the instances.
 * Similarly `elasticsearch_network_interface` and `minio_network_interface`
   should be set to the private network interface as well.
   
+
+
+### Configuring Restund
+
+Restund is deployed for NAT-hole punching and relaying. So that 1-to-1 calls
+can be established between Wire users. Restund needs to be directly publicly
+reachable on a public IP.
+
+If you need Restund to listen on a different interface than the default gateway, set `restund_network_interface`
+
+If the interface on which Restund is listening does not know its own public IP
+(e.g. because it is behind NAT itself) extra configuration is necessary. Please provide the public IP on which
+Restund is available as `restund_peer_udp_advertise_addr`.
+
+Due to this *NAT-hole punching* relay purpose and depending on where the Restund instance resides within your network
+topology, it could be used to access private services. We consider this to be unintended and thus set a couple
+of network rules on a Restund instance. If egress traffic to certain private network ranges should still
+be allowed, you may adjust `restund_allowed_private_network_cidrs` according to your setup.
+
+### Marking kubenode for calling server (SFT)
+
+The SFT Calling server should be running on a kubernetes nodes that are connected to the public internet.
+If not all kubernetes nodes match these criteria, you should specifically label the nodes that do match
+these criteria, so that we're sure SFT is deployed correctly.
+
+
+By using a `node_label` we can make sure SFT is only deployed on a certain node like `kubenode4`
+
+```
+kubenode4 node_labels="{'wire.com/role': 'sftd'}" node_annotations="{'wire.com/external-ip': 'a.b.c.d'}"
+```
+
+If the node does not know its onw public IP (e.g. becuase it's behind NAT) then you should also set
+the `wire.com/external-ip` annotation to the public IP of the node.
+
+### Configuring MinIO
+
+In order to automatically generate deeplinks, Edit the minio variables in `[minio:vars]` (`prefix`, `domain` and `deeplink_title`) by replacing `example.com` with your own domain.
+
 ### Example hosts.ini
 
 Here is an example `hosts.ini` file that was used in a succesfull example deployment, for reference. It might not be exactly what is needed for your deployment, but it should work for the KVM 7-machine deploy:
@@ -311,43 +350,6 @@ ansnode1
 ansnode2
 ansnode3
 ```
-
-### Configuring Restund
-
-Restund is deployed for NAT-hole punching and relaying. So that 1-to-1 calls
-can be established between Wire users. Restund needs to be directly publicly
-reachable on a public IP.
-
-If you need Restund to listen on a different interface than the default gateway, set `restund_network_interface`
-
-If the interface on which Restund is listening does not know its own public IP
-(e.g. because it is behind NAT itself) extra configuration is necessary. Please provide the public IP on which
-Restund is available as `restund_peer_udp_advertise_addr`.
-
-Due to this *NAT-hole punching* relay purpose and depending on where the Restund instance resides within your network
-topology, it could be used to access private services. We consider this to be unintended and thus set a couple
-of network rules on a Restund instance. If egress traffic to certain private network ranges should still
-be allowed, you may adjust `restund_allowed_private_network_cidrs` according to your setup.
-
-### Marking kubenode for calling server (SFT)
-
-The SFT Calling server should be running on a kubernetes nodes that are connected to the public internet.
-If not all kubernetes nodes match these criteria, you should specifically label the nodes that do match
-these criteria, so that we're sure SFT is deployed correctly.
-
-
-By using a `node_label` we can make sure SFT is only deployed on a certain node like `kubenode4`
-
-```
-kubenode4 node_labels="{'wire.com/role': 'sftd'}" node_annotations="{'wire.com/external-ip': 'a.b.c.d'}"
-```
-
-If the node does not know its onw public IP (e.g. becuase it's behind NAT) then you should also set
-the `wire.com/external-ip` annotation to the public IP of the node.
-
-### Configuring MinIO
-
-In order to automatically generate deeplinks, Edit the minio variables in `[minio:vars]` (`prefix`, `domain` and `deeplink_title`) by replacing `example.com` with your own domain.
 
 ## Generating secrets
 
