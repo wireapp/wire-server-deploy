@@ -485,6 +485,30 @@ sudo systemctl restart nftables libvirtd systemd-machined qemu-kvm.service ufw
 
 #### install turn pointing to port 8080
 
+### manage VMs
+
+You can use the `virsh` command to manage the virtual machines (start, stop, list them etc).
+
+Get help:
+
+```
+virsh help
+```
+
+Connect to `kubenode1` already running in the background.
+
+```
+sudo virsh console kubenode1
+```
+
+List VMs:
+
+```
+sudo virsh list
+```
+
+
+
 ### From this point:
 
 switch to docs_ubuntu_22.04.md.
