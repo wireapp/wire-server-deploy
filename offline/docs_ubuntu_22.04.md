@@ -13,9 +13,9 @@ docker](https://docker.com) for instructions.
 On ubuntu 22.04, connected to the internet:
 
 ```
-apt install docker.io
-systemctl enable docker
-systemctl start docker
+sudo apt install docker.io
+sudo systemctl enable docker
+sudo systemctl start docker
 ```
 
 Ensure the user you are using for the install has permission to run docker, or add 'sudo' to the docker commands below.
