@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-set -euo pipefail
+set -euox pipefail
 
 helm upgrade --install --wait cassandra-external ./charts/cassandra-external --values ./values/cassandra-external/values.yaml
 helm upgrade --install --wait elasticsearch-external ./charts/elasticsearch-external --values ./values/elasticsearch-external/values.yaml
@@ -10,6 +10,9 @@ helm upgrade --install --wait demo-smtp ./charts/demo-smtp --values ./values/dem
 helm upgrade --install --wait databases-ephemeral ./charts/databases-ephemeral --values ./values/databases-ephemeral/prod-values.example.yaml
 helm upgrade --install --wait reaper ./charts/reaper
 helm upgrade --debug --install --wait --timeout 10m wire-server ./charts/wire-server --values ./values/wire-server/prod-values.example.yaml --values ./values/wire-server/secrets.yaml
+echo "wire-server EVENTS"
+kubectl get events
+kubectl get -n wire events
 helm upgrade --install --wait ingress-nginx-controller ./charts/ingress-nginx-controller --values ./values/ingress-nginx-controller/prod-values.example.yaml
 
 # TODO: Requires certs; which we do not have in CI/CD at this point. future work =) (Would need cert-manager in offline package. That'd be neat)
