@@ -316,7 +316,7 @@ d ansible-playbook -i ./ansible/inventory/offline/hosts.ini ansible/restund.yml 
 With ctr being installed on all nodes that need it, seed all container images:
 
 ```
-d ansible-playbook -i ./ansible/inventory/offline/hosts.ini ansible/seed-offline-containerd.yaml
+d ansible-playbook -i ./ansible/inventory/offline/hosts.ini ansible/seed-offline-containerd.yml
 ```
 
 #### Kubernetes, part 2
