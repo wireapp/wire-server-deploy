@@ -625,6 +625,7 @@ sudo iptables -t nat -A PREROUTING -i $OUTBOUNDINTERFACE -p tcp --dport 443 -j D
 
 If you are running a UFW firewall, make sure to allow inbound traffic on 443 and 80:
 ```
+sudo ufw enable
 sudo ufw allow in on $OUTBOUNDINTERFACE proto tcp to any port 443
 sudo ufw allow in on $OUTBOUNDINTERFACE proto tcp to any port 80
 ```
