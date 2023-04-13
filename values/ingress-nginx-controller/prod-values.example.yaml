@@ -1,3 +1,6 @@
+# Image digests are not supported by our `wire-server-deploy` machinery.
+# They cannot be correctly dumped to tar files and then be loaded by
+# `containerd`.
 ingress-nginx:
   controller:
     image:

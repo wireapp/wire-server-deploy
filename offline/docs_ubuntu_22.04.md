@@ -35,7 +35,7 @@ Extract the above listed artifacts into your workspace:
 $ wget https://s3-eu-west-1.amazonaws.com/public.wire.com/artifacts/wire-server-deploy-static-<HASH>.tgz
 $ tar xvzf wire-server-deploy-static-<HASH>.tgz
 ```
-Where the HASH above is the hash of your deployment artifact, given to you by Wire, or acquired by looking at the above build job.
+Where `<HASH>` above is the hash of your deployment artifact, given to you by Wire, or acquired by looking at the above build job.
 Extract this tarball.
 
 Make sure that the admin host can `ssh` into all the machines that you want to provision. Our docker container will use the `.ssh` folder and the `ssh-agent` of the user running the scripts.
@@ -97,7 +97,7 @@ The following artifacts are provided:
    Also come as tarballs, and are seeded like the system containers.
  - `containers-other.tar`
    These are other container images, not deployed inside k8s. Currently, only
-   contains Restund.
+   contains `restund`.
  - `debs-jammy.tar`
    This acts as a self-contained dump of all packages required to install
    kubespray, as well as all other packages that are installed by ansible

@@ -1,8 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-ctr --version
-
 INCREMENTAL="${INCREMENTAL:-0}"
 
 # Build the container image

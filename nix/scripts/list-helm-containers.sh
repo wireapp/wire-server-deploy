@@ -29,7 +29,6 @@ function optionally_complain() {
 # render the charts, and assemble the list of images this would fetch.
 while IFS= read -r chart; do
   echo "Running helm template on chart ${chart}…" >&2
-  # The sed command removes the digest from images that have BOTH a tag and a digest, as skopeo doesn't support that currently.
   # The image values are left as-is
   helm template "$chart" \
     --set secrets.zrestSecret=emptyString \
