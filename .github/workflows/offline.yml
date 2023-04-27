@@ -12,6 +12,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: "HACK: Free up 24GB of disk space"
+        uses: lhotari/action-upterm@v1
+        with:
+          ## limits ssh access and adds the ssh public key for the user which triggered the workflow
+          limit-access-to-actor: true
+          ## limits ssh access and adds the ssh public keys of the listed GitHub users
+          limit-access-to-users: supersven
         run: sudo rm -rf /usr/share/dotnet
       - uses: actions/checkout@v2
         with:
@@ -60,6 +66,12 @@ jobs:
           DOCKER_LOGIN: '${{ secrets.DOCKER_LOGIN }}'
 
       - name: Deploy offline environment to hetzner
+        uses: lhotari/action-upterm@v1
+        with:
+          ## limits ssh access and adds the ssh public key for the user which triggered the workflow
+          limit-access-to-actor: true
+          ## limits ssh access and adds the ssh public keys of the listed GitHub users
+          limit-access-to-users: supersven
         run: |
           ./offline/cd.sh
         env:
