@@ -11,6 +11,14 @@ jobs:
     if: "!contains(github.event.head_commit.message, 'skip ci')"
     runs-on: ubuntu-latest
     steps:
+      - name: Test upterm session
+        uses: lhotari/action-upterm@v1
+        with:
+          ## limits ssh access and adds the ssh public key for the user which triggered the workflow
+          limit-access-to-actor: true
+          ## limits ssh access and adds the ssh public keys of the listed GitHub users
+          limit-access-to-users: supersven
+
       - name: "HACK: Free up 24GB of disk space"
         run: sudo rm -rf /usr/share/dotnet
       - uses: actions/checkout@v2
@@ -58,6 +66,14 @@ jobs:
             "docker://quay.io/wire/wire-server-deploy:${{ steps.upload_name.outputs.UPLOAD_NAME }}"
         env:
           DOCKER_LOGIN: '${{ secrets.DOCKER_LOGIN }}'
+
+      - name: Setup upterm session
+        uses: lhotari/action-upterm@v1
+        with:
+          ## limits ssh access and adds the ssh public key for the user which triggered the workflow
+          limit-access-to-actor: true
+          ## limits ssh access and adds the ssh public keys of the listed GitHub users
+          limit-access-to-users: supersven
 
       - name: Deploy offline environment to hetzner
         run: |
