@@ -20,8 +20,8 @@ docker_ubuntu_repo_gpgkey: "{{ ubuntu_repos }}/gpg"
 binaries_url: "http://{{ assethost_host }}/binaries"
 nodelocaldns_ip: 10.233.0.10
 
-kube_version: "v1.23.7"
-etcd_version: "v3.5.3"
+kube_version: "v1.26.5"
+etcd_version: "v3.5.6"
 
 container_engine: containerd
 
