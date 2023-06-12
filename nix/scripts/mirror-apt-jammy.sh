@@ -44,6 +44,7 @@ packages=(
   iproute2
   procps
   libjemalloc2
+  python3-jmespath
   qrencode
   texlive
   latexmk
