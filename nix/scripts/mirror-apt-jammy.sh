@@ -55,6 +55,7 @@ packages=(
   libseccomp2
   iptables
   bash-completion
+  logrotate
 )
 
 # shellcheck disable=SC2001
