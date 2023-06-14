@@ -53,6 +53,7 @@ packages=(
   libseccomp2
   libc6
   libseccomp2
+  iptables
 )
 
 # shellcheck disable=SC2001
