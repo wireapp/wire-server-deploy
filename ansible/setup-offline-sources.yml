@@ -84,6 +84,7 @@
 #          Acquire::Check-Valid-Until false;
 #          Acquire::AllowInsecureRepositories true;
 #          Apt::Get::AllowUnauthenticated true;
+#          Acquire::AllowDowngradeToInsecureRepositories true;
 #############################
 # Otherwise, trust the repo.
 #############################
@@ -94,7 +95,7 @@
 
     - name: Register offline repo
       apt_repository:
-        repo: "deb {{ ubuntu_repo_base_url }} {{ ansible_distribution_release }} main"
+        repo: "deb [trusted=yes] {{ ubuntu_repo_base_url }} {{ ansible_distribution_release }} main"
         state: present
     - name: Apt update
       apt:
