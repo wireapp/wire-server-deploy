@@ -49,6 +49,7 @@ packages=(
   latexmk
   libopts25
   ntp
+  iptables
 )
 
 # shellcheck disable=SC2001
