@@ -54,6 +54,7 @@ packages=(
   libc6
   libseccomp2
   iptables
+  bash-completion
 )
 
 # shellcheck disable=SC2001
