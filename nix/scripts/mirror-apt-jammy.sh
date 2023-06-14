@@ -56,6 +56,9 @@ packages=(
   iptables
   bash-completion
   logrotate
+  cron
+  crontab
+  ufw
 )
 
 # shellcheck disable=SC2001
