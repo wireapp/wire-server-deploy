@@ -454,7 +454,9 @@ d ansible-playbook -i ./ansible/inventory/offline/hosts.ini ansible/restund.yml
 ```
 
 ### ERROR: after you install restund, the restund firewall will fail to start.
-On each ansnode,
+
+On each ansnode you set in the `[restund]` section of the `hosts.ini` file
+
 delete the outbound rule to 172.16.0.0/12
 ```
 sudo ufw status numbered
