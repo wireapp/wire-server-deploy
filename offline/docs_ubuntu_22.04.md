@@ -819,17 +819,25 @@ d kubectl label node kubenode1 wire.com/role=sftd
 ##### A selected group of kubernetes nodes:
 If you are restricting SFT to certain nodes, use `nodeSelector` to run on specific nodes (**replacing the example.com domains with yours**):
 ```
-d helm upgrade --install sftd ./charts/sftd \
-  --set 'nodeSelector.wire\.com/role=sftd' \
-  --values values/sftd/values.yaml
+d helm upgrade --install sftd ./charts/sftd --set 'nodeSelector.wire\.com/role=sftd' --values values/sftd/values.yaml
 ```
 
 ##### All kubernetes nodes.
 If you are not doing that, omit the `nodeSelector` argument:
+
+```
+d helm upgrade --install sftd ./charts/sftd --values values/sftd/values.yaml
+```
+
+##### Specifying your certificates.
+
+If you bring your own certificates, you can specify them with:
+
 ```
 d helm upgrade --install sftd ./charts/sftd \
   --set-file tls.crt=/path/to/tls.crt \
   --set-file tls.key=/path/to/tls.key \
   --values values/sftd/values.yaml
 ```
+
 
