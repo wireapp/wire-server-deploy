@@ -22,7 +22,7 @@ operator_ssh_public_keys = {
 k8s_cluster = {
   cloud = "hetzner"
 
-  # NOTE: corresponds to wire-server/charts/nginx-ingress-controller/values.yaml#nodePorts
+  # NOTE: corresponds to wire-server/charts/ingress-nginx-controller/values.yaml#nodePorts
   load_balancer_ports = [
     {
       name = "http"

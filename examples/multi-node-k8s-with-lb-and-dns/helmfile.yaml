@@ -46,9 +46,9 @@ releases:
     secrets:
       - './helm_vars/wire-server/secrets.yaml'
 
-  - name: 'nginx-ingress-controller'
+  - name: 'ingress-nginx-controller'
     namespace: 'wire'
-    chart: 'wire/nginx-ingress-controller'
+    chart: 'wire/ingress-nginx-controller'
     version: 'CHANGE_ME'
 
   - name: 'nginx-ingress-services'

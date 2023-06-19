@@ -7,7 +7,7 @@ variable "default_server_type" {
 }
 
 variable "default_image" {
-  default = "ubuntu-18.04"
+  default = "ubuntu-22.04"
 }
 
 
