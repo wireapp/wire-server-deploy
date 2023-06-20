@@ -415,7 +415,7 @@ Deployment steps:
 
 ## Bug fixes
 
-- fix an issue where rerunning `helm upgrade nginx-inress-controller` (w/o any change) might fail as
+- fix an issue where rerunning `helm upgrade nginx-ingress-controller` (w/o any change) might fail as
   described in https://github.com/helm/charts/pull/20518 (#194)
 
 # 2020-03-02
