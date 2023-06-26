@@ -49,6 +49,7 @@ packages=(
   latexmk
   libopts25
   ntp
+  ntpdate
 )
 
 # shellcheck disable=SC2001
