@@ -122,6 +122,7 @@ resource "hcloud_server" "restund" {
   ssh_keys    = local.ssh_keys
   server_type = "cx11"
   user_data   = local.disable_network_cfg
+  allow_deprecated_images = true
 }
 
 resource "hcloud_server_network" "restund" {
