@@ -64,6 +64,7 @@ resource "hcloud_server" "adminhost" {
   image       = "ubuntu-18.04"
   ssh_keys    = local.ssh_keys
   server_type = "cx41"
+  allow_deprecated_images = true
   user_data   = <<-EOF
   #cloud-config
   apt:
@@ -100,6 +101,7 @@ resource "hcloud_server" "assethost" {
   ssh_keys    = local.ssh_keys
   server_type = "cx41"
   user_data   = local.disable_network_cfg
+  allow_deprecated_images = true
 }
 
 resource "hcloud_server_network" "assethost" {
@@ -138,6 +140,7 @@ resource "hcloud_server" "kubenode" {
   location    = "nbg1"
   name        = "kubenode-${random_pet.kubenode[count.index].id}"
   image       = "ubuntu-18.04"
+  allow_deprecated_images = true
   ssh_keys    = local.ssh_keys
   server_type = "cx41"
   user_data   = local.disable_network_cfg
@@ -159,6 +162,7 @@ resource "hcloud_server" "cassandra" {
   location    = "nbg1"
   name        = "cassandra-${random_pet.cassandra[count.index].id}"
   image       = "ubuntu-18.04"
+  allow_deprecated_images = true
   ssh_keys    = local.ssh_keys
   server_type = "cx11"
   user_data   = local.disable_network_cfg
@@ -180,6 +184,7 @@ resource "hcloud_server" "elasticsearch" {
   location    = "nbg1"
   name        = "elasticsearch-${random_pet.elasticsearch[count.index].id}"
   image       = "ubuntu-18.04"
+  allow_deprecated_images = true
   ssh_keys    = local.ssh_keys
   server_type = "cx11"
   user_data   = local.disable_network_cfg
@@ -201,6 +206,7 @@ resource "hcloud_server" "minio" {
   location    = "nbg1"
   name        = "minio-${random_pet.minio[count.index].id}"
   image       = "ubuntu-18.04"
+  allow_deprecated_images = true
   ssh_keys    = local.ssh_keys
   server_type = "cx11"
   user_data   = local.disable_network_cfg
