@@ -1,12 +1,11 @@
 #!/bin/sh
-# shellcheck disable=SC1091
 
 IP="/sbin/ip"
 IFCONFIG="/sbin/ifconfig"
 SUDO="/usr/bin/sudo"
 DHCLIENT="/sbin/dhclient"
 
-. ./tap-bridge-physif-vars.sh
+sh ./tap-bridge-physif-vars.sh
 
 $SUDO $IP link set "$1" down promisc off
 

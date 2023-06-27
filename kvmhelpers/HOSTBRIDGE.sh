@@ -1,11 +1,10 @@
 #!/bin/sh
-# shellcheck disable=SC1091
 
 USER=$(whoami)
 
 {
 
-    . ./HOSTBRIDGE-vars.sh
+    sh ./HOSTBRIDGE-vars.sh
 
     BRIDGEDEV=$($BRCTL show | grep -E ^"$BRIDGE")
 

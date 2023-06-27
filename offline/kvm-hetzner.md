@@ -19,7 +19,7 @@ In our example, the returned IP when creating the server was: 65.21.197.76
 
 ## Pre-requisites
 
-First off, generate a ssh key if you do not have one already.
+First off, generate an ssh key if you do not have one already.
 
 ```
 ssh-keygen -t ed25519
@@ -33,7 +33,7 @@ ssh-keygen -t ed25519
 ssh -i ~/.ssh/id_ed25519 root@65.21.197.76 -o serveraliveinterval=60
 ```
 
-### update OS
+### Update the Operating System
 When prompted about the ssh config, just accept the maintainer's version.
 ```
 apt update
@@ -164,7 +164,7 @@ tar -xzf ../wire-server-deploy-static-*.tgz
 ```
 
 ### extract debian archive
-We'll use the docker that is in the archive.
+We extract our debian package archive, so that we can use the docker that is shipped as part of that archive.
 
 ```
 tar -xf debs.tar
@@ -388,7 +388,7 @@ select "Set up Users and Passwords"
  * no, do not allow root login.
  * full name: demo
  * username: demo
- * password: (given by julia, same for all VMs)
+ * password: (use the same password for all VMs, save this!)
  * yes, use a weak password.
  * do not encrypt home directory.
 select 'configure the clock'
@@ -427,7 +427,7 @@ select "Finish the installation"
  * select continue to reboot.
 
 ### first boot
-In order to 'step back' if something goes wrong later in the install, i recommend copying the empty VMs after they have shut down:
+In order to 'step back' if something goes wrong later in the install, we recommend copying the empty VMs after they have shut down:
 ```
 cp -a assethost assethost-new
 cp -a ansnode1 ansnode1-new
@@ -439,7 +439,7 @@ cp -a kubenode3 kubenode3-new
 ```
 
 You must have each of the virtual machines running, while installing and using wire.
-I recommend using screen, and performing the following step for each image:
+We recommend using screen, and performing the following step for each image:
  * change directory to the location your VM is deployed in.
  * run "DRIVE=c ./start_kvm.sh"
  * hit escape if you want to see the boot menu.
@@ -516,6 +516,4 @@ sudo ufw allow 9092/tcp
 ```
 
 #### install turn pointing to port 8080
-
-
 

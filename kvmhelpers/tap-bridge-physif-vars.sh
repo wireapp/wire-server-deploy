@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 export BRCTL=/sbin/brctl
 export BRIDGE=br1
 export MGMT_DIR=/var/local/createvm

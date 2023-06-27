@@ -121,11 +121,10 @@ ansible_user=<USERNAME>
 ansible_password=<PASSWORD>
 ansible_become_pass=<PASSWORD>
 ```
-
 ### Configuring kubernetes and etcd
 
-You'll need at least 3 `kubenode`s.  3 of them should be added to the
-`[kube-master]`, `[etcd]`  and `[kube-node]` groups of the inventory file.  Any
+You'll need at least 3 `kubenode`s.  3 of them should be added to the`
+[kube-master]`, `[etcd]`  and `[kube-node]` groups of the inventory file.  Any
 additional nodes should only be added to the `[kube-node]` group.
 
 ### Setting up databases and kubernetes to talk over the correct (private) interface
@@ -195,19 +194,9 @@ This should generate two files. `./ansible/inventory/group_vars/all/secrets.yaml
 ## Deploying Kubernetes, Restund and stateful services
 
 ### WORKAROUND: old debian key
-All of our debian archives up to version 4.12.0 used a now-outdated debian repository signature. Some modifications are required to be able to install everything properly.
+From time to time, the key we use to sign part of our package expires. If you are getting errors in the 'setup-offline-sources' step about an expired GPG key, the below modifications are required to be able to install everything properly.
 
-First, gather a copy of the 'setup-offline-sources.yml' file from: https://raw.githubusercontent.com/wireapp/wire-server-deploy/kvm_support/ansible/setup-offline-sources.yml .
-```
-wget https://raw.githubusercontent.com/wireapp/wire-server-deploy/kvm_support/ansible/setup-offline-sources.yml
-```
-copy it into the ansible/ directory:
-```
-cp ansible/setup-offline-sources.yml ansible/setup-offline-sources.yml.backup
-cp setup-offline-sources.yml ansible/
-```
-
-Open it with your prefered text editor and edit the following:
+Open ansible/setup-offline-sources.yml with your prefered text editor and edit the following:
 * find a big block of comments and uncomment everything in it `- name: trust everything...`
 * after the block you will find `- name: Register offline repo key...`. Comment out that segment (do not comment out the part with `- name: Register offline repo`!)
 
@@ -218,7 +207,7 @@ ansible/roles-external/kubespray/roles/container-engine/docker/tasks/main.yml
 * comment out the block with -name: ensure docker-ce repository public key is installed...
 * comment out the next block -name: ensure docker-ce repository is enabled
 
-Now you are ready to start deploying services.
+Now re-run the now-modified setup-offline-sources.yml, and continue.
 
 #### WORKAROUND: dependency
 some ubuntu systems do not have GPG by default. wire assumes this is already present. ensure you have gpg installed on all of your nodes before continuing to the next step.
@@ -229,7 +218,7 @@ In order to deploy all the ansible-managed services you can run:
 ```
 # d ./bin/offline-cluster.sh
 ```
-... However a conservitave approach is to perform each step of the script step by step, for better understanding, and better handling of errors..
+... However a conservitave approach is to perform each step of the script step by step, for better understanding, and better handling of errors ...
 
 #### Populate the assethost, and prepare to install images from it.
 
@@ -350,7 +339,6 @@ Open up `./values/wire-server/values.yaml` and replace example.com and other dom
 ```
 sed -i 's/example.com/<your-domain>/g' values.yaml
 ```
-
 
 #### Deploying Wire-Server
 
@@ -476,7 +464,7 @@ if you have the certificate and it's corresponding key available on the filesyst
 d helm install nginx-ingress-services ./charts/nginx-ingress-services --values ./values/nginx-ingress-services/values.yaml --set-file secrets.tlsWildcardCert=certificate.pem --set-file secrets.tlsWildcardKey=key.pem
 ```
 
-Do not try to use paths to refer to the certificates, as the 'd' command messes with file paths outside of Wire-Server.
+Do not try to use paths to refer to the certificates, as the 'd' command does not see file paths outside of the Wire-Server directory.
 
 ##### In your nginx-ingress-services values file
 Change the domains in `values.yaml` to your domain. And add your wildcard or SAN certificate that is valid for all these
@@ -488,9 +476,10 @@ Now install the service with helm:
 d helm install nginx-ingress-services ./charts/nginx-ingress-services --values ./values/nginx-ingress-services/values.yaml --values ./values/nginx-ingress-services/secrets.yaml
 ```
 
-#### Use letsencrypt generated certificates
+#### Use Let's Encrypt generated certificates
 
-first, download cert manager, and place it in the appropriate location:
+Note: This section requires internet access.. because let's encrypt is an internet service.
+first, download the cert manager chart, and place it in the appropriate location:
 ```
 wget https://charts.jetstack.io/charts/cert-manager-v1.9.1.tgz
 mkdir tmp
@@ -506,12 +495,12 @@ edit values/nginx-ingress-services/values.yaml , to tell ingress-ingress-service
  * set useCertManager: true
  * set certmasterEmail: your.email.address
 
-set your domain name with sed:
+set your domain name with the following sed command:
 ```
 sed -i "s/example.com/YOURDOMAINHERE/" values/nginx-ingress-services/values.yaml
 ```
 
-UNDER CONSTRUCTION:
+And finally deploy cert-manager and then nginx-ingress-services:
 ```
 d kubectl create namespace cert-manager-ns
 d helm upgrade --install -n cert-manager-ns --set 'installCRDs=true' cert-manager charts/cert-manager
@@ -523,20 +512,15 @@ Watch the output of the following command to know how your request is going:
 d kubectl get certificate
 ```
 
-#### Old wire-server releases
+When it returns 'true', your certificate has been issued.
 
-on older wire-server releases, nginx-ingress-services may fail to deploy. some version numbers of services have changed. make the following changes, and try to re-deploy till it works.
+#### Name Services via manual hosts entries
+You should have a public DNS at this point already, if not (you are doing this for demo purpose) you can point to the IP manually in your "client" hosts file by adding the following:
+```
+your.public.ip.address nginz-https.<domain> nginz-ssl.<domain> assets.<domain> webapp.<domain> teams.<domain> account.<domain> sftd.<domain> restund01.<domain> restund02.<domain> federator.<domain>
+```
 
-certificate.yaml:
-v1alpha2 -> v1
-remove keyAlgorithm keySize keyEncoding
-
-certificate-federator.yaml:
-v1alpha2 -> v1
-remove keyAlgorithm keySize keyEncoding
-
-issuer:
-v1alpha2 -> v1
+Note if you do this, you will have to go to each of those domains in your browser, and hit 'Trust'.
 
 ## Installing sftd
 
@@ -559,7 +543,12 @@ If you want to restrict SFT to certain nodes, make sure that in your inventory f
 kubenode3 node_labels="{'wire.com/role': 'sftd'}" node_annotations="{'wire.com/external-ip': 'XXXX'}"
 ```
 
-If you failed to perform the above step during the ansible deployment of your sft services, you can perform then manually:
+If you failed to perform the above step during the ansible deployment of your sft services, properly edit the hosts.ini, and use the automation to perform this step again.
+```
+d ansible-playbook -i ./ansible/inventory/offline/hosts.ini ansible/kubernetes.yml --skip-tags bootstrap-os,preinstall,container-engine
+```
+
+Or, you can perform this work manually:
 ```
 d kubectl annotate node kubenode1 wire.com/external-ip=178.63.60.45
 d kubectl label node kubenode1 wire.com/role=sftd
@@ -581,4 +570,3 @@ d helm upgrade --install sftd ./charts/sftd \
   --set-file tls.key=/path/to/tls.key \
   --values values/sftd/values.yaml
 ```
-

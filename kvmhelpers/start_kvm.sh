@@ -54,15 +54,15 @@ else
 fi
 
 # paths to binaries we use.
-IP="/sbin/ip"
-SUDO="/usr/bin/sudo"
-WHOAMI="/usr/bin/whoami"
-GREP="/bin/grep"
-WC="/usr/bin/wc"
-SEQ="/usr/bin/seq"
-SORT="/usr/bin/sort"
-TAIL="/usr/bin/tail"
-SED="/bin/sed"
+export IP="/sbin/ip"
+export SUDO="/usr/bin/sudo"
+export WHOAMI="/usr/bin/whoami"
+export GREP="/bin/grep"
+export WC="/usr/bin/wc"
+export SEQ="/usr/bin/seq"
+export SORT="/usr/bin/sort"
+export TAIL="/usr/bin/tail"
+export SED="/bin/sed"
 
 # The user who is running this script.
 USER=$(${WHOAMI})
@@ -145,7 +145,7 @@ $COMMAND
 # VM has shut down, remove all of the taps.
 for each in $ASSIGNED_TAPS; do
     {
-        $SUDO ip tuntap del dev "$each" mode tap
+        $SUDO "$IP" tuntap del dev "$each" mode tap
     }
 done
 
