@@ -23,6 +23,7 @@ resource "hcloud_server" "node" {
   image       = "ubuntu-18.04"
   server_type = "cx41"
   ssh_keys    = ["hetznerssh-key"]
+  allow_deprecated_images = true
 
   # Nuremberg (for choices see `hcloud datacenter list`)
   location = "nbg1"
@@ -34,6 +35,7 @@ resource "hcloud_server" "etcd" {
   image       = "ubuntu-18.04"
   server_type = "cx41"
   ssh_keys    = ["hetznerssh-key"]
+  allow_deprecated_images = true
 
   # Nuremberg (for choices see `hcloud datacenter list`)
   location = "nbg1"
@@ -45,6 +47,7 @@ resource "hcloud_server" "redis" {
   image       = "ubuntu-18.04"
   server_type = "cx11"
   ssh_keys    = ["hetznerssh-key"]
+  allow_deprecated_images = true
 
   # Nuremberg (for choices see `hcloud datacenter list`)
   location = "nbg1"
@@ -56,6 +59,7 @@ resource "hcloud_server" "restund" {
   image       = "ubuntu-18.04"
   server_type = "cx11"
   ssh_keys    = ["hetznerssh-key"]
+  allow_deprecated_images = true
 
   # Nuremberg (for choices see `hcloud datacenter list`)
   location = "nbg1"
@@ -67,6 +71,7 @@ resource "hcloud_server" "minio" {
   image       = "ubuntu-18.04"
   server_type = "cx11"
   ssh_keys    = ["hetznerssh-key"]
+  allow_deprecated_images = true
 
   # Nuremberg (for choices see `hcloud datacenter list`)
   location = "nbg1"
@@ -78,6 +83,7 @@ resource "hcloud_server" "cassandra" {
   image       = "ubuntu-18.04"
   server_type = "cx21"
   ssh_keys    = ["hetznerssh-key"]
+  allow_deprecated_images = true
 
   # Nuremberg (for choices see `hcloud datacenter list`)
   location = "nbg1"
@@ -89,6 +95,7 @@ resource "hcloud_server" "elasticsearch" {
   image       = "ubuntu-18.04"
   server_type = "cx11"
   ssh_keys    = ["hetznerssh-key"]
+  allow_deprecated_images = true
 
   # Nuremberg (for choices see `hcloud datacenter list`)
   location = "nbg1"
