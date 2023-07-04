@@ -10,21 +10,46 @@ installed (or any other compatible container runtime really, even though
 instructions may need to be modified). See [how to install
 docker](https://docker.com) for instructions.
 
-On ubuntu 18.04, connected to the internet:
+On ubuntu 22.04, connected to the internet:
 
 ```
-apt install docker.io
+sudo apt install docker.io
+sudo systemctl enable docker
+sudo systemctl start docker
 ```
 
 Ensure the user you are using for the install has permission to run docker, or add 'sudo' to the docker commands below.
+
+### Ensuring you can run docker without sudo:
+
+Run the following command to add your user to the docker group:
+
+```
+sudo usermod -aG docker $USER
+```
+
+Note: Replace $USER with your actual username as needed.
+
+Log out and log back in to apply the changes. Alternatively, you can run the following command to activate the changes in your current shell session:
+
+```
+newgrp docker
+```
+
+Verify that you can run Docker without sudo by running the following command:
+
+```
+docker version
+```
+
+If you see the curent docker version and no error, it means that Docker is now configured to run without sudo.
 
 
 ## Downloading and extracting the artifact
 Create a fresh workspace to download the artifacts:
 
 ```
-mkdir ~/wire-server-deploy/
-cd ~/wire-server-deploy/
+$ cd ...  # you pick a good location!
 ```
 
 Obtain the latest airgrap artifact for wire-server-deploy. Please contact us to get it for now. We are
@@ -36,7 +61,7 @@ Extract the above listed artifacts into your workspace:
 $ wget https://s3-eu-west-1.amazonaws.com/public.wire.com/artifacts/wire-server-deploy-static-<HASH>.tgz
 $ tar xvzf wire-server-deploy-static-<HASH>.tgz
 ```
-Where the HASH above is the hash of your deployment artifact, given to you by Wire, or acquired by looking at the above build job.
+Where `<HASH>` above is the hash of your deployment artifact, given to you by Wire, or acquired by looking at the above build job.
 Extract this tarball.
 
 Make sure that the admin host can `ssh` into all the machines that you want to provision. Our docker container will use the `.ssh` folder and the `ssh-agent` of the user running the scripts.
@@ -57,12 +82,15 @@ E.g.:
 
 ```
 $ d ansible --version
-ansible 2.9.27
+ansible [core 2.11.6] 
   config file = /wire-server-deploy/ansible/ansible.cfg
   configured module search path = ['/root/.ansible/plugins/modules', '/usr/share/ansible/plugins/modules']
-  ansible python module location = /nix/store/vmz21km0crjx8j21bhd77vzwkpiiq9w0-python3.9-ansible-2.9.27/lib/python3.9/site-packages/ansible
-  executable location = /nix/store/vmz21km0crjx8j21bhd77vzwkpiiq9w0-python3.9-ansible-2.9.27/bin/ansible
+  ansible python module location = /nix/store/yqrs358szd85iapw6xpsh1q852f5r8wd-python3.9-ansible-core-2.11.6/lib/python3.9/site-packages/ansible
+  ansible collection location = /root/.ansible/collections:/usr/share/ansible/collections
+  executable location = /nix/store/yqrs358szd85iapw6xpsh1q852f5r8wd-python3.9-ansible-core-2.11.6/bin/ansible
   python version = 3.9.10 (main, Jan 13 2022, 23:32:03) [GCC 10.3.0]
+  jinja version = 3.0.3
+  libyaml = True
 
 
 ```
@@ -95,8 +123,8 @@ The following artifacts are provided:
    Also come as tarballs, and are seeded like the system containers.
  - `containers-other.tar`
    These are other container images, not deployed inside k8s. Currently, only
-   contains Restund.
- - `debs.tar`
+   contains `restund`.
+ - `debs-jammy.tar`
    This acts as a self-contained dump of all packages required to install
    kubespray, as well as all other packages that are installed by ansible
    playbooks on nodes that don't run kubernetes.
@@ -128,6 +156,59 @@ ansible_user=<USERNAME>
 ansible_password=<PASSWORD>
 ansible_become_pass=<PASSWORD>
 ```
+#### Editing the ansible inventory
+
+##### Adding host entries
+when editing the inventory, we only need seven entries in the '[all]' section. one entry for each of the VMs we are running.
+Edit the 'kubenode' entries, and the 'assethost' entry like normal.
+
+Instead of creating separate cassandra, elasticsearch, and minio entries, create three 'ansnode' entries, similar to the following:
+```
+ansnode1 ansible_host=172.16.0.132
+ansnode2 ansible_host=172.16.0.133
+ansnode3 ansible_host=172.16.0.134
+```
+
+##### Updating Group Membership
+Afterwards, we need to update the lists of what nodes belong to which group, so ansible knows what to install on these nodes.
+
+Add all three ansnode entries into the `cassandra` `elasticsearch`, and `minio` sections. They should look like the following:
+```
+[elasticsearch]
+# elasticsearch1
+# elasticsearch2
+# elasticsearch3
+ansnode1
+ansnode2
+ansnode3
+
+
+[minio]
+# minio1
+# minio2
+# minio3
+ansnode1
+ansnode2
+ansnode3
+
+[cassandra]
+# cassandra1
+# cassandra2
+# cassandra3
+```
+
+Add two of the ansnode entries into the `restund` section
+```
+[restund]
+ansnode1
+ansnode2
+```
+
+Add one of the ansnode entries into the `cassandra_seed` section.
+```
+[cassandra_seed]
+ansnode1
+```
 
 ### Configuring kubernetes and etcd
 
@@ -149,6 +230,8 @@ Do this for all of the instances.
   communicate among eachother. Your private network.
 * Similarly `elasticsearch_network_interface` and `minio_network_interface`
   should be set to the private network interface as well.
+  
+
 
 ### Configuring Restund
 
@@ -187,6 +270,87 @@ the `wire.com/external-ip` annotation to the public IP of the node.
 
 In order to automatically generate deeplinks, Edit the minio variables in `[minio:vars]` (`prefix`, `domain` and `deeplink_title`) by replacing `example.com` with your own domain.
 
+### Example hosts.ini
+
+Here is an example `hosts.ini` file that was used in a succesfull example deployment, for reference. It might not be exactly what is needed for your deployment, but it should work for the KVM 7-machine deploy:
+
+```
+[all]
+kubenode1 ansible_host=172.16.0.129
+kubenode2 ansible_host=172.16.0.130
+kubenode3 ansible_host=172.16.0.131
+ansnode1 ansible_host=172.16.0.132
+ansnode2 ansible_host=172.16.0.133
+ansnode3 ansible_host=172.16.0.134
+assethost ansible_host=172.16.0.128
+
+[all:vars]
+ansible_user = demo
+ansible_password = fai
+ansible_become_password = fai
+
+[cassandra:vars]
+cassandra_network_interface = enp1s0
+
+[elasticsearch:vars]
+elasticsearch_network_interface = enp1s0
+
+[minio:vars]
+minio_network_interface = enp1s0
+prefix = ""
+domain = "kiwee.world"
+deeplink_title = "wire demo environment, kiwee.world"
+
+[restund:vars]
+restund_uid = root
+
+[kube-master]
+kubenode1
+kubenode2
+kubenode3
+
+[etcd]
+
+kubenode1 etcd_member_name=etcd1
+kubenode2 etcd_member_name=etcd2
+kubenode3 etcd_member_name=etcd3
+
+[kube-node]
+kubenode1
+kubenode2
+kubenode3
+
+
+[k8s-cluster:children]
+kube-master
+kube-node
+
+[restund]
+ansnode1
+ansnode2
+
+[cassandra]
+ansnode1
+ansnode2
+ansnode3
+
+[cassandra_seed]
+ansnode1
+
+[elasticsearch]
+ansnode1
+ansnode2
+ansnode3
+
+[elasticsearch_master:children]
+elasticsearch
+
+[minio]
+ansnode1
+ansnode2
+ansnode3
+```
+
 ## Generating secrets
 
 Minio and restund services have shared secrets with the `wire-server` helm chart. We have a utility
@@ -197,25 +361,17 @@ Please run:
 ./bin/offline-secrets.sh
 ```
 
-This should generate two files. `./ansible/inventory/offline/group_vars/all/secrets.yaml` and `values/wire-server/secrets.yaml`.
+This should generate two files. `./ansible/inventory/group_vars/all/secrets.yaml` and `values/wire-server/secrets.yaml`.
 
 ## Deploying Kubernetes, Restund and stateful services
 
 ### WORKAROUND: old debian key
 All of our debian archives up to version 4.12.0 used a now-outdated debian repository signature. Some modifications are required to be able to install everything properly.
 
-First, gather a copy of the 'setup-offline-sources.yml' file from: https://raw.githubusercontent.com/wireapp/wire-server-deploy/kvm_support/ansible/setup-offline-sources.yml .
-```
-wget https://raw.githubusercontent.com/wireapp/wire-server-deploy/kvm_support/ansible/setup-offline-sources.yml
-```
-copy it into the ansible/ directory:
-```
-cp ansible/setup-offline-sources.yml ansible/setup-offline-sources.yml.backup
-cp setup-offline-sources.yml ansible/
-```
+Edit the ansible/setup-offline-sources.yml file
 
 Open it with your prefered text editor and edit the following:
-* find a big block of comments and uncomment everything in it `- name: trust everything...`
+* find a big block of comments and uncomment everything in it `- name: trust anything...`
 * after the block you will find `- name: Register offline repo key...`. Comment out that segment (do not comment out the part with `- name: Register offline repo`!)
 
 Then disable checking for outdated signatures by editing the following file:
@@ -257,17 +413,17 @@ d ansible-playbook -i ./ansible/inventory/offline/hosts.ini ansible/kubernetes.y
 ```
 
 #### Restund
+
 Now; run the restund playbook until docker is installed:
 ```
 d ansible-playbook -i ./ansible/inventory/offline/hosts.ini ansible/restund.yml --tags docker
 ```
 
-
-#### Pushing docker containers to kubenodes, and restund nodes.
-With docker being installed on all nodes that need it, seed all container images:
+#### Pushing container images to kubenodes, restund nodes and load them into containerd.
+With ctr being installed on all nodes that need it, seed all container images:
 
 ```
-d ansible-playbook -i ./ansible/inventory/offline/hosts.ini ansible/seed-offline-docker.yml
+d ansible-playbook -i ./ansible/inventory/offline/hosts.ini ansible/seed-offline-containerd.yml
 ```
 
 #### Kubernetes, part 2
@@ -291,11 +447,43 @@ They should all report ready.
 Now, deploy all other services which don't run in kubernetes.
 
 ```
-d ansible-playbook -i ./ansible/inventory/offline/hosts.ini ansible/restund.yml
 d ansible-playbook -i ./ansible/inventory/offline/hosts.ini ansible/cassandra.yml
 d ansible-playbook -i ./ansible/inventory/offline/hosts.ini ansible/elasticsearch.yml
 d ansible-playbook -i ./ansible/inventory/offline/hosts.ini ansible/minio.yml
+d ansible-playbook -i ./ansible/inventory/offline/hosts.ini ansible/restund.yml
 ```
+
+### ERROR: after you install restund, the restund firewall will fail to start.
+
+On each ansnode you set in the `[restund]` section of the `hosts.ini` file
+
+delete the outbound rule to 172.16.0.0/12
+```
+sudo ufw status numbered
+sudo ufw delete <right number>
+```
+
+#### enable the ports colocated services run on:
+cassandra:
+```
+sudo ufw allow 9042/tcp
+sudo ufw allow 9160/tcp
+sudo ufw allow 7000/tcp
+sudo ufw allow 7199/tcp
+```
+
+elasticsearch:
+```
+sudo ufw allow 9300/tcp
+sudo ufw allow 9200/tcp
+```
+
+minio:
+```
+sudo ufw allow 9000/tcp
+sudo ufw allow 9092/tcp
+```
+
 
 Afterwards, run the following playbook to create helm values that tell our helm charts
 what the IP addresses of cassandra, elasticsearch and minio are.
@@ -335,6 +523,11 @@ d helm install reaper ./charts/reaper
 #### Preparing your values
 
 Next, move `./values/wire-server/prod-values.example.yaml` to `./values/wire-server/values.yaml`.
+
+```
+cp ./values/wire-server/prod-values.example.yaml ./values/wire-server/values.yaml
+```
+
 Inspect all the values and adjust domains to your domains where needed.
 
 Add the IPs of your `restund` servers to the `turnStatic.v2` list:
@@ -355,7 +548,7 @@ be added, unless additional options have been enabled.
 Open up `./values/wire-server/values.yaml` and replace example.com and other domains and subdomain with your domain. You can do it with:
 
 ```
-sed -i 's/example.com/<your-domain>/g' values.yaml
+sed -i 's/example.com/<your-domain>/g' ./values/wire-server/values.yaml
 ```
 
 
@@ -369,11 +562,13 @@ d helm install wire-server ./charts/wire-server --timeout=15m0s --values ./value
 
 ## Directing Traffic to Wire
 
-### Deploy nginx-ingress-controller
+### Deploy ingress-nginx-controller
 
 This component requires no configuration, and is a requirement for all of the methods we support for getting traffic into your cluster:
+
 ```
-d helm install nginx-ingress-controller ./charts/nginx-ingress-controller
+mv ./values/ingress-nginx-controller/prod-values.example.yaml ./values/ingress-nginx-controller/values.yaml
+d helm install ingress-nginx-controller ./charts/ingress-nginx-controller --values ./values/ingress-nginx-controller/values.yaml
 ```
 
 ### Forwarding traffic to your cluster
@@ -405,25 +600,34 @@ This will return a shell command setting a variable to your default interface. c
 export PUBLICIPADDRESS=<your.ip.address.here>
 ```
 
-Select one of your kubernetes nodes that you are fine with losing service if it is offline:
+Select one of your kubernetes nodes that you are fine with losing service if it is offline (for example kubenode3):
+
+Make sure it is the same pod on which ingress-nginx is running:
+
+1. Run `d kubectl get pods -o wide`
+2. See on which node `ingress-nginx` is running
+3. Get the IP of this node by running `ip address` on that node
+4. Use that IP for $KUBENODEIP
+
 ```
-export KUBENODE1IP=<your.kubernetes.node.ip>
+export KUBENODEIP=<your.kubernetes.node.ip>
 ```
 
 then, if your box owns the public IP (you can see the IP in `ip addr`), run the following:
 ```
-sudo iptables -t nat -A PREROUTING -d $PUBLICIPADDRESS -i $OUTBOUNDINTERFACE -p tcp --dport 80 -j DNAT --to-destination $KUBENODE1IP:31772
-sudo iptables -t nat -A PREROUTING -d $PUBLICIPADDRESS -i $OUTBOUNDINTERFACE -p tcp --dport 443 -j DNAT --to-destination $KUBENODE1IP:31773
+sudo iptables -t nat -A PREROUTING -d $PUBLICIPADDRESS -i $OUTBOUNDINTERFACE -p tcp --dport 80 -j DNAT --to-destination $KUBENODEIP:31772
+sudo iptables -t nat -A PREROUTING -d $PUBLICIPADDRESS -i $OUTBOUNDINTERFACE -p tcp --dport 443 -j DNAT --to-destination $KUBENODEIP:31773
 ```
 
 If your box is being forwarded traffic from another firewall (you do not see the IP in `ip addr`), run the following:
 ```
-sudo iptables -t nat -A PREROUTING -i $OUTBOUNDINTERFACE -p tcp --dport 80 -j DNAT --to-destination $KUBENODE1IP:31772
-sudo iptables -t nat -A PREROUTING -i $OUTBOUNDINTERFACE -p tcp --dport 443 -j DNAT --to-destination $KUBENODE1IP:31773
+sudo iptables -t nat -A PREROUTING -i $OUTBOUNDINTERFACE -p tcp --dport 80 -j DNAT --to-destination $KUBENODEIP:31772
+sudo iptables -t nat -A PREROUTING -i $OUTBOUNDINTERFACE -p tcp --dport 443 -j DNAT --to-destination $KUBENODEIP:31773
 ```
 
 If you are running a UFW firewall, make sure to allow inbound traffic on 443 and 80:
 ```
+sudo ufw enable
 sudo ufw allow in on $OUTBOUNDINTERFACE proto tcp to any port 443
 sudo ufw allow in on $OUTBOUNDINTERFACE proto tcp to any port 80
 ```
@@ -437,8 +641,8 @@ cert-manager has a requirement on being able to reach the kubernetes on it's ext
 on an IP Masquerading router, you can redirect outgoing traffic from your cluster, that is to say, when the cluster asks to connect to your external IP, you can instead choose to send it to a kubernetes node inside of the cluster.
 ```
 export INTERNALINTERFACE=br0
-sudo iptables -t nat -A PREROUTING -i $INTERNALINTERFACE -d $PUBLICIPADDRESS -p tcp --dport 80 -j DNAT --to-destination $KUBENODE1IP:31772
-sudo iptables -t nat -A PREROUTING -i $INTERNALINTERFACE -d $PUBLICIPADDRESS -p tcp --dport 443 -j DNAT --to-destination $KUBENODE1IP:31773
+sudo iptables -t nat -A PREROUTING -i $INTERNALINTERFACE -d $PUBLICIPADDRESS -p tcp --dport 80 -j DNAT --to-destination $KUBENODEIP:31772
+sudo iptables -t nat -A PREROUTING -i $INTERNALINTERFACE -d $PUBLICIPADDRESS -p tcp --dport 443 -j DNAT --to-destination $KUBENODEIP:31773
 ```
 
 ### Incoming Calling Traffic
@@ -480,9 +684,10 @@ SSL certificates are required by the nginx-ingress-services helm chart. You can 
 ##### Prepare to deploy nginx-ingress-services
 
 Move the example values for `nginx-ingress-services`:
+
 ```
-mv ./values/nginx-ingress-services/{prod-values.example.yaml,values.yaml}
-mv ./values/nginx-ingress-services/{prod-secrets.example.yaml,secrets.yaml}
+mv ./values/nginx-ingress-services/prod-values.example.yaml ./values/nginx-ingress-services/values.yaml
+mv ./values/nginx-ingress-services/prod-secrets.example.yaml ./values/nginx-ingress-services/secrets.yaml
 ```
 
 #### Bring your own certificates
@@ -490,7 +695,7 @@ mv ./values/nginx-ingress-services/{prod-secrets.example.yaml,secrets.yaml}
 if you generated your SSL certificates yourself, there are two ways to give these to wire:
 
 ##### From the command line
-if you have the certificate and it's corresponding key available on the filesystem, copy them into the root of the wire-server-deploy directory, and:
+if you have the certificate and it's corresponding key available on the filesystem, copy them into the root of the Wire-Server directory, and:
 
 ```
 d helm install nginx-ingress-services ./charts/nginx-ingress-services --values ./values/nginx-ingress-services/values.yaml --set-file secrets.tlsWildcardCert=certificate.pem --set-file secrets.tlsWildcardKey=key.pem
@@ -509,6 +714,22 @@ d helm install nginx-ingress-services ./charts/nginx-ingress-services --values .
 ```
 
 #### Use letsencrypt generated certificates
+
+If you are using a single external IP and no route than you need to make sure that the cert-manger pods are not deployed on the same node as ingress-nginx-controller node.
+
+To do that...check where ingress-nginx-controller pod is running on -
+
+```
+d kubectl get pods -o wide
+```
+
+For e.g. .. if it is kubenode1
+
+than taint the kubenode1:
+
+```
+d kubectl cordon kubenode1
+```
 
 first, download cert manager, and place it in the appropriate location:
 ```
@@ -535,6 +756,16 @@ UNDER CONSTRUCTION:
 ```
 d kubectl create namespace cert-manager-ns
 d helm upgrade --install -n cert-manager-ns --set 'installCRDs=true' cert-manager charts/cert-manager
+```
+
+Uncordon the node you cordonned earlier:
+```
+d kubectl uncordon kubenode1
+```
+
+Then run:
+
+```
 d helm upgrade --install nginx-ingress-services charts/nginx-ingress-services -f values/nginx-ingress-services/values.yaml
 ```
 
@@ -588,52 +819,25 @@ d kubectl label node kubenode1 wire.com/role=sftd
 ##### A selected group of kubernetes nodes:
 If you are restricting SFT to certain nodes, use `nodeSelector` to run on specific nodes (**replacing the example.com domains with yours**):
 ```
-d helm upgrade --install sftd ./charts/sftd \
-  --set 'nodeSelector.wire\.com/role=sftd' \
-  --values values/sftd/values.yaml
+d helm upgrade --install sftd ./charts/sftd --set 'nodeSelector.wire\.com/role=sftd' --values values/sftd/values.yaml
 ```
 
 ##### All kubernetes nodes.
 If you are not doing that, omit the `nodeSelector` argument:
+
+```
+d helm upgrade --install sftd ./charts/sftd --values values/sftd/values.yaml
+```
+
+##### Specifying your certificates.
+
+If you bring your own certificates, you can specify them with:
+
 ```
 d helm upgrade --install sftd ./charts/sftd \
   --set-file tls.crt=/path/to/tls.crt \
   --set-file tls.key=/path/to/tls.key \
   --values values/sftd/values.yaml
 ```
-
-## Appendixes
-
-### Install ntpdate
-
-The nodes running cassandra (`kubenode` 1, 2 and 3) require precise synchronization of their clock.
-
-But `ntpdate` is not (yet) included in the assethost.
-
-To install `ntpdate` go to this link: https://packages.ubuntu.com/bionic/net/ntpdate
-
-Select the `amd64` architecture, which leads you to : https://packages.ubuntu.com/bionic/amd64/ntpdate/download
-
-And there take note of the download link in the middle of the page, in our example http://security.ubuntu.com/ubuntu/pool/universe/n/ntp/ntpdate_4.2.8p10+dfsg-5ubuntu7.3_amd64.deb
-
-Download this link on each of the kubenodes:
-
-```
-wget http://security.ubuntu.com/ubuntu/pool/universe/n/ntp/ntpdate_4.2.8p10+dfsg-5ubuntu7.3_amd64.deb
-```
-
-Then install the package:
-
-```
-sudo dpkg -i ntpdate_4.2.8p10+dfsg-5ubuntu7.3_amd64.deb
-```
-
-Finally run ntpdate:
-
-```
-sudo ntpdate -v 0.ubuntu.pool.ntp.org
-```
-
-Do this on each of the nodes, and they should all have their clocks in sync.
 
 
