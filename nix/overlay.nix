@@ -59,6 +59,15 @@ super: {
         wrapProgram $out/bin/create-container-dump --prefix PATH : '${super.lib.makeBinPath [ self.skopeo ]}'
     '';
 
+  patch-ingress-controller-images = super.runCommandNoCC "patch-ingress-controller-images"
+    {
+      nativeBuildInputs = [ super.makeWrapper ];
+    }
+    ''
+      install -Dm755 ${./scripts/patch-ingress-controller-images.sh} $out/bin/patch-ingress-controller-images
+        wrapProgram $out/bin/patch-ingress-controller-images --prefix PATH : '${super.lib.makeBinPath [ self.containerd ]}'
+    '';
+
 
   list-helm-containers = super.runCommandNoCC "list-helm-containers"
     {

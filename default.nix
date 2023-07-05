@@ -42,6 +42,7 @@ rec {
       yq
       create-container-dump
       list-helm-containers
+      patch-ingress-controller-images
       mirror-apt
       generate-gpg1-key
       kubeadm

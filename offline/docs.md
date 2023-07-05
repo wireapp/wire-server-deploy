@@ -95,7 +95,7 @@ The following artifacts are provided:
  - `containers-other.tar`
    These are other container images, not deployed inside k8s. Currently, only
    contains Restund.
- - `debs.tar`
+ - `debs-bionic.tar`
    This acts as a self-contained dump of all packages required to install
    kubespray, as well as all other packages that are installed by ansible
    playbooks on nodes that don't run kubernetes.
@@ -368,11 +368,11 @@ d helm install wire-server ./charts/wire-server --timeout=15m0s --values ./value
 
 ## Directing Traffic to Wire
 
-### Deploy nginx-ingress-controller
+### Deploy ingress-nginx-controller
 
 This component requires no configuration, and is a requirement for all of the methods we support for getting traffic into your cluster:
 ```
-d helm install nginx-ingress-controller ./charts/nginx-ingress-controller
+d helm install ingress-nginx-controller ./charts/ingress-nginx-controller
 ```
 
 ### Forwarding traffic to your cluster
