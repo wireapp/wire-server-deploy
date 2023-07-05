@@ -40,18 +40,18 @@ brig:
       internalQueue: integration-brig-events-internal
       prekeyTable: integration-brig-prekeys
     externalUrls:
-      nginz: https://nginz-https.example.com # change this
-      teamSettings: https://teams.example.com # change this (or unset if team settings are not used)
-      teamCreatorWelcome: https://teams.example.com/login # change this
-      teamMemberWelcome: https://wire.example.com/download # change this
+      nginz: https://nginz-https.default.domain # change this
+      teamSettings: https://teams.default.domain # change this (or unset if team settings are not used)
+      teamCreatorWelcome: https://teams.default.domain/login # change this
+      teamMemberWelcome: https://wire.default.domain/download # change this
     optSettings:
-      setFederationDomain: example.com # change this
+      setFederationDomain: default.domain # change this
       # Sync the domain with the 'host' variable in the sftd chart
       # Comment the next line (by adding '#' before it) if conference calling is not used
-      setSftStaticUrl: "https://sftd.example.com:443"
+      setSftStaticUrl: "https://sftd.default.domain:443"
     emailSMS:
       general:
-        emailSender: email@example.com # change this
+        emailSender: email@default.domain # change this
         smsSender: "insert-sms-sender-for-twilio" # change this if SMS support is desired
         templateBranding: # change all of these, they are used in emails
           brand: Wire
@@ -66,20 +66,20 @@ brig:
           forgot: https://wire.com/forgot/
           support: https://support.wire.com/
       user:
-        passwordResetUrl: https://account.example.com/reset/?key=${key}&code=${code}
-        activationUrl: https://account.example.com/verify/?key=${key}&code=${code}
-        smsActivationUrl: https://account.example.com/v/${code}
-        deletionUrl: https://account.example.com/d/?key=${key}&code=${code}
-        invitationUrl: https://account.example.com/i/${code}
+        passwordResetUrl: https://account.default.domain/reset/?key=${key}&code=${code}
+        activationUrl: https://account.default.domain/verify/?key=${key}&code=${code}
+        smsActivationUrl: https://account.default.domain/v/${code}
+        deletionUrl: https://account.default.domain/d/?key=${key}&code=${code}
+        invitationUrl: https://account.default.domain/i/${code}
     smtp:
       host: demo-smtp # change this if you want to use your own SMTP server
       port: 25        # change this
       connType: plain # change this. Possible values: plain|ssl|tls
 #    proxy:
-#      httpProxy: "http://proxy.example.com"
-#      httpsProxy: "https://proxy.example.com"
+#      httpProxy: "http://proxy.default.domain"
+#      httpsProxy: "https://proxy.default.domain"
 #      noProxyList:
-#        - "local.example.com"
+#        - "local.default.domain"
 #        - "10.23.0.0/16"
   turnStatic:
     v1: []
@@ -98,10 +98,10 @@ proxy:
 #    tag: some-tag (only override if you want a newer/different version than what is in the chart)
 #  config:
 #    proxy:
-#      httpProxy: "http://proxy.example.com"
-#      httpsProxy: "https://proxy.example.com"
+#      httpProxy: "http://proxy.default.domain"
+#      httpsProxy: "https://proxy.default.domain"
 #      noProxyList:
-#        - "local.example.com"
+#        - "local.default.domain"
 #        - "10.23.0.0/16"
 
 cannon:
@@ -121,14 +121,14 @@ cargohold:
       region: "eu-west-1"
       s3Bucket: assets
       s3Endpoint: http://minio-external:9000
-      s3DownloadEndpoint: https://assets.example.com
+      s3DownloadEndpoint: https://assets.default.domain
     settings:
-      federationDomain: example.com # change this
+      federationDomain: default.domain # change this
 #    proxy:
-#      httpProxy: "http://proxy.example.com"
-#      httpsProxy: "https://proxy.example.com"
+#      httpProxy: "http://proxy.default.domain"
+#      httpsProxy: "https://proxy.default.domain"
 #      noProxyList:
-#        - "local.example.com"
+#        - "local.default.domain"
 #        - "10.23.0.0/16"
 
 galley:
@@ -140,8 +140,8 @@ galley:
       host: cassandra-external
     settings:
       # prefix URI used when inviting users to a conversation by link
-      conversationCodeURI: https://account.example.com/conversation-join/ # change this
-      federationDomain: example.com # change this
+      conversationCodeURI: https://account.default.domain/conversation-join/ # change this
+      federationDomain: default.domain # change this
       # see #RefConfigOptions in `/docs/reference` (https://github.com/wireapp/wire-server/)
       featureFlags:
         sso: disabled-by-default
@@ -152,10 +152,10 @@ galley:
     aws:
       region: "eu-west-1"
 #    proxy:
-#      httpProxy: "http://proxy.example.com"
-#      httpsProxy: "https://proxy.example.com"
+#      httpProxy: "http://proxy.default.domain"
+#      httpsProxy: "https://proxy.default.domain"
 #      noProxyList:
-#        - "local.example.com"
+#        - "local.default.domain"
 #        - "10.23.0.0/16"
 
 gundeck:
@@ -174,10 +174,10 @@ gundeck:
       sqsEndpoint: http://fake-aws-sqs:4568
       snsEndpoint: http://fake-aws-sns:4575
 #    proxy:
-#      httpProxy: "http://proxy.example.com"
-#      httpsProxy: "https://proxy.example.com"
+#      httpProxy: "http://proxy.default.domain"
+#      httpsProxy: "https://proxy.default.domain"
 #      noProxyList:
-#        - "local.example.com"
+#        - "local.default.domain"
 #        - "10.23.0.0/16"
 
 nginz:
@@ -191,13 +191,13 @@ nginz:
   nginx_conf:
     # using prod means mostly that some internal endpoints are not exposed
     env: prod
-    external_env_domain: example.com
+    external_env_domain: default.domain
     deeplink:
       endpoints:
-        backendURL: "https://nginz-https.example.com"
-        backendWSURL: "https://nginz-ssl.example.com"
-        teamsURL: "https://teams.example.com"
-        accountsURL: "https://account.example.com"
+        backendURL: "https://nginz-https.default.domain"
+        backendWSURL: "https://nginz-ssl.default.domain"
+        teamsURL: "https://teams.default.domain"
+        accountsURL: "https://account.default.domain"
         blackListURL: "https://clientblacklist.wire.com/prod"
         websiteURL: "https://wire.com"
       title: "My Custom Wire Backend"
@@ -218,21 +218,21 @@ spar:
     cassandra:
       host: cassandra-external
     logLevel: Debug
-    domain: example.com
-    appUri: https://nginz-https.example.com
-    ssoUri: https://nginz-https.example.com/sso
+    domain: default.domain
+    appUri: https://nginz-https.default.domain
+    ssoUri: https://nginz-https.default.domain/sso
     maxttlAuthreq: 28800
     maxttlAuthresp: 28800
     # maxScimTokens: 16 # uncomment this if you want to use SCIM provisioning
     contacts:
     - type: ContactSupport
       company: YourCompany
-      email: email:support@example.com
+      email: email:support@default.domain
 #    proxy:
-#      httpProxy: "http://proxy.example.com"
-#      httpsProxy: "https://proxy.example.com"
+#      httpProxy: "http://proxy.default.domain"
+#      httpsProxy: "https://proxy.default.domain"
 #      noProxyList:
-#        - "local.example.com"
+#        - "local.default.domain"
 #        - "10.23.0.0/16"
 
 webapp:
@@ -241,11 +241,11 @@ webapp:
 #    tag: some-tag (only override if you want a newer/different version than what is in the chart)
   config:
     externalUrls:
-      backendRest: nginz-https.example.com
-      backendWebsocket: nginz-ssl.example.com
-      backendDomain: example.com
-      backendTeamSettings: teams.example.com
-      appHost: webapp.example.com
+      backendRest: nginz-https.default.domain
+      backendWebsocket: nginz-ssl.default.domain
+      backendDomain: default.domain
+      backendTeamSettings: teams.default.domain
+      appHost: webapp.default.domain
   # See full list of available environment variables: https://github.com/wireapp/wire-webapp/blob/dev/server/config.ts
   envVars:
     APP_NAME: "Webapp"
@@ -256,27 +256,27 @@ webapp:
     FEATURE_ENABLE_PHONE_LOGIN: "false"
     FEATURE_ENABLE_SSO: "false"
     FEATURE_SHOW_LOADING_INFORMATION: "false"
-    URL_ACCOUNT_BASE: "https://account.example.com"
+    URL_ACCOUNT_BASE: "https://account.default.domain"
     #URL_MOBILE_BASE: "https://wire-pwa-staging.zinfra.io" # TODO: is this needed?
-    URL_PRIVACY_POLICY: "https://www.example.com/terms-conditions"
-    URL_SUPPORT_BASE: "https://www.example.com/support"
-    URL_TEAMS_BASE: "https://teams.example.com"
-    URL_TEAMS_CREATE: "https://teams.example.com"
-    URL_TERMS_OF_USE_PERSONAL: "https://www.example.com/terms-conditions"
-    URL_TERMS_OF_USE_TEAMS: "https://www.example.com/terms-conditions"
-    URL_WEBSITE_BASE: "https://www.example.com"
-    CSP_EXTRA_CONNECT_SRC: "https://*.example.com, wss://*.example.com"
-    CSP_EXTRA_IMG_SRC: "https://*.example.com"
-    CSP_EXTRA_SCRIPT_SRC: "https://*.example.com"
-    CSP_EXTRA_DEFAULT_SRC: "https://*.example.com"
-    CSP_EXTRA_FONT_SRC: "https://*.example.com"
-    CSP_EXTRA_FRAME_SRC: "https://*.example.com"
-    CSP_EXTRA_MANIFEST_SRC: "https://*.example.com"
-    CSP_EXTRA_OBJECT_SRC: "https://*.example.com"
-    CSP_EXTRA_MEDIA_SRC: "https://*.example.com"
-    CSP_EXTRA_PREFETCH_SRC: "https://*.example.com"
-    CSP_EXTRA_STYLE_SRC: "https://*.example.com"
-    CSP_EXTRA_WORKER_SRC: "https://*.example.com"
+    URL_PRIVACY_POLICY: "https://www.default.domain/terms-conditions"
+    URL_SUPPORT_BASE: "https://www.default.domain/support"
+    URL_TEAMS_BASE: "https://teams.default.domain"
+    URL_TEAMS_CREATE: "https://teams.default.domain"
+    URL_TERMS_OF_USE_PERSONAL: "https://www.default.domain/terms-conditions"
+    URL_TERMS_OF_USE_TEAMS: "https://www.default.domain/terms-conditions"
+    URL_WEBSITE_BASE: "https://www.default.domain"
+    CSP_EXTRA_CONNECT_SRC: "https://*.default.domain, wss://*.default.domain"
+    CSP_EXTRA_IMG_SRC: "https://*.default.domain"
+    CSP_EXTRA_SCRIPT_SRC: "https://*.default.domain"
+    CSP_EXTRA_DEFAULT_SRC: "https://*.default.domain"
+    CSP_EXTRA_FONT_SRC: "https://*.default.domain"
+    CSP_EXTRA_FRAME_SRC: "https://*.default.domain"
+    CSP_EXTRA_MANIFEST_SRC: "https://*.default.domain"
+    CSP_EXTRA_OBJECT_SRC: "https://*.default.domain"
+    CSP_EXTRA_MEDIA_SRC: "https://*.default.domain"
+    CSP_EXTRA_PREFETCH_SRC: "https://*.default.domain"
+    CSP_EXTRA_STYLE_SRC: "https://*.default.domain"
+    CSP_EXTRA_WORKER_SRC: "https://*.default.domain"
 
 # NOTE: Only relevant if you want team-settings
 team-settings:
@@ -285,10 +285,10 @@ team-settings:
 #    tag: some-tag (only override if you want a newer/different version than what is in the chart)
   config:
     externalUrls:
-      backendRest: nginz-https.example.com
-      backendWebsocket: nginz-ssl.example.com
-      backendDomain: example.com
-      appHost: teams.example.com
+      backendRest: nginz-https.default.domain
+      backendWebsocket: nginz-ssl.default.domain
+      backendDomain: default.domain
+      appHost: teams.default.domain
   # See full list of available environment variables: https://github.com/wireapp/wire-team-settings/blob/dev/server/config.ts
   envVars:
     APP_NAME: "Team Settings"
@@ -298,22 +298,22 @@ team-settings:
     FEATURE_ENABLE_NEW_TEAM: "true"
     # NOTE: Uncomment this for legalhold support in the Team-settings UI
     # FEATURE_ENABLE_LEGAL_HOLD: "true"
-    URL_ACCOUNT_BASE: "https://account.example.com"
-    URL_WEBAPP_BASE: "https://webapp.example.com"
-    URL_WEBSITE_BASE: "https://www.example.com"
-    WEBSITE_LABEL: "www.example.com"
-    CSP_EXTRA_CONNECT_SRC: "https://*.example.com, wss://*.example.com"
-    CSP_EXTRA_IMG_SRC: "https://*.example.com"
-    CSP_EXTRA_SCRIPT_SRC: "https://*.example.com"
-    CSP_EXTRA_DEFAULT_SRC: "https://*.example.com"
-    CSP_EXTRA_FONT_SRC: "https://*.example.com"
-    CSP_EXTRA_FRAME_SRC: "https://*.example.com"
-    CSP_EXTRA_MANIFEST_SRC: "https://*.example.com"
-    CSP_EXTRA_OBJECT_SRC: "https://*.example.com"
-    CSP_EXTRA_MEDIA_SRC: "https://*.example.com"
-    CSP_EXTRA_PREFETCH_SRC: "https://*.example.com"
-    CSP_EXTRA_STYLE_SRC: "https://*.example.com"
-    CSP_EXTRA_WORKER_SRC: "https://*.example.com"
+    URL_ACCOUNT_BASE: "https://account.default.domain"
+    URL_WEBAPP_BASE: "https://webapp.default.domain"
+    URL_WEBSITE_BASE: "https://www.default.domain"
+    WEBSITE_LABEL: "www.default.domain"
+    CSP_EXTRA_CONNECT_SRC: "https://*.default.domain, wss://*.default.domain"
+    CSP_EXTRA_IMG_SRC: "https://*.default.domain"
+    CSP_EXTRA_SCRIPT_SRC: "https://*.default.domain"
+    CSP_EXTRA_DEFAULT_SRC: "https://*.default.domain"
+    CSP_EXTRA_FONT_SRC: "https://*.default.domain"
+    CSP_EXTRA_FRAME_SRC: "https://*.default.domain"
+    CSP_EXTRA_MANIFEST_SRC: "https://*.default.domain"
+    CSP_EXTRA_OBJECT_SRC: "https://*.default.domain"
+    CSP_EXTRA_MEDIA_SRC: "https://*.default.domain"
+    CSP_EXTRA_PREFETCH_SRC: "https://*.default.domain"
+    CSP_EXTRA_STYLE_SRC: "https://*.default.domain"
+    CSP_EXTRA_WORKER_SRC: "https://*.default.domain"
     IS_SELF_HOSTED: "true"
 
 # NOTE: Only relevant if you want account-pages
@@ -323,37 +323,37 @@ account-pages:
 #    tag: some-tag (only override if you want a newer/different version than what is in the chart)
   config:
     externalUrls:
-      backendRest: nginz-https.example.com
-      backendDomain: example.com
-      appHost: account.example.com
+      backendRest: nginz-https.default.domain
+      backendDomain: default.domain
+      appHost: account.default.domain
   # See full list of available environment variables: https://github.com/wireapp/wire-account/blob/dev/server/config.ts
   envVars:
     APP_NAME: "Wire Account Management"
     COMPANY_NAME: "YourCompany"
     FEATURE_ENFORCE_HTTPS: "true"
     FEATURE_ENABLE_DEBUG: "false"
-    URL_SUPPORT_BASE: "https://www.example.com/support"
-    URL_TEAMS_BASE: "https://teams.example.com"
-    URL_WEBAPP_BASE: "https://webapp.example.com"
-    URL_WEBSITE_BASE: "https://www.example.com"
-    CSP_EXTRA_CONNECT_SRC: "https://*.example.com, wss://*.example.com"
-    CSP_EXTRA_IMG_SRC: "https://*.example.com"
-    CSP_EXTRA_SCRIPT_SRC: "https://*.example.com"
-    CSP_EXTRA_DEFAULT_SRC: "https://*.example.com"
-    CSP_EXTRA_FONT_SRC: "https://*.example.com"
-    CSP_EXTRA_FRAME_SRC: "https://*.example.com"
-    CSP_EXTRA_MANIFEST_SRC: "https://*.example.com"
-    CSP_EXTRA_OBJECT_SRC: "https://*.example.com"
-    CSP_EXTRA_MEDIA_SRC: "https://*.example.com"
-    CSP_EXTRA_PREFETCH_SRC: "https://*.example.com"
-    CSP_EXTRA_STYLE_SRC: "https://*.example.com"
-    CSP_EXTRA_WORKER_SRC: "https://*.example.com"
+    URL_SUPPORT_BASE: "https://www.default.domain/support"
+    URL_TEAMS_BASE: "https://teams.default.domain"
+    URL_WEBAPP_BASE: "https://webapp.default.domain"
+    URL_WEBSITE_BASE: "https://www.default.domain"
+    CSP_EXTRA_CONNECT_SRC: "https://*.default.domain, wss://*.default.domain"
+    CSP_EXTRA_IMG_SRC: "https://*.default.domain"
+    CSP_EXTRA_SCRIPT_SRC: "https://*.default.domain"
+    CSP_EXTRA_DEFAULT_SRC: "https://*.default.domain"
+    CSP_EXTRA_FONT_SRC: "https://*.default.domain"
+    CSP_EXTRA_FRAME_SRC: "https://*.default.domain"
+    CSP_EXTRA_MANIFEST_SRC: "https://*.default.domain"
+    CSP_EXTRA_OBJECT_SRC: "https://*.default.domain"
+    CSP_EXTRA_MEDIA_SRC: "https://*.default.domain"
+    CSP_EXTRA_PREFETCH_SRC: "https://*.default.domain"
+    CSP_EXTRA_STYLE_SRC: "https://*.default.domain"
+    CSP_EXTRA_WORKER_SRC: "https://*.default.domain"
     IS_SELF_HOSTED: "true"
 
 # Only needed when legalhold is enabled
 legalhold:
-  host: "legalhold.example.com"
-  wireApiHost: "https://nginz-https.example.com"
+  host: "legalhold.default.domain"
+  wireApiHost: "https://nginz-https.default.domain"
 
 # Only needed when federation is enabled
 federator:

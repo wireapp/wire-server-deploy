@@ -5,7 +5,7 @@ config:
   logLevel: "Debug" # one of Trace,Debug,Info,Warn,Error,Fatal; 'Fatal' is least noisy, 'Trace' is most.
   ldapSource:
     tls: true
-    host: "ldap-server.example.com"
+    host: "ldap-server.default.domain"
     port: 636
     dn: "CN=Admin,DC=example,DC=com"
     password: "secret password here"

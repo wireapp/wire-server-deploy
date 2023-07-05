@@ -34,7 +34,7 @@ module "brig_prekey_lock_and_event_queue_emailing" {
   environment = "staging"
 
   zone_id = "Z12345678SQWERTYU"
-  domain = "example.com"
+  domain = "default.domain"
 }
 ```
 

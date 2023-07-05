@@ -84,7 +84,7 @@ like this:
 ```yaml
 sft_servers_blue:
   vars:
-    sft_artifact_file_url: "https://example.com/path/to/sftd_42.tar.gz"
+    sft_artifact_file_url: "https://default.domain/path/to/sftd_42.tar.gz"
     sft_artifact_checksum: somechecksum_42
     srv_announcer_active: true
 ```
@@ -101,7 +101,7 @@ For `sft_servers_green`, `srv_announcer_active` must be `false`.
    ```yaml
    sft_servers_green:
    vars:
-     sft_artifact_file_url: "https://example.com/path/to/sftd_44.tar.gz"
+     sft_artifact_file_url: "https://default.domain/path/to/sftd_44.tar.gz"
      sft_artifact_checksum: somechecksum_44
      srv_announcer_active: true
    ```
@@ -122,7 +122,7 @@ For `sft_servers_green`, `srv_announcer_active` must be `false`.
    ```yaml
    sft_servers_blue:
    vars:
-     sft_artifact_file_url: "https://example.com/path/to/sftd_42.tar.gz"
+     sft_artifact_file_url: "https://default.domain/path/to/sftd_42.tar.gz"
      sft_artifact_checksum: somechecksum_42
      srv_announcer_active: false
    ```

@@ -410,8 +410,8 @@ If you are restricting SFT to certain nodes, use `nodeSelector` to run on specif
 ```
 d helm upgrade --install sftd ./charts/sftd \
   --set 'nodeSelector.wire\.com/role=sftd' \
-  --set host=sftd.example.com \
-  --set allowOrigin=https://webapp.example.com \
+  --set host=sftd.default.domain \
+  --set allowOrigin=https://webapp.default.domain \
   --set-file tls.crt=/path/to/tls.crt \
   --set-file tls.key=/path/to/tls.key
 ```
@@ -419,8 +419,8 @@ d helm upgrade --install sftd ./charts/sftd \
 If you are not doing that, omit the `nodeSelector` argument:
 ```
 d helm upgrade --install sftd ./charts/sftd \
-  --set host=sftd.example.com \
-  --set allowOrigin=https://webapp.example.com \
+  --set host=sftd.default.domain \
+  --set allowOrigin=https://webapp.default.domain \
   --set-file tls.crt=/path/to/tls.crt \
   --set-file tls.key=/path/to/tls.key
 ```
