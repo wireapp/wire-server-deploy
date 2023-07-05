@@ -455,7 +455,7 @@ Deployment steps:
    - account-pages: updated to latest app (#175)
 
 ## Other updates
-- Standardise docs to use default.domain everywhere (#161, #172)
+- Standardise docs to use example.com everywhere (#161, #172). (Note, 5 July 2022, example.com replaced with default.domain globally in both wire-server and wire-server-deploy, this instance excluded as it's historical)
 - Cleaned up and moved docs around to wire-docs (#157)
 
 ## Breaking changes / known issues when upgrading
