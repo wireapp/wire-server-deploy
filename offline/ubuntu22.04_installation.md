@@ -88,6 +88,14 @@ UsePAM no
 PermitRootLogin prohibit-password
 ```
 
+Alternatively you can use these commands:
+
+```
+sed -i 's/#PasswordAuthentication yes/PasswordAuthentication no/g' /etc/ssh/sshd_config
+sed -i 's/UsePAM yes/ChallengeResponseAuthentication no\nUsePAM no/g' /etc/ssh/sshd_config
+sed -i 's/PermitRootLogin yes/PermitRootLogin prohibit-password/g' /etc/ssh/sshd_config
+```
+
 ### re-start SSH
 
 ```
@@ -151,6 +159,12 @@ And set the following:
 ```
 # even better: don't allow to login as root via ssh at all
 PermitRootLogin no
+```
+
+Or use this command:
+
+```
+sudo sed -i 's/PermitRootLogin prohibit-password/PermitRootLogin no/g' /etc/ssh/sshd_config
 ```
 
 ### re-start SSH
