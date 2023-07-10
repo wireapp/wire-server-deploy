@@ -37,7 +37,6 @@ jobs:
       - name: Install nix environment
         run: nix-env -f default.nix -iA env
 
-
       - name: Run offline build
         run: ./offline/ci.sh
         env:
