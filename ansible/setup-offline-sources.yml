@@ -95,7 +95,7 @@
 
     - name: Register offline repo
       apt_repository:
-        repo: "deb [trusted=yes] {{ ubuntu_repo_base_url }} {{ ansible_distribution_release }} main"
+        repo: "deb {{ ubuntu_repo_base_url }} {{ ansible_distribution_release }} main"
         state: present
     - name: Apt update
       apt:
