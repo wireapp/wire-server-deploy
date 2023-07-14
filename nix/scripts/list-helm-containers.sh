@@ -26,7 +26,7 @@ function optionally_complain() {
 }
 
 # For each helm chart passed in from stdin, use the example values to
-# render the charts, and assemble the list of images this would fetch.
+# render the charts, and assemble the list of images this would fetch..
 while IFS= read -r chart; do
   echo "Running helm template on chart ${chart}…" >&2
 
