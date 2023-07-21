@@ -10,19 +10,19 @@ helm upgrade --install --wait demo-smtp ./charts/demo-smtp --values ./values/dem
 helm upgrade --install --wait databases-ephemeral ./charts/databases-ephemeral --values ./values/databases-ephemeral/prod-values.example.yaml
 helm upgrade --install --wait reaper ./charts/reaper
 kubectl get pods --all-namespaces
-pods=$(kubectl get pods -n kube-system --field-selector=status.phase!=Running,status.phase!=Completed -o=jsonpath='{range .items[*]}{.metadata.name}{"\n"}{end}')
+pods=$(kubectl get pods -n kube-system -o=jsonpath='{.items[*].metadata.name}')
 echo "Pods not running:"
 echo "$pods"
 for pod in $pods; do
     echo "Logs for pod: $pod"
-    kubectl logs --all-containers -n kube-system "$pod"
+    kubectl logs --all-containers -n kube-system "$pod" || true
     echo "------------------------------------"
 done
 helm upgrade --install --wait wire-server ./charts/wire-server --values ./values/wire-server/prod-values.example.yaml --values ./values/wire-server/secrets.yaml || true
-pods=$(kubectl get pods -n kube-system --field-selector=status.phase!=Running,status.phase!=Completed -o=jsonpath='{range .items[*]}{.metadata.name}{"\n"}{end}')
+pods=$(kubectl get pods -n kube-system -o=jsonpath='{.items[*].metadata.name}')
 for pod in $pods; do
     echo "Logs for pod: $pod"
-    kubectl logs --all-containers -n kube-system "$pod"
+    kubectl logs --all-containers -n kube-system "$pod" || true
     echo "------------------------------------"
 done
 kubectl get pods --all-namespaces
