@@ -12,6 +12,7 @@ ansible-playbook -i $ANSIBLE_DIR/inventory/offline $ANSIBLE_DIR/restund.yml --ta
 ansible-playbook -i $ANSIBLE_DIR/inventory/offline $ANSIBLE_DIR/seed-offline-containerd.yml
 ansible-playbook -i $ANSIBLE_DIR/inventory/offline $ANSIBLE_DIR/sync_time.yml -v
 ansible-playbook -i $ANSIBLE_DIR/inventory/offline $ANSIBLE_DIR/kubernetes.yml --skip-tags bootstrap-os,preinstall,container-engine
+./bin/fix_default_router.sh
 ansible-playbook -i $ANSIBLE_DIR/inventory/offline $ANSIBLE_DIR/cassandra.yml
 ansible-playbook -i $ANSIBLE_DIR/inventory/offline $ANSIBLE_DIR/elasticsearch.yml
 ansible-playbook -i $ANSIBLE_DIR/inventory/offline $ANSIBLE_DIR/restund.yml

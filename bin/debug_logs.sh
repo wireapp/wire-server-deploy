@@ -1,7 +1,9 @@
 #!/usr/bin/env bash
 
 set -euo pipefail
-
+echo "Printing all pods status"
+kubectl get pods --all-namespaces
+echo "------------------------------------"
 namespaces=$(kubectl get ns -o=jsonpath='{.items[*].metadata.name}')
 echo "Namespaces = $namespaces"
 for ns in $namespaces; do
