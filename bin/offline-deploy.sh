@@ -20,6 +20,5 @@ WSD_CONTAINER=$(sudo docker load -i $SCRIPT_DIR/../containers-adminhost/containe
 
 
 sudo docker run --network=host -v $SSH_AUTH_SOCK:/ssh-agent -e SSH_AUTH_SOCK=/ssh-agent -v $PWD:/wire-server-deploy $WSD_CONTAINER ./bin/offline-cluster.sh
-sudo docker run --network=host -v $PWD:/wire-server-deploy $WSD_CONTAINER ./bin/debug_logs.sh
+sudo docker run --network=host -v $PWD:/wire-server-deploy $WSD_CONTAINER ./bin/fix_default_router.sh
 sudo docker run --network=host -v $PWD:/wire-server-deploy $WSD_CONTAINER ./bin/offline-helm.sh
-
