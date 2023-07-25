@@ -12,7 +12,7 @@ helm upgrade --install --wait reaper ./charts/reaper
 helm upgrade --install --wait --timeout=15m0s wire-server ./charts/wire-server --values ./values/wire-server/prod-values.example.yaml --values ./values/wire-server/secrets.yaml
 echo "Printing all pods status"
 kubectl get pods --all-namespaces
-helm upgrade --install --wait --timeout=15m0s ingress-nginx-controller ./charts/ingress-nginx-controller --values ./values/ingress-nginx-controller/prod-values.example.yaml || true
-./bin/debug_logs.sh
+helm upgrade --install ingress-nginx-controller ./charts/ingress-nginx-controller --values ./values/ingress-nginx-controller/prod-values.example.yaml
+#./bin/debug_logs.sh
 # TODO: Requires certs; which we do not have in CI/CD at this point. future work =) (Would need cert-manager in offline package. That'd be neat)
 # helm upgrade --install --wait nginx-ingress-services ./charts/nginx-ingress-services --values ./values/nginx-ingress-services/values.yaml  --values ./values/nginx-ingress-services/secrets.yaml
