@@ -191,11 +191,6 @@ tar -xzf ../wire-server-deploy-static-*.tgz
 
 We'll use the docker that is in the archive.
 
-For Ubuntu 18.04:
-
-```
-tar -xf debs-bionic.tar # Under construction
-```
 
 For Ubuntu 22.04:
 

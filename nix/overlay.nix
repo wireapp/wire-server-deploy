@@ -39,16 +39,6 @@ super: {
       # we *--set* PATH here, to ensure we don't pick wrong gpgs
       wrapProgram $out/bin/generate-gpg1-key --set PATH '${super.lib.makeBinPath (with self; [ bash coreutils gnupg1orig ])}'
     '';
-
-  mirror-apt-bionic = super.runCommandNoCC "mirror-apt-bionic"
-    {
-      nativeBuildInputs = [ super.makeWrapper ];
-    }
-    ''
-      install -Dm755 ${./scripts/mirror-apt-bionic.sh} $out/bin/mirror-apt-bionic
-      # we need to *--set* PATH here, otherwise aptly will pick the wrong gpg
-      wrapProgram $out/bin/mirror-apt-bionic --set PATH '${super.lib.makeBinPath (with self; [ aptly bash coreutils curl gnupg1orig gnused gnutar ])}'
-    '';
   mirror-apt-jammy = super.runCommandNoCC "mirror-apt-jammy"
     {
       nativeBuildInputs = [ super.makeWrapper ];

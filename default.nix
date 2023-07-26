@@ -44,7 +44,6 @@ rec {
       create-container-dump
       list-helm-containers
       patch-ingress-controller-images
-      mirror-apt-bionic
       mirror-apt-jammy
       generate-gpg1-key
       kubeadm

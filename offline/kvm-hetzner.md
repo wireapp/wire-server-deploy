@@ -173,7 +173,6 @@ tar -xzf ../wire-server-deploy-static-*.tgz
 We'll use the docker that is in the archive.
 
 ```
-tar -xf debs-bionic.tar
 tar -xf debs-jammy.tar
 ```
 
