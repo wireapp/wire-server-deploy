@@ -4,12 +4,12 @@
     - file:
         path: /opt/assets
         state: directory
-    - name: Copy debs bionic
-      unarchive:
-        src: ../debs-bionic.tar
-        dest: /opt/assets
-      tags:
-        - debs
+    # - name: Copy debs bionic
+    #   unarchive:
+    #     src: ../debs-bionic.tar
+    #     dest: /opt/assets
+    #   tags:
+    #     - debs
     - name: Copy debs jammy
       unarchive:
         src: ../debs-jammy.tar
