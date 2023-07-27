@@ -23,7 +23,7 @@ rec {
   env = pkgs.buildEnv {
     name = "wire-server-deploy";
     paths = with pkgs; [
-      ansible_2_9
+      ansible_2_11
       pythonForAnsible
       apacheHttpd
       awscli2
@@ -34,6 +34,7 @@ rec {
       kubernetes-helm
       helmfile
       kubectl
+      containerd
       openssl
       moreutils
       skopeo
@@ -42,7 +43,8 @@ rec {
       yq
       create-container-dump
       list-helm-containers
-      mirror-apt
+      patch-ingress-controller-images
+      mirror-apt-jammy
       generate-gpg1-key
       kubeadm
       # for RTP session debugging

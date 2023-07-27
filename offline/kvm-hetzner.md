@@ -173,7 +173,7 @@ tar -xzf ../wire-server-deploy-static-*.tgz
 We'll use the docker that is in the archive.
 
 ```
-tar -xf debs.tar
+tar -xf debs-jammy.tar
 ```
 
 ### (FIXME: add iptables to the repo) Install Docker from debian archive.

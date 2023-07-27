@@ -39,15 +39,14 @@ super: {
       # we *--set* PATH here, to ensure we don't pick wrong gpgs
       wrapProgram $out/bin/generate-gpg1-key --set PATH '${super.lib.makeBinPath (with self; [ bash coreutils gnupg1orig ])}'
     '';
-
-  mirror-apt = super.runCommandNoCC "mirror-apt"
+  mirror-apt-jammy = super.runCommandNoCC "mirror-apt-jammy"
     {
       nativeBuildInputs = [ super.makeWrapper ];
     }
     ''
-      install -Dm755 ${./scripts/mirror-apt.sh} $out/bin/mirror-apt
+      install -Dm755 ${./scripts/mirror-apt-jammy.sh} $out/bin/mirror-apt-jammy
       # we need to *--set* PATH here, otherwise aptly will pick the wrong gpg
-      wrapProgram $out/bin/mirror-apt --set PATH '${super.lib.makeBinPath (with self; [ aptly bash coreutils curl gnupg1orig gnused gnutar ])}'
+      wrapProgram $out/bin/mirror-apt-jammy --set PATH '${super.lib.makeBinPath (with self; [ aptly bash coreutils curl gnupg1orig gnused gnutar ])}'
     '';
 
   create-container-dump = super.runCommandNoCC "create-container-dump"
@@ -69,5 +68,12 @@ super: {
       wrapProgram $out/bin/list-helm-containers --prefix PATH : '${super.lib.makeBinPath [ self.kubernetes-helm ]}'
     '';
 
-
+  patch-ingress-controller-images = super.runCommandNoCC "patch-ingress-controller-images"
+    {
+      nativeBuildInputs = [ super.makeWrapper ];
+    }
+    ''
+      install -Dm755 ${./scripts/patch-ingress-controller-images.sh} $out/bin/patch-ingress-controller-images
+        wrapProgram $out/bin/patch-ingress-controller-images --prefix PATH : '${super.lib.makeBinPath [ self.containerd ]}'
+    '';
 }
