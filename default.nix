@@ -37,7 +37,6 @@ rec {
       kubernetes-helm
       helmfile
       kubectl
-      containerd
       openssl
       moreutils
       skopeo
@@ -46,20 +45,25 @@ rec {
       yq
       create-container-dump
       list-helm-containers
-      patch-ingress-controller-images
       mirror-apt-jammy
       generate-gpg1-key
       kubeadm
-      # for RTP session debugging
-      wireshark
-      gnuplot
-
       # Linting
       shellcheck
 
       niv
       nix-prefetch-docker
-    ] ++ [ profileEnv ];
+    ] ++ [
+      profileEnv
+    ] ++ lib.optionals pkgs.stdenv.isLinux [
+      pkgs.containerd
+      patch-ingress-controller-images # depends on containerd, TODO: migrate to skopeo?
+
+
+      # for RTP session debugging
+      wireshark
+      gnuplot
+    ];
   };
 
   # The container we use for offline deploys. Where people probably do not have
