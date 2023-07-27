@@ -12,12 +12,12 @@ super: {
     super.python3Packages.matplotlib
   ]));
 
-  kubectl = self.callPackage ./pkgs/kubectl.nix { };
+  # kubeadm and kubectl
+  kubernetes-tools = self.callPackage ./pkgs/kubernetes-tools.nix { };
+
   kubernetes-helm = super.wrapHelm super.kubernetes-helm {
     plugins = with super.kubernetes-helmPlugins; [ helm-s3 helm-secrets helm-diff helm-mapkubeapis ];
   };
-
-  kubeadm = self.callPackage ./pkgs/kubeadm.nix { };
 
   wire-binaries = self.callPackage ./pkgs/wire-binaries.nix { };
 

@@ -32,11 +32,13 @@ rec {
       awscli2
       gnumake
       gnupg
+
+      kubernetes-tools
+
       # Note: This is overriden in nix/overlay.nix to have plugins. This is
       # required so that helmfile get's the correct version of helm in its PATH.
       kubernetes-helm
       helmfile
-      kubectl
       openssl
       moreutils
       skopeo
@@ -47,7 +49,6 @@ rec {
       list-helm-containers
       mirror-apt-jammy
       generate-gpg1-key
-      kubeadm
       # Linting
       shellcheck
 
