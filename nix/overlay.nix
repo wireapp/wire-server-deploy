@@ -17,7 +17,7 @@ super: {
     plugins = with super.kubernetes-helmPlugins; [ helm-s3 helm-secrets helm-diff helm-mapkubeapis ];
   };
 
-  kubeadm = self.runCommandNoCC "kubeadm" { } "install -Dm0775 ${self.wire-binaries}/kubeadm $out/bin/kubeadm";
+  kubeadm = self.callPackage ./pkgs/kubeadm.nix { };
 
   wire-binaries = self.callPackage ./pkgs/wire-binaries.nix { };
 
