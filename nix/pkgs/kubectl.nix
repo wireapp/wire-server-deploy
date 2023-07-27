@@ -2,27 +2,34 @@
 
 stdenv.mkDerivation rec {
   pname = "kubectl";
-  version = "1.23.7";
+  version = "1.23.16";
 
   src = {
+    aarch64-linux = fetchurl {
+      url = "https://dl.k8s.io/v${version}/kubernetes-client-linux-arm64.tar.gz";
+      hash = "sha256-wBNjAtDj7JnDxS6Xe4IQKTn8hqRHxk+N6J8pptvrKMU=";
+    };
+    aarch64-darwin = fetchurl {
+      url = "https://dl.k8s.io/v${version}/kubernetes-client-darwin-arm64.tar.gz";
+      hash = "sha256-cebSirs3vpNWrsmd1VDgnnpbTyPqj8subCXKu4J4vCM=";
+    };
     x86_64-linux = fetchurl {
-      url = "https://storage.googleapis.com/kubernetes-release/release/v${version}/bin/linux/amd64/kubectl";
-      sha256 = "b4c27ad52812ebf3164db927af1a01e503be3fb9dc5ffa058c9281d67c76f66e";
+      url = "https://dl.k8s.io/v${version}/kubernetes-client-linux-amd64.tar.gz";
+      hash = "sha256-ZEYy/M6VQejreCdAer7T7v2wg8e06mV9hiaH42LOfn4=";
     };
     x86_64-darwin = fetchurl {
-      url = "https://storage.googleapis.com/kubernetes-release/release/v${version}/bin/darwin/amd64/kubectl";
-      sha256 = "1gpn6l8l5zznkrvydjv5km906adniid4wpsqy3qpdzlmgpscx1ir";
+      url = "https://dl.k8s.io/v${version}/kubernetes-client-darwin-amd64.tar.gz";
+      hash = "sha256-vllW8C3wUP5J7e2PghB/ZqenMBTnuB6ZljNItwH9bcw=";
     };
   }."${stdenv.targetPlatform.system}";
 
 
-  dontUnpack = true;
   dontBuild = true;
 
   installPhase = ''
-    cp $src kubectl
+    cp client/bin/kubectl kubectl
     install -Dm0755 kubectl -t $out/bin
   '';
 
-  meta.platforms = [ "x86_64-linux" "x86_64-darwin" ];
+  meta.platforms = [ "aarch64-linux" "aarch64-darwin" "x86_64-linux" "x86_64-darwin" ];
 }
