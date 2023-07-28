@@ -1,10 +1,10 @@
 # Migrating your Ubuntu 18 based deployment to Ubuntu 22.
 On your current Ubuntu 18 based deployment you might be using the following version of required tools:
-<br>Kubernets - 1.19.7<br>
+<br>Kubernetes - 1.19.7<br>
 Ansible - 2.9.6
 <br><br>
 while on the new Ubuntu 22 based deployment you will be using the following version of required tools:
-<br>Kubernets - 1.23.7<br>
+<br>Kubernetes - 1.23.7<br>
 Ansible - 2.11.6
 <br><br>
 ### We will be deploying the new environment in parallel to the old one and then migrate the data from the old one to the new one. At the end we will remove the old environment.
