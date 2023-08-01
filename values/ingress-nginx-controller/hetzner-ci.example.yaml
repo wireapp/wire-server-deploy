@@ -3,6 +3,7 @@
 # `containerd`.
 ingress-nginx:
   controller:
+    # There's no loadbalancer support in the Hetzner CI environment
     kind: DaemonSet
     service:
       type: NodePort

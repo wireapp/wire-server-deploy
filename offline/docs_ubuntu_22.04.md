@@ -852,3 +852,5 @@ To sync them, run the following ansible playbook -
 ```
 d ansible-playbook -i ./ansible/inventory/offline/hosts.ini ansible/sync_time.yml
 ```
+
+The above playbook will configure NTP on all Cassandra nodes, assigns first node as the authoritative node. All other nodes will sync their time with the authoritative node.
