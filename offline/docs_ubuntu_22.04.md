@@ -841,3 +841,14 @@ d helm upgrade --install sftd ./charts/sftd \
 ```
 
 
+## Appendixes
+
+
+The nodes running cassandra (`ansnode` 1, 2 and 3) require precise synchronization of their clock.
+
+In case the cassandra migration doesn't complete, it might be probably due to the clock not being in sync.
+
+To sync them, run the following ansible playbook -
+```
+d ansible-playbook -i ./ansible/inventory/offline/hosts.ini ansible/sync_time.yml
+```
