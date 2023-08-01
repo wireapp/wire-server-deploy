@@ -87,6 +87,7 @@ charts=(
   wire/fake-aws
   wire/minio-external
   wire/wire-server
+  wire/ldap-scim-bridge
   # local-path-provisioner
   # TODO: uncomment once its dependencies are pinned!
   wire/sftd
