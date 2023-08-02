@@ -59,6 +59,15 @@ packages=(
   cron
   crontab
   ufw
+  netcat
+  telnet
+  less
+  traceroute
+  strace
+  iputils-ping
+  nano
+  vi
+  tcpdump
 )
 
 # shellcheck disable=SC2001
