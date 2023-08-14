@@ -7,6 +7,7 @@ helm upgrade --install --wait elasticsearch-external ./charts/elasticsearch-exte
 helm upgrade --install --wait minio-external ./charts/minio-external --values ./values/minio-external/values.yaml
 helm upgrade --install --wait fake-aws ./charts/fake-aws --values ./values/fake-aws/prod-values.example.yaml
 helm upgrade --install --wait demo-smtp ./charts/demo-smtp --values ./values/demo-smtp/prod-values.example.yaml
+helm upgrade --install --wait rabbitmq ./charts/rabbitmq --values ./values/rabbitmq/hetzner-ci-values.example.yaml --values ./values/rabbitmq/prod-secrets.example.yaml
 helm upgrade --install --wait databases-ephemeral ./charts/databases-ephemeral --values ./values/databases-ephemeral/prod-values.example.yaml
 helm upgrade --install --wait reaper ./charts/reaper
 helm upgrade --install --wait --timeout=15m0s wire-server ./charts/wire-server --values ./values/wire-server/prod-values.example.yaml --values ./values/wire-server/secrets.yaml

@@ -1,0 +1,4 @@
+# More settings can be found here: https://github.com/bitnami/charts/tree/main/bitnami/rabbitmq
+rabbitmq:
+  persistence:
+    enabled: false
