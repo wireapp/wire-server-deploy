@@ -1,12 +1,13 @@
 # Migrating your Ubuntu 18 based deployment to Ubuntu 22.
 
 NOTE: The following migration process was done as a clean install of wire-server on new Ubuntu 22.04 VMs, then restoring a backed up snapshot of Cassandra and MiniO.
+
 **IMPORTANT**: You should notify your users of the planned migration and stop all wire-server services before making any backup snapshots and keep it down until upgrade is complete! For extra security, have your users backup their conversation history!
 On your current Ubuntu 18 based deployment you might be using the following version of required tools:
 <br>Kubernetes - 1.19.7<br>
 Ansible - 2.9.6
 <br><br>
-while on the new Ubuntu 22 based deployment you will be using the following version of required tools:
+While on the new Ubuntu 22 based deployment you will be using the following version of required tools:
 <br>Kubernetes - 1.23.7<br>
 Ansible - 2.11.6
 <br><br>
@@ -14,7 +15,6 @@ Ansible - 2.11.6
 ### We will be deploying the new environment in parallel to the old one and then migrate the data from the old one to the new one. At the end we will remove the old environment.
 
 <br>
-
 ## On your current Ubuntu 18 based deployment -
 
 ### Backup your wire-server-deploy directory.
@@ -68,7 +68,7 @@ scp '/tmp/mnt*.tar' demo@destination-machine:~/.
 
 You can also directly move the tar files from the origin machine to the destination machine.<br><br>
 
-### Backup your Minio data directory from each ansible nodes.
+### Backup your Minio data directory from each node.
 
 On each node, create a backup of the /var/lib/minio-server1 and /var/lib/minio-server2 folders using the tar command. For example, run:
 
