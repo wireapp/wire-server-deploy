@@ -492,6 +492,22 @@ what the IP addresses of cassandra, elasticsearch and minio are.
 d ansible-playbook -i ./ansible/inventory/offline/hosts.ini ansible/helm_external.yml
 ```
 
+#### Installing Rabbitmq
+
+To install the rabbitmq,
+First copy the value and secret file:
+```
+cp ./values/rabbitmq/prod-values.example.yaml ./values/rabbitmq/values.yaml
+cp ./values/rabbitmq/prod-secrets.example.yaml ./values/rabbitmq/secrets.yaml
+```
+
+Now, update the `./values/rabbitmq/values.yaml` and `./values/rabbitmq/secrets.yaml` with correct values as per needed.
+
+Deploy the rabbitmq helm chart -
+```
+d helm upgrade --install rabbitmq ./charts/rabbitmq --values ./values/rabbitmq/values.yaml --values ./values/rabbitmq/secrets.yaml
+```
+
 ### Deploying Wire
 
 It's now time to deploy the helm charts on top of kubernetes, installing the Wire platform.
