@@ -94,11 +94,11 @@ charts=(
 HELM_HOME=$(mktemp -d)
 export HELM_HOME
 
-helm repo add wire https://s3-eu-west-1.amazonaws.com/public.wire.com/charts
+helm repo add wire https://s3-eu-west-1.amazonaws.com/public.wire.com/charts-develop
 helm repo update
 
 # wire_version=$(helm show chart wire/wire-server | yq -r .version)
-wire_version="4.35.0"
+wire_version="0.0.2-pr.4696"
 
 # Download zauth; as it's needed to generate certificates
 echo "quay.io/wire/zauth:$wire_version" | create-container-dump containers-adminhost
