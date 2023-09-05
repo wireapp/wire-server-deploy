@@ -1,0 +1,16 @@
+[
+  {rabbit, [
+{% if tls_only %}
+    {tcp_listeners, []},
+{% endif %}
+{% if enable_tls %}
+    {ssl_listeners, [{{ rabbitmq_tls_port }}]},
+    {ssl_options, [{cacertfile,"{{ cacertfile_dest }}"},
+                   {certfile,"{{ certfile_dest }}"},
+                   {keyfile,"{{ keyfile_dest }}"},
+                   {verify,{{ tls_verify }}},
+                   {fail_if_no_peer_cert,{{tls_fail_if_no_peer_cert|lower}}}]},
+{% endif %}
+    {loopback_users, []}
+  ]}
+].

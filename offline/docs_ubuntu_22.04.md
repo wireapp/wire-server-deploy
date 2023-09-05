@@ -274,6 +274,11 @@ the `wire.com/external-ip` annotation to the public IP of the node.
 
 In order to automatically generate deeplinks, Edit the minio variables in `[minio:vars]` (`prefix`, `domain` and `deeplink_title`) by replacing `example.com` with your own domain.
 
+### Configuring rabbitmq
+
+Add the nodes in which you want to run rabbitmq to the `[rmq-cluster]` group. Also, update the ansible/roles/rabbimq-cluster/defaults/main.yml file with the correct configurations for your environment.
+
+
 ### Example hosts.ini
 
 Here is an example `hosts.ini` file that was used in a succesfull example deployment, for reference. It might not be exactly what is needed for your deployment, but it should work for the KVM 7-machine deploy:
@@ -356,6 +361,12 @@ elasticsearch
 ansnode1
 ansnode2
 ansnode3
+
+[rmq-cluster]
+ansnode1
+ansnode2
+ansnode3
+
 ```
 
 ## Generating secrets

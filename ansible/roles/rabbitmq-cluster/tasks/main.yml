@@ -1,0 +1,23 @@
+---
+- include_tasks: hosts.yml
+  when: update_hosts
+
+- include_tasks: install.yml
+
+- include_tasks: erlang_cookie.yml
+  when: rabbitmq_create_cluster
+
+- include_tasks: tls.yml
+  when: enable_tls
+
+- include_tasks: config.yml
+
+- include_tasks: service.yml
+
+- include_tasks: cluster.yml
+  when: rabbitmq_create_cluster == true
+
+- include_tasks: create_users.yml
+
+- include_tasks: enable_ha_queues.yml
+  when: backup_queues_in_two_nodes
