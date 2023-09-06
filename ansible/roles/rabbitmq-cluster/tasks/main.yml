@@ -4,6 +4,9 @@
 
 - include_tasks: install.yml
 
+- include_tasks: configure_dns.yml
+  when: rabbitmq_add_host_resolution_entries == true
+
 - include_tasks: erlang_cookie.yml
   when: rabbitmq_create_cluster
 
@@ -12,7 +15,7 @@
 
 - include_tasks: config.yml
 
-- include_tasks: service.yml
+#- include_tasks: service.yml
 
 - include_tasks: cluster.yml
   when: rabbitmq_create_cluster == true

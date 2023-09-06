@@ -276,7 +276,13 @@ In order to automatically generate deeplinks, Edit the minio variables in `[mini
 
 ### Configuring rabbitmq
 
-Add the nodes in which you want to run rabbitmq to the `[rmq-cluster]` group. Also, update the ansible/roles/rabbimq-cluster/defaults/main.yml file with the correct configurations for your environment.
+Add the nodes in which you want to run rabbitmq to the `[rmq-cluster]` group. Also, update the `ansible/roles/rabbimq-cluster/defaults/main.yml` file with the correct configurations for your environment.
+
+Important: RabbitMQ nodes address each other using a node name, for e.g rabbitmq@ansnode1
+Please refer to official doc and configure your DNS based on the setup - https://www.rabbitmq.com/clustering.html#cluster-formation-requirements
+
+For adding entries to local host file(/etc/hosts), set `rabbitmq_add_host_resolution_entries` to true in `ansible/roles/rabbimq-cluster/defaults/main.yml`
+
 
 
 ### Example hosts.ini
