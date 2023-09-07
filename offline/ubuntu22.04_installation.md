@@ -357,7 +357,7 @@ sudo service dnsmasq restart
 ### Acquire ubuntu 22.04 server installation CD (server).
 
 ```
-curl https://releases.ubuntu.com/jammy/ubuntu-22.04.2-live-server-amd64.iso -o ubuntu.iso
+curl https://releases.ubuntu.com/jammy/ubuntu-22.04.3-live-server-amd64.iso -o ubuntu.iso
 sudo setfacl -m u:libvirt-qemu:--x /home/demo
 ```
 
