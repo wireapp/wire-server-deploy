@@ -266,10 +266,10 @@ sudo systemctl enable libvirtd
 sudo systemctl start libvirtd
 ```
 
-### add the demo user to the kvm group
+### add the demo user to the kvm and docker group
 
 ```
-sudo usermod -a -G kvm demo
+sudo usermod -a -G kvm -G docker demo
 ```
 
 ### log out, log back in, and return to Wire-Server.
