@@ -215,11 +215,15 @@ tar -xf debs-jammy.tar
 ### (FIXME: add iptables to the repo) Install Docker from debian archive.
 
 ```
-sudo apt -y install iptables
-sudo dpkg -i debs-jammy/public/pool/main/d/docker-ce/docker-ce-cli_*.deb
-sudo dpkg -i debs-jammy/public/pool/main/c/containerd.io/containerd.io_*.deb
-sudo dpkg -i debs-jammy/public/pool/main/d/docker-ce/docker-ce_*.deb
-sudo dpkg --configure -a
+sudo bash -c '
+set -eo pipefail;
+
+apt -y install iptables;
+dpkg -i debs-jammy/public/pool/main/d/docker-ce/docker-ce-cli_*.deb;
+dpkg -i debs-jammy/public/pool/main/c/containerd.io/containerd.io_*.deb;
+dpkg -i debs-jammy/public/pool/main/d/docker-ce/docker-ce_*.deb;
+dpkg --configure -a;
+'
 ```
 
 ### (missing) point host OS to debian archive
@@ -231,29 +235,42 @@ We're going to install dnsmasq in order to provide DNS to virtual machines, and 
 Note that dnsmasq always fails when it installs. the failures (red stuff) is normal.
 
 ```
-sudo systemctl disable systemd-resolved
-sudo apt install dnsmasq ufw -y
-sudo systemctl stop systemd-resolved
+sudo bash -c '
+set -eo pipefail;
+
+systemctl disable systemd-resolved;
+apt install dnsmasq ufw -y;
+systemctl stop systemd-resolved;
+'
 ```
 
 ### Tell dnsmasq to provide DNS locally.
 
 ```
-sudo bash -c 'echo "listen-address=127.0.0.53" > /etc/dnsmasq.d/00-lo-systemd-resolvconf'
-sudo bash -c 'echo "no-resolv" >> /etc/dnsmasq.d/00-lo-systemd-resolvconf'
-sudo bash -c 'echo "server=8.8.8.8" >> /etc/dnsmasq.d/00-lo-systemd-resolvconf'
-sudo service dnsmasq restart
+sudo bash -c '
+set -eo pipefail;
+
+echo "listen-address=127.0.0.53
+no-resolv
+server=8.8.8.8
+" > /etc/dnsmasq.d/00-lo-systemd-resolvconf;
+service dnsmasq restart;
+'
 ```
 
 ### Configure Firewall
 
 ```
-sudo ufw allow 22/tcp
-sudo ufw allow from 172.16.0.0/24 proto udp to any port 53
-sudo ufw allow from 127.0.0.0/24 proto udp to any port 53
-sudo ufw allow in on br0 from any proto udp to any port 67
-sudo ufw allow Openssh
-sudo ufw enable
+sudo bash -c '
+set -eo pipefail;
+
+ufw allow 22/tcp;
+ufw allow from 172.16.0.0/24 proto udp to any port 53;
+ufw allow from 127.0.0.0/24 proto udp to any port 53;
+ufw allow in on br0 from any proto udp to any port 67;
+ufw allow Openssh;
+ufw enable;
+'
 ```
 
 ### Install libvirt and dependencies
@@ -261,9 +278,13 @@ sudo ufw enable
 We will install libvirt to create the vms for deployment
 
 ```
-sudo apt install -y qemu qemu-kvm qemu-utils libvirt-clients libvirt-daemon-system virtinst bridge-utils virt-manager
-sudo systemctl enable libvirtd
-sudo systemctl start libvirtd
+sudo bash -c '
+set -eo pipefail;
+
+apt install -y qemu qemu-kvm qemu-utils libvirt-clients libvirt-daemon-system virtinst bridge-utils virt-manager;
+systemctl enable libvirtd;
+systemctl start libvirtd;
+'
 ```
 
 ### add the demo user to the kvm and docker group
@@ -306,23 +327,36 @@ sudo apt install emacs-nox -y
 This is the interface we are going to use to talk to the virtual machines.
 
 ```
-sudo brctl addbr br0
-sudo ifconfig br0 172.16.0.1 netmask 255.255.255.0 up
+sudo bash -c '
+set -eo pipefail;
+
+brctl addbr br0;
+ifconfig br0 172.16.0.1 netmask 255.255.255.0 up;
+'
 ```
 
 ### tell DnsMasq to provide DHCP to our KVM VMs.
 
 ```
-sudo bash -c 'echo "listen-address=172.16.0.1" > /etc/dnsmasq.d/10-br0-dhcp'
-sudo bash -c 'echo "dhcp-range=172.16.0.2,172.16.0.127,10m" >> /etc/dnsmasq.d/10-br0-dhcp'
-sudo service dnsmasq restart
+sudo bash -c '
+set -eo pipefail;
+
+echo "listen-address=172.16.0.1
+dhcp-range=172.16.0.2,172.16.0.127,10m
+" > /etc/dnsmasq.d/10-br0-dhcp;
+service dnsmasq restart;
+'
 ```
 
 ### enable ip forwarding.
 
 ```
-sudo sed -i "s/.*net.ipv4.ip_forward.*/net.ipv4.ip_forward=1/" /etc/sysctl.conf
-sudo sysctl -p
+sudo bash -c '
+set -eo pipefail;
+
+sed -i "s/.*net.ipv4.ip_forward.*/net.ipv4.ip_forward=1/" /etc/sysctl.conf;
+sysctl -p;
+'
 ```
 
 ### enable network masquerading
@@ -336,22 +370,32 @@ ip ro | sed -n "/default/s/.* dev \([en\(ps|o)0-9]*\) .*/export OUTBOUNDINTERFAC
 This will return a shell command setting a variable to your default interface. copy and paste it into the command prompt, hit enter to run it, then run the following
 
 ```
-sudo sed -i 's/.*DEFAULT_FORWARD_POLICY=.*/DEFAULT_FORWARD_POLICY="ACCEPT"/' /etc/default/ufw
-sudo sed -i "1i *nat\n:POSTROUTING ACCEPT [0:0]\n-A POSTROUTING -s 172.16.0.0/24 -o $OUTBOUNDINTERFACE -j MASQUERADE\nCOMMIT" /etc/ufw/before.rules
-sudo service ufw restart
+sudo bash -c '
+set -eo pipefail;
+
+sed -i 's/.*DEFAULT_FORWARD_POLICY=.*/DEFAULT_FORWARD_POLICY="ACCEPT"/' /etc/default/ufw;
+sed -i "1i *nat\n:POSTROUTING ACCEPT [0:0]\n-A POSTROUTING -s 172.16.0.0/24 -o $OUTBOUNDINTERFACE -j MASQUERADE\nCOMMIT" /etc/ufw/before.rules;
+service ufw restart;
+'
 ```
 
 ### add static IPs for VMs.
 
 ```
-sudo bash -c 'echo "dhcp-host=assethost,172.16.0.128,10h" > /etc/dnsmasq.d/20-hosts'
-sudo bash -c 'echo "dhcp-host=kubenode1,172.16.0.129,10h" >> /etc/dnsmasq.d/20-hosts'
-sudo bash -c 'echo "dhcp-host=kubenode2,172.16.0.130,10h" >> /etc/dnsmasq.d/20-hosts'
-sudo bash -c 'echo "dhcp-host=kubenode3,172.16.0.131,10h" >> /etc/dnsmasq.d/20-hosts'
-sudo bash -c 'echo "dhcp-host=ansnode1,172.16.0.132,10h" >> /etc/dnsmasq.d/20-hosts'
-sudo bash -c 'echo "dhcp-host=ansnode2,172.16.0.133,10h" >> /etc/dnsmasq.d/20-hosts'
-sudo bash -c 'echo "dhcp-host=ansnode3,172.16.0.134,10h" >> /etc/dnsmasq.d/20-hosts'
-sudo service dnsmasq restart
+sudo bash -c '
+set -eo pipefail;
+
+echo "
+dhcp-host=assethost,172.16.0.128,10h
+dhcp-host=kubenode1,172.16.0.129,10h
+dhcp-host=kubenode2,172.16.0.130,10h
+dhcp-host=kubenode3,172.16.0.131,10h
+dhcp-host=ansnode1,172.16.0.132,10h
+dhcp-host=ansnode2,172.16.0.133,10h
+dhcp-host=ansnode3,172.16.0.134,10h
+" > /etc/dnsmasq.d/20-hosts;
+service dnsmasq restart;
+'
 ```
 
 ### Acquire ubuntu 22.04 server installation CD (server).
