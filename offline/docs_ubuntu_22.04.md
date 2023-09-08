@@ -13,9 +13,13 @@ docker](https://docker.com) for instructions.
 On ubuntu 22.04, connected to the internet:
 
 ```
-sudo apt install docker.io
-sudo systemctl enable docker
-sudo systemctl start docker
+sudo bash -c '
+set -eo pipefail;
+
+apt install docker.io;
+systemctl enable docker;
+systemctl start docker;
+'
 ```
 
 Ensure the user you are using for the install has permission to run docker, or add 'sudo' to the docker commands below.
@@ -51,9 +55,7 @@ Create a fresh workspace to download the artifacts:
 ```
 $ cd ...  # you pick a good location!
 ```
-
-Obtain the latest airgrap artifact for wire-server-deploy. Please contact us to get it for now. We are
-working on publishing a list of airgap artifacts.
+Obtain the latest airgap artifact for wire-server-deploy. Please contact us to get it.
 
 Extract the above listed artifacts into your workspace:
 
@@ -159,7 +161,7 @@ ansible_become_pass=<PASSWORD>
 #### Editing the ansible inventory
 
 ##### Adding host entries
-when editing the inventory, we only need seven entries in the '[all]' section. one entry for each of the VMs we are running.
+When editing the inventory, you only need seven entries in the '[all]' section. One entry for each of the VMs you are running.
 Edit the 'kubenode' entries, and the 'assethost' entry like normal.
 
 Instead of creating separate cassandra, elasticsearch, and minio entries, create three 'ansnode' entries, similar to the following:
@@ -170,7 +172,7 @@ ansnode3 ansible_host=172.16.0.134
 ```
 
 ##### Updating Group Membership
-Afterwards, we need to update the lists of what nodes belong to which group, so ansible knows what to install on these nodes.
+Afterwards, you need to update the lists of what nodes belong to which group, so ansible knows what to install on these nodes.
 
 Add all three ansnode entries into the `cassandra` `elasticsearch`, and `minio` sections. They should look like the following:
 ```
@@ -249,15 +251,17 @@ Due to this *NAT-hole punching* relay purpose and depending on where the Restund
 topology, it could be used to access private services. We consider this to be unintended and thus set a couple
 of network rules on a Restund instance. If egress traffic to certain private network ranges should still
 be allowed, you may adjust `restund_allowed_private_network_cidrs` according to your setup.
+If you install restund together with other services on the same machine you need to set `restund_allowed_private_network_cidrs`
+for these services to communicate over the private network.
 
 ### Marking kubenode for calling server (SFT)
 
 The SFT Calling server should be running on a kubernetes nodes that are connected to the public internet.
 If not all kubernetes nodes match these criteria, you should specifically label the nodes that do match
-these criteria, so that we're sure SFT is deployed correctly.
+these criteria, so that you're sure SFT is deployed correctly.
 
 
-By using a `node_label` we can make sure SFT is only deployed on a certain node like `kubenode4`
+By using a `node_label` you can make sure SFT is only deployed on a certain node like `kubenode4`
 
 ```
 kubenode4 node_labels="{'wire.com/role': 'sftd'}" node_annotations="{'wire.com/external-ip': 'a.b.c.d'}"
@@ -303,6 +307,7 @@ deeplink_title = "wire demo environment, kiwee.world"
 
 [restund:vars]
 restund_uid = root
+restund_allowed_private_network_cidrs=172.16.0.1/24
 
 [kube-master]
 kubenode1
@@ -325,6 +330,8 @@ kubenode3
 kube-master
 kube-node
 
+# Note: If you install restund on the same nodes as other services
+# you need to set `restund_allowed_private_network_cidrs`
 [restund]
 ansnode1
 ansnode2
@@ -353,10 +360,8 @@ ansnode3
 
 ## Generating secrets
 
-Minio and restund services have shared secrets with the `wire-server` helm chart. We have a utility
-script that generates a fresh set of secrets for these components.
+Minio and restund services have shared secrets with the `wire-server` helm chart. Run the folllowing script that generates a fresh set of secrets for these components:
 
-Please run:
 ```
 ./bin/offline-secrets.sh
 ```
@@ -364,6 +369,13 @@ Please run:
 This should generate two files. `./ansible/inventory/group_vars/all/secrets.yaml` and `values/wire-server/secrets.yaml`.
 
 ## Deploying Kubernetes, Restund and stateful services
+
+In order to deploy all the services run:
+```
+d ./bin/offline-cluster.sh
+```
+In case any of the steps in this script fail, see the notes in the comments that accompany each step.
+Comment out steps that have already completed when re-running the scripts.
 
 ### WORKAROUND: old debian key
 All of our debian archives up to version 4.12.0 used a now-outdated debian repository signature. Some modifications are required to be able to install everything properly.
@@ -382,55 +394,25 @@ ansible/roles-external/kubespray/roles/container-engine/docker/tasks/main.yml
 * comment out the next block -name: ensure docker-ce repository is enabled
 
 Now you are ready to start deploying services.
-
 #### WORKAROUND: dependency
-some ubuntu systems do not have GPG by default. wire assumes this is already present. ensure you have gpg installed on all of your nodes before continuing to the next step.
+Some ubuntu systems do not have GPG by default. Wire assumes this is already present. Ensure you have gpg installed on all of your nodes before continuing to the next step.
 
-### Deploying with Ansible
+#### Troubleshooting restund
 
-In order to deploy all the ansible-managed services you can run:
-```
-# d ./bin/offline-cluster.sh
-```
-... However a conservitave approach is to perform each step of the script step by step, for better understanding, and better handling of errors..
+Is case the restund firewall fails to start. Fix
 
-#### Populate the assethost, and prepare to install images from it.
+On each ansnode you set in the `[restund]` section of the `hosts.ini` file
 
-Copy over binaries and debs, serves assets from the asset host, and configure
-other hosts to fetch debs from it:
+Delete the outbound rule to 172.16.0.0/12
 
 ```
-d ansible-playbook -i ./ansible/inventory/offline/hosts.ini ansible/setup-offline-sources.yml
-```
-If this step fails partway, and you know that parts of it completed, the `--skip-tags debs,binaries,containers,containers-helm,containers-other` tags may come in handy.
-
-#### Kubernetes, part 1
-Run kubespray until docker is installed and runs. This allows us to preseed the docker containers that
-are part of the offline bundle:
-
-```
-d ansible-playbook -i ./ansible/inventory/offline/hosts.ini ansible/kubernetes.yml --tags bastion,bootstrap-os,preinstall,container-engine
+sudo ufw status numbered;
 ```
 
-#### Restund
-
-Now; run the restund playbook until docker is installed:
-```
-d ansible-playbook -i ./ansible/inventory/offline/hosts.ini ansible/restund.yml --tags docker
-```
-
-#### Pushing container images to kubenodes, restund nodes and load them into containerd.
-With ctr being installed on all nodes that need it, seed all container images:
+Then find the right number and delete it
 
 ```
-d ansible-playbook -i ./ansible/inventory/offline/hosts.ini ansible/seed-offline-containerd.yml
-```
-
-#### Kubernetes, part 2
-Run the rest of kubespray. This should bootstrap a kubernetes cluster successfully:
-
-```
-d ansible-playbook -i ./ansible/inventory/offline/hosts.ini ansible/kubernetes.yml --skip-tags bootstrap-os,preinstall,container-engine
+ufw delete <right number>;
 ```
 
 #### Ensuring kubernetes is healthy.
@@ -443,47 +425,26 @@ d kubectl get nodes -owide
 They should all report ready.
 
 
-#### Non-kubernetes services (restund, cassandra, elasticsearch, minio)
-Now, deploy all other services which don't run in kubernetes.
+#### Enable the ports colocated services run on:
+```
+sudo bash -c '
+set -eo pipefail;
 
-```
-d ansible-playbook -i ./ansible/inventory/offline/hosts.ini ansible/cassandra.yml
-d ansible-playbook -i ./ansible/inventory/offline/hosts.ini ansible/elasticsearch.yml
-d ansible-playbook -i ./ansible/inventory/offline/hosts.ini ansible/minio.yml
-d ansible-playbook -i ./ansible/inventory/offline/hosts.ini ansible/restund.yml
-```
+# cassandra
+ufw allow 9042/tcp;
+ufw allow 9160/tcp;
+ufw allow 7000/tcp;
+ufw allow 7199/tcp;
 
-### ERROR: after you install restund, the restund firewall will fail to start.
+# elasticsearch
+ufw allow 9300/tcp;
+ufw allow 9200/tcp;
 
-On each ansnode you set in the `[restund]` section of the `hosts.ini` file
-
-delete the outbound rule to 172.16.0.0/12
+# minio
+ufw allow 9000/tcp;
+ufw allow 9092/tcp;
+'
 ```
-sudo ufw status numbered
-sudo ufw delete <right number>
-```
-
-#### enable the ports colocated services run on:
-cassandra:
-```
-sudo ufw allow 9042/tcp
-sudo ufw allow 9160/tcp
-sudo ufw allow 7000/tcp
-sudo ufw allow 7199/tcp
-```
-
-elasticsearch:
-```
-sudo ufw allow 9300/tcp
-sudo ufw allow 9200/tcp
-```
-
-minio:
-```
-sudo ufw allow 9000/tcp
-sudo ufw allow 9092/tcp
-```
-
 
 Afterwards, run the following playbook to create helm values that tell our helm charts
 what the IP addresses of cassandra, elasticsearch and minio are.
@@ -505,18 +466,20 @@ d helm install elasticsearch-external ./charts/elasticsearch-external --values .
 d helm install minio-external ./charts/minio-external --values ./values/minio-external/values.yaml
 ```
 
+#### Deploying stateless dependencies
+
 Also copy the values file for `databases-ephemeral` as it is required for the next step:
 
 ```
 cp values/databases-ephemeral/prod-values.example.yaml values/databases-ephemeral/values.yaml
+# edit values.yaml if necessary
+d helm install databases-ephemeral ./charts/databases-ephemeral/ --values ./values/databases-ephemeral/values.yaml
 ```
 
-#### Deploying stateless dependencies
-Next, we have 4 services that need to be deployed but need no additional configuration:
+Next, three more services that need no additional configuration need to be deployed:
 ```
 d helm install fake-aws ./charts/fake-aws --values ./values/fake-aws/prod-values.example.yaml
 d helm install demo-smtp ./charts/demo-smtp --values ./values/demo-smtp/prod-values.example.yaml
-d helm install databases-ephemeral ./charts/databases-ephemeral/ --values ./values/databases-ephemeral/values.yaml
 d helm install reaper ./charts/reaper
 ```
 
@@ -567,7 +530,7 @@ d helm install wire-server ./charts/wire-server --timeout=15m0s --values ./value
 This component requires no configuration, and is a requirement for all of the methods we support for getting traffic into your cluster:
 
 ```
-mv ./values/ingress-nginx-controller/prod-values.example.yaml ./values/ingress-nginx-controller/values.yaml
+cp ./values/ingress-nginx-controller/prod-values.example.yaml ./values/ingress-nginx-controller/values.yaml
 d helm install ingress-nginx-controller ./charts/ingress-nginx-controller --values ./values/ingress-nginx-controller/values.yaml
 ```
 
@@ -575,37 +538,38 @@ d helm install ingress-nginx-controller ./charts/ingress-nginx-controller --valu
 
 #### Using network services
 
-Most enterprises have network service teams to forward traffic appropriately. Ask that your network team forward TCP port 443 to each one of the kubernetes servers on port 31773. ask the same for port 80, directing it to 31772.
-
-If they ask for clarification, a longer way of explaining it is "wire expects https traffic to be on port 31773, and http traffic to go to port 80. a load balancing rule needs to be in place, so that no matter which kubernetes host is up or down, the router will direct traffic to one of the operational kubernetes nodes. any node that accepts connections on port 31773 and 31772 can be considered as operational."
+The goal of the section is to forward traffic on ports 443 and 80 to the kubernetes node(s) that run(s) ingress service.
+Wire expected https traffic port 443 to be forwarded to port 31773 and http traffic on port 80 to be forwarded to port 31772.
 
 #### Through an IP Masquerading Firewall
 
 Your ip masquerading firewall must forward port 443 and port 80 to one of the kubernetes nodes (which must always remain online).
 Additionally, if you want to use letsEncrypt CA certificates, items behind your firewall must be redirected to your kubernetes node, when the cluster is attempting to contact the outside IP.
 
-The following instructions are given only as an example. 
-Properly configuring IP Masquerading requires a seasoned linux administrator with deep knowledge of networking. 
-They assume all traffic destined to your wire cluster is going through a single IP masquerading firewall, running some modern version of linux.
+The following instructions are given only as an example. Depending on your network setup different dns masquarading rules are required.
+In the following all traffic destined to your wire cluster is going through a single IP masquerading firewall.
 
 ##### Incoming SSL Traffic
 
-Here, you should check the ethernet interface name for your outbound IP.
+To prepare determine the interface of your outbound IP:
+
 ```
-ip ro | sed -n "/default/s/.* dev \([enpso0-9]*\) .*/export OUTBOUNDINTERFACE=\1/p"
+export OUTBOUNDINTERFACE=$(ip ro | sed -n "/default/s/.* dev \([enpso0-9]*\) .*/\1/p")
+echo "OUTBOUNDINTERFACE is $OUTBOUNDINTERFACE"
 ```
 
-This will return a shell command setting a variable to your default interface. copy and paste it. next, supply your outside IP address:
+Please check that `OUTBOUNDINTERFACE` is correctly set, before continuning.
+
+Supply your outside IP address:
+
 ```
 export PUBLICIPADDRESS=<your.ip.address.here>
 ```
 
-Select one of your kubernetes nodes that you are fine with losing service if it is offline (for example kubenode3):
-
-Make sure it is the same pod on which ingress-nginx is running:
-
-1. Run `d kubectl get pods -o wide`
-2. See on which node `ingress-nginx` is running
+1. Find out on which node `ingress-nginx` is running:
+```
+d kubectl get pods -l app.kubernetes.io/name=ingress-nginx -o=custom-columns=NAME:.metadata.name,NODE:.spec.nodeName
+```
 3. Get the IP of this node by running `ip address` on that node
 4. Use that IP for $KUBENODEIP
 
@@ -613,64 +577,82 @@ Make sure it is the same pod on which ingress-nginx is running:
 export KUBENODEIP=<your.kubernetes.node.ip>
 ```
 
-then, if your box owns the public IP (you can see the IP in `ip addr`), run the following:
+then, in case the server owns the public IP (i.e. you can see the IP in `ip addr`), run the following:
 ```
-sudo iptables -t nat -A PREROUTING -d $PUBLICIPADDRESS -i $OUTBOUNDINTERFACE -p tcp --dport 80 -j DNAT --to-destination $KUBENODEIP:31772
-sudo iptables -t nat -A PREROUTING -d $PUBLICIPADDRESS -i $OUTBOUNDINTERFACE -p tcp --dport 443 -j DNAT --to-destination $KUBENODEIP:31773
+sudo bash -c "
+set -xeo pipefail;
+
+iptables -t nat -A PREROUTING -d $PUBLICIPADDRESS -i $OUTBOUNDINTERFACE -p tcp --dport 80 -j DNAT --to-destination $KUBENODEIP:31772;
+iptables -t nat -A PREROUTING -d $PUBLICIPADDRESS -i $OUTBOUNDINTERFACE -p tcp --dport 443 -j DNAT --to-destination $KUBENODEIP:31773;
+"
 ```
 
-If your box is being forwarded traffic from another firewall (you do not see the IP in `ip addr`), run the following:
+If your server is being forwarded traffic from another firewall (you do not see the IP in `ip addr`), run the following:
 ```
-sudo iptables -t nat -A PREROUTING -i $OUTBOUNDINTERFACE -p tcp --dport 80 -j DNAT --to-destination $KUBENODEIP:31772
-sudo iptables -t nat -A PREROUTING -i $OUTBOUNDINTERFACE -p tcp --dport 443 -j DNAT --to-destination $KUBENODEIP:31773
+sudo bash -c "
+set -eo pipefail;
+
+iptables -t nat -A PREROUTING -i $OUTBOUNDINTERFACE -p tcp --dport 80 -j DNAT --to-destination $KUBENODEIP:31772;
+iptables -t nat -A PREROUTING -i $OUTBOUNDINTERFACE -p tcp --dport 443 -j DNAT --to-destination $KUBENODEIP:31773;
+"
 ```
+or add the corresponding rules to a config file (for UFW, /etc/ufw/before.rules) so they persist after rebooting.
 
 If you are running a UFW firewall, make sure to allow inbound traffic on 443 and 80:
 ```
-sudo ufw enable
-sudo ufw allow in on $OUTBOUNDINTERFACE proto tcp to any port 443
-sudo ufw allow in on $OUTBOUNDINTERFACE proto tcp to any port 80
-```
+sudo bash -c "
+set -eo pipefail;
 
-if you are running a UFW firewall, make sure to add the above iptables rules to /etc/ufw/before.rules, so they persist after a reboot.
+ufw enable;
+ufw allow in on $OUTBOUNDINTERFACE proto tcp to any port 443;
+ufw allow in on $OUTBOUNDINTERFACE proto tcp to any port 80;
+"
+```
 
 ###### Mirroring the public IP
 
-cert-manager has a requirement on being able to reach the kubernetes on it's external IP. this is trouble, because in most security concious environments, the external IP is not owned by any of the kubernetes hosts.
+`cert-manager` has a requirement on being able to reach the kubernetes on its external IP. This might be problematic, because in security concious environments, the external IP might not owned by any of the kubernetes hosts.
 
-on an IP Masquerading router, you can redirect outgoing traffic from your cluster, that is to say, when the cluster asks to connect to your external IP, you can instead choose to send it to a kubernetes node inside of the cluster.
+On an IP Masquerading router, you can redirect outgoing traffic from your cluster, i.e. when the cluster asks to connect to your external IP, it will be routed to the kubernetes node inside the cluster.
+
+Make sure `PUBLICIPADDRESS` is exported (see above).
+
 ```
 export INTERNALINTERFACE=br0
-sudo iptables -t nat -A PREROUTING -i $INTERNALINTERFACE -d $PUBLICIPADDRESS -p tcp --dport 80 -j DNAT --to-destination $KUBENODEIP:31772
-sudo iptables -t nat -A PREROUTING -i $INTERNALINTERFACE -d $PUBLICIPADDRESS -p tcp --dport 443 -j DNAT --to-destination $KUBENODEIP:31773
+sudo bash -c "
+set -xeo pipefail;
+
+iptables -t nat -A PREROUTING -i $INTERNALINTERFACE -d $PUBLICIPADDRESS -p tcp --dport 80 -j DNAT --to-destination $KUBENODEIP:31772;
+iptables -t nat -A PREROUTING -i $INTERNALINTERFACE -d $PUBLICIPADDRESS -p tcp --dport 443 -j DNAT --to-destination $KUBENODEIP:31773;
+"
 ```
+
+or add the corresponding rules to a config file (for UFW, /etc/ufw/before.rules) so they persist after rebooting.
 
 ### Incoming Calling Traffic
 
-Here, you should check the ethernet interface name for your outbound IP.
-```
-ip ro | sed -n "/default/s/.* dev \([enps0-9]*\) .*/export OUTBOUNDINTERFACE=\1/p"
-```
+Make sure `OUTBOUNDINTERFACE` and `PUBLICIPADDRESS` are exported (see above).
 
-This will return a shell command setting a variable to your default interface. copy and paste it. next, supply your outside IP address:
-```
-export PUBLICIPADDRESS=<your.ip.address.here>
-```
+Select one of your kubernetes nodes that hosts restund:
 
-Select one of your kubernetes nodes that you are fine with losing service if it is offline:
 ```
 export RESTUND01IP=<your.restund.ip>
 ```
 
 then run the following:
 ```
-sudo iptables -t nat -A PREROUTING -d $PUBLICIPADDRESS -i $OUTBOUNDINTERFACE -p tcp --dport 80 -j DNAT --to-destination $RESTUND01IP:80
-sudo iptables -t nat -A PREROUTING -d $PUBLICIPADDRESS -i $OUTBOUNDINTERFACE -p udp --dport 80 -j DNAT --to-destination $RESTUND01IP:80
-sudo iptables -t nat -A PREROUTING -d $PUBLICIPADDRESS -i $OUTBOUNDINTERFACE -p udp -m udp --dport 32768:60999 -j DNAT --to-destination $RESTUND01IP
-```
-or add an appropriate rule to a config file (for UFW, /etc/ufw/before.rules)
+sudo bash -c "
+set -eo pipefail;
 
-### Changing the TURN port.
+iptables -t nat -A PREROUTING -d $PUBLICIPADDRESS -i $OUTBOUNDINTERFACE -p tcp --dport 80 -j DNAT --to-destination $RESTUND01IP:80;
+iptables -t nat -A PREROUTING -d $PUBLICIPADDRESS -i $OUTBOUNDINTERFACE -p udp --dport 80 -j DNAT --to-destination $RESTUND01IP:80;
+iptables -t nat -A PREROUTING -d $PUBLICIPADDRESS -i $OUTBOUNDINTERFACE -p udp -m udp --dport 32768:60999 -j DNAT --to-destination $RESTUND01IP;
+"
+```
+
+or add the corresponding rules to a config file (for UFW, /etc/ufw/before.rules) so they persist after rebooting.
+
+### Changing the TURN port
 
 FIXME: ansibleize this!
 turn's connection port for incoming clients is set to 80 by default. to change it:
@@ -686,8 +668,8 @@ SSL certificates are required by the nginx-ingress-services helm chart. You can 
 Move the example values for `nginx-ingress-services`:
 
 ```
-mv ./values/nginx-ingress-services/prod-values.example.yaml ./values/nginx-ingress-services/values.yaml
-mv ./values/nginx-ingress-services/prod-secrets.example.yaml ./values/nginx-ingress-services/secrets.yaml
+cp ./values/nginx-ingress-services/prod-values.example.yaml ./values/nginx-ingress-services/values.yaml
+cp ./values/nginx-ingress-services/prod-secrets.example.yaml ./values/nginx-ingress-services/secrets.yaml
 ```
 
 #### Bring your own certificates
@@ -715,17 +697,17 @@ d helm install nginx-ingress-services ./charts/nginx-ingress-services --values .
 
 #### Use letsencrypt generated certificates
 
-If you are using a single external IP and no route than you need to make sure that the cert-manger pods are not deployed on the same node as ingress-nginx-controller node.
+If you are using a single external IP and no route then you need to make sure that the cert-manger pods are not deployed on the same node as ingress-nginx-controller node.
 
-To do that...check where ingress-nginx-controller pod is running on -
+To do that...check where ingress-nginx-controller pod is running on, e.g. by running
+
 
 ```
-d kubectl get pods -o wide
+d kubectl get pods -l app.kubernetes.io/name=ingress-nginx -o=custom-columns=NAME:.metadata.name,NODE:.spec.nodeName
 ```
+For e.g. .. if it is `kubenode1`
 
-For e.g. .. if it is kubenode1
-
-than taint the kubenode1:
+taint the node
 
 ```
 d kubectl cordon kubenode1
@@ -734,25 +716,27 @@ d kubectl cordon kubenode1
 first, download cert manager, and place it in the appropriate location:
 ```
 wget https://charts.jetstack.io/charts/cert-manager-v1.9.1.tgz
-mkdir tmp
-cd tmp
-tar -xzf ../cert-manager-*.tgz
-ls
-cd ..
- mv tmp/cert-manager/ charts/
-rm -rf tmp
+tar -C ./charts -xvzf cert-manager-v1.9.1.tgz
 ```
 
-edit values/nginx-ingress-services/values.yaml , to tell ingress-ingress-services to use cert-manager:
- * set useCertManager: true
- * set certmasterEmail: your.email.address
+In case `values.yaml` and `secrets.yaml` doesn't exist yet in `./values/nginx-ingress-services` create them from templates
+```
+cp ./values/nginx-ingress-services/prod-secrets.example.yaml ./values/nginx-ingress-services/secrets.yaml
+cp ./values/nginx-ingress-services/prod-values.example.yaml ./values/nginx-ingress-services/values.yaml
+```
+and customize.
 
-set your domain name with sed:
+Edit `values.yaml`:
+
+ * set `useCertManager: true`
+ * set `certmasterEmail: <your email address>`
+
+Set your domain name with sed:
 ```
 sed -i "s/example.com/YOURDOMAINHERE/" values/nginx-ingress-services/values.yaml
 ```
 
-UNDER CONSTRUCTION:
+Install `cert-manager` into a new namespace `cert-manager-ns`.
 ```
 d kubectl create namespace cert-manager-ns
 d helm upgrade --install -n cert-manager-ns --set 'installCRDs=true' cert-manager charts/cert-manager
@@ -766,7 +750,7 @@ d kubectl uncordon kubenode1
 Then run:
 
 ```
-d helm upgrade --install nginx-ingress-services charts/nginx-ingress-services -f values/nginx-ingress-services/values.yaml
+d helm upgrade --install nginx-ingress-services charts/nginx-ingress-services -f values/nginx-ingress-services/values.yaml 
 ```
 
 Watch the output of the following command to know how your request is going:
