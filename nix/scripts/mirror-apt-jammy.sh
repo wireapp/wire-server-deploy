@@ -130,7 +130,7 @@ $aptly snapshot create jammy-security from mirror jammy-security
 $aptly snapshot create jammy-updates from mirror jammy-updates
 $aptly snapshot create docker-ce from mirror docker-ce
 
-$aptly snapshot merge wire jammy jammy-security jammy-udpates docker-ce
+$aptly snapshot merge wire jammy jammy-security jammy-updates docker-ce
 
 $aptly publish snapshot -gpg-key="gpg@wire.com" -secret-keyring="$GNUPGHOME/secring.gpg" -distribution jammy wire
 
