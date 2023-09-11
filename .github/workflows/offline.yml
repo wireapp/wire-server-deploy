@@ -9,8 +9,7 @@ jobs:
     name: Prepare offline package
     # Useful to skip expensive CI when writing docs
     if: "!contains(github.event.head_commit.message, 'skip ci')"
-    runs-on:
-      group: wire-server-deploy
+    runs-on: U22.04-4CPU-16Gig-150GB
     steps:
       - uses: actions/checkout@v2
         with:
