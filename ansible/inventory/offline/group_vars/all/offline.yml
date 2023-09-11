@@ -48,7 +48,7 @@ es_version: "6.8.23"
 es_use_repository: false
 es_custom_package_url: "{{ binaries_url }}/elasticsearch-oss-6.8.23.deb"
 
-minio_server_artifact_url: "{{ binaries_url }}/RELEASE.2023-07-07T07-13-57Z"
+minio_server_artifact_url: "{{ binaries_url }}/minio.RELEASE.2023-07-07T07-13-57Z"
 minio_server_artifact_checksum: sha256:15d762671436cf383f9cc6667260e6c1298c25c8d7009576f709c3823e4a494d
 minio_client_artifact_url: "{{ binaries_url }}/mc.RELEASE.2023-07-07T05-25-51Z"
 minio_client_artifact_checksum: sha256:205a2dc5a49dc467f78228c43c7d368e376c6cc14492597a7c4fe195c291f074
