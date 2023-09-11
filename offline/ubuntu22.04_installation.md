@@ -423,7 +423,7 @@ Layout - English, Variant -> English --> Done
 
 Select Ubuntu Server (minimized) --> Done
 
-Network connections --> Make suere you get something like "DHCPv4 172.16.0.8/24" --> Done
+Network connections --> Make sure you get something like "DHCPv4 172.16.0.8/24" --> Done
 
 Proxy Address - dont change anything --> Done
 
