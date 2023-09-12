@@ -359,27 +359,28 @@ sysctl -p;
 '
 ```
 
-### enable network masquerading
+### Enable network masquerading
 
-Here, you should check the ethernet interface name for your outbound IP.
-
-```
-ip ro | sed -n "/default/s/.* dev \([en\(ps|o)0-9]*\) .*/export OUTBOUNDINTERFACE=\1/p"
-```
-
-This will return a shell command setting a variable to your default interface. copy and paste it into the command prompt, hit enter to run it, then run the following
+To prepare determine the interface of your outbound IP:
 
 ```
-sudo bash -c '
+export OUTBOUNDINTERFACE=$(ip ro | sed -n "/default/s/.* dev \([en\(ps|o)0-9]*\) .*/\1/p")
+echo OUTBOUNDINTERFACE is $OUTBOUNDINTERFACE
+```
+
+Please Check that `OUTBOUNDINTERFACE` is correctly set, before running enabling network masquerading:
+
+```
+sudo bash -c "
 set -eo pipefail;
 
 sed -i 's/.*DEFAULT_FORWARD_POLICY=.*/DEFAULT_FORWARD_POLICY="ACCEPT"/' /etc/default/ufw;
-sed -i "1i *nat\n:POSTROUTING ACCEPT [0:0]\n-A POSTROUTING -s 172.16.0.0/24 -o $OUTBOUNDINTERFACE -j MASQUERADE\nCOMMIT" /etc/ufw/before.rules;
+sed -i \"1i *nat\n:POSTROUTING ACCEPT [0:0]\n-A POSTROUTING -s 172.16.0.0/24 -o $OUTBOUNDINTERFACE -j MASQUERADE\nCOMMIT\" /etc/ufw/before.rules;
 service ufw restart;
-'
+"
 ```
 
-### add static IPs for VMs.
+### Add static IPs for VMs.
 
 ```
 sudo bash -c '
