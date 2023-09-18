@@ -117,17 +117,20 @@ gpg --list-keys --no-default-keyring --keyring=trustedkeys.gpg
 
 $aptly mirror create -architectures=amd64 -filter="${packages_}" -filter-with-deps jammy http://de.archive.ubuntu.com/ubuntu/ jammy main universe
 $aptly mirror create -architectures=amd64 -filter="${packages_}" -filter-with-deps jammy-security http://de.archive.ubuntu.com/ubuntu/ jammy-security main universe
+$aptly mirror create -architectures=amd64 -filter="${packages_}" -filter-with-deps jammy-updates http://de.archive.ubuntu.com/ubuntu/ jammy-updates main universe
 $aptly mirror create -architectures=amd64 -filter="${docker_packages}" -filter-with-deps docker-ce https://download.docker.com/linux/ubuntu jammy stable
 
 $aptly mirror update jammy
 $aptly mirror update jammy-security
+$aptly mirror update jammy-updates
 $aptly mirror update docker-ce
 
 $aptly snapshot create jammy from mirror jammy
 $aptly snapshot create jammy-security from mirror jammy-security
+$aptly snapshot create jammy-updates from mirror jammy-updates
 $aptly snapshot create docker-ce from mirror docker-ce
 
-$aptly snapshot merge wire jammy jammy-security docker-ce
+$aptly snapshot merge wire jammy jammy-security jammy-updates docker-ce
 
 $aptly publish snapshot -gpg-key="gpg@wire.com" -secret-keyring="$GNUPGHOME/secring.gpg" -distribution jammy wire
 

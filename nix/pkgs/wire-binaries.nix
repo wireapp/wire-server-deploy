@@ -90,13 +90,13 @@ let
     };
     minio = fetchurl rec {
       passthru.url = url;
-      url = "https://dl.min.io/server/minio/release/linux-amd64/archive/minio.RELEASE.2020-10-28T08-16-50Z";
-      sha256 = "135bnbcjlzp5w3801q8883ii93qgamiz74b729mbmyxym5s6fzic";
+      url = "https://dl.min.io/server/minio/release/linux-amd64/archive/minio.RELEASE.2023-07-07T07-13-57Z";
+      sha256 = "sha256-9tGq30uuwVVogOZZdI1/vGvI0trDVU+BbpVJLTiBZgo=";
     };
     mc = fetchurl rec {
       passthru.url = url;
-      url = "https://dl.min.io/client/mc/release/linux-amd64/archive/mc.RELEASE.2020-10-03T02-54-56Z";
-      sha256 = "0lfyl4l1fa8fsnjy892s940y7m3vjyihs3vvhccqlfic9syq9qar";
+      url = "https://dl.min.io/client/mc/release/linux-amd64/archive/mc.RELEASE.2023-07-07T05-25-51Z";
+      sha256 = "sha256-IFotxaSdxGf3gijEPH02jjdsbMFEkll6fE/hlcKR8HQ=";
     };
     elasticsearch = fetchurl rec {
       passthru.url = url;
