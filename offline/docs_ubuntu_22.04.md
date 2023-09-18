@@ -229,7 +229,7 @@ Do this for all of the instances.
   the kubenodes should talk to cassandra and on which the cassandra nodes
   should communicate among each other. Run `ip addr` on one of the cassandra nodes to determine the network interface names, and which networks they correspond to.  For example, if you set up the cassandra nodes via virt-manager, then the interface will be named `enp1s0`. 
 * Similarly `elasticsearch_network_interface` and `minio_network_interface`
-  should be set to the same private network interface as well.
+  should be set to the network interface names you want elasticsearch and minio to communicate with kubernetes with, as well.
   
 
 
