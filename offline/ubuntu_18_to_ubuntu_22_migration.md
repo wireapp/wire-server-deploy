@@ -170,46 +170,19 @@ Now ssh into each node and restore the minio data files.
 ```
 ssh demo@node1
 cd /
-tar -cvf /home/demo/minio-server1-node1.tar
-tar -cvf /home/demo/minio-server2-node1.tar
+tar -xvf /home/demo/minio-server1-node1.tar
+tar -xvf /home/demo/minio-server2-node1.tar
 ```
 
 Repeat the above steps for the other nodes, replacing the number in the file name with the respective node number.
 
 Now run the minio playbook.
 
-**NOTE**: If running minio playbook fails. You will need to do the following:
-
-SSH into minio nodes. Stop minio services with:
-
-```
-sudo service minio-server1 stop
-sudo service minio-server2 stop
-```
-
-Give ownership of backed up files to minio:
-
-```
-sudo chown -R minio:minio /var/lib/minio-server1
-sudo chown -R minio:minio /var/lib/minio-server2
-```
-
-Create a directory to start a minio server on (eg. minio-data)
-
-```
-sudo mkdir /minio-data
-sudo minio server /minio-data
-```
-
 **IMPORTANT**: Do not proceed with wire-server installation until you have restored backed up minio-server files!
 
-Now, continue with the next steps of the wire installation from here, till end - https://github.com/wireapp/wire-server-deploy/blob/master/offline/docs_ubuntu_22.04.md#non-kubernetes-services-restund-cassandra-elasticsearch-minio
+Now, continue with the next steps of the wire installation from here and install the rest of ansible playbooks (including cassandra!).
 
-As of now, you should have a new wire-server deployment up and running on your new Ubuntu 22 based host machine.
-Do not try to login/sign-up yet.<br>
-We will now restore the cassandra data files on the new machine.<br>
-Stop Cassandra on each node using: `sudo service cassandra stop`<br>
-Now on each node,
+After running cassandra playbook start the restore process:
 
 - Copy each tar file to the respective node using scp. For example, for node1:
   `scp mnt-cassandra-1.tar node1:~/. `
@@ -226,6 +199,8 @@ Now on each node,
 - Switch to the desired keyspace using: use brig;.
 - Retrieve the user data with: select \* from user;.
 - The output should display the user data from the origin machine.
+
+Continue with the rest of wire-server deployment as usual untill done.
 
 Now, you can try to login/sign-up on the new wire-server deployment on your new Ubuntu 22 based host machine.<br>
 You should be able to see the old chat history and download the old attachments.
