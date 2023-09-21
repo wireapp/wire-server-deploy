@@ -17,6 +17,10 @@ Ansible - 2.11.6
 <br>
 ## On your current Ubuntu 18 based deployment -
 
+### Uninstall wire-server deployment
+
+`d helm uninstall wire-server`
+
 ### Backup your wire-server-deploy directory.
 
 This is where all your configurations/secrets are which will be needed for a successful upgrade.
