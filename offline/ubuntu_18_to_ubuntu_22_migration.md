@@ -17,6 +17,10 @@ Ansible - 2.11.6
 <br>
 ## On your current Ubuntu 18 based deployment -
 
+### Uninstall wire-server deployment
+
+`d helm uninstall wire-server`
+
 ### Backup your wire-server-deploy directory.
 
 This is where all your configurations/secrets are which will be needed for a successful upgrade.
@@ -141,7 +145,7 @@ First cd into the wire-server-deploy directory.
 cd wire-server-deploy
 ```
 
-Now, follow the instruction from here upto step `Ensuring kubernetes is healthy` - https://github.com/wireapp/wire-server-deploy/blob/master/offline/docs.md#ensuring-kubernetes-is-healthy
+Now, follow the instruction from here up to step `Ensuring kubernetes is healthy` - https://github.com/wireapp/wire-server-deploy/blob/master/offline/docs_ubuntu_22.04.md#ensuring-kubernetes-is-healthy
 
 Now, you will be having a kubernetes v1.23.7 cluster up and running on your new machine.
 
@@ -151,7 +155,7 @@ You should have minio-backup.tar file on your new machine. Untar it in a new dir
 ```
 mkdir minio-backup
 cd minio-backup
-tar -cvf ../minio-backup.tar
+tar -xvf ../minio-backup.tar
 cd .. # Go back to the parent directory
 ```
 
@@ -170,44 +174,19 @@ Now ssh into each node and restore the minio data files.
 ```
 ssh demo@node1
 cd /
-tar -cvf /home/demo/minio-server1-node1.tar
-tar -cvf /home/demo/minio-server2-node1.tar
+tar -xvf /home/demo/minio-server1-node1.tar
+tar -xvf /home/demo/minio-server2-node1.tar
 ```
 
 Repeat the above steps for the other nodes, replacing the number in the file name with the respective node number.
 
-NOTE: Running minio playbook might fail. In that case you will need to do the following:
-
-SSH into minio nodes. Stop minio services with:
-
-```
-sudo service minio-server1 stop
-sudo service minio-server2 stop
-```
-
-Give ownership of backed up files to minio:
-
-```
-sudo chown -R minio:minio /var/lib/minio-server1
-sudo chown -R minio:minio /var/lib/minio-server2
-```
-
-Create a directory to start a minio server on (eg. minio-data)
-
-```
-sudo mkdir /minio-data
-sudo minio server /minio-data
-```
+Now run the minio playbook.
 
 **IMPORTANT**: Do not proceed with wire-server installation until you have restored backed up minio-server files!
 
-Now, continue with the next steps of the wire installation from here, till end - https://github.com/wireapp/wire-server-deploy/blob/master/offline/docs.md#non-kubernetes-services-restund-cassandra-elasticsearch-minio
+Now, continue with the next steps of the wire installation from here and install the rest of ansible playbooks (including cassandra!).
 
-As of now, you should have a new wire-server deployment up and running on your new Ubuntu 22 based host machine.
-Do not try to login/sign-up yet.<br>
-We will now restore the cassandra data files on the new machine.<br>
-Stop Cassandra on each node using: `sudo service cassandra stop`<br>
-Now on each node,
+After running cassandra playbook start the restore process:
 
 - Copy each tar file to the respective node using scp. For example, for node1:
   `scp mnt-cassandra-1.tar node1:~/. `
@@ -215,7 +194,6 @@ Now on each node,
 - Create a working folder on each node: `mkdir ~/mnt-cassandra-1/.`
 - Navigate to the working folder: `cd ~/mnt-cassandra-1/.`
 - Extract the tar file: `tar -cvf ../mnt-cassandra-1.tar`
-- Back up the original Cassandra folder: `sudo mv /mnt/cassandra /mnt/orig-cassandra/.`
 - Copy the extracted files to the destination: `sudo cp -rvf ~/mnt-cassandra-1/mnt/cassandra /mnt/.`
 - Set the correct ownership for the files: `sudo chown -R cassandra:cassandra /mnt/cassandra/.`
 - Start Cassandra on each node: `sudo service cassandra start`
@@ -225,6 +203,8 @@ Now on each node,
 - Switch to the desired keyspace using: use brig;.
 - Retrieve the user data with: select \* from user;.
 - The output should display the user data from the origin machine.
+
+Continue with the rest of wire-server deployment as usual untill done.
 
 Now, you can try to login/sign-up on the new wire-server deployment on your new Ubuntu 22 based host machine.<br>
 You should be able to see the old chat history and download the old attachments.
