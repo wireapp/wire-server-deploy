@@ -145,7 +145,7 @@ First cd into the wire-server-deploy directory.
 cd wire-server-deploy
 ```
 
-Now, follow the instruction from here upto step `Ensuring kubernetes is healthy` - https://github.com/wireapp/wire-server-deploy/blob/master/offline/docs_ubuntu_22.04.md#ensuring-kubernetes-is-healthy
+Now, follow the instruction from here up to step `Ensuring kubernetes is healthy` - https://github.com/wireapp/wire-server-deploy/blob/master/offline/docs_ubuntu_22.04.md#ensuring-kubernetes-is-healthy
 
 Now, you will be having a kubernetes v1.23.7 cluster up and running on your new machine.
 
