@@ -9,7 +9,9 @@ prepare_config() {
     # export OFFLINE_PASSWORD="$(mkpasswd)"
     # to set the hashed password
     set -u
+    # shellcheck disable=SC2153
     offline_username=$OFFLINE_USERNAME
+    # shellcheck disable=SC2153
     offline_password=$OFFLINE_PASSWORD
     set +u
 
