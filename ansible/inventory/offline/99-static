@@ -44,9 +44,9 @@
 # Below variables are set for all machines in the inventory.
 [all:vars]
 # If you need to ssh as a user that's not the same user as the one running ansible
-# set ansible_user=<some_user>
-# set ansible_password=<some password>
-# set ansible_sudo_pass=<some password>
+# ansible_user=<some_user>
+# ansible_password=<some password>
+# ansible_sudo_pass=<some password>
 # Keep in mind this user needs to be able to sudo passwordless.
 # ansible_user = root
 #
@@ -87,6 +87,13 @@
 # restund_network_interface = enp1s0
 # Uncomment and set to the true public IP if you are behind 1:1 NAT
 # restund_peer_udp_advertise_addr = a.b.c.d
+#
+# Uncomment to create firewall exception for private networks
+# restund_allowed_private_network_cidrs = a.b.c.d/24
+# If you install restund together with other services on the same machine
+# you need to restund_allowed_private_network_cidrs to allow these services
+# to communicate on the private network. E.g. If your private network is 172.16.0.1/24
+# restund_allowed_private_network_cidrs = 172.16.0/24
 
 # Explicitely specify the restund user id to be "root" to override the default of "997"
 restund_uid = root

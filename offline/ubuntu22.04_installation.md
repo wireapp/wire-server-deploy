@@ -266,6 +266,7 @@ set -eo pipefail;
 
 ufw allow 22/tcp;
 ufw allow from 172.16.0.0/24 proto udp to any port 53;
+ufw allow from 172.16.0.0/24 proto tcp to any port 3003;
 ufw allow from 127.0.0.0/24 proto udp to any port 53;
 ufw allow in on br0 from any proto udp to any port 67;
 ufw allow Openssh;
@@ -412,105 +413,65 @@ sudo setfacl -m u:libvirt-qemu:--x /home/demo
 sudo mkdir -p /var/kvm/images/ # place to store the drive images for vms
 ```
 
-### Create Assethost
-
+Create a separate window with screen (Ctrl+A C) and run
 ```
-sudo virt-install --name assethost --ram 1024 --disk path=/var/kvm/images/assethost.img,size=100 --vcpus 1 --network bridge=br0 --graphics none --console pty,target_type=serial --location /home/demo/wire-server-deploy/ubuntu.iso,kernel=casper/vmlinuz,initrd=casper/initrd --extra-args 'console=ttyS0,115200n8'
+./bin/offline-vm-setup.sh serve_nocloud
 ```
+This starts a web server on port 3003 to serve no_cloud configuration files for the automated VM installation process. Leave this running until you have created all the VMS.  Switch back to your previous screen window (Ctrl+A N).
 
-Continue in Basic Mode
-
-Layout - English, Variant -> English --> Done
-
-Select Ubuntu Server (minimized) --> Done
-
-Network connections --> Make sure you get something like "DHCPv4 172.16.0.8/24" --> Done
-
-Proxy Address - dont change anything --> Done
-
-Mirror Address - dont change anything --> Done
-
-Guided Storage configuration - dont change anything --> Done
-
-Storage Configuration - dont change anything --> Done
-
-File System Summary --> Continue
-
-- Your name: assethost # This will be kubenode1, kubenode2 and so on for other vms..
-- Your server's name --> same as above
-- Pick a username --> demo
-- Choose a password --> # create password
-- Confirm your password --> # create a password
-
-Upgrade to Ubuntu pro - dont change anything --> Continue
-
-Install OpenSSH server press Space button to enable this --> Done
-
-Featured Server snaps - dont change anything press Tab --> Done
-
-Now installation will start, might take 5-10 minutes. Mean while you can open another tab in the screen session to create more vms in the parallel."press ctrl+a than c"
-
-After installation --> select Reboot now --> Press Enter on seeeing message " [FAILED] Failed unmounting /cdrom."
-
-Again press Enter until you reach the login prompt
-
-once logged in...do
-
+Pick a username and password for the default non-root user that will be created on all VMS.
 ```
-ip address
+export OFFLINE_USERNAME=demo # feel free to change this
+export OFFLINE_PASSWORD=$(mkpasswd) # this fill prompt you for a password
 ```
 
-to get the ip address of this vm, this will return something like -
-
+Create VMS in parallel and start the automatic ubuntu installation process
 ```
-2: enp1s0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc fq_codel state UP group default qlen 1000
-    link/ether 52:54:00:d8:30:ee brd ff:ff:ff:ff:ff:ff
-    inet 172.16.0.128/24 metric 100 brd 172.16.0.255 scope global dynamic enp1s0
-       valid_lft 35970sec preferred_lft 35970sec
-    inet6 fe80::5054:ff:fed8:30ee/64 scope link
-       valid_lft forever preferred_lft forever
-```
-
-Here 172.16.0.128 is the ip address of this vm, we will need this to configure in our ansible hosts.
-Sometimes these ips are auto assigned and are not in proper range, so we make sure with above command.
-
-You can create multiple screen terminals with ctrl+b than press c to install multiple vms in parallel.
-
-### Create kubenode1
-
-```
-sudo virt-install --name kubenode1 --ram 8192 --disk path=/var/kvm/images/kubenode1.img,size=120 --vcpus 6 --network bridge=br0 --graphics none --console pty,target_type=serial --location /home/demo/wire-server-deploy/ubuntu.iso,kernel=casper/vmlinuz,initrd=casper/initrd --extra-args 'console=ttyS0,115200n8'
+# run these commands one after the other
+./bin/offline-vm-setup.sh create_assethost assethost
+./bin/offline-vm-setup.sh create_node kubenode1
+./bin/offline-vm-setup.sh create_node kubenode2
+./bin/offline-vm-setup.sh create_node kubenode3
+./bin/offline-vm-setup.sh create_node ansnode1
+./bin/offline-vm-setup.sh create_node ansnode2
+./bin/offline-vm-setup.sh create_node ansnode3
 ```
 
-### Create kubenode2
+This can take a while. While the installation is running check the state of all VMS by running`sudo virsh list --all`.  You can attach a console via `sudo virsh console ansnode1` to obvserve the installation progress (Ctrl+5 to detach the console).  After the installation completed the state of of each vm should be listed as `shut off`.
+
+Run
+```
+sudo virsh list --all
+```
+and check that every VM has completed installation, i.e. it is in `shut off` state.
+Start all VMS
 
 ```
-sudo virt-install --name kubenode2 --ram 8192 --disk path=/var/kvm/images/kubenode2.img,size=120 --vcpus 6 --network bridge=br0 --graphics none --console pty,target_type=serial --location /home/demo/wire-server-deploy/ubuntu.iso,kernel=casper/vmlinuz,initrd=casper/initrd --extra-args 'console=ttyS0,115200n8'
+sudo bash -c "
+set -e;
+virsh start assethost;
+virsh start kubenode1;
+virsh start kubenode2;
+virsh start kubenode3;
+virsh start ansnode1;
+virsh start ansnode2;
+virsh start ansnode3;
+"
 ```
 
-### Create kubenode3
+Check for every VM that dnsmasq was assigned the correct IP adress. Compare with the corresponding entry in the file `20-hosts` (see above).
+For example for VM `ansnode1` run this command:
 
 ```
-sudo virt-install --name kubenode3 --ram 8192 --disk path=/var/kvm/images/kubenode3.img,size=120 --vcpus 6 --network bridge=br0 --graphics none --console pty,target_type=serial --location /home/demo/wire-server-deploy/ubuntu.iso,kernel=casper/vmlinuz,initrd=casper/initrd --extra-args 'console=ttyS0,115200n8'
+cat /etc/dnsmasq.d/20-hosts 
+ssh demo@ansnode1 ip a show enp1s0
 ```
 
-### Create ansnode1
+Repeat this vor all VMs.
 
-```
-sudo virt-install --name ansnode1 --ram 8192 --disk path=/var/kvm/images/ansnode1.img,size=80 --vcpus 6 --network bridge=br0 --graphics none --console pty,target_type=serial --location /home/demo/wire-server-deploy/ubuntu.iso,kernel=casper/vmlinuz,initrd=casper/initrd --extra-args 'console=ttyS0,115200n8'
-```
-
-### Create ansnode2
-
-```
-sudo virt-install --name ansnode2 --ram 8192 --disk path=/var/kvm/images/ansnode2.img,size=80 --vcpus 6 --network bridge=br0 --graphics none --console pty,target_type=serial --location /home/demo/wire-server-deploy/ubuntu.iso,kernel=casper/vmlinuz,initrd=casper/initrd --extra-args 'console=ttyS0,115200n8'
-```
-
-### Create ansnode3
-
-```
-sudo virt-install --name ansnode3 --ram 8192 --disk path=/var/kvm/images/ansnode3.img,size=20 --vcpus 6 --network bridge=br0 --graphics none --console pty,target_type=serial --location /home/demo/wire-server-deploy/ubuntu.iso,kernel=casper/vmlinuz,initrd=casper/initrd --extra-args 'console=ttyS0,115200n8'
-```
+In case you had to destroy and recreate VMs the IP addresses might not match, because dnsmasq already has still leases for the previously created VMS.
+In that case stop dnsmsq, manually remove the outdated leases from `/var/lib/misc/dnsmasq.leases`, start dnsmasq, then reboot the VM.
+ 
 
 ## disable internet access to the vms
 
@@ -595,7 +556,7 @@ sudo virsh console kubenode1
 List VMs:
 
 ```
-sudo virsh list
+sudo virsh list --all
 ```
 
 ### From this point:
