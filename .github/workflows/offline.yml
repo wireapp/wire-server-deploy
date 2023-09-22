@@ -9,22 +9,9 @@ jobs:
     name: Prepare offline package
     # Useful to skip expensive CI when writing docs
     if: "!contains(github.event.head_commit.message, 'skip ci')"
-    runs-on: ubuntu-latest
+    runs-on:
+      group: wire-server-deploy
     steps:
-      - name: "HACK: Free up 24GB of disk space"
-        run: |
-          sudo rm -rf /usr/share/dotnet
-          sudo rm -rf /usr/local/share/boost
-          sudo rm -rf "$AGENT_TOOLSDIRECTORY"
-      # - name: Maximize build space
-      #   uses: easimon/maximize-build-space@master
-      #   with:
-      #     root-reserve-mb: 4096
-      #     temp-reserve-mb: 300
-      #     swap-size-mb: 192
-      #     remove-dotnet: 'true'
-      #     remove-android: 'true'
-      #     remove-haskell: 'true'
       - uses: actions/checkout@v2
         with:
           submodules: true

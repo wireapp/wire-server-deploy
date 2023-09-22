@@ -227,11 +227,11 @@ Do this for all of the instances.
 
 ### Setting up Database network interfaces.
 * Make sure that `assethost` is present in the inventory file with the correct `ansible_host` (and `ip` values if required)
-* Make sure that `cassandra_network_interface` is set to the interface on which
-  the kubenodes can reach cassandra and on which the cassandra nodes
-  communicate among eachother. Your private network.
+* Make sure that `cassandra_network_interface` is set to the name of the network interface on which
+  the kubenodes should talk to cassandra and on which the cassandra nodes
+  should communicate among each other. Run `ip addr` on one of the cassandra nodes to determine the network interface names, and which networks they correspond to.  For example, if you set up the cassandra nodes via virt-manager, then the interface will be named `enp1s0`. 
 * Similarly `elasticsearch_network_interface` and `minio_network_interface`
-  should be set to the private network interface as well.
+  should be set to the network interface names you want elasticsearch and minio to communicate with kubernetes with, as well.
   
 
 
@@ -302,8 +302,8 @@ elasticsearch_network_interface = enp1s0
 [minio:vars]
 minio_network_interface = enp1s0
 prefix = ""
-domain = "kiwee.world"
-deeplink_title = "wire demo environment, kiwee.world"
+domain = "example.com"
+deeplink_title = "wire demo environment, example.com"
 
 [restund:vars]
 restund_uid = root
