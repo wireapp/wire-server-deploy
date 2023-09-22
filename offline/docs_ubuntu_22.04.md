@@ -399,7 +399,7 @@ Some ubuntu systems do not have GPG by default. Wire assumes this is already pre
 
 #### Troubleshooting restund
 
-Is case the restund firewall fails to start. Fix
+In case the restund firewall fails to start. Fix
 
 On each ansnode you set in the `[restund]` section of the `hosts.ini` file
 
