@@ -83,4 +83,3 @@ keyfile_dest: "/etc/rabbitmq/key.pem"
 # By enabling this variable to true, there will be 1 queue master and 1 queue mirror.
 # If the node running the queue master becomes unavailable, the queue mirror will be automatically promoted to master.
 backup_queues_in_two_nodes: true
-rabbitmq_add_host_resolution_entries: false

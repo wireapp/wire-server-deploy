@@ -281,7 +281,10 @@ Add the nodes in which you want to run rabbitmq to the `[rmq-cluster]` group. Al
 Important: RabbitMQ nodes address each other using a node name, for e.g rabbitmq@ansnode1
 Please refer to official doc and configure your DNS based on the setup - https://www.rabbitmq.com/clustering.html#cluster-formation-requirements
 
-For adding entries to local host file(/etc/hosts), set `rabbitmq_add_host_resolution_entries` to true in `ansible/roles/rabbimq-cluster/defaults/main.yml`
+For adding entries to local host file(/etc/hosts), run
+```
+d ansible-playbook -i ansible/inventory/offline/hosts.ini ansible/roles/rabbitmq-cluster/tasks/configure_dns.yml
+```
 
 
 
@@ -460,11 +463,17 @@ ufw allow 9200/tcp;
 # minio
 ufw allow 9000/tcp;
 ufw allow 9092/tcp;
+
+#rabbitmq
+ufw allow 5671/tcp;
+ufw allow 5672/tcp;
+ufw allow 4369/tcp;
+ufw allow 25672/tcp;
 '
 ```
 
 Afterwards, run the following playbook to create helm values that tell our helm charts
-what the IP addresses of cassandra, elasticsearch and minio are.
+what the IP addresses of cassandra, elasticsearch, minio and rabbitmq are.
 
 ```
 d ansible-playbook -i ./ansible/inventory/offline/hosts.ini ansible/helm_external.yml

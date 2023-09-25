@@ -38,3 +38,4 @@ ansible-playbook -i $ANSIBLE_DIR/inventory/offline/hosts.ini $ANSIBLE_DIR/cassan
 ansible-playbook -i $ANSIBLE_DIR/inventory/offline/hosts.ini $ANSIBLE_DIR/elasticsearch.yml
 ansible-playbook -i $ANSIBLE_DIR/inventory/offline/hosts.ini $ANSIBLE_DIR/restund.yml
 ansible-playbook -i $ANSIBLE_DIR/inventory/offline/hosts.ini $ANSIBLE_DIR/minio.yml
+ansible-playbook -i $ANSIBLE_DIR/inventory/offline/hosts.ini $ANSIBLE_DIR/rabbitmq.yml
