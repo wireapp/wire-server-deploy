@@ -68,6 +68,7 @@ packages=(
   nano
   vi
   tcpdump
+  bzip2
 )
 
 # shellcheck disable=SC2001
