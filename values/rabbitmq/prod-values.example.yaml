@@ -2,3 +2,9 @@
 rabbitmq:
   persistence:
     size: 10Gi
+    enabled: false
+    ### To use a persistent volume, set the enabled to true
+    ### set and uncomment the name of your storageClass and existingClaim below, as per needed
+    ### also, you can refer to offline/local_persistent_storage_k8s.md for a local-path example
+    # storageClass: local-path
+    # existingClaim: local-path-pvc
