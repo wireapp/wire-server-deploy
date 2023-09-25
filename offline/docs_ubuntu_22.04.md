@@ -481,6 +481,7 @@ First.  Make kubernetes aware of where alll the external stateful services are b
 d helm install cassandra-external ./charts/cassandra-external --values ./values/cassandra-external/values.yaml
 d helm install elasticsearch-external ./charts/elasticsearch-external --values ./values/elasticsearch-external/values.yaml
 d helm install minio-external ./charts/minio-external --values ./values/minio-external/values.yaml
+d helm install rabbitmq-external ./charts/rabbitmq-external --values ./values/rabbitmq-external/values.yaml
 ```
 
 #### Deploying stateless dependencies

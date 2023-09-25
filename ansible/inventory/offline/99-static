@@ -30,6 +30,10 @@
 # minio2 ansible_host=XXXX
 # minio3 ansible_host=XXXX
 #
+# rabbitmq1 ansible_host=XXXX
+# rabbitmq2 ansible_host=XXXX
+# rabbitmq3 ansible_host=XXXX
+#
 # If you are in an offline environment, add an assethost here, from which
 # artifacts are served
 # assethost ansible_host=100.89.14.74 ip=10.114.0.9
@@ -82,7 +86,7 @@
 #domain = "example.com"
 #deeplink_title = "example.com environment"
 
-[rabbitmq:vars]
+[rmq-cluster:vars]
 # rabbitmq_network_interface = enp1s0
 
 [restund:vars]
@@ -177,6 +181,6 @@ elasticsearch
 # minio3
 
 [rmq-cluster]
-# ansnode1
-# ansnode2
-# ansnode3
+# rabbitmq1
+# rabbitmq2
+# rabbitmq3
