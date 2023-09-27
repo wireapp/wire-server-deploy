@@ -414,8 +414,36 @@ ansible/roles-external/kubespray/roles/container-engine/docker/tasks/main.yml
 * comment out the next block -name: ensure docker-ce repository is enabled
 
 Now you are ready to start deploying services.
+
 #### WORKAROUND: dependency
+
 Some ubuntu systems do not have GPG by default. Wire assumes this is already present. Ensure you have gpg installed on all of your nodes before continuing to the next step.
+
+You can check if gpg is installed by running:
+
+```
+gpg --version
+```
+
+Which should produce an output ressembling:
+
+```
+demo@assethost:~$ gpg --version
+gpg (GnuPG) 2.2.27
+libgcrypt 1.9.4
+Copyright (C) 2021 Free Software Foundation, Inc.
+License GNU GPL-3.0-or-later <https://gnu.org/licenses/gpl.html>
+This is free software: you are free to change and redistribute it.
+There is NO WARRANTY, to the extent permitted by law.
+
+Home: /home/demo/.gnupg
+Supported algorithms:
+Pubkey: RSA, ELG, DSA, ECDH, ECDSA, EDDSA
+Cipher: IDEA, 3DES, CAST5, BLOWFISH, AES, AES192, AES256, TWOFISH,
+        CAMELLIA128, CAMELLIA192, CAMELLIA256
+Hash: SHA1, RIPEMD160, SHA256, SHA384, SHA512, SHA224
+Compression: Uncompressed, ZIP, ZLIB, BZIP2
+```
 
 #### Troubleshooting restund
 
