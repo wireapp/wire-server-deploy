@@ -51,8 +51,6 @@ packages=(
   ntp
   libc6
   libseccomp2
-  libc6
-  libseccomp2
   iptables
   bash-completion
   logrotate
@@ -68,6 +66,26 @@ packages=(
   nano
   vi
   tcpdump
+  gnupg
+  # Dependencies for the rabbitmq-server package
+  erlang-base
+  erlang-asn1
+  erlang-crypto
+  erlang-eldap
+  erlang-ftp
+  erlang-inets
+  erlang-mnesia
+  erlang-os-mon
+  erlang-parsetools
+  erlang-public-key
+  erlang-runtime-tools
+  erlang-snmp
+  erlang-ssl
+  erlang-syntax-tools
+  erlang-tftp
+  erlang-tools
+  erlang-xmerl
+  rabbitmq-server
 )
 
 # shellcheck disable=SC2001
@@ -111,6 +129,9 @@ gpg --list-secret-keys
 curl 'https://keyserver.ubuntu.com/pks/lookup?op=get&search=0x790bc7277767219c42c86f933b4fe6acc0b21f32' | gpg --no-default-keyring --keyring=trustedkeys.gpg --import
 curl 'https://keyserver.ubuntu.com/pks/lookup?op=get&search=0xf6ecb3762474eda9d21b7022871920d1991bc93c' | gpg --no-default-keyring --keyring=trustedkeys.gpg --import
 curl https://download.docker.com/linux/ubuntu/gpg | gpg --no-default-keyring --keyring=trustedkeys.gpg --import
+curl -1sLf "https://keys.openpgp.org/vks/v1/by-fingerprint/0A9AF2115F4687BD29803A206B73A36E6026DFCA" | gpg --no-default-keyring --keyring=trustedkeys.gpg --import
+curl -1sLf "https://keyserver.ubuntu.com/pks/lookup?op=get&search=0xf77f1eda57ebb1cc" | gpg --no-default-keyring --keyring=trustedkeys.gpg --import
+curl -1sLf "https://packagecloud.io/rabbitmq/rabbitmq-server/gpgkey" | gpg --no-default-keyring --keyring=trustedkeys.gpg --import
 
 echo "Trusted"
 gpg --list-keys --no-default-keyring --keyring=trustedkeys.gpg

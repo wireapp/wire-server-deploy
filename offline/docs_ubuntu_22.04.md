@@ -274,6 +274,20 @@ the `wire.com/external-ip` annotation to the public IP of the node.
 
 In order to automatically generate deeplinks, Edit the minio variables in `[minio:vars]` (`prefix`, `domain` and `deeplink_title`) by replacing `example.com` with your own domain.
 
+### Configuring rabbitmq
+
+Add the nodes in which you want to run rabbitmq to the `[rmq-cluster]` group. Also, update the `ansible/roles/rabbimq-cluster/defaults/main.yml` file with the correct configurations for your environment.
+
+Important: RabbitMQ nodes address each other using a node name, for e.g rabbitmq@ansnode1
+Please refer to official doc and configure your DNS based on the setup - https://www.rabbitmq.com/clustering.html#cluster-formation-requirements
+
+For adding entries to local host file(/etc/hosts), run
+```
+d ansible-playbook -i ansible/inventory/offline/hosts.ini ansible/roles/rabbitmq-cluster/tasks/configure_dns.yml
+```
+
+
+
 ### Example hosts.ini
 
 Here is an example `hosts.ini` file that was used in a succesfull example deployment, for reference. It might not be exactly what is needed for your deployment, but it should work for the KVM 7-machine deploy:
@@ -356,6 +370,12 @@ elasticsearch
 ansnode1
 ansnode2
 ansnode3
+
+[rmq-cluster]
+ansnode1
+ansnode2
+ansnode3
+
 ```
 
 ## Generating secrets
@@ -443,11 +463,17 @@ ufw allow 9200/tcp;
 # minio
 ufw allow 9000/tcp;
 ufw allow 9092/tcp;
+
+#rabbitmq
+ufw allow 5671/tcp;
+ufw allow 5672/tcp;
+ufw allow 4369/tcp;
+ufw allow 25672/tcp;
 '
 ```
 
 Afterwards, run the following playbook to create helm values that tell our helm charts
-what the IP addresses of cassandra, elasticsearch and minio are.
+what the IP addresses of cassandra, elasticsearch, minio and rabbitmq are.
 
 ```
 d ansible-playbook -i ./ansible/inventory/offline/hosts.ini ansible/helm_external.yml
@@ -480,6 +506,7 @@ First.  Make kubernetes aware of where alll the external stateful services are b
 d helm install cassandra-external ./charts/cassandra-external --values ./values/cassandra-external/values.yaml
 d helm install elasticsearch-external ./charts/elasticsearch-external --values ./values/elasticsearch-external/values.yaml
 d helm install minio-external ./charts/minio-external --values ./values/minio-external/values.yaml
+d helm install rabbitmq-external ./charts/rabbitmq-external --values ./values/rabbitmq-external/values.yaml
 ```
 
 #### Deploying stateless dependencies
