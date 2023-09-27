@@ -27,6 +27,8 @@ brig:
       host: cassandra-external
     elasticsearch:
       host: elasticsearch-external
+    rabbitmq:
+      host: rabbitmq-external
     useSES: false
     # Set to false if you want to hand out DynamoDB to store prekeys
     randomPrekeys: true
@@ -138,6 +140,8 @@ galley:
   config:
     cassandra:
       host: cassandra-external
+    rabbitmq:
+      host: rabbitmq-external
     settings:
       # prefix URI used when inviting users to a conversation by link
       conversationCodeURI: https://account.example.com/conversation-join/ # change this

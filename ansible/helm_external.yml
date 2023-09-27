@@ -43,5 +43,5 @@
       include_tasks: tasks/helm_external.yml
       vars:
         external_dir_name: rabbitmq-external
-        server_type: rabbitmq
+        server_type: rmq-cluster
         network_interface: "{{ rabbitmq_network_interface }}"
