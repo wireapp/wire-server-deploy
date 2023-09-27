@@ -48,12 +48,6 @@ Tmate is a terminal sharing service, which you might need in order for more than
 sudo apt install tmate
 ```
 
-Also generate the keys for the demo user, as tmate will complain if they do not exist:
-
-```
-ssh-keygen -t ed25519
-```
-
 If asked, to start a tmate session, you would simply then do:
 
 ```
@@ -69,6 +63,12 @@ reboot
 ```
 
 ### Disable password login for sshd
+
+Install `nano` or your favorite text editor:
+
+```
+sudo apt install nano -y
+```
 
 Make sure the following values are configured in /etc/ssh/sshd_config:
 ```
@@ -127,9 +127,15 @@ on the local machine:
 ssh -i ~/.ssh/id_ed25519 demo@65.21.197.76 -o serveraliveinterval=60
 ```
 
-## disable root login via ssh
+## Disable root login via ssh
 
-use sudo to edit /etc/ssh/sshd_config, and set the following:
+Use sudo to edit `/etc/ssh/sshd_config`
+
+```
+sudo nano /etc/ssh/sshd_config
+```
+
+And set the following:
 ```
 # even better: don't allow to login as root via ssh at all
 PermitRootLogin no
@@ -167,7 +173,7 @@ tar -xzf ../wire-server-deploy-static-*.tgz
 We'll use the docker that is in the archive.
 
 ```
-tar -xf debs.tar
+tar -xf debs-jammy.tar
 ```
 
 ### (FIXME: add iptables to the repo) Install Docker from debian archive.
@@ -214,7 +220,7 @@ sudo apt install git -y
 git clone https://github.com/wireapp/wire-server-deploy.git
 cp -a wire-server-deploy/kvmhelpers/ ./
 cp -a wire-server-deploy/bin/newvm.sh ./bin
-cp -a wire-server-deploy/ansible/setup-offline-sources.yml ./ansible
+cp -a wire-server-deploy/ansible/setup-offline-sources.yml ./ansible # see https://github.com/wireapp/wire-server-deploy/blob/kvm_support/offline/docs.md#workaround-old-debian-key 
 chmod 550 ./bin/newvm.sh
 chmod 550 ./kvmhelpers/*.sh
 ```
@@ -253,7 +259,7 @@ screen
 ### install bridge-utils
 So that we can manage the virtual network.
 ```
-sudo apt install bridge-utils -y
+sudo apt install bridge-utils net-tools -y
 ```
 
 ### (personal) install emacs
@@ -450,12 +456,21 @@ switch to docs.md.
 
 skip down to 'Making tooling available in your environment'
 
-when editing the inventory, create 'ansnode' entries, rather than separate cassandra, elasticsearch, and minio nodes.
+#### Editing the ansible inventory
+
+##### Adding host entries
+when editing the inventory, we only need seven entries in the '[all]' section. one entry for each of the VMs we are running.
+Edit the 'kubenode' entries, and the 'assethost' entry like normal.
+
+Instead of creating separate cassandra, elasticsearch, and minio entries, create three 'ansnode' entries, similar to the following:
 ```
 ansnode1 ansible_host=172.16.0.132
 ansnode2 ansible_host=172.16.0.133
 ansnode3 ansible_host=172.16.0.134
 ```
+
+##### Updating Group Membership
+Afterwards, we need to update the lists of what nodes belong to which group, so ansible knows what to install on these nodes.
 
 Add all three ansnode entries into the `cassandra` `elasticsearch`, and `minio` sections. They should look like the following:
 ```
@@ -483,8 +498,17 @@ ansnode3
 ```
 
 Add two of the ansnode entries into the `restund` section
+```
+[restund]
+ansnode1
+ansnode2
+```
 
 Add one of the ansnode entries into the `cassandra_seed` section.
+```
+[cassandra_seed]
+ansnode1
+```
 
 ### ERROR: after you install restund, the restund firewall will fail to start.
 

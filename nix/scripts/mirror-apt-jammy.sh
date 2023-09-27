@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# This will consume a list of ubuntu bionic packages (or queries), and produces
+# This will consume a list of ubuntu jammy packages (or queries), and produces
 # a packages.tgz tarball, which can be statically served.
 
 # It assumes a GPG_PRIVATE_KEY environment variable is set
@@ -11,7 +11,7 @@ set -euo pipefail
 usage() {
   echo "usage: GPG_PRIVATE_KEY= $0 OUTPUT-DIR" >&2
   echo "You can generate a private key as follows:" >&2
-  echo "GPG_PRIVATE_KEY=\$($(dirname "$0")/generate-gpg1-key.sh)" >&2
+  echo "GPG_PRIVATE_KEY=\$(generate-gpg1-key)" >&2
   echo "export GPG_PRIVATE_KEY" >&2
   exit 1
 }
@@ -25,7 +25,7 @@ shift
 
 # NOTE:  These are all the packages needed for all our playbooks to succeed. This list was created by trial and error
 packages=(
-  python-apt
+  python3-apt
   aufs-tools
   apt-transport-https
   software-properties-common
@@ -43,10 +43,31 @@ packages=(
   openjdk-8-jdk-headless
   iproute2
   procps
-  libjemalloc1
+  libjemalloc2
   qrencode
   texlive
   latexmk
+  libopts25
+  ntp
+  libc6
+  libseccomp2
+  libc6
+  libseccomp2
+  iptables
+  bash-completion
+  logrotate
+  cron
+  crontab
+  ufw
+  netcat
+  telnet
+  less
+  traceroute
+  strace
+  iputils-ping
+  nano
+  vi
+  tcpdump
 )
 
 # shellcheck disable=SC2001
@@ -58,8 +79,7 @@ echo "$packages_"
 # installs. This is kept in sync with kubespray manually.
 # See roles/container-engine/docker/vars/ubuntu.yml
 # See roles/container-engine/containerd-common/vars/ubuntu.yml
-docker_packages="docker-ce (= 5:19.03.14~3-0~ubuntu-bionic) | docker-ce-cli (= 5:19.03.14~3-0~ubuntu-bionic) | containerd.io (= 1.3.9-1)"
-
+docker_packages="docker-ce (= 5:20.10.20~3-0~ubuntu-jammy) | docker-ce-cli (= 5:20.10.20~3-0~ubuntu-jammy) | containerd.io (= 1.6.8-1)"
 GNUPGHOME=$(mktemp -d)
 export GNUPGHOME
 aptly_config=$(mktemp)
@@ -89,25 +109,29 @@ gpg --list-secret-keys
 # import the ubuntu and docker signing keys
 # TODO: Do we want to pin these better? Verify them?
 curl 'https://keyserver.ubuntu.com/pks/lookup?op=get&search=0x790bc7277767219c42c86f933b4fe6acc0b21f32' | gpg --no-default-keyring --keyring=trustedkeys.gpg --import
+curl 'https://keyserver.ubuntu.com/pks/lookup?op=get&search=0xf6ecb3762474eda9d21b7022871920d1991bc93c' | gpg --no-default-keyring --keyring=trustedkeys.gpg --import
 curl https://download.docker.com/linux/ubuntu/gpg | gpg --no-default-keyring --keyring=trustedkeys.gpg --import
 
 echo "Trusted"
 gpg --list-keys --no-default-keyring --keyring=trustedkeys.gpg
 
-$aptly mirror create -architectures=amd64 -filter="${packages_}" -filter-with-deps bionic http://de.archive.ubuntu.com/ubuntu/ bionic main universe
-$aptly mirror create -architectures=amd64 -filter="${packages_}" -filter-with-deps bionic-security http://de.archive.ubuntu.com/ubuntu/ bionic-security main universe
-$aptly mirror create -architectures=amd64 -filter="${docker_packages}" -filter-with-deps docker-ce https://download.docker.com/linux/ubuntu bionic stable
+$aptly mirror create -architectures=amd64 -filter="${packages_}" -filter-with-deps jammy http://de.archive.ubuntu.com/ubuntu/ jammy main universe
+$aptly mirror create -architectures=amd64 -filter="${packages_}" -filter-with-deps jammy-security http://de.archive.ubuntu.com/ubuntu/ jammy-security main universe
+$aptly mirror create -architectures=amd64 -filter="${packages_}" -filter-with-deps jammy-updates http://de.archive.ubuntu.com/ubuntu/ jammy-updates main universe
+$aptly mirror create -architectures=amd64 -filter="${docker_packages}" -filter-with-deps docker-ce https://download.docker.com/linux/ubuntu jammy stable
 
-$aptly mirror update bionic
-$aptly mirror update bionic-security
+$aptly mirror update jammy
+$aptly mirror update jammy-security
+$aptly mirror update jammy-updates
 $aptly mirror update docker-ce
 
-$aptly snapshot create bionic from mirror bionic
-$aptly snapshot create bionic-security from mirror bionic-security
+$aptly snapshot create jammy from mirror jammy
+$aptly snapshot create jammy-security from mirror jammy-security
+$aptly snapshot create jammy-updates from mirror jammy-updates
 $aptly snapshot create docker-ce from mirror docker-ce
 
-$aptly snapshot merge wire bionic bionic-security docker-ce
+$aptly snapshot merge wire jammy jammy-security jammy-updates docker-ce
 
-$aptly publish snapshot -gpg-key="gpg@wire.com" -secret-keyring="$GNUPGHOME/secring.gpg" -distribution bionic wire
+$aptly publish snapshot -gpg-key="gpg@wire.com" -secret-keyring="$GNUPGHOME/secring.gpg" -distribution jammy wire
 
 gpg --export gpg@wire.com -a > "$aptly_root/public/gpg"
