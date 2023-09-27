@@ -7,6 +7,8 @@ ANSIBLE_DIR="$( cd "$SCRIPT_DIR/../ansible" && pwd )"
 
 set -x
 
+ls $ANSIBLE_DIR/inventory/offline
+
 # Populate the assethost, and prepare to install images from it.
 #
 # Copy over binaries and debs, serves assets from the asset host, and configure
