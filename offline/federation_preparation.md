@@ -2,9 +2,7 @@
 
 There are two ways to deploy the RabbitMQ cluster:
 
-Method 1
----
-## Install RabbitMQ inside kubernetes cluster with the help of helm chart
+### Method 1: Install RabbitMQ inside kubernetes cluster with the help of helm chart
 
 To install the rabbitmq,
 First copy the value and secret file:
