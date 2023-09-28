@@ -438,7 +438,7 @@ Comment out steps that have already completed when re-running the scripts.
 
 #### Ensuring Kubernetes is healthy.
 
-Ensure the cluster comes up healthy. The container also contains kubectl, so check the node status:
+Ensure the cluster comes up healthy. The container also contains `kubectl`, so check the node status:
 
 ```
 d kubectl get nodes -owide
