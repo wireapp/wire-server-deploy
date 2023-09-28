@@ -43,7 +43,7 @@ For adding entries to local host file(/etc/hosts), run
 d ansible-playbook -i ansible/inventory/offline/hosts.ini ansible/roles/rabbitmq-cluster/tasks/configure_dns.yml
 ```
 
-Create the rabbitmq cluster - 
+Create the rabbitmq cluster:
 
 ``` 
 d ansible-playbook -i ansible/inventory/offline/hosts.ini ansible/rabbitmq.yml
