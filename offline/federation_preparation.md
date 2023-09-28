@@ -34,7 +34,7 @@ ansnode2
 ansnode3
 ```
 
-Important: RabbitMQ nodes address each other using a node name, for e.g rabbitmq@ansnode1
+**Important:** RabbitMQ nodes address each other using a node name, for e.g rabbitmq@ansnode1
 Please refer to official doc and configure your DNS based on the setup - https://www.rabbitmq.com/clustering.html#cluster-formation-requirements
 
 
