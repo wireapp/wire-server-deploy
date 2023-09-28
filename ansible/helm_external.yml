@@ -36,12 +36,12 @@
         server_type: cassandra
         network_interface: "{{ cassandra_network_interface }}"
 
-- hosts: "rmq-cluster"
-  become: false
-  tasks:
-    - name: Generate rabbitmq IPs for helm
-      include_tasks: tasks/helm_external.yml
-      vars:
-        external_dir_name: rabbitmq-external
-        server_type: rmq-cluster
-        network_interface: "{{ rabbitmq_network_interface }}"
+# - hosts: "rmq-cluster"
+#   become: false
+#   tasks:
+#     - name: Generate rabbitmq IPs for helm
+#       include_tasks: tasks/helm_external.yml
+#       vars:
+#         external_dir_name: rabbitmq-external
+#         server_type: rmq-cluster
+#         network_interface: "{{ rabbitmq_network_interface }}"
