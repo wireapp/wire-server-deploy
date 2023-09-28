@@ -77,21 +77,21 @@ charts=(
   # backoffice
   # commented out for now, points to a 2.90.0 container image which doesn't
   # seem to exist on quay.io
-  wire/ingress-nginx-controller
-  wire/nginx-ingress-services
-  wire/reaper
-  wire/cassandra-external
-  wire/databases-ephemeral
-  wire/demo-smtp
-  wire/elasticsearch-external
-  wire/fake-aws
-  wire/minio-external
-  wire/wire-server
+  wire-develop/ingress-nginx-controller
+  wire-develop/nginx-ingress-services
+  wire-develop/reaper
+  wire-develop/cassandra-external
+  wire-develop/databases-ephemeral
+  wire-develop/demo-smtp
+  wire-develop/elasticsearch-external
+  wire-develop/fake-aws
+  wire-develop/minio-external
+  wire-develop/wire-server
   # local-path-provisioner
   # TODO: uncomment once its dependencies are pinned!
-  wire/sftd
-  wire/restund
-  wire/rabbitmq
+  wire-develop/sftd
+  wire-develop/restund
+  wire-develop/rabbitmq
   # Has a weird dependency on curl:latest. out of scope
   # wire-server-metrics
   # fluent-bit
@@ -105,10 +105,11 @@ HELM_HOME=$(mktemp -d)
 export HELM_HOME
 
 helm repo add wire https://s3-eu-west-1.amazonaws.com/public.wire.com/charts
+helm repo add wire-develop https://s3-eu-west-1.amazonaws.com/public.wire.com/charts-develop
 helm repo update
 
 # wire_version=$(helm show chart wire/wire-server | yq -r .version)
-wire_version="4.38.0"
+wire_version="4.38.0-mandarin.14"
 
 # Download zauth; as it's needed to generate certificates
 echo "quay.io/wire/zauth:$wire_version" | create-container-dump containers-adminhost
