@@ -92,7 +92,7 @@ charts=(
   wire/sftd
   wire/restund
   wire/rabbitmq
-  wire/rabbitmq-external
+  #wire/rabbitmq-external
   # Has a weird dependency on curl:latest. out of scope
   # wire-server-metrics
   # fluent-bit
