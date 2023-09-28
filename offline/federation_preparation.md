@@ -35,7 +35,7 @@ ansnode3
 ```
 
 **Important:** RabbitMQ nodes address each other using a node name, for e.g rabbitmq@ansnode1
-Please refer to official doc and configure your DNS based on the setup - https://www.rabbitmq.com/clustering.html#cluster-formation-requirements
+Please refer to the official documentation and configure your DNS based on the setup - https://www.rabbitmq.com/clustering.html#cluster-formation-requirements
 
 
 For adding entries to local host file(/etc/hosts), run
