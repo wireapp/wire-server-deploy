@@ -38,7 +38,7 @@ ansnode3
 Please refer to the official documentation and configure your DNS based on the setup - https://www.rabbitmq.com/clustering.html#cluster-formation-requirements
 
 
-For adding entries to local host file(/etc/hosts), run
+For adding entries to local host file(`/etc/hosts`), run
 ```
 d ansible-playbook -i ansible/inventory/offline/hosts.ini ansible/roles/rabbitmq-cluster/tasks/configure_dns.yml
 ```
