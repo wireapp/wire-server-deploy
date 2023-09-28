@@ -36,9 +36,7 @@ ansible-playbook -i $ANSIBLE_DIR/inventory/offline $ANSIBLE_DIR/kubernetes.yml -
 ./bin/fix_default_router.sh
 
 # Deploy all other services which don't run in kubernetes.
-ansible-playbook -i $ANSIBLE_DIR/inventory/offline $ANSIBLE_DIR/cassandra.yml
-ansible-playbook -i $ANSIBLE_DIR/inventory/offline $ANSIBLE_DIR/elasticsearch.yml
-ansible-playbook -i $ANSIBLE_DIR/inventory/offline $ANSIBLE_DIR/restund.yml
-ansible-playbook -i $ANSIBLE_DIR/inventory/offline $ANSIBLE_DIR/minio.yml
-ansible-playbook -i $ANSIBLE_DIR/inventory/offline $ANSIBLE_DIR/rabbitmq.yml
-ansible-playbook -i $ANSIBLE_DIR/inventory/offline $ANSIBLE_DIR/helm_external.yml
+ansible-playbook -i $ANSIBLE_DIR/inventory/offline/hosts.ini $ANSIBLE_DIR/cassandra.yml
+ansible-playbook -i $ANSIBLE_DIR/inventory/offline/hosts.ini $ANSIBLE_DIR/elasticsearch.yml
+ansible-playbook -i $ANSIBLE_DIR/inventory/offline/hosts.ini $ANSIBLE_DIR/restund.yml
+ansible-playbook -i $ANSIBLE_DIR/inventory/offline/hosts.ini $ANSIBLE_DIR/minio.yml
