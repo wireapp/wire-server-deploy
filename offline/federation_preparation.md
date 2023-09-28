@@ -49,7 +49,7 @@ Create the rabbitmq cluster:
 d ansible-playbook -i ansible/inventory/offline/hosts.ini ansible/rabbitmq.yml
 ```
 
-Make kubernetes aware of where RabbitMQ external stateful service is running:
+Make Kubernetes aware of where RabbitMQ external stateful service is running:
 ```
 d helm install rabbitmq-external ./charts/rabbitmq-external --values ./values/rabbitmq-external/values.yaml
 ```
