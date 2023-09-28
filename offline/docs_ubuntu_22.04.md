@@ -436,7 +436,7 @@ d ./bin/offline-cluster.sh
 In case any of the steps in this script fail, see the notes in the comments that accompany each step.
 Comment out steps that have already completed when re-running the scripts.
 
-#### Ensuring kubernetes is healthy.
+#### Ensuring Kubernetes is healthy.
 
 Ensure the cluster comes up healthy. The container also contains kubectl, so check the node status:
 
