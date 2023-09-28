@@ -429,7 +429,7 @@ Compression: Uncompressed, ZIP, ZLIB, BZIP2
 
 ## Deploying Kubernetes, Restund and stateful services
 
-In order to deploy all the services run:
+In order to deploy all mentioned services, run:
 ```
 d ./bin/offline-cluster.sh
 ```
@@ -512,7 +512,7 @@ d ansible-playbook -i ./ansible/inventory/offline/hosts.ini ansible/helm_externa
 It's now time to deploy the helm charts on top of kubernetes, installing the Wire platform.
 
 #### Finding the stateful services
-First.  Make kubernetes aware of where all the external stateful services are by running:
+First, setup interfaces from Kubernetes to external services by running:
 
 ```
 d helm install cassandra-external ./charts/cassandra-external --values ./values/cassandra-external/values.yaml
