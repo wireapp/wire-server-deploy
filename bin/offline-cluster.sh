@@ -15,7 +15,9 @@ ls $ANSIBLE_DIR/inventory/offline
 # other hosts to fetch debs from it.
 #
 # If this step fails partway, and you know that parts of it completed, the `--skip-tags debs,binaries,containers,containers-helm,containers-other` tags may come in handy.
-ansible-playbook -i $ANSIBLE_DIR/inventory/offline $ANSIBLE_DIR/setup-offline-sources.yml
+ansible-playbook -i $ANSIBLE_DIR/inventory/offline $ANSIBLE_DIR/setup-offline-sources.yml -vvvv
+
+exit 1
 
 # Run kubespray until docker is installed and runs. This allows us to preseed the docker containers that
 # are part of the offline bundle
