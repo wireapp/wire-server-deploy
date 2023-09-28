@@ -493,7 +493,7 @@ ufw allow 25672/tcp;
 ```
 
 ### Preparation for Federation
-For enabling Federation, we need to have RabbitMQ in place. Please follow the instructions here - [offline/federation_preparation.md] for setting up RabbitMQ.
+For enabling Federation, we need to have RabbitMQ in place. Please follow the instructions in [offline/federation_preparation.md](./offline/federation_preparation.md) for setting up RabbitMQ.
 
 After that continue to the next steps below.
 
