@@ -41,3 +41,4 @@ ansible-playbook -i $ANSIBLE_DIR/inventory/offline $ANSIBLE_DIR/elasticsearch.ym
 ansible-playbook -i $ANSIBLE_DIR/inventory/offline $ANSIBLE_DIR/restund.yml
 ansible-playbook -i $ANSIBLE_DIR/inventory/offline $ANSIBLE_DIR/minio.yml
 ansible-playbook -i $ANSIBLE_DIR/inventory/offline $ANSIBLE_DIR/rabbitmq.yml
+ansible-playbook -i $ANSIBLE_DIR/inventory/offline $ANSIBLE_DIR/helm_external.yml
