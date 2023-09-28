@@ -19,10 +19,7 @@ Deploy the rabbitmq helm chart -
 d helm upgrade --install rabbitmq ./charts/rabbitmq --values ./values/rabbitmq/values.yaml --values ./values/rabbitmq/secrets.yaml
 ```
 
-Method 2
----
-
-## Installing RabbitMQ outside kubernets cluster with ansible playbook
+### Method 2: Install RabbitMQ outside of the Kubernetes cluster with an Ansible playbook
 
 Add the nodes in which you want to run rabbitmq to the `[rmq-cluster]` group in the `ansible/inventory/offline/hosts.ini` file. Also, update the `ansible/roles/rabbimq-cluster/defaults/main.yml` file with the correct configurations for your environment.
 
