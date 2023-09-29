@@ -15,30 +15,30 @@ ls $ANSIBLE_DIR/inventory/offline
 # other hosts to fetch debs from it.
 #
 # If this step fails partway, and you know that parts of it completed, the `--skip-tags debs,binaries,containers,containers-helm,containers-other` tags may come in handy.
-ansible-playbook -i $ANSIBLE_DIR/inventory/offline $ANSIBLE_DIR/setup-offline-sources.yml
+ansible-playbook -i $ANSIBLE_DIR/inventory/offline/hosts.ini $ANSIBLE_DIR/setup-offline-sources.yml
 
 # Run kubespray until docker is installed and runs. This allows us to preseed the docker containers that
 # are part of the offline bundle
-ansible-playbook -i $ANSIBLE_DIR/inventory/offline $ANSIBLE_DIR/kubernetes.yml --tags bastion,bootstrap-os,preinstall,container-engine
+ansible-playbook -i $ANSIBLE_DIR/inventory/offline/hosts.ini $ANSIBLE_DIR/kubernetes.yml --tags bastion,bootstrap-os,preinstall,container-engine
 
 # Install docker on the restund nodes
-ansible-playbook -i $ANSIBLE_DIR/inventory/offline $ANSIBLE_DIR/restund.yml --tags docker
+ansible-playbook -i $ANSIBLE_DIR/inventory/offline/hosts.ini $ANSIBLE_DIR/restund.yml --tags docker
 
 # With ctr being installed on all nodes that need it, seed all container images:
-ansible-playbook -i $ANSIBLE_DIR/inventory/offline $ANSIBLE_DIR/seed-offline-containerd.yml
+ansible-playbook -i $ANSIBLE_DIR/inventory/offline/hosts.ini $ANSIBLE_DIR/seed-offline-containerd.yml
 
 # Install NTP
-ansible-playbook -i $ANSIBLE_DIR/inventory/offline $ANSIBLE_DIR/sync_time.yml -v
+ansible-playbook -i $ANSIBLE_DIR/inventory/offline/hosts.ini $ANSIBLE_DIR/sync_time.yml -v
 
 # Run the rest of kubespray. This should bootstrap a kubernetes cluster successfully:
-ansible-playbook -i $ANSIBLE_DIR/inventory/offline $ANSIBLE_DIR/kubernetes.yml --skip-tags bootstrap-os,preinstall,container-engine
+ansible-playbook -i $ANSIBLE_DIR/inventory/offline/hosts.ini $ANSIBLE_DIR/kubernetes.yml --skip-tags bootstrap-os,preinstall,container-engine
 
 ./bin/fix_default_router.sh
 
 # Deploy all other services which don't run in kubernetes.
-ansible-playbook -i $ANSIBLE_DIR/inventory/offline $ANSIBLE_DIR/cassandra.yml
-ansible-playbook -i $ANSIBLE_DIR/inventory/offline $ANSIBLE_DIR/elasticsearch.yml
-ansible-playbook -i $ANSIBLE_DIR/inventory/offline $ANSIBLE_DIR/restund.yml
-ansible-playbook -i $ANSIBLE_DIR/inventory/offline $ANSIBLE_DIR/minio.yml
-ansible-playbook -i $ANSIBLE_DIR/inventory/offline $ANSIBLE_DIR/rabbitmq.yml
-ansible-playbook -i $ANSIBLE_DIR/inventory/offline $ANSIBLE_DIR/helm_external.yml
+ansible-playbook -i $ANSIBLE_DIR/inventory/offline/hosts.ini $ANSIBLE_DIR/cassandra.yml
+ansible-playbook -i $ANSIBLE_DIR/inventory/offline/hosts.ini $ANSIBLE_DIR/elasticsearch.yml
+ansible-playbook -i $ANSIBLE_DIR/inventory/offline/hosts.ini $ANSIBLE_DIR/restund.yml
+ansible-playbook -i $ANSIBLE_DIR/inventory/offline/hosts.ini $ANSIBLE_DIR/minio.yml
+ansible-playbook -i $ANSIBLE_DIR/inventory/offline/hosts.ini $ANSIBLE_DIR/rabbitmq.yml
+ansible-playbook -i $ANSIBLE_DIR/inventory/offline/hosts.ini $ANSIBLE_DIR/helm_external.yml
