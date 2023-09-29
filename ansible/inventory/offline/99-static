@@ -100,7 +100,7 @@
 # If you install restund together with other services on the same machine
 # you need to restund_allowed_private_network_cidrs to allow these services
 # to communicate on the private network. E.g. If your private network is 172.16.0.1/24
-# restund_allowed_private_network_cidrs = 172.16.0/24
+# restund_allowed_private_network_cidrs = '["172.16.0/24"]'
 
 # Explicitely specify the restund user id to be "root" to override the default of "997"
 restund_uid = root
