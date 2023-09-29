@@ -9,7 +9,7 @@ To install the RabbitMQ service, first copy the value and secret files:
 cp ./values/rabbitmq/prod-values.example.yaml ./values/rabbitmq/values.yaml
 cp ./values/rabbitmq/prod-secrets.example.yaml ./values/rabbitmq/secrets.yaml
 ```
-By default this will create a RabbitMQ deployment with ephemeral storage. To use the local persistence storage of Kubernetes nodes, please refer to the related documentation in [offline/local_persistent_storage_k8s.md](./offline/local_persistent_storage_k8s.md).
+By default this will create a RabbitMQ deployment with ephemeral storage. To use the local persistence storage of Kubernetes nodes, please refer to the related documentation in [offline/local_persistent_storage_k8s.md](./local_persistent_storage_k8s.md).
 
 Now, update the `./values/rabbitmq/values.yaml` and `./values/rabbitmq/secrets.yaml` with correct values as needed.
 
@@ -20,7 +20,7 @@ d helm upgrade --install rabbitmq ./charts/rabbitmq --values ./values/rabbitmq/v
 
 ### Method 2: Install RabbitMQ outside of the Kubernetes cluster with an Ansible playbook
 
-Add the nodes on which you want to run rabbitmq to the `[rmq-cluster]` group in the `ansible/inventory/offline/hosts.ini` file. Also, update the `ansible/roles/rabbimq-cluster/defaults/main.yml` file with the correct configurations for your environment.
+Add the nodes on which you want to run rabbitmq to the `[rmq-cluster]` group in the `ansible/inventory/offline/hosts.ini` file. Also, update the `ansible/roles/rabbitmq-cluster/defaults/main.yml` file with the correct configurations for your environment.
 
 If you need RabbitMQ to listen on a different interface than the default gateway, set `rabbitmq_network_interface`
 
