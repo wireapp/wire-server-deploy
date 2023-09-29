@@ -321,7 +321,10 @@ deeplink_title = "wire demo environment, example.com"
 
 [restund:vars]
 restund_uid = root
-restund_allowed_private_network_cidrs=172.16.0.1/24
+restund_allowed_private_network_cidrs='["172.16.0.1/24"]'
+
+[rmq-cluster:vars]
+rabbitmq_network_interface = enp1s0
 
 [kube-master]
 kubenode1
