@@ -390,6 +390,8 @@ This should generate two files. `./ansible/inventory/group_vars/all/secrets.yaml
 
 ## Deploying Kubernetes, Restund and stateful services
 
+NOTE: Before running `d ./bin/offline-cluster.sh`, comment out the call to `./bin/fix_default_router.sh` (this call/script dsiables DNS resolution in the cluster). If you do not comment out this line, notifications will not occur.
+
 In order to deploy all the services run:
 ```
 d ./bin/offline-cluster.sh
