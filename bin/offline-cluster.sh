@@ -9,36 +9,61 @@ set -x
 
 ls $ANSIBLE_DIR/inventory/offline
 
+if [ -f "$ANSIBLE_DIR/inventory/offline/hosts.ini" ]
+then
+        INVENTORY_FILE="$ANSIBLE_DIR/inventory/offline/hosts.ini"
+else 
+        if [ -f "$ANSIBLE_DIR/inventory/offline/inventory.yml" ]
+        then
+                INVENTORY_FILE="$ANSIBLE_DIR/inventory/offline/inventory.yml"
+        else
+                {
+                        echo "no inventory file in ansible/inventory/offline/. please supply an inventory.yml or hosts.ini."
+                        exit -1
+                }
+        fi
+fi
+
+if [ -f "$ANSIBLE_DIR/inventory/offline/hosts.ini" ]  && [ -f "$ANSIBLE_DIR/inventory/offline/inventory.ymp" ]
+then
+        {
+                echo "both hosts.ini and inventory.yml provided in ansible/inventory/offline! pick only one."
+                exit -1
+        }
+fi
+
+echo "using ansible inventory: $INVENTORY_FILE"
+
 # Populate the assethost, and prepare to install images from it.
 #
 # Copy over binaries and debs, serves assets from the asset host, and configure
 # other hosts to fetch debs from it.
 #
 # If this step fails partway, and you know that parts of it completed, the `--skip-tags debs,binaries,containers,containers-helm,containers-other` tags may come in handy.
-ansible-playbook -i $ANSIBLE_DIR/inventory/offline/hosts.ini $ANSIBLE_DIR/setup-offline-sources.yml
+ansible-playbook -i $INVENTORY_FILE $ANSIBLE_DIR/setup-offline-sources.yml
 
 # Run kubespray until docker is installed and runs. This allows us to preseed the docker containers that
 # are part of the offline bundle
-ansible-playbook -i $ANSIBLE_DIR/inventory/offline/hosts.ini $ANSIBLE_DIR/kubernetes.yml --tags bastion,bootstrap-os,preinstall,container-engine
+ansible-playbook -i $INVENTORY_FILE $ANSIBLE_DIR/kubernetes.yml --tags bastion,bootstrap-os,preinstall,container-engine
 
 # Install docker on the restund nodes
-ansible-playbook -i $ANSIBLE_DIR/inventory/offline/hosts.ini $ANSIBLE_DIR/restund.yml --tags docker
+ansible-playbook -i $INVENTORY_FILE $ANSIBLE_DIR/restund.yml --tags docker
 
 # With ctr being installed on all nodes that need it, seed all container images:
-ansible-playbook -i $ANSIBLE_DIR/inventory/offline/hosts.ini $ANSIBLE_DIR/seed-offline-containerd.yml
+ansible-playbook -i $INVENTORY_FILE $ANSIBLE_DIR/seed-offline-containerd.yml
 
 # Install NTP
-ansible-playbook -i $ANSIBLE_DIR/inventory/offline/hosts.ini $ANSIBLE_DIR/sync_time.yml -v
+ansible-playbook -i $INVENTORY_FILE $ANSIBLE_DIR/sync_time.yml -v
 
 # Run the rest of kubespray. This should bootstrap a kubernetes cluster successfully:
-ansible-playbook -i $ANSIBLE_DIR/inventory/offline/hosts.ini $ANSIBLE_DIR/kubernetes.yml --skip-tags bootstrap-os,preinstall,container-engine
+ansible-playbook -i $INVENTORY_FILE $ANSIBLE_DIR/kubernetes.yml --skip-tags bootstrap-os,preinstall,container-engine
 
 ./bin/fix_default_router.sh
 
 # Deploy all other services which don't run in kubernetes.
-ansible-playbook -i $ANSIBLE_DIR/inventory/offline/hosts.ini $ANSIBLE_DIR/cassandra.yml
-ansible-playbook -i $ANSIBLE_DIR/inventory/offline/hosts.ini $ANSIBLE_DIR/elasticsearch.yml
-ansible-playbook -i $ANSIBLE_DIR/inventory/offline/hosts.ini $ANSIBLE_DIR/restund.yml
-ansible-playbook -i $ANSIBLE_DIR/inventory/offline/hosts.ini $ANSIBLE_DIR/minio.yml
-ansible-playbook -i $ANSIBLE_DIR/inventory/offline/hosts.ini $ANSIBLE_DIR/rabbitmq.yml
-ansible-playbook -i $ANSIBLE_DIR/inventory/offline/hosts.ini $ANSIBLE_DIR/helm_external.yml
+ansible-playbook -i $INVENTORY_FILE $ANSIBLE_DIR/cassandra.yml
+ansible-playbook -i $INVENTORY_FILE $ANSIBLE_DIR/elasticsearch.yml
+ansible-playbook -i $INVENTORY_FILE $ANSIBLE_DIR/restund.yml
+ansible-playbook -i $INVENTORY_FILE $ANSIBLE_DIR/minio.yml
+ansible-playbook -i $INVENTORY_FILE $ANSIBLE_DIR/rabbitmq.yml
+ansible-playbook -i $INVENTORY_FILE $ANSIBLE_DIR/helm_external.yml
