@@ -5,6 +5,9 @@ binaries, ansible playbooks, debian package sources and everything required to
 install Wire.
 
 ## Installing docker
+
+Note: If you are using a Hetzner machine, docker should already be installed (you can check with `docker version`) and you can skip this section.
+
 On your machine (we call this the "admin host"), you need to have `docker`
 installed (or any other compatible container runtime really, even though
 instructions may need to be modified). See [how to install
