@@ -421,6 +421,7 @@ This starts a web server on port 3003 to serve no_cloud configuration files for 
 
 Pick a username and password for the default non-root user that will be created on all VMS.
 ```
+sudo apt install whois # needed for mkpass
 export OFFLINE_USERNAME=demo # feel free to change this
 export OFFLINE_PASSWORD=$(mkpasswd) # this fill prompt you for a password
 ```
