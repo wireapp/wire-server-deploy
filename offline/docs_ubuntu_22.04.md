@@ -512,21 +512,11 @@ what the IP addresses of cassandra, elasticsearch, minio and rabbitmq are.
 d ansible-playbook -i ./ansible/inventory/offline/hosts.ini ansible/helm_external.yml
 ```
 
-#### Installing Rabbitmq
+### Preparation for Federation
 
-To install the rabbitmq,
-First copy the value and secret file:
-```
-cp ./values/rabbitmq/prod-values.example.yaml ./values/rabbitmq/values.yaml
-cp ./values/rabbitmq/prod-secrets.example.yaml ./values/rabbitmq/secrets.yaml
-```
+For enabling Federation, we need to have RabbitMQ in place. Please follow the instructions in [offline/federation_preparation.md](./federation_preparation.md) for setting up RabbitMQ.
 
-Now, update the `./values/rabbitmq/values.yaml` and `./values/rabbitmq/secrets.yaml` with correct values as per needed.
-
-Deploy the rabbitmq helm chart -
-```
-d helm upgrade --install rabbitmq ./charts/rabbitmq --values ./values/rabbitmq/values.yaml --values ./values/rabbitmq/secrets.yaml
-```
+After that continue to the next steps below.
 
 ### Deploying Wire
 
