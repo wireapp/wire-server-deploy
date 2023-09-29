@@ -280,19 +280,6 @@ the `wire.com/external-ip` annotation to the public IP of the node.
 
 In order to automatically generate deeplinks, Edit the minio variables in `[minio:vars]` (`prefix`, `domain` and `deeplink_title`) by replacing `example.com` with your own domain.
 
-### Configuring rabbitmq
-
-Add the nodes in which you want to run rabbitmq to the `[rmq-cluster]` group. Also, update the `ansible/roles/rabbimq-cluster/defaults/main.yml` file with the correct configurations for your environment.
-
-Important: RabbitMQ nodes address each other using a node name, for e.g rabbitmq@ansnode1
-Please refer to official doc and configure your DNS based on the setup - https://www.rabbitmq.com/clustering.html#cluster-formation-requirements
-
-For adding entries to local host file(/etc/hosts), run
-```
-d ansible-playbook -i ansible/inventory/offline/hosts.ini ansible/roles/rabbitmq-cluster/tasks/configure_dns.yml
-```
-
-
 
 ### Example hosts.ini
 
@@ -327,7 +314,10 @@ deeplink_title = "wire demo environment, example.com"
 
 [restund:vars]
 restund_uid = root
-restund_allowed_private_network_cidrs=172.16.0.1/24
+restund_allowed_private_network_cidrs='["172.16.0/24"]'
+
+[rmq-cluster:vars]
+rabbitmq_network_interface = enp1s0
 
 [kube-master]
 kubenode1
@@ -394,14 +384,6 @@ Minio and restund services have shared secrets with the `wire-server` helm chart
 
 This should generate two files. `./ansible/inventory/group_vars/all/secrets.yaml` and `values/wire-server/secrets.yaml`.
 
-## Deploying Kubernetes, Restund and stateful services
-
-In order to deploy all the services run:
-```
-d ./bin/offline-cluster.sh
-```
-In case any of the steps in this script fail, see the notes in the comments that accompany each step.
-Comment out steps that have already completed when re-running the scripts.
 
 #### Ensuring kubernetes is healthy.
 
@@ -460,6 +442,25 @@ Hash: SHA1, RIPEMD160, SHA256, SHA384, SHA512, SHA224
 Compression: Uncompressed, ZIP, ZLIB, BZIP2
 ```
 
+## Deploying Kubernetes, Restund and stateful services
+
+In order to deploy all mentioned services, run:
+```
+d ./bin/offline-cluster.sh
+```
+In case any of the steps in this script fail, see the notes in the comments that accompany each step.
+Comment out steps that have already completed when re-running the scripts.
+
+#### Ensuring Kubernetes is healthy.
+
+Ensure the cluster comes up healthy. The container also contains `kubectl`, so check the node status:
+
+```
+d kubectl get nodes -owide
+```
+They should all report ready.
+
+
 #### Troubleshooting restund
 
 In case the restund firewall fails to start. Fix
@@ -507,6 +508,13 @@ ufw allow 25672/tcp;
 '
 ```
 
+### Preparation for Federation
+For enabling Federation, we need to have RabbitMQ in place. Please follow the instructions in [offline/federation_preparation.md](./federation_preparation.md) for setting up RabbitMQ.
+
+After that continue to the next steps below.
+
+
+### Preparing helm values for external services
 Afterwards, run the following playbook to create helm values that tell our helm charts
 what the IP addresses of cassandra, elasticsearch, minio and rabbitmq are.
 
@@ -514,34 +522,18 @@ what the IP addresses of cassandra, elasticsearch, minio and rabbitmq are.
 d ansible-playbook -i ./ansible/inventory/offline/hosts.ini ansible/helm_external.yml
 ```
 
-#### Installing Rabbitmq
-
-To install the rabbitmq,
-First copy the value and secret file:
-```
-cp ./values/rabbitmq/prod-values.example.yaml ./values/rabbitmq/values.yaml
-cp ./values/rabbitmq/prod-secrets.example.yaml ./values/rabbitmq/secrets.yaml
-```
-
-Now, update the `./values/rabbitmq/values.yaml` and `./values/rabbitmq/secrets.yaml` with correct values as per needed.
-
-Deploy the rabbitmq helm chart -
-```
-d helm upgrade --install rabbitmq ./charts/rabbitmq --values ./values/rabbitmq/values.yaml --values ./values/rabbitmq/secrets.yaml
-```
 
 ### Deploying Wire
 
 It's now time to deploy the helm charts on top of kubernetes, installing the Wire platform.
 
 #### Finding the stateful services
-First.  Make kubernetes aware of where alll the external stateful services are by running:
+First, setup interfaces from Kubernetes to external services by running:
 
 ```
 d helm install cassandra-external ./charts/cassandra-external --values ./values/cassandra-external/values.yaml
 d helm install elasticsearch-external ./charts/elasticsearch-external --values ./values/elasticsearch-external/values.yaml
 d helm install minio-external ./charts/minio-external --values ./values/minio-external/values.yaml
-d helm install rabbitmq-external ./charts/rabbitmq-external --values ./values/rabbitmq-external/values.yaml
 ```
 
 #### Deploying stateless dependencies
