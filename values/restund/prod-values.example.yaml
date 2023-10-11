@@ -2,4 +2,4 @@ federate:
   dtls:
     tls:
       key: "key"
-      secret: "secret"
+      crt: "cert"
