@@ -1,5 +1,7 @@
-federate:
-  dtls:
-    tls:
-      key: "key"
-      crt: "cert"
+# If you are using Let's Encrypt and cert-manager, use issuerRef instead
+# and comment out key and crt in secrets.yaml
+#federate:
+#  dtls:
+#    tls:
+#      issuerRef:
+#        name: letsencrypt-http01
