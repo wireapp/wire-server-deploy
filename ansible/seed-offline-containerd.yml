@@ -1,5 +1,5 @@
 - name: Seed system containers
-  hosts: k8s-cluster:etcd
+  hosts: k8s-cluster
   tags: system-containers
   tasks:
     - name: load containers
