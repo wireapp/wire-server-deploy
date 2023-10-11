@@ -1,5 +1,6 @@
 allowOrigin: https://webapp.example.com
 host: sftd.example.com
-tls:
-  issuerRef:
-    name: letsencrypt-prod
+# Uncomment if you are using Let's Encrypt and cert-manager
+#tls:
+#  issuerRef:
+#    name: letsencrypt-http01
