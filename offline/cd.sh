@@ -7,9 +7,9 @@ function cleanup {
   echo done
 }
 trap cleanup EXIT
-
 (cd terraform/examples/wire-server-deploy-offline-hetzner ; terraform init ; terraform apply -auto-approve )
 adminhost=$(cd terraform/examples/wire-server-deploy-offline-hetzner ; terraform output adminhost)
+adminhost="${adminhost//\"/}" # remove extra quotes around the returned string
 ssh_private_key=$(cd terraform/examples/wire-server-deploy-offline-hetzner ; terraform output ssh_private_key)
 
 eval `ssh-agent`
