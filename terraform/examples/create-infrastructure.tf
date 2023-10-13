@@ -1,7 +1,7 @@
 # Example terraform script to create virtual machines on the hetzner cloud provider 
 # and an ansible-compatible inventory file
 terraform {
-  required_version = ">= 0.12.1"
+  required_version = "~> 1.1"
 
   # Recommended: configure a backend to share terraform state
   # See terraform documentation
