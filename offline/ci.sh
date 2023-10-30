@@ -105,7 +105,7 @@ charts=(
 HELM_HOME=$(mktemp -d)
 export HELM_HOME
 
-helm repo add wire https://s3-eu-west-1.amazonaws.com/public.wire.com/charts-develop
+helm repo add wire https://s3-eu-west-1.amazonaws.com/public.wire.com/charts
 helm repo update
 
 # wire_version=$(helm show chart wire/wire-server | yq -r .version)
