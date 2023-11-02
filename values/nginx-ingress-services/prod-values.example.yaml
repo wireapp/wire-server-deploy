@@ -19,12 +19,12 @@ certManager:
 #                should be adjusted on a per installation basis
 config:
   dns:
-    https: nginz-https.example.com
-    ssl: nginz-ssl.example.com
-    webapp: webapp.example.com
-    fakeS3: assets.example.com
-    teamSettings: teams.example.com
-    accountPages: account.example.com
+    https: nginz-https.default.domain
+    ssl: nginz-ssl.default.domain
+    webapp: webapp.default.domain
+    fakeS3: assets.default.domain
+    teamSettings: teams.default.domain
+    accountPages: account.default.domain
 
 service:
   s3:

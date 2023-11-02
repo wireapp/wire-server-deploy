@@ -39,7 +39,7 @@ Run all commands from `terraform/environment` directory.
    `$ENV_DIR/operator-ssh.dec`<sup>[1]</sup>. Example:
 
    ```bash
-   ssh-keygen -o -a 100 -t ed25519 -f "$ENV_DIR/operator-ssh.dec" -C "example@example.com"
+   ssh-keygen -o -a 100 -t ed25519 -f "$ENV_DIR/operator-ssh.dec" -C "example@default.domain"
    # see footnote 2 if you're a wire employee
    ```
 1. (optional) encrypt files if collaborating using SOPS:
@@ -50,7 +50,7 @@ Run all commands from `terraform/environment` directory.
 1. Create variables for the environment in `$ENV_DIR/terraform.tfvars`, example:
    ```tf
    environment = <env>
-   root_domain = "example.com"
+   root_domain = "default.domain"
    operator_ssh_public_keys = {
       terraform_managed = {
         "<key name>" = "<public key from step above>"

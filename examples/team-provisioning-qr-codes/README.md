@@ -58,7 +58,7 @@ The script reads configuration from a series of environment variables:
 - `DEEPLINK_URL`: the URL for the private Wire server's deeplink. See [this
   page](https://docs.wire.com/how-to/associate/deeplink.html) for further
   information on using deeplinks with private Wire instances. Example:
-  `https://assets.wire.example.com/public/deeplink.html`.
+  `https://assets.wire.default.domain/public/deeplink.html`.
 
 - `INSTRUCTIONS`: path to a file containing administrator-provided setup
   instructions to be included in the generated PDF. The contents of this file
@@ -82,19 +82,19 @@ An example invocation of the script could look like this:
 
 ``` sh
     $ cat > instructions.txt <<EOF
-    These are instructions for onboarding into example.com's private Wire
+    These are instructions for onboarding into default.domain's private Wire
     server. Please scan the invite QR code on your mobile device, and create an
     account using the email address listed below. Then, please install the Wire
     application for your mobile device, and then scan the deeplink QR code and
     open the link on that page in order to configure your client to work with
-    example.com's Wire server.
+    default.domain's Wire server.
     EOF
     $
-    $ export TEAM_ADMIN_EMAIL="someone@example.com"
+    $ export TEAM_ADMIN_EMAIL="someone@default.domain"
     $ export TEAM_ADMIN_PASSWORD="password"
     $ export TEAM_ID="9cabf984-7a35-4cd5-9891-850c64f9195a"
-    $ export NGINZ_HOST="nginz-https.wire.example.com"
-    $ export DEEPLINK_URL="https://assets.wire.example.com/public/deeplink.html"
+    $ export NGINZ_HOST="nginz-https.wire.default.domain"
+    $ export DEEPLINK_URL="https://assets.wire.default.domain/public/deeplink.html"
     $ export INSTRUCTIONS=./instructions.txt
     $
     $ ./generate-user-pdf.sh john.doe@nonexistent-domain.example

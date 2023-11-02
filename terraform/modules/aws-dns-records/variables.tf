@@ -1,6 +1,6 @@
 variable "zone_fqdn" {
   type        = string
-  description = "FQDN of the DNS zone root (required; example: example.com; will append: '.')"
+  description = "FQDN of the DNS zone root (required; example: default.domain; will append: '.')"
 }
 
 variable "domain" {

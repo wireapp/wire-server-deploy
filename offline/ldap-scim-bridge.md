@@ -17,7 +17,7 @@ config:
   logLevel: "Debug"  # one of Trace,Debug,Info,Warn,Error,Fatal; Fatal is least noisy, Trace most.
   ldapSource:
     tls: true
-    host: "dc1.example.com"
+    host: "dc1.default.domain"
     port: 636
     dn: "CN=Read Only User,CN=users,DC=example,DC=com"
     password: "READONLYPASSWORD"
@@ -121,7 +121,7 @@ For active Directory:
 ```
 ldapSource:
   tls: true
-  host: "dc1.example.com"
+  host: "dc1.default.domain"
   port: 636
   dn: "CN=Wire RO,CN=users,DC=com,DC=example"
   password: "SECRETPASSWORDHERE"
@@ -129,7 +129,7 @@ ldapSource:
 
 ### Pick your users
 
-Select the user group you want to sync. for example, to find all of the people in the engineering department of the example.com AD domain:
+Select the user group you want to sync. for example, to find all of the people in the engineering department of the default.domain AD domain:
 
 ```
 search:

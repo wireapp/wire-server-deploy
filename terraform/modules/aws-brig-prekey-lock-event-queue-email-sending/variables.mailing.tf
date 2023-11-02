@@ -14,7 +14,7 @@ variable "zone_id" {
 }
 variable "domain" {
   type        = string
-  description = "FQDN of the email address that is used in 'From' when sending emails (example: example.com)"
+  description = "FQDN of the email address that is used in 'From' when sending emails (example: default.domain)"
   default     = null
 }
 

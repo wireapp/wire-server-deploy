@@ -3,7 +3,7 @@
 # This role requires the following variables to be set:
 #
 #prefix: example-
-#domain: example.com
+#domain: default.domain
 #deeplink_title: Example Environment
 
 assetsURL: "https://{{ prefix }}assets.{{ domain }}"

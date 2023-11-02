@@ -184,7 +184,7 @@ the `wire.com/external-ip` annotation to the public IP of the node.
 
 ### Configuring MinIO
 
-In order to automatically generate deeplinks, Edit the minio variables in `[minio:vars]` (`prefix`, `domain` and `deeplink_title`) by replacing `example.com` with your own domain.
+In order to automatically generate deeplinks, Edit the minio variables in `[minio:vars]` (`prefix`, `domain` and `deeplink_title`) by replacing `default.domain` with your own domain.
 
 ## Generating secrets
 
@@ -351,10 +351,10 @@ Open up `./values/wire-server/secrets.yaml` and inspect the values. In theory
 this file should have only generated secrets, and no additional secrets have to
 be added, unless additional options have been enabled.
 
-Open up `./values/wire-server/values.yaml` and replace example.com and other domains and subdomain with your domain. You can do it with:
+Open up `./values/wire-server/values.yaml` and replace default.domain and other domains and subdomain with your domain. You can do it with:
 
 ```
-sed -i 's/example.com/<your-domain>/g' values.yaml
+sed -i 's/default.domain/<your-domain>/g' values.yaml
 ```
 
 
@@ -527,7 +527,7 @@ edit values/nginx-ingress-services/values.yaml , to tell ingress-ingress-service
 
 set your domain name with sed:
 ```
-sed -i "s/example.com/YOURDOMAINHERE/" values/nginx-ingress-services/values.yaml
+sed -i "s/default.domain/YOURDOMAINHERE/" values/nginx-ingress-services/values.yaml
 ```
 
 UNDER CONSTRUCTION:
@@ -585,7 +585,7 @@ d kubectl label node kubenode1 wire.com/role=sftd
 ```
 
 ##### A selected group of kubernetes nodes:
-If you are restricting SFT to certain nodes, use `nodeSelector` to run on specific nodes (**replacing the example.com domains with yours**):
+If you are restricting SFT to certain nodes, use `nodeSelector` to run on specific nodes (**replacing the default.domain domains with yours**):
 ```
 d helm upgrade --install sftd ./charts/sftd \
   --set 'nodeSelector.wire\.com/role=sftd' \

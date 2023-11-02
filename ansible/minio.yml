@@ -80,5 +80,5 @@
       # FUTUREWORK: parse them from a configuration file shared with helm
       # (as the domain needs to be known in helm override values.yaml)
       prefix: "{{ minio_deeplink_prefix | default('example-') }}"
-      domain: "{{ minio_deeplink_domain | default('example.com') }}"
-      deeplink_title: "{{ minio_deeplink_domain | default('example.com environment') }}"
+      domain: "{{ minio_deeplink_domain | default('default.domain') }}"
+      deeplink_title: "{{ minio_deeplink_domain | default('default.domain environment') }}"
