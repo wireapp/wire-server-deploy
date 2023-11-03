@@ -54,7 +54,7 @@ If you see the curent docker version and no error, it means that Docker is now c
 
 ## Downloading and extracting the artifact
 
-Note: If you have followed the Ubuntu installation instructions (`ubuntu22.04_installation.md` or `ubuntu_installation.md`) before following this page, you already have a wire-server-deploy folder with an artifact extracted into it, and you can simply use that.
+Note: If you have followed the Ubuntu installation instructions (`single_hetzner_machine_installation.md`) before following this page, you already have a wire-server-deploy folder with an artifact extracted into it, and you can simply use that.
 
 Create a fresh workspace to download the artifacts:
 
