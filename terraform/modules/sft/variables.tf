@@ -51,7 +51,7 @@ variable "server_type_stale" {
 }
 
 variable "image" {
-  default = "ubuntu-22.04"
+  default = "ubuntu-18.04"
 }
 
 variable "location" {
