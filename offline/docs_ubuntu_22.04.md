@@ -54,7 +54,7 @@ If you see the curent docker version and no error, it means that Docker is now c
 
 ## Downloading and extracting the artifact
 
-Note: If you have followed the Ubuntu installation instructions (`ubuntu22.04_installation.md` or `ubuntu_installation.md`) before following this page, you already have a wire-server-deploy folder with an artifact extracted into it, and you can simply use that.
+Note: If you have followed the Ubuntu installation instructions (`single_hetzner_machine_installation.md`) before following this page, you already have a wire-server-deploy folder with an artifact extracted into it, and you can simply use that.
 
 Create a fresh workspace to download the artifacts:
 
@@ -403,6 +403,15 @@ d ./bin/offline-cluster.sh
 In case any of the steps in this script fail, see the notes in the comments that accompany each step.
 Comment out steps that have already completed when re-running the scripts.
 
+#### Ensuring kubernetes is healthy.
+
+Ensure the cluster comes up healthy. The container also contains kubectl, so check the node status:
+
+```
+d kubectl get nodes -owide
+```
+They should all report ready.
+
 ### WORKAROUND: old debian key
 All of our debian archives up to version 4.12.0 used a now-outdated debian repository signature. Some modifications are required to be able to install everything properly.
 
@@ -469,17 +478,9 @@ Then find the right number and delete it
 ufw delete <right number>;
 ```
 
-#### Ensuring kubernetes is healthy.
 
-Ensure the cluster comes up healthy. The container also contains kubectl, so check the node status:
+and enable the ports for colocated services running on these nodes:
 
-```
-d kubectl get nodes -owide
-```
-They should all report ready.
-
-
-#### Enable the ports colocated services run on:
 ```
 sudo bash -c '
 set -eo pipefail;
