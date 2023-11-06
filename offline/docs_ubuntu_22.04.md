@@ -479,7 +479,7 @@ ufw delete <right number>;
 ```
 
 
-and enable the ports colocated services run on:
+and enable the ports for colocated services running on these nodes:
 
 ```
 sudo bash -c '
