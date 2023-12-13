@@ -62,7 +62,7 @@ ansible-playbook -i $INVENTORY_FILE $ANSIBLE_DIR/kubernetes.yml --skip-tags boot
 ./bin/fix_default_router.sh
 
 # Deploy all other services which don't run in kubernetes.
-ansible-playbook -i $INVENTORY_FILE $ANSIBLE_DIR/cassandra.yml -vvv
-ansible-playbook -i $INVENTORY_FILE $ANSIBLE_DIR/elasticsearch.yml -vvv
-ansible-playbook -i $INVENTORY_FILE $ANSIBLE_DIR/minio.yml -vvv
-ansible-playbook -i $INVENTORY_FILE $ANSIBLE_DIR/restund.yml -vvv
+ansible-playbook -i $INVENTORY_FILE $ANSIBLE_DIR/cassandra.yml
+ansible-playbook -i $INVENTORY_FILE $ANSIBLE_DIR/elasticsearch.yml
+ansible-playbook -i $INVENTORY_FILE $ANSIBLE_DIR/minio.yml
+ansible-playbook -i $INVENTORY_FILE $ANSIBLE_DIR/restund.yml
