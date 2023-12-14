@@ -19,4 +19,4 @@ WSD_CONTAINER=$(sudo docker load -i $SCRIPT_DIR/../containers-adminhost/containe
 ./bin/offline-secrets.sh
 
 sudo docker run --network=host -v $SSH_AUTH_SOCK:/ssh-agent -e SSH_AUTH_SOCK=/ssh-agent -v $PWD:/wire-server-deploy $WSD_CONTAINER ./bin/offline-cluster.sh
-sudo docker run --network=host -v $PWD:/wire-server-deploy -e SSH_AUTH_SOCK=/ssh-agent $WSD_CONTAINER ./bin/offline-helm.sh
+sudo docker run --network=host -v $SSH_AUTH_SOCK:/ssh-agent -e SSH_AUTH_SOCK=/ssh-agent -v $PWD:/wire-server-deploy $WSD_CONTAINER ./bin/offline-helm.sh
