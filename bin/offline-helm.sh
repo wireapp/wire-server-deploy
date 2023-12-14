@@ -5,7 +5,7 @@ set -x
 
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 ANSIBLE_DIR="$( cd "$SCRIPT_DIR/../ansible" && pwd )"
-ansible-playbook -i "$ANSIBLE_DIR"/inventory/offline "$ANSIBLE_DIR"/helm_external.yml -vv
+ansible-playbook -i "$ANSIBLE_DIR"/inventory/offline/inventory.yml   "$ANSIBLE_DIR"/helm_external.yml -vv
 
 helm upgrade --install --wait cassandra-external ./charts/cassandra-external --values ./values/cassandra-external/values.yaml
 helm upgrade --install --wait elasticsearch-external ./charts/elasticsearch-external --values ./values/elasticsearch-external/values.yaml
