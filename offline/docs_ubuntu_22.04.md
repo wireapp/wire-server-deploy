@@ -516,10 +516,10 @@ After that continue to the next steps below.
 
 ### Preparing helm values for external services
 Afterwards, run the following playbook to create helm values that tell our helm charts
-what the IP addresses of cassandra, elasticsearch, minio and rabbitmq are.
+what the IP addresses of cassandra, elasticsearch, minio are.
 
 ```
-d ansible-playbook -i ./ansible/inventory/offline/hosts.ini ansible/helm_external.yml
+d ansible-playbook -i ./ansible/inventory/offline/hosts.ini ansible/helm_external.yml --skip-tags=rabbitmq-external
 ```
 
 

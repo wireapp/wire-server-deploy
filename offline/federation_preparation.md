@@ -50,24 +50,10 @@ Create the rabbitmq cluster:
 d ansible-playbook -i ansible/inventory/offline/hosts.ini ansible/rabbitmq.yml
 ```
 
-Uncomment the following section, in the `ansible/helm_external.yml` file:
-```
-# - hosts: "rmq-cluster"
-#   become: false
-#   tasks:
-#     - name: Generate rabbitmq IPs for helm
-#       include_tasks: tasks/helm_external.yml
-#       vars:
-#         external_dir_name: rabbitmq-external
-#         server_type: rmq-cluster
-#         network_interface: "{{ rabbitmq_network_interface }}"
-
-```
-
 and run the following playbook to create values file for helm charts to look for RabbitMQ IP addresses -
 
 ```
-d ansible-playbook -i ./ansible/inventory/offline/hosts.ini ansible/helm_external.yml
+d ansible-playbook -i ./ansible/inventory/offline/hosts.ini ansible/helm_external.yml --tags=rabbitmq-external
 ```
 
 Make Kubernetes aware of where RabbitMQ external stateful service is running:
