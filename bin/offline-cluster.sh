@@ -2,34 +2,25 @@
 
 set -eou pipefail
 
-SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-ANSIBLE_DIR="$( cd "$SCRIPT_DIR/../ansible" && pwd )"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+ANSIBLE_DIR="$(cd "$SCRIPT_DIR/../ansible" && pwd)"
 
 set -x
 
 ls $ANSIBLE_DIR/inventory/offline
 
-if [ -f "$ANSIBLE_DIR/inventory/offline/hosts.ini" ]
-then
-        INVENTORY_FILE="$ANSIBLE_DIR/inventory/offline/hosts.ini"
+if [ -f "$ANSIBLE_DIR/inventory/offline/hosts.ini" ]; then
+  INVENTORY_FILE="$ANSIBLE_DIR/inventory/offline/hosts.ini"
+elif [ -f "$ANSIBLE_DIR/inventory/offline/inventory.yml" ]; then
+  INVENTORY_FILE="$ANSIBLE_DIR/inventory/offline/inventory.yml"
 else
-        if [ -f "$ANSIBLE_DIR/inventory/offline/inventory.yml" ]
-        then
-                INVENTORY_FILE="$ANSIBLE_DIR/inventory/offline/inventory.yml"
-        else
-                {
-                        echo "no inventory file in ansible/inventory/offline/. please supply an inventory.yml or hosts.ini."
-                        exit -1
-                }
-        fi
+  echo "No inventory file in ansible/inventory/offline/. Please supply an $ANSIBLE_DIR/inventory/offline/inventory.yml or $ANSIBLE_DIR/inventory/offline/hosts.ini"
+  exit -1
 fi
 
-if [ -f "$ANSIBLE_DIR/inventory/offline/hosts.ini" ]  && [ -f "$ANSIBLE_DIR/inventory/offline/inventory.ymp" ]
-then
-        {
-                echo "both hosts.ini and inventory.yml provided in ansible/inventory/offline! pick only one."
-                exit -1
-        }
+if [ -f "$ANSIBLE_DIR/inventory/offline/hosts.ini" ] && [ -f "$ANSIBLE_DIR/inventory/offline/inventory.yml" ]; then
+  echo "Both hosts.ini and inventory.yml provided in ansible/inventory/offline! Pick only one."
+  exit -1
 fi
 
 echo "using ansible inventory: $INVENTORY_FILE"
