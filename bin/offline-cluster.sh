@@ -24,7 +24,6 @@ if [ -f "$ANSIBLE_DIR/inventory/offline/hosts.ini" ] && [ -f "$ANSIBLE_DIR/inven
 fi
 
 echo "using ansible inventory: $INVENTORY_FILE"
-cat $INVENTORY_FILE
 
 # Populate the assethost, and prepare to install images from it.
 #
@@ -57,3 +56,6 @@ ansible-playbook -i $INVENTORY_FILE $ANSIBLE_DIR/cassandra.yml
 ansible-playbook -i $INVENTORY_FILE $ANSIBLE_DIR/elasticsearch.yml
 ansible-playbook -i $INVENTORY_FILE $ANSIBLE_DIR/minio.yml
 ansible-playbook -i $INVENTORY_FILE $ANSIBLE_DIR/restund.yml
+
+# create helm values that tell our helm charts what the IP addresses of cassandra, elasticsearch and minio are:
+ansible-playbook -i $INVENTORY_FILE $ANSIBLE_DIR/helm_external.yml --skip-tags=rabbitmq-external

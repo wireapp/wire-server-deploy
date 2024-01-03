@@ -385,15 +385,6 @@ Minio and restund services have shared secrets with the `wire-server` helm chart
 This should generate two files. `./ansible/inventory/group_vars/all/secrets.yaml` and `values/wire-server/secrets.yaml`.
 
 
-#### Ensuring kubernetes is healthy.
-
-Ensure the cluster comes up healthy. The container also contains kubectl, so check the node status:
-
-```
-d kubectl get nodes -owide
-```
-They should all report ready.
-
 ### WORKAROUND: old debian key
 All of our debian archives up to version 4.12.0 used a now-outdated debian repository signature. Some modifications are required to be able to install everything properly.
 
@@ -512,16 +503,6 @@ ufw allow 25672/tcp;
 For enabling Federation, we need to have RabbitMQ in place. Please follow the instructions in [offline/federation_preparation.md](./federation_preparation.md) for setting up RabbitMQ.
 
 After that continue to the next steps below.
-
-
-### Preparing helm values for external services
-Afterwards, run the following playbook to create helm values that tell our helm charts
-what the IP addresses of cassandra, elasticsearch, minio are.
-
-```
-d ansible-playbook -i ./ansible/inventory/offline/hosts.ini ansible/helm_external.yml --skip-tags=rabbitmq-external
-```
-
 
 ### Deploying Wire
 

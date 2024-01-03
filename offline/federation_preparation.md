@@ -63,7 +63,7 @@ d helm install rabbitmq-external ./charts/rabbitmq-external --values ./values/ra
 
 Configure wire-server to use the external RabbitMQ service:
 
-Edit the `/values/wire-server/prod-values.yaml` file to update the RabbitMQ host
+Edit the `/values/wire-server/prod-values.example.yaml` file to update the RabbitMQ host
 Under `brig` and `galley` section, you will find the `rabbitmq` config, update the host to `rabbitmq-external`, it should look like this:
 ```
 rabbitmq:

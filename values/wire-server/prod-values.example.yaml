@@ -28,7 +28,7 @@ brig:
     elasticsearch:
       host: elasticsearch-external
     rabbitmq:
-      host: rabbitmq # name of the rabbitmq service, for e.g. rabbitmq-external
+      host: rabbitmq # name of the rabbitmq service, either `rabbitmq-external` or `rabbitmq`
     useSES: false
     # Set to false if you want to hand out DynamoDB to store prekeys
     randomPrekeys: true
@@ -141,7 +141,7 @@ galley:
     cassandra:
       host: cassandra-external
     rabbitmq:
-      host: rabbitmq # name of the rabbitmq service, for e.g. rabbitmq-external
+      host: rabbitmq # name of the rabbitmq service, either `rabbitmq-external` or `rabbitmq`
     settings:
       # prefix URI used when inviting users to a conversation by link
       conversationCodeURI: https://account.example.com/conversation-join/ # change this
