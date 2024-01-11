@@ -35,8 +35,19 @@ ansnode2
 ansnode3
 ```
 
-**Important:** RabbitMQ nodes address each other using a node name, for e.g rabbitmq@ansnode1
-Please refer to the official documentation and configure your DNS based on the setup - https://www.rabbitmq.com/clustering.html#cluster-formation-requirements
+
+#### Hostname Resolution
+RabbitMQ nodes address each other using a node name, a combination of a prefix and domain name, either short or fully-qualified (FQDNs). For e.g. rabbitmq@ansnode1
+
+Therefore every cluster member must be able to resolve hostnames of every other cluster member, its own hostname, as well as machines on which command line tools such as rabbitmqctl might be used.
+
+Nodes will perform hostname resolution early on node boot. In container-based environments it is important that hostname resolution is ready before the container is started.
+
+Hostname resolution can use any of the standard OS-provided methods:
+
+For e.g. DNS records
+Local host files (e.g. /etc/hosts)
+Reference - https://www.rabbitmq.com/clustering.html#cluster-formation-requirements
 
 
 For adding entries to local host file(`/etc/hosts`), run

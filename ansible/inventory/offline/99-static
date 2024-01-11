@@ -86,6 +86,7 @@
 #domain = "example.com"
 #deeplink_title = "example.com environment"
 
+# Rabbitmq specific variables
 [rmq-cluster:vars]
 # rabbitmq_network_interface = enp1s0
 
@@ -180,6 +181,7 @@ elasticsearch
 # minio2
 # minio3
 
+# Add all rabbitmq nodes here
 [rmq-cluster]
 # rabbitmq1
 # rabbitmq2
