@@ -42,7 +42,7 @@ mesosphere/aws-cli:1.14.5
 metallb/controller:v0.7.3
 metallb/speaker:v0.7.3
 minio/minio:RELEASE.2023-07-07T07-13-57Z
-ixdotai/smtp:latest
+ixdotai/smtp:v0.5.2
 library/nginx:1.15
 quay.io/coreos/configmap-reload:v0.0.1
 quay.io/coreos/etcd:v3.2.26
