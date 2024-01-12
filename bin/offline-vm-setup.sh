@@ -67,7 +67,7 @@ create_node () {
     sudo virt-install \
         --name "$name" \
         --ram 8192 \
-        --disk path=/var/kvm/images/"$name".img,size=80 \
+        --disk path=/var/kvm/images/"$name".img,size=100 \
         --vcpus 6 \
         --network bridge=br0 \
         --graphics none \

@@ -45,3 +45,4 @@
         external_dir_name: rabbitmq-external
         server_type: rmq-cluster
         network_interface: "{{ rabbitmq_network_interface }}"
+  tags: rabbitmq-external
