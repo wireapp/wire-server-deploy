@@ -61,7 +61,7 @@ let
     nerdctl = fetchurl rec {
       passthru.url = url;
       url = "https://github.com/containerd/nerdctl/releases/download/v${ nerdctl_version }/nerdctl-${ nerdctl_version }-linux-${ image_arch }.tar.gz";
-      sha256 = "ad40ecf11c689fad594a05a40fef65adb4df8ecd1ffb6711e13cff5382aeaed9";
+      sha256 = "5fc0a6e8c3a71cbba95fbdb6833fb8a7cd8e78f53de10988362d4029c14b905a";
     };
     calicoctl = fetchurl rec {
       passthru.url = url;
