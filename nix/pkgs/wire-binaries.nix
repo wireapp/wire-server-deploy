@@ -46,7 +46,7 @@ let
     containerd = fetchurl rec {
       passthru.url = url;
       url = "https://github.com/containerd/containerd/releases/download/v${ containerd_version }/containerd-${ containerd_version }-linux-${ image_arch }.tar.gz";
-      sha256 = "3a1322c18ee5ff4b9bd5af6b7b30c923a3eab8af1df05554f530ef8e2b24ac5e";
+      sha256 = "d66161d54546fad502fd50a13fcb79efff033fcd895adc9c44762680dcde4e69";
     };
     runc = fetchurl rec {
       passthru.url = url;
