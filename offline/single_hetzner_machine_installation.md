@@ -19,7 +19,10 @@ Please note the public IP of the newly provisioned server, as it's used for the 
 
 ## Pre-requisites (ansible)
 
-Make sure to have ansible available on your local computer with a recent version (eg. 2.14.9 as of 2024-01).
+Install ansible on your local computer, if not present yet.
+```
+~ ❯ sudo apt install ansible ansible-core
+```
 
 ## Adjust playbook vars as needed
 
@@ -33,9 +36,10 @@ Take a look at the "vars:" section in wire-server-deploy/ansible/hetzner-single-
 
 ## Run ansible playbook for server bootstrapping
 
+Navigate to the ansible folder in wire-server-deploy and execute the playbook using valid vars as described above.
 ```
-cd wire-server-deploy/ansible
-ansible-playbook hetzner-single-deploy.yml -i root@$HETZNER_IP, --diff
+~ ❯ cd wire-server-deploy/ansible
+~ ❯ ansible-playbook hetzner-single-deploy.yml -i root@$HETZNER_IP, --diff
 ```
 Please note and include the trailing comma when invoking the playbook.
 

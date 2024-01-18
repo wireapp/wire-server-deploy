@@ -99,7 +99,7 @@
       state: directory
       owner: demo
       group: demo
-      mode: 0775
+      mode: 0750
   - name: check if wire-server-deploy-static-{{ artifact_hash }}.tgz exists
     stat:
       path: /home/demo/wire-server-deploy-static-{{ artifact_hash }}.tgz
@@ -109,7 +109,7 @@
       cmd: curl -fsSLo /home/demo/wire-server-deploy-static-{{ artifact_hash }}.tgz https://s3-eu-west-1.amazonaws.com/public.wire.com/artifacts/wire-server-deploy-static-{{ artifact_hash }}.tgz
       creates: /home/demo/wire-server-deploy-static-{{ artifact_hash }}.tgz
     when: not artifact_archive_file_check.stat.exists
-  - name: check if wire-server-deploy folderi contents exist
+  - name: check if wire-server-deploy folder contents exist
     stat:
       path: /home/demo/wire-server-deploy/containers-helm.tar
     register: artifact_folder_content_check
@@ -128,6 +128,10 @@
       cmd: curl -fsSLo /home/demo/wire-server-deploy/ubuntu.iso https://releases.ubuntu.com/jammy/ubuntu-{{ ubuntu_version }}-live-server-amd64.iso
       creates: /home/demo/wire-server-deploy/ubuntu.iso
     when: not iso_file_check.stat.exists
+  - name: set permissions inside wire-server-deploy
+    command: find /home/demo/wire-server-deploy -type d -exec chmod -c 0750 {} \;
+    register: chmod_result
+    changed_when: "chmod_result.stdout != \"\""
 
   handlers:
   - name: sshd | restart
