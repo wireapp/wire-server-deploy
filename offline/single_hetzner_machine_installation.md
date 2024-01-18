@@ -28,7 +28,7 @@ Take a look at the "vars:" section in wire-server-deploy/ansible/hetzner-single-
   vars:
     artifact_hash: a6e0929c9a5f4af09655c9433bb56a4858ec7574
     ubuntu_version: 22.04.3
-    ssh_pubkey: "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIODDzgw4BncNvSVOIraAXZYkkLn+iTo6ixkXXQ4lKZhL jan.schumacher@wire.com"
+    ssh_pubkey: "ssh-ed25519 AAAAC3Nz_CHANGEME_TE5AAAA_CHANGEME_cRpDu8vNelUH+changeme/OWB50Rk5GP jane.doe@example.com"
 ```
 
 ## Run ansible playbook for server bootstrapping

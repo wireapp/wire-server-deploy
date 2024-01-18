@@ -3,7 +3,7 @@
 set -Eeuo pipefail
 
 if [[ $EUID -eq 0 ]]; then
-  echo "Please don't run me as root" 1>&2
+  msg "Please don't run me as root" 1>&2
   exit 1
 fi
 
@@ -17,6 +17,7 @@ Non-interactive script for deploying standard set of Ubuntu Server VMs on a sing
 Script will create VMs with a sudo user "demo" and PW auth disabled.
 For SSH access, it'll use the 1st key found in the local user's .ssh/authorized_keys.
 If no key can be found, it will interactively ask for a key (and accept any input, so be careful).
+The script will exit gracefully if VMs already exist.
 
 Default mode with no arguments creates seven libvirt VMs using cloud-init:
  * assethost
@@ -38,7 +39,7 @@ EOF
 cleanup() {
   trap - SIGINT SIGTERM ERR EXIT
   pkill -f "http.server"
-  rm -rf "$DEPLOY_DIR"/nocloud/*
+  rm -r "$DEPLOY_DIR"/nocloud/
 }
 
 msg() {
@@ -86,9 +87,13 @@ nohup python3 -m http.server 3003 -d "$NOCLOUD_DIR" &
 
 if [[ -f ~/.ssh/authorized_keys && -s ~/.ssh/authorized_keys ]]; then
   SSHKEY=$(head -n 1 ~/.ssh/authorized_keys)
-  echo "Including local SSH key ""$SSHKEY"" for VM deployment"
+  msg ""
+  msg "######"
+  msg ""
+  msg "Including local SSH key ""$SSHKEY"" for VM deployment"
+  msg ""
 else
-  read -r -p "No local SSH keys for current user ""$USER"" found; please enter a key now: " SSHKEY
+  read -r -p "No local SSH keys for current user ""$USER"" found; please enter a vaild key now: " SSHKEY
 fi
 
 prepare_config() {
@@ -140,8 +145,27 @@ create_vm () {
 }
 
 for VM in $VM_NAME; do
-  set -u
-  msg "Creating VM $VM ..."
-  create_vm "$VM"
-  sleep 20
+  if sudo virsh list --all | grep -Fq "$VM"; then
+    msg "######"
+    msg ""
+    msg "ATTENTION - VM ""$VM"" already exists"
+    msg ""
+    continue
+  else
+    set -u
+    msg "Creating VM $VM ..."
+    create_vm "$VM"
+    sleep 20
+  fi
 done
+
+msg "######"
+msg ""
+msg "Active VMs and DHCP leases:"
+msg ""
+sudo virsh net-dhcp-leases --network default
+msg "######"
+msg ""
+msg "Host name 'ubuntu-server' is just a placeholder during VM installation."
+msg "To look up the real host name, wait until VM deployment is finished, reboot the VM (twice) and execute 'sudo virsh net-dhcp-leases --network default' again"
+msg ""
