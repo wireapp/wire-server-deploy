@@ -39,7 +39,7 @@ EOF
 cleanup() {
   trap - SIGINT SIGTERM ERR EXIT
   pkill -f "http.server"
-  rm -r "$DEPLOY_DIR"/nocloud/
+  rm -r "$DEPLOY_DIR"/nocloud/*
 }
 
 msg() {
