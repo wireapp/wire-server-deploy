@@ -99,8 +99,13 @@ calling_charts=(
   wire/restund
 )
 
-# TODO: Awaiting some fixes in wire-server regarding tagless images
+# wire_version=$(helm show chart wire/wire-server | yq -r .version)
+wire_version="4.39.0"
 
+# same as prior.. in most cases.
+wire_calling_version="4.39.0"
+
+# TODO: Awaiting some fixes in wire-server regarding tagless images
 HELM_HOME=$(mktemp -d)
 export HELM_HOME
 
@@ -109,11 +114,9 @@ helm repo add wire https://s3-eu-west-1.amazonaws.com/public.wire.com/charts
 #helm repo add wire-develop https://s3-eu-west-1.amazonaws.com/public.wire.com/charts-develop
 helm repo update
 
-# wire_version=$(helm show chart wire/wire-server | yq -r .version)
-wire_version="4.39.0"
-
-# same as prior.. in most cases.
-wire_calling_version="4.39.0"
+# Note: If you need to deploy something from the develop branch, uncomment the next two lines.
+#helm repo add wire-develop https://s3-eu-west-1.amazonaws.com/public.wire.com/charts-develop
+#helm repo update
 
 # Download zauth; as it's needed to generate certificates
 echo "quay.io/wire/zauth:$wire_version" | create-container-dump containers-adminhost
@@ -126,15 +129,12 @@ for chartName in "${calling_charts[@]}"; do
   (cd ./charts; helm pull --version "$wire_calling_version" --untar "$chartName")
 done
 
-# HACKS!
-sed -i -Ee 's/v0\.6\.0-rc\.1/v0.6.0-rc.2/' "$(pwd)"/charts/restund/Chart.yaml
-sed -i -Ee 's/2\.1\.19/3.1.3/' "$(pwd)"/charts/sftd/Chart.yaml
+###################################
+####### DIRTY HACKS GO HERE #######
+###################################
 
-#echo "Patching wire-server to include federator"
-sed -i -Ee 's/federator: false/federator: true/' "$(pwd)"/charts/wire-server/values.yaml
-sed -i -Ee 's/useSharedFederatorSecret: false/useSharedFederatorSecret: true/' "$(pwd)"/charts/wire-server/charts/federator/values.yaml
-
-cat  "$(pwd)"/charts/wire-server/values.yaml
+# old hack? missin an undo step?
+#sed -i -Ee 's/useSharedFederatorSecret: false/useSharedFederatorSecret: true/' "$(pwd)"/charts/wire-server/charts/federator/values.yaml
 
 # Patch wire-server values.yaml to include federator
 # This is needed to bundle it's image.
