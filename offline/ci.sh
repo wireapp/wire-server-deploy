@@ -30,7 +30,6 @@ install -m755 "$(nix-build --no-out-link -A pkgs.wire-binaries)/"* binaries/
 tar cf binaries.tar binaries
 rm -r binaries
 
-
 function list-system-containers() {
 # These are manually updated with values from
 # https://github.com/kubernetes-sigs/kubespray/blob/release-2.15/roles/download/defaults/main.yml
@@ -72,11 +71,13 @@ echo "quay.io/wire/restund:v0.6.0-rc.2" | create-container-dump containers-other
 tar cf containers-other.tar containers-other
 [[ "$INCREMENTAL" -eq 0 ]] && rm -r containers-other
 
-
+# NOTE: if you want to ship something from the develop branch, replace 'wire' with 'wire-develop' below.
 charts=(
   # backoffice
   # commented out for now, points to a 2.90.0 container image which doesn't
   # seem to exist on quay.io
+  # TODO: uncomment once its dependencies are pinned!
+  # local-path-provisioner
   wire/ingress-nginx-controller
   wire/nginx-ingress-services
   wire/reaper
@@ -87,29 +88,35 @@ charts=(
   wire/fake-aws
   wire/minio-external
   wire/wire-server
-  # local-path-provisioner
-  # TODO: uncomment once its dependencies are pinned!
-  wire/sftd
-  wire/restund
   wire/rabbitmq
   wire/rabbitmq-external
-  # Has a weird dependency on curl:latest. out of scope
-  # wire-server-metrics
-  # fluent-bit
-  # kibana
   # wire/federator
 )
 
-# TODO: Awaiting some fixes in wire-server regarding tagless images
+# Note: if you want to ship something from the develop branch, replace 'wire' with 'wire-develop' below.
+calling_charts=(
+  wire/sftd
+  wire/restund
+)
 
+# wire_version=$(helm show chart wire/wire-server | yq -r .version)
+wire_version="4.39.0"
+
+# same as prior.. in most cases.
+wire_calling_version="4.39.0"
+
+# TODO: Awaiting some fixes in wire-server regarding tagless images
 HELM_HOME=$(mktemp -d)
 export HELM_HOME
 
 helm repo add wire https://s3-eu-west-1.amazonaws.com/public.wire.com/charts
+# Note: If you need to deploy something from the develop branch, uncomment the next line.
+#helm repo add wire-develop https://s3-eu-west-1.amazonaws.com/public.wire.com/charts-develop
 helm repo update
 
-# wire_version=$(helm show chart wire/wire-server | yq -r .version)
-wire_version="4.39.0"
+# Note: If you need to deploy something from the develop branch, uncomment the next two lines.
+#helm repo add wire-develop https://s3-eu-west-1.amazonaws.com/public.wire.com/charts-develop
+#helm repo update
 
 # Download zauth; as it's needed to generate certificates
 echo "quay.io/wire/zauth:$wire_version" | create-container-dump containers-adminhost
@@ -118,6 +125,16 @@ mkdir -p ./charts
 for chartName in "${charts[@]}"; do
   (cd ./charts; helm pull --version "$wire_version" --untar "$chartName")
 done
+for chartName in "${calling_charts[@]}"; do
+  (cd ./charts; helm pull --version "$wire_calling_version" --untar "$chartName")
+done
+
+###################################
+####### DIRTY HACKS GO HERE #######
+###################################
+
+# old hack? missin an undo step?
+#sed -i -Ee 's/useSharedFederatorSecret: false/useSharedFederatorSecret: true/' "$(pwd)"/charts/wire-server/charts/federator/values.yaml
 
 # Patch wire-server values.yaml to include federator
 # This is needed to bundle it's image.
@@ -138,7 +155,6 @@ tar cf containers-helm.tar containers-helm
 [[ "$INCREMENTAL" -eq 0 ]] && rm -r containers-helm
 
 echo "docker_ubuntu_repo_repokey: '${fingerprint}'" > ansible/inventory/offline/group_vars/all/key.yml
-
 
 tar czf assets.tgz debs-jammy.tar binaries.tar containers-adminhost containers-helm.tar containers-other.tar containers-system.tar ansible charts values bin
 
