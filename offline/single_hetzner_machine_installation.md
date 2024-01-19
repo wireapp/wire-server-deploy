@@ -17,14 +17,7 @@ If not using Hetzner, for reference, the specs of the ax101 server are:
 
 Please note the public IP of the newly provisioned server, as it's used for the ansible playbook run.
 
-## Pre-requisites (ansible)
-
-Install ansible on your local computer, if not present yet.
-```
-~ ❯ sudo apt install ansible ansible-core
-```
-
-## Adjust playbook vars as needed
+## Adjust ansible playbook vars as needed
 
 Take a look at the "vars:" section in wire-server-deploy/ansible/hetzner-single-deploy.yml and adjust vars as needed. Example:
 ```
@@ -41,7 +34,7 @@ Navigate to the ansible folder in wire-server-deploy and execute the playbook us
 ~ ❯ cd wire-server-deploy/ansible
 ~ ❯ ansible-playbook hetzner-single-deploy.yml -i root@$HETZNER_IP, --diff
 ```
-Please note and include the trailing comma when invoking the playbook.
+Please note and include the trailing comma when invoking the playbook. Playbook execution might take a few minutes, especially when downloading and unpacking a new artifact.
 
 The playbook will install baseline defaults (packages, firewall, SSH config, SSH key(s), user(s)), download & extract wire-server-deploy and download the specified ubuntu ISO.
 The playbook is written to be idempotent; eg. files won't be redownloaded as long as they already exist on the target host. Deploying a new version of "wire-server-deploy" is as easy as removing the folder from the target host and updating the "artifact_hash" variable in the playbook.
@@ -55,13 +48,13 @@ demo@Ubuntu-2204-jammy-amd64-base:~/wire-server-deploy$ bin/offline-vm-setup.sh
 ```
 Without arguments, the script will deploy seven VMs behind the default libvirt network (virbr0, 192.168.122.0/24).
 
- * assethost
- * kubenode1
- * kubenode2
- * kubenode3
- * ansnode1
- * ansnode2
- * ansnode3
+ * assethost - IP: 192.168.122.10
+ * kubenode1 - IP: 192.168.122.21
+ * kubenode2 - IP: 192.168.122.22
+ * kubenode3 - IP: 192.168.122.23
+ * ansnode1  - IP: 192.168.122.31
+ * ansnode2  - IP: 192.168.122.32
+ * ansnode3  - IP: 192.168.122.33
 
 This will take up to 15 min (longer if the server still builds its MD RAID in the background). Once all VMs are deployed, they should be shut off. Status can be checked with:
 ```
@@ -87,28 +80,22 @@ virsh start ansnode3;
 
 ## Access VMs
 
-VMs created with offline-vm-setup.sh are accessible via SSH with the public key which was deployed to the "demo" user in the ansible playbook. In order to access individual VMs, use SSH with ProxyJump:
+VMs created with offline-vm-setup.sh are accessible via SSH with two public keys.
+ * Existing key from ~/.ssh/authorized_keys (externally via ProxyJump)
+ * Local keypair key from ~/.ssh/id_ed25519 (Keypair on dedicated server)
 
+To use your own key, use SSH with ProxyJump, as it's the more secure alternative compared to Key Forwarding ("ssh -A"):
 ```
 ~ ❯ ssh demo@192.168.122.XXX -J demo@$HETZNER_IP
 ```
 
-## TODO - clarify if Docker daemon on Hetzner server can be installed via "apt install docker.io" or needs to be installed from the artifact archive, like so:
+Or just use the local keypair, created by offline-vm-setup.sh inside the dedicated server:
 ```
-demo@Ubuntu-2204-jammy-amd64-base:~/wire-server-deploy$ tar -xf debs-jammy.tar
+demo@Ubuntu-2204-jammy-amd64-base:~$ ssh assethost
 ```
 
-```
-demo@Ubuntu-2204-jammy-amd64-base:~/wire-server-deploy$ sudo bash -c '
-set -eo pipefail;
-
-apt -y install iptables;
-dpkg -i debs-jammy/public/pool/main/d/docker-ce/docker-ce-cli_*.deb;
-dpkg -i debs-jammy/public/pool/main/c/containerd.io/containerd.io_*.deb;
-dpkg -i debs-jammy/public/pool/main/d/docker-ce/docker-ce_*.deb;
-dpkg --configure -a;
-'
-```
+Hint: resolving VM hostnames from inside the dedicated server should work, since the script is appending entries to /etc/hosts during VM creation.
+But this does not work for resolving hostnames between VMs at this point. We'll be using IP addresses only going forward.
 
 ### From this point:
 

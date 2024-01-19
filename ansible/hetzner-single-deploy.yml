@@ -1,7 +1,7 @@
 - hosts: all
   become: true
   vars:
-    artifact_hash: a6e0929c9a5f4af09655c9433bb56a4858ec7574
+    artifact_hash: cc69eb754b69b9fbe13784de8cf6e7f6ef0f7ff6
     ubuntu_version: 22.04.3
     ssh_pubkey: "ssh-ed25519 AAAAC3Nz_CHANGEME_TE5AAAA_CHANGEME_cRpDu8vNelUH+changeme/OWB50Rk5GP jane.doe@example.com"
   tasks:
@@ -29,6 +29,7 @@
       - vim
       - wget
       - whois
+      - docker.io
       - qemu
       - qemu-kvm
       - qemu-utils
@@ -62,7 +63,7 @@
   - name: add default user accounts
     user:
       name: demo
-      groups: sudo, kvm
+      groups: sudo, kvm, docker
       uid: 900
       state: present
       shell: /bin/bash
@@ -103,6 +104,8 @@
   - name: check if wire-server-deploy-static-{{ artifact_hash }}.tgz exists
     stat:
       path: /home/demo/wire-server-deploy-static-{{ artifact_hash }}.tgz
+      get_checksum: False
+      get_md5: False
     register: artifact_archive_file_check
   - name: download wire-server-deploy archive
     shell:
@@ -128,10 +131,9 @@
       cmd: curl -fsSLo /home/demo/wire-server-deploy/ubuntu.iso https://releases.ubuntu.com/jammy/ubuntu-{{ ubuntu_version }}-live-server-amd64.iso
       creates: /home/demo/wire-server-deploy/ubuntu.iso
     when: not iso_file_check.stat.exists
-  - name: set permissions inside wire-server-deploy
-    command: find /home/demo/wire-server-deploy -type d -exec chmod -c 0750 {} \;
-    register: chmod_result
-    changed_when: "chmod_result.stdout != \"\""
+  - name: set permissions inside wire-server-deploy via shell command (fails when using ansible directive)
+    shell:
+      cmd: chmod -R 0775 /home/demo/wire-server-deploy; chowm -R demo:demo /home/demo
 
   handlers:
   - name: sshd | restart
