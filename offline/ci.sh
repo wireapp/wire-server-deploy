@@ -111,6 +111,7 @@ helm repo update
 # wire_version=$(helm show chart wire/wire-server | yq -r .version)
 wire_version="4.39.0"
 
+# same as prior.. in most cases.
 wire_calling_version="4.39.0"
 
 # Download zauth; as it's needed to generate certificates
