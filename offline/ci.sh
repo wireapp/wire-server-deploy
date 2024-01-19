@@ -105,7 +105,8 @@ HELM_HOME=$(mktemp -d)
 export HELM_HOME
 
 helm repo add wire https://s3-eu-west-1.amazonaws.com/public.wire.com/charts
-helm repo add wire-develop https://s3-eu-west-1.amazonaws.com/public.wire.com/charts-develop
+# Note: If you need to deploy something from the develop branch, uncomment the next line.
+#helm repo add wire-develop https://s3-eu-west-1.amazonaws.com/public.wire.com/charts-develop
 helm repo update
 
 # wire_version=$(helm show chart wire/wire-server | yq -r .version)
