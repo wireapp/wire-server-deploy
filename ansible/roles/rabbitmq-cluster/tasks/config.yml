@@ -1,0 +1,34 @@
+---
+- name: rabbitmq default file
+  template:
+    src: "{{ item.src }}"
+    dest: "{{ item.dest }}"
+    owner: root
+    group: root
+    mode: 0644
+  with_items:
+    - { src: etc/default/rabbitmq-server.j2 , dest: /etc/default/rabbitmq-server }
+    - { src: etc/rabbitmq/rabbitmq.config.j2, dest: /etc/rabbitmq/rabbitmq.config }
+    # - { src: etc/rabbitmq/rabbitmq-env.conf.j2, dest: /etc/rabbitmq/rabbitmq-env.conf }
+  notify:
+    restart rabbitmq-server
+
+- name: restart rabbitmq-server
+  service:
+    name: rabbitmq-server
+    state: restarted
+
+# - name: Enable the plugins is installed
+#   rabbitmq_plugin:
+#     names: "{{ item }}"
+#     prefix: /usr/lib/rabbitmq
+#     state: enabled
+#     new_only: yes
+#   with_items: "{{ rabbitmq_plugins }}"
+#   notify:
+#     restart rabbitmq-server
+
+- name: restart rabbitmq-server
+  service:
+    name: rabbitmq-server
+    state: restarted

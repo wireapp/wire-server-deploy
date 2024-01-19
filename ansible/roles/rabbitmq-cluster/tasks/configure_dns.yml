@@ -1,0 +1,14 @@
+---
+- name: Update /etc/hosts on rmq-cluster nodes
+  hosts: rmq-cluster
+  become: yes  # This allows the playbook to run with elevated privileges
+
+  tasks:
+    - name: Add entries to /etc/hosts
+      lineinfile:
+        path: /etc/hosts
+        regexp: "^{{ hostvars[item].ansible_default_ipv4.address }}\\s+{{ item }}\\s+rabbit@{{ item }}$"
+        line: "{{ hostvars[item].ansible_default_ipv4.address }} {{ item }} rabbit@{{ item }}"
+        insertbefore: EOF
+      with_items: "{{ groups['rmq-cluster'] }}"
+      when: item != inventory_hostname

@@ -1,0 +1,16 @@
+---
+# rc 70: user already exists
+- name: create test user
+  shell: rabbitmqctl add_user test test
+  register: res
+  failed_when: res.rc != 70 and res.rc != 0
+  changed_when: res.rc != 70
+
+- name: list permissions for test user
+  shell: rabbitmqctl list_permissions
+  register: list_permissions
+  changed_when: false
+
+- name: set permissions on / vhost
+  shell: rabbitmqctl set_permissions test ".*" ".*" ".*"
+  when: list_permissions.stdout.find("test") == -1
