@@ -1,5 +1,5 @@
 variable "hcloud_image" {
-  default = "ubuntu-18.04"
+  default = "ubuntu-22.04"
 }
 
 variable "hcloud_location" {

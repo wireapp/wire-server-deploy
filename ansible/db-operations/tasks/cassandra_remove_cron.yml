@@ -1,0 +1,11 @@
+---
+- debug: var=cassandra_cluster_name
+# Note that these should match the job names at roles/cassandra/tasks/cron.yml
+- name: 'Remove cassandra cronjobs'
+  cron:
+    name: "{{ item }}"
+    state: absent
+  with_items:
+    - "cassandra_incremental_backup_{{ cassandra_cluster_name }}"
+    - "cassandra_backup_{{ cassandra_cluster_name }}"
+    - "cassandra_repair_{{ cassandra_cluster_name }}"

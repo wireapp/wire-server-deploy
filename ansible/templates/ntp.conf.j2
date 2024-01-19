@@ -1,0 +1,9 @@
+
+template# NTP Config
+
+driftfile /var/lib/ntp/drift
+restrict default nomodify notrap nopeer noquery
+restrict 127.0.0.1
+restrict ::1
+
+server {{ ntp_server }}

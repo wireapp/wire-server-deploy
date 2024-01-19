@@ -1,0 +1,27 @@
+---
+- name: Configure NTP on Cassandra nodes
+  hosts: cassandra
+  become: true
+  vars:
+    authoritative_node: "{{ groups['cassandra'][0] }}"
+
+  tasks:
+    - name: Install NTP package
+      apt:
+        name: ntp
+        state: present
+
+    - name: Configure NTP servers
+      lineinfile:
+        path: /etc/ntp.conf
+        line: "server {{ hostvars[authoritative_node].ansible_host }} prefer"
+        state: present
+      when: inventory_hostname != authoritative_node
+
+    - name: Restart NTP service
+      service:
+        name: ntp
+        state: restarted
+
+    - name: Print current date
+      command: date

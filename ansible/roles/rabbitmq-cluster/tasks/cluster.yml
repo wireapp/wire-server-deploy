@@ -1,0 +1,16 @@
+---
+- name: make sure rabbitmq server is up
+  service:
+    name: rabbitmq-server
+    state: started
+
+- name: make sure rabbitmq app is up
+  command: rabbitmqctl start_app
+
+- name: check if already in cluster
+  command: rabbitmqctl cluster_status
+  register: cluster_status
+  changed_when: false
+
+- include_tasks: join_cluster.yml
+  when: cluster_status.stdout.find("rabbit@{{ rabbitmq_cluster_master }}") == -1 and (ansible_fqdn != rabbitmq_cluster_master)

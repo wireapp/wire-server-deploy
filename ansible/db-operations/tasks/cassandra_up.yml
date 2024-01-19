@@ -1,0 +1,15 @@
+- include: runit_up.yml service=cassandra
+
+- name: 'Cassandra: Waiting for thrift port'
+  wait_for: >
+    port={{ routing_table[cassandra_role].rpc.exposed }}
+    host="{{ ansible_ec2_local_ipv4 }}"
+
+- name: 'Cassandra: Waiting for CQL port'
+  wait_for: >
+    port={{ routing_table[cassandra_role].native_transport.exposed }}
+    host="{{ ansible_ec2_local_ipv4 }}"
+
+- include: cassandra_cluster_healthy.yml
+
+- pause: seconds={{ cassandra_wait_after_restart|default(120) }}

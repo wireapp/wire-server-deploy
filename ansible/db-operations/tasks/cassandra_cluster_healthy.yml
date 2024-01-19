@@ -1,0 +1,29 @@
+- name: 'Cassandra: gather number of schemas'
+  shell: nodetool describecluster | grep '[0-9a-f\]\{8\}-[0-9a-f]\{4\}-[0-9a-f]\{4\}-[0-9a-f]\{4\}-[0-9a-f]\{12\}' | wc -l
+  register: num_schemas
+
+- name: 'Cassandra: check for schema disagreements'
+  fail: msg="Schema disagreements. Please fix first."
+  when: 'expected_num_schemas is defined and (num_schemas.stdout|int > expected_num_schemas) or
+         num_schemas.stdout|int > 1'
+
+- name: 'Cassandra: check more for schema disagreements'
+  fail: msg="Schema disagreements. Please fix first."
+  when: 'num_schemas.stdout.find("UNREACHABLE") != -1'
+
+# can't use 'var:' in a task
+- set_fact:
+    desired_nodes: "{{ groups[cassandra_role|replace('_seed','')]|default([])|length + groups[cassandra_role|replace('_seed','') + '_seed']|length }}"
+
+- debug: var=desired_nodes
+
+- name: 'Cassandra: check that the desired number of nodes is up'
+  shell: nodetool status | grep ^UN | wc -l
+  register: num_nodes
+  until: num_nodes.stdout|int == desired_nodes|int
+  retries: 10
+  delay: 15
+  when: dry_run is not defined
+
+- debug: var=num_nodes.stdout
+  when: dry_run is not defined

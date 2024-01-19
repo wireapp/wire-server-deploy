@@ -1,0 +1,6 @@
+- name: 'Cassandra: draining node...'
+  shell: nodetool drain
+
+- name: 'Cassandra: stopping the daemon'
+  shell: systemctl stop cassandra
+  ignore_errors: true
