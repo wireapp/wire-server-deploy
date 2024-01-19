@@ -1,5 +1,5 @@
 terraform {
-  required_version = "~> 0.13"
+  required_version = "~> 1.1"
 
   required_providers {
     aws = {
@@ -7,8 +7,7 @@ terraform {
       version = "~> 2.58"
     }
     hcloud = {
-      source  = "terraform-providers/hcloud"
-      version = "~> 1.19"
+      source  = "hetznercloud/hcloud"
     }
   }
 

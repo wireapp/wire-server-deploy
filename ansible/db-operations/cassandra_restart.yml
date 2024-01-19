@@ -1,0 +1,9 @@
+- name: restart cassandra nodes
+  hosts: "cassandra"
+  any_errors_fatal: yes
+  gather_facts: no
+  serial: 1
+  tasks:
+    - include: tasks/cassandra_cluster_healthy.yml
+    - include: tasks/cassandra_down.yml
+    - include: tasks/cassandra_up.yml

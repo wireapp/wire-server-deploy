@@ -1,0 +1,33 @@
+# NOTE: you will need an LDAP SCIM bridge deployment for each team!
+# by default, run every 5 minutes.
+schedule: "*/5 * * * * *"
+config:
+  logLevel: "Debug" # one of Trace,Debug,Info,Warn,Error,Fatal; 'Fatal' is least noisy, 'Trace' is most.
+  ldapSource:
+    tls: true
+    host: "ldap-server.example.com"
+    port: 636
+    dn: "CN=Admin,DC=example,DC=com"
+    password: "secret password here"
+    search:
+      base: "DC=example,DC=com"
+      objectClass: "person"
+      memberOf "CN=people,OU=engineering,DC=example,DC=com"
+    codec: "utf8"
+    #    deleteOnAttribute:  # optional, related to delete-from-directory.
+    #      key: "deleted"
+    #      value: "true"
+    #    deleteFromDirectory:  # optional; ok to use together with delete-on-attribute if you use both.
+    #      base: "ou=DeletedPeople,DC=example,DC=com"
+    #      objectClass: "account"
+  scimTarget:
+    tls: false
+    host: "spar"
+    port: 8080
+    path: "/scim/v2"
+    token: "Bearer BEARERTOKENHERE"
+  mapping:
+    displayName: "displayName"
+    userName: "mailNickname"
+    externalId: "mail"
+    email: "mail"

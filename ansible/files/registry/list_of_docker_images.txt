@@ -41,8 +41,8 @@ localstack/localstack:0.8.7
 mesosphere/aws-cli:1.14.5
 metallb/controller:v0.7.3
 metallb/speaker:v0.7.3
-minio/minio:RELEASE.2019-04-09T01-22-30Z
-namshi/smtp:latest
+minio/minio:RELEASE.2023-07-07T07-13-57Z
+ixdotai/smtp:v0.5.2
 library/nginx:1.15
 quay.io/coreos/configmap-reload:v0.0.1
 quay.io/coreos/etcd:v3.2.26
@@ -53,7 +53,6 @@ quay.io/coreos/grafana-watcher:v0.0.8
 quay.io/coreos/prometheus-config-reloader:v0.20.0
 quay.io/coreos/prometheus-operator:v0.20.0
 quay.io/external_storage/local-volume-provisioner:v2.1.0
-quay.io/kubernetes-ingress-controller/nginx-ingress-controller:0.22.0
 quay.io/prometheus/alertmanager:v0.15.1
 quay.io/prometheus/node-exporter:v0.15.2
 quay.io/prometheus/prometheus:v2.2.1

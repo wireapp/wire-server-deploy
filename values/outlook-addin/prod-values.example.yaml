@@ -1,0 +1,11 @@
+host: "outlook.example.com"
+wireApiBaseUrl: "https://nginz-https.example.com"
+wireAuthorizationEndpoint: "https://webapp.example.com/auth"
+allowOrigin: "https://webapp.example.com, https://nginz-https.example.com"
+# uncomment the tls section if you are using cert-manager for certificates, otherwise,
+# follow the documentation in outlook-addin charts README how to deploy using your own certs
+#tls:
+#  issuerRef:
+#    name: letsencrypt-http01
+# clientId is obtained after registering outlook service with wire OAuth, more in README of outlook-addin chart
+clientId: ""

@@ -1,0 +1,13 @@
+---
+# Copy cacert, cert and key file for TLS/SSL
+- name: make sure TLS/SSL certificates exists
+  template:
+    src: "{{ item.src }}"
+    dest: "{{ item.dest }}"
+    owner: root
+    group: rabbitmq
+    mode: 0644
+  with_items:
+    - { src: "{{ cacertfile }}", dest: "{{ cacertfile_dest }}" }
+    - { src: "{{ certfile }}", dest: "{{ certfile_dest }}" }
+    - { src: "{{ keyfile }}", dest: "{{ keyfile_dest }}" }

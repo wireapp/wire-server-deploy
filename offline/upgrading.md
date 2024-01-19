@@ -47,7 +47,7 @@ sudo docker image ls | grep -E "^quay.io/wire/sftd" | sed "s/.*[ ]*\([0-9a-f]\{1
 #### SFT Cluster
 If you are running a DMZ deployment, prune the old wire-server images and their dependencies on the SFT kubernetes hosts...
 ```
-sudo docker image ls | grep -E "^quay.io/wire/(team-settings|account|webapp|namshi-smtp)" | sed "s/.*[ ]*\([0-9a-f]\{12\}\).*/sudo docker image rm \1/"
+sudo docker image ls | grep -E "^quay.io/wire/(team-settings|account|webapp|ixdotai-smtp)" | sed "s/.*[ ]*\([0-9a-f]\{12\}\).*/sudo docker image rm \1/"
 sudo docker image ls | grep -E "^(bitnami/redis|airdock/fake-sqs|localstack/localstack)" | sed "s/.*[ ]*\([0-9a-f]\{12\}\).*/sudo docker image rm \1/"
 ```
 
@@ -117,7 +117,7 @@ The following is a list of important artifacts which are provided:
  - `containers-other.tar`
    These are other container images, not deployed inside k8s. Currently, only
    contains Restund.
- - `debs.tar`
+ - `debs-*.tar`
    This acts as a self-contained dump of all packages required to install
    kubespray, as well as all other packages that are installed by ansible
    playbooks on nodes that don't run kubernetes.
@@ -130,13 +130,14 @@ The following is a list of important artifacts which are provided:
 
 ## Comparing the inventory
 
+Diff outputs differences between the two files. lines that start with `@@` specify a position. lines with `-` are from the old file, lines with `+` are from the new inventory, and lines starting with ` ` are the same in both files. We are going to use diff to compare files from your old install with your new install.
+
 Copy `ansible/inventory/offline/99-static` to `ansible/inventory/offline/hosts.ini`.
 
 Compare the inventory from your old install to the inventory of your new install.
 ```
 diff -u ../<OLD_PACKAGE_DIR>/ansible/inventory/offline/99-static ansible/inventory/offline/hosts.ini
 ```
-
 
 Your old install may use a `hosts.ini` instead of `99-static`.
 check to see if a hosts.ini is present:
@@ -153,8 +154,6 @@ otherwise, compare hosts.ini from both installation directories.
 ```
 diff -u ../<OLD_PACKAGE_DIR>/ansible/inventory/offline/hosts.ini ansible/inventory/offline/hosts.ini
 ```
-
-Diff outputs differences between the two files. lines that start with `@@` specify a position. lines with `-` are from the old file, lines with `+` are from the new inventory, and lines starting with ` ` are the same in both files.
 
 Using a text editor, make sure your new hosts.ini has all of the work you did on the first installation.
 
@@ -235,7 +234,7 @@ some ubuntu systems do not have GPG by default. wire assumes this is already pre
 Since docker is already installed on all nodes that need it, push the new container images to the assethost, and seed all container images:
 
 ```
-d ansible-playbook -i ./ansible/inventory/offline/hosts.ini ansible/setup-offline-sources.yml
+d ansible-playbook -i ./ansible/inventory/offline/hosts.ini ansible/setup-offline-sources.yml --tags "debs,containers-helm"
 d ansible-playbook -i ./ansible/inventory/offline/hosts.ini ansible/seed-offline-docker.yml
 ```
 
@@ -298,7 +297,7 @@ d helm upgrade databases-ephemeral ./charts/databases-ephemeral/ --values ./valu
 d helm upgrade reaper ./charts/reaper/
 ```
 
-#### Demo-SMTP service
+#### Upgrading the demo SMTP service
 
 Compare your demo-smtp configuration files, and decide whether you need to change them or not.
 ```
@@ -314,7 +313,7 @@ cp ../<OLD_PACKAGE_DIR>/values/demo-smtp/values.yaml values/demo-smtp/values.yam
 d helm upgrade demo-smtp ./charts/demo-smtp/ --values ./values/demo-smtp/values.yaml
 ```
 
-#### Upgrading the demo SMTP service
+#### Upgrading the NginX ingress
 
 Compare your demo-smtp configuration files, and decide whether you need to change them or not.
 ```
@@ -326,11 +325,11 @@ If there are no differences, copy these files into your new tree.
 cp ../<OLD_PACKAGE_DIR>/values/nginx-ingress-services/values.yaml values/nginx-ingress-services/values.yaml
 ```
 
-#### Upgrading nginx-ingress-controller
+#### Upgrading ingress-nginx-controller
 
 Re-deploy your ingress, to direct traffic into your cluster with the new version of nginx.
 ```
-d helm upgrade nginx-ingress-controller ./charts/nginx-ingress-controller/
+d helm upgrade ingress-nginx-controller ./charts/ingress-nginx-controller/
 ```
 
 ### Upgrading Wire itsself

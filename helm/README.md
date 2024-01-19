@@ -6,7 +6,7 @@ but may or may not include *stateful* backing services (e.g. Cassandra or Elasti
 The respective Kubernetes objects are defined in Helm charts. This allows to template and transfer them. 
 The charts themselves are defined in [wire-server](https://github.com/wireapp/wire-server/tree/master/charts)
 and uploaded to the [release](https://s3-eu-west-1.amazonaws.com/public.wire.com/charts) or
-[develop](https://s3-eu-west-1.amazonaws.com/public.wire.com/charts-develop) Helm repositories.
+[develop](https://s3-eu-west-1.amazonaws.com/public.wire.com/charts-develop) (or develop older than 2023-04 [old-develop](https://s3-eu-west-1.amazonaws.com/public.wire.com/charts-develop-2022)) Helm repositories.
 
 To describe a deployment in a declarative fashion a tool called [*Helmfile*](https://github.com/roboll/helmfile) is
 being used, which wraps the `helm` CLI. 

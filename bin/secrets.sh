@@ -87,6 +87,12 @@ nginz:
         basicAuth: $(cat "$NGINZ_BASIC_CONFIG")
         zAuth:
             publicKeys: $(cat "$zpub")
+
+cannon:
+  secrets:
+    nginz:
+      zAuth:
+        publicKeys: $(cat "$zpub")
 brig:
     secrets:
         zAuth:

@@ -4,6 +4,7 @@ tags:
   account-pages: true
   team-settings: true # enable if you need team-settings. Requires a pullSecret
   legalhold: false # Enable if you need legalhold
+  federation: false # Enable to use federation
 
 cassandra-migrations:
 #  images:
@@ -26,6 +27,8 @@ brig:
       host: cassandra-external
     elasticsearch:
       host: elasticsearch-external
+    rabbitmq:
+      host: rabbitmq # name of the rabbitmq service, either `rabbitmq-external` or `rabbitmq`
     useSES: false
     # Set to false if you want to hand out DynamoDB to store prekeys
     randomPrekeys: true
@@ -83,10 +86,10 @@ brig:
   turnStatic:
     v1: []
     v2:
-      - "turn:<IP of restund1>:80"
-      - "turn:<IP of restund2:80"
-      - "turn:<IP of restund1>:80?transport=tcp"
-      - "turn:<IP of restund2>:80?transport=tcp"
+      # - "turn:<IP of restund1>:80"
+      # - "turn:<IP of restund2:80"
+      # - "turn:<IP of restund1>:80?transport=tcp"
+      # - "turn:<IP of restund2>:80?transport=tcp"
       # - "turns:<IP of restund1>:443?transport=tcp"
       # - "turns:<IP of restund2>:443?transport=tcp"
 
@@ -137,6 +140,8 @@ galley:
   config:
     cassandra:
       host: cassandra-external
+    rabbitmq:
+      host: rabbitmq # name of the rabbitmq service, either `rabbitmq-external` or `rabbitmq`
     settings:
       # prefix URI used when inviting users to a conversation by link
       conversationCodeURI: https://account.example.com/conversation-join/ # change this
@@ -191,6 +196,20 @@ nginz:
     # using prod means mostly that some internal endpoints are not exposed
     env: prod
     external_env_domain: example.com
+    deeplink:
+      endpoints:
+        backendURL: "https://nginz-https.example.com"
+        backendWSURL: "https://nginz-ssl.example.com"
+        teamsURL: "https://teams.example.com"
+        accountsURL: "https://account.example.com"
+        blackListURL: "https://clientblacklist.wire.com/prod"
+        websiteURL: "https://wire.com"
+      title: "My Custom Wire Backend"
+      # Optional -- Uncomment these if you want to direct all of your mobile users to use the same proxy.
+      #apiProxy:
+        #host: "socks5.proxy.com"
+        #port: 1080
+        #needsAuthentication: true
   # For demo mode only, we don't need to keep websocket connections open on upgrade:
   drainTimeout: 10
   terminationGracePeriodSeconds: 30
@@ -268,7 +287,6 @@ team-settings:
   replicaCount: 1
 #  image:
 #    tag: some-tag (only override if you want a newer/different version than what is in the chart)
-
   config:
     externalUrls:
       backendRest: nginz-https.example.com
@@ -340,3 +358,8 @@ account-pages:
 legalhold:
   host: "legalhold.example.com"
   wireApiHost: "https://nginz-https.example.com"
+
+# Only needed when federation is enabled
+federator:
+  tls:
+    useSharedFederatorSecret: true

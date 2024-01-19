@@ -1,0 +1,7 @@
+  hosts: elasticsearch
+  serial: 1
+  any_errors_fatal: yes
+  tasks:
+    - include: tasks/elasticsearch_cluster_healthy.yml
+    - include: tasks/elasticsearch_down.yml
+    - include: tasks/elasticsearch_up.yml

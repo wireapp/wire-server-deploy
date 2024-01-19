@@ -1,0 +1,5 @@
+- name: Run repair - wait for up to 2h, poll every 10 sec
+  # This is copied from the crontab in cassandra/tasks/cron
+  shell: "flock -n /tmp/backup_repair_mutex /usr/local/bin/cassandra_repair_default | systemd-cat -t cassandra_repair/"
+  async: 7200
+  poll: 10

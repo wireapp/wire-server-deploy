@@ -4,9 +4,9 @@
     - file:
         path: /opt/assets
         state: directory
-    - name: Copy debs
+    - name: Copy debs jammy
       unarchive:
-        src: ../debs.tar
+        src: ../debs-jammy.tar
         dest: /opt/assets
       tags:
         - debs
@@ -47,8 +47,12 @@
         daemon-reload: yes
 
 - name: Set up offline repositories and remove online ones
-  hosts: k8s-cluster:etcd:restund:cassandra:elasticsearch:minio
+  hosts: k8s-cluster:etcd:restund:cassandra:elasticsearch:minio:rmq-cluster
   tasks:
+    - name: Bail if GPG is not installed or installable.
+      apt:
+        name: gpg
+        state: present
     - name: Remove /etc/apt/sources.list to remove all online debian package repos
       file:
         path: /etc/apt/sources.list
@@ -57,13 +61,35 @@
       file:
         path: /etc/apt/sources.list.d/
         state: absent
+
+#######################################################################
+# If your offline repo's debian key has expired, uncomment this block.
+#############
+# If you had to uncomment this block, comment out the docker-ce repo logic in
+# that starts at line 56 of
+# roles-external/kubespray/roles/container-engine/docker/tasks/main.yml
+# . comment out the 'ensure docker-ce repository public key is installed', and
+# the 'ensure docker-ce repository is enabled' blocks.
+#######################################################################
+#    - name: trust anything
+#      copy:
+#        dest: /etc/apt/apt.conf.d/90-baroque
+#        content: |
+#          Acquire::Check-Valid-Until false;
+#          Acquire::AllowInsecureRepositories true;
+#          Apt::Get::AllowUnauthenticated true;
+#          Acquire::AllowDowngradeToInsecureRepositories true;
+#############################
+# Otherwise, trust the repo.
+#############################
     - name: Register offline repo key
       apt_key:
         url: "{{ ubuntu_repo_gpgkey }}"
         state: present
+
     - name: Register offline repo
       apt_repository:
-        repo: "deb {{ ubuntu_repo_base_url  }} bionic main"
+        repo: "deb {{ ubuntu_repo_base_url }} {{ ansible_distribution_release }} main"
         state: present
     - name: Apt update
       apt:
