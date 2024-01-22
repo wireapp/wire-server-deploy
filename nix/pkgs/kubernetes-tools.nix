@@ -3,7 +3,7 @@
 
 buildGoModule rec {
   pname = "kubernetes";
-  version = "1.23.16";
+  version = "1.28.2";
 
   src = fetchFromGitHub {
     owner = "kubernetes";
