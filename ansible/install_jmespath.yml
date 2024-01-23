@@ -1,0 +1,10 @@
+# ansible role to install the .deb package from the jmespath_1_0_1_url url
+- name: Install jmespath-1.0.1 on Kubernets nodes
+  hosts: k8s-cluster
+  become: true
+  tasks:
+    - name: Debian - Download jmespath from url
+      get_url: url={{ jmespath_1_0_1_url }} dest=/tmp/jmespath_1_0_1.deb validate_certs=no
+
+    - name: Debian - Ensure jmespath is installed from downloaded package
+      apt: deb=/tmp/jmespath_1_0_1.deb

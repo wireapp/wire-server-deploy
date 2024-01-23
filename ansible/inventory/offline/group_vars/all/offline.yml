@@ -56,6 +56,8 @@ minio_client_artifact_url: "{{ binaries_url }}/mc.RELEASE.2023-07-07T05-25-51Z"
 minio_client_artifact_checksum: sha256:205a2dc5a49dc467f78228c43c7d368e376c6cc14492597a7c4fe195c291f074
 minio_client_upgrade_from_checksums : [ "sha256:59e184bd4e2c3a8a19837b0f0da3977bd4e301495a24e4a5d50e291728a1de51" ]
 
+jmespath_1_0_1_url: "{{ binaries_url }}/python3-jmespath_1.0.1-1_all.deb"
+
 kubeconfig_localhost: true
 #resolvconf_mode: none
 

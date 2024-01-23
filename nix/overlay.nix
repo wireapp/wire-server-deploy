@@ -10,7 +10,6 @@ super: {
     # for packet debugging and reporting.
     super.python3Packages.pyshark
     super.python3Packages.matplotlib
-    super.python3Packages.jmespath
   ]));
 
   # kubeadm and kubectl
