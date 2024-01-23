@@ -128,6 +128,9 @@ autoinstall:
       enp1s0:
         dhcp4: no
         addresses: [${VM_IP[i]}/24]
+        routes:
+          - to: default
+            via: 192.168.122.1
   storage:
     layout:
       sizing-policy: all
@@ -173,7 +176,7 @@ create_vm () {
 for (( i=0; i<${#VM_NAME[@]}; i++ )); do
   if sudo virsh list --all | grep -Fq "${VM_NAME[i]}"; then
     msg ""
-    msg "ATTENTION - VM ""${VM_NAME[i]}"" already exists, exiting ..."
+    msg "ATTENTION - VM ""${VM_NAME[i]}"" already exists"
     msg ""
     continue
   else

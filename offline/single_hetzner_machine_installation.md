@@ -27,6 +27,8 @@ Take a look at the "vars:" section in wire-server-deploy/ansible/hetzner-single-
     ssh_pubkey: "ssh-ed25519 AAAAC3Nz_CHANGEME_TE5AAAA_CHANGEME_cRpDu8vNelUH+changeme/OWB50Rk5GP jane.doe@example.com"
 ```
 
+The variable 'artifact_hash' above is the hash of your deployment artifact, given to you by Wire, or acquired by looking at the build job.
+
 ## Run ansible playbook for server bootstrapping
 
 Navigate to the ansible folder in wire-server-deploy and execute the playbook using valid vars as described above.
@@ -38,6 +40,8 @@ Please note and include the trailing comma when invoking the playbook. Playbook 
 
 The playbook will install baseline defaults (packages, firewall, SSH config, SSH key(s), user(s)), download & extract wire-server-deploy and download the specified ubuntu ISO.
 The playbook is written to be idempotent; eg. files won't be redownloaded as long as they already exist on the target host. Deploying a new version of "wire-server-deploy" is as easy as removing the folder from the target host and updating the "artifact_hash" variable in the playbook.
+
+At this point it's recommended to reboot the server once.
 
 ## Create VMs
 
