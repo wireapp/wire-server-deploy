@@ -6,7 +6,7 @@ Bootstrapping a single dedicated Hetzner server for virtual machine deployment a
 
 ## Use the hetzner robot console to create a new server.
 
-Select Ubuntu 22.04.2 on an ax101 dedicated server. If possible, please already provide a public key in the Hetzner console which can be used for ansible deployment.
+Select Ubuntu 22.04.2 on an ax101 dedicated server. Make sure you provide a public key in the Hetzner console which can be used for ansible deployment.
 
 If not using Hetzner, for reference, the specs of the ax101 server are:
 
