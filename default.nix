@@ -28,6 +28,7 @@ rec {
     paths = with pkgs; [
       pythonForAnsible
       ansible_2_15
+      jmespath
       apacheHttpd
       awscli2
       gnumake
