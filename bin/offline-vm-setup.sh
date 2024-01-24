@@ -26,13 +26,16 @@ For SSH access, it'll use two keys:
 The script will exit gracefully if VMs already exist.
 
 Default mode with no arguments creates seven libvirt VMs using cloud-init:
- * assethost - IP: 192.168.122.10
- * kubenode1 - IP: 192.168.122.21
- * kubenode2 - IP: 192.168.122.22
- * kubenode3 - IP: 192.168.122.23
- * ansnode1  - IP: 192.168.122.31
- * ansnode2  - IP: 192.168.122.32
- * ansnode3  - IP: 192.168.122.33
+
+ | hostname  | IP             | RAM      | VCPUs | disk space (thin provisioned) |
+  -------------------------------------------------------------------------------
+ | assethost | 192.168.122.10 | 4096 MiB | 2     | 100 GB                        |
+ | kubenode1 | 192.168.122.21 | 8192 MiB | 6     | 100 GB                        |
+ | kubenode2 | 192.168.122.22 | 8192 MiB | 6     | 100 GB                        |
+ | kubenode3 | 192.168.122.23 | 8192 MiB | 6     | 100 GB                        |
+ | ansnode1  | 192.168.122.31 | 8192 MiB | 4     | 350 GB                        |
+ | ansnode2  | 192.168.122.32 | 8192 MiB | 4     | 350 GB                        |
+ | ansnode3  | 192.168.122.33 | 8192 MiB | 4     | 350 GB                        |
 
 Available options:
 -h, --help          Print this help and exit
@@ -86,9 +89,15 @@ fi
 if [[ -n "${DEPLOY_SINGLE_VM-}" ]]; then
   VM_NAME=("$2")
   VM_IP=("192.168.122.$(shuf -i100-240 -n1)")
+  VM_VCPU=(4)
+  VM_RAM=(8192)
+  VM_DISK=(100)
 else
   VM_NAME=(assethost kubenode1 kubenode2 kubenode3 ansnode1 ansnode2 ansnode3)
   VM_IP=(192.168.122.10 192.168.122.21 192.168.122.22 192.168.122.23 192.168.122.31 192.168.122.32 192.168.122.33)
+  VM_VCPU=(2 6 6 6 4 4 4)
+  VM_RAM=(4096 8192 8192 8192 8192 8192 8192)
+  VM_DISK=(100 100 100 100 350 350 350)
 fi
 
 if [[ -f "$HOME"/.ssh/authorized_keys && -s "$HOME"/.ssh/authorized_keys ]]; then
@@ -162,9 +171,9 @@ create_vm () {
 
   sudo virt-install \
     --name "${VM_NAME[i]}" \
-    --ram 8192 \
-    --disk path=/var/lib/libvirt/images/"${VM_NAME[i]}".qcow2,size=100 \
-    --vcpus 4 \
+    --ram "${VM_RAM[i]}" \
+    --disk path=/var/lib/libvirt/images/"${VM_NAME[i]}".qcow2,size="${VM_DISK[i]}" \
+    --vcpus "${VM_VCPU[i]}" \
     --network bridge=virbr0 \
     --graphics none \
     --osinfo detect=on,require=off \
@@ -181,11 +190,23 @@ for (( i=0; i<${#VM_NAME[@]}; i++ )); do
     continue
   else
     set -u
-    msg "Creating VM ""${VM_NAME[i]}"" with IP ""${VM_IP[i]}"" ..."
-    create_vm "${VM_NAME[i]}"
-    msg "Writing IP and hostname to /etc/hosts ..."
-    echo """${VM_IP[i]}"" ""${VM_NAME[i]}""" | sudo tee -a /etc/hosts
     msg ""
+    msg "Creating VM ""${VM_NAME[i]}"" ..."
+    msg "IP:    ""${VM_IP[i]}"""
+    msg "VCPUs: ""${VM_VCPU[i]}"""
+    msg "RAM:   ""${VM_RAM[i]}"" MiB"
+    msg "DISK:  ""${VM_DISK[i]}"" GB"
+    create_vm "${VM_NAME[i]}"
+    if grep -Fq "${VM_NAME[i]}" /etc/hosts; then
+      msg ""
+      msg "Updating existing record in /etc/hosts for ""${VM_NAME[i]}"" with IP ""${VM_IP[i]}"""
+      sudo sed -i -e "/${VM_NAME[i]}/c\\${VM_IP[i]} ${VM_NAME[i]}" /etc/hosts
+    else
+      msg ""
+      msg "Writing IP and hostname to /etc/hosts ..."
+      echo """${VM_IP[i]}"" ""${VM_NAME[i]}""" | sudo tee -a /etc/hosts
+      msg ""
+    fi
     sleep 20
   fi
 done

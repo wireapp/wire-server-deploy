@@ -15,7 +15,8 @@ If not using Hetzner, for reference, the specs of the ax101 server are:
 - 2 x 3.84 TB NVMe SSD Datacenter Edition (software RAID 1)
 - 1 GBit/s port
 
-Please note the public IP of the newly provisioned server, as it's used for the ansible playbook run.
+The main public IPv4 address of the Hetzner server to connect to with SSH / ansible can be found in the "Server" tab in the Hetzner Robot console, next to the Server Name.
+As soon as the initial Hetzner server deployment is finished, we'll use Ansible to further provision the system.
 
 ## Adjust ansible playbook vars as needed
 
@@ -24,7 +25,7 @@ Take a look at the "vars:" section in wire-server-deploy/ansible/hetzner-single-
   vars:
     artifact_hash: a6e0929c9a5f4af09655c9433bb56a4858ec7574
     ubuntu_version: 22.04.3
-    ssh_pubkey: "ssh-ed25519 AAAAC3Nz_CHANGEME_TE5AAAA_CHANGEME_cRpDu8vNelUH+changeme/OWB50Rk5GP jane.doe@example.com"
+    ssh_pubkey: "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIDPTGTo1lTqd3Ym/75MRyQvj8xZINO/GI6FzfIadSe5c backend+hetzner-dedicated-operator@wire.com"
 ```
 
 The variable 'artifact_hash' above is the hash of your deployment artifact, given to you by Wire, or acquired by looking at the build job.

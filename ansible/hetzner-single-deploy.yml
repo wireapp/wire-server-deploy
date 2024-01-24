@@ -3,7 +3,7 @@
   vars:
     artifact_hash: cc69eb754b69b9fbe13784de8cf6e7f6ef0f7ff6
     ubuntu_version: 22.04.3
-    ssh_pubkey: "ssh-ed25519 AAAAC3Nz_CHANGEME_TE5AAAA_CHANGEME_cRpDu8vNelUH+changeme/OWB50Rk5GP jane.doe@example.com"
+    ssh_pubkey: "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIDPTGTo1lTqd3Ym/75MRyQvj8xZINO/GI6FzfIadSe5c backend+hetzner-dedicated-operator@wire.com"
   tasks:
   - name: apt update
     apt: update_cache=yes force_apt_get=yes

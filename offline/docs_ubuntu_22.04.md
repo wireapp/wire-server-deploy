@@ -4,21 +4,77 @@ We have a pipeline in  `wire-server-deploy` producing container images, static
 binaries, ansible playbooks, debian package sources and everything required to
 install Wire.
 
-## Preparations
+## Installing docker
 
-This section is a continuation of the demo cluster setup described in single_hetzner_machine_installation.md. At this point, the following prerequisites should be met:
+Note: If you are using a Hetzner machine, docker should already be installed (you can check with `docker version`) and you can skip this section.
 
- * dedicated server system with sufficient resources
- * deployment of ansible/hetzner-single-deploy.yml playbook
- * deployment of seven libvirt VMs using bin/offline-vm-setup.sh shell script
+On your machine (we call this the "admin host"), you need to have `docker`
+installed (or any other compatible container runtime really, even though
+instructions may need to be modified). See [how to install
+docker](https://docker.com) for instructions.
 
-If the above prerequisites can not be met for whatever reason, here's a short summary in order to continue:
+On ubuntu 22.04, connected to the internet:
 
- * dedicated system with root access running Ubuntu Server 22.04, Docker daemon, KVM/libvirt, reachable by public IP
- * internal libvirt subnet (eg. 192.168.122.0/24), which is not able to forward traffic to public internet
- * passwordless sudo user (eg. "demo") that is part of "docker" system group
- * download and extraction of wire artifact archive, download of Ubuntu 22.04 Server ISO
- * deployment of seven libvirt VMs as described in single_hetzner_machine_installation.md
+```
+sudo bash -c '
+set -eo pipefail;
+
+apt install docker.io;
+systemctl enable docker;
+systemctl start docker;
+'
+```
+
+Ensure the user you are using for the install has permission to run docker, or add 'sudo' to the docker commands below.
+
+### Ensuring you can run docker without sudo:
+
+Run the following command to add your user to the docker group:
+
+```
+sudo usermod -aG docker $USER
+```
+
+Note: Replace $USER with your actual username as needed.
+
+Log out and log back in to apply the changes. Alternatively, you can run the following command to activate the changes in your current shell session:
+
+```
+newgrp docker
+```
+
+Verify that you can run Docker without sudo by running the following command:
+
+```
+docker version
+```
+
+If you see the curent docker version and no error, it means that Docker is now configured to run without sudo.
+
+
+## Downloading and extracting the artifact
+
+Note: If you have followed the Ubuntu installation instructions (`single_hetzner_machine_installation.md`) before following this page, you already have a wire-server-deploy folder with an artifact extracted into it, and you can simply use that.
+
+Create a fresh workspace to download the artifacts:
+
+```
+$ cd ...  # you pick a good location!
+```
+Obtain the latest airgap artifact for wire-server-deploy. Please contact us to get it.
+
+Extract the above listed artifacts into your workspace:
+
+```
+$ wget https://s3-eu-west-1.amazonaws.com/public.wire.com/artifacts/wire-server-deploy-static-<HASH>.tgz
+$ tar xvzf wire-server-deploy-static-<HASH>.tgz
+```
+Where `<HASH>` above is the hash of your deployment artifact, given to you by Wire, or acquired by looking at the above build job.
+Extract this tarball.
+
+Make sure that the admin host can `ssh` into all the machines that you want to provision. Our docker container will use the `.ssh` folder and the `ssh-agent` of the user running the scripts.
+
+There's also a docker image containing the tooling inside this repo.
 
 ## Making tooling available in your environment.
 
@@ -169,7 +225,7 @@ You'll need at least 3 `kubenode`s.  3 of them should be added to the
 additional nodes should only be added to the `[kube-node]` group.
 
 ### Setting up databases and kubernetes to talk over the correct (private) interface
-If you are deploying wire on servers that are expected to use one interface to talk to the public, and a separate interface to talk amongst themselves, you will need to add "ip=" declarations for the private interface of each node. for instance, if the first kubenode was expected to talk to the world on 192.168.122.21/24, but speak to other wire services (kubernetes, databases, etc) on 192.168.0.2/24, you should edit its entry like the following:
+If you are deploying wire on servers that are expected to use one interface to talk to the public, and a separate interface to talk amongst themselves, you will need to add "ip=" declarations for the private interface of each node. for instance, if the first kubenode was expected to talk to the world on 192.168.122.21, but speak to other wire services (kubernetes, databases, etc) on 192.168.0.2, you should edit its entry like the following:
 ```
 kubenode1 ansible_host=192.168.122.21 ip=192.168.0.2
 ```
@@ -227,7 +283,7 @@ In order to automatically generate deeplinks, Edit the minio variables in `[mini
 
 ### Example hosts.ini
 
-Here is an example `hosts.ini` file that was used in a succesfull example deployment, for reference. It might not be exactly what is needed for your deployment, but it should work for the libvirt deployment described in single_hetzner_machine_installation.md:
+Here is an example `hosts.ini` file that was used in a succesfull example deployment, for reference. It might not be exactly what is needed for your deployment, but it should work for the KVM 7-machine deploy:
 
 ```
 [all]
@@ -241,9 +297,8 @@ ansnode3 ansible_host=192.168.122.33
 
 [all:vars]
 ansible_user = demo
-# uncomment below if using PWs instead of SSH keys
-#ansible_password = fai
-#ansible_become_password = fai
+ansible_password = fai
+ansible_become_password = fai
 
 [cassandra:vars]
 cassandra_network_interface = enp1s0
@@ -605,16 +660,26 @@ ufw allow in on $OUTBOUNDINTERFACE proto tcp to any port 80;
 "
 ```
 
+If using nftables, incoming traffic for ports 80 and 443 can be forwarded with these commands:
+```
+sudo bash -c "
+set -xeo pipefail;
+
+nft add rule nat PREROUTING iif $OUTBOUNDINTERFACE tcp dport 80 dnat to $KUBENODEIP:31772
+nft add rule nat PREROUTING iif $OUTBOUNDINTERFACE tcp dport 443 dnat to $KUBENODEIP:31773
+"
+```
+
 ###### Mirroring the public IP
 
-`cert-manager` has a requirement on being able to reach the kubernetes on its external IP. This might be problematic, because in security concious environments, the external IP might not owned by any of the kubernetes hosts.
+`cert-manager` has a requirement on being able to reach the kubernetes on its external IP. This might be problematic, because in security conscious environments, the external IP might not owned by any of the kubernetes hosts.
 
 On an IP Masquerading router, you can redirect outgoing traffic from your cluster, i.e. when the cluster asks to connect to your external IP, it will be routed to the kubernetes node inside the cluster.
 
 Make sure `PUBLICIPADDRESS` is exported (see above).
 
 ```
-export INTERNALINTERFACE=br0
+export INTERNALINTERFACE=virbr0
 sudo bash -c "
 set -xeo pipefail;
 
@@ -624,6 +689,17 @@ iptables -t nat -A PREROUTING -i $INTERNALINTERFACE -d $PUBLICIPADDRESS -p tcp -
 ```
 
 or add the corresponding rules to a config file (for UFW, /etc/ufw/before.rules) so they persist after rebooting.
+
+Using nftables:
+
+```
+sudo bash -c "
+set -xeo pipefail;
+
+nft add rule nat PREROUTING iif $INTERNALINTERFACE ip daddr $PUBLICIPADDRESS tcp dport 80 dnat to $KUBENODEIP:31772
+nft add rule nat PREROUTING iif $INTERNALINTERFACE ip daddr $PUBLICIPADDRESS tcp dport 443 dnat to $KUBENODEIP:31773
+"
+```
 
 ### Incoming Calling Traffic
 
@@ -647,6 +723,19 @@ iptables -t nat -A PREROUTING -d $PUBLICIPADDRESS -i $OUTBOUNDINTERFACE -p udp -
 ```
 
 or add the corresponding rules to a config file (for UFW, /etc/ufw/before.rules) so they persist after rebooting.
+
+Using nftables:
+
+```
+sudo bash -c "
+set -xeo pipefail;
+
+nft add rule nat PREROUTING iif $OUTBOUNDINTERFACE ip daddr $PUBLICIPADDRESS tcp dport 80 dnat to $RESTUND01IP:80
+nft add rule nat PREROUTING iif $OUTBOUNDINTERFACE ip daddr $PUBLICIPADDRESS udp dport 80 dnat to $RESTUND01IP:80
+nft add rule nat PREROUTING iif $OUTBOUNDINTERFACE ip daddr $PUBLICIPADDRESS udp dport 32768-60999 dnat to $RESTUND01IP:32768-60999
+"
+```
+
 
 ### Changing the TURN port
 
