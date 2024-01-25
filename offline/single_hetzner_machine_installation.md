@@ -23,7 +23,7 @@ As soon as the initial Hetzner server deployment is finished, we'll use Ansible 
 Take a look at the "vars:" section in wire-server-deploy/ansible/hetzner-single-deploy.yml and adjust vars as needed. Example:
 ```
   vars:
-    artifact_hash: a6e0929c9a5f4af09655c9433bb56a4858ec7574
+    artifact_hash: 452c8d41b519a3b41f22d93110cfbcf269697953
     ubuntu_version: 22.04.3
     ssh_pubkey: "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIDPTGTo1lTqd3Ym/75MRyQvj8xZINO/GI6FzfIadSe5c backend+hetzner-dedicated-operator@wire.com"
 ```
