@@ -30,7 +30,7 @@ function optionally_complain() {
 while IFS= read -r chart; do
   echo "Running helm template on chart ${chart}…" >&2
   # The image values are left as-is
-  helm template "$chart" \
+  helm template --debug "$chart" \
     --set secrets.zrestSecret=emptyString \
     --set federate.dtls.tls.key=emptyString \
     --set federate.dtls.tls.crt=emptyString \

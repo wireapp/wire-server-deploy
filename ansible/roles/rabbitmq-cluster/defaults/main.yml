@@ -1,0 +1,85 @@
+---
+# Whether you need to update hosts file or not, default false.
+# This is useful when you are using AWS EC2 instance, whose default hostname is too long and doesn't have a meaning,
+# like "ip-10-101-50-12.eu-central-1.compute.internal", but you want to use something shorter and meaningful as hostname.
+# In this case you need to set this variable to true in order to update the hosts file, and you need to define a variable named "rabbitmq_hosts",
+# with the following format:
+#
+# rabbitmq_hosts: |
+#   node-1-ip node-1-FQDN
+#   node-2-ip node-2-FQDN
+#
+# example:
+#
+# rabbitmq_hosts: |
+#   10.0.0.10 eu-central-1-mq-master   (whatever the command `hostname -f` outputs on this host)
+#   10.0.0.11 eu-central-1-mq-slave-01 (whatever the command `hostname -f` outputs on this host)
+#
+update_hosts: false
+
+rabbitmq_cluster_master: ansnode1
+rabbitmq_hosts: |
+  172.16.0.132 ansnode1
+  172.16.0.133 ansnode2
+  172.16.0.134 ansnode3
+
+# erlang
+# erlang_version: "1:20.2.2"
+# erlang_download_url: "http://packages.erlang-solutions.com/site/esl/esl-erlang/FLAVOUR_1_general/esl-erlang_20.2.2-1~ubuntu~xenial_amd64.deb"
+# erlang_pkg_name: "esl-erlang_20.2.2-1~ubuntu~xenial_amd64.deb"
+
+# cluster
+rabbitmq_create_cluster: yes
+rabbitmq_erlang_cookie: WKRBTTEQRYPTQOPUKSVF
+# https://www.rabbitmq.com/configure.html#define-environment-variables
+# When set to true this will cause RabbitMQ to use fully qualified names to identify nodes.
+# This may prove useful on EC2.
+# Note that it is not possible to switch between using short and long names without resetting the node.
+rabbitmq_use_longname: 'false'
+
+# log rotate
+rabbitmq_logrotate_period: weekly
+rabbitmq_logrotate_amount: 20
+
+# https://www.rabbitmq.com/install-debian.html
+# The main setting that needs adjustment is the max number of open files, also known as ulimit -n.
+# The default value on many operating systems is too low for a messaging broker (eg. 1024 on several Linux distributions).
+# We recommend allowing for at least 65536 file descriptors for user rabbitmq in production environments.
+# 4096 should be sufficient for most development workloads
+rabbitmq_ulimit_open_files: 65536
+
+# default ports
+rabbitmq_tls_port: 5671
+rabbitmq_amqp_port: 5672
+rabbitmq_epmd_port: 4369
+rabbitmq_node_port: 25672
+
+# plugins for HTTP API monitor
+rabbitmq_plugins:
+  - rabbitmq_management
+  # - rabbitmq_management_agent
+  # - rabbitmq_shovel
+  # - rabbitmq_shovel_management
+
+# TLS/SSL support
+enable_tls: false
+# if true, only tls is supported which means amqp default port 5672 is not open anymore
+tls_only: false
+
+tls_verify: "verify_none"
+tls_fail_if_no_peer_cert: false
+
+cacertfile: ""
+cacertfile_dest: "/etc/rabbitmq/cacert.pem"
+
+certfile: ""
+certfile_dest: "/etc/rabbitmq/cert.pem"
+
+keyfile: ""
+keyfile_dest: "/etc/rabbitmq/key.pem"
+
+# By default, queues within a RabbitMQ cluster are located on a single node (the node on which they were first declared).
+# Queues can optionally be made mirrored across all nodes, or exactly N number of nodes
+# By enabling this variable to true, there will be 1 queue master and 1 queue mirror.
+# If the node running the queue master becomes unavailable, the queue mirror will be automatically promoted to master.
+backup_queues_in_two_nodes: true

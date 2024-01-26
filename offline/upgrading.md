@@ -47,7 +47,7 @@ sudo docker image ls | grep -E "^quay.io/wire/sftd" | sed "s/.*[ ]*\([0-9a-f]\{1
 #### SFT Cluster
 If you are running a DMZ deployment, prune the old wire-server images and their dependencies on the SFT kubernetes hosts...
 ```
-sudo docker image ls | grep -E "^quay.io/wire/(team-settings|account|webapp|namshi-smtp)" | sed "s/.*[ ]*\([0-9a-f]\{12\}\).*/sudo docker image rm \1/"
+sudo docker image ls | grep -E "^quay.io/wire/(team-settings|account|webapp|ixdotai-smtp)" | sed "s/.*[ ]*\([0-9a-f]\{12\}\).*/sudo docker image rm \1/"
 sudo docker image ls | grep -E "^(bitnami/redis|airdock/fake-sqs|localstack/localstack)" | sed "s/.*[ ]*\([0-9a-f]\{12\}\).*/sudo docker image rm \1/"
 ```
 

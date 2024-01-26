@@ -30,6 +30,10 @@
 # minio2 ansible_host=XXXX
 # minio3 ansible_host=XXXX
 #
+# rabbitmq1 ansible_host=XXXX
+# rabbitmq2 ansible_host=XXXX
+# rabbitmq3 ansible_host=XXXX
+#
 # If you are in an offline environment, add an assethost here, from which
 # artifacts are served
 # assethost ansible_host=100.89.14.74 ip=10.114.0.9
@@ -57,7 +61,7 @@
 # execution is wrapped through a container, as the ssh-agent socket isn't
 # accessible there.
 
-## In the next three sections, Cassandra, elasticsearch, and MinIO need
+## In the next four sections, Cassandra, elasticsearch, rabbitmq, and MinIO need
 #  the name of the interface you want database services to run on
 #  specified. While this can be used to specify a private network just
 #  for databases, you must specify the interface name you want to run
@@ -82,6 +86,10 @@
 #domain = "example.com"
 #deeplink_title = "example.com environment"
 
+# Rabbitmq specific variables
+[rmq-cluster:vars]
+# rabbitmq_network_interface = enp1s0
+
 [restund:vars]
 # Uncomment if your public IP is not on the default gateway
 # restund_network_interface = enp1s0
@@ -92,8 +100,8 @@
 # restund_allowed_private_network_cidrs = a.b.c.d/24
 # If you install restund together with other services on the same machine
 # you need to restund_allowed_private_network_cidrs to allow these services
-# to communicate on the private network. E.g. If your private network is 172.16.0.1/24
-# restund_allowed_private_network_cidrs = 172.16.0/24
+# to communicate on the private network. E.g. If your private network is 172.16.0.0/24
+# restund_allowed_private_network_cidrs = '["172.16.0.0/24"]'
 
 # Explicitely specify the restund user id to be "root" to override the default of "997"
 restund_uid = root
@@ -172,3 +180,9 @@ elasticsearch
 # minio1
 # minio2
 # minio3
+
+# Add all rabbitmq nodes here
+[rmq-cluster]
+# rabbitmq1
+# rabbitmq2
+# rabbitmq3

@@ -1,10 +1,13 @@
-# How to install wire
+# How to install wire (offline cluster)
 
 We have a pipeline in  `wire-server-deploy` producing container images, static
 binaries, ansible playbooks, debian package sources and everything required to
 install Wire.
 
 ## Installing docker
+
+Note: If you are using a Hetzner machine, docker should already be installed (you can check with `docker version`) and you can skip this section.
+
 On your machine (we call this the "admin host"), you need to have `docker`
 installed (or any other compatible container runtime really, even though
 instructions may need to be modified). See [how to install
@@ -50,6 +53,9 @@ If you see the curent docker version and no error, it means that Docker is now c
 
 
 ## Downloading and extracting the artifact
+
+Note: If you have followed the Ubuntu installation instructions (`single_hetzner_machine_installation.md`) before following this page, you already have a wire-server-deploy folder with an artifact extracted into it, and you can simply use that.
+
 Create a fresh workspace to download the artifacts:
 
 ```
@@ -166,9 +172,9 @@ Edit the 'kubenode' entries, and the 'assethost' entry like normal.
 
 Instead of creating separate cassandra, elasticsearch, and minio entries, create three 'ansnode' entries, similar to the following:
 ```
-ansnode1 ansible_host=172.16.0.132
-ansnode2 ansible_host=172.16.0.133
-ansnode3 ansible_host=172.16.0.134
+ansnode1 ansible_host=192.168.122.31
+ansnode2 ansible_host=192.168.122.32
+ansnode3 ansible_host=192.168.122.33
 ```
 
 ##### Updating Group Membership
@@ -219,9 +225,9 @@ You'll need at least 3 `kubenode`s.  3 of them should be added to the
 additional nodes should only be added to the `[kube-node]` group.
 
 ### Setting up databases and kubernetes to talk over the correct (private) interface
-If you are deploying wire on servers that are expected to use one interface to talk to the public, and a separate interface to talk amongst themselves, you will need to add "ip=" declarations for the private interface of each node. for instance, if the first kubenode was expected to talk to the world on 172.16.0.129, but speak to other wire services (kubernetes, databases, etc) on 192.168.0.2, you should edit its entry like the following:
+If you are deploying wire on servers that are expected to use one interface to talk to the public, and a separate interface to talk amongst themselves, you will need to add "ip=" declarations for the private interface of each node. for instance, if the first kubenode was expected to talk to the world on 192.168.122.21, but speak to other wire services (kubernetes, databases, etc) on 192.168.0.2, you should edit its entry like the following:
 ```
-kubenode1 ansible_host=172.16.0.129 ip=192.168.0.2
+kubenode1 ansible_host=192.168.122.21 ip=192.168.0.2
 ```
 Do this for all of the instances.
 
@@ -274,19 +280,20 @@ the `wire.com/external-ip` annotation to the public IP of the node.
 
 In order to automatically generate deeplinks, Edit the minio variables in `[minio:vars]` (`prefix`, `domain` and `deeplink_title`) by replacing `example.com` with your own domain.
 
+
 ### Example hosts.ini
 
 Here is an example `hosts.ini` file that was used in a succesfull example deployment, for reference. It might not be exactly what is needed for your deployment, but it should work for the KVM 7-machine deploy:
 
 ```
 [all]
-kubenode1 ansible_host=172.16.0.129
-kubenode2 ansible_host=172.16.0.130
-kubenode3 ansible_host=172.16.0.131
-ansnode1 ansible_host=172.16.0.132
-ansnode2 ansible_host=172.16.0.133
-ansnode3 ansible_host=172.16.0.134
-assethost ansible_host=172.16.0.128
+assethost ansible_host=192.168.122.10
+kubenode1 ansible_host=192.168.122.21
+kubenode2 ansible_host=192.168.122.22
+kubenode3 ansible_host=192.168.122.23
+ansnode1 ansible_host=192.168.122.31
+ansnode2 ansible_host=192.168.122.32
+ansnode3 ansible_host=192.168.122.33
 
 [all:vars]
 ansible_user = demo
@@ -307,7 +314,10 @@ deeplink_title = "wire demo environment, example.com"
 
 [restund:vars]
 restund_uid = root
-restund_allowed_private_network_cidrs=172.16.0.1/24
+restund_allowed_private_network_cidrs='["192.168.122.0/24"]'
+
+[rmq-cluster:vars]
+rabbitmq_network_interface = enp1s0
 
 [kube-master]
 kubenode1
@@ -356,6 +366,12 @@ elasticsearch
 ansnode1
 ansnode2
 ansnode3
+
+[rmq-cluster]
+ansnode1
+ansnode2
+ansnode3
+
 ```
 
 ## Generating secrets
@@ -368,14 +384,6 @@ Minio and restund services have shared secrets with the `wire-server` helm chart
 
 This should generate two files. `./ansible/inventory/group_vars/all/secrets.yaml` and `values/wire-server/secrets.yaml`.
 
-## Deploying Kubernetes, Restund and stateful services
-
-In order to deploy all the services run:
-```
-d ./bin/offline-cluster.sh
-```
-In case any of the steps in this script fail, see the notes in the comments that accompany each step.
-Comment out steps that have already completed when re-running the scripts.
 
 ### WORKAROUND: old debian key
 All of our debian archives up to version 4.12.0 used a now-outdated debian repository signature. Some modifications are required to be able to install everything properly.
@@ -394,8 +402,55 @@ ansible/roles-external/kubespray/roles/container-engine/docker/tasks/main.yml
 * comment out the next block -name: ensure docker-ce repository is enabled
 
 Now you are ready to start deploying services.
+
 #### WORKAROUND: dependency
+
 Some ubuntu systems do not have GPG by default. Wire assumes this is already present. Ensure you have gpg installed on all of your nodes before continuing to the next step.
+
+You can check if gpg is installed by running:
+
+```
+gpg --version
+```
+
+Which should produce an output ressembling:
+
+```
+demo@assethost:~$ gpg --version
+gpg (GnuPG) 2.2.27
+libgcrypt 1.9.4
+Copyright (C) 2021 Free Software Foundation, Inc.
+License GNU GPL-3.0-or-later <https://gnu.org/licenses/gpl.html>
+This is free software: you are free to change and redistribute it.
+There is NO WARRANTY, to the extent permitted by law.
+
+Home: /home/demo/.gnupg
+Supported algorithms:
+Pubkey: RSA, ELG, DSA, ECDH, ECDSA, EDDSA
+Cipher: IDEA, 3DES, CAST5, BLOWFISH, AES, AES192, AES256, TWOFISH,
+        CAMELLIA128, CAMELLIA192, CAMELLIA256
+Hash: SHA1, RIPEMD160, SHA256, SHA384, SHA512, SHA224
+Compression: Uncompressed, ZIP, ZLIB, BZIP2
+```
+
+## Deploying Kubernetes, Restund and stateful services
+
+In order to deploy all mentioned services, run:
+```
+d ./bin/offline-cluster.sh
+```
+In case any of the steps in this script fail, see the notes in the comments that accompany each step.
+Comment out steps that have already completed when re-running the scripts.
+
+#### Ensuring Kubernetes is healthy.
+
+Ensure the cluster comes up healthy. The container also contains `kubectl`, so check the node status:
+
+```
+d kubectl get nodes -owide
+```
+They should all report ready.
+
 
 #### Troubleshooting restund
 
@@ -415,17 +470,9 @@ Then find the right number and delete it
 ufw delete <right number>;
 ```
 
-#### Ensuring kubernetes is healthy.
 
-Ensure the cluster comes up healthy. The container also contains kubectl, so check the node status:
+and enable the ports for colocated services running on these nodes:
 
-```
-d kubectl get nodes -owide
-```
-They should all report ready.
-
-
-#### Enable the ports colocated services run on:
 ```
 sudo bash -c '
 set -eo pipefail;
@@ -443,38 +490,26 @@ ufw allow 9200/tcp;
 # minio
 ufw allow 9000/tcp;
 ufw allow 9092/tcp;
+
+#rabbitmq
+ufw allow 5671/tcp;
+ufw allow 5672/tcp;
+ufw allow 4369/tcp;
+ufw allow 25672/tcp;
 '
 ```
 
-Afterwards, run the following playbook to create helm values that tell our helm charts
-what the IP addresses of cassandra, elasticsearch and minio are.
+### Preparation for Federation
+For enabling Federation, we need to have RabbitMQ in place. Please follow the instructions in [offline/federation_preparation.md](./federation_preparation.md) for setting up RabbitMQ.
 
-```
-d ansible-playbook -i ./ansible/inventory/offline/hosts.ini ansible/helm_external.yml
-```
-
-#### Installing Rabbitmq
-
-To install the rabbitmq,
-First copy the value and secret file:
-```
-cp ./values/rabbitmq/prod-values.example.yaml ./values/rabbitmq/values.yaml
-cp ./values/rabbitmq/prod-secrets.example.yaml ./values/rabbitmq/secrets.yaml
-```
-
-Now, update the `./values/rabbitmq/values.yaml` and `./values/rabbitmq/secrets.yaml` with correct values as per needed.
-
-Deploy the rabbitmq helm chart -
-```
-d helm upgrade --install rabbitmq ./charts/rabbitmq --values ./values/rabbitmq/values.yaml --values ./values/rabbitmq/secrets.yaml
-```
+After that continue to the next steps below.
 
 ### Deploying Wire
 
 It's now time to deploy the helm charts on top of kubernetes, installing the Wire platform.
 
 #### Finding the stateful services
-First.  Make kubernetes aware of where alll the external stateful services are by running:
+First, setup interfaces from Kubernetes to external services by running:
 
 ```
 d helm install cassandra-external ./charts/cassandra-external --values ./values/cassandra-external/values.yaml
@@ -625,16 +660,26 @@ ufw allow in on $OUTBOUNDINTERFACE proto tcp to any port 80;
 "
 ```
 
+If using nftables, incoming traffic for ports 80 and 443 can be forwarded with these commands:
+```
+sudo bash -c "
+set -xeo pipefail;
+
+nft add rule nat PREROUTING iif $OUTBOUNDINTERFACE tcp dport 80 dnat to $KUBENODEIP:31772
+nft add rule nat PREROUTING iif $OUTBOUNDINTERFACE tcp dport 443 dnat to $KUBENODEIP:31773
+"
+```
+
 ###### Mirroring the public IP
 
-`cert-manager` has a requirement on being able to reach the kubernetes on its external IP. This might be problematic, because in security concious environments, the external IP might not owned by any of the kubernetes hosts.
+`cert-manager` has a requirement on being able to reach the kubernetes on its external IP. This might be problematic, because in security conscious environments, the external IP might not owned by any of the kubernetes hosts.
 
 On an IP Masquerading router, you can redirect outgoing traffic from your cluster, i.e. when the cluster asks to connect to your external IP, it will be routed to the kubernetes node inside the cluster.
 
 Make sure `PUBLICIPADDRESS` is exported (see above).
 
 ```
-export INTERNALINTERFACE=br0
+export INTERNALINTERFACE=virbr0
 sudo bash -c "
 set -xeo pipefail;
 
@@ -644,6 +689,17 @@ iptables -t nat -A PREROUTING -i $INTERNALINTERFACE -d $PUBLICIPADDRESS -p tcp -
 ```
 
 or add the corresponding rules to a config file (for UFW, /etc/ufw/before.rules) so they persist after rebooting.
+
+Using nftables:
+
+```
+sudo bash -c "
+set -xeo pipefail;
+
+nft add rule nat PREROUTING iif $INTERNALINTERFACE ip daddr $PUBLICIPADDRESS tcp dport 80 dnat to $KUBENODEIP:31772
+nft add rule nat PREROUTING iif $INTERNALINTERFACE ip daddr $PUBLICIPADDRESS tcp dport 443 dnat to $KUBENODEIP:31773
+"
+```
 
 ### Incoming Calling Traffic
 
@@ -667,6 +723,19 @@ iptables -t nat -A PREROUTING -d $PUBLICIPADDRESS -i $OUTBOUNDINTERFACE -p udp -
 ```
 
 or add the corresponding rules to a config file (for UFW, /etc/ufw/before.rules) so they persist after rebooting.
+
+Using nftables:
+
+```
+sudo bash -c "
+set -xeo pipefail;
+
+nft add rule nat PREROUTING iif $OUTBOUNDINTERFACE ip daddr $PUBLICIPADDRESS tcp dport 80 dnat to $RESTUND01IP:80
+nft add rule nat PREROUTING iif $OUTBOUNDINTERFACE ip daddr $PUBLICIPADDRESS udp dport 80 dnat to $RESTUND01IP:80
+nft add rule nat PREROUTING iif $OUTBOUNDINTERFACE ip daddr $PUBLICIPADDRESS udp dport 32768-60999 dnat to $RESTUND01IP:32768-60999
+"
+```
+
 
 ### Changing the TURN port
 

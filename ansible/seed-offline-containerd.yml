@@ -1,5 +1,6 @@
 - name: Seed system containers
-  hosts: k8s-cluster:etcd
+  # Add etcd group here if you are deploying separate worker and master clusters
+  hosts: k8s-cluster
   tags: system-containers
   tasks:
     - name: load containers

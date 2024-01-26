@@ -4,7 +4,7 @@ tags:
   account-pages: true
   team-settings: true # enable if you need team-settings. Requires a pullSecret
   legalhold: false # Enable if you need legalhold
-  federator: false # Enable to use federation
+  federation: false # Enable to use federation
 
 cassandra-migrations:
 #  images:
@@ -27,6 +27,8 @@ brig:
       host: cassandra-external
     elasticsearch:
       host: elasticsearch-external
+    rabbitmq:
+      host: rabbitmq # name of the rabbitmq service, either `rabbitmq-external` or `rabbitmq`
     useSES: false
     # Set to false if you want to hand out DynamoDB to store prekeys
     randomPrekeys: true
@@ -138,6 +140,8 @@ galley:
   config:
     cassandra:
       host: cassandra-external
+    rabbitmq:
+      host: rabbitmq # name of the rabbitmq service, either `rabbitmq-external` or `rabbitmq`
     settings:
       # prefix URI used when inviting users to a conversation by link
       conversationCodeURI: https://account.example.com/conversation-join/ # change this

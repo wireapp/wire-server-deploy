@@ -43,7 +43,7 @@ rec {
       moreutils
       skopeo
       sops
-      terraform_0_13
+      terraform_1
       yq
       create-container-dump
       list-helm-containers
