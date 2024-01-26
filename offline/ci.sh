@@ -97,6 +97,7 @@ charts=(
 calling_charts=(
   wire/sftd
   wire/restund
+  wire/coturn
 )
 
 # wire_version=$(helm show chart wire/wire-server | yq -r .version)
