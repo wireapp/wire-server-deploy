@@ -52,7 +52,7 @@ ansible-playbook -i $INVENTORY_FILE $ANSIBLE_DIR/install_jmespath.yml -v
 # Run the rest of kubespray. This should bootstrap a kubernetes cluster successfully:
 ansible-playbook -i $INVENTORY_FILE $ANSIBLE_DIR/kubernetes.yml --skip-tags bootstrap-os,preinstall,container-engine,multus
 
-#./bin/fix_default_router.sh
+./bin/fix_default_router.sh
 
 # Deploy all other services which don't run in kubernetes.
 ansible-playbook -i $INVENTORY_FILE $ANSIBLE_DIR/cassandra.yml
