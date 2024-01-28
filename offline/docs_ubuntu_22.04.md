@@ -90,14 +90,14 @@ E.g.:
 
 ```
 $ d ansible --version
-ansible [core 2.11.6] 
+ansible [core 2.15.5]
   config file = /wire-server-deploy/ansible/ansible.cfg
   configured module search path = ['/root/.ansible/plugins/modules', '/usr/share/ansible/plugins/modules']
-  ansible python module location = /nix/store/yqrs358szd85iapw6xpsh1q852f5r8wd-python3.9-ansible-core-2.11.6/lib/python3.9/site-packages/ansible
+  ansible python module location = /nix/store/p9kbf1v35r184hwx9p4snny1clkbrvp7-python3.11-ansible-core-2.15.5/lib/python3.11/site-packages/ansible
   ansible collection location = /root/.ansible/collections:/usr/share/ansible/collections
-  executable location = /nix/store/yqrs358szd85iapw6xpsh1q852f5r8wd-python3.9-ansible-core-2.11.6/bin/ansible
-  python version = 3.9.10 (main, Jan 13 2022, 23:32:03) [GCC 10.3.0]
-  jinja version = 3.0.3
+  executable location = /nix/store/p9kbf1v35r184hwx9p4snny1clkbrvp7-python3.11-ansible-core-2.15.5/bin/ansible
+  python version = 3.11.6 (main, Oct  2 2023, 13:45:54) [GCC 12.3.0] (/nix/store/qp5zys77biz7imbk6yy85q5pdv7qk84j-python3-3.11.6/bin/python3.11)
+  jinja version = 3.1.2
   libyaml = True
 
 
