@@ -46,9 +46,6 @@ ansible-playbook -i $INVENTORY_FILE $ANSIBLE_DIR/seed-offline-containerd.yml
 # Install NTP
 ansible-playbook -i $INVENTORY_FILE $ANSIBLE_DIR/sync_time.yml -v
 
-# Install jmespath
-ansible-playbook -i $INVENTORY_FILE $ANSIBLE_DIR/install_jmespath.yml -v
-
 # Run the rest of kubespray. This should bootstrap a kubernetes cluster successfully:
 ansible-playbook -i $INVENTORY_FILE $ANSIBLE_DIR/kubernetes.yml --skip-tags bootstrap-os,preinstall,container-engine,multus
 

@@ -103,11 +103,6 @@ let
       url = "https://artifacts.elastic.co/downloads/elasticsearch/elasticsearch-oss-${elasticsearch_version}.deb";
       sha256 = "sha256:0s7m49rvg5n6mrjzg5snbg3092mq0n661qs9209phjzka1lqajvb";
     };
-    jmespath = fetchurl rec {
-      passthru.url = url;
-      url = "http://ftp.de.debian.org/debian/pool/main/p/python-jmespath/python3-jmespath_1.0.1-1_all.deb";
-      sha256 = "2b4351db7f00a8e4840140572b337a5005f897eaf6c7d9c929991e85a152d388";
-    };
   };
 in
 runCommandNoCC "wire-binaries"
