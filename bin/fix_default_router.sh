@@ -21,5 +21,6 @@ echo "Updating the configMap coredns -n kube-system"
 kubectl get configmap coredns -n kube-system --output yaml > coredns_config.yaml
 sed -i coredns_config.yaml -e '/^[ ]*forward.*/{N;N;N;d;}' -e "s/^\([ ]*\)cache/\1forward . 127.0.0.53:9999 {\n\1  max_fails 0\n\1}\n\1cache/"
 kubectl apply -f coredns_config.yaml
-
+echo "Printing kubectl get configmap coredns -n kube-system --output yaml after updating"
+kubectl get configmap coredns -n kube-system --output yaml
 sleep 10
