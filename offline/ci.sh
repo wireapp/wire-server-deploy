@@ -96,7 +96,6 @@ charts=(
 # Note: if you want to ship something from the develop branch, replace 'wire' with 'wire-develop' below.
 calling_charts=(
   wire/sftd
-  wire/coturn
   wire/restund
 )
 
