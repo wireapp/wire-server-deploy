@@ -16,8 +16,7 @@ Usage: $(basename "${BASH_SOURCE[0]}") [-h] [-v] [--deploy-vm vmname]
 Non-interactive script for deploying the Wire standard set of Ubuntu Server VMs on a single dedicated server using libvirt.
 Script will create VMs with a sudo user "demo" and PW auth disabled.
 
-All VMs are created with static IPs from default libvirt subnet. IPs and hostnames are appended to /etc/hosts for convenience.
-For single VM deployment ("--deploy-vm" flag) a static IP is chosen randomly from .100 to .240 range. (Yes, this might collide if deploying many individual VMs.)
+All VMs are created with static IPs from default libvirt subnet (192.168.122.0/24). IPs and hostnames are appended to /etc/hosts for convenience.
 
 For SSH access, it'll use two keys:
  * The first key found in ~/.ssh/authorized_keys. Will ask interactively if no key can be found (and accept any input, so be careful).
@@ -36,6 +35,15 @@ Default mode with no arguments creates seven libvirt VMs using cloud-init:
  | ansnode1  | 192.168.122.31 | 8192 MiB | 4     | 350 GB                        |
  | ansnode2  | 192.168.122.32 | 8192 MiB | 4     | 350 GB                        |
  | ansnode3  | 192.168.122.33 | 8192 MiB | 4     | 350 GB                        |
+
+For single VM deployment ("--deploy-vm" flag) a static IP is chosen randomly from .100 to .240 range.
+If an IP from that range already exists in /etc/hosts, the shuffle will reiterate until an unused IP is found in order to avoid collisions.
+
+Single VM deployment will create a VM with the following resoures (can be editied in the script prior execution):
+
+ | hostname             | IP                        | RAM      | VCPUs | disk space (thin provisioned) |
+  ------------------------------------------------------------------------------------------------------
+ | (argument from flag) | (range from .100 to .240) | 8192 MiB | 4     | 100 GB                        |
 
 Available options:
 -h, --help          Print this help and exit
@@ -92,6 +100,9 @@ if [[ -n "${DEPLOY_SINGLE_VM-}" ]]; then
   VM_VCPU=(4)
   VM_RAM=(8192)
   VM_DISK=(100)
+  while grep -Fq "${VM_IP[0]}" /etc/hosts; do
+    VM_IP=("192.168.122.$(shuf -i100-240 -n1)")
+  done
 else
   VM_NAME=(assethost kubenode1 kubenode2 kubenode3 ansnode1 ansnode2 ansnode3)
   VM_IP=(192.168.122.10 192.168.122.21 192.168.122.22 192.168.122.23 192.168.122.31 192.168.122.32 192.168.122.33)
