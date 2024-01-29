@@ -68,6 +68,7 @@ quay.io/calico/apiserver:v3.26.4
 quay.io/jetstack/cert-manager-controller:v1.13.2
 quay.io/jetstack/cert-manager-cainjector:v1.13.2
 quay.io/jetstack/cert-manager-webhook:v1.13.2
+quay.io/jetstack/cert-manager-ctl:v1.13.2
 quay.io/metallb/speaker:v0.13.9
 quay.io/metallb/controller:v0.13.9
 docker.io/library/nginx:1.25.2-alpine

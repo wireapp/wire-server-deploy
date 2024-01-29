@@ -791,8 +791,8 @@ d kubectl cordon kubenode1
 
 first, download cert manager, and place it in the appropriate location:
 ```
-wget https://charts.jetstack.io/charts/cert-manager-v1.9.1.tgz
-tar -C ./charts -xvzf cert-manager-v1.9.1.tgz
+wget https://charts.jetstack.io/charts/cert-manager-v1.13.2.tgz
+tar -C ./charts -xvzf cert-manager-v1.13.2.tgz
 ```
 
 In case `values.yaml` and `secrets.yaml` doesn't exist yet in `./values/nginx-ingress-services` create them from templates
