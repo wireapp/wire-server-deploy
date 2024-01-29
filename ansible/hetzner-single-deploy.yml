@@ -30,6 +30,7 @@
       - wget
       - whois
       - docker.io
+      - dnsmasq
       - qemu
       - qemu-kvm
       - qemu-utils
@@ -78,6 +79,13 @@
       dest: /etc/sudoers
       regexp: '^%sudo'
       line: "%sudo ALL=(ALL) NOPASSWD:ALL"
+  - name: set proper ACLs for libvirt and demo user
+    acl:
+      path: /home/demo
+      entity: libvirt-qemu
+      etype: user
+      permissions: x
+      state: present
   - name: deploy sshd config
     copy:
       src: files/hetzner_server_sshd_config
@@ -117,6 +125,8 @@
       - name: check if wire-server-deploy folder contents exist
         stat:
           path: /home/demo/wire-server-deploy/containers-helm.tar
+          get_checksum: False
+          get_md5: False
         register: artifact_folder_content_check
       - name: unpack wire-server-deploy archive
         unarchive:
@@ -127,6 +137,8 @@
       - name: check if ubuntu iso exists
         stat:
           path: /home/demo/wire-server-deploy/ubuntu.iso
+          get_checksum: False
+          get_md5: False
         register: iso_file_check
       - name: download ubuntu {{ ubuntu_version }} iso
         shell:
