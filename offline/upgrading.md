@@ -47,7 +47,7 @@ sudo docker image ls | grep -E "^quay.io/wire/sftd" | sed "s/.*[ ]*\([0-9a-f]\{1
 #### SFT Cluster
 If you are running a DMZ deployment, prune the old wire-server images and their dependencies on the SFT kubernetes hosts...
 ```
-sudo docker image ls | grep -E "^quay.io/wire/(team-settings|account|webapp|namshi-smtp)" | sed "s/.*[ ]*\([0-9a-f]\{12\}\).*/sudo docker image rm \1/"
+sudo docker image ls | grep -E "^quay.io/wire/(team-settings|account|webapp|ixdotai-smtp)" | sed "s/.*[ ]*\([0-9a-f]\{12\}\).*/sudo docker image rm \1/"
 sudo docker image ls | grep -E "^(bitnami/redis|airdock/fake-sqs|localstack/localstack)" | sed "s/.*[ ]*\([0-9a-f]\{12\}\).*/sudo docker image rm \1/"
 ```
 
@@ -117,7 +117,7 @@ The following is a list of important artifacts which are provided:
  - `containers-other.tar`
    These are other container images, not deployed inside k8s. Currently, only
    contains Restund.
- - `debs.tar`
+ - `debs-*.tar`
    This acts as a self-contained dump of all packages required to install
    kubespray, as well as all other packages that are installed by ansible
    playbooks on nodes that don't run kubernetes.
@@ -325,11 +325,11 @@ If there are no differences, copy these files into your new tree.
 cp ../<OLD_PACKAGE_DIR>/values/nginx-ingress-services/values.yaml values/nginx-ingress-services/values.yaml
 ```
 
-#### Upgrading nginx-ingress-controller
+#### Upgrading ingress-nginx-controller
 
 Re-deploy your ingress, to direct traffic into your cluster with the new version of nginx.
 ```
-d helm upgrade nginx-ingress-controller ./charts/nginx-ingress-controller/
+d helm upgrade ingress-nginx-controller ./charts/ingress-nginx-controller/
 ```
 
 ### Upgrading Wire itsself

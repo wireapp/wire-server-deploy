@@ -1,0 +1,162 @@
+- hosts: all
+  become: true
+  vars:
+    artifact_hash: 452c8d41b519a3b41f22d93110cfbcf269697953
+    ubuntu_version: 22.04.3
+    ssh_pubkey: "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIDPTGTo1lTqd3Ym/75MRyQvj8xZINO/GI6FzfIadSe5c backend+hetzner-dedicated-operator@wire.com"
+  tasks:
+  - name: apt update
+    apt: update_cache=yes force_apt_get=yes
+  - name: apt upgrade
+    apt: upgrade=dist force_apt_get=yes
+  - name: install default packages
+    apt:
+      install_recommends: no
+      pkg:
+      - aptitude
+      - apt-transport-https
+      - bind9-host
+      - curl
+      - debian-goodies
+      - dnsutils
+      - git
+      - less
+      - lsof
+      - net-tools
+      - rsyslog
+      - screen
+      - sudo
+      - vim
+      - wget
+      - whois
+      - docker.io
+      - dnsmasq
+      - qemu
+      - qemu-kvm
+      - qemu-utils
+      - libvirt-clients
+      - libvirt-daemon-system
+      - virtinst
+      - bridge-utils
+  - name: generate german locales
+    locale_gen:
+      name: de_DE.UTF-8
+      state: present
+  - name: generate us locales
+    locale_gen:
+      name: en_US.UTF-8
+      state: present
+  - name: set system language
+    lineinfile:
+      path: /etc/default/locale
+      regexp: '^#?LANG='
+      line: 'LANG="en_US.UTF-8"'
+  - name: set keyboard layout
+    lineinfile:
+      path: /etc/default/keyboard
+      regexp: '^#?XKBLAYOUT='
+      line: 'XKBLAYOUT="us"'
+  - name: set keyboard variant
+    lineinfile:
+      path: /etc/default/keyboard
+      regexp: '^#?XKVARIANT='
+      line: 'XKBVARIANT="de"'
+  - name: add default user accounts
+    user:
+      name: demo
+      groups: sudo, kvm, docker
+      uid: 900
+      state: present
+      shell: /bin/bash
+      password: "!"
+  - name: Adding SSH pubkey for user demo
+    authorized_key:
+      user: demo
+      state: present
+      key: "{{ ssh_pubkey }}"
+  - name: passwordless sudo
+    lineinfile:
+      dest: /etc/sudoers
+      regexp: '^%sudo'
+      line: "%sudo ALL=(ALL) NOPASSWD:ALL"
+  - name: set proper ACLs for libvirt and demo user
+    acl:
+      path: /home/demo
+      entity: libvirt-qemu
+      etype: user
+      permissions: x
+      state: present
+  - name: deploy sshd config
+    copy:
+      src: files/hetzner_server_sshd_config
+      dest: /etc/ssh/sshd_config
+      mode: 0644
+      owner: root
+      group: root
+    notify: sshd | restart
+  - name: deploy /etc/nftables.conf
+    copy:
+      src: files/hetzner_server_nftables.conf
+      dest: /etc/nftables.conf
+      mode: 0750
+      owner: root
+      group: root
+    notify: nftables | restart
+  - name: deploy wire artifact, ubuntu iso
+    block:
+      - name: create wire-server-deploy directory for demo user
+        file:
+          path: /home/demo/wire-server-deploy
+          state: directory
+          owner: demo
+          group: demo
+          mode: 0775
+      - name: check if wire-server-deploy-static-{{ artifact_hash }}.tgz exists
+        stat:
+          path: /home/demo/wire-server-deploy-static-{{ artifact_hash }}.tgz
+          get_checksum: False
+          get_md5: False
+        register: artifact_archive_file_check
+      - name: download wire-server-deploy archive
+        shell:
+          cmd: curl -fsSLo /home/demo/wire-server-deploy-static-{{ artifact_hash }}.tgz https://s3-eu-west-1.amazonaws.com/public.wire.com/artifacts/wire-server-deploy-static-{{ artifact_hash }}.tgz
+          creates: /home/demo/wire-server-deploy-static-{{ artifact_hash }}.tgz
+        when: not artifact_archive_file_check.stat.exists
+      - name: check if wire-server-deploy folder contents exist
+        stat:
+          path: /home/demo/wire-server-deploy/containers-helm.tar
+          get_checksum: False
+          get_md5: False
+        register: artifact_folder_content_check
+      - name: unpack wire-server-deploy archive
+        unarchive:
+          src: /home/demo/wire-server-deploy-static-{{ artifact_hash }}.tgz
+          dest: /home/demo/wire-server-deploy
+          remote_src: yes
+        when: not artifact_folder_content_check.stat.exists
+      - name: check if ubuntu iso exists
+        stat:
+          path: /home/demo/wire-server-deploy/ubuntu.iso
+          get_checksum: False
+          get_md5: False
+        register: iso_file_check
+      - name: download ubuntu {{ ubuntu_version }} iso
+        shell:
+          cmd: curl -fsSLo /home/demo/wire-server-deploy/ubuntu.iso https://releases.ubuntu.com/jammy/ubuntu-{{ ubuntu_version }}-live-server-amd64.iso
+          creates: /home/demo/wire-server-deploy/ubuntu.iso
+        when: not iso_file_check.stat.exists
+      - name: set permissions inside wire-server-deploy via shell command (fails when using ansible directive)
+        shell:
+          cmd: sudo chmod -R 0775 /home/demo/wire-server-deploy; sudo chown -R demo:demo /home/demo
+    become_user: demo
+
+  handlers:
+  - name: sshd | restart
+    service:
+      name: sshd
+      state: restarted
+  - name: nftables | restart
+    service:
+      name: nftables
+      enabled: true
+      state: restarted

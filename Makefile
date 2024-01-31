@@ -100,6 +100,8 @@ renew-certs: check-inputs-ansible
 		--private-key ${ENV_DIR}/operator-ssh.dec \
 		-vv
 	mv $(ANSIBLE_DIR)/kubeconfig.new ${ENV_DIR}/
+	echo "Now run:"
+	echo "cd ${ENV_DIR} && sops -e kubeconfig.new > kubeconfig && mv kubeconfig.new kubeconfig.dec && git add kubeconfig"
 
 # Usage: ENV=bella make create-inventory fetch-kubeconfig
 # Then encrypt the new kubeconfig with sops

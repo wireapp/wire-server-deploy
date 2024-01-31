@@ -9,22 +9,20 @@ jobs:
     name: Prepare offline package
     # Useful to skip expensive CI when writing docs
     if: "!contains(github.event.head_commit.message, 'skip ci')"
-    runs-on: ubuntu-latest
+    runs-on:
+      group: wire-server-deploy
     steps:
-      - name: "HACK: Free up 24GB of disk space"
-        run: sudo rm -rf /usr/share/dotnet
       - uses: actions/checkout@v2
         with:
           submodules: true
-      - uses: cachix/install-nix-action@v14.1
-      - uses: cachix/cachix-action@v10
+      - uses: cachix/install-nix-action@v20
+      - uses: cachix/cachix-action@v12
         with:
           name: wire-server
           signingKey: "${{ secrets.CACHIX_SIGNING_KEY }}"
 
       - name: Install nix environment
         run: nix-env -f default.nix -iA env
-
 
       - name: Run offline build
         run: ./offline/ci.sh
