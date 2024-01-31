@@ -148,6 +148,8 @@ autoinstall:
       enp1s0:
         dhcp4: no
         addresses: [${VM_IP[i]}/24]
+        nameservers:
+          addresses: ['192.168.122.1']
         routes:
           - to: default
             via: 192.168.122.1
