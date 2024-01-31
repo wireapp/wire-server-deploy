@@ -78,19 +78,20 @@ charts=(
   # seem to exist on quay.io
   # TODO: uncomment once its dependencies are pinned!
   # local-path-provisioner
-  wire/ingress-nginx-controller
-  wire/nginx-ingress-services
-  wire/reaper
-  wire/cassandra-external
-  wire/databases-ephemeral
-  wire/demo-smtp
-  wire/elasticsearch-external
-  wire/fake-aws
-  wire/minio-external
-  wire/wire-server
-  wire/rabbitmq
-  wire/rabbitmq-external
-  # wire/federator
+  wire-develop/nginx-ingress-controller
+  wire-develop/nginx-ingress-services
+  wire-develop/reaper
+  wire-develop/cassandra-external
+  wire-develop/databases-ephemeral
+  wire-develop/demo-smtp
+  wire-develop/elasticsearch-external
+  wire-develop/fake-aws
+  wire-develop/minio-external
+  wire-develop/wire-server
+  # not shipped with M3.5.3
+  # wire-develop/rabbitmq
+  # wire-develop/rabbitmq-external
+  # wire-develop/federator
 )
 
 # Note: if you want to ship something from the develop branch, replace 'wire' with 'wire-develop' below.
@@ -100,23 +101,21 @@ calling_charts=(
 )
 
 # wire_version=$(helm show chart wire/wire-server | yq -r .version)
-wire_version="4.39.0"
+wire_version="4.9.36-hotfix.24"
 
 # same as prior.. in most cases.
-wire_calling_version="4.39.0"
+wire_calling_version="4.9.36-hotfix.24"
 
 # TODO: Awaiting some fixes in wire-server regarding tagless images
 HELM_HOME=$(mktemp -d)
 export HELM_HOME
 
-helm repo add wire https://s3-eu-west-1.amazonaws.com/public.wire.com/charts
-# Note: If you need to deploy something from the develop branch, uncomment the next line.
-#helm repo add wire-develop https://s3-eu-west-1.amazonaws.com/public.wire.com/charts-develop
-helm repo update
+#helm repo add wire https://s3-eu-west-1.amazonaws.com/public.wire.com/charts
+#helm repo update
 
 # Note: If you need to deploy something from the develop branch, uncomment the next two lines.
-#helm repo add wire-develop https://s3-eu-west-1.amazonaws.com/public.wire.com/charts-develop
-#helm repo update
+helm repo add wire-develop https://s3-eu-west-1.amazonaws.com/public.wire.com/charts-develop
+helm repo update
 
 # Download zauth; as it's needed to generate certificates
 echo "quay.io/wire/zauth:$wire_version" | create-container-dump containers-adminhost
@@ -155,6 +154,6 @@ tar cf containers-helm.tar containers-helm
 
 echo "docker_ubuntu_repo_repokey: '${fingerprint}'" > ansible/inventory/offline/group_vars/all/key.yml
 
-tar czf assets.tgz debs-jammy.tar binaries.tar containers-adminhost containers-helm.tar containers-other.tar containers-system.tar ansible charts values bin
+tar czf assets.tgz debs.tar binaries.tar containers-adminhost containers-helm.tar containers-other.tar containers-system.tar ansible charts values bin
 
 echo "Done"
