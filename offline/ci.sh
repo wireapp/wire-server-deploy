@@ -133,12 +133,10 @@ done
 ####### DIRTY HACKS GO HERE #######
 ###################################
 
-# old hack? missin an undo step?
-#sed -i -Ee 's/useSharedFederatorSecret: false/useSharedFederatorSecret: true/' "$(pwd)"/charts/wire-server/charts/federator/values.yaml
-
 # Patch wire-server values.yaml to include federator
 # This is needed to bundle it's image.
 sed -i -Ee 's/federation: false/federation: true/' "$(pwd)"/values/wire-server/prod-values.example.yaml
+sed -i -Ee 's/useSharedFederatorSecret: false/useSharedFederatorSecret: true/' "$(pwd)"/charts/wire-server/charts/federator/values.yaml
 
 # Get and dump required containers from Helm charts. Omit integration test
 # containers (e.g. `quay.io_wire_galley-integration_4.22.0`.)
@@ -147,6 +145,7 @@ for chartPath in "$(pwd)"/charts/*; do
 done | list-helm-containers | grep -v "\-integration:" | create-container-dump containers-helm
 
 # Undo changes on wire-server values.yaml
+sed -i -Ee 's/useSharedFederatorSecret: true/useSharedFederatorSecret: false/' "$(pwd)"/charts/wire-server/charts/federator/values.yaml
 sed -i -Ee 's/federation: true/federation: false/' "$(pwd)"/values/wire-server/prod-values.example.yaml
 
 patch-ingress-controller-images "$(pwd)"
