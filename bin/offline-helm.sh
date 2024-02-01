@@ -12,7 +12,7 @@ helm upgrade --install --wait rabbitmq ./charts/rabbitmq --values ./values/rabbi
 helm upgrade --install --wait databases-ephemeral ./charts/databases-ephemeral --values ./values/databases-ephemeral/prod-values.example.yaml
 helm upgrade --install --wait reaper ./charts/reaper
 kubectl get pods --all-namespaces -o wide
-helm upgrade --install --wait --timeout=15m0s wire-server ./charts/wire-server --values ./values/wire-server/prod-values.example.yaml --values ./values/wire-server/secrets.yaml
+helm upgrade --install --timeout=15m0s wire-server ./charts/wire-server --values ./values/wire-server/prod-values.example.yaml --values ./values/wire-server/secrets.yaml
 echo "Printing all pods status"
 kubectl get pods --all-namespaces -o wide
 helm upgrade --install --wait ingress-nginx-controller ./charts/ingress-nginx-controller --values ./values/ingress-nginx-controller/hetzner-ci.example.yaml
