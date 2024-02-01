@@ -38,6 +38,8 @@
       - whois
       - docker.io
       - dnsmasq
+      - telnet
+      - python3-lxml
       - qemu
       - qemu-kvm
       - qemu-utils
@@ -101,6 +103,37 @@
       owner: root
       group: root
     notify: sshd | restart
+  - name: collect libvirt network facts
+    virt_net:
+      command: facts
+  - name: remove & stop libvirt default network
+    when: ansible_libvirt_networks["default"] is defined
+    virt_net:
+      command: "{{ item }}"
+      name: default2
+    with_items:
+      - destroy
+      - undefine
+  - name: create new libvirt network with good defaults
+    when: ansible_libvirt_networks["wirebox"] is not defined
+    virt_net:
+      name: wirebox
+      command: define
+      xml: '{{ lookup("file", "files/hetzner_server_libvirt_default_net.xml") }}'
+  - name: collect libvirt network facts after defining new network
+    virt_net:
+      command: facts
+  - name: start new default libvirt net
+    when: ansible_libvirt_networks["wirebox"].state != 'active'
+    virt_net:
+      name: wirebox
+      command: create
+      autostart: yes
+  - name: start new default libvirt net on boot
+    when: ansible_libvirt_networks["wirebox"].autostart != 'yes'
+    virt_net:
+      name: wirebox
+      autostart: yes
   - name: deploy /etc/nftables.conf
     copy:
       src: files/hetzner_server_nftables.conf
