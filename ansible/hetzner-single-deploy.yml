@@ -114,7 +114,7 @@
     with_items:
       - destroy
       - undefine
-  - name: create new libvirt network with good defaults
+  - name: create new libvirt network with appropriate defaults (no iptables hook)
     when: ansible_libvirt_networks["wirebox"] is not defined
     virt_net:
       name: wirebox
@@ -134,6 +134,10 @@
     virt_net:
       name: wirebox
       autostart: yes
+  - name: check if nftables.conf is deployed already
+    stat:
+      path: /root/.nftables_deployed
+    register: nft_deployed
   - name: deploy /etc/nftables.conf
     copy:
       src: files/hetzner_server_nftables.conf
@@ -142,6 +146,13 @@
       owner: root
       group: root
     notify: nftables | restart
+    when: not nft_deployed.stat.exists
+  - name: add local file flag after nftables deployment
+    file:
+      path: /root/.nftables_deployed
+      state: touch
+      modification_time: preserve
+      access_time: preserve
   - name: deploy wire artifact, ubuntu iso
     block:
       - name: create wire-server-deploy directory for demo user
