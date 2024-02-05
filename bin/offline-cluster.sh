@@ -49,7 +49,10 @@ ansible-playbook -i $INVENTORY_FILE $ANSIBLE_DIR/sync_time.yml -v
 # Run the rest of kubespray. This should bootstrap a kubernetes cluster successfully:
 ansible-playbook -i $INVENTORY_FILE $ANSIBLE_DIR/kubernetes.yml --skip-tags bootstrap-os,preinstall,container-engine,multus
 
-./bin/fix_default_router.sh
+# run fix_default_router.sh only when needed to fix the nodelocaldns and coredns config issues.
+if [ "$1" == "disable_fix_default_router" ]; then
+  ./bin/fix_default_router.sh
+fi
 
 # Deploy all other services which don't run in kubernetes.
 ansible-playbook -i $INVENTORY_FILE $ANSIBLE_DIR/cassandra.yml
