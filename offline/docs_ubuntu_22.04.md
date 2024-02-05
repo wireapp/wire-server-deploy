@@ -619,10 +619,10 @@ export PUBLICIPADDRESS=<your.ip.address.here>
 
 1. Find out on which node `ingress-nginx` is running:
 ```
+d kubectl get pods -l app.kubernetes.io/name=ingress-nginx -o=custom-columns=NAME:.metadata.name,NODE:.spec.nodeName,IP:.status.hostIP
 d kubectl get pods -l app.kubernetes.io/name=ingress-nginx -o=custom-columns=NAME:.metadata.name,NODE:.spec.nodeName
 ```
-3. Get the IP of this node by running `ip address` on that node
-4. Use that IP for $KUBENODEIP
+2. Use that IP for $KUBENODEIP
 
 ```
 export KUBENODEIP=<your.kubernetes.node.ip>
@@ -660,13 +660,20 @@ ufw allow in on $OUTBOUNDINTERFACE proto tcp to any port 80;
 "
 ```
 
-If using nftables, incoming traffic for ports 80 and 443 can be forwarded with these commands:
+For wire-in-a-box deployments based on single_hetzner_machine_installation.md, an nftables based firewall including a predefined ruleset should already exist. By default, the predefined ruleset forwards ingress traffic to kubenode1 (192.168.122.21).
+To check on which node the ingress controller has been deployed, get the node IP via kubectl:
 ```
-sudo bash -c "
-set -xeo pipefail;
+d kubectl get pods -l app.kubernetes.io/name=ingress-nginx -o=custom-columns=NAME:.metadata.name,NODE:.spec.nodeName,IP:.status.hostIP
+```
 
-nft add rule nat PREROUTING iif $OUTBOUNDINTERFACE tcp dport 80 dnat to $KUBENODEIP:31772
-nft add rule nat PREROUTING iif $OUTBOUNDINTERFACE tcp dport 443 dnat to $KUBENODEIP:31773
+If the IP returns 192.168.122.21, you can skip the next few steps.
+Otherwise, execute these commands:
+```
+export KUBENODEIP=<your.kubernetes.node.ip>
+
+sudo sed -i -e "s/192.168.122.21/$KUBENODEIP/g" /etc/nftables.conf
+
+sudo systemctl restart nftables
 "
 ```
 
@@ -690,16 +697,6 @@ iptables -t nat -A PREROUTING -i $INTERNALINTERFACE -d $PUBLICIPADDRESS -p tcp -
 
 or add the corresponding rules to a config file (for UFW, /etc/ufw/before.rules) so they persist after rebooting.
 
-Using nftables:
-
-```
-sudo bash -c "
-set -xeo pipefail;
-
-nft add rule nat PREROUTING iif $INTERNALINTERFACE ip daddr $PUBLICIPADDRESS tcp dport 80 dnat to $KUBENODEIP:31772
-nft add rule nat PREROUTING iif $INTERNALINTERFACE ip daddr $PUBLICIPADDRESS tcp dport 443 dnat to $KUBENODEIP:31773
-"
-```
 
 ### Incoming Calling Traffic
 
@@ -724,16 +721,11 @@ iptables -t nat -A PREROUTING -d $PUBLICIPADDRESS -i $OUTBOUNDINTERFACE -p udp -
 
 or add the corresponding rules to a config file (for UFW, /etc/ufw/before.rules) so they persist after rebooting.
 
-Using nftables:
+Using nftables, the firewall deployed via single_hetzner_machine_installation.md should already DNAT restund traffic to the correct node (ansnode1, 192.168.122.31).
+To verify, check the NAT table status:
 
 ```
-sudo bash -c "
-set -xeo pipefail;
-
-nft add rule nat PREROUTING iif $OUTBOUNDINTERFACE ip daddr $PUBLICIPADDRESS tcp dport 80 dnat to $RESTUND01IP:80
-nft add rule nat PREROUTING iif $OUTBOUNDINTERFACE ip daddr $PUBLICIPADDRESS udp dport 80 dnat to $RESTUND01IP:80
-nft add rule nat PREROUTING iif $OUTBOUNDINTERFACE ip daddr $PUBLICIPADDRESS udp dport 32768-60999 dnat to $RESTUND01IP:32768-60999
-"
+sudo nft list table nat
 ```
 
 
