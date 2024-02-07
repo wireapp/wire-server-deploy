@@ -287,8 +287,6 @@ webapp:
   capabilities:
     drop:
       - ALL
-  runAsUser: 1000
-  runAsGroup: 1000
   seccompProfile:
     type: RuntimeDefault
 
@@ -335,8 +333,6 @@ team-settings:
   capabilities:
     drop:
       - ALL
-  runAsUser: 1000
-  runAsGroup: 1000
   seccompProfile:
     type: RuntimeDefault
 
@@ -379,8 +375,6 @@ account-pages:
   capabilities:
     drop:
       - ALL
-  runAsUser: 1000
-  runAsGroup: 1000
   seccompProfile:
     type: RuntimeDefault
 
