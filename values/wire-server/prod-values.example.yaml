@@ -282,14 +282,6 @@ webapp:
     CSP_EXTRA_STYLE_SRC: "https://*.example.com"
     CSP_EXTRA_WORKER_SRC: "https://*.example.com"
 
-  podSecurityContext:
-  allowPrivilegeEscalation: false
-  capabilities:
-    drop:
-      - ALL
-  seccompProfile:
-    type: RuntimeDefault
-
 # NOTE: Only relevant if you want team-settings
 team-settings:
   replicaCount: 1
@@ -328,14 +320,6 @@ team-settings:
     CSP_EXTRA_WORKER_SRC: "https://*.example.com"
     IS_SELF_HOSTED: "true"
 
-  podSecurityContext:
-  allowPrivilegeEscalation: false
-  capabilities:
-    drop:
-      - ALL
-  seccompProfile:
-    type: RuntimeDefault
-
 # NOTE: Only relevant if you want account-pages
 account-pages:
   replicaCount: 1
@@ -369,14 +353,6 @@ account-pages:
     CSP_EXTRA_STYLE_SRC: "https://*.example.com"
     CSP_EXTRA_WORKER_SRC: "https://*.example.com"
     IS_SELF_HOSTED: "true"
-
-  podSecurityContext:
-  allowPrivilegeEscalation: false
-  capabilities:
-    drop:
-      - ALL
-  seccompProfile:
-    type: RuntimeDefault
 
 # Only needed when legalhold is enabled
 legalhold:
