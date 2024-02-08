@@ -32,7 +32,7 @@ rm -r binaries
 
 function list-system-containers() {
 # These are manually updated with values from
-# https://github.com/kubernetes-sigs/kubespray/blob/release-2.15/roles/download/defaults/main.yml
+# https://github.com/kubernetes-sigs/kubespray/blob/release-2.24/roles/kubespray-defaults/defaults/main/download.yml
 # TODO: Automate this. This is very wieldy :)
   cat <<EOF
 registry.k8s.io/pause:3.9

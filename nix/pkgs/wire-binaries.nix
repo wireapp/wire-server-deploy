@@ -6,7 +6,7 @@ let
   image_arch = "amd64";
 
   # These values are manually kept in sync with:
-  # https://github.com/kubernetes-sigs/kubespray/blob/release-2.20/roles/download/defaults/main.yml
+  # https://github.com/kubernetes-sigs/kubespray/blob/release-2.24/roles/kubespray-defaults/defaults/main/download.yml
   # TODO: Find a better process. Automate this!
   kube_version = "v1.28.2";
   etcd_version = "v3.5.9";
