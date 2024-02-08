@@ -1,6 +1,6 @@
 # More settings can be found here: https://github.com/bitnami/charts/tree/main/bitnami/rabbitmq
 rabbitmq:
-  # some Kernel in your VMs does not support modifying ulimit via containers, setting this to empty won't override default ulimit  
+  # some Kernel versions does not support modifying ulimit via containers, setting this to empty won't override default ulimit
   ulimitNofiles: ""
   persistence:
     size: 10Gi
