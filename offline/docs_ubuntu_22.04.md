@@ -849,7 +849,7 @@ With the nftables based Hetzner Server setup, enable this rule and restart nftab
 ```
 vi /et/nftables.conf
 
-iifname virbr0 oifname $INF_WAN counter accept comment "allow internet for internal VMs, disable this rule only for letsencrypt cert issue"
+iifname virbr0 oifname $INF_WAN counter accept comment "allow internet for internal VMs, enable this rule only for letsencrypt cert issue"
 
 sudo systemctl restart nftables
 ```
