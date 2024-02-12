@@ -620,7 +620,6 @@ export PUBLICIPADDRESS=<your.ip.address.here>
 1. Find out on which node `ingress-nginx` is running:
 ```
 d kubectl get pods -l app.kubernetes.io/name=ingress-nginx -o=custom-columns=NAME:.metadata.name,NODE:.spec.nodeName,IP:.status.hostIP
-d kubectl get pods -l app.kubernetes.io/name=ingress-nginx -o=custom-columns=NAME:.metadata.name,NODE:.spec.nodeName
 ```
 2. Use that IP for $KUBENODEIP
 
@@ -660,8 +659,22 @@ ufw allow in on $OUTBOUNDINTERFACE proto tcp to any port 80;
 "
 ```
 
-For wire-in-a-box deployments based on single_hetzner_machine_installation.md, an nftables based firewall including a predefined ruleset should already exist. By default, the predefined ruleset forwards ingress traffic to kubenode1 (192.168.122.21).
-To check on which node the ingress controller has been deployed, get the node IP via kubectl:
+For wire-in-a-box deployments based on single_hetzner_machine_installation.md, an nftables based firewall including a predefined ruleset should already exist.
+
+The default interface name of a wire-in-box Hetzner host is not deterministic. In order to update the nftables firewall with the correct host interface name, execute the following:
+
+```
+sudo bash -c "
+set -eo pipefail;
+
+INF_WAN=`ip r | grep default | awk '{print $5}'`
+echo $INF_WAN
+sed -i -e "s/enp41s0/$INF_WAN/g" /etc/nftables.conf
+systemctl restart nftables
+"
+```
+
+By default, the predefined ruleset forwards ingress traffic to kubenode1 (192.168.122.21). To check on which node the ingress controller has been deployed, get the node IP via kubectl:
 ```
 d kubectl get pods -l app.kubernetes.io/name=ingress-nginx -o=custom-columns=NAME:.metadata.name,NODE:.spec.nodeName,IP:.status.hostIP
 ```
@@ -830,10 +843,24 @@ Then run:
 d helm upgrade --install nginx-ingress-services charts/nginx-ingress-services -f values/nginx-ingress-services/values.yaml 
 ```
 
+In order to acquire SSL certificates from letsencrypt, outgoing traffic needs from VMs needs to be enabled temporarily.
+With the nftables based Hetzner Server setup, enable this rule and restart nftables:
+
+```
+vi /et/nftables.conf
+
+iifname virbr0 oifname $INF_WAN counter accept comment "allow internet for internal VMs, disable this rule only for letsencrypt cert issue"
+
+sudo systemctl restart nftables
+```
+
 Watch the output of the following command to know how your request is going:
 ```
 d kubectl get certificate
 ```
+
+Once the cert has been issued successfully, the rule above can be disabled again, disallowing outgoing traffic from VMs. Restart the firewall after edits.
+
 
 #### Old wire-server releases
 
