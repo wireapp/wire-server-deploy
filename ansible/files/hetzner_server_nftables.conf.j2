@@ -3,7 +3,7 @@
 flush ruleset
 
 define KUBENODEIP = 192.168.122.21
-define INF_WAN    = enp41s0
+define INF_WAN    = {{ ansible_default_ipv4.interface }}
 
 table inet filter {
   chain block_definitions {

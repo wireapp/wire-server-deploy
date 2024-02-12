@@ -660,20 +660,6 @@ ufw allow in on $OUTBOUNDINTERFACE proto tcp to any port 80;
 ```
 
 For wire-in-a-box deployments based on single_hetzner_machine_installation.md, an nftables based firewall including a predefined ruleset should already exist.
-
-The default interface name of a wire-in-box Hetzner host is not deterministic. In order to update the nftables firewall with the correct host interface name, execute the following:
-
-```
-sudo bash -c "
-set -eo pipefail;
-
-INF_WAN=`ip r | grep default | awk '{print $5}'`
-echo $INF_WAN
-sed -i -e "s/enp41s0/$INF_WAN/g" /etc/nftables.conf
-systemctl restart nftables
-"
-```
-
 By default, the predefined ruleset forwards ingress traffic to kubenode1 (192.168.122.21). To check on which node the ingress controller has been deployed, get the node IP via kubectl:
 ```
 d kubectl get pods -l app.kubernetes.io/name=ingress-nginx -o=custom-columns=NAME:.metadata.name,NODE:.spec.nodeName,IP:.status.hostIP

@@ -139,8 +139,8 @@
       path: /root/.nftables_deployed
     register: nft_deployed
   - name: deploy /etc/nftables.conf
-    copy:
-      src: files/hetzner_server_nftables.conf
+    template:
+      src: files/hetzner_server_nftables.conf.j2
       dest: /etc/nftables.conf
       mode: 0750
       owner: root
