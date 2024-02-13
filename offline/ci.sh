@@ -116,7 +116,7 @@ calling_charts=(
 )
 
 # wire_version=$(helm show chart wire/wire-server | yq -r .version)
-wire_version="4.40.0"
+wire_version="4.41.0"
 
 # same as prior.. in most cases.
 wire_calling_version="4.40.0"
