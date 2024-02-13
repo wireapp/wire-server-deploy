@@ -32,32 +32,47 @@ rm -r binaries
 
 function list-system-containers() {
 # These are manually updated with values from
-# https://github.com/kubernetes-sigs/kubespray/blob/release-2.15/roles/download/defaults/main.yml
+# https://github.com/kubernetes-sigs/kubespray/blob/release-2.24/roles/kubespray-defaults/defaults/main/download.yml
 # TODO: Automate this. This is very wieldy :)
   cat <<EOF
-registry.k8s.io/kube-apiserver:v1.23.7
-registry.k8s.io/kube-controller-manager:v1.23.7
-registry.k8s.io/kube-scheduler:v1.23.7
-registry.k8s.io/kube-proxy:v1.23.7
-quay.io/coreos/etcd:v3.5.3
-quay.io/calico/node:v3.23.3
-quay.io/calico/cni:v3.23.3
-quay.io/calico/kube-controllers:v3.23.3
-quay.io/calico/pod2daemon-flexvol:v3.23.3
-quay.io/calico/typha:v3.23.3
-quay.io/calico/apiserver:v3.23.3
-quay.io/jetstack/cert-manager-webhook:v1.9.1
-quay.io/jetstack/cert-manager-controller:v1.9.1
-quay.io/jetstack/cert-manager-cainjector:v1.9.1
-quay.io/jetstack/cert-manager-ctl:v1.9.1
-docker.io/library/nginx:1.23.0-alpine
-registry.k8s.io/ingress-nginx/controller:v1.2.1
-registry.k8s.io/coredns:1.7.0
-registry.k8s.io/coredns/coredns:v1.8.6
-registry.k8s.io/dns/k8s-dns-node-cache:1.21.1
-registry.k8s.io/cpa/cluster-proportional-autoscaler-amd64:1.8.5
-registry.k8s.io/pause:3.6
-docker.io/kubernetesui/dashboard-amd64:v2.6.1
+registry.k8s.io/pause:3.9
+registry.k8s.io/coredns/coredns:v1.10.1
+registry.k8s.io/dns/k8s-dns-node-cache:1.22.28
+registry.k8s.io/cpa/cluster-proportional-autoscaler:v1.8.8
+registry.k8s.io/metrics-server/metrics-server:v0.6.4
+registry.k8s.io/sig-storage/local-volume-provisioner:v2.5.0
+registry.k8s.io/ingress-nginx/controller:v1.9.4
+registry.k8s.io/sig-storage/csi-attacher:v3.3.0
+registry.k8s.io/sig-storage/csi-provisioner:v3.0.0
+registry.k8s.io/sig-storage/csi-snapshotter:v5.0.0
+registry.k8s.io/sig-storage/snapshot-controller:v4.2.1
+registry.k8s.io/sig-storage/csi-resizer:v1.3.0
+registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.4.0
+registry.k8s.io/kube-apiserver:v1.28.2
+registry.k8s.io/kube-controller-manager:v1.28.2
+registry.k8s.io/kube-scheduler:v1.28.2
+registry.k8s.io/kube-proxy:v1.28.2
+quay.io/coreos/etcd:v3.5.9
+quay.io/cilium/cilium:v1.13.4
+quay.io/cilium/operator:v1.13.4
+quay.io/cilium/hubble-relay:v1.13.4
+quay.io/cilium/certgen:v0.1.8
+quay.io/cilium/hubble-ui:v0.11.0
+quay.io/cilium/hubble-ui-backend:v0.11.0
+quay.io/calico/node:v3.26.4
+quay.io/calico/cni:v3.26.4
+quay.io/calico/pod2daemon-flexvol:v3.26.4
+quay.io/calico/kube-controllers:v3.26.4
+quay.io/calico/typha:v3.26.4
+quay.io/calico/apiserver:v3.26.4
+quay.io/jetstack/cert-manager-controller:v1.13.2
+quay.io/jetstack/cert-manager-cainjector:v1.13.2
+quay.io/jetstack/cert-manager-webhook:v1.13.2
+quay.io/jetstack/cert-manager-ctl:v1.13.2
+quay.io/metallb/speaker:v0.13.9
+quay.io/metallb/controller:v0.13.9
+docker.io/library/nginx:1.25.2-alpine
+docker.io/kubernetesui/dashboard:v2.7.0
 docker.io/kubernetesui/metrics-scraper:v1.0.8
 EOF
 }
@@ -104,7 +119,7 @@ calling_charts=(
 wire_version="4.40.0"
 
 # same as prior.. in most cases.
-wire_calling_version="4.39.0"
+wire_calling_version="4.40.0"
 
 # TODO: Awaiting some fixes in wire-server regarding tagless images
 HELM_HOME=$(mktemp -d)

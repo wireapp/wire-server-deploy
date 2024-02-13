@@ -6,16 +6,16 @@ let
   image_arch = "amd64";
 
   # These values are manually kept in sync with:
-  # https://github.com/kubernetes-sigs/kubespray/blob/release-2.20/roles/download/defaults/main.yml
+  # https://github.com/kubernetes-sigs/kubespray/blob/release-2.24/roles/kubespray-defaults/defaults/main/download.yml
   # TODO: Find a better process. Automate this!
-  kube_version = "v1.23.7";
-  etcd_version = "v3.5.3";
-  cni_version = "v1.1.1";
-  calico_version = "v3.23.3";
-  crictl_version = "v1.23.0";
-  runc_version = "v1.1.4";
-  nerdctl_version = "0.22.2";
-  containerd_version = "1.6.8";
+  kube_version = "v1.28.2";
+  etcd_version = "v3.5.9";
+  cni_version = "v1.3.0";
+  calico_version = "v3.26.4";
+  crictl_version = "v1.28.0";
+  runc_version = "v1.1.10";
+  nerdctl_version = "1.7.1";
+  containerd_version = "1.7.11";
 
 
   # Note: If you change a version, replace the checksum with zeros, run « nix-build --no-out-link -A pkgs.wire-binaries », it will complain and give you the right checksum, use that checksum in this file, run it again and it should build without complaining.
@@ -26,57 +26,57 @@ let
     kubelet = fetchurl rec {
       passthru.url = url;
       url = "https://storage.googleapis.com/kubernetes-release/release/${ kube_version }/bin/linux/${ image_arch }/kubelet";
-      sha256 = "518f67200e853253ed6424488d6148476144b6b796ec7c6160cff15769b3e12a";
+      sha256 = "17edb866636f14eceaad58c56eab12af7ab3be3c78400aff9680635d927f1185";
     };
     kubeadm = fetchurl rec {
       passthru.url = url;
       url = "https://storage.googleapis.com/kubernetes-release/release/${ kube_version }/bin/linux/${ image_arch }/kubeadm";
-      sha256 = "d7d863213eeb4791cdbd7c5fd398cf0cc2ef1547b3a74de8285786040f75efd2";
+      sha256 = "6a4808230661c69431143db2e200ea2d021c7f1b1085e6353583075471310d00";
     };
     kubectl = fetchurl rec {
       passthru.url = url;
       url = "https://storage.googleapis.com/kubernetes-release/release/${ kube_version }/bin/linux/${ image_arch }/kubectl";
-      sha256 = "b4c27ad52812ebf3164db927af1a01e503be3fb9dc5ffa058c9281d67c76f66e";
+      sha256 = "c922440b043e5de1afa3c1382f8c663a25f055978cbc6e8423493ec157579ec5";
     };
     crictl = fetchurl rec {
       passthru.url = url;
       url = "https://github.com/kubernetes-sigs/cri-tools/releases/download/${ crictl_version }/crictl-${ crictl_version }-linux-${ image_arch }.tar.gz";
-      sha256 = "b754f83c80acdc75f93aba191ff269da6be45d0fc2d3f4079704e7d1424f1ca8";
+      sha256 = "8dc78774f7cbeaf787994d386eec663f0a3cf24de1ea4893598096cb39ef2508";
     };
     containerd = fetchurl rec {
       passthru.url = url;
       url = "https://github.com/containerd/containerd/releases/download/v${ containerd_version }/containerd-${ containerd_version }-linux-${ image_arch }.tar.gz";
-      sha256 = "3a1322c18ee5ff4b9bd5af6b7b30c923a3eab8af1df05554f530ef8e2b24ac5e";
+      sha256 = "d66161d54546fad502fd50a13fcb79efff033fcd895adc9c44762680dcde4e69";
     };
     runc = fetchurl rec {
       passthru.url = url;
       url = "https://github.com/opencontainers/runc/releases/download/${ runc_version }/runc.${ image_arch }";
-      sha256 = "db772be63147a4e747b4fe286c7c16a2edc4a8458bd3092ea46aaee77750e8ce";
+      sha256 = "81f73a59be3d122ab484d7dfe9ddc81030f595cc59968f61c113a9a38a2c113a";
     };
     calico_crds = fetchurl rec {
       passthru.url = url;
       url = "https://github.com/projectcalico/calico/archive/${ calico_version }.tar.gz";
-      sha256 = "d25f5c9a3adeba63219f3c8425a8475ebfbca485376a78193ec1e4c74e7a6115";
+      sha256 = "481e52de684c049f3f7f7bac78f0f6f4ae424d643451adc9e3d3fa9d03fb6d57";
     };
     nerdctl = fetchurl rec {
       passthru.url = url;
       url = "https://github.com/containerd/nerdctl/releases/download/v${ nerdctl_version }/nerdctl-${ nerdctl_version }-linux-${ image_arch }.tar.gz";
-      sha256 = "ad40ecf11c689fad594a05a40fef65adb4df8ecd1ffb6711e13cff5382aeaed9";
+      sha256 = "5fc0a6e8c3a71cbba95fbdb6833fb8a7cd8e78f53de10988362d4029c14b905a";
     };
     calicoctl = fetchurl rec {
       passthru.url = url;
       url = "https://github.com/projectcalico/calico/releases/download/${ calico_version }/calicoctl-linux-${ image_arch }";
-      sha256 = "d9c04ab15bad9d8037192abd2aa4733a01b0b64a461c7b788118a0d6747c1737";
+      sha256 = "9960357ef6d61eda7abf80bd397544c1952f89d61e5eaf9f6540dae379a3ef61";
     };
     etcd = fetchurl rec {
       passthru.url = url;
       url = "https://github.com/coreos/etcd/releases/download/${ etcd_version }/etcd-${ etcd_version }-linux-${ image_arch }.tar.gz";
-      sha256 = "e13e119ff9b28234561738cd261c2a031eb1c8688079dcf96d8035b3ad19ca58";
+      sha256 = "d59017044eb776597eca480432081c5bb26f318ad292967029af1f62b588b042";
     };
     cni = fetchurl rec {
       passthru.url = url;
       url = "https://github.com/containernetworking/plugins/releases/download/${ cni_version }/cni-plugins-linux-${ image_arch }-${ cni_version }.tgz";
-      sha256 = "b275772da4026d2161bf8a8b41ed4786754c8a93ebfb6564006d5da7f23831e5";
+      sha256 = "754a71ed60a4bd08726c3af705a7d55ee3df03122b12e389fdba4bea35d7dd7e";
     };
     cassandra = fetchurl rec {
       passthru.url = url;

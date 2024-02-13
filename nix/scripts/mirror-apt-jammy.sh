@@ -26,6 +26,7 @@ shift
 # NOTE:  These are all the packages needed for all our playbooks to succeed. This list was created by trial and error
 packages=(
   python3-apt
+  python3-netaddr
   aufs-tools
   apt-transport-https
   software-properties-common
