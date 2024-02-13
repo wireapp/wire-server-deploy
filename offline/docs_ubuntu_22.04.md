@@ -833,7 +833,7 @@ In order to acquire SSL certificates from letsencrypt, outgoing traffic needs fr
 With the nftables based Hetzner Server setup, enable this rule and restart nftables:
 
 ```
-vi /et/nftables.conf
+vi /etc/nftables.conf
 
 iifname virbr0 oifname $INF_WAN counter accept comment "allow internet for internal VMs, enable this rule only for letsencrypt cert issue"
 
