@@ -87,7 +87,7 @@ tar cf containers-other.tar containers-other
 [[ "$INCREMENTAL" -eq 0 ]] && rm -r containers-other
 
 legacy_chart_release() {
-  # Note: if you want to ship from the develop branch, replace 'wire' with 'wire-develop' below.
+  # Note: if you want to ship from the develop branch, replace 'repo' url below
   # repo=https://s3-eu-west-1.amazonaws.com/public.wire.com/charts-develop
   repo=https://s3-eu-west-1.amazonaws.com/public.wire.com/charts
   wire_version="4.41.0"
