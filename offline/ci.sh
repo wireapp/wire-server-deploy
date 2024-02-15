@@ -81,69 +81,107 @@ list-system-containers | create-container-dump containers-system
 tar cf containers-system.tar containers-system
 [[ "$INCREMENTAL" -eq 0 ]] && rm -r containers-system
 
-# Used for ansible-restund role
+Used for ansible-restund role
 echo "quay.io/wire/restund:v0.6.0-rc.2" | create-container-dump containers-other
 tar cf containers-other.tar containers-other
 [[ "$INCREMENTAL" -eq 0 ]] && rm -r containers-other
 
-# NOTE: if you want to ship something from the develop branch, replace 'wire' with 'wire-develop' below.
-charts=(
-  # backoffice
-  # commented out for now, points to a 2.90.0 container image which doesn't
-  # seem to exist on quay.io
-  # TODO: uncomment once its dependencies are pinned!
-  # local-path-provisioner
-  wire/ingress-nginx-controller
-  wire/nginx-ingress-services
-  wire/reaper
-  wire/cassandra-external
-  wire/databases-ephemeral
-  wire/demo-smtp
-  wire/elasticsearch-external
-  wire/fake-aws
-  wire/minio-external
-  wire/wire-server
-  wire/rabbitmq
-  wire/rabbitmq-external
-  # wire/federator
-)
+legacy_chart_release() {
+  repo=https://s3-eu-west-1.amazonaws.com/public.wire.com/charts
+  # Note: if you want to ship from the develop branch, replace 'wire' with 'wire-develop' below.
+  # repo=https://s3-eu-west-1.amazonaws.com/public.wire.com/charts-develop
 
-# Note: if you want to ship something from the develop branch, replace 'wire' with 'wire-develop' below.
-calling_charts=(
-  wire/sftd
-  wire/restund
-  wire/coturn
-)
+  wire_version="4.41.0"
+  wire_calling_version="4.40.0"
+  
+  charts=(
+    # backoffice
+    # commented out for now, points to a 2.90.0 container image which doesn't
+    # seem to exist on quay.io
+    # TODO: uncomment once its dependencies are pinned!
+    # local-path-provisioner
+    ingress-nginx-controller
+    nginx-ingress-services
+    reaper
+    cassandra-external
+    databases-ephemeral
+    demo-smtp
+    elasticsearch-external
+    fake-aws
+    minio-external
+    wire-server
+    rabbitmq
+    rabbitmq-external
+    # federator
+  )
 
-# wire_version=$(helm show chart wire/wire-server | yq -r .version)
-wire_version="4.41.0"
+  for chartName in "${charts[@]}"; do
+    echo "$chartName $repo $wire_version"
+  done
 
-# same as prior.. in most cases.
-wire_calling_version="4.40.0"
+  calling_charts=(
+    sftd
+    restund
+    coturn
+  )
+
+  for chartName in "${calling_charts[@]}"; do
+    echo "$chartName $repo $wire_calling_version"
+  done
+}
+
+wire_build_chart_release () {
+  wire_build="https://raw.githubusercontent.com/wireapp/wire-builds/623e216bebc76ed80cc9bb7e332600d616e277bd/build.json"
+  curl "$wire_build" | jq -r '.helmCharts | to_entries | map("\(.key) \(.value.repo) \(.value.version)") | join("\n") '
+}
+
+# pull_charts() accepts repos in format
+# <chart-name> <repo-url> <chart-version>
+# on stdin
+pull_charts() {
+  echo "Pulling charts into ./charts ..."
+
+  home=$(mktemp -d)
+  export HELM_CACHE_HOME="$home"
+  export HELM_DATA_HOME="$home"
+  export HELM_CONFIG_HOME="$home"
+
+  declare -A repos
+  # needed to handle associative array lookup
+  set +u
+
+  while IFS=$'\n' read -r line
+  do
+    echo "$line"
+    IFS=$' ' read -r -a parts <<< "$line"
+    name=${parts[0]}
+    repo=${parts[1]}
+    version=${parts[2]}
+
+    # we pull the repo only the first time we see it
+    # to prevent pulling the same repo over and over again
+    repo_short_name=${repos[$repo]}
+    if [ "$repo_short_name" == "" ]; then
+      n=${#repos[@]}
+      repo_short_name="repo_$((n+1))"
+      repos[$repo]=$repo_short_name
+      helm repo add "$repo_short_name" "$repo"
+      helm repo update "$repo_short_name"
+    fi
+
+    (cd ./charts; helm pull --version "$version" --untar "$repo_short_name/$name")
+  done
+  echo "Pulling charts done."
+}
+
+# Flip comments if you want to create a release from https://github.com/wireapp/wire-builds
+legacy_chart_release | pull_charts
+# wire_build_chart_release | pull_charts
 
 # TODO: Awaiting some fixes in wire-server regarding tagless images
-HELM_HOME=$(mktemp -d)
-export HELM_HOME
-
-helm repo add wire https://s3-eu-west-1.amazonaws.com/public.wire.com/charts
-# Note: If you need to deploy something from the develop branch, uncomment the next line.
-#helm repo add wire-develop https://s3-eu-west-1.amazonaws.com/public.wire.com/charts-develop
-helm repo update
-
-# Note: If you need to deploy something from the develop branch, uncomment the next two lines.
-#helm repo add wire-develop https://s3-eu-west-1.amazonaws.com/public.wire.com/charts-develop
-#helm repo update
 
 # Download zauth; as it's needed to generate certificates
 echo "quay.io/wire/zauth:$wire_version" | create-container-dump containers-adminhost
-
-mkdir -p ./charts
-for chartName in "${charts[@]}"; do
-  (cd ./charts; helm pull --version "$wire_version" --untar "$chartName")
-done
-for chartName in "${calling_charts[@]}"; do
-  (cd ./charts; helm pull --version "$wire_calling_version" --untar "$chartName")
-done
 
 ###################################
 ####### DIRTY HACKS GO HERE #######
