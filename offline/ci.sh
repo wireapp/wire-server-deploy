@@ -178,6 +178,7 @@ legacy_chart_release | pull_charts
 # TODO: Awaiting some fixes in wire-server regarding tagless images
 
 # Download zauth; as it's needed to generate certificates
+wire_version=$(helm show chart ./charts/wire-server | yq -r .version)
 echo "quay.io/wire/zauth:$wire_version" | create-container-dump containers-adminhost
 
 ###################################
