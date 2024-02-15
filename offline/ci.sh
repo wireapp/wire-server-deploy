@@ -135,7 +135,7 @@ wire_build_chart_release () {
   curl "$wire_build" | jq -r '.helmCharts | to_entries | map("\(.key) \(.value.repo) \(.value.version)") | join("\n") '
 }
 
-# pull_charts() accepts repos in format
+# pull_charts() accepts charts in format
 # <chart-name> <repo-url> <chart-version>
 # on stdin
 pull_charts() {
