@@ -87,10 +87,9 @@ tar cf containers-other.tar containers-other
 [[ "$INCREMENTAL" -eq 0 ]] && rm -r containers-other
 
 legacy_chart_release() {
-  repo=https://s3-eu-west-1.amazonaws.com/public.wire.com/charts
   # Note: if you want to ship from the develop branch, replace 'wire' with 'wire-develop' below.
   # repo=https://s3-eu-west-1.amazonaws.com/public.wire.com/charts-develop
-
+  repo=https://s3-eu-west-1.amazonaws.com/public.wire.com/charts
   wire_version="4.41.0"
   wire_calling_version="4.40.0"
   
@@ -114,7 +113,6 @@ legacy_chart_release() {
     rabbitmq-external
     # federator
   )
-
   for chartName in "${charts[@]}"; do
     echo "$chartName $repo $wire_version"
   done
@@ -124,7 +122,6 @@ legacy_chart_release() {
     restund
     coturn
   )
-
   for chartName in "${calling_charts[@]}"; do
     echo "$chartName $repo $wire_calling_version"
   done
