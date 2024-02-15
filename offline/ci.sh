@@ -137,6 +137,7 @@ wire_build_chart_release () {
 # on stdin
 pull_charts() {
   echo "Pulling charts into ./charts ..."
+  mkdir -p ./charts
 
   home=$(mktemp -d)
   export HELM_CACHE_HOME="$home"
