@@ -90,14 +90,14 @@ E.g.:
 
 ```
 $ d ansible --version
-ansible [core 2.11.6] 
+ansible [core 2.15.5]
   config file = /wire-server-deploy/ansible/ansible.cfg
   configured module search path = ['/root/.ansible/plugins/modules', '/usr/share/ansible/plugins/modules']
-  ansible python module location = /nix/store/yqrs358szd85iapw6xpsh1q852f5r8wd-python3.9-ansible-core-2.11.6/lib/python3.9/site-packages/ansible
+  ansible python module location = /nix/store/p9kbf1v35r184hwx9p4snny1clkbrvp7-python3.11-ansible-core-2.15.5/lib/python3.11/site-packages/ansible
   ansible collection location = /root/.ansible/collections:/usr/share/ansible/collections
-  executable location = /nix/store/yqrs358szd85iapw6xpsh1q852f5r8wd-python3.9-ansible-core-2.11.6/bin/ansible
-  python version = 3.9.10 (main, Jan 13 2022, 23:32:03) [GCC 10.3.0]
-  jinja version = 3.0.3
+  executable location = /nix/store/p9kbf1v35r184hwx9p4snny1clkbrvp7-python3.11-ansible-core-2.15.5/bin/ansible
+  python version = 3.11.6 (main, Oct  2 2023, 13:45:54) [GCC 12.3.0] (/nix/store/qp5zys77biz7imbk6yy85q5pdv7qk84j-python3-3.11.6/bin/python3.11)
+  jinja version = 3.1.2
   libyaml = True
 
 
@@ -619,10 +619,9 @@ export PUBLICIPADDRESS=<your.ip.address.here>
 
 1. Find out on which node `ingress-nginx` is running:
 ```
-d kubectl get pods -l app.kubernetes.io/name=ingress-nginx -o=custom-columns=NAME:.metadata.name,NODE:.spec.nodeName
+d kubectl get pods -l app.kubernetes.io/name=ingress-nginx -o=custom-columns=NAME:.metadata.name,NODE:.spec.nodeName,IP:.status.hostIP
 ```
-3. Get the IP of this node by running `ip address` on that node
-4. Use that IP for $KUBENODEIP
+2. Use that IP for $KUBENODEIP
 
 ```
 export KUBENODEIP=<your.kubernetes.node.ip>
@@ -660,13 +659,20 @@ ufw allow in on $OUTBOUNDINTERFACE proto tcp to any port 80;
 "
 ```
 
-If using nftables, incoming traffic for ports 80 and 443 can be forwarded with these commands:
+For wire-in-a-box deployments based on single_hetzner_machine_installation.md, an nftables based firewall including a predefined ruleset should already exist.
+By default, the predefined ruleset forwards ingress traffic to kubenode1 (192.168.122.21). To check on which node the ingress controller has been deployed, get the node IP via kubectl:
 ```
-sudo bash -c "
-set -xeo pipefail;
+d kubectl get pods -l app.kubernetes.io/name=ingress-nginx -o=custom-columns=NAME:.metadata.name,NODE:.spec.nodeName,IP:.status.hostIP
+```
 
-nft add rule nat PREROUTING iif $OUTBOUNDINTERFACE tcp dport 80 dnat to $KUBENODEIP:31772
-nft add rule nat PREROUTING iif $OUTBOUNDINTERFACE tcp dport 443 dnat to $KUBENODEIP:31773
+If the IP returns 192.168.122.21, you can skip the next few steps.
+Otherwise, execute these commands:
+```
+export KUBENODEIP=<your.kubernetes.node.ip>
+
+sudo sed -i -e "s/192.168.122.21/$KUBENODEIP/g" /etc/nftables.conf
+
+sudo systemctl restart nftables
 "
 ```
 
@@ -690,16 +696,6 @@ iptables -t nat -A PREROUTING -i $INTERNALINTERFACE -d $PUBLICIPADDRESS -p tcp -
 
 or add the corresponding rules to a config file (for UFW, /etc/ufw/before.rules) so they persist after rebooting.
 
-Using nftables:
-
-```
-sudo bash -c "
-set -xeo pipefail;
-
-nft add rule nat PREROUTING iif $INTERNALINTERFACE ip daddr $PUBLICIPADDRESS tcp dport 80 dnat to $KUBENODEIP:31772
-nft add rule nat PREROUTING iif $INTERNALINTERFACE ip daddr $PUBLICIPADDRESS tcp dport 443 dnat to $KUBENODEIP:31773
-"
-```
 
 ### Incoming Calling Traffic
 
@@ -724,16 +720,11 @@ iptables -t nat -A PREROUTING -d $PUBLICIPADDRESS -i $OUTBOUNDINTERFACE -p udp -
 
 or add the corresponding rules to a config file (for UFW, /etc/ufw/before.rules) so they persist after rebooting.
 
-Using nftables:
+Using nftables, the firewall deployed via single_hetzner_machine_installation.md should already DNAT restund traffic to the correct node (ansnode1, 192.168.122.31).
+To verify, check the NAT table status:
 
 ```
-sudo bash -c "
-set -xeo pipefail;
-
-nft add rule nat PREROUTING iif $OUTBOUNDINTERFACE ip daddr $PUBLICIPADDRESS tcp dport 80 dnat to $RESTUND01IP:80
-nft add rule nat PREROUTING iif $OUTBOUNDINTERFACE ip daddr $PUBLICIPADDRESS udp dport 80 dnat to $RESTUND01IP:80
-nft add rule nat PREROUTING iif $OUTBOUNDINTERFACE ip daddr $PUBLICIPADDRESS udp dport 32768-60999 dnat to $RESTUND01IP:32768-60999
-"
+sudo nft list table nat
 ```
 
 
@@ -800,8 +791,8 @@ d kubectl cordon kubenode1
 
 first, download cert manager, and place it in the appropriate location:
 ```
-wget https://charts.jetstack.io/charts/cert-manager-v1.9.1.tgz
-tar -C ./charts -xvzf cert-manager-v1.9.1.tgz
+wget https://charts.jetstack.io/charts/cert-manager-v1.13.2.tgz
+tar -C ./charts -xvzf cert-manager-v1.13.2.tgz
 ```
 
 In case `values.yaml` and `secrets.yaml` doesn't exist yet in `./values/nginx-ingress-services` create them from templates
@@ -838,10 +829,24 @@ Then run:
 d helm upgrade --install nginx-ingress-services charts/nginx-ingress-services -f values/nginx-ingress-services/values.yaml 
 ```
 
+In order to acquire SSL certificates from letsencrypt, outgoing traffic needs from VMs needs to be enabled temporarily.
+With the nftables based Hetzner Server setup, enable this rule and restart nftables:
+
+```
+vi /etc/nftables.conf
+
+iifname virbr0 oifname $INF_WAN counter accept comment "allow internet for internal VMs, enable this rule only for letsencrypt cert issue"
+
+sudo systemctl restart nftables
+```
+
 Watch the output of the following command to know how your request is going:
 ```
 d kubectl get certificate
 ```
+
+Once the cert has been issued successfully, the rule above can be disabled again, disallowing outgoing traffic from VMs. Restart the firewall after edits.
+
 
 #### Old wire-server releases
 

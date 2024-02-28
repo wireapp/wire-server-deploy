@@ -1,10 +1,17 @@
 - hosts: all
   become: true
   vars:
-    artifact_hash: 452c8d41b519a3b41f22d93110cfbcf269697953
+    artifact_hash: 94bdc70a1e9864261543e3ec3ffcd9069b09bd17
     ubuntu_version: 22.04.3
     ssh_pubkey: "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIDPTGTo1lTqd3Ym/75MRyQvj8xZINO/GI6FzfIadSe5c backend+hetzner-dedicated-operator@wire.com"
   tasks:
+  - name: set ipv4 forward
+    sysctl:
+      name: net.ipv4.ip_forward
+      value: '1'
+      sysctl_set: true
+      state: present
+      reload: true
   - name: apt update
     apt: update_cache=yes force_apt_get=yes
   - name: apt upgrade
@@ -30,6 +37,9 @@
       - wget
       - whois
       - docker.io
+      - dnsmasq
+      - telnet
+      - python3-lxml
       - qemu
       - qemu-kvm
       - qemu-utils
@@ -78,6 +88,13 @@
       dest: /etc/sudoers
       regexp: '^%sudo'
       line: "%sudo ALL=(ALL) NOPASSWD:ALL"
+  - name: set proper ACLs for libvirt and demo user
+    acl:
+      path: /home/demo
+      entity: libvirt-qemu
+      etype: user
+      permissions: x
+      state: present
   - name: deploy sshd config
     copy:
       src: files/hetzner_server_sshd_config
@@ -86,14 +103,56 @@
       owner: root
       group: root
     notify: sshd | restart
+  - name: collect libvirt network facts
+    virt_net:
+      command: facts
+  - name: remove & stop libvirt default network
+    when: ansible_libvirt_networks["default"] is defined
+    virt_net:
+      command: "{{ item }}"
+      name: default
+    with_items:
+      - destroy
+      - undefine
+  - name: create new libvirt network with appropriate defaults (no iptables hook)
+    when: ansible_libvirt_networks["wirebox"] is not defined
+    virt_net:
+      name: wirebox
+      command: define
+      xml: '{{ lookup("file", "files/hetzner_server_libvirt_default_net.xml") }}'
+  - name: collect libvirt network facts after defining new network
+    virt_net:
+      command: facts
+  - name: start new default libvirt net
+    when: ansible_libvirt_networks["wirebox"].state != 'active'
+    virt_net:
+      name: wirebox
+      command: create
+      autostart: yes
+  - name: start new default libvirt net on boot
+    when: ansible_libvirt_networks["wirebox"].autostart != 'yes'
+    virt_net:
+      name: wirebox
+      autostart: yes
+  - name: check if nftables.conf is deployed already
+    stat:
+      path: /root/.nftables_deployed
+    register: nft_deployed
   - name: deploy /etc/nftables.conf
-    copy:
-      src: files/hetzner_server_nftables.conf
+    template:
+      src: files/hetzner_server_nftables.conf.j2
       dest: /etc/nftables.conf
       mode: 0750
       owner: root
       group: root
     notify: nftables | restart
+    when: not nft_deployed.stat.exists
+  - name: add local file flag after nftables deployment
+    file:
+      path: /root/.nftables_deployed
+      state: touch
+      modification_time: preserve
+      access_time: preserve
   - name: deploy wire artifact, ubuntu iso
     block:
       - name: create wire-server-deploy directory for demo user
@@ -117,6 +176,8 @@
       - name: check if wire-server-deploy folder contents exist
         stat:
           path: /home/demo/wire-server-deploy/containers-helm.tar
+          get_checksum: False
+          get_md5: False
         register: artifact_folder_content_check
       - name: unpack wire-server-deploy archive
         unarchive:
@@ -127,6 +188,8 @@
       - name: check if ubuntu iso exists
         stat:
           path: /home/demo/wire-server-deploy/ubuntu.iso
+          get_checksum: False
+          get_md5: False
         register: iso_file_check
       - name: download ubuntu {{ ubuntu_version }} iso
         shell:
