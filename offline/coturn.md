@@ -147,9 +147,44 @@ If you want to run Coturn on multiple machines, you must:
 
 ## Configure the SFT labels for Coturn and SFT to share a port range. 
 
+First, we must locate what the "external" IP address of the machine is. 
+
+We get it by running the following command:
+
+```bash
+
+sudo ip addr
+
+```
+
+The first interface will be the loopback interface, `lo`, and the second interface will be the "external" interface, `enp41s0` in our example, the output looking something like this:
+
+```bash
+
+demo@install-docs:~/wire-server-deploy$ ip addr
+1: lo: <LOOPBACK,UP,LOWER_UP> mtu 65536 qdisc noqueue state UNKNOWN group default qlen 1000
+    link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00
+    inet 127.0.0.1/8 scope host lo
+       valid_lft forever preferred_lft forever
+    inet6 ::1/128 scope host 
+       valid_lft forever preferred_lft forever
+2: enp41s0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc mq state UP group default qlen 1000
+    link/ether a8:a1:59:a2:9b:5b brd ff:ff:ff:ff:ff:ff
+    inet 5.9.84.121/32 scope global enp41s0
+       valid_lft forever preferred_lft forever
+    inet6 2a01:4f8:162:3b6::2/64 scope global 
+       valid_lft forever preferred_lft forever
+    inet6 fe80::aaa1:59ff:fea2:9b5b/64 scope link 
+       valid_lft forever preferred_lft forever
+3: etc... 
+
+``` 
+
+In this case, the external IP address is `5.9.84.121`.
+
 ```{note}
 
-Note this step is also documented in the Switch to [ Wire install docs](docs_ubuntu_22.04.md)
+Note this step is also documented in the [ Wire install docs](docs_ubuntu_22.04.md)
 
 ``` 
 
@@ -178,6 +213,14 @@ d kubectl label node kubenode1 wire.com/role=sftd
 
 ```
 
+We must also annotate the node with the exrenal IP address we will be listening to (which we found with `sudo ip addr` above):
+
+```bash
+
+kubectl annotate node kubenode3 wire.com/external-ip='your.public.ip.address'
+
+```
+
 If we want to run SFT on multiple nodes, the procedure is the same as the one documented above for running Coturn on multiple nodes.
 
 We now should have Coturn configured to run on one or more kubernetes node(s), and SFT configured to run on one or more kubernetes node(s), and the two should not run on the same node(s)/overlap.
@@ -192,11 +235,19 @@ d helm upgrade --install sftd ./charts/sftd --set 'nodeSelector.wire\.com/role=s
 
 ## Configure the port redirection in Nftables.
 
+```{note}
+
+Note: This section is only relevant if you are running Wire-Server/Coturn/SFT behind a `nftables`-managed firewall.
+
+``` 
+
 We must configure the port redirection in Nftables to allow traffic to reach Coturn and SFT.
 
 Calling and TURN services (Coturn, Restund, SFT) require being reachable on a range of ports used to transmit the calling data.
 
-Because SFT and Coturn can not run on the same node, and can not share the same port range on the "outside" interface of the machine, we must configure the port redirection in Nftables to allow traffic to reach Coturn and SFT by splitting the ports between the two services.
+Both SFT and Coturn both want to use the same port range, therefore predicting which node is using which port range ahead of time requires dividing/configuring port ranges in advance.
+
+Therefore, we configure the port redirection in Nftables to allow traffic to reach Coturn and SFT by splitting the ports between the two services.
 
 Here we have decided the following distribution of ports:
 
@@ -309,30 +360,7 @@ sudo ip addr
 
 ```
 
-The first interface will be the loopback interface, `lo`, and the second interface will be the "external" interface, `enp41s0` in our example, the output looking something like this:
-
-```bash
-
-demo@install-docs:~/wire-server-deploy$ ip addr
-1: lo: <LOOPBACK,UP,LOWER_UP> mtu 65536 qdisc noqueue state UNKNOWN group default qlen 1000
-    link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00
-    inet 127.0.0.1/8 scope host lo
-       valid_lft forever preferred_lft forever
-    inet6 ::1/128 scope host 
-       valid_lft forever preferred_lft forever
-2: enp41s0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc mq state UP group default qlen 1000
-    link/ether a8:a1:59:a2:9b:5b brd ff:ff:ff:ff:ff:ff
-    inet 5.9.84.121/32 scope global enp41s0
-       valid_lft forever preferred_lft forever
-    inet6 2a01:4f8:162:3b6::2/64 scope global 
-       valid_lft forever preferred_lft forever
-    inet6 fe80::aaa1:59ff:fea2:9b5b/64 scope link 
-       valid_lft forever preferred_lft forever
-3: etc... 
-
-``` 
-
-In this case, the external IP address is `5.9.84.121` so we will use that value for our Wire-Server configuration.
+For more details on getting the extrenal IP address see the `Configure the SFT labels for Coturn and SFT to share a port range` section above.
 
 Edit the `values/wire-server/values.yaml` file:
 
@@ -468,4 +496,19 @@ And then re-run the `helm install` command.
 d helm install coturn ./charts/coturn --timeout=15m0s --values values/coturn/values.yaml --values values/coturn/secret.yaml
 ```
 
+## Appendix: Note on migration.
+
+The current guide is written with the assumption that you are setting up Coturn for the first time, on a fresh Wire-Server installation.
+
+If you are migrating from Restund to Coturn to an existing/running/in-use installation, as clients are currently using Restund, you can not disable Restund before all clients have migrated to Coturn, which they do by retrieving a freshly updated calling configuration from Wire-Server that instructs them to use the Coturn IPs instead of the Restund IPs.
+
+This configuration update occurs every 24 hours, so you will have to wait at least 24 hours before you can disable Restund.
+
+These are the additional steps to ensure a smooth transition:
+
+1. Deploy Coturn as described in this guide, without disabling Restund yet.
+2. Change the `turnStatic` call configuration in the `values/wire-server/values.yaml` file to use the Coturn IPs instead of the Restund IPs.
+3. Re-deploy the Wire-Server chart to apply the new configuration.
+4. Wait at least 24 hours for all clients to retrieve the new configuration.
+5. Once you are sure all clients have migrated to Coturn, you can disable Restund as described in this guide.
 
