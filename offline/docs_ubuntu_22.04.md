@@ -915,6 +915,13 @@ d helm upgrade --install sftd ./charts/sftd \
 ```
 
 
+## Coturn.
+
+To deploy coturn on your new installation, go to the following link and follow the instructions there:
+
+[Installing Coturn](coturn.md)
+
+
 ## Appendixes
 
 
