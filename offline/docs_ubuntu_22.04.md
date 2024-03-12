@@ -574,6 +574,28 @@ Now deploy `wire-server`:
 d helm install wire-server ./charts/wire-server --timeout=15m0s --values ./values/wire-server/values.yaml --values ./values/wire-server/secrets.yaml
 ```
 
+### Deploying webapp
+
+Update the values in ./values/webapp/prod-values.example.yaml and run
+```
+d helm install webapp ./charts/webapp --values ./values/webapp/prod-values.example.yaml
+```
+
+### Deploying team-settings
+
+Update the values in ./values/team-settings/prod-values.example.yaml and ./values/team-settings/prod-secrets.example.yaml, then run
+```
+d helm install team-settings ./charts/team-settings --values ./values/team-settings/prod-values.example.yaml --values ./values/team-settings/prod-secrets.example.yaml
+```
+
+### Deploying account-pages
+
+Update the values in ./values/account-pages/prod-values.example.yaml and run
+```
+d helm install account-pages ./charts/account-pages --values ./values/account-pages/prod-values.example.yaml
+```
+
+
 ## Directing Traffic to Wire
 
 ### Deploy ingress-nginx-controller
