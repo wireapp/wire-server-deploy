@@ -52,7 +52,7 @@ stepConfig:
 
   address: "0.0.0.0:9000"
 
-  # dnsName: acme.alpha.example.com
+  dnsName: acme.alpha.example.com
 
   # additionalDNSNames: 
   #   - localhost
@@ -87,13 +87,13 @@ stepConfig:
     claims:
       maxTLSCertDuration: 87701h
 
-    # jwk: |-
-    #   {
-    #     "type": "JWK",
-    #     "name": "..example.com",
-    #     "key": { ... },
-    #     "encryptedKey": "e..."
-    #   }
+    jwk: |-
+      {
+        "type": "JWK",
+        "name": "..example.com",
+        "key": { ... },
+        "encryptedKey": "e..."
+      }
 
     acme:
       name: keycloakteams
@@ -106,13 +106,13 @@ stepConfig:
         minTLSCertDuration: 60s
 
       dpop:
-        # key: <base64 string>
+        key: "someBAse64Key"
         wireDomain: alpha.example.com
 
       oidc:
         clientId: wireapp
-        # discoveryBaseUrl: https://keycloak.example.com/auth/realms/master
-        # issuerUrl: https://keycloak.example.com/auth/realms/master?client_id=wireapp
+        discoveryBaseUrl: https://keycloak.example.com/auth/realms/master
+        issuerUrl: https://keycloak.example.com/auth/realms/master?client_id=wireapp
         signatureAlgorithms:
           - RS256
           - ES256
@@ -125,7 +125,7 @@ stepConfig:
          }
 
       x509:
-        # organization: alpha.example.com
+        organization: alpha.example.com
         template: |
           {
             "subject": {
