@@ -25,4 +25,4 @@ useStagingACMEServer: true
 basicAuthSecret: username:$apr1$3jXFMMZX$z6OOf4eUn1wU.NYJt246u1
 
 certManager:
-  certmasterEmail:
+  certmasterEmail: "email@example.com"
