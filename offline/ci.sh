@@ -74,7 +74,6 @@ quay.io/metallb/controller:v0.13.9
 docker.io/library/nginx:1.25.2-alpine
 docker.io/kubernetesui/dashboard:v2.7.0
 docker.io/kubernetesui/metrics-scraper:v1.0.8
-bats/bats:1.8.1
 EOF
 }
 
@@ -130,7 +129,7 @@ legacy_chart_release() {
 
 wire_build_chart_release () {
   wire_build="https://raw.githubusercontent.com/wireapp/wire-builds/q1-2024/build.json"
-  curl "$wire_build" | jq -r '.helmCharts | to_entries | map("\(.key) \(.value.repo) \(.value.version)") | join("\n") '
+  curl "$wire_build" | jq -r '.helmCharts | with_entries(select(.key != "inbucket")) | to_entries | map("\(.key) \(.value.repo) \(.value.version)") | join("\n") '
 }
 
 # pull_charts() accepts charts in format
