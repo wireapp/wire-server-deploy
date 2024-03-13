@@ -14,15 +14,15 @@ helm upgrade --install --wait reaper ./charts/reaper
 helm upgrade --install --wait --timeout=15m0s wire-server ./charts/wire-server --values ./values/wire-server/prod-values.example.yaml --values ./values/wire-server/secrets.yaml
 # if charts/webapp directory exists
 if [ -d "./charts/webapp" ]; then
-    helm upgrade --install --wait --timeout=15m0s webapp ./charts/webapp --values ./values/webapp/prod-values.example.yaml
+    helm upgrade --install --timeout=15m0s webapp ./charts/webapp --values ./values/webapp/prod-values.example.yaml
 fi
 
 if [ -d "./charts/account-pages" ]; then
-    helm upgrade --install --wait --timeout=15m0s account-pages ./charts/account-pages --values ./values/account-pages/prod-values.example.yaml
+    helm upgrade --install --timeout=15m0s account-pages ./charts/account-pages --values ./values/account-pages/prod-values.example.yaml
 fi
 
 if [ -d "./charts/team-settings" ]; then
-    helm upgrade --install --wait --timeout=15m0s team-settings ./charts/team-settings --values ./values/team-settings/prod-values.example.yaml --values ./values/team-settings/prod-secrets.example.yaml
+    helm upgrade --install --timeout=15m0s team-settings ./charts/team-settings --values ./values/team-settings/prod-values.example.yaml --values ./values/team-settings/prod-secrets.example.yaml
 fi
 echo "Printing all pods status"
 kubectl get pods --all-namespaces -o wide
