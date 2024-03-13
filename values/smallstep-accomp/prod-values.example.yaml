@@ -20,7 +20,7 @@ nginx:
 
 upstreams:
   enabled: true
-  # dnsResolver: 9.9.9.9
+  dnsResolver: 9.9.9.9
   
   # Note: include the smallstep host of the own domain here as well
   proxiedHosts: []

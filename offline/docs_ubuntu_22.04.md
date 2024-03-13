@@ -613,6 +613,14 @@ and run
 d helm install account-pages ./charts/account-pages --values ./values/account-pages/prod-values.example.yaml
 ```
 
+### Deploying smallstep-accomp
+
+Update the values in `./values/smallstep-accomp/prod-values.example.yaml`
+and then run
+```
+d helm install smallstep-accomp ./charts/smallstep-accomp --values ./values/smallstep-accomp/prod-values.example.yaml
+```
+
 
 ## Directing Traffic to Wire
 
