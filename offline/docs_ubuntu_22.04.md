@@ -166,21 +166,12 @@ ansible_become_pass=<PASSWORD>
 ```
 #### Editing the ansible inventory
 
-##### Adding host entries
-When editing the inventory, you only need seven entries in the '[all]' section. One entry for each of the VMs you are running.
-Edit the 'kubenode' entries, and the 'assethost' entry like normal.
-
-Instead of creating separate cassandra, elasticsearch, and minio entries, create three 'ansnode' entries, similar to the following:
-```
-ansnode1 ansible_host=192.168.122.31
-ansnode2 ansible_host=192.168.122.32
-ansnode3 ansible_host=192.168.122.33
-```
-
 ##### Updating Group Membership
-Afterwards, you need to update the lists of what nodes belong to which group, so ansible knows what to install on these nodes.
+It's recommended to update the lists of what nodes belong to which group, so ansible knows what to install on these nodes.
 
-Add all three ansnode entries into the `cassandra` `elasticsearch`, and `minio` sections. They should look like the following:
+For our Wire internal offline deployments using seven VMs, we edit the inventory to run all services outside of K8s on three `ansnode` VMs.
+For productive on-prem deployments, these sections can be divided into individual host groups, reflecting the architecture of the target infrastructure.
+Examples with individual nodes for Elastic, MinIO, Cassandra and Restund are commented out below.
 ```
 [elasticsearch]
 # elasticsearch1
@@ -189,7 +180,6 @@ Add all three ansnode entries into the `cassandra` `elasticsearch`, and `minio` 
 ansnode1
 ansnode2
 ansnode3
-
 
 [minio]
 # minio1
@@ -203,26 +193,54 @@ ansnode3
 # cassandra1
 # cassandra2
 # cassandra3
-```
+ansnode1
+ansnode2
+ansnode3
 
-Add two of the ansnode entries into the `restund` section
-```
+[cassandra_seed]
+# cassandraseed1
+ansnode1
+
 [restund]
+# restund1
+# restund2
 ansnode1
 ansnode2
 ```
 
-Add one of the ansnode entries into the `cassandra_seed` section.
-```
-[cassandra_seed]
-ansnode1
-```
-
 ### Configuring kubernetes and etcd
 
-You'll need at least 3 `kubenode`s.  3 of them should be added to the
-`[kube-master]`, `[etcd]`  and `[kube-node]` groups of the inventory file.  Any
-additional nodes should only be added to the `[kube-node]` group.
+To run Kubernetes, at least three nodes are required, which need to be added to the `[kube-master]`, `[etcd]`  and `[kube-node]` groups of the inventory file. Any
+additional nodes should only be added to the `[kube-node]` group:
+For our Wire internal offline deployments using seven VMs, we edit the inventory to run all services inside K8s on three `kubenode` VMs.
+For productive on-prem deployments, these sections can be divided into individual host groups, reflecting the architecture of the target infrastructure.
+```
+[kube-master]
+# kubemaster1
+# kubemaster2
+# kubemaster3
+kubenode1
+kubenode2
+kubenode3
+
+[etcd]
+# etcd1 etcd_member_name=etcd1
+# etcd2 etcd_member_name=etcd2
+# etcd3 etcd_member_name=etcd3
+kubenode1 etcd_member_name=etcd1
+kubenode2 etcd_member_name=etcd2
+kubenode3 etcd_member_name=etcd3
+
+[kube-node]
+# prodnode1
+# prodnode2
+# prodnode3
+# prodnode4
+# ...
+kubenode1
+kubenode2
+kubenode3
+```
 
 ### Setting up databases and kubernetes to talk over the correct (private) interface
 If you are deploying wire on servers that are expected to use one interface to talk to the public, and a separate interface to talk amongst themselves, you will need to add "ip=" declarations for the private interface of each node. for instance, if the first kubenode was expected to talk to the world on 192.168.122.21, but speak to other wire services (kubernetes, databases, etc) on 192.168.0.2, you should edit its entry like the following:
@@ -233,13 +251,10 @@ Do this for all of the instances.
 
 ### Setting up Database network interfaces.
 * Make sure that `assethost` is present in the inventory file with the correct `ansible_host` (and `ip` values if required)
-* Make sure that `cassandra_network_interface` is set to the name of the network interface on which
-  the kubenodes should talk to cassandra and on which the cassandra nodes
-  should communicate among each other. Run `ip addr` on one of the cassandra nodes to determine the network interface names, and which networks they correspond to.  For example, if you set up the cassandra nodes via virt-manager, then the interface will be named `enp1s0`. 
-* Similarly `elasticsearch_network_interface` and `minio_network_interface`
-  should be set to the network interface names you want elasticsearch and minio to communicate with kubernetes with, as well.
+* Make sure that `cassandra_network_interface` is set to the name of the network interface on which the kubenodes should talk to cassandra and on which the cassandra nodes
+  should communicate among each other. Run `ip addr` on one of the cassandra nodes to determine the network interface names, and which networks they correspond to. In Ubuntu 22.04 for example, interface names are predictable and individualized, eg. `enp41s0`. 
+* Similarly `elasticsearch_network_interface` and `minio_network_interface` should be set to the network interface names you want elasticsearch and minio to communicate with kubernetes with, as well.
   
-
 
 ### Configuring Restund
 
@@ -283,7 +298,8 @@ In order to automatically generate deeplinks, Edit the minio variables in `[mini
 
 ### Example hosts.ini
 
-Here is an example `hosts.ini` file that was used in a succesfull example deployment, for reference. It might not be exactly what is needed for your deployment, but it should work for the KVM 7-machine deploy:
+Here is an example `hosts.ini` file for an internal "Wire in a box" deployment with seven VMs.
+Please note that your on-prem infrastructure requirements likely differ in terms of number of VMs / nodes, IP addresses and ranges, as well as host names.
 
 ```
 [all]
@@ -325,7 +341,6 @@ kubenode2
 kubenode3
 
 [etcd]
-
 kubenode1 etcd_member_name=etcd1
 kubenode2 etcd_member_name=etcd2
 kubenode3 etcd_member_name=etcd3
@@ -334,7 +349,6 @@ kubenode3 etcd_member_name=etcd3
 kubenode1
 kubenode2
 kubenode3
-
 
 [k8s-cluster:children]
 kube-master
