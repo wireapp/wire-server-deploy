@@ -212,7 +212,7 @@ ansnode2
 
 To run Kubernetes, at least three nodes are required, which need to be added to the `[kube-master]`, `[etcd]`  and `[kube-node]` groups of the inventory file. Any
 additional nodes should only be added to the `[kube-node]` group:
-For our Wire internal offline deployments using seven VMs, we edit the inventory to run all services outside of K8s on three `kubenode` VMs.
+For our Wire internal offline deployments using seven VMs, we edit the inventory to run all services inside K8s on three `kubenode` VMs.
 For productive on-prem deployments, these sections can be divided into individual host groups, reflecting the architecture of the target infrastructure.
 ```
 [kube-master]
