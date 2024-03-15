@@ -565,7 +565,6 @@ Open up `./values/wire-server/values.yaml` and replace example.com and other dom
 sed -i 's/example.com/<your-domain>/g' ./values/wire-server/values.yaml
 ```
 
-
 #### Deploying Wire-Server
 
 Now deploy `wire-server`:
