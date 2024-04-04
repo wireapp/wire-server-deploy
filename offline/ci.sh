@@ -111,6 +111,7 @@ legacy_chart_release() {
     wire-server
     rabbitmq
     rabbitmq-external
+    ldap-scim-bridge
     # federator
   )
   for chartName in "${charts[@]}"; do

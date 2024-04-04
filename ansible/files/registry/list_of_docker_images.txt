@@ -74,4 +74,5 @@ quay.io/wire/team-settings:10445-2.7.0-32c53e-v0.22.0-delete-team
 quay.io/wire/team-settings:1.0.5-e5b56a400181ca72d198c616af3eb81010591a8e
 quay.io/wire/webapp:1.0.84-a3d49cff206f946b2fdbf0488c14a999cf530105
 quay.io/wire/webapp:41491-0.1.0-9fe4de-v0.20.2-production
+quay.io/wire/ldap-scim-bridge:0.9
 rancher/local-path-provisioner:v0.0.2
