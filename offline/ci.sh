@@ -128,7 +128,7 @@ legacy_chart_release() {
 }
 
 wire_build_chart_release () {
-  wire_build="https://github.com/wireapp/wire-builds/blob/6bb19f7c0447a270219c81b8f17bfe13c5787d22/build.json"
+  wire_build="https://raw.githubusercontent.com/wireapp/wire-builds/6bb19f7c0447a270219c81b8f17bfe13c5787d22/build.json"
   curl "$wire_build" | jq -r '.helmCharts | with_entries(select(.key != "inbucket")) | to_entries | map("\(.key) \(.value.repo) \(.value.version)") | join("\n") '
 }
 
