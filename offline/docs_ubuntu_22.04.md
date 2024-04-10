@@ -563,10 +563,10 @@ Add the IPs of your `restund` servers to the `turnStatic.v2` list:
   turnStatic:
     v1: []
     v2:
-      - "turn:<IP of restund1>:80"
-      - "turn:<IP of restund2>:80"
-      - "turn:<IP of restund1>:80?transport=tcp"
-      - "turn:<IP of restund2>:80?transport=tcp"
+      - "turn:<IP of restund1>:3478"
+      - "turn:<IP of restund2>:3478"
+      - "turn:<IP of restund1>:3478?transport=tcp"
+      - "turn:<IP of restund2>:3478?transport=tcp"
 ```
 
 Open up `./values/wire-server/secrets.yaml` and inspect the values. In theory
@@ -905,6 +905,8 @@ d kubectl label node kubenode1 wire.com/role=sftd
 ```
 
 ##### A selected group of kubernetes nodes:
+By default, the replicaCount in `values/sftd/values.yaml` is set to 3. Change it to the number of nodes on which you want to deploy sftd server.
+
 If you are restricting SFT to certain nodes, use `nodeSelector` to run on specific nodes (**replacing the example.com domains with yours**):
 ```
 d helm upgrade --install sftd ./charts/sftd --set 'nodeSelector.wire\.com/role=sftd' --values values/sftd/values.yaml
