@@ -129,7 +129,7 @@ legacy_chart_release() {
 }
 
 wire_build_chart_release () {
-  wire_build="https://raw.githubusercontent.com/wireapp/wire-builds/add_ldap/build.json" # temporary to test the ldap chart
+  wire_build="https://raw.githubusercontent.com/wireapp/wire-builds/dev/build.json" # temporary to test the ldap chart
   curl "$wire_build" | jq -r '.helmCharts | to_entries | map("\(.key) \(.value.repo) \(.value.version)") | join("\n") '
 }
 
