@@ -129,7 +129,7 @@ legacy_chart_release() {
 }
 
 wire_build_chart_release () {
-  wire_build="https://raw.githubusercontent.com/wireapp/wire-builds/623e216bebc76ed80cc9bb7e332600d616e277bd/build.json"
+  wire_build="https://raw.githubusercontent.com/wireapp/wire-builds/add_ldap/build.json" # temporary to test the ldap chart
   curl "$wire_build" | jq -r '.helmCharts | to_entries | map("\(.key) \(.value.repo) \(.value.version)") | join("\n") '
 }
 
@@ -173,8 +173,8 @@ pull_charts() {
 }
 
 # Flip comments if you want to create a release from https://github.com/wireapp/wire-builds
-legacy_chart_release | pull_charts
-# wire_build_chart_release | pull_charts
+#legacy_chart_release | pull_charts
+wire_build_chart_release | pull_charts
 
 # TODO: Awaiting some fixes in wire-server regarding tagless images
 
