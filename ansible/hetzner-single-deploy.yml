@@ -1,8 +1,8 @@
 - hosts: all
   become: true
   vars:
-    artifact_hash: 736b8ea76de5e67b68d15e8d2a70063b240a5af5
-    ubuntu_version: 22.04.4
+    artifact_hash: 94bdc70a1e9864261543e3ec3ffcd9069b09bd17
+    ubuntu_version: 22.04.3
     ssh_pubkey: "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIDPTGTo1lTqd3Ym/75MRyQvj8xZINO/GI6FzfIadSe5c backend+hetzner-dedicated-operator@wire.com"
   tasks:
   - name: set ipv4 forward
@@ -139,7 +139,6 @@
       path: /etc/dnsmasq.d/disable_public_resolv
       line: "except-interface={{ ansible_default_ipv4.interface }}"
       create: true
-      mode: 0750
       owner: root
       group: root
       mode: 0644
