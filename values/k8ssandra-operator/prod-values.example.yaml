@@ -1,2 +1,4 @@
-disableCertManagerCheck: true
-
+cass-operator:
+  disableCertManagerCheck: true
+  admissionWebhooks:
+    enabled: false
