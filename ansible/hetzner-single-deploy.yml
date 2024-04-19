@@ -37,7 +37,6 @@
       - wget
       - whois
       - docker.io
-      - dnsmasq
       - telnet
       - python3-lxml
       - qemu
@@ -134,15 +133,6 @@
     virt_net:
       name: wirebox
       autostart: yes
-  - name: disable dnsmasq for public interface
-    lineinfile:
-      path: /etc/dnsmasq.d/disable_public_resolv
-      line: "except-interface={{ ansible_default_ipv4.interface }}"
-      create: true
-      owner: root
-      group: root
-      mode: 0644
-    notify: dnsmasq | restart
   - name: check if nftables.conf is deployed already
     stat:
       path: /root/.nftables_deployed
@@ -219,8 +209,4 @@
     service:
       name: nftables
       enabled: true
-      state: restarted
-  - name: dnsmasq | restart
-    service:
-      name: dnsmasq
       state: restarted
