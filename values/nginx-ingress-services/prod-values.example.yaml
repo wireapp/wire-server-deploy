@@ -25,6 +25,8 @@ config:
     fakeS3: assets.example.com
     teamSettings: teams.example.com
     accountPages: account.example.com
+    # uncomment below to activate cert acquisition for federator ingress
+    # federator: federator.example.com 
 
 service:
   s3:
