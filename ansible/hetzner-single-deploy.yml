@@ -37,7 +37,6 @@
       - wget
       - whois
       - docker.io
-      - dnsmasq
       - telnet
       - python3-lxml
       - qemu
