@@ -953,6 +953,7 @@ and, install the fluent-bit helm chart
 d helm upgrade --install fluent-bit ./charts/fluent-bit --values values/fluent-bit/values.yaml
 ```
 
+Make sure that outgoing traffic is allowed to your destination server from the host machine.
 
 
 ## Appendixes
