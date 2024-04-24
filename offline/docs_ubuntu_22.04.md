@@ -618,7 +618,7 @@ In the following all traffic destined to your wire cluster is going through a si
 
 To prepare determine the interface of your outbound IP:
 
-```
+```bash
 export OUTBOUNDINTERFACE=$(ip ro | sed -n "/default/s/.* dev \([enpso0-9]*\) .*/\1/p")
 echo "OUTBOUNDINTERFACE is $OUTBOUNDINTERFACE"
 ```
@@ -627,9 +627,23 @@ Please check that `OUTBOUNDINTERFACE` is correctly set, before continuning.
 
 Supply your outside IP address:
 
-```
+```bash
 export PUBLICIPADDRESS=<your.ip.address.here>
 ```
+
+You can do this automatically with this line, that automatically inserts into `$PUBLICIPADDRESS` the IP of the interface with name `$OUTBOUNDINTERFACE` :
+
+```bash
+export PUBLICIPADDRESS=$(ip -br addr | awk -v iface="$OUTBOUNDINTERFACE" '$1 == iface {split($3, a, "/"); print a[1]}')
+```
+
+Finally you can check the right value is in the environment variable using:
+
+```bash
+echo "PUBLICIPADDRESS is $PUBLICIPADDRESS"
+```
+
+Then:
 
 1. Find out on which node `ingress-nginx` is running:
 ```
