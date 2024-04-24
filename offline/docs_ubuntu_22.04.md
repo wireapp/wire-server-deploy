@@ -618,7 +618,7 @@ In the following all traffic destined to your wire cluster is going through a si
 
 To prepare determine the interface of your outbound IP:
 
-```
+```bash
 export OUTBOUNDINTERFACE=$(ip ro | sed -n "/default/s/.* dev \([enpso0-9]*\) .*/\1/p")
 echo "OUTBOUNDINTERFACE is $OUTBOUNDINTERFACE"
 ```
@@ -627,9 +627,23 @@ Please check that `OUTBOUNDINTERFACE` is correctly set, before continuning.
 
 Supply your outside IP address:
 
-```
+```bash
 export PUBLICIPADDRESS=<your.ip.address.here>
 ```
+
+You can do this directly with this one-liner command, which inserts into `$PUBLICIPADDRESS` the IP of the interface with name `$OUTBOUNDINTERFACE` :
+
+```bash
+export PUBLICIPADDRESS=$(ip -br addr | awk -v iface="$OUTBOUNDINTERFACE" '$1 == iface {split($3, a, "/"); print a[1]}')
+```
+
+Finally you can check the right value is in the environment variable using:
+
+```bash
+echo "PUBLICIPADDRESS is $PUBLICIPADDRESS"
+```
+
+Then:
 
 1. Find out on which node `ingress-nginx` is running:
 ```
@@ -639,6 +653,12 @@ d kubectl get pods -l app.kubernetes.io/name=ingress-nginx -o=custom-columns=NAM
 
 ```
 export KUBENODEIP=<your.kubernetes.node.ip>
+```
+
+Or instead of getting the IP manually, you can also do this with a one-liner command:
+
+```bash
+export KUBENODEIP=$(sudo docker run --network=host -v ${SSH_AUTH_SOCK:-nonexistent}:/ssh-agent -e SSH_AUTH_SOCK=/ssh-agent -v $HOME/.ssh:/root/.ssh -v $PWD:/wire-server-deploy $WSD_CONTAINER kubectl get pods -l app.kubernetes.io/name=ingress-nginx -o=custom-columns=NAME:.metadata.name,NODE:.spec.nodeName,IP:.status.hostIP --no-headers |  awk '{print $3}')
 ```
 
 then, in case the server owns the public IP (i.e. you can see the IP in `ip addr`), run the following:
