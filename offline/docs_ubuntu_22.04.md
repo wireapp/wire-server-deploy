@@ -631,7 +631,7 @@ Supply your outside IP address:
 export PUBLICIPADDRESS=<your.ip.address.here>
 ```
 
-You can do this automatically with this line, that automatically inserts into `$PUBLICIPADDRESS` the IP of the interface with name `$OUTBOUNDINTERFACE` :
+You can do this directly with this one-liner command, which inserts into `$PUBLICIPADDRESS` the IP of the interface with name `$OUTBOUNDINTERFACE` :
 
 ```bash
 export PUBLICIPADDRESS=$(ip -br addr | awk -v iface="$OUTBOUNDINTERFACE" '$1 == iface {split($3, a, "/"); print a[1]}')
