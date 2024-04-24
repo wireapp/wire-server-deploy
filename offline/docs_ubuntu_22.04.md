@@ -938,6 +938,24 @@ To deploy coturn on your new installation, go to the following link and follow t
 [Installing Coturn](coturn.md)
 
 
+## Installing fluent-bit
+
+To collect and distribute logs to database or log servers such as Elasticsearch, syslog, etc.
+Copy `values/fluent-bit/prod-values.example.yaml` to `values/fluent-bit/values.yaml` and edit the file accordingly. Sample values for Elasticsearch and syslog are provided in the file.
+
+```
+cp values/fluent-bit/prod-values.example.yaml values/fluent-bit/values.yaml
+```
+
+and, install the fluent-bit helm chart
+
+```
+d helm upgrade --install fluent-bit ./charts/fluent-bit --values values/fluent-bit/values.yaml
+```
+
+Make sure that traffic is allowed from your kubernetes nodes to your destination server (elasticsearch or syslog).
+
+
 ## Appendixes
 
 
