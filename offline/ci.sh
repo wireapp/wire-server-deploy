@@ -81,6 +81,7 @@ cr.dtsx.io/datastax/cass-config-builder:1.0-ubi8
 cr.k8ssandra.io/k8ssandra/cass-management-api:3.11.11
 cr.k8ssandra.io/k8ssandra/system-logger:v1.19.1
 docker.io/thelastpickle/cassandra-reaper:3.5.0
+docker.io/k8ssandra/medusa:0.20.1
 EOF
 }
 
