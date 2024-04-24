@@ -655,6 +655,12 @@ d kubectl get pods -l app.kubernetes.io/name=ingress-nginx -o=custom-columns=NAM
 export KUBENODEIP=<your.kubernetes.node.ip>
 ```
 
+Or instead of getting the IP manually, you can also do this with a one-liner command:
+
+```bash
+export KUBENODEIP=$(sudo docker run --network=host -v ${SSH_AUTH_SOCK:-nonexistent}:/ssh-agent -e SSH_AUTH_SOCK=/ssh-agent -v $HOME/.ssh:/root/.ssh -v $PWD:/wire-server-deploy $WSD_CONTAINER kubectl get pods -l app.kubernetes.io/name=ingress-nginx -o=custom-columns=NAME:.metadata.name,NODE:.spec.nodeName,IP:.status.hostIP --no-headers |  awk '{print $3}')
+```
+
 then, in case the server owns the public IP (i.e. you can see the IP in `ip addr`), run the following:
 ```
 sudo bash -c "
