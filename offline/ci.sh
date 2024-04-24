@@ -128,6 +128,8 @@ legacy_chart_release() {
 }
 
 wire_build_chart_release () {
+  # NOTE: If you are building a release from 'main' for the first time, please check that the build.json contains
+  # all helm charts! E.g. compare against q1-2024. If it does then please remove this note.
   wire_build="https://raw.githubusercontent.com/wireapp/wire-builds/623e216bebc76ed80cc9bb7e332600d616e277bd/build.json"
   curl "$wire_build" | jq -r '.helmCharts | to_entries | map("\(.key) \(.value.repo) \(.value.version)") | join("\n") '
 }
