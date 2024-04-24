@@ -953,7 +953,7 @@ and, install the fluent-bit helm chart
 d helm upgrade --install fluent-bit ./charts/fluent-bit --values values/fluent-bit/values.yaml
 ```
 
-Make sure that outgoing traffic is allowed to your destination server from the host machine.
+Make sure that traffic is allowed from your kubernetes nodes to your destination server (elasticsearch or syslog).
 
 
 ## Appendixes
