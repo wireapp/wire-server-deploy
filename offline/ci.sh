@@ -128,9 +128,8 @@ legacy_chart_release() {
 }
 
 wire_build_chart_release () {
-  # NOTE: If you are building a release from 'main' for the first time, please check that the build.json contains
-  # all helm charts! E.g. compare against q1-2024. If it does then please remove this note.
-  wire_build="https://raw.githubusercontent.com/wireapp/wire-builds/623e216bebc76ed80cc9bb7e332600d616e277bd/build.json"
+  set -euo pipefail
+  wire_build="$1"
   curl "$wire_build" | jq -r '.helmCharts | to_entries | map("\(.key) \(.value.repo) \(.value.version)") | join("\n") '
 }
 
@@ -173,9 +172,12 @@ pull_charts() {
   echo "Pulling charts done."
 }
 
-# Flip comments if you want to create a release from https://github.com/wireapp/wire-builds
-legacy_chart_release | pull_charts
-# wire_build_chart_release | pull_charts
+wire_build="<fill me>"
+wire_build_chart_release "$wire_build" | pull_charts
+
+# Uncomment if you want to create non-wire-build release
+# and uncomment the other pull_charts call from aboe
+# legacy_chart_release | pull_charts
 
 # TODO: Awaiting some fixes in wire-server regarding tagless images
 
