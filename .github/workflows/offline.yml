@@ -1,6 +1,6 @@
 on:
   push:
-    branches: [master, develop]
+    branches: [master, develop, zulu-hotfix1]
     tags: [ v* ]
   pull_request:
     branches: [master, develop]
