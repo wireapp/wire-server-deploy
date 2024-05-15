@@ -68,6 +68,7 @@ packages=(
   vi
   tcpdump
   gnupg
+  bzip2
   # Dependencies for the rabbitmq-server package
   erlang-base
   erlang-asn1
