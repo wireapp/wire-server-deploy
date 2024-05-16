@@ -412,9 +412,19 @@ Instead, we configure it to use the external IP addres we found above, and the C
 
 As we have changed our Wire-Server configuration, we must re-deploy the Wire-Server chart to apply the new configuration:
 
+If wire-server is already installed, first uninstall it:
+
 ```bash
 
-d helm upgrade --install wire-server ./charts/wire-server --values values/wire-server/values.yaml
+d helm uninstall wire-server
+
+```
+
+Then install wire-server with:
+
+```bash
+
+d helm install wire-server ./charts/wire-server --timeout=15m0s --values ./values/wire-server/values.yaml --values ./values/wire-server/secrets.yaml
 
 ```
 

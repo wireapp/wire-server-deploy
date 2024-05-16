@@ -166,21 +166,12 @@ ansible_become_pass=<PASSWORD>
 ```
 #### Editing the ansible inventory
 
-##### Adding host entries
-When editing the inventory, you only need seven entries in the '[all]' section. One entry for each of the VMs you are running.
-Edit the 'kubenode' entries, and the 'assethost' entry like normal.
-
-Instead of creating separate cassandra, elasticsearch, and minio entries, create three 'ansnode' entries, similar to the following:
-```
-ansnode1 ansible_host=192.168.122.31
-ansnode2 ansible_host=192.168.122.32
-ansnode3 ansible_host=192.168.122.33
-```
-
 ##### Updating Group Membership
-Afterwards, you need to update the lists of what nodes belong to which group, so ansible knows what to install on these nodes.
+It's recommended to update the lists of what nodes belong to which group, so ansible knows what to install on these nodes.
 
-Add all three ansnode entries into the `cassandra` `elasticsearch`, and `minio` sections. They should look like the following:
+For our Wire internal offline deployments using seven VMs, we edit the inventory to run all services outside of K8s on three `ansnode` VMs.
+For productive on-prem deployments, these sections can be divided into individual host groups, reflecting the architecture of the target infrastructure.
+Examples with individual nodes for Elastic, MinIO, Cassandra and Restund are commented out below.
 ```
 [elasticsearch]
 # elasticsearch1
@@ -189,7 +180,6 @@ Add all three ansnode entries into the `cassandra` `elasticsearch`, and `minio` 
 ansnode1
 ansnode2
 ansnode3
-
 
 [minio]
 # minio1
@@ -203,26 +193,54 @@ ansnode3
 # cassandra1
 # cassandra2
 # cassandra3
-```
+ansnode1
+ansnode2
+ansnode3
 
-Add two of the ansnode entries into the `restund` section
-```
+[cassandra_seed]
+# cassandraseed1
+ansnode1
+
 [restund]
+# restund1
+# restund2
 ansnode1
 ansnode2
 ```
 
-Add one of the ansnode entries into the `cassandra_seed` section.
-```
-[cassandra_seed]
-ansnode1
-```
-
 ### Configuring kubernetes and etcd
 
-You'll need at least 3 `kubenode`s.  3 of them should be added to the
-`[kube-master]`, `[etcd]`  and `[kube-node]` groups of the inventory file.  Any
-additional nodes should only be added to the `[kube-node]` group.
+To run Kubernetes, at least three nodes are required, which need to be added to the `[kube-master]`, `[etcd]`  and `[kube-node]` groups of the inventory file. Any
+additional nodes should only be added to the `[kube-node]` group:
+For our Wire internal offline deployments using seven VMs, we edit the inventory to run all services inside K8s on three `kubenode` VMs.
+For productive on-prem deployments, these sections can be divided into individual host groups, reflecting the architecture of the target infrastructure.
+```
+[kube-master]
+# kubemaster1
+# kubemaster2
+# kubemaster3
+kubenode1
+kubenode2
+kubenode3
+
+[etcd]
+# etcd1 etcd_member_name=etcd1
+# etcd2 etcd_member_name=etcd2
+# etcd3 etcd_member_name=etcd3
+kubenode1 etcd_member_name=etcd1
+kubenode2 etcd_member_name=etcd2
+kubenode3 etcd_member_name=etcd3
+
+[kube-node]
+# prodnode1
+# prodnode2
+# prodnode3
+# prodnode4
+# ...
+kubenode1
+kubenode2
+kubenode3
+```
 
 ### Setting up databases and kubernetes to talk over the correct (private) interface
 If you are deploying wire on servers that are expected to use one interface to talk to the public, and a separate interface to talk amongst themselves, you will need to add "ip=" declarations for the private interface of each node. for instance, if the first kubenode was expected to talk to the world on 192.168.122.21, but speak to other wire services (kubernetes, databases, etc) on 192.168.0.2, you should edit its entry like the following:
@@ -233,13 +251,10 @@ Do this for all of the instances.
 
 ### Setting up Database network interfaces.
 * Make sure that `assethost` is present in the inventory file with the correct `ansible_host` (and `ip` values if required)
-* Make sure that `cassandra_network_interface` is set to the name of the network interface on which
-  the kubenodes should talk to cassandra and on which the cassandra nodes
-  should communicate among each other. Run `ip addr` on one of the cassandra nodes to determine the network interface names, and which networks they correspond to.  For example, if you set up the cassandra nodes via virt-manager, then the interface will be named `enp1s0`. 
-* Similarly `elasticsearch_network_interface` and `minio_network_interface`
-  should be set to the network interface names you want elasticsearch and minio to communicate with kubernetes with, as well.
+* Make sure that `cassandra_network_interface` is set to the name of the network interface on which the kubenodes should talk to cassandra and on which the cassandra nodes
+  should communicate among each other. Run `ip addr` on one of the cassandra nodes to determine the network interface names, and which networks they correspond to. In Ubuntu 22.04 for example, interface names are predictable and individualized, eg. `enp41s0`. 
+* Similarly `elasticsearch_network_interface` and `minio_network_interface` should be set to the network interface names you want elasticsearch and minio to communicate with kubernetes with, as well.
   
-
 
 ### Configuring Restund
 
@@ -283,7 +298,8 @@ In order to automatically generate deeplinks, Edit the minio variables in `[mini
 
 ### Example hosts.ini
 
-Here is an example `hosts.ini` file that was used in a succesfull example deployment, for reference. It might not be exactly what is needed for your deployment, but it should work for the KVM 7-machine deploy:
+Here is an example `hosts.ini` file for an internal "Wire in a box" deployment with seven VMs.
+Please note that your on-prem infrastructure requirements likely differ in terms of number of VMs / nodes, IP addresses and ranges, as well as host names.
 
 ```
 [all]
@@ -325,7 +341,6 @@ kubenode2
 kubenode3
 
 [etcd]
-
 kubenode1 etcd_member_name=etcd1
 kubenode2 etcd_member_name=etcd2
 kubenode3 etcd_member_name=etcd3
@@ -334,7 +349,6 @@ kubenode3 etcd_member_name=etcd3
 kubenode1
 kubenode2
 kubenode3
-
 
 [k8s-cluster:children]
 kube-master
@@ -549,10 +563,10 @@ Add the IPs of your `restund` servers to the `turnStatic.v2` list:
   turnStatic:
     v1: []
     v2:
-      - "turn:<IP of restund1>:80"
-      - "turn:<IP of restund2>:80"
-      - "turn:<IP of restund1>:80?transport=tcp"
-      - "turn:<IP of restund2>:80?transport=tcp"
+      - "turn:<IP of restund1>:3478"
+      - "turn:<IP of restund2>:3478"
+      - "turn:<IP of restund1>:3478?transport=tcp"
+      - "turn:<IP of restund2>:3478?transport=tcp"
 ```
 
 Open up `./values/wire-server/secrets.yaml` and inspect the values. In theory
@@ -651,7 +665,7 @@ In the following all traffic destined to your wire cluster is going through a si
 
 To prepare determine the interface of your outbound IP:
 
-```
+```bash
 export OUTBOUNDINTERFACE=$(ip ro | sed -n "/default/s/.* dev \([enpso0-9]*\) .*/\1/p")
 echo "OUTBOUNDINTERFACE is $OUTBOUNDINTERFACE"
 ```
@@ -660,9 +674,23 @@ Please check that `OUTBOUNDINTERFACE` is correctly set, before continuning.
 
 Supply your outside IP address:
 
-```
+```bash
 export PUBLICIPADDRESS=<your.ip.address.here>
 ```
+
+You can do this directly with this one-liner command, which inserts into `$PUBLICIPADDRESS` the IP of the interface with name `$OUTBOUNDINTERFACE` :
+
+```bash
+export PUBLICIPADDRESS=$(ip -br addr | awk -v iface="$OUTBOUNDINTERFACE" '$1 == iface {split($3, a, "/"); print a[1]}')
+```
+
+Finally you can check the right value is in the environment variable using:
+
+```bash
+echo "PUBLICIPADDRESS is $PUBLICIPADDRESS"
+```
+
+Then:
 
 1. Find out on which node `ingress-nginx` is running:
 ```
@@ -672,6 +700,12 @@ d kubectl get pods -l app.kubernetes.io/name=ingress-nginx -o=custom-columns=NAM
 
 ```
 export KUBENODEIP=<your.kubernetes.node.ip>
+```
+
+Or instead of getting the IP manually, you can also do this with a one-liner command:
+
+```bash
+export KUBENODEIP=$(sudo docker run --network=host -v ${SSH_AUTH_SOCK:-nonexistent}:/ssh-agent -e SSH_AUTH_SOCK=/ssh-agent -v $HOME/.ssh:/root/.ssh -v $PWD:/wire-server-deploy $WSD_CONTAINER kubectl get pods -l app.kubernetes.io/name=ingress-nginx -o=custom-columns=NAME:.metadata.name,NODE:.spec.nodeName,IP:.status.hostIP --no-headers |  awk '{print $3}')
 ```
 
 then, in case the server owns the public IP (i.e. you can see the IP in `ip addr`), run the following:
@@ -938,6 +972,8 @@ d kubectl label node kubenode1 wire.com/role=sftd
 ```
 
 ##### A selected group of kubernetes nodes:
+By default, the replicaCount in `values/sftd/values.yaml` is set to 3. Change it to the number of nodes on which you want to deploy sftd server.
+
 If you are restricting SFT to certain nodes, use `nodeSelector` to run on specific nodes (**replacing the example.com domains with yours**):
 ```
 d helm upgrade --install sftd ./charts/sftd --set 'nodeSelector.wire\.com/role=sftd' --values values/sftd/values.yaml
@@ -967,6 +1003,24 @@ d helm upgrade --install sftd ./charts/sftd \
 To deploy coturn on your new installation, go to the following link and follow the instructions there:
 
 [Installing Coturn](coturn.md)
+
+
+## Installing fluent-bit
+
+To collect and distribute logs to database or log servers such as Elasticsearch, syslog, etc.
+Copy `values/fluent-bit/prod-values.example.yaml` to `values/fluent-bit/values.yaml` and edit the file accordingly. Sample values for Elasticsearch and syslog are provided in the file.
+
+```
+cp values/fluent-bit/prod-values.example.yaml values/fluent-bit/values.yaml
+```
+
+and, install the fluent-bit helm chart
+
+```
+d helm upgrade --install fluent-bit ./charts/fluent-bit --values values/fluent-bit/values.yaml
+```
+
+Make sure that traffic is allowed from your kubernetes nodes to your destination server (elasticsearch or syslog).
 
 
 ## Appendixes

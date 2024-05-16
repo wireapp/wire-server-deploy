@@ -44,11 +44,17 @@ brig:
       teamSettings: https://teams.example.com # change this (or unset if team settings are not used)
       teamCreatorWelcome: https://teams.example.com/login # change this
       teamMemberWelcome: https://wire.example.com/download # change this
+    enableFederation: false # Enable to use federation
     optSettings:
       setFederationDomain: example.com # change this
       # Sync the domain with the 'host' variable in the sftd chart
       # Comment the next line (by adding '#' before it) if conference calling is not used
       setSftStaticUrl: "https://sftd.example.com:443"
+      # Uncomment and replace values below for adding federated backends
+      # setFederationStrategy: allowDynamic
+      # setFederationDomainConfigs:
+      #   - domain: remotebackend1.example.com
+      #     search_policy: full_search
     emailSMS:
       general:
         emailSender: email@example.com # change this
@@ -122,6 +128,7 @@ cargohold:
       s3Bucket: assets
       s3Endpoint: http://minio-external:9000
       s3DownloadEndpoint: https://assets.example.com
+    enableFederation: false # Enable to use federation
     settings:
       federationDomain: example.com # change this
 #    proxy:
@@ -140,6 +147,7 @@ galley:
       host: cassandra-external
     rabbitmq:
       host: rabbitmq # name of the rabbitmq service, either `rabbitmq-external` or `rabbitmq`
+    enableFederation: false # Enable to use federation
     settings:
       # prefix URI used when inviting users to a conversation by link
       conversationCodeURI: https://account.example.com/conversation-join/ # change this

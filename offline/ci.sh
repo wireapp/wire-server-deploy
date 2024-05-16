@@ -128,8 +128,9 @@ legacy_chart_release() {
 }
 
 wire_build_chart_release () {
-  wire_build="https://raw.githubusercontent.com/wireapp/wire-builds/q1-2024/build.json"
-  curl "$wire_build" | jq -r '.helmCharts | with_entries(select(.key != "inbucket")) | to_entries | map("\(.key) \(.value.repo) \(.value.version)") | join("\n") '
+  set -euo pipefail
+  wire_build="$1"
+  curl "$wire_build" | jq -r '.helmCharts | to_entries | map("\(.key) \(.value.repo) \(.value.version)") | join("\n") '
 }
 
 # pull_charts() accepts charts in format
@@ -171,9 +172,12 @@ pull_charts() {
   echo "Pulling charts done."
 }
 
-# Flip comments if you want to create a release from https://github.com/wireapp/wire-builds
-#legacy_chart_release | pull_charts
-wire_build_chart_release | pull_charts
+wire_build="https://raw.githubusercontent.com/wireapp/wire-builds/7469e52b0ef12f5dd0af08d11ea7ed231b31f5e1/build.json"
+wire_build_chart_release "$wire_build" | pull_charts
+
+# Uncomment if you want to create non-wire-build release
+# and uncomment the other pull_charts call from aboe
+# legacy_chart_release | pull_charts
 
 # TODO: Awaiting some fixes in wire-server regarding tagless images
 

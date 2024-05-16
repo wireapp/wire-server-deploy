@@ -40,7 +40,8 @@ table ip nat {
     type nat hook prerouting priority -100;
     iifname { $INF_WAN, virbr0 } tcp dport 80 fib daddr type local dnat to $KUBENODEIP:31772
     iifname { $INF_WAN, virbr0 } tcp dport 443 fib daddr type local dnat to $KUBENODEIP:31773
-    udp dport 80 dnat ip to 192.168.122.31:80
+    udp dport 3478 dnat ip to 192.168.122.31:3478
+    tcp dport 3478 dnat ip to 192.168.122.31:3478
     udp dport 32768-60999 dnat ip to 192.168.122.31:32768-60999
     fib daddr type local counter jump DOCKER
   }
