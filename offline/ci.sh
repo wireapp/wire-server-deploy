@@ -130,7 +130,7 @@ legacy_chart_release() {
 wire_build_chart_release () {
   set -euo pipefail
   wire_build="$1"
-  curl "$wire_build" | jq -r '.helmCharts | to_entries | map("\(.key) \(.value.repo) \(.value.version)") | join("\n") '
+  curl "$wire_build" | jq -r '.helmCharts | with_entries(select(.key != "inbucket")) | to_entries | map("\(.key) \(.value.repo) \(.value.version)") | join("\n") '
 }
 
 # pull_charts() accepts charts in format
