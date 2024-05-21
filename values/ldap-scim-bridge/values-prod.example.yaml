@@ -1,3 +1,6 @@
+image:
+  repository: quay.io/wire/ldap-scim-bridge
+  tag: 0.9
 # NOTE: you will need an LDAP SCIM bridge deployment for each team!
 # by default, run every 5 minutes.
 schedule: "*/5 * * * * *"
