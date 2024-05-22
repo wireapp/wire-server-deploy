@@ -27,6 +27,7 @@ shift
 packages=(
   python3-apt
   python3-netaddr
+  python3-pip
   aufs-tools
   apt-transport-https
   software-properties-common
