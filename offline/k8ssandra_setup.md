@@ -1,26 +1,26 @@
 # Setting up K8ssandra
 Reference - https://docs.k8ssandra.io/install/local/single-cluster-helm/
 
-K8ssandra will need following components to be installed in the cluster - 
-- dynamic persistent volume provisioning(for e.g with Openebs)
+K8ssandra will need the following components to be installed in the cluster - 
+- dynamic persistent volume provisioning (for e.g with OpenEBS)
 - cert-manager
-- minio(for backup and restore)
+- minio (for backup and restore)
 - K8ssandra-operator
 - Configure minio bucket for backups
 
 ## [1] Dynamic Persistent Volume Provisioning
-If you already have a dynamic persistent volume provisioning setup, you can skip this step. Else, we will be using Openebs for dynamic persistent volume provisioning.
+If you already have a dynamic persistent volume provisioning setup, you can skip this step. If not, we will be using OpenEBS for dynamic persistent volume provisioning.
 
 Reference docs - https://openebs.io/docs/user-guides/local-storage-user-guide/local-pv-hostpath/hostpath-installation
 
-Deploy Openebs -
+Deploy OpenEBS -
 
 ```
 d helm install openebs charts/openebs --namespace openebs --create-namespace
 ```
 The above helm chart will be readily available in the offline artifact.
 
-After successful deployment of openebs, you will see these storageclasses
+After successful deployment of OpenEBS, you will see these storage classes:
 ```
 d kubectl get sc
 NAME               PROVISIONER                    RECLAIMPOLICY   VOLUMEBINDINGMODE      ALLOWVOLUMEEXPANSION   AGE
@@ -70,9 +70,9 @@ d helm install k8ssandra-operator charts/k8ssandra-operator -n database --create
 ```
 
 ## [5] Configure Minio Bucket for Backups
-Create a secret to access Minio, make a new file `minio-secret.yaml`, and put into it -
+Create a K8s secret to access Minio by applying `minio-secret.yaml` below.
 
-Get the aws_access_key_id and aws_secret_access_key from ansible/inventory/offline/group_vars/all/secrets.yaml file, they will be under minio_access_key and minio_secret_key
+Important: Use `aws_access_key_id` and `aws_secret_access_key` from ansible/inventory/offline/group_vars/all/secrets.yaml file, they will be named `minio_access_key` and `minio_secret_key`.
 
 ```
 apiVersion: v1
@@ -88,24 +88,24 @@ stringData:
    aws_secret_access_key = dpZqqiR0Bwz6Kc6J8ruPfTC1VqIPI4EM0Id6TLWG83 #update this
 ```
 
-and apply this -
+Apply the secret:
 
 ```d kubectl apply -f minio-secret.yaml```
 
-Now, put this medusa config under spec section in ```charts/k8ssandra-test-cluster/templates/k8ssandra-cluster.yaml``` file -
+Now, put this medusa config directly below the `spec:` section in ```charts/k8ssandra-test-cluster/templates/k8ssandra-cluster.yaml```:
 ```
 medusa:
-    storageProperties:
-      storageProvider: s3_compatible
-      region: eu-west-1
-      bucketName: k8ssandra-backups
-      host: minio-external
-      port: 9000
-      prefix: dc1
-      storageSecretRef:
-        name: medusa-bucket-key
-      secure: false
-      maxBackupAge: 7
+  storageProperties:
+    storageProvider: s3_compatible
+    region: eu-west-1
+    bucketName: k8ssandra-backups
+    host: minio-external
+    port: 9000
+    prefix: dc1
+    storageSecretRef:
+      name: medusa-bucket-key
+    secure: false
+    maxBackupAge: 7
 ```
 
 ## Install K8ssandra Test Cluster
@@ -121,7 +121,7 @@ Now, deploy it -
 d helm upgrade --install k8ssandra-test-cluster charts/k8ssandra-test-cluster --namespace database
 ```
 
-After successful deployment, change the size to 3 and than upgrade the deployment
+After successful deployment, change the size to 3 and upgrade the deployment.
 
 Note: Deploying with size: 3 directly will result in some hostname resolution issues.
 ```
@@ -131,7 +131,7 @@ d helm upgrade --install k8ssandra-test-cluster charts/k8ssandra-test-cluster --
 ## Enable Backups
 Reference - https://docs.k8ssandra.io/tasks/backup-restore/
 
-To enable Medusa backup schedule and old backups purging schedule, create a file `k8ssandra-backup.yaml` -
+To enable Medusa backup schedule and purging schedule for old backups, create a file `k8ssandra-backup.yaml`:
 ```
 apiVersion: medusa.k8ssandra.io/v1alpha1
 kind: MedusaBackupSchedule

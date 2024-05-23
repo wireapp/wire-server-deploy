@@ -580,7 +580,7 @@ Open up `./values/wire-server/values.yaml` and replace example.com and other dom
 sed -i 's/example.com/<your-domain>/g' ./values/wire-server/values.yaml
 ```
 
-#### [Optional] Using Kubernetes managed Cassandra(K8ssandra)
+#### [Optional] Using Kubernetes managed Cassandra (K8ssandra)
 You can deploy K8ssandra by following these docs - 
 [offline/k8ssandra_setup.md](./k8ssandra_setup.md)
 
