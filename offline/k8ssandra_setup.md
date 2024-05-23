@@ -92,7 +92,7 @@ Apply the secret:
 
 ```d kubectl apply -f minio-secret.yaml```
 
-Now, put this medusa config directly below the `spec:` section in ```charts/k8ssandra-test-cluster/templates/k8ssandra-cluster.yaml```:
+Now, put this medusa config directly below the `spec:` section in `charts/k8ssandra-test-cluster/templates/k8ssandra-cluster.yaml`:
 ```
 medusa:
   storageProperties:
@@ -109,23 +109,24 @@ medusa:
 ```
 
 ## Install K8ssandra Test Cluster
-In ```charts/k8ssandra-test-cluster/templates/k8ssandra-cluster.yaml``` update the following variables - 
+Create a copy of variable file -
+```
+cp ./values/k8ssandra-test-cluster/prod-values.example.yaml ./values/k8ssandra-test-cluster/values.yaml
+```
 
-Set `size` to 1
-
-Set `storageClassName` to "openebs-hostpath"
+You can update the values in the `values/k8ssandra-test-cluster/values.yaml` file as per your requirement.
 
 Now, deploy it -
 
 ```
-d helm upgrade --install k8ssandra-test-cluster charts/k8ssandra-test-cluster --namespace database
+d helm upgrade --install k8ssandra-test-cluster charts/k8ssandra-test-cluster --values values/k8ssandra-test-cluster/values.yaml --namespace database
 ```
 
-After successful deployment, change the size to 3 and upgrade the deployment.
+After successful deployment, change the `datacenter -> size` to 3 in ```values/k8ssandra-test-cluster/values.yaml``` and upgrade the deployment.
 
 Note: Deploying with size: 3 directly will result in some hostname resolution issues.
 ```
-d helm upgrade --install k8ssandra-test-cluster charts/k8ssandra-test-cluster --namespace database
+d helm upgrade --install k8ssandra-test-cluster charts/k8ssandra-test-cluster --values values/k8ssandra-test-cluster/values.yaml --namespace database
 ```
 
 ## Enable Backups
