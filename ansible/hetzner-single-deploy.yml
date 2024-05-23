@@ -1,7 +1,7 @@
 - hosts: all
   become: true
   vars:
-    artifact_hash: 8054e59c8a40a6ac2cce2bbdbf4c80fa06d50e4b
+    artifact_hash: f97a141ff9484810164510bf872bd2033ec3e7ff
     ubuntu_version: 22.04.4
     ssh_pubkey: "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIDPTGTo1lTqd3Ym/75MRyQvj8xZINO/GI6FzfIadSe5c backend+hetzner-dedicated-operator@wire.com"
   tasks:
