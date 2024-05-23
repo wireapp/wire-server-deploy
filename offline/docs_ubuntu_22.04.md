@@ -313,11 +313,12 @@ ansnode3 ansible_host=192.168.122.33
 
 [all:vars]
 ansible_user = demo
-ansible_password = fai
-ansible_become_password = fai
 
 [cassandra:vars]
 cassandra_network_interface = enp1s0
+cassandra_backup_enabled = False
+cassandra_incremental_backup_enabled = False
+# cassandra_backup_s3_bucket = 
 
 [elasticsearch:vars]
 elasticsearch_network_interface = enp1s0
