@@ -66,7 +66,9 @@ Minio and minio-external chart should have been already installed, if you are fo
 
 ## [4] Deploy K8ssandra Operator
 ```
-d helm install k8ssandra-operator charts/k8ssandra-operator -n database --create-namespace
+cp ./values/k8ssandra-operator/prod-values.example.yaml ./values/k8ssandra-operator/values.yaml
+
+d helm install k8ssandra-operator charts/k8ssandra-operator --values ./values/k8ssandra-operator/values.yaml -n database --create-namespace
 ```
 
 ## [5] Configure Minio Bucket for Backups
