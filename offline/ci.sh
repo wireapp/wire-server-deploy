@@ -74,6 +74,7 @@ quay.io/metallb/controller:v0.13.9
 docker.io/library/nginx:1.25.2-alpine
 docker.io/kubernetesui/dashboard:v2.7.0
 docker.io/kubernetesui/metrics-scraper:v1.0.8
+quay.io/wire/ldap-scim-bridge:0.9
 EOF
 }
 
