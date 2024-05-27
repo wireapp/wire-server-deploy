@@ -46,7 +46,7 @@ d helm install k8ssandra-operator charts/k8ssandra-operator --values ./values/k8
 ## [5] Configure Minio Bucket for Backups
 Create a K8s secret for k8ssandra to access with Minio by applying `minio-secret.yaml` below.
 
-Important: Use `aws_access_key_id` and `aws_secret_access_key` from ansible/inventory/offline/group_vars/all/secrets.yaml file, they will be named `minio_access_key` and `minio_secret_key`.
+You can find the value of `aws_access_key_id` and `aws_secret_access_key` from `ansible/inventory/offline/group_vars/all/secrets.yaml` file, they will be named `minio_access_key` and `minio_secret_key` respectively. Replace them in the secret config below.
 
 ```
 apiVersion: v1
