@@ -21,8 +21,8 @@ fi
 # Now we are running as sudo.
 
 # Installing the required packages.
-sudo apt-get update
-sudo apt-get install -y sysbench hardinfo inxi virt-what lshw net-tools ubuntu-report
+apt-get update
+apt-get install -y sysbench hardinfo inxi virt-what lshw net-tools ubuntu-report
 
 # Setup
 WORK_FOLDER="/tmp/wire-information-gathering/"
@@ -208,40 +208,40 @@ save_command 65 cron-contents      cat -n /etc/cron.d/*
 save_file 66    dnsmasq-conf       /etc/dnsmasq.conf
 
 # CPU Benchmark.
-save_command 67 cpu-benchmark      sudo sysbench --test=cpu --cpu-max-prime=20000 run
+save_command 67 cpu-benchmark      sysbench --test=cpu --cpu-max-prime=20000 run
 
 # File i/o benchmark command 1.
-save_command 68 io-benchmark-1     sudo sysbench --test=fileio --file-total-size=2G prepare
+save_command 68 io-benchmark-1     sysbench --test=fileio --file-total-size=2G prepare
 
 # File i/o benchmark command 2.
-save_command 69 io-benchmark-2     sudo sysbench --test=fileio --file-total-size=2G --file-test-mode=rndrw run
+save_command 69 io-benchmark-2     sysbench --test=fileio --file-total-size=2G --file-test-mode=rndrw run
 
 # File i/o benchmark command 3.
-save_command 70 io-benchmark-3     sudo sysbench --test=fileio --file-total-size=2G cleanup
+save_command 70 io-benchmark-3     sysbench --test=fileio --file-total-size=2G cleanup
 
 # Memory benchmark.
-save_command 71 ram-benchmark      sudo sysbench --test=memory run
+save_command 71 ram-benchmark      sysbench --test=memory run
 
 # Hardinfo command.
-save_command 72 hardinfo           sudo hardinfo
+save_command 72 hardinfo           hardinfo
 
 # Inxi basic system information    
-save_command 73 inxi-basic         sudo inxi -F
+save_command 73 inxi-basic         inxi -F
 
 # Inxi full system information 
-save_command 74 inxi-full          sudo inxi -Fxz
+save_command 74 inxi-full          inxi -Fxz
 
 # Inxi hardware information 
-save_command 75 inxi-hardware      sudo inxi -xxx
+save_command 75 inxi-hardware      inxi -xxx
 
 # Detect if we are running inside a virtual machine.
-save_command 76 virt-what          sudo virt-what 
+save_command 76 virt-what          virt-what 
 
 # Download an Ubuntu ISO so we can see the network speed.
 save_command 77 internet-speed     wget --progress=bar:force "$URL" -O "/tmp/test-file.iso" 2>&1
 
 # Save the disk space usage (`du`) of the entire disk:
-save_command 78 disk-usage         sudo du -hc /
+save_command 78 disk-usage         du -hc /
 
 # Log.
 echo "# Clean up temporary files"
