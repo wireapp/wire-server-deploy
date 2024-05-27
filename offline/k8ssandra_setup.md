@@ -2,9 +2,9 @@
 Reference - https://docs.k8ssandra.io/install/local/single-cluster-helm/
 
 K8ssandra will need the following components to be installed in the cluster - 
-- dynamic persistent volume provisioning (for e.g with OpenEBS)
-- cert-manager
-- minio (for backup and restore)
+- Dynamic persistent volume provisioning (e.g with OpenEBS)
+- Cert-Manager
+- Minio (for backup and restore)
 - K8ssandra-operator
 - Configure minio bucket for backups
 
@@ -13,12 +13,12 @@ If you already have a dynamic persistent volume provisioning setup, you can skip
 
 Reference docs - https://openebs.io/docs/user-guides/local-storage-user-guide/local-pv-hostpath/hostpath-installation
 
-Deploy OpenEBS -
+### Deploy OpenEBS
 
 ```
 d helm install openebs charts/openebs --namespace openebs --create-namespace
 ```
-The above helm chart will be readily available in the offline artifact.
+The above helm chart is available in the offline artifact.
 
 After successful deployment of OpenEBS, you will see these storage classes:
 ```
@@ -29,12 +29,12 @@ openebs-hostpath   openebs.io/local               Delete          WaitForFirstCo
 ```
 
 ## [2] Install cert-manager
-cert-manager is a must requirement for k8ssandra - https://docs.k8ssandra.io/install/local/single-cluster-helm/#deploy-cert-manager
+cert-manager is a must requirement for k8ssandra - see https://docs.k8ssandra.io/install/local/single-cluster-helm/#deploy-cert-manager for why.
 
 To install the cert-manager, follow the steps mentioned in `Use letsencrypt generated certificates` section in [offline/docs_ubuntu_22.04.md](./docs_ubuntu_22.04.md)
 
 ## [3] Install Minio
-Minio and minio-external chart should have been already installed, if you are following the docs_ubuntu_22.04.md
+Minio and minio-external chart should have been already installed, if you are following docs_ubuntu_22.04.md
 
 ## [4] Deploy K8ssandra Operator
 ```
@@ -44,7 +44,7 @@ d helm install k8ssandra-operator charts/k8ssandra-operator --values ./values/k8
 ```
 
 ## [5] Configure Minio Bucket for Backups
-Create a K8s secret to access Minio by applying `minio-secret.yaml` below.
+Create a K8s secret for k8ssandra to access with Minio by applying `minio-secret.yaml` below.
 
 Important: Use `aws_access_key_id` and `aws_secret_access_key` from ansible/inventory/offline/group_vars/all/secrets.yaml file, they will be named `minio_access_key` and `minio_secret_key`.
 
@@ -83,7 +83,7 @@ medusa:
 ```
 
 ## Install K8ssandra Test Cluster
-Create a copy of variable file -
+Create a copy of the provided values file -
 ```
 cp ./values/k8ssandra-test-cluster/prod-values.example.yaml ./values/k8ssandra-test-cluster/values.yaml
 ```
