@@ -29,37 +29,9 @@ openebs-hostpath   openebs.io/local               Delete          WaitForFirstCo
 ```
 
 ## [2] Install cert-manager
-Note: For wire-in-a-box setup, cert-manager pods should not be running on same node as ingress-nginx-controller. Hence, we should first install the ingress-nginx-controller and than install cert-manager.
+cert-manager is a must requirement for k8ssandra - https://docs.k8ssandra.io/install/local/single-cluster-helm/#deploy-cert-manager
 
-```
-cp ./values/ingress-nginx-controller/prod-values.example.yaml ./values/ingress-nginx-controller/values.yaml
-d helm install ingress-nginx-controller ./charts/ingress-nginx-controller --values ./values/ingress-nginx-controller/values.yaml
-```
-Now check where ingress-nginx-controller pod is running and install cert-manager on a different node.
-
-```
-d kubectl get pods -l app.kubernetes.io/name=ingress-nginx -o=custom-columns=NAME:.metadata.name,NODE:.spec.nodeName
-```
-For e.g. .. if it is `kubenode1`, taint the node
-```
-d kubectl cordon kubenode1
-```
-Now, download cert manager, and place it in the appropriate location:
-```
-wget https://charts.jetstack.io/charts/cert-manager-v1.13.2.tgz
-tar -C ./charts -xvzf cert-manager-v1.13.2.tgz
-```
-
-Install `cert-manager` into a new namespace `cert-manager-ns`.
-```
-d kubectl create namespace cert-manager-ns
-d helm upgrade --install -n cert-manager-ns --set 'installCRDs=true' cert-manager charts/cert-manager
-```
-
-Uncordon the node you cordonned earlier:
-```
-d kubectl uncordon kubenode1
-```
+To install the cert-manager, follow the steps mentioned in `Use letsencrypt generated certificates` section in [offline/docs_ubuntu_22.04.md](./docs_ubuntu_22.04.md)
 
 ## [3] Install Minio
 Minio and minio-external chart should have been already installed, if you are following the docs_ubuntu_22.04.md
