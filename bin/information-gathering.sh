@@ -147,7 +147,7 @@ save_command 45 network-info       ifconfig -a
 save_command 46 ip-addresses       ip addr
 
 # Save network interfaces
-save_file    47 network-interfaces /etc/network/interfaces
+save_file    47 network-interfaces netplan status
 
 # Save routing information
 save_command 48 routing-info       route -n
