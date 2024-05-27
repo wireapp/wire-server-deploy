@@ -204,44 +204,41 @@ save_command 64 cron-files         ls -l /etc/cron.d/*
 # Save Cron contents
 save_command 65 cron-contents      cat -n /etc/cron.d/*
 
-# Save DNSMasq configuration
-save_file 66    dnsmasq-conf       /etc/dnsmasq.conf
-
 # CPU Benchmark.
-save_command 67 cpu-benchmark      sysbench --test=cpu --cpu-max-prime=20000 run
+save_command 66 cpu-benchmark      sysbench --test=cpu --cpu-max-prime=20000 run
 
 # File i/o benchmark command 1.
-save_command 68 io-benchmark-1     sysbench --test=fileio --file-total-size=2G prepare
+save_command 67 io-benchmark-1     sysbench --test=fileio --file-total-size=2G prepare
 
 # File i/o benchmark command 2.
-save_command 69 io-benchmark-2     sysbench --test=fileio --file-total-size=2G --file-test-mode=rndrw run
+save_command 68 io-benchmark-2     sysbench --test=fileio --file-total-size=2G --file-test-mode=rndrw run
 
 # File i/o benchmark command 3.
-save_command 70 io-benchmark-3     sysbench --test=fileio --file-total-size=2G cleanup
+save_command 69 io-benchmark-3     sysbench --test=fileio --file-total-size=2G cleanup
 
 # Memory benchmark.
-save_command 71 ram-benchmark      sysbench --test=memory run
+save_command 70 ram-benchmark      sysbench --test=memory run
 
 # Hardinfo command.
-save_command 72 hardinfo           hardinfo
+save_command 71 hardinfo           hardinfo
 
 # Inxi basic system information    
-save_command 73 inxi-basic         inxi -F
+save_command 72 inxi-basic         inxi -F
 
 # Inxi full system information 
-save_command 74 inxi-full          inxi -Fxz
+save_command 73 inxi-full          inxi -Fxz
 
 # Inxi hardware information 
-save_command 75 inxi-hardware      inxi -xxx
+save_command 74 inxi-hardware      inxi -xxx
 
 # Detect if we are running inside a virtual machine.
-save_command 76 virt-what          virt-what 
+save_command 75 virt-what          virt-what 
 
 # Download an Ubuntu ISO so we can see the network speed.
-save_command 77 internet-speed     wget --progress=bar:force "$URL" -O "/tmp/test-file.iso" 2>&1
+save_command 76 internet-speed     wget --progress=bar:force "$URL" -O "/tmp/test-file.iso" 2>&1
 
 # Save the disk space usage (`du`) of the entire disk:
-save_command 78 disk-usage         du -hc /
+save_command 77 disk-usage         du -hc /
 
 # Log.
 echo "# Clean up temporary files"
