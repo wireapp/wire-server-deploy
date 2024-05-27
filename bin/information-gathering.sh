@@ -171,7 +171,7 @@ save_command 53 current-date       date
 save_command 54 current-utc-date   date --utc
 
 # Save routing tables
-save_command 55 routing-tables     ip route
+save_command 55 routing-tables     iptables-save
 
 # Save uptime
 save_command 56 uptime             uptime
