@@ -27,7 +27,7 @@ apt-get install -y sysbench hardinfo inxi virt-what lshw net-tools ubuntu-report
 # Setup
 WORK_FOLDER="/tmp/wire-information-gathering/"
 FINAL_FILE="/tmp/wire-information-gathering.tar.gz"
-URL="https://releases.ubuntu.com/24.04/ubuntu-24.04-desktop-amd64.iso"
+URL="http://distro.ibiblio.org/damnsmall/current/current.iso"
 
 # Clean work folder if we already ran this
 rm -rf $WORK_FOLDER
