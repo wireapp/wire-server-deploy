@@ -580,6 +580,16 @@ Open up `./values/wire-server/values.yaml` and replace example.com and other dom
 sed -i 's/example.com/<your-domain>/g' ./values/wire-server/values.yaml
 ```
 
+#### [Optional] Using Kubernetes managed Cassandra (K8ssandra)
+You can deploy K8ssandra by following these docs - 
+[offline/k8ssandra_setup.md](./k8ssandra_setup.md)
+
+Once K8ssandra is deployed, change the host address in `values/wire-server/values.yaml` to the K8ssandra service address, i.e.
+```
+sed -i 's/cassandra-external/k8ssandra-cluster-datacenter-1-service.database/g' ./values/wire-server/values.yaml
+```
+
+
 #### Deploying Wire-Server
 
 Now deploy `wire-server`:
