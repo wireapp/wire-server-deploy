@@ -36,7 +36,7 @@ rm -rf $WORK_FOLDER
 mkdir -p $WORK_FOLDER
 
 # Gather the OS issue
-ISSUE=$(cat /etc/issue | tr -d '\\n\\l' | head -n 1)
+ISSUE=$(tr -d '\\n\\l' < /etc/issue | head -n 1)
 
 # Display and save
 echo "# 01. Issue is «$ISSUE»"
@@ -48,8 +48,8 @@ save_file(){
     NAME=$2
     FILE=$3
     echo "# $NUMBER. Saving $NAME"
-    echo "# This file contains the contents of the file «$FILE», starting here:" > $WORK_FOLDER/$NUMBER-$NAME.txt 
-    cat $FILE >> $WORK_FOLDER/$NUMBER-$NAME.txt 2>/dev/null
+    echo "# This file contains the contents of the file «$FILE», starting here:" > $WORK_FOLDER/"$NUMBER"-"$NAME".txt
+    cat "$FILE" >> $WORK_FOLDER/"$NUMBER"-"$NAME".txt 2>/dev/null
 }
 
 # Utility to run a command and save it to our work folder
@@ -57,10 +57,10 @@ save_command(){
     NUMBER=$1
     NAME=$2
     shift; shift;
-    COMMAND=$@
+    COMMAND="$*"
     echo "# $NUMBER. Saving $NAME"
-    echo "# This file contains the results of the command «$COMMAND», starting here:" > $WORK_FOLDER/$NUMBER-$NAME.txt 
-    $COMMAND >> $WORK_FOLDER/$NUMBER-$NAME.txt 2>&1 
+    echo "# This file contains the results of the command «$COMMAND», starting here:" > $WORK_FOLDER/"$NUMBER"-"$NAME".txt
+    $COMMAND >> $WORK_FOLDER/"$NUMBER"-"$NAME".txt 2>&1
 }
 
 # Save log files
@@ -138,7 +138,7 @@ save_command 42 ping               ping -c 3 8.8.8.8
 save_command 43 disk-usage         df -h
 
 # Check the current language
-save_command 44 current-language   set | egrep '^(LANG|LC_)'
+save_command 44 current-language   set | grep -E '^(LANG|LC_)'
 
 # Save network information
 save_command 45 network-info       ifconfig -a
