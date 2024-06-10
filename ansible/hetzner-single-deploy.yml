@@ -27,6 +27,7 @@
       - debian-goodies
       - dnsutils
       - git
+      - dnsmasq
       - less
       - lsof
       - net-tools
