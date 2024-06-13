@@ -103,14 +103,11 @@
       owner: root
       group: root
     notify: sshd | restart
-  - name: Stop dnsmasq service
-    ansible.builtin.service:
+  - name: stop and disable dnsmasq service
+    service:
       name: dnsmasq
       state: stopped
-  - name: Disable dnsmasq service
-    ansible.builtin.service:
-      name: dnsmasq
-      enabled: no
+      enabled: false
   - name: collect libvirt network facts
     virt_net:
       command: facts
