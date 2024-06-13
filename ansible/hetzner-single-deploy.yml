@@ -27,6 +27,7 @@
       - debian-goodies
       - dnsutils
       - git
+      - dnsmasq
       - less
       - lsof
       - net-tools
@@ -102,6 +103,11 @@
       owner: root
       group: root
     notify: sshd | restart
+  - name: stop and disable dnsmasq service
+    service:
+      name: dnsmasq
+      state: stopped
+      enabled: false
   - name: collect libvirt network facts
     virt_net:
       command: facts
