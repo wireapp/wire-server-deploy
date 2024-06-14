@@ -3,4 +3,4 @@ host: sftd.example.com
 replicaCount: 3
 tls:
   issuerRef:
-    name: letsencrypt-prod
+    name: letsencrypt-http01
