@@ -13,7 +13,7 @@
         state: directory
 
     - name: Export RabbitMQ configurations
-      command: rabbitmqadmin export "{{ backup_dir }}/{{ inventory_hostname }}_definitions.json"
+      command: rabbitmqadmin export "{{ backup_dir }}/definitions.json"
 
     - name: Get RabbitMQ node directory
       command: rabbitmqctl eval 'rabbit_mnesia:dir().'
@@ -28,4 +28,4 @@
       register: dir_contents
 
     - name: Back up RabbitMQ data directory
-      command: tar cvf "{{ backup_dir }}/{{ inventory_hostname }}_rabbitmq-backup.tgz" {{ rabbitmq_node_dir }}
+      command: tar cvf "{{ backup_dir }}/rabbitmq-backup.tgz" {{ rabbitmq_node_dir }}

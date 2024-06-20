@@ -1,4 +1,4 @@
-This document is for ansible based RabbitMQ outside of Kubernetes.
+This document is for backup and restore process of RabbitMQ deployed outside of Kubernetes.
 
 ## Backup
 To take a backup of RabbitMQ,
@@ -15,7 +15,34 @@ Replace the `<path_to_store_backup>` in the below command with the path where yo
 d ansible-playbook -i ansible/inventory/offline/hosts.ini ansible/rabbitmq_backup.yml --extra-vars "backup_dir=<path_to_store_backup>"
 ```
 
-This ansible playbook will create `<node_name>_definitions.json` and `<node_name>_rabbitmq-backup.tgz` in all the RabbitMQ nodes.
-For e.g, ansnode1 will have `ansnode1_definitions.json` and `ansnode1_rabbitmq-backup.tgz` file created in the path `<path_to_store_backup>`.
+This ansible playbook will create `definitions.json` and `rabbitmq-backup.tgz` in all the RabbitMQ nodes at `<path_to_store_backup>`.
 These files are the backup of the RabbitMQ definitions and messages respectively.
 
+Now, save these files on your host machine with scp command -
+```
+mkdir rabbitmq_backups
+cd rabbitmq_backups
+```
+Fetch the backup files for each node one by one,
+```
+scp -r <node_name>:<path_to_store_backup>/ <node_name>/
+```
+
+
+## Restore
+To restore the RabbitMQ backup,
+Copy the backup files to the specific nodes in the path `<path_to_store_backup>` for each node -
+```
+scp -r <node_name>/ <node_name>:<path_to_store_backup>/
+```
+
+Than ssh into each node and run the following command from the path `<path_to_store_backup>` -
+To restore the definitions - 
+```
+rabbitmqadmin import definitions.json
+```
+To restore the data -
+```
+sudo tar xvf rabbitmq-backup.tgz -C /
+sudo chown -R rabbitmq:rabbitmq /var/lib/rabbitmq/mnesia # To ensure the correct permissions
+```
