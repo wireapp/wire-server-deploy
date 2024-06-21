@@ -1,22 +1,19 @@
 This document describes the backup and restore process for RabbitMQ deployed outside of Kubernetes.
 
 ## Backup
-To take a backup of RabbitMQ,
-
-Make sure you have the nodes on which RabbitMQ is running in the inventory file, under the `rmq-cluster` group.
-Then run the following command,
+Make sure to have the nodes on which RabbitMQ is running in the [ansible inventory file](https://github.com/wireapp/wire-server-deploy/blob/master/offline/docs_ubuntu_22.04.md#editing-the-inventory), under the `rmq-cluster` group.
+Then run the following command:
 ```
 source bin/offline-env.sh
 ```
 
-Replace `<path_to_store_backup>` in the below command with the path where you want to store the backup on the rabbitmq nodes.
+Replace `/path/to/backup` in the command below with the backup target path on the rabbitmq nodes.
 
 ```
-d ansible-playbook -i ansible/inventory/offline/hosts.ini ansible/rabbitmq_backup.yml --extra-vars "backup_dir=<path_to_store_backup>"
+d ansible-playbook -i ansible/inventory/offline/hosts.ini ansible/rabbitmq_backup.yml --extra-vars "backup_dir=/path/to/backup"
 ```
 
-This ansible playbook will create `definitions.json` and `rabbitmq-backup.tgz` on all the RabbitMQ nodes at `<path_to_store_backup>`.
-These files are the backup of the RabbitMQ definitions and messages respectively.
+This ansible playbook will create `definitions.json` (Definitions) and `rabbitmq-backup.tgz` (Messages) files on all RabbitMQ nodes at `/path/to/backup`.
 
 Now, save these files on your host machine with scp command -
 ```
