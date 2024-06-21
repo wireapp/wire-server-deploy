@@ -23,9 +23,19 @@
       set_fact:
         rabbitmq_node_dir: "{{ node_directory.stdout | regex_replace('\"', '') }}"
 
+    - name: Stop RabbitMQ service
+      service:
+        name: rabbitmq-server
+        state: stopped
+
     - name: List contents of RabbitMQ node directory
       command: ls {{ rabbitmq_node_dir }}
       register: dir_contents
 
     - name: Back up RabbitMQ data directory
       command: tar cvf "{{ backup_dir }}/rabbitmq-backup.tgz" {{ rabbitmq_node_dir }}
+
+    - name: Start RabbitMQ service
+      service:
+        name: rabbitmq-server
+        state: started
