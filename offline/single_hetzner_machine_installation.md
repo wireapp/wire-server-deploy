@@ -30,6 +30,14 @@ Take a look at the "vars:" section in wire-server-deploy/ansible/hetzner-single-
 
 The variable 'artifact_hash' above is the hash of your deployment artifact, given to you by Wire, or acquired by looking at the build job.
 
+## Install ansible collections
+
+Playbooks use the `community.libvirt` ansible collection, it can be installed with the ansible-galaxy command.
+
+```
+ansible-galaxy collection install community.libvirt
+```
+
 ## Run ansible playbook for server bootstrapping
 
 Navigate to the ansible folder in wire-server-deploy and execute the playbook using valid vars as described above.
