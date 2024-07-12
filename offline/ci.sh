@@ -2,7 +2,7 @@
 set -euo pipefail
 
 INCREMENTAL="${INCREMENTAL:-0}"
-HELM_CHART_EXCLUDE_LIST="$1"
+HELM_CHART_EXCLUDE_LIST=${1:-'["inbucket"]'}
 
 echo "Excluding following charts from the release: $HELM_CHART_EXCLUDE_LIST"
 
