@@ -1,6 +1,6 @@
 on:
   push:
-    branches: [master, develop, updating_apt_key]
+    branches: [master, develop]
     tags: [ v* ]
   pull_request:
     branches: [master, develop]
