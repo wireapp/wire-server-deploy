@@ -4,6 +4,8 @@ set -euo pipefail
 INCREMENTAL="${INCREMENTAL:-0}"
 HELM_CHART_EXCLUDE_LIST="$1"
 
+echo "Excluding following charts from the release: $HELM_CHART_EXCLUDE_LIST"
+
 # Build the container image
 container_image=$(nix-build --no-out-link -A container)
 # if [[ -n "${DOCKER_LOGIN:-}" ]];then
