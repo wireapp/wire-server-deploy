@@ -25,7 +25,7 @@ jobs:
         run: nix-env -f default.nix -iA env
 
       - name: Run offline build
-        run: ./offline/ci.sh ["elasticsearch-curator", "fluent-bit", "kibana", "redis-cluster", "inbucket", "aws-ingress", "backoffice", "calling-test", "nginx-ingress-controller", "postgresql"]
+        run: ./offline/ci.sh '["elasticsearch-curator", "fluent-bit", "kibana", "redis-cluster", "inbucket", "aws-ingress", "backoffice", "calling-test", "nginx-ingress-controller", "postgresql"]'
         env:
           GPG_PRIVATE_KEY: '${{ secrets.GPG_PRIVATE_KEY }}'
           DOCKER_LOGIN: '${{ secrets.DOCKER_LOGIN }}'
