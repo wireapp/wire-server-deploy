@@ -2,7 +2,16 @@
 set -euo pipefail
 
 INCREMENTAL="${INCREMENTAL:-0}"
-HELM_CHART_EXCLUDE_LIST=${1:-'["inbucket"]'}
+
+# Default exclude list
+HELM_CHART_EXCLUDE_LIST="inbucket"
+
+# Parse the HELM_CHART_EXCLUDE_LIST argument
+for arg in "$@"
+do
+  eval "$arg"
+done
+HELM_CHART_EXCLUDE_LIST=$(echo "$HELM_CHART_EXCLUDE_LIST" | jq -R 'split(",")')
 echo "Excluding following charts from the release: $HELM_CHART_EXCLUDE_LIST"
 
 # Build the container image
