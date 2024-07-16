@@ -3,6 +3,17 @@ set -euo pipefail
 
 INCREMENTAL="${INCREMENTAL:-0}"
 
+# Default exclude list
+HELM_CHART_EXCLUDE_LIST="inbucket"
+
+# Parse the HELM_CHART_EXCLUDE_LIST argument
+for arg in "$@"
+do
+  eval "$arg"
+done
+HELM_CHART_EXCLUDE_LIST=$(echo "$HELM_CHART_EXCLUDE_LIST" | jq -R 'split(",")')
+echo "Excluding following charts from the release: $HELM_CHART_EXCLUDE_LIST"
+
 # Build the container image
 container_image=$(nix-build --no-out-link -A container)
 # if [[ -n "${DOCKER_LOGIN:-}" ]];then
@@ -138,7 +149,13 @@ legacy_chart_release() {
 wire_build_chart_release () {
   set -euo pipefail
   wire_build="$1"
-  curl "$wire_build" | jq -r '.helmCharts | with_entries(select(.key != "inbucket")) | to_entries | map("\(.key) \(.value.repo) \(.value.version)") | join("\n") '
+  curl "$wire_build" | jq -r --argjson HELM_CHART_EXCLUDE_LIST "$HELM_CHART_EXCLUDE_LIST" '
+  .helmCharts
+  | with_entries(select([.key] | inside($HELM_CHART_EXCLUDE_LIST) | not))
+  | to_entries
+  | map("\(.key) \(.value.repo) \(.value.version)")
+  | join("\n")
+  '
 }
 
 # pull_charts() accepts charts in format
