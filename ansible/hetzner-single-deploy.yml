@@ -1,8 +1,8 @@
 - hosts: all
   become: true
   vars:
-    artifact_hash: 94bdc70a1e9864261543e3ec3ffcd9069b09bd17
-    ubuntu_version: 22.04.3
+    artifact_hash: d8fe36747614968ea73ebd43d47b99364c52f9c1
+    ubuntu_version: 22.04.4
     ssh_pubkey: "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIDPTGTo1lTqd3Ym/75MRyQvj8xZINO/GI6FzfIadSe5c backend+hetzner-dedicated-operator@wire.com"
   tasks:
   - name: set ipv4 forward
@@ -27,6 +27,7 @@
       - debian-goodies
       - dnsutils
       - git
+      - dnsmasq
       - less
       - lsof
       - net-tools
@@ -37,7 +38,6 @@
       - wget
       - whois
       - docker.io
-      - dnsmasq
       - telnet
       - python3-lxml
       - qemu
@@ -103,6 +103,11 @@
       owner: root
       group: root
     notify: sshd | restart
+  - name: stop and disable dnsmasq service
+    service:
+      name: dnsmasq
+      state: stopped
+      enabled: false
   - name: collect libvirt network facts
     virt_net:
       command: facts

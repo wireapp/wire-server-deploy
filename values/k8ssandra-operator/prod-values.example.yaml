@@ -1,0 +1,14 @@
+cass-operator:
+  disableCertManagerCheck: true
+
+cleaner:
+  image:
+    registry: docker.io
+    repository: k8ssandra/k8ssandra-tools
+    tag: 1.6.0-20240328143453-c6f39dad
+
+client:
+  image:
+    registry: docker.io
+    repository: k8ssandra/k8ssandra-tools
+    tag: 1.6.0-20240328143453-c6f39dad

@@ -25,9 +25,12 @@ config:
     fakeS3: assets.example.com
     teamSettings: teams.example.com
     accountPages: account.example.com
+    # uncomment below to activate cert acquisition for federator ingress
+    # federator: federator.example.com 
 
+# Redirection configuration for fake-aws-s3
 service:
+  useFakeS3: true
   s3:
     externalPort: 9000
     serviceName: minio-external
-    externallyCreated: true

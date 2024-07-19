@@ -74,6 +74,14 @@ quay.io/metallb/controller:v0.13.9
 docker.io/library/nginx:1.25.2-alpine
 docker.io/kubernetesui/dashboard:v2.7.0
 docker.io/kubernetesui/metrics-scraper:v1.0.8
+quay.io/wire/ldap-scim-bridge:0.9
+bats/bats:1.8.1
+docker.io/openebs/linux-utils:3.5.0
+cr.dtsx.io/datastax/cass-config-builder:1.0-ubi8
+cr.k8ssandra.io/k8ssandra/cass-management-api:3.11.16
+cr.k8ssandra.io/k8ssandra/system-logger:v1.19.1
+docker.io/thelastpickle/cassandra-reaper:3.5.0
+docker.io/k8ssandra/medusa:0.20.1
 EOF
 }
 
@@ -128,8 +136,9 @@ legacy_chart_release() {
 }
 
 wire_build_chart_release () {
-  wire_build="https://raw.githubusercontent.com/wireapp/wire-builds/623e216bebc76ed80cc9bb7e332600d616e277bd/build.json"
-  curl "$wire_build" | jq -r '.helmCharts | to_entries | map("\(.key) \(.value.repo) \(.value.version)") | join("\n") '
+  set -euo pipefail
+  wire_build="$1"
+  curl "$wire_build" | jq -r '.helmCharts | with_entries(select(.key != "inbucket")) | to_entries | map("\(.key) \(.value.repo) \(.value.version)") | join("\n") '
 }
 
 # pull_charts() accepts charts in format
@@ -171,9 +180,12 @@ pull_charts() {
   echo "Pulling charts done."
 }
 
-# Flip comments if you want to create a release from https://github.com/wireapp/wire-builds
-legacy_chart_release | pull_charts
-# wire_build_chart_release | pull_charts
+wire_build="https://raw.githubusercontent.com/wireapp/wire-builds/ae13f32434611c09cc074227a9da55a6fcc61a94/build.json"
+wire_build_chart_release "$wire_build" | pull_charts
+
+# Uncomment if you want to create non-wire-build release
+# and uncomment the other pull_charts call from aboe
+# legacy_chart_release | pull_charts
 
 # TODO: Awaiting some fixes in wire-server regarding tagless images
 

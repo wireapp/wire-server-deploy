@@ -27,6 +27,7 @@ shift
 packages=(
   python3-apt
   python3-netaddr
+  python3-pip
   aufs-tools
   apt-transport-https
   software-properties-common
@@ -68,6 +69,7 @@ packages=(
   vi
   tcpdump
   gnupg
+  bzip2
   # Dependencies for the rabbitmq-server package
   erlang-base
   erlang-asn1

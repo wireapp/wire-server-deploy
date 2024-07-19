@@ -1,0 +1,41 @@
+---
+- hosts: rmq-cluster
+  vars:
+    backup_dir: "/path/to/backup" # need to pass this as an extra var
+  tasks:
+    - name: Enable RabbitMQ management plugin
+      command: rabbitmq-plugins enable rabbitmq_management
+      become: true
+
+    - name: Ensure backup directory exists
+      file:
+        path: "{{ backup_dir }}"
+        state: directory
+
+    - name: Export RabbitMQ configurations
+      command: rabbitmqadmin export "{{ backup_dir }}/definitions.json"
+
+    - name: Get RabbitMQ node directory
+      command: rabbitmqctl eval 'rabbit_mnesia:dir().'
+      register: node_directory
+
+    - name: Set RabbitMQ node directory path
+      set_fact:
+        rabbitmq_node_dir: "{{ node_directory.stdout | regex_replace('\"', '') }}"
+
+    - name: Stop RabbitMQ service
+      service:
+        name: rabbitmq-server
+        state: stopped
+
+    - name: List contents of RabbitMQ node directory
+      command: ls {{ rabbitmq_node_dir }}
+      register: dir_contents
+
+    - name: Back up RabbitMQ data directory
+      command: tar cvf "{{ backup_dir }}/rabbitmq-backup.tgz" {{ rabbitmq_node_dir }}
+
+    - name: Start RabbitMQ service
+      service:
+        name: rabbitmq-server
+        state: started

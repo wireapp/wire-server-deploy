@@ -16,6 +16,7 @@
       - "dummy-bucket"
       - "assets"
       - "public"
+      - "k8ssandra-backups"
     minio_layouts:
       # The first minio instance on this server.
       server1:

@@ -104,4 +104,5 @@ But this does not work for resolving hostnames between VMs at this point. We'll 
 
 ### From this point:
 
-switch to docs_ubuntu_22.04.md.
+Switch to [the Ubuntu 22.04 Wire install docs](docs_ubuntu_22.04.md)
+
