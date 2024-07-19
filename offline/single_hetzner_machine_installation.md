@@ -32,7 +32,7 @@ The variable 'artifact_hash' above is the hash of your deployment artifact, give
 
 ## Install ansible collections
 
-Playbooks use the `community.libvirt` ansible collection, it can be installed with the ansible-galaxy command.
+Playbooks use the `community.libvirt` ansible collection. If you do not have it installed, it can be installed with the ansible-galaxy command.
 
 ```
 ansible-galaxy collection install community.libvirt
