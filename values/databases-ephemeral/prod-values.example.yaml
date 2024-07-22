@@ -3,3 +3,30 @@
 tags:
   cassandra-ephemeral: false
   elasticsearch-ephemeral: false
+
+redis-ephemeral:
+  redis-ephemeral:
+    usePassword: false
+    cluster:
+      enabled: true
+      slaveCount: 3
+    master:
+      persistence:
+        enabled: false
+      resources:
+        limits:
+          cpu: "1000m"
+          memory: "1024Mi"
+        requests:
+          cpu: "500m"
+          memory: "512Mi"
+    slave:
+      persistence:
+        enabled: false
+      resources:
+        limits:
+          cpu: "1000m"
+          memory: "1024Mi"
+        requests:
+          cpu: "500m"
+          memory: "512Mi"
