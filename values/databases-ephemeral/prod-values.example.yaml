@@ -9,6 +9,8 @@ redis-ephemeral:
     usePassword: false
     cluster:
       enabled: true
+      # https://artifacthub.io/packages/helm/bitnami-aks/redis/11.3.4#production-configuration
+      # default slaveCount is 2
       slaveCount: 3
     master:
       persistence:
