@@ -162,6 +162,11 @@ wire_build_chart_release () {
   '
 }
 
+add_external_helm_charts () {
+  # Add external helm charts here
+  echo "keycloak https://codecentric.github.io/helm-charts/keycloakx 2.3.0"
+}
+
 # pull_charts() accepts charts in format
 # <chart-name> <repo-url> <chart-version>
 # on stdin
@@ -202,7 +207,7 @@ pull_charts() {
 }
 
 wire_build="https://raw.githubusercontent.com/wireapp/wire-builds/ae13f32434611c09cc074227a9da55a6fcc61a94/build.json"
-wire_build_chart_release "$wire_build" | pull_charts
+wire_build_chart_release "$wire_build"; add_external_helm_charts | pull_charts
 
 # Uncomment if you want to create non-wire-build release
 # and uncomment the other pull_charts call from aboe
