@@ -164,7 +164,7 @@ wire_build_chart_release () {
 
 add_external_helm_charts () {
   # Add external helm charts here
-  echo "keycloak https://codecentric.github.io/helm-charts/keycloakx 2.3.0"
+  echo "keycloakx https://codecentric.github.io/helm-charts 2.3.0"
 }
 
 # pull_charts() accepts charts in format
