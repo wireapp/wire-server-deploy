@@ -160,6 +160,7 @@ wire_build_chart_release () {
   | map("\(.key) \(.value.repo) \(.value.version)")
   | join("\n")
   '
+  echo "k8ssandra-operator https://helm.k8ssandra.io/stable 1.15.0"
 }
 
 add_external_helm_charts () {
@@ -210,7 +211,7 @@ pull_charts() {
 }
 
 wire_build="https://raw.githubusercontent.com/wireapp/wire-builds/ae13f32434611c09cc074227a9da55a6fcc61a94/build.json"
-wire_build_chart_release "$wire_build"; echo "k8ssandra-operator" "https://helm.k8ssandra.io/stable" "1.15.0" | pull_charts
+wire_build_chart_release "$wire_build" | pull_charts
 
 # Uncomment if you want to create non-wire-build release
 # and uncomment the other pull_charts call from aboe
