@@ -163,6 +163,7 @@ wire_build_chart_release () {
 }
 
 add_external_helm_charts () {
+  set -euo pipefail
   # Add external helm charts here
   echo "keycloakx https://codecentric.github.io/helm-charts 2.3.0"
 }
@@ -190,6 +191,7 @@ pull_charts() {
     name=${parts[0]}
     repo=${parts[1]}
     version=${parts[2]}
+    echo "Pulling $name from $repo with version $version"
 
     # we add and update the repo only the first time we see it to speed up the process
     repo_short_name=${repos[$repo]}
@@ -200,7 +202,7 @@ pull_charts() {
       helm repo add "$repo_short_name" "$repo"
       helm repo update "$repo_short_name"
     fi
-
+    echo "$repo_short_name/$name/$version"
     (cd ./charts; helm pull --version "$version" --untar "$repo_short_name/$name")
   done
   echo "Pulling charts done."
