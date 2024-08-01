@@ -161,14 +161,10 @@ wire_build_chart_release () {
   | join("\n")
   '
   echo "k8ssandra-operator https://helm.k8ssandra.io/stable 1.15.0"
+  echo "keycloakx https://codecentric.github.io/helm-charts 2.3.0"
+  echo "openebs https://openebs.github.io/charts 3.10.0"
 }
 
-add_external_helm_charts () {
-  set -euo pipefail
-  # Add external helm charts here
-  echo "k8ssandra-operator" "https://helm.k8ssandra.io/stable" "1.15.0"
-  #echo "keycloakx https://codecentric.github.io/helm-charts 2.3.0"
-}
 
 # pull_charts() accepts charts in format
 # <chart-name> <repo-url> <chart-version>
