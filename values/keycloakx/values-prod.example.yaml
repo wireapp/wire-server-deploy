@@ -1,0 +1,46 @@
+command:
+  - "/opt/keycloak/bin/kc.sh"
+  - "start"
+  - "--http-enabled=true"
+  - "--http-port=8080"
+  - "--hostname-strict=false"
+  - "--hostname-strict-https=true"
+
+extraEnv:
+  - name: "JAVA_OPTS_APPEND"
+    value: "-Djgroups.dns.query=keycloak-headless"
+  - name: "KEYCLOAK_ADMIN"
+    value: "admin"
+  - name: "KEYCLOAK_ADMIN_PASSWORD"
+    value: "admin"
+
+database:
+  vendor: "postgres"
+  hostname: "keycloak-postgres-postgresql"
+  port: "5432"
+  username: "keycloak"
+  password: "keycloak"
+
+ingress:
+  enabled: true
+  ingressClassName: "nginx"
+  rules:
+    - host: "keycloak.example.com"
+      paths:
+        - path: "{{ tpl .Values.http.relativePath $ | trimSuffix \"/\" }}/"
+          pathType: "Prefix"
+  tls:
+    - hosts:
+        - "keycloak.example.com"
+      secretName: "ingress_cert_secret_name"
+  console:
+    enabled: true
+    ingressClassName: "nginx"
+    rules:
+      - host: "keycloak.example.com"
+        paths:
+          - path: "{{ tpl .Values.http.relativePath $ | trimSuffix \"/\" }}/admin"
+            pathType: "Prefix"
+
+# Adding annotations section to avoid errors
+annotations: {}
