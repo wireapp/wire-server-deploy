@@ -45,3 +45,6 @@
 # Adding annotations section to avoid errors
 keycloakx:
   secrets: {}
+
+# test purpose,
+secrets: {}
