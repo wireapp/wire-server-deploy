@@ -1,3 +1,4 @@
-coturn:
-  secrets:
-    zrestSecrets: {}
+secrets:
+  zrestSecrets:
+    - ""
+  zrestSecret: ""
