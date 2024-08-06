@@ -160,6 +160,7 @@ wire_build_chart_release () {
   | map("\(.key) \(.value.repo) \(.value.version)")
   | join("\n")
   '
+  # Will be removed once these are added to the build.json through helm-charts repo
   echo "k8ssandra-operator https://helm.k8ssandra.io/stable 1.15.0"
   echo "keycloakx https://codecentric.github.io/helm-charts 2.3.0"
   echo "openebs https://openebs.github.io/charts 3.10.0"
@@ -189,7 +190,6 @@ pull_charts() {
     name=${parts[0]}
     repo=${parts[1]}
     version=${parts[2]}
-    echo "Pulling $name from $repo with version $version"
 
     # we add and update the repo only the first time we see it to speed up the process
     repo_short_name=${repos[$repo]}
@@ -200,7 +200,6 @@ pull_charts() {
       helm repo add "$repo_short_name" "$repo"
       helm repo update "$repo_short_name"
     fi
-    echo "$repo_short_name/$name/$version"
     (cd ./charts; helm pull --version "$version" --untar "$repo_short_name/$name")
   done
   echo "Pulling charts done."
