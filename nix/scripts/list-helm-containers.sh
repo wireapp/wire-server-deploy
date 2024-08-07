@@ -31,8 +31,6 @@ while IFS= read -r chart; do
   echo "Running helm template on chart ${chart}…" >&2
   # The image values are left as-is
   helm template --debug "$chart" \
-    --set secrets.zrestSecret=emptyString \
-    --set secrets.zrestSecrets={} \
     --set federate.dtls.tls.key=emptyString \
     --set federate.dtls.tls.crt=emptyString \
     $( [[ -f ./values/$(basename $chart)/prod-values.example.yaml ]] && echo "-f ./values/$(basename $chart)/prod-values.example.yaml" ) \
