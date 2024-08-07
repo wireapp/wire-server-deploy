@@ -1,4 +1,2 @@
 secrets:
-  zrestSecrets:
-    - ""
   zrestSecret: ""
