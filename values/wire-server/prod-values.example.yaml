@@ -50,6 +50,9 @@ brig:
       # Sync the domain with the 'host' variable in the sftd chart
       # Comment the next line (by adding '#' before it) if conference calling is not used
       setSftStaticUrl: "https://sftd.example.com:443"
+      # If set to true, creating new personal users or new teams on your instance from
+      # outside your backend installation is disabled
+      setRestrictUserCreation: false
       # Uncomment and replace values below for adding federated backends
       # setFederationStrategy: allowDynamic
       # setFederationDomainConfigs:
