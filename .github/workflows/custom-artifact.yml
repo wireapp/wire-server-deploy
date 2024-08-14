@@ -2,8 +2,7 @@ on:
   push:
     branches: [master, develop]
     tags: [ v* ]
-  pull_request:
-    branches: [master, develop]
+  workflow_dispatch:
 jobs:
   offline:
     name: Prepare custom offline package
@@ -25,7 +24,7 @@ jobs:
         run: nix-env -f default.nix -iA env
 
       - name: Run offline build
-        run: ./offline/ci.sh HELM_CHART_EXCLUDE_LIST=elasticsearch-curator,fluent-bit,kibana,redis-cluster,inbucket,aws-ingress,backoffice,calling-test,nginx-ingress-controller,postgresql
+        run: ./offline/ci.sh HELM_CHART_EXCLUDE_LIST=elasticsearch-curator,fluent-bit,kibana,redis-cluster,inbucket,aws-ingress,backoffice,calling-test,nginx-ingress-controller
         env:
           GPG_PRIVATE_KEY: '${{ secrets.GPG_PRIVATE_KEY }}'
           DOCKER_LOGIN: '${{ secrets.DOCKER_LOGIN }}'

@@ -160,10 +160,6 @@ wire_build_chart_release () {
   | map("\(.key) \(.value.repo) \(.value.version)")
   | join("\n")
   '
-  # Will be removed once these are added to the build.json through helm-charts repo
-  echo "k8ssandra-operator https://helm.k8ssandra.io/stable 1.15.0"
-  echo "keycloakx https://codecentric.github.io/helm-charts 2.3.0"
-  echo "openebs https://openebs.github.io/charts 3.10.0"
 }
 
 
