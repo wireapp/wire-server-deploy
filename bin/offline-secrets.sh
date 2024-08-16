@@ -39,6 +39,8 @@ brig:
     setNexmo: |-
       key: "dummy"
       secret: "dummy"
+    # Uncomment and update value to enable sft credentials provisioning
+    # sftTokenSecret: dummysecret
 cargohold:
   secrets:
     awsKeyId: "$minio_access_key"
