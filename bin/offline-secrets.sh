@@ -39,7 +39,7 @@ brig:
     setNexmo: |-
       key: "dummy"
       secret: "dummy"
-    # Uncomment and update value to enable sft credentials provisioning
+    # Uncomment and update value to connect to the SFT servers that require it
     # sftTokenSecret: dummysecret
 cargohold:
   secrets:
