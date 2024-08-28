@@ -2,6 +2,10 @@
 
 set -Eeuo pipefail
 
+msg() {
+  echo >&2 -e "${1-}"
+}
+
 if [[ $EUID -eq 0 ]]; then
   msg "Please don't run me as root" 1>&2
   exit 1
@@ -57,10 +61,6 @@ cleanup() {
   trap - SIGINT SIGTERM ERR EXIT
   pkill -f "http.server"
   rm -r "$DEPLOY_DIR"/nocloud/* 2>/dev/null
-}
-
-msg() {
-  echo >&2 -e "${1-}"
 }
 
 die() {
