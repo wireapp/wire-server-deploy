@@ -182,11 +182,7 @@ demo@install-docs:~/wire-server-deploy$ ip addr
 
 In this case, the external IP address is `5.9.84.121`.
 
-```{note}
-
-Note this step is also documented in the [Wire install docs](/docs_ubuntu_22.04)
-
-``` 
+Please note: This step is also documented in the [Wire install docs](docs_ubuntu_22.04)
 
 We must make sure that Coturn pods and SFT pods do not run on the same kubernetes nodes.
 
