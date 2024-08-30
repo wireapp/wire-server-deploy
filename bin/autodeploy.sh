@@ -177,7 +177,7 @@ ansnode2 ansible_host=192.168.122.32
 ansnode3 ansible_host=192.168.122.33
 
 [all:vars]
-ansible_user = demo
+ansible_user = $DEMO_USER
 
 [cassandra:vars]
 cassandra_network_interface = enp1s0
@@ -406,6 +406,6 @@ remote_deployment
 EOT
 
 msg ""
-msg "INFO: Wire-in-a-box has successfully been deployed!"
+msg "INFO: Wire-in-a-box has been deployed successfully!"
 msg "INFO: Access the web client interface at https://webapp.$TARGET_SYSTEM"
 msg "INFO: To interact with k8s, log into $DEMO_USER@$TARGET_SYSTEM and source ./bin/offline-env.sh"
