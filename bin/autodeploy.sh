@@ -30,16 +30,12 @@ It is likely desirable to invoke the script with "--artifact-hash" and / or "--t
  * artifact-hash = d8fe36747614968ea73ebd43d47b99364c52f9c1
  * target-system = wiab-autodeploy.wire.link
 
-The script will run a number of preflight checks before invoking a deployment:
- * Enumeration of required subdomain A records (see SUBDOMAINS variable).
- * Testing if SSH login via root is possible.
-
 Available options:
 -h, --help          Print this help and exit
 -v, --verbose       Print script debug info
 --force-redeploy    Force cleanup of previous Wire-in-a-box installation on target host
 --artifact-hash     String, specifies artifact ID as created here: https://github.com/wireapp/wire-server-deploy/actions/workflows/offline.yml
-                    Defaults to d8fe36747614968ea73ebd43d47b99364c52f9c1
+                    Defaults to 5c06158547bc57846eadaa2be5c813ec43be9b59
 --target-system     String, domain name used to access the target host
                     Defaults to wiab-autodeploy.wire.link
 EOF
@@ -81,10 +77,10 @@ parse_params() {
 
 parse_params "$@"
 
-ARTIFACT_HASH="${ARTIFACT_HASH:-d8fe36747614968ea73ebd43d47b99364c52f9c1}"
+ARTIFACT_HASH="${ARTIFACT_HASH:-5c06158547bc57846eadaa2be5c813ec43be9b59}"
 TARGET_SYSTEM="${TARGET_SYSTEM:-wiab-autodeploy.wire.link}"
 FORCE_REDEPLOY="${FORCE_REDEPLOY:-0}"
-SUBDOMAINS="account assets coturn federator inbucket nginz-https nginz-ssl restund sft sftd teams webapp"
+SUBDOMAINS="account assets coturn federator inbucket nginz-https nginz-ssl sft teams webapp"
 SSH_PORT=22
 SSH_USER=root
 DEMO_USER=demo
@@ -99,9 +95,7 @@ for SUBDOMAIN in $SUBDOMAINS; do
   if host "$SUBDOMAIN"."$TARGET_SYSTEM" >/dev/null 2>&1 ; then
     msg "INFO: DNS A record exists: $SUBDOMAIN.$TARGET_SYSTEM"
   else
-    msg "ERROR: DNS A record for $SUBDOMAIN.$TARGET_SYSTEM does not exist. Exiting. Please check DNS record set."
-    msg ""
-  exit 1
+    die "ERROR: DNS A record for $SUBDOMAIN.$TARGET_SYSTEM does not exist. Exiting. Please check DNS record set."
   fi
 done
 
@@ -109,16 +103,22 @@ if ssh -q -o ConnectTimeout=5 -p "$SSH_PORT" "$SSH_USER"@webapp."$TARGET_SYSTEM"
   msg ""
   msg "INFO: Successfully logged into $TARGET_SYSTEM as $SSH_USER"
 else
-  msg "ERROR: Can't log into $TARGET_SYSTEM via SSH, please check SSH connectivity."
-  exit 1
+  die "ERROR: Can't log into $TARGET_SYSTEM via SSH, please check SSH connectivity."
 fi
 
+if curl --head --silent --fail https://s3-eu-west-1.amazonaws.com/public.wire.com/artifacts/wire-server-deploy-static-"$ARTIFACT_HASH".tgz >/dev/null 2>&1 ; then
+  msg "INFO: Artifact exists https://s3-eu-west-1.amazonaws.com/public.wire.com/artifacts/wire-server-deploy-static-$ARTIFACT_HASH.tgz"
+else
+  die "ERROR: No artifact found via https://s3-eu-west-1.amazonaws.com/public.wire.com/artifacts/wire-server-deploy-static-$ARTIFACT_HASH.tgz"
+fi
+
+
 system_cleanup() {
-#  for VM in $(virsh list --all --name); do virsh destroy "$VM"; virsh undefine "$VM" --remove-all-storage; done
-#  docker system prune -a -f
+  for VM in $(virsh list --all --name); do virsh destroy "$VM"; virsh undefine "$VM" --remove-all-storage; done
+  docker system prune -a -f
   rm -f /home/$DEMO_USER/.ssh/known_hosts
-#  rm -rf /home/$DEMO_USER/wire-server-deploy
-#  rm -f /home/$DEMO_USER/wire-server-deploy-static-*.tgz
+  rm -rf /home/$DEMO_USER/wire-server-deploy
+  rm -f /home/$DEMO_USER/wire-server-deploy-static-*.tgz
 }
 
 preprovision_hetzner() {
@@ -163,6 +163,8 @@ remote_deployment() {
   export -f d
 
   bash bin/offline-secrets.sh
+
+  HOST_IP=$(dig @resolver4.opendns.com myip.opendns.com +short)
 
   cat >ansible/inventory/offline/hosts.ini<<EOF
 [all]
@@ -280,10 +282,8 @@ ufw allow 25672/tcp;
 
   cp values/wire-server/prod-values.example.yaml values/wire-server/values.yaml
   sed -i "s/example.com/$TARGET_SYSTEM/g" values/wire-server/values.yaml
-  sed -i "s/# - \"turn:<IP of restund1>:80\"/- \"turn:192.168.122.31:3478\"/g" values/wire-server/values.yaml
-  sed -i "s/# - \"turn:<IP of restund2:80\"/- \"turn:192.168.122.32:3478\"/g" values/wire-server/values.yaml
-  sed -i "s/# - \"turn:<IP of restund1>:80?transport=tcp\"/- \"turn:192.168.122.31:3478?transport=tcp\"/g" values/wire-server/values.yaml
-  sed -i "s/# - \"turn:<IP of restund2>:80?transport=tcp\"/- \"turn:192.168.122.32:3478?transport=tcp\"/g" values/wire-server/values.yaml
+  sed -i "s/# - \"turn:<IP of restund1>:80\"/- \"turn:$HOST_IP:3478\"/g" values/wire-server/values.yaml
+  sed -i "s/# - \"turn:<IP of restund1>:80?transport=tcp\"/- \"turn:$HOST_IP:3478?transport=tcp\"/g" values/wire-server/values.yaml
 
   d helm install wire-server ./charts/wire-server --timeout=15m0s --values ./values/wire-server/values.yaml --values ./values/wire-server/secrets.yaml
 
@@ -293,7 +293,7 @@ ufw allow 25672/tcp;
   sed -i "s/example.com/$TARGET_SYSTEM/" values/team-settings/prod-values.example.yaml
   d helm install team-settings ./charts/team-settings --values ./values/team-settings/prod-values.example.yaml --values ./values/team-settings/prod-secrets.example.yaml
 
-  sed -i "s/example.com/$TARGET_SYSTEM/" ./values/account-pages/prod-values.example.yaml
+  sed -i "s/example.com/$TARGET_SYSTEM/" values/account-pages/prod-values.example.yaml
   d helm install account-pages ./charts/account-pages --values ./values/account-pages/prod-values.example.yaml
 
   cp values/ingress-nginx-controller/prod-values.example.yaml ./values/ingress-nginx-controller/values.yaml
@@ -328,12 +328,34 @@ ufw allow 25672/tcp;
   sed -i "s/webapp.example.com/webapp.$TARGET_SYSTEM/" values/sftd/values.yaml
   sed -i "s/sftd.example.com/sft.$TARGET_SYSTEM/" values/sftd/values.yaml
   sed -i 's/name: letsencrypt-prod/name: letsencrypt-http01/' values/sftd/values.yaml
-  d helm upgrade --install sftd ./charts/sftd --values values/sftd/values.yaml
+  sed -i "s/replicaCount: 3/replicaCount: 1/" values/sftd/values.yaml
+  d kubectl label node kubenode1 wire.com/role=sftd
+  d helm upgrade --install sftd ./charts/sftd --set 'nodeSelector.wire\.com/role=sftd' --set 'node_annotations="{'wire\.com/external-ip': '"$HOST_IP"'}"' --values values/sftd/values.yaml
+
+  ZREST_SECRET=$(grep -A1 turn values/wire-server/secrets.yaml | grep secret | tr -d '"' | awk '{print $NF}')
+
+  cat >values/coturn/values.yaml<<EOF
+nodeSelector:
+  wire.com/role: coturn
+
+coturnTurnListenIP: '192.168.122.23'
+coturnTurnRelayIP: '192.168.122.23'
+coturnTurnExternalIP: '$HOST_IP'
+EOF
+
+  cat >values/coturn/secrets.yaml<<EOF
+secrets:
+  zrestSecrets:
+    - "$ZREST_SECRET"
+EOF
+
+  d kubectl label node kubenode3 wire.com/role=coturn
+  d kubectl annotate node kubenode3 wire.com/external-ip="$HOST_IP"
+  d helm upgrade --install coturn ./charts/coturn --values values/coturn/values.yaml --values values/coturn/secrets.yaml
 }
 
-EXISTING_INSTALL=$(ssh -p "$SSH_PORT" "$SSH_USER"@webapp."$TARGET_SYSTEM" "ls /home/$DEMO_USER/wire-server-deploy-static-*.tgz 2>/dev/null")
+EXISTING_INSTALL=$(ssh -p "$SSH_PORT" "$SSH_USER"@webapp."$TARGET_SYSTEM" "ls /home/$DEMO_USER/wire-server-deploy-static-*.tgz 2>/dev/null" || true)
 EXISTING_VMS=$(ssh -p "$SSH_PORT" "$SSH_USER"@webapp."$TARGET_SYSTEM" "virsh list --all --name")
-#EXISTING_VMS=$(ssh -p "$SSH_PORT" "$SSH_USER"@webapp."$TARGET_SYSTEM" "virsh list --all --name | tr '\n' ' ' | tr -d '[:blank:]'")
 EXISTING_CONTAINERS=$(ssh -p "$SSH_PORT" "$SSH_USER"@webapp."$TARGET_SYSTEM" "docker ps -q --all")
 
 if [[ "$EXISTING_INSTALL" ]]; then
@@ -362,11 +384,9 @@ if [ "$DO_SYSTEM_CLEANUP" = true ] && [ "$FORCE_REDEPLOY" = 0 ]; then
   read -p "Do you want to wipe all wire-server-deploy components from $TARGET_SYSTEM? (y/n) " PROMPT_CLEANUP
   if [[ $PROMPT_CLEANUP == "n" || $PROMPT_CLEANUP == "N" ]]; then
     msg ""
-    msg "Aborting, not cleaning up $TARGET_SYSTEM"
-    msg ""
-    exit 1
+    die "Aborting, not cleaning up $TARGET_SYSTEM"
   fi
-else
+#elif [ "$DO_SYSTEM_CLEANUP" = true ]; then
   msg ""
   msg "INFO: Cleaning up all VMs, docker resources and wire-server-deploy files on $TARGET_SYSTEM."
   msg ""

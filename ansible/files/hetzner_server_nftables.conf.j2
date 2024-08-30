@@ -3,6 +3,8 @@
 flush ruleset
 
 define KUBENODEIP = 192.168.122.21
+define SFTIP      = 192.168.122.21
+define COTURNIP   = 192.168.122.23
 define INF_WAN    = {{ ansible_default_ipv4.interface }}
 
 table inet filter {
@@ -25,9 +27,10 @@ table inet filter {
   }
   chain FORWARD {
     type filter hook forward priority 0;
-    #iifname virbr0 oifname $INF_WAN counter accept comment "allow internet for internal VMs, enable this rule only for letsencrypt cert issue"
+    iifname virbr0 oifname $INF_WAN counter accept comment "allow internet for internal VMs, needed fo things like letsencrypt cert issue"
     iifname virbr0 oifname virbr0 counter accept comment "allow traffic between VMs"
     iifname $INF_WAN oifname virbr0 ct status dnat counter accept comment "allow DNAT forward from external interface to virbr0"
+    iifname docker0 oifname virbr0 counter accept
     jump block_definitions
   }
   chain OUTPUT {
@@ -38,11 +41,16 @@ table inet filter {
 table ip nat {
   chain PREROUTING {
     type nat hook prerouting priority -100;
-    iifname { $INF_WAN, virbr0 } tcp dport 80 fib daddr type local dnat to $KUBENODEIP:31772
-    iifname { $INF_WAN, virbr0 } tcp dport 443 fib daddr type local dnat to $KUBENODEIP:31773
-    udp dport 3478 dnat ip to 192.168.122.31:3478
-    tcp dport 3478 dnat ip to 192.168.122.31:3478
-    udp dport 32768-60999 dnat ip to 192.168.122.31:32768-60999
+
+    iifname { $INF_WAN, virbr0 } tcp dport 80 fib daddr type local dnat to $KUBENODEIP:31772 comment "HTTP ingress"
+    iifname { $INF_WAN, virbr0 } tcp dport 443 fib daddr type local dnat to $KUBENODEIP:31773 comment "HTTPS ingress"
+
+    iifname { $INF_WAN, virbr0 } tcp dport 3478 fib daddr type local dnat to $COTURNIP comment "COTURN control TCP"
+    iifname { $INF_WAN, virbr0 } udp dport 3478 fib daddr type local dnat to $COTURNIP comment "COTURN control UDP"
+
+    iifname { $INF_WAN, virbr0 } udp dport 32768-46883 fib daddr type local dnat to $COTURNIP comment "COTURN UDP range"
+    iifname { $INF_WAN, virbr0 } udp dport 46884-61000 fib daddr type local dnat to $SFTIP comment "SFT UDP range"
+
     fib daddr type local counter jump DOCKER
   }
   chain POSTROUTING {

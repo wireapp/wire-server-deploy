@@ -1,8 +1,8 @@
 # Scope
 
-This document gives exact instructions for performing an offline installation of Wire on a single VM from Hetzner. it uses the KVM based virtual machine system to create all of the required virtual machines.
+This document gives exact instructions for performing an offline demo installation of Wire on a single dedicated Hetzner server. It uses the KVM based virtual machine system to create all of the required virtual machines.
 
-Bootstrapping a single dedicated Hetzner server for virtual machine deployment as well as wire-server-deploy artifact download has largely been automated with ansible and bash.
+Bootstrapping a single dedicated Hetzner server for virtual machine deployment, the wire-server-deploy artifact download as well as the wire-server k8s installation have been fully automated.
 
 ## Use the hetzner robot console to create a new server.
 
@@ -17,6 +17,19 @@ If not using Hetzner, for reference, the specs of the ax101 server are:
 
 The main public IPv4 address of the Hetzner server to connect to with SSH / ansible can be found in the "Server" tab in the Hetzner Robot console, next to the Server Name.
 As soon as the initial Hetzner server deployment is finished, we'll use Ansible to further provision the system.
+
+## Automated full install
+
+If you wish to set up "Wire in a box" for demo or testing purposes, use the script [autodeploy.sh](../bin/autodeploy.sh). It supports several config flags, which can be reviewed by calling the script using a helper flag:
+
+```bash
+autodeploy.sh -h
+```
+
+Running the script against a valid dedicated (Hetzner) server will install a fully functioning "Wire in a box" demo environment, based on the instructions provided in [docs_ubuntu_22.04.md](docs_ubuntu_22.04.md) and [coturn.md](coturn.md).
+
+This process takes approximately 90 minutes. If this script suits your needs and the installation is a success, there's no need to follow the individualized instructions below.
+
 
 ## Adjust ansible playbook vars as needed
 
@@ -105,4 +118,3 @@ But this does not work for resolving hostnames between VMs at this point. We'll 
 ### From this point:
 
 Switch to [the Ubuntu 22.04 Wire install docs](docs_ubuntu_22.04.md)
-
