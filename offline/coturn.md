@@ -184,7 +184,7 @@ In this case, the external IP address is `5.9.84.121`.
 
 ```{note}
 
-Note this step is also documented in the [Wire install docs](/docs_ubuntu_22.04.md)
+Note this step is also documented in the [Wire install docs](/docs_ubuntu_22.04)
 
 ``` 
 
