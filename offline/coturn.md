@@ -273,9 +273,9 @@ define INF_WAN    = enp41s0
 
 Where:
 
-* `COTURNIP` is the IP address of the machine where Coturn will run (in our example, the first kubernetes node, `kubenode3`).
-* `SFTIP` is the IP address of the machine where SFT will run (in our example, the third kubernetes node, `kubenode1`).
-* `KUBENODEIP` is the K8s node IP running nginx HTTP / HTTPS ingress.
+* `SFTIP` is the IP address of the machine where SFT will run (in our example, the first kubernetes node, `kubenode1`).
+* `COTURNIP` is the IP address of the machine where Coturn will run (in our example, the third kubernetes node, `kubenode3`).
+* `KUBENODEIP` is the IP address of the machine running nginx HTTP / HTTPS ingress.
 * `INF_WAN` is the name of the WAN interface exposed to the outside world (the Internet).
 
 Please note that while in this example, the IPs for SFTIP and KUBENODEIP point to the same host (kubenode1), this might change depending on where K8s deploys our nginx ingress.
