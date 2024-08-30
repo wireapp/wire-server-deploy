@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-
+# shellcheck disable=SC2087
 set -Eeuo pipefail
 
 msg() {
@@ -27,7 +27,7 @@ Running the script without any arguments requires one interaction - confirming t
 For CI usage, it's recommended to invoke "--force-redeploy".
 
 It is likely desirable to invoke the script with "--artifact-hash" and / or "--target-system" as well. These are the hardcoded fallback values:
- * artifact-hash = d8fe36747614968ea73ebd43d47b99364c52f9c1
+ * artifact-hash = 5c06158547bc57846eadaa2be5c813ec43be9b59
  * target-system = wiab-autodeploy.wire.link
 
 Available options:
@@ -112,6 +112,17 @@ else
   die "ERROR: No artifact found via https://s3-eu-west-1.amazonaws.com/public.wire.com/artifacts/wire-server-deploy-static-$ARTIFACT_HASH.tgz"
 fi
 
+system_cleanup_meta() {
+  msg ""
+  msg "INFO: Cleaning up all VMs, docker resources and wire-server-deploy files on $TARGET_SYSTEM."
+  msg ""
+  sleep 5
+  ssh -p "$SSH_PORT" "$SSH_USER"@webapp."$TARGET_SYSTEM" "bash -s" <<EOT
+$(declare -p DEMO_USER)
+$(declare -f system_cleanup)
+system_cleanup
+EOT
+}
 
 system_cleanup() {
   for VM in $(virsh list --all --name); do virsh destroy "$VM"; virsh undefine "$VM" --remove-all-storage; done
@@ -127,7 +138,7 @@ preprovision_hetzner() {
   msg "INFO: This will setup up the Hetzner system with basic defaults, download and unpack the wire-server-deploy artifact."
   sleep 5
   export LC_ALL="C.UTF-8";
-  ansible-playbook ../ansible/hetzner-single-deploy.yml -e "artifact_hash=$ARTIFACT_HASH" -i $SSH_USER@webapp."$TARGET_SYSTEM", --diff --private-key="$HOME"/.ssh/hetzner_operator
+  ansible-playbook ../ansible/hetzner-single-deploy.yml -e "artifact_hash=$ARTIFACT_HASH" -i $SSH_USER@webapp."$TARGET_SYSTEM", --diff 
 }
 
 remote_deployment() {
@@ -378,28 +389,22 @@ if [ "$DO_SYSTEM_CLEANUP" = false ]; then
   msg ""
   msg "INFO: Target system clean, no previous wire-server-deploy installation found."
 fi
-
 if [ "$DO_SYSTEM_CLEANUP" = true ] && [ "$FORCE_REDEPLOY" = 0 ]; then
   msg ""
-  read -p "Do you want to wipe all wire-server-deploy components from $TARGET_SYSTEM? (y/n) " PROMPT_CLEANUP
+  IFS= read -r -p "Do you want to wipe all wire-server-deploy components from $TARGET_SYSTEM? (y/n) " PROMPT_CLEANUP
   if [[ $PROMPT_CLEANUP == "n" || $PROMPT_CLEANUP == "N" ]]; then
     msg ""
     die "Aborting, not cleaning up $TARGET_SYSTEM"
   fi
-#elif [ "$DO_SYSTEM_CLEANUP" = true ]; then
-  msg ""
-  msg "INFO: Cleaning up all VMs, docker resources and wire-server-deploy files on $TARGET_SYSTEM."
-  msg ""
-  ssh -p "$SSH_PORT" "$SSH_USER"@webapp."$TARGET_SYSTEM" "bash -s" <<EOT
-$(declare -p DEMO_USER)
-$(declare -f system_cleanup)
-system_cleanup
-EOT
+  system_cleanup_meta
+fi
+if [ "$DO_SYSTEM_CLEANUP" = true ] && [ "$FORCE_REDEPLOY" = 1 ]; then
+  system_cleanup_meta
 fi
 
 msg "INFO: Commencing Wire-in-a-box deployment on $TARGET_SYSTEM."
 preprovision_hetzner
-ssh -p "$SSH_PORT" "$DEMO_USER"@webapp."$TARGET_SYSTEM" -i "$HOME"/.ssh/hetzner_operator "bash -s" <<EOT
+ssh -p "$SSH_PORT" "$DEMO_USER"@webapp."$TARGET_SYSTEM" "bash -s" <<EOT
 $(declare -p DEMO_USER TARGET_SYSTEM SCRIPT_DIR)
 $(declare -f remote_deployment)
 remote_deployment
