@@ -188,7 +188,7 @@ We must make sure that Coturn pods and SFT pods do not run on the same kubernete
 
 This means we must label the kubernetes nodes to run on nodes that we did not select to run Coturn in the previous step.
 
-In this example, we've decided to run Coturn on the first kubernetes node, `kubenode3`, which has an IP address of `192.168.122.23`.
+In this example, we've decided to run Coturn on the third kubernetes node, `kubenode3`, which has an IP address of `192.168.122.23`.
 
 First we make sure the SFT chart is configured to only run on kubernetes nodes with the right label (`sftd`).
 
