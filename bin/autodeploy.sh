@@ -10,7 +10,7 @@ trap cleanup SIGINT SIGTERM ERR EXIT
 
 usage() {
   cat <<EOF
-Usage: $(basename "${BASH_SOURCE[0]}") [-h] [-v] [--force-redeploy] [--artifact-hash string] [--target-system string]
+Usage: $(basename "${BASH_SOURCE[0]}") [-h] [-v] [--force-redeploy] [--artifact-hash string] [--target-domain string]
 
 This script deploys "Wire in a box", a functional, self-contained demo environment of Wire and it's various components.
 Following this Readme: https://github.com/wireapp/wire-server-deploy/blob/master/offline/docs_ubuntu_22.04.md
@@ -26,9 +26,9 @@ Deployment takes about 90 to 100 minutes on a Hetzner "AX41-NVMe" target system.
 Running the script without any arguments requires one interaction - confirming the removal of any resources left by a previous Wire-in-a-box installation.
 For CI usage, it's recommended to invoke "--force-redeploy".
 
-It is likely desirable to invoke the script with "--artifact-hash" and / or "--target-system" as well. These are the hardcoded fallback values:
+It is likely desirable to invoke the script with "--artifact-hash" and / or "--target-domain" as well. These are the hardcoded fallback values:
  * artifact-hash = 5c06158547bc57846eadaa2be5c813ec43be9b59
- * target-system = wiab-autodeploy.wire.link
+ * target-domain = wiab-autodeploy.wire.link
 
 Available options:
 -h, --help          Print this help and exit
@@ -36,7 +36,7 @@ Available options:
 --force-redeploy    Force cleanup of previous Wire-in-a-box installation on target host
 --artifact-hash     String, specifies artifact ID as created here: https://github.com/wireapp/wire-server-deploy/actions/workflows/offline.yml
                     Defaults to 5c06158547bc57846eadaa2be5c813ec43be9b59
---target-system     String, domain name used to access the target host
+--target-domain     String, domain name used to access the target host
                     Defaults to wiab-autodeploy.wire.link
 EOF
   exit
@@ -63,7 +63,7 @@ parse_params() {
       ARTIFACT_HASH="${2-}"
       shift
       ;;
-    --target-system)
+    --target-domain)
       TARGET_SYSTEM="${2-}"
       shift
       ;;
