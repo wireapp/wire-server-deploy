@@ -19,6 +19,7 @@ This script can either be run locally or via CI, always within the context of it
 
 Requirements:
  * A dedicated (root) server running Ubuntu 22.04 Server with at least 16 CPU cores, 64 GiB RAM, 500 GB NVMe SSD and an (unfirewalled) public IP address.
+ * DNS setup as required for selfhosting Wire, eg. a domain plus several subdomains (see SUBDOMAINS variable).
  * Access to server via root user using an SSH keypair.
 
 Deployment takes about 90 to 100 minutes on a Hetzner "AX41-NVMe" target system. Longer if RAID is actively syncing disks.
