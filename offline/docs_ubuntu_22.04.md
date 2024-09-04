@@ -514,6 +514,9 @@ ufw allow 25672/tcp;
 '
 ```
 
+### Deploy RabbitMQ cluster
+Follow the steps mentioned here to create a RabbitMQ cluster based on your setup - [offline/rabbitmq_setup.md](./rabbitmq_setup.md)
+
 ### Preparation for Federation
 For enabling Federation, we need to have RabbitMQ in place. Please follow the instructions in [offline/federation_preparation.md](./federation_preparation.md) for setting up RabbitMQ.
 

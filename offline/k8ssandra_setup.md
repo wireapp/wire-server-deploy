@@ -9,24 +9,7 @@ K8ssandra will need the following components to be installed in the cluster -
 - Configure minio bucket for backups
 
 ## [1] Dynamic Persistent Volume Provisioning
-If you already have a dynamic persistent volume provisioning setup, you can skip this step. If not, we will be using OpenEBS for dynamic persistent volume provisioning.
-
-Reference docs - https://openebs.io/docs/user-guides/local-storage-user-guide/local-pv-hostpath/hostpath-installation
-
-### Deploy OpenEBS
-
-```
-d helm install openebs charts/openebs --namespace openebs --create-namespace
-```
-The above helm chart is available in the offline artifact.
-
-After successful deployment of OpenEBS, you will see these storage classes:
-```
-d kubectl get sc
-NAME               PROVISIONER                    RECLAIMPOLICY   VOLUMEBINDINGMODE      ALLOWVOLUMEEXPANSION   AGE
-openebs-device     openebs.io/local               Delete          WaitForFirstConsumer   false                  5d20h
-openebs-hostpath   openebs.io/local               Delete          WaitForFirstConsumer   false                  5d20h
-```
+Refer to [offline/local_persistent_storage_k8s](./local_persistent_storage_k8s.md)
 
 ## [2] Install cert-manager
 cert-manager is a must requirement for k8ssandra - see https://docs.k8ssandra.io/install/local/single-cluster-helm/#deploy-cert-manager for why.
