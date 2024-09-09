@@ -1036,7 +1036,7 @@ Make sure that traffic is allowed from your kubernetes nodes to your destination
 
 ## Appendixes
 
-
+### Syncing time on cassandra nodes
 The nodes running cassandra (`ansnode` 1, 2 and 3) require precise synchronization of their clock.
 
 In case the cassandra migration doesn't complete, it might be probably due to the clock not being in sync.
@@ -1047,3 +1047,15 @@ d ansible-playbook -i ./ansible/inventory/offline/hosts.ini ansible/sync_time.ym
 ```
 
 The above playbook will configure NTP on all Cassandra nodes, assigns first node as the authoritative node. All other nodes will sync their time with the authoritative node.
+
+### Resetting the k8s cluster
+To reset the k8s cluster, run the following command:
+```
+d ansible-playbook -i ansible/inventory/offline/hosts.ini ansible/roles-external/kubespray/reset.yml --skip-tags files
+```
+You can remove the `--skip-tags files` option if you want to remove all the loaded container images as well.
+
+After that, to reinstall the cluster, comment out the steps in the `offline-cluster.sh` script, such as setup-offline-sources and seed-offline-containerd to avoid re-downloading the container images to save time, and run -
+```
+d ./bin/offline-cluster.sh
+```
