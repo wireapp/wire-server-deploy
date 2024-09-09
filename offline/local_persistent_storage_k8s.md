@@ -17,3 +17,7 @@ NAME               PROVISIONER                    RECLAIMPOLICY   VOLUMEBINDINGM
 openebs-device     openebs.io/local               Delete          WaitForFirstConsumer   false                  5d20h
 openebs-hostpath   openebs.io/local               Delete          WaitForFirstConsumer   false                  5d20h
 ```
+
+### Backup and Restore
+
+For backup and restore of the OpenEBS Local Storage, refer to the official docs at - https://openebs.io/docs/user-guides/local-storage-user-guide/additional-information/backupandrestore
