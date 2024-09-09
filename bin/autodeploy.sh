@@ -119,6 +119,7 @@ system_cleanup_meta() {
   msg ""
   sleep 5
   ssh -p "$SSH_PORT" "$SSH_USER"@webapp."$TARGET_SYSTEM" "bash -s" <<EOT
+# Making relevant vars and functions available to remote shell via SSH
 $(declare -p DEMO_USER)
 $(declare -f system_cleanup)
 system_cleanup
@@ -406,6 +407,7 @@ fi
 msg "INFO: Commencing Wire-in-a-box deployment on $TARGET_SYSTEM."
 preprovision_hetzner
 ssh -p "$SSH_PORT" "$DEMO_USER"@webapp."$TARGET_SYSTEM" "bash -s" <<EOT
+# Making relevant vars and functions available to remote shell via SSH
 $(declare -p DEMO_USER TARGET_SYSTEM SCRIPT_DIR)
 $(declare -f remote_deployment)
 remote_deployment
