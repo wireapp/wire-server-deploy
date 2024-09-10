@@ -82,13 +82,13 @@ rabbitmq:
 
 ## Backup and Restore
 
-Following steps describe the backup and restore process for RabbitMQ deployed outside of Kubernetes.
+The following steps describe the backup and restore process for RabbitMQ deployed outside of Kubernetes.
 
-Although, this can vary based on your setup, it is also recommended to follow the official documentation here - https://www.rabbitmq.com/docs/backup
+This can vary based on your security, privacy, and administrative policies. It is also recommended to read and follow the official documentation here - https://www.rabbitmq.com/docs/backup
 
 ## Backup
 Make sure to have the nodes on which RabbitMQ is running in the [ansible inventory file](https://github.com/wireapp/wire-server-deploy/blob/master/offline/docs_ubuntu_22.04.md#editing-the-inventory), under the `rmq-cluster` group.
-Then run the following command:
+Then run the following command to load your wire utility environment:
 ```
 source bin/offline-env.sh
 ```
