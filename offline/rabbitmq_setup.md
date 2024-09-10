@@ -80,7 +80,6 @@ rabbitmq:
   host: rabbitmq-external
 ``` 
 
-
 ## Backup and Restore
 
 Following steps describe the backup and restore process for RabbitMQ deployed outside of Kubernetes.
