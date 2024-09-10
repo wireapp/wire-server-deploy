@@ -35,7 +35,6 @@ ansnode2
 ansnode3
 ```
 
-
 #### Hostname Resolution
 RabbitMQ nodes address each other using a node name, a combination of a prefix and domain name, either short or fully-qualified (FQDNs). For e.g. rabbitmq@ansnode1
 
