@@ -33,9 +33,9 @@ gcr.io/google_containers/pause-amd64:3.1
 gcr.io/kubernetes-helm/tiller:v2.11.0
 gcr.io/kubernetes-helm/tiller:v2.13.1
 grafana/grafana:5.0.0
-k8s.gcr.io/cluster-proportional-autoscaler-amd64:1.4.0
-k8s.gcr.io/defaultbackend:1.4
-k8s.gcr.io/k8s-dns-node-cache:1.15.1
+registry.k8s.io/cluster-proportional-autoscaler-amd64:1.4.0
+registry.k8s.io/defaultbackend:1.4
+registry.k8s.io/k8s-dns-node-cache:1.15.1
 lachlanevenson/k8s-helm:v2.13.1
 localstack/localstack:0.8.7
 mesosphere/aws-cli:1.14.5
