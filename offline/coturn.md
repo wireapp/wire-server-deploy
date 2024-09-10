@@ -182,17 +182,13 @@ demo@install-docs:~/wire-server-deploy$ ip addr
 
 In this case, the external IP address is `5.9.84.121`.
 
-```{note}
-
-Note this step is also documented in the [ Wire install docs](docs_ubuntu_22.04.md)
-
-``` 
+Please note: This step is also documented in the [Wire install docs](docs_ubuntu_22.04)
 
 We must make sure that Coturn pods and SFT pods do not run on the same kubernetes nodes.
 
 This means we must label the kubernetes nodes to run on nodes that we did not select to run Coturn in the previous step.
 
-In this example, we've decided to run Coturn on the first kubernetes node, `kubenode1`, which has an IP address of `192.168.122.21`.
+In this example, we've decided to run Coturn on the third kubernetes node, `kubenode3`, which has an IP address of `192.168.122.23`.
 
 First we make sure the SFT chart is configured to only run on kubernetes nodes with the right label (`sftd`).
 
@@ -205,7 +201,7 @@ nodeSelector:
 
 ``` 
 
-Then we label the `kubenode1` machine with the `wire.com/role: coturn` label:
+Then we label the `kubenode1` machine with the `wire.com/role: sftd` label:
 
 ```bash
 
@@ -217,7 +213,7 @@ We must also annotate the node with the exrenal IP address we will be listening 
 
 ```bash
 
-kubectl annotate node kubenode3 wire.com/external-ip='your.public.ip.address'
+d kubectl annotate node kubenode3 wire.com/external-ip='your.public.ip.address'
 
 ```
 
@@ -269,22 +265,20 @@ We will do the following modifications:
 First, we create some definitions in the beginning of the file for readability:
 
 ```
-define COTURNIP    = 192.168.122.21
-define SFTIP       = 192.168.122.23
-
-define ANSNODEIP  = 192.168.122.31
-define ASSETHOSTIP= 192.168.122.10
-
+define SFTIP      = 192.168.122.21
+define COTURNIP   = 192.168.122.23
+define KUBENODEIP = 192.168.122.21
 define INF_WAN    = enp41s0
 ``` 
 
 Where:
 
-* `COTURNIP` is the IP address of the machine where Coturn will run (in our example, the first kubernetes node, `kubenode1`).
-* `SFTIP` is the IP address of the machine where SFT will run (in our example, the third kubernetes node, `kubenode3`).
-* `ANSNODEIP` is the IP address the first machine where ansible will install non-kubernetes services (in our example, the first ansible node, `ansnode1`).
-* `ASSETHOSTIP` is the IP address of the machine where the assethost will run (see earlier steps in the installation process.)
+* `SFTIP` is the IP address of the machine where SFT will run (in our example, the first kubernetes node, `kubenode1`).
+* `COTURNIP` is the IP address of the machine where Coturn will run (in our example, the third kubernetes node, `kubenode3`).
+* `KUBENODEIP` is the IP address of the machine running nginx HTTP / HTTPS ingress.
 * `INF_WAN` is the name of the WAN interface exposed to the outside world (the Internet).
+
+Please note that while in this example, the IPs for SFTIP and KUBENODEIP point to the same host (kubenode1), this might change depending on where K8s deploys our nginx ingress.
 
 Then, we edit the `table ip nat` / `chain PREROUTING` section of the file:
 
@@ -295,17 +289,14 @@ table ip nat {
 
     type nat hook prerouting priority -100;
 
-    iifname { $INF_WAN, virbr0 } tcp dport 80  fib daddr type local dnat to $SFTIP:31772
-    iifname { $INF_WAN, virbr0 } tcp dport 443 fib daddr type local dnat to $SFTIP:31773
+    iifname { $INF_WAN, virbr0 } tcp dport 80 fib daddr type local dnat to $KUBENODEIP:31772 comment "HTTP ingress"
+    iifname { $INF_WAN, virbr0 } tcp dport 443 fib daddr type local dnat to $KUBENODEIP:31773 comment "HTTPS ingress"
 
-    udp dport 80   dnat ip to $ANSNODEIP:80
-    udp dport 1194 dnat ip to $ASSETHOSTIP:1194
+    iifname { $INF_WAN, virbr0 } tcp dport 3478 fib daddr type local dnat to $COTURNIP comment "COTURN control TCP"
+    iifname { $INF_WAN, virbr0 } udp dport 3478 fib daddr type local dnat to $COTURNIP comment "COTURN control UDP"
 
-    iifname $INF_WAN ip daddr 5.9.84.121 udp dport 32768-46883 dnat to $COTURNIP
-    iifname $INF_WAN ip daddr 5.9.84.121 udp dport 46884-61000 dnat to $SFTIP
-
-    iifname $INF_WAN udp dport 3478 dnat to $COTURNIP:3478
-    iifname $INF_WAN tcp dport 3478 dnat to $COTURNIP:3478
+    iifname { $INF_WAN, virbr0 } udp dport 32768-46883 fib daddr type local dnat to $COTURNIP comment "COTURN UDP range"
+    iifname { $INF_WAN, virbr0 } udp dport 46884-61000 fib daddr type local dnat to $SFTIP comment "SFT UDP range"
 
     fib daddr type local counter jump DOCKER
   }
@@ -314,25 +305,25 @@ table ip nat {
 
 Some explanations:
 
-This is used for the SFT control:
+This is used for the HTTP(S) ingress:
 
 ```nft 
-    iifname { $INF_WAN, virbr0 } tcp dport 80  fib daddr type local dnat to $SFTIP:31772
-    iifname { $INF_WAN, virbr0 } tcp dport 443 fib daddr type local dnat to $SFTIP:31773
+    iifname { $INF_WAN, virbr0 } tcp dport 80 fib daddr type local dnat to $KUBENODEIP:31772 comment "HTTP ingress"
+    iifname { $INF_WAN, virbr0 } tcp dport 443 fib daddr type local dnat to $KUBENODEIP:31773 comment "HTTPS ingress"
 ``` 
 
 This is the part that distributes the UDP packets (media/calling traffic) in two different port ranges for SFT and Coturn:
 
 ```nft
-    iifname $INF_WAN ip daddr 5.9.84.121 udp dport 32768-46883 dnat to $COTURNIP
-    iifname $INF_WAN ip daddr 5.9.84.121 udp dport 46884-61000 dnat to $SFTIP
+    iifname { $INF_WAN, virbr0 } udp dport 32768-46883 fib daddr type local dnat to $COTURNIP comment "COTURN UDP range"
+    iifname { $INF_WAN, virbr0 } udp dport 46884-61000 fib daddr type local dnat to $SFTIP comment "SFT UDP range"
 ``` 
 
 This is the part that redirects the control traffic to the Coturn port:
 
 ```nft
-    iifname $INF_WAN udp dport 3478 dnat to $COTURNIP:3478
-    iifname $INF_WAN tcp dport 3478 dnat to $COTURNIP:3478
+    iifname { $INF_WAN, virbr0 } tcp dport 3478 fib daddr type local dnat to $COTURNIP comment "COTURN control TCP"
+    iifname { $INF_WAN, virbr0 } udp dport 3478 fib daddr type local dnat to $COTURNIP comment "COTURN control UDP"
 ```
 
 
@@ -412,19 +403,9 @@ Instead, we configure it to use the external IP addres we found above, and the C
 
 As we have changed our Wire-Server configuration, we must re-deploy the Wire-Server chart to apply the new configuration:
 
-If wire-server is already installed, first uninstall it:
-
 ```bash
 
-d helm uninstall wire-server
-
-```
-
-Then install wire-server with:
-
-```bash
-
-d helm install wire-server ./charts/wire-server --timeout=15m0s --values ./values/wire-server/values.yaml --values ./values/wire-server/secrets.yaml
+d helm upgrade --install wire-server ./charts/wire-server --timeout=15m0s --values ./values/wire-server/values.yaml --values ./values/wire-server/secrets.yaml
 
 ```
 
@@ -482,10 +463,6 @@ NAME       READY   STATUS    RESTARTS   AGE
 coturn-0   1/1     Running   0          1d
 ```
 
-
-
-
-
 ## Appendix: Debugging procedure.
 
 If coturn has already been installed once (for example if something went wrong and you are re-trying), before running a new deploy of Coturn first do:
@@ -506,6 +483,24 @@ And then re-run the `helm install` command.
 d helm install coturn ./charts/coturn --timeout=15m0s --values values/coturn/values.yaml --values values/coturn/secret.yaml
 ```
 
+For further debugging, enable `verboseLogging` in `charts/coturn/values.yaml` and redeploy coturn:
+
+```yaml
+config:
+  verboseLogging: true
+```
+
+```bash
+d helm uninstall coturn
+d helm install coturn ./charts/coturn --timeout=15m0s --values values/coturn/values.yaml --values values/coturn/secret.yaml
+```
+
+Debug log should now be visible in the coturn pod stdout:
+
+```bash
+d kubectl logs coturn-0
+```
+
 ## Appendix: Note on migration.
 
 The current guide is written with the assumption that you are setting up Coturn for the first time, on a fresh Wire-Server installation.
@@ -521,4 +516,3 @@ These are the additional steps to ensure a smooth transition:
 3. Re-deploy the Wire-Server chart to apply the new configuration.
 4. Wait at least 24 hours for all clients to retrieve the new configuration.
 5. Once you are sure all clients have migrated to Coturn, you can disable Restund as described in this guide.
-

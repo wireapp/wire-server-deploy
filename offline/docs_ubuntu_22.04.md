@@ -4,6 +4,10 @@ We have a pipeline in  `wire-server-deploy` producing container images, static
 binaries, ansible playbooks, debian package sources and everything required to
 install Wire.
 
+## Demo / Testing installation
+
+To install a self-hosted instance of Wire deployed on one Server ("Wire in a box") for testing purposes, we recommend the [autodeploy.sh](../bin/autodeploy.sh) script. See also: [Automated full install](single_hetzner_machine_installation.md#automated-full-install) section in the Single Hetzner Machine installation readme.
+
 ## Installing docker
 
 Note: If you are using a Hetzner machine, docker should already be installed (you can check with `docker version`) and you can skip this section.
