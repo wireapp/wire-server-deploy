@@ -21,7 +21,7 @@ resource "hcloud_server" "node" {
   count       = 3
   name        = "node${count.index}"
   image       = "ubuntu-22.04"
-  server_type = "cx41"
+  server_type = "cx42"
   ssh_keys    = ["hetznerssh-key"]
   # Nuremberg (for choices see `hcloud datacenter list`)
   location = "nbg1"
@@ -31,7 +31,7 @@ resource "hcloud_server" "etcd" {
   count       = 3
   name        = "etcd${count.index}"
   image       = "ubuntu-22.04"
-  server_type = "cx41"
+  server_type = "cx42"
   ssh_keys    = ["hetznerssh-key"]
 
   # Nuremberg (for choices see `hcloud datacenter list`)
