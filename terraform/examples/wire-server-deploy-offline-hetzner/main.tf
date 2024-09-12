@@ -63,7 +63,7 @@ resource "hcloud_server" "adminhost" {
   name        = "adminhost-${random_pet.adminhost.id}"
   image       = "ubuntu-22.04"
   ssh_keys    = local.ssh_keys
-  server_type = "cx41"
+  server_type = "cx42"
   user_data   = <<-EOF
   #cloud-config
   apt:
@@ -98,7 +98,7 @@ resource "hcloud_server" "assethost" {
   name        = "assethost-${random_pet.assethost.id}"
   image       = "ubuntu-22.04"
   ssh_keys    = local.ssh_keys
-  server_type = "cx41"
+  server_type = "cx42"
   user_data   = local.disable_network_cfg
 }
 
@@ -139,7 +139,7 @@ resource "hcloud_server" "kubenode" {
   name        = "kubenode-${random_pet.kubenode[count.index].id}"
   image       = "ubuntu-22.04"
   ssh_keys    = local.ssh_keys
-  server_type = "cx41"
+  server_type = "cx42"
   user_data   = local.disable_network_cfg
 }
 
