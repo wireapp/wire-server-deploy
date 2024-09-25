@@ -4,7 +4,7 @@ set -euo pipefail
 INCREMENTAL="${INCREMENTAL:-0}"
 
 # Default exclude list
-HELM_CHART_EXCLUDE_LIST="inbucket"
+HELM_CHART_EXCLUDE_LIST="aws-ingress,backoffice,calling-test,fluent-bit,inbucket,k8ssandra-test-cluster,kibana,nginx-ingress-controller,restund"
 
 # Parse the HELM_CHART_EXCLUDE_LIST argument
 for arg in "$@"
