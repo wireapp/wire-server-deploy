@@ -224,6 +224,10 @@ echo "quay.io/wire/zauth:$wire_version" | create-container-dump containers-admin
 sed -i -Ee 's/federation: false/federation: true/' "$(pwd)"/values/wire-server/prod-values.example.yaml
 sed -i -Ee 's/useSharedFederatorSecret: false/useSharedFederatorSecret: true/' "$(pwd)"/charts/wire-server/charts/federator/values.yaml
 
+# drop step-certificates/.../test-connection.yaml because it lacks an image tag
+# cf. https://github.com/smallstep/helm-charts/pull/196/files
+rm -v charts/step-certificates/charts/step-certificates/templates/tests/*
+
 # Get and dump required containers from Helm charts. Omit integration test
 # containers (e.g. `quay.io_wire_galley-integration_4.22.0`.)
 for chartPath in "$(pwd)"/charts/*; do
