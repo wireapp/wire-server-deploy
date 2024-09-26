@@ -28,6 +28,12 @@ step-certificates:
   #     - name: STEPDEBUG
   #       value: "1"
 
+  # Set `hostAliases` to fix certificate revocation. This enables certificate revocation from within the Smallstep pod:
+  #     step ca revoke --ca-url=https://acme.local.domain:9000 <serial-number> # Adjust the domain as needed
+  # hostAliases:
+  #   - ip: 127.0.0.1
+  #     hostnames: [acme.local.domain] # Adjust the domain as needed
+  
   # ingress:
   #   enabled: true
   #   annotations:
