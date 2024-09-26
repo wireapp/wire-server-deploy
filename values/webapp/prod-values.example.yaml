@@ -1,4 +1,4 @@
-replicaCount: 1
+replicaCount: 3
 #  image:
 #    tag: some-tag (only override if you want a newer/different version than what is in the chart)
 config:
