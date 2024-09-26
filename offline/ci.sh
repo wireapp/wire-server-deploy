@@ -92,11 +92,12 @@ docker.io/kubernetesui/metrics-scraper:v1.0.8
 quay.io/wire/ldap-scim-bridge:0.9
 bats/bats:1.8.1
 docker.io/openebs/linux-utils:3.5.0
-cr.dtsx.io/datastax/cass-config-builder:1.0-ubi8
-cr.k8ssandra.io/k8ssandra/cass-management-api:3.11.16
-cr.k8ssandra.io/k8ssandra/system-logger:v1.19.1
+docker.io/datastax/cass-config-builder:1.0-ubi8
+docker.io/k8ssandra/cass-management-api:3.11.16
+docker.io/k8ssandra/system-logger:v1.19.1
 docker.io/thelastpickle/cassandra-reaper:3.5.0
 docker.io/k8ssandra/medusa:0.20.1
+cr.step.sm/smallstep/step-ca:0.25.3-rc7
 EOF
 }
 
@@ -222,6 +223,10 @@ echo "quay.io/wire/zauth:$wire_version" | create-container-dump containers-admin
 # This is needed to bundle it's image.
 sed -i -Ee 's/federation: false/federation: true/' "$(pwd)"/values/wire-server/prod-values.example.yaml
 sed -i -Ee 's/useSharedFederatorSecret: false/useSharedFederatorSecret: true/' "$(pwd)"/charts/wire-server/charts/federator/values.yaml
+
+# drop step-certificates/.../test-connection.yaml because it lacks an image tag
+# cf. https://github.com/smallstep/helm-charts/pull/196/files
+rm -v charts/step-certificates/charts/step-certificates/templates/tests/*
 
 # Get and dump required containers from Helm charts. Omit integration test
 # containers (e.g. `quay.io_wire_galley-integration_4.22.0`.)

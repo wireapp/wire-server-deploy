@@ -1,0 +1,89 @@
+step-certificates:
+  image:
+    repository: cr.step.sm/smallstep/step-ca
+    initContainerRepository: busybox:1.36.1
+    tag: 0.25.3-rc7
+  bootstrap:
+    image:
+      repository: cr.smallstep.com/smallstep/step-ca-bootstrap
+      tag: 0.22.0
+
+  # bootstrap:
+  #   enabled: false
+  #   configmaps: false
+
+  # inject:
+  #   enabled: false
+
+  # existingSecrets:
+  #   enabled: true
+  #   ca: true
+  #   data:
+  #     ca.key: "/secrets/ca.key" # Example; adjust the path as needed
+  #     password: "/secrets/password" # Example; adjust the path as needed
+  #     root_ca_key: "/secrets/root_ca_key" # Example; adjust the path as needed
+
+  # ca:
+  #   env:
+  #     - name: STEPDEBUG
+  #       value: "1"
+
+  # ingress:
+  #   enabled: true
+  #   annotations:
+  #     nginx.ingress.kubernetes.io/backend-protocol: "HTTPS"
+  #     nginx.ingress.kubernetes.io/ssl-redirect: "false"
+  #     nginx.ingress.kubernetes.io/use-regex: "true"
+  #     nginx.ingress.kubernetes.io/enable-cors: "true"
+  #     nginx.ingress.kubernetes.io/cors-allow-origin: "local.domain" # Adjust the domain as needed
+  #     nginx.ingress.kubernetes.io/cors-expose-headers: "Replay-Nonce, Location"
+  #   ingressClassName: "nginx"
+  #   tls:
+  #     - hosts:
+  #         - "acme.local.domain" # Adjust the domain as needed
+  #       secretName: "ingress-cert" # Adjust the secret name as needed
+  #   hosts:
+  #     - host: "acme.local.domain" # Adjust the domain as needed
+  #       paths:
+  #         - "/version"
+  #         - "/roots.pem"
+  #         - "/root/(.*)"
+  #         - "/federation"
+  #         - "/provisioners(.*)"
+  #         - "/crl"
+  #         - "/acme/(.*)"
+
+  # stepConfig:
+  #   enabled: true
+  #   dnsName: "acme.local.domain" # Adjust the domain as needed
+  #   additionalDNSNames:
+  #     - "localhost"
+  #   federatedRoots:
+  #     - "/home/step/certs/ca.crt"
+  #     # Add more paths for federated roots if needed
+
+  #   authority:
+  #     jwk: "/secrets/jwk_provisioner.json" # Adjust the path as needed
+  #     acme:
+  #       name: "keycloakteams"
+  #       dpop:
+  #         key: "/secrets/dpop_key.pem" # Adjust the path as needed
+  #         wireDomain: "local.domain" # Adjust the domain as needed
+  #       oidc:
+  #         clientId: "wireapp"
+  #         discoveryBaseUrl: ""
+  #         issuerUrl: "https://keycloak.example.com/auth/realms/master?client_id=wireapp" # URL to the oidc issuer
+  #         jwksUrl: "https://keycloak.example.com/auth/realms/master/protocol/openid-connect/certs" # URL where issuer publishes its JSON Web Key Set
+  #       x509:
+  #         organization: "local.domain"
+
+  # existingCerts:
+  #   enabled: true
+  #   data:
+  #     ca.crt: "/certs/ca.crt"
+  #     root_ca.crt: "/certs/root_ca.crt'"
+  #     # Add cross certificates if available
+
+  # caPassword:
+  #   enabled: true
+  #   password: "/secrets/password"
