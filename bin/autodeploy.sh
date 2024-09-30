@@ -2,6 +2,17 @@
 # shellcheck disable=SC2087
 set -Eeuo pipefail
 
+
+#
+# Problems discovered while running this script
+#
+# - on first run "virsh" not found. This seems to be installed only later 
+# - change cleanup user logic: user should specify whether to clean. The script should warn if it's not in clean state, but never die
+# - if `bash bin/offline-vm-setup.sh` fails then this script doesn't seem to notice it
+# - the `offline-vm-setup.sh` seems to stop the python server before the vm installation can make use of it. Probably the virsh install commands run in the background and don't block the main script long enough for the python server to be still alive
+#
+#
+
 msg() {
   echo >&2 -e "${1-}"
 }
@@ -28,7 +39,7 @@ Running the script without any arguments requires one interaction - confirming t
 For CI usage, it's recommended to invoke "--force-redeploy".
 
 It is likely desirable to invoke the script with "--artifact-hash" and / or "--target-domain" as well. These are the hardcoded fallback values:
- * artifact-hash = 5c06158547bc57846eadaa2be5c813ec43be9b59
+ * artifact-hash = dd7b682ba14c65116fa9a87b1dc80787bbad16bb
  * target-domain = wiab-autodeploy.wire.link
 
 Available options:
@@ -78,7 +89,7 @@ parse_params() {
 
 parse_params "$@"
 
-ARTIFACT_HASH="${ARTIFACT_HASH:-5c06158547bc57846eadaa2be5c813ec43be9b59}"
+ARTIFACT_HASH="${ARTIFACT_HASH:-dd7b682ba14c65116fa9a87b1dc80787bbad16bb}"
 TARGET_SYSTEM="${TARGET_SYSTEM:-wiab-autodeploy.wire.link}"
 FORCE_REDEPLOY="${FORCE_REDEPLOY:-0}"
 SUBDOMAINS="account assets coturn federator inbucket nginz-https nginz-ssl sft teams webapp"
@@ -104,14 +115,14 @@ if ssh -q -o ConnectTimeout=5 -p "$SSH_PORT" "$SSH_USER"@webapp."$TARGET_SYSTEM"
   msg ""
   msg "INFO: Successfully logged into $TARGET_SYSTEM as $SSH_USER"
 else
-  die "ERROR: Can't log into $TARGET_SYSTEM via SSH, please check SSH connectivity."
+  die "ERROR: Can't log into webapp.$TARGET_SYSTEM via SSH, please check SSH connectivity."
 fi
 
-if curl --head --silent --fail https://s3-eu-west-1.amazonaws.com/public.wire.com/artifacts/wire-server-deploy-static-"$ARTIFACT_HASH".tgz >/dev/null 2>&1 ; then
-  msg "INFO: Artifact exists https://s3-eu-west-1.amazonaws.com/public.wire.com/artifacts/wire-server-deploy-static-$ARTIFACT_HASH.tgz"
-else
-  die "ERROR: No artifact found via https://s3-eu-west-1.amazonaws.com/public.wire.com/artifacts/wire-server-deploy-static-$ARTIFACT_HASH.tgz"
-fi
+# if curl --head --silent --fail https://s3-eu-west-1.amazonaws.com/public.wire.com/artifacts/wire-server-deploy-static-"$ARTIFACT_HASH".tgz >/dev/null 2>&1 ; then
+#   msg "INFO: Artifact exists https://s3-eu-west-1.amazonaws.com/public.wire.com/artifacts/wire-server-deploy-static-$ARTIFACT_HASH.tgz"
+# else
+#   die "ERROR: No artifact found via https://s3-eu-west-1.amazonaws.com/public.wire.com/artifacts/wire-server-deploy-static-$ARTIFACT_HASH.tgz"
+# fi
 
 system_cleanup_meta() {
   msg ""
@@ -126,12 +137,15 @@ system_cleanup
 EOT
 }
 
+# TODO:: Check if virsh is available. If not (fresh install) then you don't need to check 
+# for 
 system_cleanup() {
-  for VM in $(virsh list --all --name); do virsh destroy "$VM"; virsh undefine "$VM" --remove-all-storage; done
-  docker system prune -a -f
-  rm -f /home/$DEMO_USER/.ssh/known_hosts
-  rm -rf /home/$DEMO_USER/wire-server-deploy
-  rm -f /home/$DEMO_USER/wire-server-deploy-static-*.tgz
+  echo "doing nothing"
+  # for VM in $(virsh list --all --name); do virsh destroy "$VM"; virsh undefine "$VM" --remove-all-storage; done
+  # docker system prune -a -f
+  # rm -f /home/$DEMO_USER/.ssh/known_hosts
+  # rm -rf /home/$DEMO_USER/wire-server-deploy
+  # rm -f /home/$DEMO_USER/wire-server-deploy-static-*.tgz
 }
 
 preprovision_hetzner() {
@@ -144,12 +158,14 @@ preprovision_hetzner() {
 }
 
 remote_deployment() {
+  set -e
   msg() {
     echo >&2 -e "${1-}"
   }
   cd $SCRIPT_DIR &>/dev/null || exit 1
 
   bash bin/offline-vm-setup.sh
+
   msg ""
   while sudo virsh list --all | grep -Fq running; do
     sleep 20
@@ -170,8 +186,7 @@ remote_deployment() {
   ZAUTH_CONTAINER=$(sudo docker load -i "$SCRIPT_DIR"/containers-adminhost/quay.io_wire_zauth_*.tar | awk '{print $3}')
   export ZAUTH_CONTAINER
   WSD_CONTAINER=$(sudo docker load -i "$SCRIPT_DIR"/containers-adminhost/container-wire-server-deploy.tgz | awk '{print $3}')
-  d() {
-    sudo docker run --network=host -v "${SSH_AUTH_SOCK:-nonexistent}":/ssh-agent -e SSH_AUTH_SOCK=/ssh-agent -v "$HOME"/.ssh:/root/.ssh -v "$PWD":/wire-server-deploy "$WSD_CONTAINER" "$@"
+  d() { sudo docker run --network=host -v "${SSH_AUTH_SOCK:-nonexistent}":/ssh-agent -e SSH_AUTH_SOCK=/ssh-agent -v "$HOME"/.ssh:/root/.ssh -v "$PWD":/wire-server-deploy "$WSD_CONTAINER" "$@"
   }
   export -f d
 
@@ -405,7 +420,7 @@ if [ "$DO_SYSTEM_CLEANUP" = true ] && [ "$FORCE_REDEPLOY" = 1 ]; then
 fi
 
 msg "INFO: Commencing Wire-in-a-box deployment on $TARGET_SYSTEM."
-preprovision_hetzner
+# preprovision_hetzner
 ssh -p "$SSH_PORT" "$DEMO_USER"@webapp."$TARGET_SYSTEM" "bash -s" <<EOT
 # Making relevant vars and functions available to remote shell via SSH
 $(declare -p DEMO_USER TARGET_SYSTEM SCRIPT_DIR)
