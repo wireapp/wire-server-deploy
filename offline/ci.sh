@@ -4,7 +4,7 @@ set -euo pipefail
 INCREMENTAL="${INCREMENTAL:-0}"
 
 # Default exclude list
-HELM_CHART_EXCLUDE_LIST="inbucket"
+HELM_CHART_EXCLUDE_LIST="aws-ingress,backoffice,calling-test,fluent-bit,inbucket,k8ssandra-test-cluster,kibana,nginx-ingress-controller,restund"
 
 # Parse the HELM_CHART_EXCLUDE_LIST argument
 for arg in "$@"
@@ -202,7 +202,7 @@ pull_charts() {
   echo "Pulling charts done."
 }
 
-wire_build="https://raw.githubusercontent.com/wireapp/wire-builds/c5729427af29609b904958e2d369573bae3daac6/build.json"
+wire_build="https://raw.githubusercontent.com/wireapp/wire-builds/4ec9c06fecc0d13aa62f25f719da48a3a48bd514/build.json"
 wire_build_chart_release "$wire_build" | pull_charts
 
 # Uncomment if you want to create non-wire-build release
