@@ -1,9 +1,9 @@
 - hosts: all
   become: true
   vars:
-    artifact_hash: d8fe36747614968ea73ebd43d47b99364c52f9c1
-    ubuntu_version: 22.04.4
-    ssh_pubkey: "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIDPTGTo1lTqd3Ym/75MRyQvj8xZINO/GI6FzfIadSe5c backend+hetzner-dedicated-operator@wire.com"
+    artifact_hash: dd7b682ba14c65116fa9a87b1dc80787bbad16bb
+    ubuntu_version: 22.04.5
+    ssh_pubkey: "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIBantLLGJX/7S6zT+ixyNdQ81XSboOkErYo7Bi9tUIwX"
   tasks:
   - name: set ipv4 forward
     sysctl:
@@ -40,7 +40,7 @@
       - docker.io
       - telnet
       - python3-lxml
-      - qemu
+      - qemu-system-x86
       - qemu-kvm
       - qemu-utils
       - libvirt-clients
