@@ -368,26 +368,10 @@ You will find a section that looks like this (default):
   turnStatic:
     v1: []
     v2:
-      # - "turn:<IP of restund1>:80"
-      # - "turn:<IP of restund2:80"
-      # - "turn:<IP of restund1>:80?transport=tcp"
-      # - "turn:<IP of restund2>:80?transport=tcp"
-      # - "turns:<IP of restund1>:443?transport=tcp"
-      # - "turns:<IP of restund2>:443?transport=tcp"
-
-``` 
-
-Or if you have already configured Restund, something like this:
-
-```yaml 
-
-  turnStatic:
-    v1: []
-    v2:
-      - "turn:<IP of restund1>:80"
-      - "turn:<IP of restund2>:80"
-      - "turn:<IP of restund1>:80?transport=tcp"
-      - "turn:<IP of restund2>:80?transport=tcp"
+      # - "turn:<IP of coturn1>:3478"
+      # - "turn:<IP of coturn2>:3478"
+      # - "turn:<IP of coturn1>:3478?transport=tcp"
+      # - "turn:<IP of coturn2>:3478?transport=tcp"
 
 ``` 
 

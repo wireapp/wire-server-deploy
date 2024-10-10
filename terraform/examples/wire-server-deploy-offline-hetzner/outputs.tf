@@ -96,17 +96,5 @@ output "static-inventory" {
         minio_network_interface = "ens10"
       }
     }
-    restund = {
-      hosts = {
-        for index, server in hcloud_server.restund : server.name => {
-          ansible_host = hcloud_server_network.restund[index].ip
-          ansible_user = "root"
-        }
-      }
-      vars = {
-        restund_network_interface = "ens10"
-      }
-    }
-
   }
 }

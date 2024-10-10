@@ -47,7 +47,7 @@
         daemon-reload: yes
 
 - name: Set up offline repositories and remove online ones
-  hosts: k8s-cluster:etcd:restund:cassandra:elasticsearch:minio:rmq-cluster
+  hosts: k8s-cluster:etcd:cassandra:elasticsearch:minio:rmq-cluster
   tasks:
     - name: Bail if GPG is not installed or installable.
       apt:
