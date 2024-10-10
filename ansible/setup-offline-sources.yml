@@ -30,13 +30,6 @@
       tags:
         - containers-helm
         - containers
-    - name: Copy other containers
-      unarchive:
-        src: ../containers-other.tar
-        dest: /opt/assets
-      tags:
-        - containers-other
-        - containers
     - copy:
         src: files/serve-assets.service
         dest: /etc/systemd/system/serve-assets.service
