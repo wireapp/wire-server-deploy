@@ -75,7 +75,6 @@ fi
 if [[ ! -f $ANSIBLE_DIR/inventory/offline/group_vars/all/secrets.yaml ]]; then
   echo "Writing $ANSIBLE_DIR/inventory/offline/group_vars/all/secrets.yaml"
   cat << EOT > $ANSIBLE_DIR/inventory/offline/group_vars/all/secrets.yaml
-restund_zrest_secret: "$zrest"
 minio_access_key: "$minio_access_key"
 minio_secret_key: "$minio_secret_key"
 EOT
