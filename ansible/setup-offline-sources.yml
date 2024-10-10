@@ -30,13 +30,6 @@
       tags:
         - containers-helm
         - containers
-    - name: Copy other containers
-      unarchive:
-        src: ../containers-other.tar
-        dest: /opt/assets
-      tags:
-        - containers-other
-        - containers
     - copy:
         src: files/serve-assets.service
         dest: /etc/systemd/system/serve-assets.service
@@ -47,7 +40,7 @@
         daemon-reload: yes
 
 - name: Set up offline repositories and remove online ones
-  hosts: k8s-cluster:etcd:restund:cassandra:elasticsearch:minio:rmq-cluster
+  hosts: k8s-cluster:etcd:cassandra:elasticsearch:minio:rmq-cluster
   tasks:
     - name: Bail if GPG is not installed or installable.
       apt:

@@ -133,9 +133,6 @@ The following artifacts are provided:
  - `containers-helm.tar`
    These are the container images our charts (and charts we depend on) refer to.
    Also come as tarballs, and are seeded like the system containers.
- - `containers-other.tar`
-   These are other container images, not deployed inside k8s. Currently, only
-   contains `restund`.
  - `debs-jammy.tar`
    This acts as a self-contained dump of all packages required to install
    kubespray, as well as all other packages that are installed by ansible
@@ -175,7 +172,7 @@ It's recommended to update the lists of what nodes belong to which group, so ans
 
 For our Wire internal offline deployments using seven VMs, we edit the inventory to run all services outside of K8s on three `ansnode` VMs.
 For productive on-prem deployments, these sections can be divided into individual host groups, reflecting the architecture of the target infrastructure.
-Examples with individual nodes for Elastic, MinIO, Cassandra and Restund are commented out below.
+Examples with individual nodes for Elastic, MinIO, and Cassandra are commented out below.
 ```
 [elasticsearch]
 # elasticsearch1
@@ -205,11 +202,6 @@ ansnode3
 # cassandraseed1
 ansnode1
 
-[restund]
-# restund1
-# restund2
-ansnode1
-ansnode2
 ```
 
 ### Configuring kubernetes and etcd
@@ -258,26 +250,7 @@ Do this for all of the instances.
 * Make sure that `cassandra_network_interface` is set to the name of the network interface on which the kubenodes should talk to cassandra and on which the cassandra nodes
   should communicate among each other. Run `ip addr` on one of the cassandra nodes to determine the network interface names, and which networks they correspond to. In Ubuntu 22.04 for example, interface names are predictable and individualized, eg. `enp41s0`. 
 * Similarly `elasticsearch_network_interface` and `minio_network_interface` should be set to the network interface names you want elasticsearch and minio to communicate with kubernetes with, as well.
-  
 
-### Configuring Restund
-
-Restund is deployed for NAT-hole punching and relaying. So that 1-to-1 calls
-can be established between Wire users. Restund needs to be directly publicly
-reachable on a public IP.
-
-If you need Restund to listen on a different interface than the default gateway, set `restund_network_interface`
-
-If the interface on which Restund is listening does not know its own public IP
-(e.g. because it is behind NAT itself) extra configuration is necessary. Please provide the public IP on which
-Restund is available as `restund_peer_udp_advertise_addr`.
-
-Due to this *NAT-hole punching* relay purpose and depending on where the Restund instance resides within your network
-topology, it could be used to access private services. We consider this to be unintended and thus set a couple
-of network rules on a Restund instance. If egress traffic to certain private network ranges should still
-be allowed, you may adjust `restund_allowed_private_network_cidrs` according to your setup.
-If you install restund together with other services on the same machine you need to set `restund_allowed_private_network_cidrs`
-for these services to communicate over the private network.
 
 ### Marking kubenode for calling server (SFT)
 
@@ -333,10 +306,6 @@ prefix = ""
 domain = "example.com"
 deeplink_title = "wire demo environment, example.com"
 
-[restund:vars]
-restund_uid = root
-restund_allowed_private_network_cidrs='["192.168.122.0/24"]'
-
 [rmq-cluster:vars]
 rabbitmq_network_interface = enp1s0
 
@@ -358,12 +327,6 @@ kubenode3
 [k8s-cluster:children]
 kube-master
 kube-node
-
-# Note: If you install restund on the same nodes as other services
-# you need to set `restund_allowed_private_network_cidrs`
-[restund]
-ansnode1
-ansnode2
 
 [cassandra]
 ansnode1
@@ -395,7 +358,7 @@ ansnode3
 
 ## Generating secrets
 
-Minio and restund services have shared secrets with the `wire-server` helm chart. Run the folllowing script that generates a fresh set of secrets for these components:
+Minio and coturn services have shared secrets with the `wire-server` helm chart. Run the folllowing script that generates a fresh set of secrets for these components:
 
 ```
 ./bin/offline-secrets.sh
@@ -452,7 +415,7 @@ Hash: SHA1, RIPEMD160, SHA256, SHA384, SHA512, SHA224
 Compression: Uncompressed, ZIP, ZLIB, BZIP2
 ```
 
-## Deploying Kubernetes, Restund and stateful services
+## Deploying Kubernetes and stateful services
 
 In order to deploy all mentioned services, run:
 ```
@@ -469,54 +432,6 @@ Ensure the cluster comes up healthy. The container also contains `kubectl`, so c
 d kubectl get nodes -owide
 ```
 They should all report ready.
-
-
-#### Troubleshooting restund
-
-In case the restund firewall fails to start. Fix
-
-On each ansnode you set in the `[restund]` section of the `hosts.ini` file
-
-Delete the outbound rule to 172.16.0.0/12
-
-```
-sudo ufw status numbered;
-```
-
-Then find the right number and delete it
-
-```
-ufw delete <right number>;
-```
-
-
-and enable the ports for colocated services running on these nodes:
-
-```
-sudo bash -c '
-set -eo pipefail;
-
-# cassandra
-ufw allow 9042/tcp;
-ufw allow 9160/tcp;
-ufw allow 7000/tcp;
-ufw allow 7199/tcp;
-
-# elasticsearch
-ufw allow 9300/tcp;
-ufw allow 9200/tcp;
-
-# minio
-ufw allow 9000/tcp;
-ufw allow 9092/tcp;
-
-#rabbitmq
-ufw allow 5671/tcp;
-ufw allow 5672/tcp;
-ufw allow 4369/tcp;
-ufw allow 25672/tcp;
-'
-```
 
 ### Deploy RabbitMQ cluster
 Follow the steps mentioned here to create a RabbitMQ cluster based on your setup - [offline/rabbitmq_setup.md](./rabbitmq_setup.md)
@@ -566,15 +481,15 @@ cp ./values/wire-server/prod-values.example.yaml ./values/wire-server/values.yam
 
 Inspect all the values and adjust domains to your domains where needed.
 
-Add the IPs of your `restund` servers to the `turnStatic.v2` list:
+Add the IPs of your `coturn` servers to the `turnStatic.v2` list:
 ```yaml
   turnStatic:
     v1: []
     v2:
-      - "turn:<IP of restund1>:3478"
-      - "turn:<IP of restund2>:3478"
-      - "turn:<IP of restund1>:3478?transport=tcp"
-      - "turn:<IP of restund2>:3478?transport=tcp"
+      - "turn:<IP of coturn1>:3478"
+      - "turn:<IP of coturn2>:3478"
+      - "turn:<IP of coturn1>:3478?transport=tcp"
+      - "turn:<IP of coturn2>:3478?transport=tcp"
 ```
 
 Open up `./values/wire-server/secrets.yaml` and inspect the values. In theory

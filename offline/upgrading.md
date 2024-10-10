@@ -114,9 +114,6 @@ The following is a list of important artifacts which are provided:
  - `containers-helm.tar`
    These are the container images our charts (and charts we depend on) refer to.
    Also come as tarballs, and are seeded like the system containers.
- - `containers-other.tar`
-   These are other container images, not deployed inside k8s. Currently, only
-   contains Restund.
  - `debs-*.tar`
    This acts as a self-contained dump of all packages required to install
    kubespray, as well as all other packages that are installed by ansible
