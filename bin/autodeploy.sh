@@ -139,7 +139,12 @@ preprovision_hetzner() {
   msg "INFO: running local ansible playbook for inital server deployment."
   msg "INFO: This will setup up the Hetzner system with basic defaults, download and unpack the wire-server-deploy artifact."
   sleep 5
-  export LC_ALL="C.UTF-8";
+  # on Mac devices C.UTF-8 is not available
+  if [[ $(uname) == "Darwin" ]]; then
+    export LC_ALL=en_US.UTF-8
+  else
+    export LC_ALL=C.UTF-8
+  fi
   ansible-playbook ../ansible/hetzner-single-deploy.yml -e "artifact_hash=$ARTIFACT_HASH" -i $SSH_USER@webapp."$TARGET_SYSTEM", --diff 
 }
 
