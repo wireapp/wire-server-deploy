@@ -92,6 +92,7 @@ msg ""
 msg "INFO: starting Wire-in-a-box deployment for $TARGET_SYSTEM using artifact ID $ARTIFACT_HASH"
 msg ""
 
+
 for SUBDOMAIN in $SUBDOMAINS; do
   if host "$SUBDOMAIN"."$TARGET_SYSTEM" >/dev/null 2>&1 ; then
     msg "INFO: DNS A record exists: $SUBDOMAIN.$TARGET_SYSTEM"
@@ -106,6 +107,7 @@ if ssh -q -o ConnectTimeout=5 -p "$SSH_PORT" "$SSH_USER"@webapp."$TARGET_SYSTEM"
 else
   die "ERROR: Can't log into $TARGET_SYSTEM via SSH, please check SSH connectivity."
 fi
+
 
 if curl --head --silent --fail https://s3-eu-west-1.amazonaws.com/public.wire.com/artifacts/wire-server-deploy-static-"$ARTIFACT_HASH".tgz >/dev/null 2>&1 ; then
   msg "INFO: Artifact exists https://s3-eu-west-1.amazonaws.com/public.wire.com/artifacts/wire-server-deploy-static-$ARTIFACT_HASH.tgz"
@@ -133,6 +135,11 @@ system_cleanup() {
   rm -rf /home/$DEMO_USER/wire-server-deploy
   rm -f /home/$DEMO_USER/wire-server-deploy-static-*.tgz
 }
+
+# Make sure the host machine is up to date and has all required packages installed
+ssh -p "$SSH_PORT" "$SSH_USER"@webapp."$TARGET_SYSTEM" "
+  sudo apt update && sudo apt upgrade -y && sudo apt install -y aptitude apt-transport-https bind9-host curl debian-goodies dnsutils git dnsmasq less lsof net-tools rsyslog screen sudo vim wget whois docker.io telnet python3-lxml qemu qemu-kvm qemu-utils libvirt-clients libvirt-daemon-system virtinst bridge-utils
+"
 
 preprovision_hetzner() {
   msg ""
@@ -391,6 +398,7 @@ if [[ "$EXISTING_CONTAINERS" ]]; then
   msg "WARNING: existing Docker containers found."
   DO_SYSTEM_CLEANUP=true
 fi
+
 
 if [ "$DO_SYSTEM_CLEANUP" = false ]; then
   msg ""
