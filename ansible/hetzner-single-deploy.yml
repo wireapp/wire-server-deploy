@@ -171,7 +171,6 @@
         stat:
           path: /home/demo/wire-server-deploy-static-{{ artifact_hash }}.tgz
           get_checksum: False
-          get_md5: False
         register: artifact_archive_file_check
       - name: download wire-server-deploy archive
         shell:
