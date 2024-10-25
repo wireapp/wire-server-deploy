@@ -101,7 +101,7 @@ for SUBDOMAIN in $SUBDOMAINS; do
   fi
 done
 
-if ssh -q -o ConnectTimeout=5 -p "$SSH_PORT" "$SSH_USER"@webapp."$TARGET_SYSTEM" id | grep -q "$SSH_USER"; then
+if ssh -v -o StrictHostKeyChecking=no -o ConnectTimeout=5 -p "$SSH_PORT" "$SSH_USER"@webapp."$TARGET_SYSTEM" id | grep -q "$SSH_USER"; then
   msg ""
   msg "INFO: Successfully logged into $TARGET_SYSTEM as $SSH_USER"
 else
