@@ -37,4 +37,4 @@ jobs:
       - name: Run Auto Deploy Script
         run: |
           cd bin
-          ./autodeploy.sh --artifact-hash ${{ env.commit_sha }} --target-domain wiab-test-box.wire.link --force-redeploy
+          ./autodeploy.sh --artifact-hash 2e8e4319ff3a8c309dc0ef5a1800611faa1ab0cb --target-domain wiab-test-box.wire.link --force-redeploy
