@@ -151,7 +151,7 @@ preprovision_hetzner() {
   else
     export LC_ALL=C.UTF-8
   fi
-  ansible-playbook ../ansible/hetzner-single-deploy.yml -e "artifact_hash=$ARTIFACT_HASH" -i $SSH_USER@webapp."$TARGET_SYSTEM", --diff 
+  ansible-playbook ../ansible/hetzner-single-deploy.yml -e "artifact_hash=$ARTIFACT_HASH" -e "ansible_ssh_timeout=120" -i $SSH_USER@webapp."$TARGET_SYSTEM", --diff
 }
 
 remote_deployment() {
