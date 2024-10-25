@@ -101,7 +101,7 @@ for SUBDOMAIN in $SUBDOMAINS; do
   fi
 done
 
-if ssh -v -o StrictHostKeyChecking=no -o ConnectTimeout=5 -p "$SSH_PORT" "$SSH_USER"@webapp."$TARGET_SYSTEM" id | grep -q "$SSH_USER"; then
+if ssh -q -o StrictHostKeyChecking=no -o ConnectTimeout=5 -p "$SSH_PORT" "$SSH_USER"@webapp."$TARGET_SYSTEM" id | grep -q "$SSH_USER"; then
   msg ""
   msg "INFO: Successfully logged into $TARGET_SYSTEM as $SSH_USER"
 else
@@ -120,7 +120,7 @@ system_cleanup_meta() {
   msg "INFO: Cleaning up all VMs, docker resources and wire-server-deploy files on $TARGET_SYSTEM."
   msg ""
   sleep 5
-  ssh -p "$SSH_PORT" "$SSH_USER"@webapp."$TARGET_SYSTEM" "bash -s" <<EOT
+  ssh -p "$SSH_PORT" -o StrictHostKeyChecking=no "$SSH_USER"@webapp."$TARGET_SYSTEM" "bash -s" <<EOT
 # Making relevant vars and functions available to remote shell via SSH
 $(declare -p DEMO_USER)
 $(declare -f system_cleanup)
@@ -378,9 +378,9 @@ EOF
   d helm upgrade --install coturn ./charts/coturn --values values/coturn/values.yaml --values values/coturn/secrets.yaml
 }
 
-EXISTING_INSTALL=$(ssh -p "$SSH_PORT" "$SSH_USER"@webapp."$TARGET_SYSTEM" "ls /home/$DEMO_USER/wire-server-deploy-static-*.tgz 2>/dev/null" || echo "false")
-EXISTING_VMS=$(ssh -p "$SSH_PORT" "$SSH_USER"@webapp."$TARGET_SYSTEM" "virsh list --all --name" || echo "false")
-EXISTING_CONTAINERS=$(ssh -p "$SSH_PORT" "$SSH_USER"@webapp."$TARGET_SYSTEM" "docker ps -q --all" || echo "false")
+EXISTING_INSTALL=$(ssh -p "$SSH_PORT" -o StrictHostKeyChecking=no "$SSH_USER"@webapp."$TARGET_SYSTEM" "ls /home/$DEMO_USER/wire-server-deploy-static-*.tgz 2>/dev/null" || echo "false")
+EXISTING_VMS=$(ssh -p "$SSH_PORT" -o StrictHostKeyChecking=no "$SSH_USER"@webapp."$TARGET_SYSTEM" "virsh list --all --name" || echo "false")
+EXISTING_CONTAINERS=$(ssh -p "$SSH_PORT" -o StrictHostKeyChecking=no "$SSH_USER"@webapp."$TARGET_SYSTEM" "docker ps -q --all" || echo "false")
 
 if [[ "$EXISTING_INSTALL" != "false" && -n "$EXISTING_INSTALL" ]]; then
   msg ""
@@ -418,7 +418,7 @@ fi
 
 msg "INFO: Commencing Wire-in-a-box deployment on $TARGET_SYSTEM."
 preprovision_hetzner
-ssh -p "$SSH_PORT" "$DEMO_USER"@webapp."$TARGET_SYSTEM" "bash -s" <<EOT
+ssh -p "$SSH_PORT" -o StrictHostKeyChecking=no "$DEMO_USER"@webapp."$TARGET_SYSTEM" "bash -s" <<EOT
 # Making relevant vars and functions available to remote shell via SSH
 $(declare -p DEMO_USER TARGET_SYSTEM SCRIPT_DIR)
 $(declare -f remote_deployment)

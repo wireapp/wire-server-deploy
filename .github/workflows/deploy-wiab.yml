@@ -1,4 +1,4 @@
-name: Deploy on Hetnzer WIAB setup
+name: Deploy on Hetzner WIAB setup
 on:
   pull_request:
     branches:
@@ -30,7 +30,7 @@ jobs:
       - name: Get latest commit SHA
         id: get_commit_sha
         run: |
-          COMMIT_SHA=$(git rev-parse --short HEAD)
+          COMMIT_SHA=$(git rev-parse HEAD)
           echo "commit_sha=$COMMIT_SHA" >> $GITHUB_ENV
 
       # Step 4: Run the autodeploy script
