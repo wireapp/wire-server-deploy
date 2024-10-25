@@ -5,7 +5,7 @@ on:
   workflow_dispatch:
 jobs:
   offline:
-    name: Prepare custom offline package
+    name: Prepare custom offline package # Do not change this name, it is used to trigger deploy-wiab workflow
     # Useful to skip expensive CI when writing docs
     if: "!contains(github.event.head_commit.message, 'skip ci')"
     runs-on:
@@ -53,6 +53,11 @@ jobs:
             "docker://quay.io/wire/wire-server-deploy:${{ steps.upload_name.outputs.UPLOAD_NAME }}"
         env:
           DOCKER_LOGIN: '${{ secrets.DOCKER_LOGIN }}'
+
+      # Set output for deploy-wiab workflow to start
+      - name: Set output to trigger dependent workflow
+        if: success()
+        run: echo "::set-output name=trigger_next_workflow::true"
 
       - name: Deploy offline environment to hetzner
         run: |
