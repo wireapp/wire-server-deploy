@@ -24,7 +24,7 @@ jobs:
       - name: Set up SSH key
         uses: webfactory/ssh-agent@v0.5.3
         with:
-          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+          ssh-private-key: ${{ secrets.WIAB_PRIVATE_SSH_KEY }}
     
       # Step 3: Get the latest commit SHA, for the artifact
       - name: Get latest commit SHA
@@ -37,4 +37,4 @@ jobs:
       - name: Run Auto Deploy Script
         run: |
           cd bin
-          ./autodeploy.sh --artifact-hash ${{ env.commit_sha }} --target-domain wiab-test-box.wire.link
+          ./autodeploy.sh --artifact-hash ${{ env.commit_sha }} --target-domain wiab-test-box.wire.link --force-redeploy
