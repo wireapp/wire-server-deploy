@@ -129,17 +129,16 @@ EOT
 }
 
 system_cleanup() {
-  for VM in $(virsh list --all --name); do virsh destroy "$VM"; virsh undefine "$VM" --remove-all-storage; done
-  docker system prune -a -f
+  if which virsh > /dev/null; then
+    for VM in $(virsh list --all --name); do virsh destroy "$VM"; virsh undefine "$VM" --remove-all-storage; done
+  fi
+  if which docker > /dev/null; then
+    docker system prune -a -f
+  fi
   rm -f /home/$DEMO_USER/.ssh/known_hosts
   rm -rf /home/$DEMO_USER/wire-server-deploy
   rm -f /home/$DEMO_USER/wire-server-deploy-static-*.tgz
 }
-
-# Make sure the host machine is up to date and has all required packages installed
-ssh -p "$SSH_PORT" "$SSH_USER"@webapp."$TARGET_SYSTEM" "
-  sudo apt update && sudo apt upgrade -y && sudo apt install -y aptitude apt-transport-https bind9-host curl debian-goodies dnsutils git dnsmasq less lsof net-tools rsyslog screen sudo vim wget whois docker.io telnet python3-lxml qemu qemu-kvm qemu-utils libvirt-clients libvirt-daemon-system virtinst bridge-utils
-"
 
 preprovision_hetzner() {
   msg ""
@@ -379,26 +378,26 @@ EOF
   d helm upgrade --install coturn ./charts/coturn --values values/coturn/values.yaml --values values/coturn/secrets.yaml
 }
 
-EXISTING_INSTALL=$(ssh -p "$SSH_PORT" "$SSH_USER"@webapp."$TARGET_SYSTEM" "ls /home/$DEMO_USER/wire-server-deploy-static-*.tgz 2>/dev/null" || true)
-EXISTING_VMS=$(ssh -p "$SSH_PORT" "$SSH_USER"@webapp."$TARGET_SYSTEM" "virsh list --all --name")
-EXISTING_CONTAINERS=$(ssh -p "$SSH_PORT" "$SSH_USER"@webapp."$TARGET_SYSTEM" "docker ps -q --all")
+EXISTING_INSTALL=$(ssh -p "$SSH_PORT" "$SSH_USER"@webapp."$TARGET_SYSTEM" "ls /home/$DEMO_USER/wire-server-deploy-static-*.tgz 2>/dev/null" || echo "false")
+EXISTING_VMS=$(ssh -p "$SSH_PORT" "$SSH_USER"@webapp."$TARGET_SYSTEM" "virsh list --all --name" || echo "false")
+EXISTING_CONTAINERS=$(ssh -p "$SSH_PORT" "$SSH_USER"@webapp."$TARGET_SYSTEM" "docker ps -q --all" || echo "false")
 
-if [[ "$EXISTING_INSTALL" ]]; then
+if [[ "$EXISTING_INSTALL" != "false" && -n "$EXISTING_INSTALL" ]]; then
   msg ""
   msg "WARNING: existing wire-server-deploy installation found: $EXISTING_INSTALL"
   DO_SYSTEM_CLEANUP=true
 fi
-if [[ "$EXISTING_VMS" ]]; then
+if [[ "$EXISTING_VMS" != "false" && -n "$EXISTING_VMS" ]]; then
   msg ""
   msg "WARNING: existing libvirt VMs found: $EXISTING_VMS"
   DO_SYSTEM_CLEANUP=true
 fi
-if [[ "$EXISTING_CONTAINERS" ]]; then
+if [[ "$EXISTING_CONTAINERS" != "false" && -n "$EXISTING_CONTAINERS"  ]]; then
+  echo "$EXISTING_CONTAINERS"
   msg ""
   msg "WARNING: existing Docker containers found."
   DO_SYSTEM_CLEANUP=true
 fi
-
 
 if [ "$DO_SYSTEM_CLEANUP" = false ]; then
   msg ""
