@@ -151,7 +151,7 @@ preprovision_hetzner() {
   else
     export LC_ALL=C.UTF-8
   fi
-  ansible-playbook ../ansible/hetzner-single-deploy.yml -e "artifact_hash=$ARTIFACT_HASH" -e "ansible_ssh_common_args='-o ServerAliveInterval=60 -o ServerAliveCountMax=3'" -i $SSH_USER@webapp."$TARGET_SYSTEM", --diff
+  ansible-playbook ../ansible/hetzner-single-deploy.yml -e "artifact_hash=$ARTIFACT_HASH" -e "ansible_ssh_common_args='-o ServerAliveInterval=30 -o ServerAliveCountMax=10 -o ControlMaster=auto -o ControlPersist=180m'" -i $SSH_USER@webapp."$TARGET_SYSTEM", --diff
 }
 
 remote_deployment() {
