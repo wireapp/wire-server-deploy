@@ -418,7 +418,7 @@ fi
 
 msg "INFO: Commencing Wire-in-a-box deployment on $TARGET_SYSTEM."
 preprovision_hetzner
-ssh -p "$SSH_PORT" -o StrictHostKeyChecking=no "$DEMO_USER"@webapp."$TARGET_SYSTEM" "bash -s" <<EOT
+ssh -p "$SSH_PORT" -o StrictHostKeyChecking=no -o ServerAliveInterval=30 -o ServerAliveCountMax=10 "$DEMO_USER"@webapp."$TARGET_SYSTEM" "bash -s" <<EOT
 # Making relevant vars and functions available to remote shell via SSH
 $(declare -p DEMO_USER TARGET_SYSTEM SCRIPT_DIR)
 $(declare -f remote_deployment)
