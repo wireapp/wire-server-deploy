@@ -181,7 +181,6 @@
         stat:
           path: /home/demo/wire-server-deploy/containers-helm.tar
           get_checksum: False
-          get_md5: False
         register: artifact_folder_content_check
       - name: unpack wire-server-deploy archive
         unarchive:
