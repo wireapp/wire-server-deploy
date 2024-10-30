@@ -711,37 +711,6 @@ iptables -t nat -A PREROUTING -i $INTERNALINTERFACE -d $PUBLICIPADDRESS -p tcp -
 or add the corresponding rules to a config file (for UFW, /etc/ufw/before.rules) so they persist after rebooting.
 
 
-### Incoming Calling Traffic
-
-Make sure `OUTBOUNDINTERFACE` and `PUBLICIPADDRESS` are exported (see above).
-
-Select one of your kubernetes nodes that hosts restund:
-
-```
-export RESTUND01IP=<your.restund.ip>
-```
-
-then run the following:
-```
-sudo bash -c "
-set -eo pipefail;
-
-iptables -t nat -A PREROUTING -d $PUBLICIPADDRESS -i $OUTBOUNDINTERFACE -p tcp --dport 80 -j DNAT --to-destination $RESTUND01IP:80;
-iptables -t nat -A PREROUTING -d $PUBLICIPADDRESS -i $OUTBOUNDINTERFACE -p udp --dport 80 -j DNAT --to-destination $RESTUND01IP:80;
-iptables -t nat -A PREROUTING -d $PUBLICIPADDRESS -i $OUTBOUNDINTERFACE -p udp -m udp --dport 32768:60999 -j DNAT --to-destination $RESTUND01IP;
-"
-```
-
-or add the corresponding rules to a config file (for UFW, /etc/ufw/before.rules) so they persist after rebooting.
-
-Using nftables, the firewall deployed via single_hetzner_machine_installation.md should already DNAT restund traffic to the correct node (ansnode1, 192.168.122.31).
-To verify, check the NAT table status:
-
-```
-sudo nft list table nat
-```
-
-
 ### Changing the TURN port
 
 FIXME: ansibleize this!
