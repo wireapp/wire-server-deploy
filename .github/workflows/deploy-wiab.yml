@@ -1,8 +1,5 @@
 name: Deploy on Hetzner WIAB setup
 on:
-  pull_request:
-    branches:
-      - master
   workflow_run:
     workflows: ["Prepare custom offline package"]
     types:
