@@ -29,10 +29,10 @@ while IFS= read -r image; do
       # If an image has both a tag and digest, remove the tag. Return the original if there is no match.
       image_trimmed=$(echo "$image" | sed -E 's/(.+)(:.+(@.+))/\1\3/')
       if [[ -n "${DOCKER_LOGIN:-}" && "$image" =~ quay.io/wire ]];then
-        skopeo copy --insecure-policy --src-creds "$DOCKER_LOGIN" \
+        skopeo copy --retry-times 10 --insecure-policy --src-creds "$DOCKER_LOGIN" \
           docker://$image_trimmed docker-archive:${image_path} --additional-tag $image
       else
-        skopeo copy --insecure-policy \
+        skopeo copy --retry-times 10 --insecure-policy \
           docker://$image_trimmed docker-archive:${image_path} --additional-tag $image
       fi
       echo "${image_filename}.tar" >> $(realpath "$1")/index.txt
