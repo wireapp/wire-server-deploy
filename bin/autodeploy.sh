@@ -92,6 +92,7 @@ msg ""
 msg "INFO: starting Wire-in-a-box deployment for $TARGET_SYSTEM using artifact ID $ARTIFACT_HASH"
 msg ""
 
+
 for SUBDOMAIN in $SUBDOMAINS; do
   if host "$SUBDOMAIN"."$TARGET_SYSTEM" >/dev/null 2>&1 ; then
     msg "INFO: DNS A record exists: $SUBDOMAIN.$TARGET_SYSTEM"
@@ -100,12 +101,13 @@ for SUBDOMAIN in $SUBDOMAINS; do
   fi
 done
 
-if ssh -q -o ConnectTimeout=5 -p "$SSH_PORT" "$SSH_USER"@webapp."$TARGET_SYSTEM" id | grep -q "$SSH_USER"; then
+if ssh -q -o StrictHostKeyChecking=no -o ConnectTimeout=5 -p "$SSH_PORT" "$SSH_USER"@webapp."$TARGET_SYSTEM" id | grep -q "$SSH_USER"; then
   msg ""
   msg "INFO: Successfully logged into $TARGET_SYSTEM as $SSH_USER"
 else
   die "ERROR: Can't log into $TARGET_SYSTEM via SSH, please check SSH connectivity."
 fi
+
 
 if curl --head --silent --fail https://s3-eu-west-1.amazonaws.com/public.wire.com/artifacts/wire-server-deploy-static-"$ARTIFACT_HASH".tgz >/dev/null 2>&1 ; then
   msg "INFO: Artifact exists https://s3-eu-west-1.amazonaws.com/public.wire.com/artifacts/wire-server-deploy-static-$ARTIFACT_HASH.tgz"
@@ -118,7 +120,7 @@ system_cleanup_meta() {
   msg "INFO: Cleaning up all VMs, docker resources and wire-server-deploy files on $TARGET_SYSTEM."
   msg ""
   sleep 5
-  ssh -p "$SSH_PORT" "$SSH_USER"@webapp."$TARGET_SYSTEM" "bash -s" <<EOT
+  ssh -p "$SSH_PORT" -o StrictHostKeyChecking=no "$SSH_USER"@webapp."$TARGET_SYSTEM" "bash -s" <<EOT
 # Making relevant vars and functions available to remote shell via SSH
 $(declare -p DEMO_USER)
 $(declare -f system_cleanup)
@@ -127,8 +129,12 @@ EOT
 }
 
 system_cleanup() {
-  for VM in $(virsh list --all --name); do virsh destroy "$VM"; virsh undefine "$VM" --remove-all-storage; done
-  docker system prune -a -f
+  if which virsh > /dev/null; then
+    for VM in $(virsh list --all --name); do virsh destroy "$VM"; virsh undefine "$VM" --remove-all-storage; done
+  fi
+  if which docker > /dev/null; then
+    docker system prune -a -f
+  fi
   rm -f /home/$DEMO_USER/.ssh/known_hosts
   rm -rf /home/$DEMO_USER/wire-server-deploy
   rm -f /home/$DEMO_USER/wire-server-deploy-static-*.tgz
@@ -139,8 +145,13 @@ preprovision_hetzner() {
   msg "INFO: running local ansible playbook for inital server deployment."
   msg "INFO: This will setup up the Hetzner system with basic defaults, download and unpack the wire-server-deploy artifact."
   sleep 5
-  export LC_ALL="C.UTF-8";
-  ansible-playbook ../ansible/hetzner-single-deploy.yml -e "artifact_hash=$ARTIFACT_HASH" -i $SSH_USER@webapp."$TARGET_SYSTEM", --diff 
+  # on Mac devices C.UTF-8 is not available
+  if [[ $(uname) == "Darwin" ]]; then
+    export LC_ALL=en_US.UTF-8
+  else
+    export LC_ALL=C.UTF-8
+  fi
+  ansible-playbook ../ansible/hetzner-single-deploy.yml -e "artifact_hash=$ARTIFACT_HASH" -e "ansible_ssh_common_args='-o ServerAliveInterval=30 -o ServerAliveCountMax=10 -o ControlMaster=auto -o ControlPersist=180m'" -i $SSH_USER@webapp."$TARGET_SYSTEM", --diff
 }
 
 remote_deployment() {
@@ -367,21 +378,22 @@ EOF
   d helm upgrade --install coturn ./charts/coturn --values values/coturn/values.yaml --values values/coturn/secrets.yaml
 }
 
-EXISTING_INSTALL=$(ssh -p "$SSH_PORT" "$SSH_USER"@webapp."$TARGET_SYSTEM" "ls /home/$DEMO_USER/wire-server-deploy-static-*.tgz 2>/dev/null" || true)
-EXISTING_VMS=$(ssh -p "$SSH_PORT" "$SSH_USER"@webapp."$TARGET_SYSTEM" "virsh list --all --name")
-EXISTING_CONTAINERS=$(ssh -p "$SSH_PORT" "$SSH_USER"@webapp."$TARGET_SYSTEM" "docker ps -q --all")
+EXISTING_INSTALL=$(ssh -p "$SSH_PORT" -o StrictHostKeyChecking=no "$SSH_USER"@webapp."$TARGET_SYSTEM" "ls /home/$DEMO_USER/wire-server-deploy-static-*.tgz 2>/dev/null" || echo "false")
+EXISTING_VMS=$(ssh -p "$SSH_PORT" -o StrictHostKeyChecking=no "$SSH_USER"@webapp."$TARGET_SYSTEM" "virsh list --all --name" || echo "false")
+EXISTING_CONTAINERS=$(ssh -p "$SSH_PORT" -o StrictHostKeyChecking=no "$SSH_USER"@webapp."$TARGET_SYSTEM" "docker ps -q --all" || echo "false")
 
-if [[ "$EXISTING_INSTALL" ]]; then
+if [[ "$EXISTING_INSTALL" != "false" && -n "$EXISTING_INSTALL" ]]; then
   msg ""
   msg "WARNING: existing wire-server-deploy installation found: $EXISTING_INSTALL"
   DO_SYSTEM_CLEANUP=true
 fi
-if [[ "$EXISTING_VMS" ]]; then
+if [[ "$EXISTING_VMS" != "false" && -n "$EXISTING_VMS" ]]; then
   msg ""
   msg "WARNING: existing libvirt VMs found: $EXISTING_VMS"
   DO_SYSTEM_CLEANUP=true
 fi
-if [[ "$EXISTING_CONTAINERS" ]]; then
+if [[ "$EXISTING_CONTAINERS" != "false" && -n "$EXISTING_CONTAINERS"  ]]; then
+  echo "$EXISTING_CONTAINERS"
   msg ""
   msg "WARNING: existing Docker containers found."
   DO_SYSTEM_CLEANUP=true
@@ -406,7 +418,7 @@ fi
 
 msg "INFO: Commencing Wire-in-a-box deployment on $TARGET_SYSTEM."
 preprovision_hetzner
-ssh -p "$SSH_PORT" "$DEMO_USER"@webapp."$TARGET_SYSTEM" "bash -s" <<EOT
+ssh -p "$SSH_PORT" -o StrictHostKeyChecking=no -o ServerAliveInterval=30 -o ServerAliveCountMax=10 "$DEMO_USER"@webapp."$TARGET_SYSTEM" "bash -s" <<EOT
 # Making relevant vars and functions available to remote shell via SSH
 $(declare -p DEMO_USER TARGET_SYSTEM SCRIPT_DIR)
 $(declare -f remote_deployment)

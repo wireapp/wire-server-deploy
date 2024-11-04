@@ -2,7 +2,7 @@
   become: true
   vars:
     artifact_hash: d8fe36747614968ea73ebd43d47b99364c52f9c1
-    ubuntu_version: 22.04.4
+    ubuntu_version: 22.04.5
     ssh_pubkey: "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIDPTGTo1lTqd3Ym/75MRyQvj8xZINO/GI6FzfIadSe5c backend+hetzner-dedicated-operator@wire.com"
   tasks:
   - name: set ipv4 forward
@@ -171,7 +171,6 @@
         stat:
           path: /home/demo/wire-server-deploy-static-{{ artifact_hash }}.tgz
           get_checksum: False
-          get_md5: False
         register: artifact_archive_file_check
       - name: download wire-server-deploy archive
         shell:
@@ -182,7 +181,6 @@
         stat:
           path: /home/demo/wire-server-deploy/containers-helm.tar
           get_checksum: False
-          get_md5: False
         register: artifact_folder_content_check
       - name: unpack wire-server-deploy archive
         unarchive:
@@ -194,7 +192,6 @@
         stat:
           path: /home/demo/wire-server-deploy/ubuntu.iso
           get_checksum: False
-          get_md5: False
         register: iso_file_check
       - name: download ubuntu {{ ubuntu_version }} iso
         shell:

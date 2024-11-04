@@ -223,3 +223,8 @@ for (( i=0; i<${#VM_NAME[@]}; i++ )); do
     sleep 20
   fi
 done
+
+while sudo virsh list --all | grep -Fq running; do
+  sleep 20
+  msg "INFO: VM deployment still in progress ..."
+done
