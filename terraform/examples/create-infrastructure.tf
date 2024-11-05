@@ -42,7 +42,7 @@ resource "hcloud_server" "redis" {
   count       = 0
   name        = "redis${count.index}"
   image       = "ubuntu-22.04"
-  server_type = "cx11"
+  server_type = "cx22"
   ssh_keys    = ["hetznerssh-key"]
 
   # Nuremberg (for choices see `hcloud datacenter list`)
@@ -53,7 +53,7 @@ resource "hcloud_server" "restund" {
   count       = 2
   name        = "restund${count.index}"
   image       = "ubuntu-22.04"
-  server_type = "cx11"
+  server_type = "cx22"
   ssh_keys    = ["hetznerssh-key"]
 
   # Nuremberg (for choices see `hcloud datacenter list`)
@@ -64,7 +64,7 @@ resource "hcloud_server" "minio" {
   count       = 3
   name        = "minio${count.index}"
   image       = "ubuntu-22.04"
-  server_type = "cx11"
+  server_type = "cx22"
   ssh_keys    = ["hetznerssh-key"]
 
   # Nuremberg (for choices see `hcloud datacenter list`)
@@ -86,7 +86,7 @@ resource "hcloud_server" "elasticsearch" {
   count       = 3
   name        = "elasticsearch${count.index}"
   image       = "ubuntu-22.04"
-  server_type = "cx11"
+  server_type = "cx22"
   ssh_keys    = ["hetznerssh-key"]
 
   # Nuremberg (for choices see `hcloud datacenter list`)
