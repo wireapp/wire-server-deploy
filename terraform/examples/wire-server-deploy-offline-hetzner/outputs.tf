@@ -65,7 +65,7 @@ output "static-inventory" {
         }
       }
       vars = {
-        cassandra_network_interface = "ens10"
+        cassandra_network_interface = "eth0"
       }
     }
     cassandra_seed = {
@@ -93,7 +93,7 @@ output "static-inventory" {
         }
       }
       vars = {
-        minio_network_interface = "ens10"
+        minio_network_interface = "eth0"
       }
     }
     restund = {
@@ -104,7 +104,7 @@ output "static-inventory" {
         }
       }
       vars = {
-        restund_network_interface = "ens10"
+        restund_network_interface = "eth0"
       }
     }
 
