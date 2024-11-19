@@ -75,7 +75,7 @@ resource "hcloud_server" "cassandra" {
   count       = 3
   name        = "cassandra${count.index}"
   image       = "ubuntu-22.04"
-  server_type = "cx21"
+  server_type = "cx22"
   ssh_keys    = ["hetznerssh-key"]
 
   # Nuremberg (for choices see `hcloud datacenter list`)
