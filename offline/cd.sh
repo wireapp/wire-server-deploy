@@ -2,16 +2,18 @@
 
 set -euo pipefail
 
-function cleanup {
-  (cd terraform/examples/wire-server-deploy-offline-hetzner ; terraform destroy -auto-approve)
-  echo done
-}
-trap cleanup EXIT
+# function cleanup {
+#   (cd terraform/examples/wire-server-deploy-offline-hetzner ; terraform destroy -auto-approve)
+#   echo done
+# }
+# trap cleanup EXIT
 (cd terraform/examples/wire-server-deploy-offline-hetzner ; terraform init ; terraform apply -auto-approve )
 adminhost=$(cd terraform/examples/wire-server-deploy-offline-hetzner ; terraform output adminhost)
 adminhost="${adminhost//\"/}" # remove extra quotes around the returned string
 ssh_private_key=$(cd terraform/examples/wire-server-deploy-offline-hetzner ; terraform output ssh_private_key)
 
+echo "adminhost: $adminhost"
+echo "$ssh_private_key"
 eval `ssh-agent`
 ssh-add - <<< "$ssh_private_key"
 
