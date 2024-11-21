@@ -11,10 +11,8 @@ ls $ANSIBLE_DIR/inventory/offline
 
 if [ -f "$ANSIBLE_DIR/inventory/offline/hosts.ini" ]; then
   INVENTORY_FILE="$ANSIBLE_DIR/inventory/offline/hosts.ini"
-  cat "$INVENTORY_FILE"
 elif [ -f "$ANSIBLE_DIR/inventory/offline/inventory.yml" ]; then
   INVENTORY_FILE="$ANSIBLE_DIR/inventory/offline/inventory.yml"
-  cat "$INVENTORY_FILE"
 else
   echo "No inventory file in ansible/inventory/offline/. Please supply an $ANSIBLE_DIR/inventory/offline/inventory.yml or $ANSIBLE_DIR/inventory/offline/hosts.ini"
   exit -1
@@ -52,10 +50,10 @@ ansible-playbook -i $INVENTORY_FILE $ANSIBLE_DIR/sync_time.yml -v
 ansible-playbook -i $INVENTORY_FILE $ANSIBLE_DIR/kubernetes.yml --skip-tags bootstrap-os,preinstall,container-engine,multus
 
 # Deploy all other services which don't run in kubernetes.
-ansible-playbook -i $INVENTORY_FILE -vvv $ANSIBLE_DIR/cassandra.yml
-ansible-playbook -i $INVENTORY_FILE -vvv $ANSIBLE_DIR/elasticsearch.yml
-ansible-playbook -i $INVENTORY_FILE -vvv $ANSIBLE_DIR/minio.yml
-ansible-playbook -i $INVENTORY_FILE -vvv $ANSIBLE_DIR/restund.yml
+ansible-playbook -i $INVENTORY_FILE $ANSIBLE_DIR/cassandra.yml
+ansible-playbook -i $INVENTORY_FILE $ANSIBLE_DIR/elasticsearch.yml
+ansible-playbook -i $INVENTORY_FILE $ANSIBLE_DIR/minio.yml
+ansible-playbook -i $INVENTORY_FILE $ANSIBLE_DIR/restund.yml
 
 # create helm values that tell our helm charts what the IP addresses of cassandra, elasticsearch and minio are:
-ansible-playbook -i $INVENTORY_FILE -vvv $ANSIBLE_DIR/helm_external.yml --skip-tags=rabbitmq-external
+ansible-playbook -i $INVENTORY_FILE $ANSIBLE_DIR/helm_external.yml --skip-tags=rabbitmq-external
