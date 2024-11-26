@@ -202,6 +202,7 @@ ansnode3 ansible_host=192.168.122.33
 
 [all:vars]
 ansible_user = $DEMO_USER
+ansible_ssh_common_args = '-o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no'
 
 [cassandra:vars]
 cassandra_network_interface = enp1s0
