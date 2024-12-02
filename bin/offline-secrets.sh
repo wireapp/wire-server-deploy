@@ -63,6 +63,11 @@ team-settings:
     # container is pre-seeded
     # It is just the empty "{}" json hashmap
     configJson: "e30K"
+background-worker:
+  secrets:
+    rabbitmq:
+      username: wire-server
+      password: verysecurepassword
 EOF
 
 fi
