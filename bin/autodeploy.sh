@@ -81,9 +81,9 @@ parse_params "$@"
 ARTIFACT_HASH="${ARTIFACT_HASH:-5c06158547bc57846eadaa2be5c813ec43be9b59}"
 TARGET_SYSTEM="${TARGET_SYSTEM:-wiab-autodeploy.wire.link}"
 FORCE_REDEPLOY="${FORCE_REDEPLOY:-0}"
-SUBDOMAINS="account assets coturn federator inbucket nginz-https nginz-ssl sft teams webapp"
+SUBDOMAINS=""
 SSH_PORT=22
-SSH_USER=root
+SSH_USER=ubuntu
 DEMO_USER=demo
 SCRIPT_DIR=/home/"$DEMO_USER"/wire-server-deploy
 DO_SYSTEM_CLEANUP=false
@@ -160,7 +160,7 @@ remote_deployment() {
   }
   cd $SCRIPT_DIR &>/dev/null || exit 1
 
-  bash bin/offline-vm-setup.sh
+  bash bin/offline-vm-stackit.sh
   msg ""
   while sudo virsh list --all | grep -Fq running; do
     sleep 20
