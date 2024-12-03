@@ -44,7 +44,7 @@ parse_params() {
     case "${1-}" in
     -h | --help) usage ;;
     -v | --verbose) set -x ;;
-    --deploy-container) DEPLOY_SINGLE_CONTAINER=1 ;;
+    --deploy-container) ;;
     -?*) die "Unknown option: $1" ;;
     *) break ;;
     esac
