@@ -1,9 +1,9 @@
 - hosts: all
   become: true
   vars:
-    artifact_hash: d8fe36747614968ea73ebd43d47b99364c52f9c1
+    artifact_hash: 4188e07fd369e282f8a5083e4ede7f7a2fc0df3d
     ubuntu_version: 22.04.5
-    ssh_pubkey: "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIDPTGTo1lTqd3Ym/75MRyQvj8xZINO/GI6FzfIadSe5c backend+hetzner-dedicated-operator@wire.com"
+    ssh_pubkey: "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQCvYwUBNBINxRAJWO+zSzDWhmp1he65zW7RTVgKUatku0q3NvIpYFCFbu99EsGRm6fkC5tikT6ucbft+BXbCf5RRo3od4QdmwSTZtE0lyDHGczJCohwDVTMj2vAG7V9f6u/qPu8Pw0nbQTeIyx27B9XDZjCPnvb3nBh6vP7nb5dKTEGW83brtu9rM0sqeovZicxME+PiAHJCHkijE4w1IcMEjuaBBMsSnwOp3C3L1LVc+CJDvjMGiuNquNy+GBmP1R/3vZFXyblrtQfSLo9p39QIDhpwvRS465iaMo7mdWw7RQ9oOwFKCHHzd96zlQFHWzILfgHvFyRyB5b7GZ+bX1tYi9y66JbmCvhD/oSdjQ5EU+UKGdjqklcrnLdvrZq+YFYi1pyeRcLG/5OE+5C0IpH1aOHIeXI4Dq8HDqj4HWO6yvlEXTBrNcl0MI77hd77mT5vfhq8tBKoQdrY4IAjHB/bDhojL67qDcnGX42vsOzOzO+GZA1X9g+//0ehb3e8j/XP1u0qnlzApN+8ete5uR8sqlvWMoJfH62mmthEpIrCAuUpoBSiuNY5eM4arB6Jg3M6avcOjuTGEXEU0QVRhmISAPsTNsyc6KudTl/a3Z8IEMli8jhllENEROITsi4NJyeaCTVrGmqMbndUJObQluSmI+TaKDKJDv6aIZQox6iyQ=="
   tasks:
   - name: set ipv4 forward
     sysctl:
@@ -41,6 +41,7 @@
       - telnet
       - python3-lxml
       - qemu
+      - lcx
       - qemu-kvm
       - qemu-utils
       - libvirt-clients
