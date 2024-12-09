@@ -128,11 +128,11 @@ create_container() {
   "
   sudo lxc config set "$name" security.privileged true
   sudo lxc config set "$name" linux.kernel_modules overlay,nf_nat,br_netfilter,ip_tables
-  lxc config device add "$name" modules disk source=/lib/modules path=/lib/modules
+  sudo lxc restart "$name"
+  sudo lxc config device add "$name" modules disk source=/lib/modules path=/lib/modules
 
 
   msg "Starting container..."
-  sudo lxc restart "$name"
 }
 
 sudo systemctl start snap.lxd.daemon
