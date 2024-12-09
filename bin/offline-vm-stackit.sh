@@ -126,6 +126,10 @@ create_container() {
     echo 'demo ALL=(ALL) NOPASSWD:ALL' > /etc/sudoers.d/demo
     chmod 440 /etc/sudoers.d/demo
   "
+  sudo lxc config set "$name" security.privileged true
+  sudo lxc config set "$name" linux.kernel_modules overlay,nf_nat,br_netfilter,ip_tables
+  lxc config device add "$name" modules disk source=/lib/modules path=/lib/modules
+
 
   msg "Starting container..."
   sudo lxc restart "$name"
@@ -135,7 +139,10 @@ sudo systemctl start snap.lxd.daemon
 sudo systemctl enable snap.lxd.daemon
 #sudo usermod -aG lxd "$USER"
 #newgrp lxd
-
+sudo apt update
+# shellcheck disable=SC2046
+sudo apt install --reinstall linux-modules-$(uname -r) linux-modules-extra-$(uname -r) -y
+sudo modprobe ip_vs ip_vs_rr ip_vs_wrr ip_vs_lc ip_vs_wlc ip_vs_sh nf_conntrack
 STORAGE_NAME="default"
 
 # Check if the storage pool already exists
