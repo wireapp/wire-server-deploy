@@ -433,6 +433,36 @@ d kubectl get nodes -owide
 ```
 They should all report ready.
 
+### Troubleshooting external services
+Cassandra, Minio and Elasticsearch are running outside Kubernets cluster, make sure those machines have necessary ports open -
+
+On each of the machines running Cassandra, Minio and Elasticsearch, run the following commands to open the necessary ports, if needed:
+```
+sudo bash -c '
+set -eo pipefail;
+
+# cassandra
+ufw allow 9042/tcp;
+ufw allow 9160/tcp;
+ufw allow 7000/tcp;
+ufw allow 7199/tcp;
+
+# elasticsearch
+ufw allow 9300/tcp;
+ufw allow 9200/tcp;
+
+# minio
+ufw allow 9000/tcp;
+ufw allow 9092/tcp;
+
+#rabbitmq
+ufw allow 5671/tcp;
+ufw allow 5672/tcp;
+ufw allow 4369/tcp;
+ufw allow 25672/tcp;
+'
+```
+
 ### Deploy RabbitMQ cluster
 Follow the steps mentioned here to create a RabbitMQ cluster based on your setup - [offline/rabbitmq_setup.md](./rabbitmq_setup.md)
 

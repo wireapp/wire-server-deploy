@@ -93,6 +93,12 @@
 [rmq-cluster:vars]
 # rabbitmq_network_interface = enp1s0
 
+# For the following groups, add all nodes defined above to the sections below.
+# Define any additional variables that should be set for these nodes.
+
+# Uncomment this is you use the bastion host
+# [bastion]
+# bastion
 
 # Add all nodes that should be the master
 [kube-master]
