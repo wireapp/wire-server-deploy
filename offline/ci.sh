@@ -105,11 +105,6 @@ list-system-containers | create-container-dump containers-system
 tar cf containers-system.tar containers-system
 [[ "$INCREMENTAL" -eq 0 ]] && rm -r containers-system
 
-# Used for ansible-restund role
-echo "quay.io/wire/restund:v0.6.0-rc.2" | create-container-dump containers-other
-tar cf containers-other.tar containers-other
-[[ "$INCREMENTAL" -eq 0 ]] && rm -r containers-other
-
 legacy_chart_release() {
   # Note: if you want to ship from the develop branch, replace 'repo' url below
   # repo=https://s3-eu-west-1.amazonaws.com/public.wire.com/charts-develop
@@ -143,7 +138,6 @@ legacy_chart_release() {
 
   calling_charts=(
     sftd
-    restund
     coturn
   )
   for chartName in "${calling_charts[@]}"; do
@@ -245,6 +239,6 @@ tar cf containers-helm.tar containers-helm
 
 echo "docker_ubuntu_repo_repokey: '${fingerprint}'" > ansible/inventory/offline/group_vars/all/key.yml
 
-tar czf assets.tgz debs-jammy.tar binaries.tar containers-adminhost containers-helm.tar containers-other.tar containers-system.tar ansible charts values bin
+tar czf assets.tgz debs-jammy.tar binaries.tar containers-adminhost containers-helm.tar containers-system.tar ansible charts values bin
 
 echo "Done"
