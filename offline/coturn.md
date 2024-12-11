@@ -58,14 +58,17 @@ Add the following configuration to the `values.yaml` file:
 # See: https://github.com/wireapp/wire-server/blob/develop/charts/coturn/values.yaml
 # And: https://github.com/wireapp/wire-server/blob/develop/charts/coturn/README.md
 
+# use nodeSelector only if you are planning on using less than 3 pods in your installation and wish to pin coturn to specific nodes
 nodeSelector:
   wire.com/role: coturn
 
-coturnTurnListenIP: '192.168.122.23'
-
+replicaCount: 3
+coturnTurnListenIP: "__COTURN_POD_IP__"
+coturnTurnExternalIP: "__COTURN_EXT_IP__"
+coturnTurnRelayIP: "__COTURN_POD_IP__"
 ```
 
-Where `192.168.122.23` is the IP address of the machine where you want to run Coturn (in our example, the third kubernetes node, `kubenode3`).
+Annotate nodes with the wire.com/external-ip annotation if you are behind 1:1 NAT to make coturn aware of its external IP address.
 
 ## Create a `secret.yaml` file for the Coturn secrets.
 
@@ -499,6 +502,19 @@ Debug log should now be visible in the coturn pod stdout:
 
 ```bash
 d kubectl logs coturn-0
+```
+
+Check if the pod has the correct IP configuration in place.
+
+```bash
+d kubectl exec -it coturn-0 -- bash
+grep ip= coturn-config/turnserver.conf
+
+# output will look something like this
+
+listening-ip=xxx.xxx.xxx.xxx
+relay-ip=xxx.xxx.xxx.xxx.xxx
+external-ip=xxx.xxx.xxx.xxx
 ```
 
 ## Appendix: Note on migration.
