@@ -63,7 +63,7 @@ resource "hcloud_server" "adminhost" {
   name        = "adminhost-${random_pet.adminhost.id}"
   image       = "ubuntu-22.04"
   ssh_keys    = local.ssh_keys
-  server_type = "cx42"
+  server_type = "cpx41"
   user_data   = <<-EOF
   #cloud-config
   apt:
@@ -98,7 +98,7 @@ resource "hcloud_server" "assethost" {
   name        = "assethost-${random_pet.assethost.id}"
   image       = "ubuntu-22.04"
   ssh_keys    = local.ssh_keys
-  server_type = "cx42"
+  server_type = "cpx41"
   user_data   = local.disable_network_cfg
 }
 
@@ -118,7 +118,7 @@ resource "hcloud_server" "restund" {
   name        = "restund-${random_pet.restund[count.index].id}"
   image       = "ubuntu-22.04"
   ssh_keys    = local.ssh_keys
-  server_type = "cx11"
+  server_type = "cx22"
   user_data   = local.disable_network_cfg
 }
 
@@ -139,7 +139,7 @@ resource "hcloud_server" "kubenode" {
   name        = "kubenode-${random_pet.kubenode[count.index].id}"
   image       = "ubuntu-22.04"
   ssh_keys    = local.ssh_keys
-  server_type = "cx42"
+  server_type = "cpx41"
   user_data   = local.disable_network_cfg
 }
 
@@ -160,8 +160,8 @@ resource "hcloud_server" "cassandra" {
   name        = "cassandra-${random_pet.cassandra[count.index].id}"
   image       = "ubuntu-22.04"
   ssh_keys    = local.ssh_keys
-  server_type = "cx11"
-  user_data   = local.disable_network_cfg
+  server_type = "cx22"
+  # user_data   = local.disable_network_cfg
 }
 
 resource "hcloud_server_network" "cassandra" {
@@ -181,8 +181,8 @@ resource "hcloud_server" "elasticsearch" {
   name        = "elasticsearch-${random_pet.elasticsearch[count.index].id}"
   image       = "ubuntu-22.04"
   ssh_keys    = local.ssh_keys
-  server_type = "cx11"
-  user_data   = local.disable_network_cfg
+  server_type = "cx22"
+  # user_data   = local.disable_network_cfg
 }
 
 resource "hcloud_server_network" "elasticsearch" {
@@ -202,8 +202,8 @@ resource "hcloud_server" "minio" {
   name        = "minio-${random_pet.minio[count.index].id}"
   image       = "ubuntu-22.04"
   ssh_keys    = local.ssh_keys
-  server_type = "cx11"
-  user_data   = local.disable_network_cfg
+  server_type = "cx22"
+  # user_data   = local.disable_network_cfg
 }
 
 resource "hcloud_server_network" "minio" {

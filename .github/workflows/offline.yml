@@ -51,7 +51,7 @@ jobs:
         run: |
           container_image=$(nix-build --no-out-link -A container)
 
-          skopeo copy --dest-creds "$DOCKER_LOGIN" \
+          skopeo copy --retry-times 10 --dest-creds "$DOCKER_LOGIN" \
             docker-archive:"$container_image" \
             "docker://quay.io/wire/wire-server-deploy:${{ steps.upload_name.outputs.UPLOAD_NAME }}"
         env:
@@ -68,5 +68,3 @@ jobs:
         run: (cd terraform/examples/wire-server-deploy-offline-hetzner ; terraform init && terraform destroy -auto-approve)
         env:
           HCLOUD_TOKEN: '${{ secrets.HCLOUD_TOKEN }}'
-
-
