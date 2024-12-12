@@ -130,6 +130,8 @@ create_container() {
   sudo lxc config set "$name" linux.kernel_modules overlay,nf_nat,br_netfilter,ip_tables
   sudo lxc restart "$name"
   sudo lxc config device add "$name" modules disk source=/lib/modules path=/lib/modules
+  sudo lxc config device add "$name" kmsg unix-char path=/dev/kmsg
+  sudo lxc config device add "$name" proc-sys disk source=/proc/sys path=/proc/sys
 
 
   msg "Starting container..."
@@ -142,7 +144,24 @@ sudo systemctl enable snap.lxd.daemon
 sudo apt update
 # shellcheck disable=SC2046
 sudo apt install --reinstall linux-modules-$(uname -r) linux-modules-extra-$(uname -r) -y
-sudo modprobe ip_vs ip_vs_rr ip_vs_wrr ip_vs_lc ip_vs_wlc ip_vs_sh nf_conntrack
+sudo modprobe ip_vs
+sudo modprobe ip_vs_rr
+sudo modprobe ip_vs_wrr
+sudo modprobe ip_vs_lc
+sudo modprobe ip_vs_wlc
+sudo modprobe ip_vs_sh
+sudo modprobe nf_conntrack
+sudo modprobe dummy
+sudo modprobe ip_tables
+sudo modprobe br_netfilter
+sudo modprobe ip6_tables
+sudo modprobe ip_vs_sed
+sudo modprobe bridge
+sudo modprobe vxlan
+sudo modprobe overlay
+sudo sysctl -w kernel.panic=10
+sudo sysctl -w kernel.panic_on_oops=1
+sudo sysctl -w vm.overcommit_memory=1
 STORAGE_NAME="default"
 
 # Check if the storage pool already exists
