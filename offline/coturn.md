@@ -70,6 +70,11 @@ coturnTurnRelayIP: "__COTURN_POD_IP__"
 
 Annotate nodes with the wire.com/external-ip annotation if you are behind 1:1 NAT to make coturn aware of its external IP address.
 
+ie.
+```
+d kubectl annotate node kubenode1 wire.com/external-ip=IP.ADDRESS
+```
+
 ## Create a `secret.yaml` file for the Coturn secrets.
 
 For the Coturn secrets, we are going to re-use the wire-server secrets.
