@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # shellcheck disable=SC2087
 set -Eeuo pipefail
-
+set -x
 msg() {
   echo >&2 -e "${1-}"
 }
@@ -160,18 +160,18 @@ remote_deployment() {
   }
   cd $SCRIPT_DIR &>/dev/null || exit 1
 
-  bash bin/offline-vm-stackit.sh
-  msg ""
-  while sudo virsh list --all | grep -Fq running; do
-    sleep 20
-    msg "INFO: VM deployment still in progress ..."
-  done
-  sleep 20
-  msg ""
-  msg "INFO: VM deployment done. Starting all VMs:"
-  msg ""
-  for VM in $(sudo virsh list --all --name); do sudo virsh start "$VM"; done
-  sleep 60
+  #bash bin/offline-vm-stackit.sh
+  # msg ""
+  # while sudo virsh list --all | grep -Fq running; do
+  #   sleep 20
+  #   msg "INFO: VM deployment still in progress ..."
+  # done
+  # sleep 20
+  # msg ""
+  # msg "INFO: VM deployment done. Starting all VMs:"
+  # msg ""
+  # for VM in $(sudo virsh list --all --name); do sudo virsh start "$VM"; done
+  # sleep 60
 
   msg ""
   msg "INFO: Setting up offline environment (this will take a while)."
@@ -418,7 +418,7 @@ if [ "$DO_SYSTEM_CLEANUP" = true ] && [ "$FORCE_REDEPLOY" = 1 ]; then
 fi
 
 msg "INFO: Commencing Wire-in-a-box deployment on $TARGET_SYSTEM."
-preprovision_hetzner
+#preprovision_hetzner
 ssh -p "$SSH_PORT" -o StrictHostKeyChecking=no -o ServerAliveInterval=30 -o ServerAliveCountMax=10 "$DEMO_USER"@webapp."$TARGET_SYSTEM" "bash -s" <<EOT
 # Making relevant vars and functions available to remote shell via SSH
 $(declare -p DEMO_USER TARGET_SYSTEM SCRIPT_DIR)
