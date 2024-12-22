@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # shellcheck disable=SC2087
 set -Eeuo pipefail
-
+set -x
 msg() {
   echo >&2 -e "${1-}"
 }
@@ -81,9 +81,9 @@ parse_params "$@"
 ARTIFACT_HASH="${ARTIFACT_HASH:-5c06158547bc57846eadaa2be5c813ec43be9b59}"
 TARGET_SYSTEM="${TARGET_SYSTEM:-wiab-autodeploy.wire.link}"
 FORCE_REDEPLOY="${FORCE_REDEPLOY:-0}"
-SUBDOMAINS="account assets coturn federator inbucket nginz-https nginz-ssl sft teams webapp"
+SUBDOMAINS=""
 SSH_PORT=22
-SSH_USER=root
+SSH_USER=ubuntu
 DEMO_USER=demo
 SCRIPT_DIR=/home/"$DEMO_USER"/wire-server-deploy
 DO_SYSTEM_CLEANUP=false
@@ -160,18 +160,18 @@ remote_deployment() {
   }
   cd $SCRIPT_DIR &>/dev/null || exit 1
 
-  bash bin/offline-vm-setup.sh
-  msg ""
-  while sudo virsh list --all | grep -Fq running; do
-    sleep 20
-    msg "INFO: VM deployment still in progress ..."
-  done
-  sleep 20
-  msg ""
-  msg "INFO: VM deployment done. Starting all VMs:"
-  msg ""
-  for VM in $(sudo virsh list --all --name); do sudo virsh start "$VM"; done
-  sleep 60
+  #bash bin/offline-vm-stackit.sh
+  # msg ""
+  # while sudo virsh list --all | grep -Fq running; do
+  #   sleep 20
+  #   msg "INFO: VM deployment still in progress ..."
+  # done
+  # sleep 20
+  # msg ""
+  # msg "INFO: VM deployment done. Starting all VMs:"
+  # msg ""
+  # for VM in $(sudo virsh list --all --name); do sudo virsh start "$VM"; done
+  # sleep 60
 
   msg ""
   msg "INFO: Setting up offline environment (this will take a while)."
@@ -202,6 +202,7 @@ ansnode3 ansible_host=192.168.122.33
 
 [all:vars]
 ansible_user = $DEMO_USER
+ansible_ssh_common_args = '-o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no'
 
 [cassandra:vars]
 cassandra_network_interface = enp1s0
@@ -417,7 +418,7 @@ if [ "$DO_SYSTEM_CLEANUP" = true ] && [ "$FORCE_REDEPLOY" = 1 ]; then
 fi
 
 msg "INFO: Commencing Wire-in-a-box deployment on $TARGET_SYSTEM."
-preprovision_hetzner
+#preprovision_hetzner
 ssh -p "$SSH_PORT" -o StrictHostKeyChecking=no -o ServerAliveInterval=30 -o ServerAliveCountMax=10 "$DEMO_USER"@webapp."$TARGET_SYSTEM" "bash -s" <<EOT
 # Making relevant vars and functions available to remote shell via SSH
 $(declare -p DEMO_USER TARGET_SYSTEM SCRIPT_DIR)
