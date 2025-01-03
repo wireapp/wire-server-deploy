@@ -17,13 +17,3 @@
         for container in $(curl -q {{ assethost_host }}/containers-helm/index.txt);do
           curl -q "{{ assethost_host }}/containers-helm/$container" | docker load
         done
-
-- name: Download restund container
-  hosts: restund
-  tags: restund-containers
-  tasks:
-    - name: load containers
-      shell: |
-        for container in $(curl -q {{ assethost_host }}/containers-other/index.txt);do
-          curl -q "{{ assethost_host }}/containers-other/$container" | docker load
-        done

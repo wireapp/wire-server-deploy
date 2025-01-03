@@ -4,7 +4,6 @@ locals {
   minio_count         = 2
   elasticsearch_count = 2
   cassandra_count     = 3
-  restund_count       = 2
   ssh_keys            = [hcloud_ssh_key.adminhost.name]
 
   # TODO: IPv6
@@ -106,28 +105,6 @@ resource "hcloud_server_network" "assethost" {
   server_id = hcloud_server.assethost.id
   subnet_id = hcloud_network_subnet.main.id
 }
-
-
-resource "random_pet" "restund" {
-  count = local.restund_count
-}
-
-resource "hcloud_server" "restund" {
-  count       = local.restund_count
-  location    = "nbg1"
-  name        = "restund-${random_pet.restund[count.index].id}"
-  image       = "ubuntu-22.04"
-  ssh_keys    = local.ssh_keys
-  server_type = "cx22"
-  user_data   = local.disable_network_cfg
-}
-
-resource "hcloud_server_network" "restund" {
-  count     = local.restund_count
-  server_id = hcloud_server.restund[count.index].id
-  subnet_id = hcloud_network_subnet.main.id
-}
-
 
 resource "random_pet" "kubenode" {
   count = local.kubenode_count
