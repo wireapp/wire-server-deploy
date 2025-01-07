@@ -4,7 +4,7 @@ set -euo pipefail
 INCREMENTAL="${INCREMENTAL:-0}"
 
 # Default exclude list
-HELM_CHART_EXCLUDE_LIST="inbucket"
+HELM_CHART_EXCLUDE_LIST="inbucket,wire-server-enterprise"
 
 # Parse the HELM_CHART_EXCLUDE_LIST argument
 for arg in "$@"
