@@ -39,6 +39,14 @@ brig:
     setNexmo: |-
       key: "dummy"
       secret: "dummy"
+    rabbitmq:
+      username: wire-server
+      password: verysecurepassword
+cannon:
+  secrets:
+    rabbitmq:
+      username: wire-server
+      password: verysecurepassword
 cargohold:
   secrets:
     awsKeyId: "$minio_access_key"
@@ -51,6 +59,9 @@ gundeck:
   secrets:
     awsKeyId: dummykey
     awsSecretKey: dummysecret
+      rabbitmq:
+        username: wire-server
+        password: very-secure-password
 nginz:
   secrets:
     zAuth:
