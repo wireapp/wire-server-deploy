@@ -3,8 +3,8 @@ set -euo pipefail
 
 INCREMENTAL="${INCREMENTAL:-0}"
 
-# Default exclude list
-HELM_CHART_EXCLUDE_LIST="inbucket, wire-server-enterprise"
+# Default exclude list, temporary wire-server-enterprise exclusion due to access privileges
+HELM_CHART_EXCLUDE_LIST="inbucket,wire-server-enterprise"
 
 # Parse the HELM_CHART_EXCLUDE_LIST argument
 for arg in "$@"
@@ -156,7 +156,7 @@ wire_build_chart_release () {
   wire_build="$1"
   curl "$wire_build" | jq -r --argjson HELM_CHART_EXCLUDE_LIST "$HELM_CHART_EXCLUDE_LIST" '
   .helmCharts
-  | with_entries(select([.key] | inside($HELM_CHART_EXCLUDE_LIST) | not))
+  | with_entries(select(.key as $k | $HELM_CHART_EXCLUDE_LIST | index($k) | not))
   | to_entries
   | map("\(.key) \(.value.repo) \(.value.version)")
   | join("\n")
@@ -204,8 +204,6 @@ pull_charts() {
 
 wire_build="https://raw.githubusercontent.com/wireapp/wire-builds/5dcc99aa4e182672030ae38c5f94604dcefa51d1/build.json"
 wire_build_chart_release "$wire_build" | pull_charts
-
-ls charts/
 
 # Uncomment if you want to create non-wire-build release
 # and uncomment the other pull_charts call from aboe
