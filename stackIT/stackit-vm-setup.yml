@@ -1,0 +1,610 @@
+---
+- name: Setup Minikube Cluster and Configure Nodes
+  hosts: all
+  become: yes
+  vars:
+    # to ssh into the machine and run the playbook
+    ansible_user: ubuntu
+    kubernetes_version: "v1.28.2"
+    container_runtime: "containerd"
+    minikube_nodes: 3
+    minikube_cpus: 6
+    minikube_memory: "8192"
+    minikube_disk_size: "100g"
+    docker_network_name: "minikube"
+    pod_network_cidr: "10.233.0.0/16"
+    k8s_node_names:
+      - "kubenode01"
+      - "kubenode02"
+      - "kubenode03"
+
+    # container params
+    container_base_name: "ansnode"
+    image_name: "ubuntu-ssh"
+    container_node_names:
+      - "assetnode"
+      - "ansnode1"
+      - "ansnode2"
+      - "ansnode3"
+
+    # artifact_hash
+    artifact_hash: "3a18fae3106968b48b5a3b35f1bd0817ca4e5569"
+
+    # networking iptables dnat rules
+    # This should be the ip address of k8s node where ngnix-ingress-controller is running
+    # check NGINX_K8S_NODE in setting-values.sh
+    k8s_ingress_controller_ip: "192.168.49.3"
+    http_dnat_rules:
+      - { protocol: "tcp", port: 443, to_port: 31773 }
+      - { protocol: "tcp", port: 80,  to_port: 31772 }
+    # This should be the ip address of k8s node where coturn is running
+    # check COTURN_NODE in setting-values.sh
+    coturn_k8s_node_ip: "192.168.49.4"
+    turn_dnat_rules:
+      - { protocol: "tcp", port: 3478,  to_port: 3478 }
+      - { protocol: "udp", port: 3478,  to_port: 3478 }
+
+    
+  tasks:
+
+  # for temporary files
+  - name: Create /tmp/wire-deploy directory
+    become: yes
+    become_user: "{{ ansible_user }}"
+    file:
+      path: /tmp/wire-deploy
+      state: directory
+      mode: '0755'
+
+  - name: Package installation and configuration
+    block:
+      - name: apt update
+        apt: update_cache=yes force_apt_get=yes
+
+      - name: apt upgrade
+        apt: upgrade=dist force_apt_get=yes
+
+      - name: Install dependencies
+        apt:
+          name:
+          # common packages
+            - aptitude
+            - bind9-host
+            - debian-goodies
+            - dnsutils
+            - git
+            - dnsmasq
+            - less
+            - lsof
+            - net-tools
+            - rsyslog
+            - screen
+            - sudo
+            - vim
+            - wget
+            - whois
+            - telnet
+            - python3-lxml
+            - apt-transport-https
+            - ca-certificates
+            - curl
+            - software-properties-common
+            - bridge-utils
+          # team collaboration
+            - tmate
+            - asciinema
+          state: present
+          update_cache: yes
+
+      - name: Create /etc/apt/keyrings directory
+        file:
+          path: /etc/apt/keyrings
+          state: directory
+          mode: '0755'
+
+      - name: Download Docker GPG key
+        get_url:
+          url: https://download.docker.com/linux/ubuntu/gpg
+          dest: /etc/apt/keyrings/docker.asc
+          mode: '0644'
+
+      - name: Add Docker repository to apt sources
+        shell: |
+          echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu $(. /etc/os-release && echo $VERSION_CODENAME) stable" > /etc/apt/sources.list.d/docker.list
+        args:
+          executable: /bin/bash
+
+      - name: Update apt package index
+        apt:
+          update_cache: yes
+
+      - name: Install Docker packages
+        apt:
+          name:
+            - docker-ce
+            - docker-ce-cli
+            - containerd.io
+            - docker-buildx-plugin
+            - docker-compose-plugin
+          state: present
+
+      - name: Add ubuntu user to the docker group
+        user:
+          name: "{{ ansible_user }}" # Replace with the username you want to modify
+          groups: docker
+          append: yes
+
+      - name: Enable and start Docker service
+        systemd:
+          name: docker
+          enabled: yes
+          state: started
+
+      - name: Install Minikube
+        get_url:
+          url: "https://github.com/kubernetes/minikube/releases/latest/download/minikube-linux-amd64"
+          dest: /usr/local/bin/minikube
+          mode: '0755'
+
+      - name: Install kubectl
+        get_url:
+          url: "https://dl.k8s.io/release/{{ kubernetes_version }}/bin/linux/amd64/kubectl"
+          dest: /usr/local/bin/kubectl
+          mode: '0755'
+
+    when: skip_install | default(false) == false
+
+  - name: Creating ssh key and storing it
+    # storing creds in the {{ ansible_user }} user's home directory
+    become: yes
+    become_user: "{{ ansible_user }}"
+    block:
+    - name: Ensure the .ssh directory exists
+      file:
+        path: "/home/{{ ansible_user }}/.ssh"
+        state: directory
+        mode: '0700'
+        owner: "{{ ansible_user }}"
+        group: "{{ ansible_user }}"
+
+    - name: Generate SSH key if it does not exist
+      shell: |
+        if [ ! -f "/home/{{ ansible_user }}/.ssh/id_rsa" ]; then
+          ssh-keygen -t rsa -b 4096 -f "/home/{{ ansible_user }}/.ssh/id_rsa" -N "" -C "ansible-generated-key";
+        fi
+      args:
+        creates: "/home/{{ ansible_user }}/.ssh/id_rsa"
+
+    - name: Read the public key content
+      slurp:
+        src: "/home/{{ ansible_user }}/.ssh/id_rsa.pub"
+      register: ssh_key_content
+
+    - name: Set the public key as a fact
+      set_fact:
+        ssh_public_key: "{{ ssh_key_content['content'] | b64decode }}"
+  
+    when: skip_ssh | default(false) == false
+
+  - name: start k8s(minikube) cluster 
+    become: yes
+    become_user: "{{ ansible_user }}"
+    block:
+    - name: Check if Minikube is running
+      shell: minikube status
+      register: minikube_status
+      failed_when: false
+      changed_when: false
+
+    - name: Start Minikube with specified configurations
+      shell: |
+        minikube start \
+          --nodes={{ minikube_nodes }} \
+          --cpus={{ minikube_cpus }} \
+          --memory={{ minikube_memory }} \
+          --disk-size={{ minikube_disk_size }} \
+          --kubernetes-version="{{ kubernetes_version }}" \
+          --container-runtime="{{ container_runtime }}" \
+          --driver=docker \
+          --extra-config=kubeadm.pod-network-cidr={{ pod_network_cidr }}
+      when: "'Running' not in minikube_status.stdout"
+
+    - name: Retrieve node names from the cluster
+      shell: kubectl get nodes -o json | jq -r '.items[].metadata.name'
+      register: kube_node_names
+    
+    - name: Configure Node labels
+      shell: |
+        kubectl label node {{ item.1 }} wire.io/node={{ item.0 }}
+      loop: "{{ k8s_node_names | zip(kube_node_names.stdout_lines) | list }}"
+      register: label_output
+
+    - name: Get list of running Minikube nodes
+      shell: minikube node list | awk '{print $1}'
+      register: minikube_nodes_raw
+
+    - name: Add SSH key to all Minikube nodes
+      shell: |
+        minikube ssh --native-ssh=false -n {{ item }} -- "mkdir -p ~/.ssh && echo '{{ ssh_public_key }}' >> ~/.ssh/authorized_keys && chmod 600 ~/.ssh/authorized_keys"
+      args:
+        executable: /bin/bash
+      with_items: "{{  minikube_nodes_raw.stdout_lines }}"
+      async: 30
+      poll: 5
+
+    when: skip_minikube | default(false) == false
+
+  - name: Start Container Nodes
+    become: yes
+    become_user: "{{ ansible_user }}"
+    block:
+    - name: Pull the base Ubuntu image
+      docker_image:
+        name: ubuntu:22.04
+        source: pull
+
+    - name: Write public key to a file
+      copy:
+        dest: /tmp/wire-deploy/id_rsa.pub
+        content: "{{ ssh_public_key }}"
+
+    - name: Create Dockerfile
+      copy:
+        dest: /tmp/wire-deploy/Dockerfile
+        content: |
+          FROM ubuntu:22.04
+          RUN apt update && apt install -y openssh-server systemd systemd-sysv cron && mkdir /var/run/sshd
+          RUN systemctl enable ssh && systemctl start ssh
+          RUN systemctl enable cron && systemctl start cron
+          RUN echo "PermitRootLogin yes" >> /etc/ssh/sshd_config
+          RUN mkdir -p /root/.ssh
+          COPY id_rsa.pub /root/.ssh/authorized_keys
+          RUN chmod 600 /root/.ssh/authorized_keys
+          EXPOSE 22
+          STOPSIGNAL SIGRTMIN+3
+          CMD ["/sbin/init"]
+
+    - name: Build the Docker image
+      shell: |
+        docker build --no-cache -t {{ image_name }} /tmp/wire-deploy
+
+    - name: Create and start containers
+      docker_container:
+        name: "{{ item }}"
+        image: "{{ image_name }}"
+        state: started
+        restart_policy: always
+        hostname: "{{ item }}"
+        privileged: yes
+        network_mode: "{{ docker_network_name }}"
+        env:
+          container: "docker"
+        volumes:
+          - /sys/fs/cgroup:/sys/fs/cgroup:rw
+        cgroupns_mode: "host" 
+        tmpfs:
+          - /run
+          - /run/lock
+        security_opts:
+          - seccomp=unconfined
+          - apparmor=unconfined
+      loop: "{{ container_node_names }}"
+
+    when: skip_docker | default(false) == false
+
+  - name: Generate hosts.ini with dynamic IPs
+    become: yes
+    become_user: "{{ ansible_user }}"
+    block:
+
+    - name: Display running containers
+      shell: docker ps
+      register: docker_ps_output
+
+    - name: Print Docker container information
+      debug:
+        var: docker_ps_output.stdout
+
+    - name: Extract IPs of Minikube nodes
+      shell: |
+        kubectl get nodes -o json | jq -r '.items[].status.addresses[] | select(.type=="InternalIP").address'
+      register: kube_ips
+
+    - name: Store Minikube node IPs as variable
+      set_fact:
+        kubernetes_node_ips: "{{ kube_ips.stdout_lines }}"
+
+    - name: Extract IPs of Docker containers
+      shell: |
+        docker inspect -f '{{ "{{ range.NetworkSettings.Networks }}{{ .IPAddress }}{{ end }}" }}' {{ item }}
+      loop: "{{ container_node_names }}"
+      register: docker_ips
+
+    - name: Store Docker container IPs as variable
+      set_fact:
+        docker_container_ips: "{{ docker_ips.results | map(attribute='stdout') }}"
+
+    - name: Display Kubernetes node IPs
+      debug:
+        msg: "Kubernetes Node IPs: {{ kubernetes_node_ips }}"
+
+    - name: Display Docker container IPs
+      debug:
+        msg: "Docker Container IPs: {{ docker_container_ips }}"
+
+    - name: Create dictionary for Kubernetes nodes and container IPs
+      set_fact:
+        host_ips:
+          kubenode1: "{{ kubernetes_node_ips[0] }}"
+          kubenode2: "{{ kubernetes_node_ips[1] }}"
+          kubenode3: "{{ kubernetes_node_ips[2] }}"
+          assethost: "{{ docker_container_ips[0] }}"
+          ansnode1: "{{ docker_container_ips[1] }}"
+          ansnode2: "{{ docker_container_ips[2] }}"
+          ansnode3: "{{ docker_container_ips[3] }}"
+
+    - name: Generate hosts.ini content
+      set_fact:
+        hosts_ini_content: |
+          [all]
+          kubenode1 ansible_host={{ host_ips.kubenode1 }} ansible_user=docker
+          kubenode2 ansible_host={{ host_ips.kubenode2 }} ansible_user=docker
+          kubenode3 ansible_host={{ host_ips.kubenode3 }} ansible_user=docker
+          assethost ansible_host={{ host_ips.assethost }} ansible_user=root
+          ansnode1 ansible_host={{ host_ips.ansnode1 }} ansible_user=root
+          ansnode2 ansible_host={{ host_ips.ansnode2 }} ansible_user=root
+          ansnode3 ansible_host={{ host_ips.ansnode3 }} ansible_user=root
+
+          [all:vars]
+          ansible_ssh_common_args = '-o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no'
+
+          [cassandra:vars]
+          cassandra_network_interface = eth0
+          cassandra_backup_enabled = False
+          cassandra_incremental_backup_enabled = False
+
+          [elasticsearch:vars]
+          elasticsearch_network_interface = eth0
+
+          [minio:vars]
+          minio_network_interface = eth0
+          prefix = ""
+          domain = "kittensonfire.com"
+          deeplink_title = "wire demo environment, kittensonfire.com"
+
+          [rmq-cluster:vars]
+          rabbitmq_network_interface = eth0
+
+          [kube-master]
+          kubenode1
+          kubenode2
+          kubenode3
+
+          [etcd]
+          kubenode1 etcd_member_name=etcd1
+          kubenode2 etcd_member_name=etcd2
+          kubenode3 etcd_member_name=etcd3
+
+          [kube-node]
+          kubenode1
+          kubenode2
+          kubenode3
+
+          [k8s-cluster:children]
+          kube-master
+          kube-node
+
+          [cassandra]
+          ansnode1
+          ansnode2
+          ansnode3
+
+          [cassandra_seed]
+          ansnode1
+
+          [elasticsearch]
+          ansnode1
+          ansnode2
+          ansnode3
+
+          [elasticsearch_master:children]
+          elasticsearch
+
+          [minio]
+          ansnode1
+          ansnode2
+          ansnode3
+
+          [rmq-cluster]
+          ansnode1
+          ansnode2
+          ansnode3
+
+    when: skip_inventory | default(false) == false
+
+  - name: Download wire artifact
+    become: yes
+    become_user: "{{ ansible_user }}"
+    block:
+      - name: create wire-server-deploy directory for {{ ansible_user }} user
+        file:
+          path: /home/{{ ansible_user }}/wire-server-deploy
+          state: directory
+          owner: "{{ ansible_user }}"
+          group: "{{ ansible_user }}"
+          mode: 0775
+
+      - name: check if wire-server-deploy-static-{{ artifact_hash }}.tgz exists
+        stat:
+          path: /home/{{ ansible_user }}/wire-server-deploy-static-{{ artifact_hash }}.tgz
+          get_checksum: False
+
+        register: artifact_archive_file_check
+      - name: download wire-server-deploy archive
+        shell:
+          cmd: curl -fsSLo /home/{{ ansible_user }}/wire-server-deploy-static-{{ artifact_hash }}.tgz https://s3-eu-west-1.amazonaws.com/public.wire.com/artifacts/wire-server-deploy-static-{{ artifact_hash }}.tgz
+          creates: /home/{{ ansible_user }}/wire-server-deploy-static-{{ artifact_hash }}.tgz
+        when: not artifact_archive_file_check.stat.exists
+
+      - name: check if wire-server-deploy folder contents exist
+        stat:
+          path: /home/{{ ansible_user }}/wire-server-deploy/containers-helm.tar
+          get_checksum: False
+        register: artifact_folder_content_check
+
+      - name: unpack wire-server-deploy archive
+        unarchive:
+          src: /home/{{ ansible_user }}/wire-server-deploy-static-{{ artifact_hash }}.tgz
+          dest: /home/{{ ansible_user }}/wire-server-deploy
+          remote_src: yes
+
+        when: not artifact_folder_content_check.stat.exists
+      - name: set permissions inside wire-server-deploy via shell command (fails when using ansible directive)
+        shell:
+          cmd: sudo chmod -R 0775 /home/{{ ansible_user }}/wire-server-deploy; sudo chown -R {{ ansible_user }}:{{ ansible_user }} /home/{{ ansible_user }}
+
+      - name: Write updated hosts.ini to file
+        copy:
+          dest:  /home/{{ ansible_user }}/wire-server-deploy/ansible/inventory/offline/hosts.ini
+          content: "{{ hosts_ini_content }}"
+
+    when: skip_download | default(false) == false
+
+  - name: Delete /tmp/wire-deploy directory with contents
+    file:
+      path: /tmp/wire-deploy
+      state: absent
+
+  - name: Configure iptables rules
+    become: yes
+    block:
+    - name: Get the default interface for the default route
+      shell: ip route | awk '/default/ {print $5}' | head -n 1
+      register: default_interface
+      changed_when: false
+
+    - name: Get the IP address of the default interface
+      shell: ip -4 addr show dev {{ default_interface.stdout }} | awk '/inet / {print $2}' | cut -d/ -f1
+      register: default_interface_ip
+      changed_when: false
+
+    - name: Configure DNAT rules to send http/https traffic to the k8s ingress controller
+      iptables:
+        table: nat
+        chain: PREROUTING
+        protocol: "{{ item.protocol }}"
+        jump: DNAT
+        in_interface: "{{ default_interface.stdout }}"
+        destination: "{{ default_interface_ip.stdout }}"
+        destination_port: "{{ item.port }}"
+        to_destination: "{{ k8s_ingress_controller_ip }}:{{ item.to_port }}"
+        state: present
+        action: insert
+      loop: "{{ http_dnat_rules }}"
+      loop_control:
+        label: "Setting DNAT rule for port {{ item.port }} -> {{ k8s_ingress_controller_ip }}:{{ item.to_port }}"
+
+    - name: Get the {{ docker_network_name }} Docker network ID
+      shell: |
+        docker network inspect {{ docker_network_name }} | jq -r '.[0].Id'
+      register: docker_network_id
+      changed_when: false
+
+    - name: Get all interfaces with bridge interfaces
+      shell: ip -o addr show | awk '{print $2}' | grep -i 'br-'
+      register: bridge_interfaces
+      changed_when: false
+
+    - name: Find the matching bridge interface for {{ docker_network_name }} Docker network
+      shell: |
+        for iface in {{ bridge_interfaces.stdout_lines | join(' ') }}; do
+          iface_id=$(echo "$iface" | cut -d '-' -f2)
+          if echo "{{ docker_network_id.stdout }}" | grep -q "$iface_id"; then
+            echo "$iface"
+            break
+          fi
+        done
+      register: matching_bridge_interface
+      changed_when: false
+    
+    - name: Ensure FORWARD rule for traffic from main interface to ingress controller
+      iptables:
+        table: filter
+        chain: FORWARD
+        in_interface: "{{ default_interface.stdout }}"
+        out_interface: "{{ matching_bridge_interface.stdout }}"
+        jump: ACCEPT
+        state: present
+        action: insert
+
+    - name: Ensure FORWARD rule for traffic from ingress controller to main interface
+      iptables:
+        table: filter
+        chain: FORWARD
+        in_interface: "{{ matching_bridge_interface.stdout }}"
+        out_interface: "{{ default_interface.stdout }}"
+        jump: ACCEPT
+        state: present
+        action: insert
+
+    - name: Configure DNAT rule to send UDP traffic for coturn to coturn server on k8s node
+      iptables:
+        table: nat
+        chain: PREROUTING
+        protocol: udp
+        jump: DNAT
+        destination: "{{ default_interface_ip.stdout }}"
+        destination_ports: "32768:61000"
+        in_interface: "{{ default_interface.stdout }}"
+        to_destination: "{{ coturn_k8s_node_ip }}"
+        state: present
+        action: insert
+
+    - name: Configure DNAT rules to reach turn servers running on k8s node
+      iptables:
+        table: nat
+        chain: PREROUTING
+        protocol: "{{ item.protocol }}"
+        jump: DNAT
+        in_interface: "{{ default_interface.stdout }}"
+        destination: "{{ default_interface_ip.stdout }}"
+        destination_port: "{{ item.port }}"
+        to_destination: "{{ coturn_k8s_node_ip }}:{{ item.to_port }}"
+        state: present
+        action: insert
+      loop: "{{ turn_dnat_rules }}"
+      loop_control:
+        label: "Setting DNAT rule for port {{ item.port }} -> {{ coturn_k8s_node_ip }}:{{ item.to_port }}"
+
+    - name: Ensure /etc/iptables directory exists
+      ansible.builtin.file:
+        path: /etc/iptables
+        state: directory
+        owner: root
+        group: root
+        mode: '0755'
+
+    - name: Save iptables rules
+      shell: iptables-save -f /etc/iptables/rules.v4 
+
+    when: skip_iptables | default(false) == false
+
+  - name: disabling kubespray in offline-cluster.sh
+    become: yes
+    become_user: "{{ ansible_user }}"
+    block:
+    - name: Comment specific lines in offline-cluster.sh
+      ansible.builtin.lineinfile:
+        path: /home/{{ ansible_user }}/wire-server-deploy/bin/offline-cluster.sh
+        regexp: '^ansible-playbook -i \$INVENTORY_FILE \$ANSIBLE_DIR/kubernetes.yml --tags bastion,bootstrap-os,preinstall,container-engine'
+        line: '# ansible-playbook -i $INVENTORY_FILE $ANSIBLE_DIR/kubernetes.yml --tags bastion,bootstrap-os,preinstall,container-engine'
+        state: present
+
+    - name: Comment another specific line in offline-cluster.sh
+      ansible.builtin.lineinfile:
+        path: /home/{{ ansible_user }}/wire-server-deploy/bin/offline-cluster.sh
+        regexp: '^ansible-playbook -i \$INVENTORY_FILE \$ANSIBLE_DIR/kubernetes.yml --skip-tags bootstrap-os,preinstall,container-engine,multus'
+        line: '# ansible-playbook -i $INVENTORY_FILE $ANSIBLE_DIR/kubernetes.yml --skip-tags bootstrap-os,preinstall,container-engine,multus'
+        state: present
+  
+    when: skip_disable_kubespray | default(false) == false
