@@ -1,26 +1,31 @@
 # StackIT Deployment and Configuration Guide
 
-This guide outlines the steps to set up and deploy the StackIT environment, including DNS configuration, Minikube cluster creation, Docker container setup, and Helm chart deployment. Each task and its associated commands are provided for clarity and customization.
+This guide outlines the steps to set up and deploy Wire in a StackIT environment, including DNS configuration, Minikube cluster creation, Docker container setup, and Helm chart deployment. Each task and its associated commands are provided for clarity and customization.
 
 ---
 
-## Steps to Deploy StackIT
+## Steps to Deploy
 
 ### 1. Run the Ansible Playbook
-- Prepare DNS records, STackIT public IP and set up Cert Manager to start before next step.
+- Prepare DNS records, StackIT public IP and set up Cert Manager to start before next step as mentioned [here](https://docs.wire.com/how-to/install/helm.html#how-to-set-up-dns-records). 
+   - Check file `stackIT/host.ini` for host details
+   - Check file `stackIT/setting-values.sh` for DNS records i.e. TARGET_SYSTEM and CERT_MASTER_EMAIL
+      - We have used letsencrypt for example for cert management
 - Use the following command to set up the VM:
   ```bash
-  ansible-playbook -i host stackIT/stackit-vm-setup.yml --private-key ~/.ssh/stackit_private_key
+  ansible-playbook -i stackIT/host.ini stackIT/stackit-vm-setup.yml --private-key ~/.ssh/stackit_private_key
   ```
 
 - **Optional Skips:**
-  Use the following variables to skip tasks:
+  The ansible playbook is seggregated into multiple blocks. Use the following variables to control the flow of tasks:
   ```bash
   -e skip_install=true
+  -e skip_ssh=true
   -e skip_minikube=true
   -e skip_docker=true
-  -e skip_ssh=true
   -e skip_inventory=true
+  -e skip_download=true
+  -e skip_iptables=true
   ```
 
 - **Artifacts and Tasks:**

@@ -3,7 +3,8 @@
 set -Eeuo pipefail
 
 BASE_DIR="/wire-server-deploy"
-TARGET_SYSTEM="kittensonfire.com"
+TARGET_SYSTEM="mydomain.com"
+CERT_MASTER_EMAIL="certmaster@mydomain.com"
 HOST_IP=$(wget -qO- https://api.ipify.org)
 SFT_NODE="minikube"
 COTURN_NODE="minikube-m03"
@@ -69,7 +70,7 @@ process_values() {
 
   # Setting certManager and DNS records
   sed -e 's/useCertManager: false/useCertManager: true/g' \
-    -e "/certmasterEmail:$/s/certmasterEmail:/certmasterEmail: backend+wiabautodeploy@wire.com/" \
+    -e "/certmasterEmail:$/s/certmasterEmail:/certmasterEmail: $CERT_MASTER_EMAIL/" \
     -e "s/example.com/$TARGET_SYSTEM/" \
     "$BASE_DIR/values/nginx-ingress-services/values.yaml" > "$TEMP_DIR/nginx-ingress-services-values.yaml"
 
