@@ -36,33 +36,33 @@ This guide outlines the steps to set up and deploy Wire in a StackIT environment
 
 ---
 
-### 2. Commands to Run on the StackIT Nodes
+### 2. Commands to Run on the StackIT Nodes in directory `wire-server-deploy`
 
 1. **Load the environment:**
    ```bash
    source stackIT/offline-env.sh
    ```
 
-2. **Access the environment:**
+2. **Generate secrets:**
    ```bash
-   d bash
+   bash -x bin/offline-secrets.sh
    ```
 
-3. **Generate secrets:**
+3. **Access the environment:**
    ```bash
-   bash bin/offline-secrets.sh
+   d bash
    ```
 
 4. **Set up and configure the environment:**
    Run the following to set up the AssetHost, loading containers for k8s cluster, sync time, cassandra, elasticsearch and minio:
    ```bash
-   bash offline-cluster.sh
+   bash -x bin/offline-cluster.sh
    ```
 
 5. **Deploy Helm charts:**
    Use the following script to set up Helm chart values and deploy them:
    ```bash
-   bash stackIT/setting-values.sh
+   bash -x stackIT/setting-values.sh
    ```
 
 ---
