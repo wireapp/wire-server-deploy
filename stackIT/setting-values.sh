@@ -54,7 +54,7 @@ process_charts() {
 
 process_values() {
   TEMP_DIR=$(mktemp -d)
-  trap "rm -rf $TEMP_DIR" EXIT
+  trap 'rm -rf $TEMP_DIR' EXIT
 
   # Fixing the hosts with TARGET_SYSTEM and setting the turn server
   sed -e "s/example.com/$TARGET_SYSTEM/g" \
