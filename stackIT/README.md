@@ -26,6 +26,7 @@ This guide outlines the steps to set up and deploy Wire in a StackIT environment
   -e skip_inventory=true
   -e skip_download=true
   -e skip_iptables=true
+  -e skip_disable_kubespray=true
   ```
 
 - **Artifacts and Tasks:**
