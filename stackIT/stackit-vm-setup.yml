@@ -140,6 +140,9 @@
           enabled: yes
           state: started
 
+      - name: Reset SSH connection to apply dpcker group membership changes
+        meta: reset_connection
+
       - name: Install Minikube
         get_url:
           url: "https://github.com/kubernetes/minikube/releases/latest/download/minikube-linux-amd64"
@@ -254,8 +257,8 @@
         content: |
           FROM ubuntu:22.04
           RUN apt update && apt install -y openssh-server systemd systemd-sysv cron && mkdir /var/run/sshd
-          RUN systemctl enable ssh && systemctl start ssh
-          RUN systemctl enable cron && systemctl start cron
+          RUN systemctl enable ssh
+          RUN systemctl enable cron
           RUN echo "PermitRootLogin yes" >> /etc/ssh/sshd_config
           RUN mkdir -p /root/.ssh
           COPY id_rsa.pub /root/.ssh/authorized_keys
