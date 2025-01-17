@@ -54,7 +54,7 @@
     file:
       path: /tmp/wire-deploy
       state: directory
-      mode: '0755'
+      mode: '0700'
 
   - name: Package installation and configuration
     block:
