@@ -20,7 +20,7 @@ To setup Coturn, we will:
 * Create a `values.yaml` file and fill it with configuration.
 * Create a `secret.yaml` file for the Coturn secrets.
 * Configure the Coturn labels to select on which machine(s) it will run.
-* Configure the SFT labels for Coturn and SFT to share a port range.
+* Configure the SFT labels for Coturn and SFT deployment.
 * Configure the port redirection in Nftables.
 * Change the Wire-Server configuration to use Coturn instead of Restund.
 * Disable Restund.
@@ -145,7 +145,7 @@ If you want to run Coturn on multiple machines, you must:
 
 2. Change the `replicaCount` in the `charts/coturn/values.yaml` file to the number of machines you want to run Coturn on.
 
-## Configure the SFT labels for Coturn and SFT to share a port range. 
+## Configure the SFT labels for Coturn and SFT deployment
 
 First, we must locate what the "external" IP address of the machine is. 
 
@@ -237,20 +237,15 @@ Note: This section is only relevant if you are running Wire-Server/Coturn/SFT be
 
 ``` 
 
-We must configure the port redirection in Nftables to allow traffic to reach Coturn and SFT.
+We must configure the port redirection in Nftables to allow traffic to reach Coturn.
 
 Calling and TURN services (Coturn, Restund, SFT) require being reachable on a range of ports used to transmit the calling data.
 
-Both SFT and Coturn both want to use the same port range, therefore predicting which node is using which port range ahead of time requires dividing/configuring port ranges in advance.
-
-Therefore, we configure the port redirection in Nftables to allow traffic to reach Coturn and SFT by splitting the ports between the two services.
-
 Here we have decided the following distribution of ports:
 
-* Coturn will operate between ports 32768 and 46883.
-* SFT will operate between ports 46884 and 61000.
+* Coturn will operate between ports 32768 and 61000.
 
-We will configure the port redirection in Nftables to allow traffic to reach Coturn and SFT.
+We will configure the port redirection in Nftables to allow traffic to reach Coturn.
 
 In the file `/etc/nftables.conf`, which we edit with:
 
@@ -265,7 +260,6 @@ We will do the following modifications:
 First, we create some definitions in the beginning of the file for readability:
 
 ```
-define SFTIP      = 192.168.122.21
 define COTURNIP   = 192.168.122.23
 define KUBENODEIP = 192.168.122.21
 define INF_WAN    = enp41s0
@@ -273,12 +267,9 @@ define INF_WAN    = enp41s0
 
 Where:
 
-* `SFTIP` is the IP address of the machine where SFT will run (in our example, the first kubernetes node, `kubenode1`).
 * `COTURNIP` is the IP address of the machine where Coturn will run (in our example, the third kubernetes node, `kubenode3`).
 * `KUBENODEIP` is the IP address of the machine running nginx HTTP / HTTPS ingress.
 * `INF_WAN` is the name of the WAN interface exposed to the outside world (the Internet).
-
-Please note that while in this example, the IPs for SFTIP and KUBENODEIP point to the same host (kubenode1), this might change depending on where K8s deploys our nginx ingress.
 
 Then, we edit the `table ip nat` / `chain PREROUTING` section of the file:
 
@@ -295,8 +286,7 @@ table ip nat {
     iifname { $INF_WAN, virbr0 } tcp dport 3478 fib daddr type local dnat to $COTURNIP comment "COTURN control TCP"
     iifname { $INF_WAN, virbr0 } udp dport 3478 fib daddr type local dnat to $COTURNIP comment "COTURN control UDP"
 
-    iifname { $INF_WAN, virbr0 } udp dport 32768-46883 fib daddr type local dnat to $COTURNIP comment "COTURN UDP range"
-    iifname { $INF_WAN, virbr0 } udp dport 46884-61000 fib daddr type local dnat to $SFTIP comment "SFT UDP range"
+    iifname { $INF_WAN, virbr0 } udp dport 32768-61000 fib daddr type local dnat to $COTURNIP comment "COTURN UDP range"
 
     fib daddr type local counter jump DOCKER
   }
@@ -312,11 +302,10 @@ This is used for the HTTP(S) ingress:
     iifname { $INF_WAN, virbr0 } tcp dport 443 fib daddr type local dnat to $KUBENODEIP:31773 comment "HTTPS ingress"
 ``` 
 
-This is the part that distributes the UDP packets (media/calling traffic) in two different port ranges for SFT and Coturn:
+This is the part that routes the UDP packets (media/calling traffic) to Coturn service:
 
 ```nft
-    iifname { $INF_WAN, virbr0 } udp dport 32768-46883 fib daddr type local dnat to $COTURNIP comment "COTURN UDP range"
-    iifname { $INF_WAN, virbr0 } udp dport 46884-61000 fib daddr type local dnat to $SFTIP comment "SFT UDP range"
+    iifname { $INF_WAN, virbr0 } udp dport 32768-61000 fib daddr type local dnat to $COTURNIP comment "COTURN UDP range"
 ``` 
 
 This is the part that redirects the control traffic to the Coturn port:
@@ -351,7 +340,7 @@ sudo ip addr
 
 ```
 
-For more details on getting the extrenal IP address see the `Configure the SFT labels for Coturn and SFT to share a port range` section above.
+For more details on getting the extrenal IP address see the `Configure the SFT labels for Coturn and SFT deployment` section above.
 
 Edit the `values/wire-server/values.yaml` file:
 
