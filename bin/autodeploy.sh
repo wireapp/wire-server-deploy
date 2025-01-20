@@ -312,13 +312,13 @@ ufw allow 25672/tcp;
 
   d helm install wire-server ./charts/wire-server --timeout=15m0s --values ./values/wire-server/values.yaml --values ./values/wire-server/secrets.yaml
 
-  sed -i "s/example.com/$TARGET_SYSTEM/" values/webapp/prod-values.example.yaml
+  sed -i "s/example.com/$TARGET_SYSTEM/g" values/webapp/prod-values.example.yaml
   d helm install webapp ./charts/webapp --values ./values/webapp/prod-values.example.yaml
 
-  sed -i "s/example.com/$TARGET_SYSTEM/" values/team-settings/prod-values.example.yaml
+  sed -i "s/example.com/$TARGET_SYSTEM/g" values/team-settings/prod-values.example.yaml
   d helm install team-settings ./charts/team-settings --values ./values/team-settings/prod-values.example.yaml --values ./values/team-settings/prod-secrets.example.yaml
 
-  sed -i "s/example.com/$TARGET_SYSTEM/" values/account-pages/prod-values.example.yaml
+  sed -i "s/example.com/$TARGET_SYSTEM/g" values/account-pages/prod-values.example.yaml
   d helm install account-pages ./charts/account-pages --values ./values/account-pages/prod-values.example.yaml
 
   cp values/ingress-nginx-controller/prod-values.example.yaml ./values/ingress-nginx-controller/values.yaml
