@@ -611,7 +611,7 @@ Update the values in `./values/webapp/prod-values.example.yaml`
 
 Set your domain name with sed:
 ```
-sed -i "s/example.com/YOURDOMAINHERE/" values/webapp/prod-values.example.yaml
+sed -i "s/example.com/YOURDOMAINHERE/g" values/webapp/prod-values.example.yaml
 ```
 and run
 ```
@@ -624,7 +624,7 @@ Update the values in `./values/team-settings/prod-values.example.yaml` and `./va
 
 Set your domain name with sed:
 ```
-sed -i "s/example.com/YOURDOMAINHERE/" values/team-settings/prod-values.example.yaml
+sed -i "s/example.com/YOURDOMAINHERE/g" values/team-settings/prod-values.example.yaml
 ```
 then run
 ```
@@ -637,7 +637,7 @@ Update the values in `./values/account-pages/prod-values.example.yaml`
 
 Set your domain name with sed:
 ```
-sed -i "s/example.com/YOURDOMAINHERE/" values/account-pages/prod-values.example.yaml
+sed -i "s/example.com/YOURDOMAINHERE/g" values/account-pages/prod-values.example.yaml
 ```
 and run
 ```
