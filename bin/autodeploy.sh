@@ -81,7 +81,8 @@ parse_params "$@"
 ARTIFACT_HASH="${ARTIFACT_HASH:-5c06158547bc57846eadaa2be5c813ec43be9b59}"
 TARGET_SYSTEM="${TARGET_SYSTEM:-wiab-autodeploy.wire.link}"
 FORCE_REDEPLOY="${FORCE_REDEPLOY:-0}"
-SUBDOMAINS="account assets coturn federator inbucket nginz-https nginz-ssl sft teams webapp"
+# List of subdomains to check for DNS A records are defined here https://docs.wire.com/how-to/install/helm.html#how-to-set-up-dns-records
+SUBDOMAINS="account assets coturn federator inbucket nginz-https nginz-ssl sftd teams webapp"
 SSH_PORT=22
 SSH_USER=root
 DEMO_USER=demo
@@ -350,7 +351,7 @@ ufw allow 25672/tcp;
 
   cp values/sftd/prod-values.example.yaml values/sftd/values.yaml
   sed -i "s/webapp.example.com/webapp.$TARGET_SYSTEM/" values/sftd/values.yaml
-  sed -i "s/sftd.example.com/sft.$TARGET_SYSTEM/" values/sftd/values.yaml
+  sed -i "s/sftd.example.com/sftd.$TARGET_SYSTEM/" values/sftd/values.yaml
   sed -i 's/name: letsencrypt-prod/name: letsencrypt-http01/' values/sftd/values.yaml
   sed -i "s/replicaCount: 3/replicaCount: 1/" values/sftd/values.yaml
   d kubectl label node kubenode1 wire.com/role=sftd
