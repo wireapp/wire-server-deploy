@@ -64,7 +64,7 @@ gundeck:
     awsSecretKey: dummysecret
     rabbitmq:
       username: wire-server
-      password: very-secure-password
+      password: verysecurepassword
 nginz:
   secrets:
     zAuth:
