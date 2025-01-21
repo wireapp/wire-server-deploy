@@ -552,7 +552,17 @@ d helm install databases-ephemeral ./charts/databases-ephemeral/ --values ./valu
 Next, three more services that need no additional configuration need to be deployed:
 ```
 d helm install fake-aws ./charts/fake-aws --values ./values/fake-aws/prod-values.example.yaml
-d helm install demo-smtp ./charts/demo-smtp --values ./values/demo-smtp/prod-values.example.yaml
+
+# ensure that the RELAY_NETWORKS value is set to the podCIDR
+SMTP_VALUES_FILE="./values/demo-smtp/prod-values.example.yaml"
+podCIDR=$(d kubectl get configmap -n kube-system kubeadm-config -o yaml | grep -i 'podSubnet' | awk '{print $2}' 2>/dev/null)
+if [[ $? -eq 0 && -n "$podCIDR" ]]; then
+  sed -i "s|RELAY_NETWORKS: \".*\"|RELAY_NETWORKS: \":${podCIDR}\"|" $SMTP_VALUES_FILE
+else
+    echo "Failed to fetch podSubnet. Attention using the default value: $(grep -i RELAY_NETWORKS $SMTP_VALUES_FILE)"
+fi
+d helm install demo-smtp ./charts/demo-smtp --values $SMTP_VALUES_FILE
+
 d helm install reaper ./charts/reaper
 ```
 
