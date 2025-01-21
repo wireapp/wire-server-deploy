@@ -258,3 +258,7 @@ legalhold:
 federator:
   tls:
     useSharedFederatorSecret: true
+
+background-worker:
+  config:
+    enableFederation: false

@@ -32,12 +32,12 @@
 ####################################################################################################
 
 
-- name: Download restund container
-  hosts: restund
-  tags: restund-containers
-  tasks:
-    - name: load restund container
-      shell: |
-        for container in $(curl -q {{ assethost_host }}/containers-other/index.txt);do
-          curl -q "{{ assethost_host }}/containers-other/$container" | ctr -n=k8s.io images import -
-        done
+#- name: Download restund container
+#  hosts: restund
+#  tags: restund-containers
+#  tasks:
+#    - name: load restund container
+#      shell: |
+#        for container in $(curl -q {{ assethost_host }}/containers-other/index.txt);do
+#          curl -q "{{ assethost_host }}/containers-other/$container" | ctr -n=k8s.io images import -
+#        done
