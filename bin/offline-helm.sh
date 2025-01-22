@@ -11,11 +11,8 @@ helm upgrade --install --wait demo-smtp ./charts/demo-smtp --values ./values/dem
 helm upgrade --install --wait rabbitmq ./charts/rabbitmq --values ./values/rabbitmq/prod-values.example.yaml --values ./values/rabbitmq/prod-secrets.example.yaml
 helm upgrade --install --wait databases-ephemeral ./charts/databases-ephemeral --values ./values/databases-ephemeral/prod-values.example.yaml
 helm upgrade --install --wait reaper ./charts/reaper
-helm upgrade --install --timeout=30m0s wire-server ./charts/wire-server --values ./values/wire-server/prod-values.example.yaml --values ./values/wire-server/secrets.yaml
-sleep 15m
-kubectl get pods --all-namespaces -o wide
-sleep 15m
-kubectl get pods --all-namespaces -o wide
+helm upgrade --install --wait --timeout=30m0s wire-server ./charts/wire-server --values ./values/wire-server/prod-values.example.yaml --values ./values/wire-server/secrets.yaml
+
 # if charts/webapp directory exists
 if [ -d "./charts/webapp" ]; then
     helm upgrade --install --wait --timeout=15m0s webapp ./charts/webapp --values ./values/webapp/prod-values.example.yaml
