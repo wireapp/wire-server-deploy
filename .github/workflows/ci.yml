@@ -25,6 +25,11 @@ jobs:
         run: nix-build -A env
       - name: Install the environment
         run: nix-env -f . -A env -i
+      - name: Install terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "^1.3.7"
+          terraform_wrapper: false
       - name: Check terraform init
         run: |
           cd terraform/environment
