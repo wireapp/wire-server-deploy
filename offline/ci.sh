@@ -67,7 +67,7 @@ registry.k8s.io/kube-apiserver:v1.28.2
 registry.k8s.io/kube-controller-manager:v1.28.2
 registry.k8s.io/kube-scheduler:v1.28.2
 registry.k8s.io/kube-proxy:v1.28.2
-quay.io/coreos/etcd:v3.5.9
+quay.io/coreos/etcd:v3.5.13
 quay.io/cilium/cilium:v1.13.4
 quay.io/cilium/operator:v1.13.4
 quay.io/cilium/hubble-relay:v1.13.4
@@ -84,13 +84,11 @@ quay.io/jetstack/cert-manager-controller:v1.16.3
 quay.io/jetstack/cert-manager-cainjector:v1.16.3
 quay.io/jetstack/cert-manager-webhook:v1.16.3
 quay.io/jetstack/cert-manager-ctl:v1.14.7
-quay.io/metallb/speaker:v0.13.9
-quay.io/metallb/controller:v0.13.9
 docker.io/library/nginx:1.25.2-alpine
 docker.io/kubernetesui/dashboard:v2.7.0
 docker.io/kubernetesui/metrics-scraper:v1.0.8
 quay.io/wire/ldap-scim-bridge:0.9
-bats/bats:1.8.1
+bats/bats:1.11.1
 docker.io/openebs/linux-utils:3.5.0
 docker.io/datastax/cass-config-builder:1.0-ubi8
 docker.io/k8ssandra/cass-management-api:3.11.16
