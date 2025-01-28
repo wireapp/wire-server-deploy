@@ -70,10 +70,10 @@ registry.k8s.io/kube-proxy:v1.28.2
 quay.io/coreos/etcd:v3.5.13
 quay.io/calico/node:v3.29.0
 quay.io/calico/cni:v3.29.0
-quay.io/calico/pod2daemon-flexvol:v3.29.0
-quay.io/calico/kube-controllers:v3.29.0
-quay.io/calico/typha:v3.29.0
-quay.io/calico/apiserver:v3.29.0
+quay.io/calico/pod2daemon-flexvol:v3.28.0
+quay.io/calico/kube-controllers:v3.28.0
+quay.io/calico/typha:v3.28.0
+quay.io/calico/apiserver:v3.28.0
 quay.io/jetstack/cert-manager-controller:v1.16.3
 quay.io/jetstack/cert-manager-cainjector:v1.16.3
 quay.io/jetstack/cert-manager-webhook:v1.16.3
