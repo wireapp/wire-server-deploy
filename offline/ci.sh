@@ -196,7 +196,7 @@ pull_charts() {
   echo "Pulling charts done."
 }
 
-wire_build="https://raw.githubusercontent.com/wireapp/wire-builds/c0a2bc4ca1ff320527bb758ab5f5f22eb58ef0c6/build.json"
+wire_build="https://raw.githubusercontent.com/wireapp/wire-builds/f2f363f30eb8bc62df33b106238abfc37b1f6711/build.json"
 wire_build_chart_release "$wire_build" | pull_charts
 
 # Uncomment if you want to create non-wire-build release
