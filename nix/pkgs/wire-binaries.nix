@@ -71,7 +71,7 @@ let
     etcd = fetchurl rec {
       passthru.url = url;
       url = "https://github.com/coreos/etcd/releases/download/${ etcd_version }/etcd-${ etcd_version }-linux-${ image_arch }.tar.gz";
-      sha256 = "d59017044eb776597eca480432081c5bb26f318ad292967029af1f62b588b042";
+      sha256 = "26e90d024fa2310bc52bb40e7f2132e81640b55f8fc446c00ae07e30af2a44fd";
     };
     cni = fetchurl rec {
       passthru.url = url;
