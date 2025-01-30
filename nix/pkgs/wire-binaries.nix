@@ -9,7 +9,7 @@ let
   # https://github.com/kubernetes-sigs/kubespray/blob/release-2.24/roles/kubespray-defaults/defaults/main/download.yml
   # TODO: Find a better process. Automate this!
   kube_version = "v1.28.2";
-  etcd_version = "v3.5.9";
+  etcd_version = "v3.5.10";
   cni_version = "v1.3.0";
   calico_version = "v3.26.4";
   crictl_version = "v1.28.0";
