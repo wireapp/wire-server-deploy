@@ -11,6 +11,7 @@
     minikube_cpus: 6
     minikube_memory: "8192"
     minikube_disk_size: "100g"
+    # assuming minkube network is available, by default
     docker_network_name: "minikube"
     pod_network_cidr: "10.233.0.0/16"
     k8s_node_names:
@@ -33,13 +34,13 @@
     # networking iptables dnat rules
     # This should be the ip address of k8s node where ngnix-ingress-controller is running
     # check NGINX_K8S_NODE in setting-values.sh
-    k8s_ingress_controller_ip: "192.168.49.3"
+    k8s_ingress_controller_node: "minikube-m02"
     http_dnat_rules:
       - { protocol: "tcp", port: 443, to_port: 31773 }
       - { protocol: "tcp", port: 80,  to_port: 31772 }
     # This should be the ip address of k8s node where coturn is running
     # check COTURN_NODE in setting-values.sh
-    coturn_k8s_node_ip: "192.168.49.4"
+    coturn_k8s_node: "minikube-m03"
     turn_dnat_rules:
       - { protocol: "tcp", port: 3478,  to_port: 3478 }
       - { protocol: "udp", port: 3478,  to_port: 3478 }
@@ -140,7 +141,7 @@
           enabled: yes
           state: started
 
-      - name: Reset SSH connection to apply dpcker group membership changes
+      - name: Reset SSH connection to apply docker group membership changes
         meta: reset_connection
 
       - name: Install Minikube
@@ -491,6 +492,14 @@
       register: default_interface_ip
       changed_when: false
 
+    - name: Get the IP address of the k8s_ingress_controller node
+      shell: |
+        kubectl get node {{ k8s_ingress_controller_node }} -o json | jq -r '.status.addresses[] | select(.type=="InternalIP").address'
+      register: k8s_ingress_controller_ip
+      become: yes
+      become_user: "{{ ansible_user }}"
+      changed_when: false
+
     - name: Configure DNAT rules to send http/https traffic to the k8s ingress controller
       iptables:
         table: nat
@@ -500,12 +509,12 @@
         in_interface: "{{ default_interface.stdout }}"
         destination: "{{ default_interface_ip.stdout }}"
         destination_port: "{{ item.port }}"
-        to_destination: "{{ k8s_ingress_controller_ip }}:{{ item.to_port }}"
+        to_destination: "{{ k8s_ingress_controller_ip.stdout }}:{{ item.to_port }}"
         state: present
         action: insert
       loop: "{{ http_dnat_rules }}"
       loop_control:
-        label: "Setting DNAT rule for port {{ item.port }} -> {{ k8s_ingress_controller_ip }}:{{ item.to_port }}"
+        label: "Setting DNAT rule for port {{ item.port }} -> {{ k8s_ingress_controller_ip.stdout }}:{{ item.to_port }}"
 
     - name: Get the {{ docker_network_name }} Docker network ID
       shell: |
@@ -550,6 +559,14 @@
         state: present
         action: insert
 
+    - name: Get the IP address of the coturn node
+      shell: |
+        kubectl get node {{ coturn_k8s_node }} -o json | jq -r '.status.addresses[] | select(.type=="InternalIP").address'
+      register: coturn_k8s_node_ip
+      become: yes
+      become_user: "{{ ansible_user }}"
+      changed_when: false
+
     - name: Configure DNAT rule to send UDP traffic for coturn to coturn server on k8s node
       iptables:
         table: nat
@@ -559,7 +576,7 @@
         destination: "{{ default_interface_ip.stdout }}"
         destination_ports: "32768:61000"
         in_interface: "{{ default_interface.stdout }}"
-        to_destination: "{{ coturn_k8s_node_ip }}"
+        to_destination: "{{ coturn_k8s_node_ip.stdout }}"
         state: present
         action: insert
 
@@ -572,12 +589,12 @@
         in_interface: "{{ default_interface.stdout }}"
         destination: "{{ default_interface_ip.stdout }}"
         destination_port: "{{ item.port }}"
-        to_destination: "{{ coturn_k8s_node_ip }}:{{ item.to_port }}"
+        to_destination: "{{ coturn_k8s_node_ip.stdout }}:{{ item.to_port }}"
         state: present
         action: insert
       loop: "{{ turn_dnat_rules }}"
       loop_control:
-        label: "Setting DNAT rule for port {{ item.port }} -> {{ coturn_k8s_node_ip }}:{{ item.to_port }}"
+        label: "Setting DNAT rule for port {{ item.port }} -> {{ coturn_k8s_node_ip.stdout }}:{{ item.to_port }}"
 
     - name: Ensure /etc/iptables directory exists
       ansible.builtin.file:
