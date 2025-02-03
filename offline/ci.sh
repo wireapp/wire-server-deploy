@@ -4,7 +4,7 @@ set -euo pipefail
 INCREMENTAL="${INCREMENTAL:-0}"
 
 # Default exclude list
-HELM_CHART_EXCLUDE_LIST="inbucket"
+HELM_CHART_EXCLUDE_LIST="inbucket,wire-server-enterprise"
 
 # Parse the HELM_CHART_EXCLUDE_LIST argument
 for arg in "$@"
@@ -150,7 +150,7 @@ wire_build_chart_release () {
   wire_build="$1"
   curl "$wire_build" | jq -r --argjson HELM_CHART_EXCLUDE_LIST "$HELM_CHART_EXCLUDE_LIST" '
   .helmCharts
-  | with_entries(select([.key] | inside($HELM_CHART_EXCLUDE_LIST) | not))
+  | with_entries(select(.key as $k | $HELM_CHART_EXCLUDE_LIST | index($k) | not))
   | to_entries
   | map("\(.key) \(.value.repo) \(.value.version)")
   | join("\n")
