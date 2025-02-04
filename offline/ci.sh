@@ -4,7 +4,7 @@ set -euo pipefail
 INCREMENTAL="${INCREMENTAL:-0}"
 
 # Default exclude list
-HELM_CHART_EXCLUDE_LIST="inbucket"
+HELM_CHART_EXCLUDE_LIST="inbucket,wire-server-enterprise"
 
 # Parse the HELM_CHART_EXCLUDE_LIST argument
 for arg in "$@"
@@ -51,46 +51,36 @@ function list-system-containers() {
 # TODO: Automate this. This is very wieldy :)
   cat <<EOF
 registry.k8s.io/pause:3.9
-registry.k8s.io/coredns/coredns:v1.10.1
-registry.k8s.io/dns/k8s-dns-node-cache:1.22.28
-registry.k8s.io/cpa/cluster-proportional-autoscaler:v1.8.8
-registry.k8s.io/metrics-server/metrics-server:v0.6.4
+registry.k8s.io/coredns/coredns:v1.11.4
+registry.k8s.io/dns/k8s-dns-node-cache:1.24.0
+registry.k8s.io/cpa/cluster-proportional-autoscaler:v1.9.0
+registry.k8s.io/metrics-server/metrics-server:v0.7.2
 registry.k8s.io/sig-storage/local-volume-provisioner:v2.5.0
-registry.k8s.io/ingress-nginx/controller:v1.9.4
-registry.k8s.io/sig-storage/csi-attacher:v3.3.0
-registry.k8s.io/sig-storage/csi-provisioner:v3.0.0
-registry.k8s.io/sig-storage/csi-snapshotter:v5.0.0
-registry.k8s.io/sig-storage/snapshot-controller:v4.2.1
-registry.k8s.io/sig-storage/csi-resizer:v1.3.0
-registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.4.0
+registry.k8s.io/ingress-nginx/controller:v1.10.6
+registry.k8s.io/sig-storage/csi-attacher:v4.8.0
+registry.k8s.io/sig-storage/csi-provisioner:v4.0.1
+registry.k8s.io/sig-storage/csi-snapshotter:v8.0.0
+registry.k8s.io/sig-storage/snapshot-controller:v8.0.0
+registry.k8s.io/sig-storage/csi-resizer:v1.13.1
+registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.13.0
 registry.k8s.io/kube-apiserver:v1.28.2
 registry.k8s.io/kube-controller-manager:v1.28.2
 registry.k8s.io/kube-scheduler:v1.28.2
 registry.k8s.io/kube-proxy:v1.28.2
-quay.io/coreos/etcd:v3.5.9
-quay.io/cilium/cilium:v1.13.4
-quay.io/cilium/operator:v1.13.4
-quay.io/cilium/hubble-relay:v1.13.4
-quay.io/cilium/certgen:v0.1.8
-quay.io/cilium/hubble-ui:v0.11.0
-quay.io/cilium/hubble-ui-backend:v0.11.0
-quay.io/calico/node:v3.26.4
-quay.io/calico/cni:v3.26.4
+quay.io/coreos/etcd:v3.5.10
+quay.io/calico/node:v3.29.0
+quay.io/calico/cni:v3.29.0
 quay.io/calico/pod2daemon-flexvol:v3.26.4
 quay.io/calico/kube-controllers:v3.26.4
 quay.io/calico/typha:v3.26.4
 quay.io/calico/apiserver:v3.26.4
-quay.io/jetstack/cert-manager-controller:v1.13.2
-quay.io/jetstack/cert-manager-cainjector:v1.13.2
-quay.io/jetstack/cert-manager-webhook:v1.13.2
-quay.io/jetstack/cert-manager-ctl:v1.13.2
-quay.io/metallb/speaker:v0.13.9
-quay.io/metallb/controller:v0.13.9
-docker.io/library/nginx:1.25.2-alpine
-docker.io/kubernetesui/dashboard:v2.7.0
-docker.io/kubernetesui/metrics-scraper:v1.0.8
+quay.io/jetstack/cert-manager-controller:v1.16.3
+quay.io/jetstack/cert-manager-cainjector:v1.16.3
+quay.io/jetstack/cert-manager-webhook:v1.16.3
+quay.io/jetstack/cert-manager-ctl:v1.14.7
+docker.io/library/nginx:1.25.4-alpine
 quay.io/wire/ldap-scim-bridge:0.9
-bats/bats:1.8.1
+bats/bats:1.11.1
 docker.io/openebs/linux-utils:3.5.0
 docker.io/datastax/cass-config-builder:1.0-ubi8
 docker.io/k8ssandra/cass-management-api:3.11.16
@@ -150,7 +140,7 @@ wire_build_chart_release () {
   wire_build="$1"
   curl "$wire_build" | jq -r --argjson HELM_CHART_EXCLUDE_LIST "$HELM_CHART_EXCLUDE_LIST" '
   .helmCharts
-  | with_entries(select([.key] | inside($HELM_CHART_EXCLUDE_LIST) | not))
+  | with_entries(select(.key as $k | $HELM_CHART_EXCLUDE_LIST | index($k) | not))
   | to_entries
   | map("\(.key) \(.value.repo) \(.value.version)")
   | join("\n")

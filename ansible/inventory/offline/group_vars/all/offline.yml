@@ -21,7 +21,7 @@ binaries_url: "http://{{ assethost_host }}/binaries"
 nodelocaldns_ip: 10.233.0.10
 
 kube_version: "v1.28.2"
-etcd_version: "v3.5.9"
+etcd_version: "v3.5.10"
 
 kubeadm_download_url: "{{ binaries_url }}/kubeadm"
 kubectl_download_url: "{{ binaries_url }}/kubectl"
