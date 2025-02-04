@@ -85,7 +85,7 @@ docker.io/openebs/linux-utils:3.5.0
 docker.io/datastax/cass-config-builder:1.0-ubi8
 docker.io/k8ssandra/cass-management-api:3.11.16
 docker.io/k8ssandra/system-logger:v1.21.0
-docker.io/thelastpickle/cassandra-reaper:3.5.0
+docker.io/thelastpickle/cassandra-reaper:3.7.1
 docker.io/k8ssandra/medusa:0.20.1
 cr.step.sm/smallstep/step-ca:0.25.3-rc7
 EOF
