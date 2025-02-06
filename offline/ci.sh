@@ -79,7 +79,6 @@ quay.io/jetstack/cert-manager-cainjector:v1.16.3
 quay.io/jetstack/cert-manager-webhook:v1.16.3
 quay.io/jetstack/cert-manager-ctl:v1.14.7
 docker.io/library/nginx:1.25.4-alpine
-quay.io/wire/ldap-scim-bridge:0.9
 bats/bats:1.11.1
 docker.io/openebs/linux-utils:3.5.0
 docker.io/datastax/cass-config-builder:1.0-ubi8
