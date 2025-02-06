@@ -67,6 +67,7 @@ registry.k8s.io/kube-apiserver:v1.28.2
 registry.k8s.io/kube-controller-manager:v1.28.2
 registry.k8s.io/kube-scheduler:v1.28.2
 registry.k8s.io/kube-proxy:v1.28.2
+registry.k8s.io/ingress-nginx/kube-webhook-certgen:v20231011-8b53cabe0
 quay.io/coreos/etcd:v3.5.10
 quay.io/calico/node:v3.29.0
 quay.io/calico/cni:v3.29.0
@@ -221,7 +222,7 @@ done | list-helm-containers | grep -v "\-integration:" | create-container-dump c
 sed -i -Ee 's/useSharedFederatorSecret: true/useSharedFederatorSecret: false/' "$(pwd)"/charts/wire-server/charts/federator/values.yaml
 sed -i -Ee 's/federation: true/federation: false/' "$(pwd)"/values/wire-server/prod-values.example.yaml
 
-patch-ingress-controller-images "$(pwd)"
+#patch-ingress-controller-images "$(pwd)"
 
 tar cf containers-helm.tar containers-helm
 [[ "$INCREMENTAL" -eq 0 ]] && rm -r containers-helm
