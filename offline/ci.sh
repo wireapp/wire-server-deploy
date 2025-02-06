@@ -53,7 +53,7 @@ function list-system-containers() {
 registry.k8s.io/pause:3.9
 registry.k8s.io/coredns/coredns:v1.11.4
 registry.k8s.io/dns/k8s-dns-node-cache:1.24.0
-registry.k8s.io/cpa/cluster-proportional-autoscaler:v1.9.0
+registry.k8s.io/cpa/cluster-proportional-autoscaler:v1.8.8
 registry.k8s.io/metrics-server/metrics-server:v0.7.2
 registry.k8s.io/sig-storage/local-volume-provisioner:v2.5.0
 registry.k8s.io/ingress-nginx/controller:v1.10.6
