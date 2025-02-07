@@ -57,12 +57,6 @@ registry.k8s.io/cpa/cluster-proportional-autoscaler:v1.8.8
 registry.k8s.io/metrics-server/metrics-server:v0.7.2
 registry.k8s.io/sig-storage/local-volume-provisioner:v2.5.0
 registry.k8s.io/ingress-nginx/controller:v1.10.6
-registry.k8s.io/sig-storage/csi-attacher:v4.8.0
-registry.k8s.io/sig-storage/csi-provisioner:v4.0.1
-registry.k8s.io/sig-storage/csi-snapshotter:v8.0.0
-registry.k8s.io/sig-storage/snapshot-controller:v8.0.0
-registry.k8s.io/sig-storage/csi-resizer:v1.13.1
-registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.13.0
 registry.k8s.io/kube-apiserver:v1.28.2
 registry.k8s.io/kube-controller-manager:v1.28.2
 registry.k8s.io/kube-scheduler:v1.28.2
