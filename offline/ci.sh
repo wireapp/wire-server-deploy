@@ -74,12 +74,6 @@ quay.io/jetstack/cert-manager-cainjector:v1.16.3
 quay.io/jetstack/cert-manager-webhook:v1.16.3
 docker.io/library/nginx:1.25.4-alpine
 bats/bats:1.11.1
-docker.io/openebs/linux-utils:3.5.0
-docker.io/datastax/cass-config-builder:1.0-ubi8
-docker.io/k8ssandra/cass-management-api:3.11.16
-docker.io/k8ssandra/system-logger:v1.21.0
-docker.io/thelastpickle/cassandra-reaper:3.7.1
-docker.io/k8ssandra/medusa:0.23.0
 cr.step.sm/smallstep/step-ca:0.25.3-rc7
 EOF
 }
