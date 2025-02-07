@@ -69,8 +69,8 @@ registry.k8s.io/kube-scheduler:v1.28.2
 registry.k8s.io/kube-proxy:v1.28.2
 registry.k8s.io/ingress-nginx/kube-webhook-certgen:v20231011-8b53cabe0
 quay.io/coreos/etcd:v3.5.10
-quay.io/calico/node:v3.29.0
-quay.io/calico/cni:v3.29.0
+quay.io/calico/node:v3.26.4
+quay.io/calico/cni:v3.26.4
 quay.io/calico/pod2daemon-flexvol:v3.26.4
 quay.io/calico/kube-controllers:v3.26.4
 quay.io/calico/typha:v3.26.4
