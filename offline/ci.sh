@@ -71,6 +71,7 @@ quay.io/calico/apiserver:v3.26.4
 quay.io/jetstack/cert-manager-controller:v1.16.3
 quay.io/jetstack/cert-manager-cainjector:v1.16.3
 quay.io/jetstack/cert-manager-webhook:v1.16.3
+quay.io/jetstack/cert-manager-startupapicheck:v1.16.3
 docker.io/library/nginx:1.25.4-alpine
 bats/bats:1.11.1
 cr.step.sm/smallstep/step-ca:0.25.3-rc7
