@@ -52,7 +52,7 @@ function list-system-containers() {
   cat <<EOF
 registry.k8s.io/pause:3.9
 registry.k8s.io/coredns/coredns:v1.11.4
-registry.k8s.io/dns/k8s-dns-node-cache:1.22.8
+registry.k8s.io/dns/k8s-dns-node-cache:1.22.28
 registry.k8s.io/cpa/cluster-proportional-autoscaler:v1.8.8
 registry.k8s.io/metrics-server/metrics-server:v0.7.2
 registry.k8s.io/ingress-nginx/controller:v1.10.6
