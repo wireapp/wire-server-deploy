@@ -28,6 +28,9 @@
       - "ansnode2"
       - "ansnode3"
 
+    # same value as the target_system in setting-values.sh
+    target_domain: "example.com"
+
     # artifact_hash
     artifact_hash: "3a18fae3106968b48b5a3b35f1bd0817ca4e5569"
 
@@ -44,10 +47,8 @@
     turn_dnat_rules:
       - { protocol: "tcp", port: 3478,  to_port: 3478 }
       - { protocol: "udp", port: 3478,  to_port: 3478 }
-
     
   tasks:
-
   # for temporary files
   - name: Create /tmp/wire-deploy directory
     become: yes
@@ -373,8 +374,8 @@
           [minio:vars]
           minio_network_interface = eth0
           prefix = ""
-          domain = "kittensonfire.com"
-          deeplink_title = "wire demo environment, kittensonfire.com"
+          domain = "example.com"
+          deeplink_title = "wire demo environment, example.com"
 
           [rmq-cluster:vars]
           rabbitmq_network_interface = eth0
@@ -423,6 +424,10 @@
           ansnode1
           ansnode2
           ansnode3
+
+    - name: Replace example.com with the target domain
+      set_fact:
+        hosts_ini_content: "{{ hosts_ini_content | replace('example.com', target_domain) }}"
 
     when: skip_inventory | default(false) == false
 
@@ -514,7 +519,7 @@
         action: insert
       loop: "{{ http_dnat_rules }}"
       loop_control:
-        label: "Setting DNAT rule for port {{ item.port }} -> {{ k8s_ingress_controller_ip.stdout }}:{{ item.to_port }}"
+        label: "Setting DNAT rule for port {{ item.port }} -> {{ k8s_ingress_controller_ip.stdout | default('undefined') }}:{{ item.to_port }}"
 
     - name: Get the {{ docker_network_name }} Docker network ID
       shell: |
@@ -594,7 +599,7 @@
         action: insert
       loop: "{{ turn_dnat_rules }}"
       loop_control:
-        label: "Setting DNAT rule for port {{ item.port }} -> {{ coturn_k8s_node_ip.stdout }}:{{ item.to_port }}"
+        label: "Setting DNAT rule for port {{ item.port }} -> {{ coturn_k8s_node_ip.stdout | default('undefined') }}:{{ item.to_port }}"
 
     - name: Ensure /etc/iptables directory exists
       ansible.builtin.file:
