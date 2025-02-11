@@ -50,9 +50,9 @@ minio_server_artifact_url: "{{ binaries_url }}/minio.RELEASE.2023-07-07T07-13-57
 minio_server_artifact_checksum: sha256:f6d1aadf4baec1556880e659748d7fbc6bc8d2dac3554f816e95492d3881660a
 minio_server_upgrade_from_checksums : [ "sha256:2c7e6774a9befbba6a126791f363550f8f14e34008e100d0e0e57e2ad9b2ab8c" ]
 
-minio_client_artifact_url: "{{ binaries_url }}/mc.RELEASE.2023-07-07T05-25-51Z"
-minio_client_artifact_checksum: sha256:205a2dc5a49dc467f78228c43c7d368e376c6cc14492597a7c4fe195c291f074
-minio_client_upgrade_from_checksums : [ "sha256:59e184bd4e2c3a8a19837b0f0da3977bd4e301495a24e4a5d50e291728a1de51" ]
+minio_client_artifact_url: "{{ binaries_url }}/mc.RELEASE.2023-10-24T05-18-28Z"
+minio_client_artifact_checksum: sha256:52f6380627d97761426c67b16ffba25cf0f60f86c83a6d5fc5c4af4b9ce4f9f7
+minio_client_upgrade_from_checksums : [ "sha256:59e184bd4e2c3a8a19837b0f0da3977bd4e301495a24e4a5d50e291728a1de51", sha256:205a2dc5a49dc467f78228c43c7d368e376c6cc14492597a7c4fe195c291f074 ]
 
 kubeconfig_localhost: true
 #resolvconf_mode: none
@@ -63,3 +63,17 @@ is_aws_environment: False
 
 # IP address for the logging (for example QRadar) server
 syslog_target_ip: 12.34.56.78
+
+# OVERRIDES
+
+coredns_version: "v1.11.4"
+
+metrics_server_version: "v0.7.2"
+
+ingress_nginx_version: "v1.10.6"
+
+ingress_nginx_kube_webhook_certgen_image_tag: "v20231011-8b53cabe0"
+
+cert_manager_version: "v1.16.3"
+
+nginx_image_tag: "1.25.4-alpine"
