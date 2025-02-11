@@ -3,8 +3,8 @@
 set -Eeuo pipefail
 
 BASE_DIR="/wire-server-deploy"
-TARGET_SYSTEM="mydomain.com"
-CERT_MASTER_EMAIL="certmaster@mydomain.com"
+TARGET_SYSTEM="example.com"
+CERT_MASTER_EMAIL="certmaster@example.com"
 # this IP should match the DNS A record for TARGET_SYSTEM
 HOST_IP=$(wget -qO- https://api.ipify.org)
 SFT_NODE="minikube"
