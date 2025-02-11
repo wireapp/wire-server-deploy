@@ -3,10 +3,10 @@
 # `containerd`.
 ingress-nginx:
   controller:
-#    image:
-#      tag: "v1.6.4"
-#      digest: ""
-#      digestChroot: ""
+    image:
+      tag: "v1.10.6"
+      digest: ""
+      digestChroot: ""
     admissionWebhooks:
       patch:
         image:
