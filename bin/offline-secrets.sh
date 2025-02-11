@@ -39,6 +39,8 @@ brig:
     setNexmo: |-
       key: "dummy"
       secret: "dummy"
+    # Uncomment and update value to connect to the SFT servers that require it
+    # sftTokenSecret: dummysecret
 cargohold:
   secrets:
     awsKeyId: "$minio_access_key"

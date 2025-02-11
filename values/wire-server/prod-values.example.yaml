@@ -30,6 +30,13 @@ brig:
     useSES: false
     # Set to false if you want to hand out DynamoDB to store prekeys
     randomPrekeys: true
+    # Uncomment and update values for sft server below, the secret token for the same can be
+    # configured at sftTokenSecret variable in the secrets.yaml file
+    # sft:
+    #   sftBaseDomain: sftd.example.com
+    #   sftSRVServiceName: sftd
+    #   sftDiscoveryIntervalSeconds: 10
+    #   sftListLength: 20
     aws:
       # change if using real AWS
       region: "eu-west-1"
