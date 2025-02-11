@@ -7,7 +7,7 @@ This guide outlines the steps to set up and deploy Wire in a StackIT environment
 ## Prerequisites
 
 - ansible
-- ssh
+- ssh, ssh key for the ansible user on StackIT VM
 
 ## Steps to Deploy WIAB from local environment
 
@@ -16,9 +16,10 @@ This guide outlines the steps to set up and deploy Wire in a StackIT environment
    - `cd wire-server-deploy`
 
 ### 2. Run the Ansible Playbook
-- Prepare DNS records, StackIT public IP and set up Cert Manager (for example, letsencrypt) to start before next step as mentioned [here](https://docs.wire.com/how-to/install/helm.html#how-to-set-up-dns-records). 
-   - Check file `stackIT/host.ini` for host details
-   - Check file `stackIT/setting-values.sh` for DNS records i.e. TARGET_SYSTEM and CERT_MASTER_EMAIL
+- Prepare DNS records, StackIT public IP and set up Cert Manager (for example, letsencrypt) to start before next step as mentioned [here](https://docs.wire.com/how-to/install/helm.html#how-to-set-up-dns-records).
+   - Check file `stackIT/host.ini` for host details, replace example.com with the host machine.
+   - Check file `stackIT/stackit-vm-setup.yml` to define target_domain, replace example.com with the wire host domain - Ansible tasks will take care of other replacement operations.
+   - Check file `stackIT/setting-values.sh` for DNS records i.e. TARGET_SYSTEM and CERT_MASTER_EMAIL, replace example.com with the wire host domain, the bash script will take care of other replacement operations in helm chart values.
       - We have used letsencrypt for example for cert management
 - Use the following command to set up the VM:
   ```bash
