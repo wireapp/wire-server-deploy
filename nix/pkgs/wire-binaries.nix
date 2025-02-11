@@ -96,7 +96,7 @@ let
     mc = fetchurl rec {
       passthru.url = url;
       url = "https://dl.min.io/client/mc/release/linux-amd64/archive/mc.RELEASE.2023-10-24T05-18-28Z";
-      sha256 = "sha256-UvY4YmefV5fFxLaqfbF+D+FPvKFM8K9vWzXvpM7Pn/c=";
+      sha256 = "sha256-XxKSa2RrUzzeoaVIxURgpNrXjye4sX05m6Av9O42jk0=";
     };
     elasticsearch = fetchurl rec {
       passthru.url = url;
