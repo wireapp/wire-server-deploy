@@ -19,7 +19,7 @@ let
 
 
   # Note: If you change a version, replace the checksum with zeros, run « nix-build --no-out-link -A pkgs.wire-binaries », it will complain and give you the right checksum, use that checksum in this file, run it again and it should build without complaining.
-  cassandra_version = "3.11.16";
+  cassandra_version = "3.11.16"; # TODO:
   jmx_prometheus_javaagent_version = "0.10";
   elasticsearch_version = "6.8.23";
   srcs = {
@@ -95,8 +95,8 @@ let
     };
     mc = fetchurl rec {
       passthru.url = url;
-      url = "https://dl.min.io/client/mc/release/linux-amd64/archive/mc.RELEASE.2023-07-07T05-25-51Z";
-      sha256 = "sha256-IFotxaSdxGf3gijEPH02jjdsbMFEkll6fE/hlcKR8HQ=";
+      url = "https://dl.min.io/client/mc/release/linux-amd64/archive/mc.RELEASE.2023-10-24T05-18-28Z";
+      sha256 = "sha256-UvY4YmefV5fFxLaqfbF+D+FPvKFM8K9vWzXvpM7Pn/c=";
     };
     elasticsearch = fetchurl rec {
       passthru.url = url;
