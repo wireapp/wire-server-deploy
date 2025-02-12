@@ -31,6 +31,6 @@ helm upgrade --install --wait --timeout=15m0s ingress-nginx-controller ./charts/
 
 echo "Printing all pods status: "
 kubectl get pods --all-namespaces -o wide
-./bin/debug_logs.sh
+#./bin/debug_logs.sh
 # TODO: Requires certs; which we do not have in CI/CD at this point. future work =) (Would need cert-manager in offline package. That'd be neat)
 # helm upgrade --install --wait nginx-ingress-services ./charts/nginx-ingress-services --values ./values/nginx-ingress-services/values.yaml  --values ./values/nginx-ingress-services/secrets.yaml
