@@ -68,7 +68,7 @@ coturnTurnExternalIP: "__COTURN_EXT_IP__"
 coturnTurnRelayIP: "__COTURN_POD_IP__"
 ```
 
-Annotate nodes with the wire.com/external-ip annotation if you are behind 1:1 NAT to make coturn aware of its external IP address.
+Annotate nodes with the wire.com/external-ip annotation if the nodes are behind a 1:1 NAT. This is to make coturn aware of its external IP address.
 
 ie.
 ```
