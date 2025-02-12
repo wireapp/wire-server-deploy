@@ -58,7 +58,7 @@ Add the following configuration to the `values.yaml` file:
 # See: https://github.com/wireapp/wire-server/blob/develop/charts/coturn/values.yaml
 # And: https://github.com/wireapp/wire-server/blob/develop/charts/coturn/README.md
 
-# use nodeSelector only if you are planning on using less than 3 pods in your installation and wish to pin coturn to specific nodes
+# use nodeSelector only if you are planning on using coturn on fewer than the number of workers in your cluster. This is used to pin coturn to specific nodes.
 nodeSelector:
   wire.com/role: coturn
 
