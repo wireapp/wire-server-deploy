@@ -95,8 +95,8 @@ let
     };
     mc = fetchurl rec {
       passthru.url = url;
-      url = "https://dl.min.io/client/mc/release/linux-amd64/archive/mc.RELEASE.2023-07-07T05-25-51Z";
-      sha256 = "sha256-IFotxaSdxGf3gijEPH02jjdsbMFEkll6fE/hlcKR8HQ=";
+      url = "https://dl.min.io/client/mc/release/linux-amd64/archive/mc.RELEASE.2023-10-24T05-18-28Z";
+      sha256 = "sha256-XxKSa2RrUzzeoaVIxURgpNrXjye4sX05m6Av9O42jk0=";
     };
     elasticsearch = fetchurl rec {
       passthru.url = url;
