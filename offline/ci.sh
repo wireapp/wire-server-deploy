@@ -71,8 +71,6 @@ quay.io/jetstack/cert-manager-controller:v1.16.3
 quay.io/jetstack/cert-manager-cainjector:v1.16.3
 quay.io/jetstack/cert-manager-webhook:v1.16.3
 quay.io/jetstack/cert-manager-startupapicheck:v1.16.3
-quay.io/metallb/speaker:v0.13.9
-quay.io/metallb/controller:v0.13.9
 docker.io/library/nginx:1.25.4-alpine
 docker.io/kubernetesui/dashboard:v2.7.0
 docker.io/kubernetesui/metrics-scraper:v1.0.8
