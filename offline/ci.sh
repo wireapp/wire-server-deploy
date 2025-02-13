@@ -90,7 +90,7 @@ docker.io/library/nginx:1.25.4-alpine
 docker.io/kubernetesui/dashboard:v2.7.0
 docker.io/kubernetesui/metrics-scraper:v1.0.8
 quay.io/wire/ldap-scim-bridge:0.9
-bats/bats:1.8.1
+bats/bats:1.11.1
 docker.io/openebs/linux-utils:3.5.0
 docker.io/datastax/cass-config-builder:1.0-ubi8
 docker.io/k8ssandra/cass-management-api:3.11.16
