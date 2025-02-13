@@ -61,12 +61,6 @@ registry.k8s.io/kube-controller-manager:v1.28.2
 registry.k8s.io/kube-scheduler:v1.28.2
 registry.k8s.io/kube-proxy:v1.28.2
 quay.io/coreos/etcd:v3.5.10
-quay.io/cilium/cilium:v1.13.4
-quay.io/cilium/operator:v1.13.4
-quay.io/cilium/hubble-relay:v1.13.4
-quay.io/cilium/certgen:v0.1.8
-quay.io/cilium/hubble-ui:v0.11.0
-quay.io/cilium/hubble-ui-backend:v0.11.0
 quay.io/calico/node:v3.26.4
 quay.io/calico/cni:v3.26.4
 quay.io/calico/pod2daemon-flexvol:v3.26.4
