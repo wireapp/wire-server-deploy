@@ -55,14 +55,7 @@ registry.k8s.io/coredns/coredns:v1.11.4
 registry.k8s.io/dns/k8s-dns-node-cache:1.22.28
 registry.k8s.io/cpa/cluster-proportional-autoscaler:v1.8.8
 registry.k8s.io/metrics-server/metrics-server:v0.7.2
-registry.k8s.io/sig-storage/local-volume-provisioner:v2.5.0
 registry.k8s.io/ingress-nginx/controller:v1.10.6
-registry.k8s.io/sig-storage/csi-attacher:v3.3.0
-registry.k8s.io/sig-storage/csi-provisioner:v3.0.0
-registry.k8s.io/sig-storage/csi-snapshotter:v5.0.0
-registry.k8s.io/sig-storage/snapshot-controller:v4.2.1
-registry.k8s.io/sig-storage/csi-resizer:v1.3.0
-registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.4.0
 registry.k8s.io/kube-apiserver:v1.28.2
 registry.k8s.io/kube-controller-manager:v1.28.2
 registry.k8s.io/kube-scheduler:v1.28.2
