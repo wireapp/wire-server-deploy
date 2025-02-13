@@ -67,3 +67,4 @@ syslog_target_ip: 12.34.56.78
 # OVERRIDES
 
 coredns_version: "v1.11.4"
+ingress_nginx_version: "v1.10.6"
