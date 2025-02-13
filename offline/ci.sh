@@ -51,7 +51,7 @@ function list-system-containers() {
 # TODO: Automate this. This is very wieldy :)
   cat <<EOF
 registry.k8s.io/pause:3.9
-registry.k8s.io/coredns/coredns:v1.10.1
+registry.k8s.io/coredns/coredns:v1.11.4
 registry.k8s.io/dns/k8s-dns-node-cache:1.22.28
 registry.k8s.io/cpa/cluster-proportional-autoscaler:v1.8.8
 registry.k8s.io/metrics-server/metrics-server:v0.6.4
