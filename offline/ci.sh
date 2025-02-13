@@ -67,7 +67,7 @@ registry.k8s.io/kube-apiserver:v1.28.2
 registry.k8s.io/kube-controller-manager:v1.28.2
 registry.k8s.io/kube-scheduler:v1.28.2
 registry.k8s.io/kube-proxy:v1.28.2
-quay.io/coreos/etcd:v3.5.9
+quay.io/coreos/etcd:v3.5.10
 quay.io/cilium/cilium:v1.13.4
 quay.io/cilium/operator:v1.13.4
 quay.io/cilium/hubble-relay:v1.13.4
