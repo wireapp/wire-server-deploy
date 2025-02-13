@@ -72,8 +72,6 @@ quay.io/jetstack/cert-manager-cainjector:v1.16.3
 quay.io/jetstack/cert-manager-webhook:v1.16.3
 quay.io/jetstack/cert-manager-startupapicheck:v1.16.3
 docker.io/library/nginx:1.25.4-alpine
-docker.io/kubernetesui/dashboard:v2.7.0
-docker.io/kubernetesui/metrics-scraper:v1.0.8
 quay.io/wire/ldap-scim-bridge:0.9
 bats/bats:1.11.1
 docker.io/openebs/linux-utils:3.5.0
