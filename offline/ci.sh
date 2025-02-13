@@ -98,6 +98,7 @@ docker.io/k8ssandra/system-logger:v1.19.1
 docker.io/thelastpickle/cassandra-reaper:3.5.0
 docker.io/k8ssandra/medusa:0.20.1
 cr.step.sm/smallstep/step-ca:0.25.3-rc7
+registry.k8s.io/ingress-nginx/kube-webhook-certgen:v20231011-8b53cabe0
 EOF
 }
 
