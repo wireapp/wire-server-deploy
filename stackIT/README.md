@@ -39,7 +39,7 @@ This guide outlines the steps to set up and deploy Wire in a StackIT environment
   -e skip_disable_kubespray=true
   ```
 
-- **Artifacts and Tasks:**
+- **The above command will accomplish the following tasks:**
   - Minikube Kubernetes cluster and four Docker containers to support node requirements.
   - Generate `hosts.ini` based on the IPs of above containers for further ansible operations on node
   - Download wire-server-deploy artifacts based on the specified hash 
@@ -72,26 +72,6 @@ This guide outlines the steps to set up and deploy Wire in a StackIT environment
       ```bash
       d bash -x stackIT/setting-values.sh
       ```
-
----
-
-## To-Dos
-
-1. **Modify `bin/offline-env.sh`:**
-   - Add definitions for Kubernetes config for kubectl for non-kubespray environments like in stackIT
-   - When Copying ssh env from the host drop or re-initialize the known_hosts to avoid ip change clashes
-
-2. **Update `bin/offline-cluster.sh`:**
-   - Remove references to `restund.yml`.
-   - Introduce a check for Kubespray to avoid execution if Minikube is already running.
-
-3. **Enhance Helm charts:**
-   - Ensure pods reload when there are changes in:
-     - ConfigMaps.
-     - Environment variables.
-     - Public IPs parsed at pod startup.
-   - Introduce hashing to track changes and trigger restarts as needed.
-   - Current upgrades don't restart the pods for example, sftd and coturn
 
 ---
 
