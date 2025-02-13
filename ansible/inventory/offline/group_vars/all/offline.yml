@@ -68,3 +68,4 @@ syslog_target_ip: 12.34.56.78
 
 coredns_version: "v1.11.4"
 ingress_nginx_version: "v1.10.6"
+metrics_server_version: "v0.7.2"
