@@ -20,7 +20,7 @@ To setup Coturn, we will:
 * Create a `values.yaml` file and fill it with configuration.
 * Create a `secret.yaml` file for the Coturn secrets.
 * Configure the Coturn labels to select on which machine(s) it will run.
-* Configure the SFT labels for Coturn and SFT deployment.
+* Configure the SFT deployment for node selection and public IP discovery.
 * Configure the port redirection in Nftables.
 * Change the Wire-Server configuration to use Coturn instead of Restund.
 * Disable Restund.
@@ -145,7 +145,7 @@ If you want to run Coturn on multiple machines, you must:
 
 2. Change the `replicaCount` in the `charts/coturn/values.yaml` file to the number of machines you want to run Coturn on.
 
-## Configure the SFT labels for Coturn and SFT deployment
+## Configure the SFT deployment for node selection and public IP discovery
 
 First, we must locate what the "external" IP address of the machine is. 
 
@@ -239,7 +239,7 @@ Note: This section is only relevant if you are running Wire-Server/Coturn/SFT be
 
 We must configure the port redirection in Nftables to allow traffic to reach Coturn.
 
-Calling and TURN services (Coturn, Restund, SFT) require being reachable on a range of ports used to transmit the calling data.
+Calling and TURN services (Coturn, SFT) require being reachable on a range of ports used to transmit the calling data. SFT service listens on port 443 which is managed through k8s ingress controller, we must ensure that external traffic for port 443 is able to reach ingress controller.
 
 Here we have decided the following distribution of ports:
 
@@ -340,7 +340,7 @@ sudo ip addr
 
 ```
 
-For more details on getting the extrenal IP address see the `Configure the SFT labels for Coturn and SFT deployment` section above.
+For more details on getting the extrenal IP address see the `Configure the SFT deployment for node selection and public IP discovery` section above.
 
 Edit the `values/wire-server/values.yaml` file:
 
