@@ -4,7 +4,7 @@ set -euo pipefail
 INCREMENTAL="${INCREMENTAL:-0}"
 
 # Default exclude list
-HELM_CHART_EXCLUDE_LIST="inbucket"
+HELM_CHART_EXCLUDE_LIST="inbucket,wire-server-enterprise"
 
 # Parse the HELM_CHART_EXCLUDE_LIST argument
 for arg in "$@"
@@ -105,11 +105,6 @@ list-system-containers | create-container-dump containers-system
 tar cf containers-system.tar containers-system
 [[ "$INCREMENTAL" -eq 0 ]] && rm -r containers-system
 
-# Used for ansible-restund role
-echo "quay.io/wire/restund:v0.6.0-rc.2" | create-container-dump containers-other
-tar cf containers-other.tar containers-other
-[[ "$INCREMENTAL" -eq 0 ]] && rm -r containers-other
-
 legacy_chart_release() {
   # Note: if you want to ship from the develop branch, replace 'repo' url below
   # repo=https://s3-eu-west-1.amazonaws.com/public.wire.com/charts-develop
@@ -143,7 +138,6 @@ legacy_chart_release() {
 
   calling_charts=(
     sftd
-    restund
     coturn
   )
   for chartName in "${calling_charts[@]}"; do
@@ -156,7 +150,7 @@ wire_build_chart_release () {
   wire_build="$1"
   curl "$wire_build" | jq -r --argjson HELM_CHART_EXCLUDE_LIST "$HELM_CHART_EXCLUDE_LIST" '
   .helmCharts
-  | with_entries(select([.key] | inside($HELM_CHART_EXCLUDE_LIST) | not))
+  | with_entries(select(.key as $k | $HELM_CHART_EXCLUDE_LIST | index($k) | not))
   | to_entries
   | map("\(.key) \(.value.repo) \(.value.version)")
   | join("\n")
@@ -202,7 +196,7 @@ pull_charts() {
   echo "Pulling charts done."
 }
 
-wire_build="https://raw.githubusercontent.com/wireapp/wire-builds/3902aa7621df0aa1dae269821801427d98d930e6/build.json"
+wire_build="https://raw.githubusercontent.com/wireapp/wire-builds/991e280a114701209d0ba3c1847e4e1ac7d05a43/build.json"
 wire_build_chart_release "$wire_build" | pull_charts
 
 # Uncomment if you want to create non-wire-build release
@@ -245,6 +239,6 @@ tar cf containers-helm.tar containers-helm
 
 echo "docker_ubuntu_repo_repokey: '${fingerprint}'" > ansible/inventory/offline/group_vars/all/key.yml
 
-tar czf assets.tgz debs-jammy.tar binaries.tar containers-adminhost containers-helm.tar containers-other.tar containers-system.tar ansible charts values bin
+tar czf assets.tgz debs-jammy.tar binaries.tar containers-adminhost containers-helm.tar containers-system.tar ansible charts values bin
 
 echo "Done"

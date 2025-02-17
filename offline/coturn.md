@@ -11,7 +11,7 @@ This document explains how to install Coturn on a newly deployed Wire-Server ins
 This presumes you already have:
 
 * Followed the [single Hetzner machine installation](single_hetzner_machine_installation.md) guide or otherwise have a machine ready to accept a Wire-Server deployment.
-* Have followed the [Wire-Server installation](docs_ubuntu_22.04.md) guide and have Wire-Server deployed and working (with Restund as the TURN server, which is currently the default, and will be replaced by Coturn as part of this process).
+* Have followed the [Wire-Server installation](docs_ubuntu_22.04.md) guide and have Wire-Server deployed and working.
 
 ## Plan. 
 
@@ -22,8 +22,7 @@ To setup Coturn, we will:
 * Configure the Coturn labels to select on which machine(s) it will run.
 * Configure the SFT deployment for node selection and public IP discovery.
 * Configure the port redirection in Nftables.
-* Change the Wire-Server configuration to use Coturn instead of Restund.
-* Disable Restund.
+* Change the Wire-Server configuration to use Coturn.
 * Install Coturn using Helm.
 * Verify that Coturn is working.
 
@@ -58,14 +57,22 @@ Add the following configuration to the `values.yaml` file:
 # See: https://github.com/wireapp/wire-server/blob/develop/charts/coturn/values.yaml
 # And: https://github.com/wireapp/wire-server/blob/develop/charts/coturn/README.md
 
+# use nodeSelector only if you are planning on using coturn on fewer than the number of workers in your cluster. This is used to pin coturn to specific nodes.
 nodeSelector:
   wire.com/role: coturn
 
-coturnTurnListenIP: '192.168.122.23'
-
+replicaCount: 3
+coturnTurnListenIP: "__COTURN_POD_IP__"
+coturnTurnExternalIP: "__COTURN_EXT_IP__"
+coturnTurnRelayIP: "__COTURN_POD_IP__"
 ```
 
-Where `192.168.122.23` is the IP address of the machine where you want to run Coturn (in our example, the third kubernetes node, `kubenode3`).
+Annotate nodes with the wire.com/external-ip annotation if the nodes are behind a 1:1 NAT. This is to make coturn aware of its external IP address.
+
+ie.
+```
+d kubectl annotate node kubenode1 wire.com/external-ip=IP.ADDRESS
+```
 
 ## Create a `secret.yaml` file for the Coturn secrets.
 
@@ -324,9 +331,9 @@ sudo systemctl restart nftables
 
 ```
 
-## Change the Wire-Server configuration to use Coturn instead of Restund.
+## Change the Wire-Server configuration to use Coturn.
 
-We must change the Wire-Server configuration to use Coturn instead of Restund.
+We must change the Wire-Server configuration to use Coturn.
 
 First, we must locate what the "external" IP address of the machine is. 
 
@@ -357,26 +364,10 @@ You will find a section that looks like this (default):
   turnStatic:
     v1: []
     v2:
-      # - "turn:<IP of restund1>:80"
-      # - "turn:<IP of restund2:80"
-      # - "turn:<IP of restund1>:80?transport=tcp"
-      # - "turn:<IP of restund2>:80?transport=tcp"
-      # - "turns:<IP of restund1>:443?transport=tcp"
-      # - "turns:<IP of restund2>:443?transport=tcp"
-
-``` 
-
-Or if you have already configured Restund, something like this:
-
-```yaml 
-
-  turnStatic:
-    v1: []
-    v2:
-      - "turn:<IP of restund1>:80"
-      - "turn:<IP of restund2>:80"
-      - "turn:<IP of restund1>:80?transport=tcp"
-      - "turn:<IP of restund2>:80?transport=tcp"
+      # - "turn:<IP of coturn1>:3478"
+      # - "turn:<IP of coturn2>:3478"
+      # - "turn:<IP of coturn1>:3478?transport=tcp"
+      # - "turn:<IP of coturn2>:3478?transport=tcp"
 
 ``` 
 
@@ -398,35 +389,10 @@ d helm upgrade --install wire-server ./charts/wire-server --timeout=15m0s --valu
 
 ```
 
-## Disable Restund.
-
-As we are no longer using Restund, we should now disable it entirely.
-
-We do this by editing the `hosts.ini` file:
-
-Edit `ansible/inventory/offline/hosts.ini`, and comment out the restund section by adding `#` at the beginning of each line :
-
-```
-[restund]
-# ansnode1
-# ansnode2
-```
-
-Then connect to each ansnode and do:
-
-```bash
-sudo service restund stop
-```
-
-And check it is stopped with: 
-
-```bash
-sudo service restund status
-```
 
 ## Install Coturn with Helm.
 
-We have now configured our Coturn `value` and `secret` files, configured `wire-server` to use Coturn, and disabled Restund.
+We have now configured our Coturn `value` and `secret` files, configured `wire-server` to use Coturn.
 
 It is time to actually deploy Coturn.
 
@@ -490,6 +456,20 @@ Debug log should now be visible in the coturn pod stdout:
 d kubectl logs coturn-0
 ```
 
+Check if the pod has the correct IP configuration in place.
+
+```bash
+d kubectl exec -it coturn-0 -- bash
+grep ip= coturn-config/turnserver.conf
+
+# output will look something like this
+
+listening-ip=xxx.xxx.xxx.xxx
+relay-ip=xxx.xxx.xxx.xxx.xxx
+external-ip=xxx.xxx.xxx.xxx
+```
+
+
 ## Appendix: Note on migration.
 
 The current guide is written with the assumption that you are setting up Coturn for the first time, on a fresh Wire-Server installation.
@@ -504,4 +484,30 @@ These are the additional steps to ensure a smooth transition:
 2. Change the `turnStatic` call configuration in the `values/wire-server/values.yaml` file to use the Coturn IPs instead of the Restund IPs.
 3. Re-deploy the Wire-Server chart to apply the new configuration.
 4. Wait at least 24 hours for all clients to retrieve the new configuration.
-5. Once you are sure all clients have migrated to Coturn, you can disable Restund as described in this guide.
+5. Once you are sure all clients have migrated to Coturn, you can disable Restund as described in this guide below.
+
+## Disable Restund.
+
+As we are no longer using Restund, we should now disable it entirely.
+
+We do this by editing the `hosts.ini` file:
+
+Edit `ansible/inventory/offline/hosts.ini`, and comment out the restund section by adding `#` at the beginning of each line :
+
+```
+[restund]
+# ansnode1
+# ansnode2
+```
+
+Then connect to each ansnode and do:
+
+```bash
+sudo service restund stop
+```
+
+And check it is stopped with: 
+
+```bash
+sudo service restund status
+```

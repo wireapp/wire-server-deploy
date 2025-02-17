@@ -5,7 +5,6 @@ ${connection_strings_minio}
 ${connection_strings_elasticsearch}
 ${connection_strings_cassandra}
 ${connection_strings_redis}
-${connection_strings_restund}
 
 [vpn:children]
 k8s-cluster
@@ -56,9 +55,6 @@ ${list_minio}
 [redis]
 ${list_redis}
 
-[restund]
-${list_restund}
-
 [all:vars]
 ## path to the ssh private key
 # ansible_ssh_private_key_file =
@@ -78,7 +74,6 @@ ansible_python_interpreter = /usr/bin/python3
 # cassandra_network_interface = vpn0
 # redis_network_interface = vpn0
 # registry_network_interface = vpn0
-# restund_network_interface = vpn0
 
 ## configure a proxy if one is needed to access the Internet
 # http_proxy = ""

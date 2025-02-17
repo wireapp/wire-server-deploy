@@ -93,12 +93,10 @@ brig:
   turnStatic:
     v1: []
     v2:
-      # - "turn:<IP of restund1>:80"
-      # - "turn:<IP of restund2:80"
-      # - "turn:<IP of restund1>:80?transport=tcp"
-      # - "turn:<IP of restund2>:80?transport=tcp"
-      # - "turns:<IP of restund1>:443?transport=tcp"
-      # - "turns:<IP of restund2>:443?transport=tcp"
+      # - "turn:<IP of coturn1>:3478"
+      # - "turn:<IP of coturn2>:3478"
+      # - "turn:<IP of coturn1>:3478?transport=tcp"
+      # - "turn:<IP of coturn2>:3478?transport=tcp"
 
 
 proxy:
@@ -119,6 +117,9 @@ cannon:
 #    tag: some-tag (only override if you want a newer/different version than what is in the chart)
   # For demo mode only, we don't need to keep websocket connections open on chart upgrades
   drainTimeout: 10
+  config:
+    cassandra: 
+      host: cassandra-external
 
 cargohold:
   replicaCount: 3
@@ -258,3 +259,10 @@ legalhold:
 federator:
   tls:
     useSharedFederatorSecret: true
+
+background-worker:
+  config:
+    cassandra:
+      host: cassandra-external
+    # Enable for federation
+    enableFederation: false

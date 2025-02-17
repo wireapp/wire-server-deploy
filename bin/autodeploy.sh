@@ -317,8 +317,8 @@ ufw allow 25672/tcp;
 
   cp values/wire-server/prod-values.example.yaml values/wire-server/values.yaml
   sed -i "s/example.com/$TARGET_SYSTEM/g" values/wire-server/values.yaml
-  sed -i "s/# - \"turn:<IP of restund1>:80\"/- \"turn:$HOST_IP:3478\"/g" values/wire-server/values.yaml
-  sed -i "s/# - \"turn:<IP of restund1>:80?transport=tcp\"/- \"turn:$HOST_IP:3478?transport=tcp\"/g" values/wire-server/values.yaml
+  sed -i "s/# - \"turn:<IP of coturn1>:3478\"/- \"turn:$HOST_IP:3478\"/g" values/wire-server/values.yaml
+  sed -i "s/# - \"turn:<IP of coturn1>:3478?transport=tcp\"/- \"turn:$HOST_IP:3478?transport=tcp\"/g" values/wire-server/values.yaml
 
   d helm install wire-server ./charts/wire-server --timeout=15m0s --values ./values/wire-server/values.yaml --values ./values/wire-server/secrets.yaml
 
