@@ -70,7 +70,7 @@ This guide outlines the steps to set up and deploy Wire in a StackIT environment
 ---
 
 ### 3. Commands to Run on the StackIT Node in directory `wire-server-deploy`
-#### Note: These commands can be collected to run inside a single script, here we have broken down the deployment into small collective steps. These commands can work only from the stackIT node and directory wire-server-deploy.
+#### Note: These commands can be collected to run inside a single script, here we have broken down the deployment into small collective steps. These commands can work only from the stackIT node and in the directory wire-server-deploy.
 
 - **Load the environment:**
    ```bash
