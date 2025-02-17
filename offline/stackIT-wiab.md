@@ -35,7 +35,7 @@ This guide outlines the steps to set up and deploy Wire in a StackIT environment
 ### 2. Prepare the variables for Wire deployment
 - Prepare DNS records, StackIT public IP and set up Cert Manager (for example, letsencrypt) to start before next step as mentioned [here](https://docs.wire.com/how-to/install/helm.html#how-to-set-up-dns-records).
    - Check file `stackIT/host.ini` for host details, replace example.com with the host machine.
-   - Check file `stackIT/stackit-vm-setup.yml` to define target_domain, replace example.com with the wire host domain - Ansible tasks will take care of other replacement operations.
+   - Check file `stackIT/stackit-vm-setup.yml` to define target_domain, replace example.com with the desired base domain of your Wire deployment - Ansible tasks will take care of other replacement operations.
    - Check file `stackIT/setting-values.sh` for DNS records i.e. TARGET_SYSTEM and CERT_MASTER_EMAIL, replace example.com with the wire host domain, the bash script will take care of other replacement operations in helm chart values.
       - We have used letsencrypt for example for cert management.
       - If you intend to use something other than letsencrypt, then please follow the documentation [Acquiring / Deploying SSL Certificates](https://github.com/wireapp/wire-server-deploy/blob/master/offline/docs_ubuntu_22.04.md#acquiring--deploying-ssl-certificates) **post running all the steps in** [3. Commands to Run on the StackIT Node in directory wire-server-deploy](https://github.com/wireapp/wire-server-deploy/blob/master/offline/stackIT-wiab.md#3-commands-to-run-on-the-stackit-node-in-directory-wire-server-deploy), to deploy your own certificates.
