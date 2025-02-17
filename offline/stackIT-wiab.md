@@ -32,7 +32,7 @@ This guide outlines the steps to set up and deploy Wire in a StackIT environment
    - `git clone https://github.com/wireapp/wire-server-deploy.git`
    - `cd wire-server-deploy`
 
-### 2. Prepare the variables for wire deployment
+### 2. Prepare the variables for Wire deployment
 - Prepare DNS records, StackIT public IP and set up Cert Manager (for example, letsencrypt) to start before next step as mentioned [here](https://docs.wire.com/how-to/install/helm.html#how-to-set-up-dns-records).
    - Check file `stackIT/host.ini` for host details, replace example.com with the host machine.
    - Check file `stackIT/stackit-vm-setup.yml` to define target_domain, replace example.com with the wire host domain - Ansible tasks will take care of other replacement operations.
