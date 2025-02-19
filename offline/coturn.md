@@ -309,7 +309,7 @@ This is used for the HTTP(S) ingress:
     iifname { $INF_WAN, virbr0 } tcp dport 443 fib daddr type local dnat to $KUBENODEIP:31773 comment "HTTPS ingress"
 ``` 
 
-This is the part that routes the UDP packets (media/calling traffic) to Coturn service:
+This is the part that routes the UDP packets (media/calling traffic) to the calling services:
 
 ```nft
     iifname { $INF_WAN, virbr0 } udp dport 32768-61000 fib daddr type local dnat to $COTURNIP comment "COTURN UDP range"
