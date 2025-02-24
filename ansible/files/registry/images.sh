@@ -9,7 +9,7 @@ registry_name="localhost"
 images=$(cat $SCRIPT_DIR/list_of_docker_images.txt)
 quay=$(cat $SCRIPT_DIR/list_of_docker_images.txt | grep "^quay.io" | awk -F quay.io/ '{print $2}' | grep -v '^$' )
 gcr=$(cat $SCRIPT_DIR/list_of_docker_images.txt | grep "^gcr.io" | awk -F gcr.io/ '{print $2}' | grep -v '^$')
-k8sgcr=$(cat $SCRIPT_DIR/list_of_docker_images.txt | grep "^k8s.gcr.io" | awk -F k8s.gcr.io/ '{print $2}' | grep -v '^$')
+registryk8s=$(cat $SCRIPT_DIR/list_of_docker_images.txt | grep "^registry.k8s.io" | awk -F registry.k8s.io/ '{print $2}' | grep -v '^$')
 hub=$(cat $SCRIPT_DIR/list_of_docker_images.txt | grep -v gcr.io | grep -v quay.io)
 
 
@@ -26,8 +26,8 @@ for image in ${quay[@]}; do
     mirror
 done;
 
-prefix=k8s.gcr.io/
-for image in ${k8sgcr[@]}; do
+prefix=registry.k8s.io/
+for image in ${registryk8s[@]}; do
     mirror
 done;
 

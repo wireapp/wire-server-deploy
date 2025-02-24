@@ -1,0 +1,78 @@
+# See defaults in https://github.com/fluent/helm-charts/tree/main/charts/fluent-bit
+fluent-bit:
+  config:
+    inputs: |
+      [INPUT]
+          Name tail
+          Path /var/log/containers/*.log
+          Parser cri
+          Tag kube.*
+          Mem_Buf_Limit 5MB
+          Skip_Long_Lines On
+
+      [INPUT]
+          Name systemd
+          Tag host.*
+          Systemd_Filter _SYSTEMD_UNIT=kubelet.service
+          Read_From_Tail On
+
+    outputs: |
+      ###### Uncomment and update values in this part to enable output to Elasticsearch
+      # [OUTPUT]
+      #     Name es
+      #     Match kube.*
+      #     Host elasticsearch-ephemeral
+      #     Generate_ID On
+      #     Logstash_Format On
+      #     Logstash_Prefix pod
+      #     Retry_Limit False
+      #     Trace_Error On
+      #     Replace_Dots On
+      # [OUTPUT]
+      #     Name es
+      #     Match host.*
+      #     Host elasticsearch-ephemeral
+      #     Generate_ID On
+      #     Logstash_Format On
+      #     Logstash_Prefix node
+      #     Retry_Limit False
+      #     Trace_Error On
+      #     Replace_Dots On
+
+      ###### Uncomment and update values in this part to enable output to Syslog
+      # syslog output reference - https://docs.fluentbit.io/manual/pipeline/outputs/syslog
+      # Uncomment this section to enable syslog output
+      # [OUTPUT]
+      #   name                 syslog
+      #   match                *
+      #   host                 127.0.0.1 # IP address of the syslog server
+      #   port                 514
+      #   mode                 udp
+      #   syslog_format        rfc5424
+      #   syslog_maxsize       2048
+      #   syslog_severity_preset 7 # Between 0-7 for log severity levels
+      #   syslog_message_key   message
+
+    ## https://docs.fluentbit.io/manual/pipeline/parsers
+    customParsers: |
+      [PARSER]
+          # http://rubular.com/r/tjUt3Awgg4
+          Name cri
+          Format regex
+          Regex ^(?<time>[^ ]+) (?<stream>stdout|stderr) (?<logtag>[^ ]*) (?<message>.*)$
+          Time_Key    time
+          Time_Format %Y-%m-%dT%H:%M:%S.%L%z
+
+      [PARSER]
+          Name docker_no_time
+          Format json
+          Time_Keep Off
+          Time_Key time
+          Time_Format %Y-%m-%dT%H:%M:%S.%L
+
+      [PARSER]
+          Name nginz
+          Format regex
+          Regex ^(?<remote_addr>[^ ]*) (?<remote_user>[^ ]*) "(?<thetime>[0-9\/a-zA-Z:]* [+][0-9]*)" "(?<method>[^ ]*) (?<path>.*) (?<http_version>.*)" (?<status>[0-9]*) (?<body_bytes_sent>[0-9]*) "(?<http_referer>[^ ])" "(?<http_user_agent>.*)" (?<http_x_forwarded_for>[^ ]*) (?<connection>[^ ]*) (?<request_time>[^ ]*) (?<upstream_response_time>[^ ]*) (?<upstream_cache_status>[^ ]*) (?<zauth_user>[^ ]*) (?<zauth_connection>[^ ]*) (?<request>[a-z0-9]*)
+          Time_Key thetime
+          Time_Format %d/%b/%Y:%H:%M:%S %z

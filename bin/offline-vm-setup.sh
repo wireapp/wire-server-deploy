@@ -2,6 +2,10 @@
 
 set -Eeuo pipefail
 
+msg() {
+  echo >&2 -e "${1-}"
+}
+
 if [[ $EUID -eq 0 ]]; then
   msg "Please don't run me as root" 1>&2
   exit 1
@@ -57,10 +61,6 @@ cleanup() {
   trap - SIGINT SIGTERM ERR EXIT
   pkill -f "http.server"
   rm -r "$DEPLOY_DIR"/nocloud/* 2>/dev/null
-}
-
-msg() {
-  echo >&2 -e "${1-}"
 }
 
 die() {
@@ -148,6 +148,8 @@ autoinstall:
       enp1s0:
         dhcp4: no
         addresses: [${VM_IP[i]}/24]
+        nameservers:
+          addresses: ['192.168.122.1']
         routes:
           - to: default
             via: 192.168.122.1
@@ -220,4 +222,9 @@ for (( i=0; i<${#VM_NAME[@]}; i++ )); do
     fi
     sleep 20
   fi
+done
+
+while sudo virsh list --all | grep -Fq running; do
+  sleep 20
+  msg "INFO: VM deployment still in progress ..."
 done

@@ -90,7 +90,7 @@
       with_items:
         - "{{ registry_dns_name }}"
         - quay.io
-        - k8s.gcr.io
+        - registry.k8s.io
         - gcr.io
         - docker.caching.proxy.internal
         - registry-1.docker.io

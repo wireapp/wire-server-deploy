@@ -26,8 +26,9 @@ rec {
   env = pkgs.buildEnv {
     name = "wire-server-deploy";
     paths = with pkgs; [
-      ansible_2_11
+      ansible_2_15
       pythonForAnsible
+      jmespath
       apacheHttpd
       awscli2
       gnumake
@@ -43,7 +44,7 @@ rec {
       moreutils
       skopeo
       sops
-      terraform_1
+      opentofu
       yq
       create-container-dump
       list-helm-containers

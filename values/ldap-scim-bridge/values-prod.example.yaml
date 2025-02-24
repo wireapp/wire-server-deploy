@@ -1,6 +1,6 @@
 # NOTE: you will need an LDAP SCIM bridge deployment for each team!
 # by default, run every 5 minutes.
-schedule: "*/5 * * * * *"
+schedule: "*/5 * * * *"
 config:
   logLevel: "Debug" # one of Trace,Debug,Info,Warn,Error,Fatal; 'Fatal' is least noisy, 'Trace' is most.
   ldapSource:
@@ -12,7 +12,7 @@ config:
     search:
       base: "DC=example,DC=com"
       objectClass: "person"
-      memberOf "CN=people,OU=engineering,DC=example,DC=com"
+      memberOf: "CN=people,OU=engineering,DC=example,DC=com"
     codec: "utf8"
     #    deleteOnAttribute:  # optional, related to delete-from-directory.
     #      key: "deleted"

@@ -1,11 +1,5 @@
 # How to deploy the ldap-scim-bridge
 
-Note: the LDAP Scim bridge is in a separate package at the moment. the docker container is available from: 
-
-https://temp-rhc-jun.s3.eu-west-1.amazonaws.com/ldap-scim-bridge%3A0.4.tar.bz2
-
-the helm chart is in wire-server.
-
 Create a values file
 mkdir values/ldap-scim-bridge_team-0
 the values file looks like the following:
@@ -45,16 +39,6 @@ config:
     email: "mail"
 ```
 
-When you get the package:
-
-Copy your values and charts folders into the `Wire-Server` directory you're using.
-
-Copy the container image to all of the kubernetes hosts in your cluster.
-
-Pre-seed the docker container for `ldap-scim-bridge` onto all of your kubernetes hosts.
-```
-sudo bash -c "cat ldap-scim-bridge:0.4.tar.bz2 | docker load"
-```
 
 ## Get the Active Directory root authority's public certificate
 

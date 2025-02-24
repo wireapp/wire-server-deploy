@@ -1,0 +1,4 @@
+# This file designates code owners for different parts of the repository
+
+# Define code owners for all files in the repository
+*     @wireapp/customerops @julialongtin

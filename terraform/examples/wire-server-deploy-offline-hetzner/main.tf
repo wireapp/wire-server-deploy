@@ -4,7 +4,6 @@ locals {
   minio_count         = 2
   elasticsearch_count = 2
   cassandra_count     = 3
-  restund_count       = 2
   ssh_keys            = [hcloud_ssh_key.adminhost.name]
 
   # TODO: IPv6
@@ -63,7 +62,7 @@ resource "hcloud_server" "adminhost" {
   name        = "adminhost-${random_pet.adminhost.id}"
   image       = "ubuntu-22.04"
   ssh_keys    = local.ssh_keys
-  server_type = "cx41"
+  server_type = "cpx41"
   user_data   = <<-EOF
   #cloud-config
   apt:
@@ -98,7 +97,7 @@ resource "hcloud_server" "assethost" {
   name        = "assethost-${random_pet.assethost.id}"
   image       = "ubuntu-22.04"
   ssh_keys    = local.ssh_keys
-  server_type = "cx41"
+  server_type = "cpx41"
   user_data   = local.disable_network_cfg
 }
 
@@ -106,28 +105,6 @@ resource "hcloud_server_network" "assethost" {
   server_id = hcloud_server.assethost.id
   subnet_id = hcloud_network_subnet.main.id
 }
-
-
-resource "random_pet" "restund" {
-  count = local.restund_count
-}
-
-resource "hcloud_server" "restund" {
-  count       = local.restund_count
-  location    = "nbg1"
-  name        = "restund-${random_pet.restund[count.index].id}"
-  image       = "ubuntu-22.04"
-  ssh_keys    = local.ssh_keys
-  server_type = "cx11"
-  user_data   = local.disable_network_cfg
-}
-
-resource "hcloud_server_network" "restund" {
-  count     = local.restund_count
-  server_id = hcloud_server.restund[count.index].id
-  subnet_id = hcloud_network_subnet.main.id
-}
-
 
 resource "random_pet" "kubenode" {
   count = local.kubenode_count
@@ -139,7 +116,7 @@ resource "hcloud_server" "kubenode" {
   name        = "kubenode-${random_pet.kubenode[count.index].id}"
   image       = "ubuntu-22.04"
   ssh_keys    = local.ssh_keys
-  server_type = "cx41"
+  server_type = "cpx41"
   user_data   = local.disable_network_cfg
 }
 
@@ -160,8 +137,8 @@ resource "hcloud_server" "cassandra" {
   name        = "cassandra-${random_pet.cassandra[count.index].id}"
   image       = "ubuntu-22.04"
   ssh_keys    = local.ssh_keys
-  server_type = "cx11"
-  user_data   = local.disable_network_cfg
+  server_type = "cx22"
+  # user_data   = local.disable_network_cfg
 }
 
 resource "hcloud_server_network" "cassandra" {
@@ -181,8 +158,8 @@ resource "hcloud_server" "elasticsearch" {
   name        = "elasticsearch-${random_pet.elasticsearch[count.index].id}"
   image       = "ubuntu-22.04"
   ssh_keys    = local.ssh_keys
-  server_type = "cx11"
-  user_data   = local.disable_network_cfg
+  server_type = "cx22"
+  # user_data   = local.disable_network_cfg
 }
 
 resource "hcloud_server_network" "elasticsearch" {
@@ -202,8 +179,8 @@ resource "hcloud_server" "minio" {
   name        = "minio-${random_pet.minio[count.index].id}"
   image       = "ubuntu-22.04"
   ssh_keys    = local.ssh_keys
-  server_type = "cx11"
-  user_data   = local.disable_network_cfg
+  server_type = "cx22"
+  # user_data   = local.disable_network_cfg
 }
 
 resource "hcloud_server_network" "minio" {

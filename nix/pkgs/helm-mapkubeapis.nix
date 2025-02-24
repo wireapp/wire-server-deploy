@@ -14,7 +14,7 @@ buildGoModule rec {
     sha256 = "sha256-OIom+fMjLkbYXbxCsISuihdr3CWjUnkucTnDfoix9B0=";
   };
 
-  vendorSha256 = "sha256-jqVzBRlGFhDHaiSF9AArJdt4KRCiUqUuo0CnJUTbSfE=";
+  vendorHash = "sha256-jqVzBRlGFhDHaiSF9AArJdt4KRCiUqUuo0CnJUTbSfE=";
 
   # NOTE: Remove the install and upgrade hooks.
   postPatch = ''

@@ -65,7 +65,7 @@ output "static-inventory" {
         }
       }
       vars = {
-        cassandra_network_interface = "ens10"
+        cassandra_network_interface = "eth0"
       }
     }
     cassandra_seed = {
@@ -79,7 +79,7 @@ output "static-inventory" {
         }
       }
       vars = {
-        elasticsearch_network_interface = "ens10"
+        elasticsearch_network_interface = "eth0"
       }
     }
     elasticsearch_master = {
@@ -93,20 +93,8 @@ output "static-inventory" {
         }
       }
       vars = {
-        minio_network_interface = "ens10"
+        minio_network_interface = "eth0"
       }
     }
-    restund = {
-      hosts = {
-        for index, server in hcloud_server.restund : server.name => {
-          ansible_host = hcloud_server_network.restund[index].ip
-          ansible_user = "root"
-        }
-      }
-      vars = {
-        restund_network_interface = "ens10"
-      }
-    }
-
   }
 }
