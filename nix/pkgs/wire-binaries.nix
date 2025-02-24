@@ -9,7 +9,7 @@ let
   # https://github.com/kubernetes-sigs/kubespray/blob/release-2.24/roles/kubespray-defaults/defaults/main/download.yml
   # TODO: Find a better process. Automate this!
   kube_version = "v1.28.2";
-  etcd_version = "v3.5.9";
+  etcd_version = "v3.5.10";
   cni_version = "v1.3.0";
   calico_version = "v3.26.4";
   crictl_version = "v1.28.0";
@@ -71,7 +71,7 @@ let
     etcd = fetchurl rec {
       passthru.url = url;
       url = "https://github.com/coreos/etcd/releases/download/${ etcd_version }/etcd-${ etcd_version }-linux-${ image_arch }.tar.gz";
-      sha256 = "d59017044eb776597eca480432081c5bb26f318ad292967029af1f62b588b042";
+      sha256 = "26e90d024fa2310bc52bb40e7f2132e81640b55f8fc446c00ae07e30af2a44fd";
     };
     cni = fetchurl rec {
       passthru.url = url;
@@ -95,8 +95,8 @@ let
     };
     mc = fetchurl rec {
       passthru.url = url;
-      url = "https://dl.min.io/client/mc/release/linux-amd64/archive/mc.RELEASE.2023-07-07T05-25-51Z";
-      sha256 = "sha256-IFotxaSdxGf3gijEPH02jjdsbMFEkll6fE/hlcKR8HQ=";
+      url = "https://dl.min.io/client/mc/release/linux-amd64/archive/mc.RELEASE.2023-10-24T05-18-28Z";
+      sha256 = "sha256-XxKSa2RrUzzeoaVIxURgpNrXjye4sX05m6Av9O42jk0=";
     };
     elasticsearch = fetchurl rec {
       passthru.url = url;
