@@ -1,11 +1,3 @@
----
-name: Change (PR)
-about: template for a PR that introduces a change 
-title: "[TITLE]"
-labels: 
-assignees:
----
-
 <!-- In case this addressed an existing issue 
 Fixes ${ISSUE_URL}
 -->
@@ -16,17 +8,26 @@ Fixes ${ISSUE_URL}
 
 * [ ] Fix
 * [ ] Feature
-
+* [ ] Documentation
+* [ ] Security / Upgrade
 
 ### Basic information 
 
-Technology: <!-- Ansible, Kubernetes, Helm, Terraform -->
+* [ ] THIS CHANGE REQUIRES A DEPLOYMENT PACKAGE RELEASE
+* [ ] THIS CHANGE REQUIRES A WIRE-DOCS RELEASE
 
-Version: <!-- Version of the technologies you just referred to -->
+### Testing
 
-* [ ] I ran/applied the changes myself
-* [ ] I can confirm that it was successful
+* [ ] I ran/applied the changes myself, in a test environment.
+* [ ] The CI job attached to this repo will test it for me.
 
+### Tracking
+
+* [ ] I mentioned this PR in Jira, OR I mentioned the Jira ticket in this PR.
+* [ ] I mentioned this PR in one of the issues attached to one of our repositories.
+
+### Knowledge Transfer
+* [ ] An Asciinema session is attached to the Jira ticket.
 
 ### Motivation
 
