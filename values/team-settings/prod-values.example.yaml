@@ -7,7 +7,7 @@ config:
     backendWebsocket: nginz-ssl.example.com
     backendDomain: example.com
     appHost: teams.example.com
-# See full list of available environment variables: https://github.com/wireapp/wire-team-settings/blob/dev/server/config.ts
+# See full list of available environment variables: https://github.com/wireapp/wire-web-config-wire/blob/master/wire-team-settings/.env.defaults
 envVars:
   APP_NAME: "Team Settings"
   ENFORCE_HTTPS: "true"

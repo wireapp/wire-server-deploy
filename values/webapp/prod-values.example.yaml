@@ -8,7 +8,7 @@ config:
     backendDomain: example.com
     backendTeamSettings: teams.example.com
     appHost: webapp.example.com
-# See full list of available environment variables: https://github.com/wireapp/wire-webapp/blob/dev/server/config.ts
+# See full list of available environment variables: https://github.com/wireapp/wire-web-config-default/blob/master/wire-webapp/.env.defaults
 envVars:
   APP_NAME: "Webapp"
   ENFORCE_HTTPS: "true"
