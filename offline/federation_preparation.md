@@ -13,27 +13,6 @@ dig srv _wire-server-federator._tcp.example.com +short
 0 10 443 federator.example.com.
 ```
 
-#### fixme: fix srv way?
-Optionally, SRV DNS record load balancing can be configured for SFT. Configuration in the `brig` section of `wire-server/values.yaml` file will be required:
-
-```yaml
-brig:
-  config:
-    sft:
-      sftBaseDomain: example.com
-      sftSRVServiceName: sft
-      sftDiscoveryIntervalSeconds: 10
-      sftListLength: 20
-```
-
-As well as SRV records for `_sft._tcp.example.com` which should resolve to A records with a public IP address of your sft servers.
-
-```bash
-dig SRV _sft._tcp.example.com +short
-0 10 443 sftd2.example.com.
-0 10 443 sftd1.example.com
-```
-
 ### Networking (calling, mostly)
 
 #### Federated Calling Traffic
@@ -41,14 +20,14 @@ dig SRV _sft._tcp.example.com +short
 In order for users on both federated backends to communicate, calling traffic needs to travel between your wire calling environment and the calling environment of your federation partner.
 
 There are two options for how calling traffic is transfered between federating backends: with, or without DTLS.
-If you have chosen DTLS, you need to have incoming port 9191 to your calling cluster.
+If you have chosen DTLS, you need to have incoming port 9191 between your calling clusters. Federated calling traffic will be transmitted between federated environments on this port.
 
 ### Communications
 If you decide to use the DTLS transport option for federated calling traffic, you will need a trusted communication channel with your federation partner, in order to handle key material.
 
 ## Services
 
-**IMPORTANT:** In the following section you will be setting a *backend domain* for your wire-server. Once this has been set, and you have redeployed `wire-server`, do not change it anymore!!! 
+**IMPORTANT:** In the following section you will be setting a *federation domain* for your Wire installation. This domain can never be changed during runtime, and uniquely identifies your installation, both to other federated partners, and to your end user's devices. Touching this domain requires deleting all history on all attached environments! Once this has been set, and you have redeployed `wire-server`, do not change it anymore!!!
 
 ### RabbitMQ
 
@@ -100,7 +79,7 @@ brig:
 
 #### setFederationStrategy
 
-Configuration for accepting federated requests. For more details, visit [docs.wire.com](https://docs.wire.com/understand/configure-federation.html#configure-federation-strategy-whom-to-federate-with-in-brig).
+The 'setFederationStrategy' configuration option controls how your backend responds to federation requests from other backends. For more details, visit [docs.wire.com](https://docs.wire.com/understand/configure-federation.html#configure-federation-strategy-whom-to-federate-with-in-brig).
 
 - allowNone - "disabled" federation
 - allowAll - lets any BE federate (send requests to federator) 
@@ -108,7 +87,7 @@ Configuration for accepting federated requests. For more details, visit [docs.wi
 
 #### setFederationDomainConfigs
 
-Configuration for inbound federated user lookup/search. For more details, visit [docs.wire.com](https://docs.wire.com/understand/configure-federation.html#configure-federation-strategy-whom-to-federate-with-in-brig).
+The 'setFederationDomainConfigs' configuration option controls inbound user lookups and searches from other federated backends. For more details, visit [docs.wire.com](https://docs.wire.com/understand/configure-federation.html#configure-federation-strategy-whom-to-federate-with-in-brig).
 
 - no_search - **default**, users can't be found with federated search
 - exact_handle_search - users can only be found when the exact user handle is matched in the search
@@ -185,11 +164,8 @@ To begin with, we are going to assume you have calling working "properly". that 
 
 For this document, we are going to assume "not that paranoid" and "simplify networking, please."
 
-### Coturn (WIP)
-external-ip annotation must be PUBLIC IP address
-
-#### TODO: no-dtls hardcoded in coturn configmap
-#### TODO: Test without dtls
+### Coturn
+external-ip annotation must be a PUBLIC IP address.
 
 ```yaml
 coturnFederationListeningIP: '__COTURN_POD_IP__'
@@ -222,7 +198,7 @@ Redeploy `coturn`:
 d helm upgrade --install coturn charts/coturn -f values/coturn/values.yaml -f values/coturn/secrets.yaml
 ```
 
-### SFTD (WIP)
+### SFTD
 
 #### TODO: charts/sftd/templates/statefulset.yaml for newer SFTD version
 
