@@ -6,7 +6,7 @@ config:
     backendRest: nginz-https.example.com
     backendDomain: example.com
     appHost: account.example.com
-# See full list of available environment variables: https://github.com/wireapp/wire-account/blob/dev/server/config.ts
+# See full list of available environment variables: https://github.com/wireapp/wire-web-config-wire/blob/master/wire-account/.env.defaults
 envVars:
   APP_NAME: "Wire Account Management"
   COMPANY_NAME: "YourCompany"
