@@ -199,6 +199,9 @@ wire_build_chart_release "$wire_build" | pull_charts
 wire_version=$(helm show chart ./charts/wire-server | yq -r .version)
 echo "quay.io/wire/zauth:$wire_version" | create-container-dump containers-adminhost
 
+echo "Writing debian-builds.json"
+list-debian-packages
+
 ###################################
 ####### DIRTY HACKS GO HERE #######
 ###################################
