@@ -34,6 +34,8 @@ install -m755 "$container_image" "containers-adminhost/container-wire-server-dep
 
 mirror-apt-jammy debs-jammy
 tar cf debs-jammy.tar debs-jammy
+echo "Writing debian-builds.json"
+list-debian-packages
 rm -r debs-jammy
 
 fingerprint=$(echo "$GPG_PRIVATE_KEY" | gpg --with-colons --import-options show-only --import --fingerprint  | awk -F: '$1 == "fpr" {print $10; exit}')
@@ -198,9 +200,6 @@ wire_build_chart_release "$wire_build" | pull_charts
 # Download zauth; as it's needed to generate certificates
 wire_version=$(helm show chart ./charts/wire-server | yq -r .version)
 echo "quay.io/wire/zauth:$wire_version" | create-container-dump containers-adminhost
-
-echo "Writing debian-builds.json"
-list-debian-packages
 
 ###################################
 ####### DIRTY HACKS GO HERE #######
