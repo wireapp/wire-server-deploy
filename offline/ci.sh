@@ -32,6 +32,19 @@ container_image=$(nix-build --no-out-link -A container)
 mkdir -p containers-{helm,other,system,adminhost}
 install -m755 "$container_image" "containers-adminhost/container-wire-server-deploy.tgz"
 
+function list-debian-packages() {
+  REPO_ROOT="$(git rev-parse --show-toplevel)"
+  DEBIAN_BUILDS="$REPO_ROOT/debian-builds.json"
+
+  jq -n '{debian: []}' > "$DEBIAN_BUILDS"
+
+  for pkg in debs-jammy/*; do
+    name=$(basename "$pkg")
+    version=$(dpkg-deb --info "$pkg" | grep Version | awk '{print $2}')
+    jq --arg name "$name" --arg version "$version" '.debian += [$name: { version: $version}]' "$DEBIAN_BUILDS" > tmp.json && mv tmp.json "$DEBIAN_BUILDS"
+  done
+}
+
 mirror-apt-jammy debs-jammy
 tar cf debs-jammy.tar debs-jammy
 echo "Writing debian-builds.json"
@@ -46,19 +59,6 @@ mkdir -p binaries
 install -m755 "$(nix-build --no-out-link -A pkgs.wire-binaries)/"* binaries/
 tar cf binaries.tar binaries
 rm -r binaries
-
-function list-debian-packages() {
-  REPO_ROOT="$(git rev-parse --show-toplevel)"
-  DEBIAN_BUILDS="$REPO_ROOT/debian-builds.json"
-
-  jq -n '{debian: []}' > "$DEBIAN_BUILDS"
-
-  for pkg in debs-jammy/*; do
-    name=$(basename "$pkg")
-    version=$(dpkg-deb --info "$pkg" | grep Version | awk '{print $2}')
-    jq --arg name "$name" --arg version "$version" '.debian += [$name: { version: $version}]' "$DEBIAN_BUILDS" > tmp.json && mv tmp.json "$DEBIAN_BUILDS"
-  done
-}
 
 function list-system-containers() {
 # These are manually updated with values from
