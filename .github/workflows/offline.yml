@@ -30,13 +30,18 @@ jobs:
           GPG_PRIVATE_KEY: '${{ secrets.GPG_PRIVATE_KEY }}'
           DOCKER_LOGIN: '${{ secrets.DOCKER_LOGIN }}'
 
+      - name: Debug
+        run: |
+          echo "$GITHUB_REF"
+          echo "$GITHUB_HEAD_REF"
+
       - name: Commit debian-builds.json
         run: |
           git config --global user.name "zebot"
           git config --global user.email 'zebot@users.noreply.github.com'
           git add debian-builds.json
           git diff --cached --quiet || git commit -m "Update debian-builds.json [skip ci]"
-          branch_name=$(echo $GITHUB_REF | sed 's/refs\/heads\///')
+          branch_name=$(echo $GITHUB_HEAD_REF | sed 's/refs\/heads\///')
           git push origin "$branch_name"
 
       - name: Get upload name
