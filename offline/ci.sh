@@ -39,7 +39,7 @@ function list-debian-packages() {
     name=$(basename "$pkg")
     version=$(dpkg-deb --info "$pkg" | awk '/Version:/ {print $2}')
     jq --arg name "$name" --arg version "$version" \
-      '.debian += [$name: { version: $version}]' "$DEBIAN_BUILDS" > tmp.json && mv tmp.json "$DEBIAN_BUILDS"
+      '.debian += [{ name: $name, version: $version}]' "$DEBIAN_BUILDS" > tmp.json && mv tmp.json "$DEBIAN_BUILDS"
   done
 }
 
