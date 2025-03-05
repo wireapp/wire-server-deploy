@@ -33,12 +33,15 @@ mkdir -p containers-{helm,other,system,adminhost}
 install -m755 "$container_image" "containers-adminhost/container-wire-server-deploy.tgz"
 
 function list-debian-packages() {
-  DEBIAN_BUILDS="$GITHUB_WORKSPACE/debian-builds.json"
+  if [ ! -f debian-builds.json ]; then
+    echo "[]" > debian-builds.json
+  fi
+
   find debs-jammy/pool/ -type f -name "*.deb" | while read -r pkg; do
     name=$(basename "$pkg")
     version=$(dpkg-deb --info "$pkg" | awk '/Version:/ {print $2}')
     jq --arg name "$name" --arg version "$version" \
-      '.debian += [{ name: $name, version: $version}]' "$DEBIAN_BUILDS" > tmp.json && mv tmp.json "$DEBIAN_BUILDS"
+      '. += [{ name: $name, version: $version }]' debian-builds.json > debian-builds.tmp && mv debian-builds.tmp debian-builds.json
   done
 }
 
