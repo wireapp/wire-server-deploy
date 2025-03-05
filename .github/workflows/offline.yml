@@ -30,6 +30,14 @@ jobs:
           GPG_PRIVATE_KEY: '${{ secrets.GPG_PRIVATE_KEY }}'
           DOCKER_LOGIN: '${{ secrets.DOCKER_LOGIN }}'
 
+      - name: Commit debian-builds.json
+        run: |
+          git config --global user.name "zebot"
+          git config --global user.email 'zebot@users.noreply.github.com'
+          git add debian-builds.json
+          git diff --cached --quiet || git commit -m "Update debian-builds.json [skip ci]"
+          git push origin HEAD:${{ github.ref }}
+
       - name: Get upload name
         id: upload_name
         run: |
