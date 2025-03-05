@@ -36,7 +36,8 @@ jobs:
           git config --global user.email 'zebot@users.noreply.github.com'
           git add debian-builds.json
           git diff --cached --quiet || git commit -m "Update debian-builds.json [skip ci]"
-          git push origin HEAD:${{ github.ref }}
+          branch_name=$(echo $GITHUB_REF | sed 's/refs\/heads\///')
+          git push origin "$branch_name"
 
       - name: Get upload name
         id: upload_name
