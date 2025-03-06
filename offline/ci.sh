@@ -32,23 +32,24 @@ container_image=$(nix-build --no-out-link -A container)
 mkdir -p containers-{helm,other,system,adminhost}
 install -m755 "$container_image" "containers-adminhost/container-wire-server-deploy.tgz"
 
-function list-debian-packages() {
+function write-debian-builds-json() {
   if [ ! -f debian-builds.json ]; then
     echo "[]" > debian-builds.json
   fi
 
   find debs-jammy/pool/ -type f -name "*.deb" | while read -r pkg; do
-    name=$(basename "$pkg")
+    name=$(dpkg-deb --info "$pkg" | awk '/Package:/ {print $2}')
     version=$(dpkg-deb --info "$pkg" | awk '/Version:/ {print $2}')
+    source=$(dpkg-deb --info "$pkg" | awl '/Source:/ {print $2}')
     jq --arg name "$name" --arg version "$version" \
-      '. += [{ name: $name, version: $version }]' debian-builds.json > debian-builds.tmp && mv debian-builds.tmp debian-builds.json
+      '. += [{ name: $name, version: $version, source: $source }]' debian-builds.json > debian-builds.tmp && mv debian-builds.tmp debian-builds.json
   done
 }
 
 mirror-apt-jammy debs-jammy
 tar cf debs-jammy.tar debs-jammy
 echo "Writing debian-builds.json"
-list-debian-packages
+write-debian-builds-json
 rm -r debs-jammy
 
 fingerprint=$(echo "$GPG_PRIVATE_KEY" | gpg --with-colons --import-options show-only --import --fingerprint  | awk -F: '$1 == "fpr" {print $10; exit}')
