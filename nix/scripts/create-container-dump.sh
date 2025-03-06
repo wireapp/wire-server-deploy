@@ -37,5 +37,6 @@ while IFS= read -r image; do
           docker://$image_trimmed docker-archive:${image_path} --additional-tag $image
       fi
       echo "${image_filename}.tar" >> $(realpath "$1")/index.txt
+      create-build-entry $image_filename
     fi
 done

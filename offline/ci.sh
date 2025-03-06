@@ -232,6 +232,6 @@ tar cf containers-helm.tar containers-helm
 
 echo "docker_ubuntu_repo_repokey: '${fingerprint}'" > ansible/inventory/offline/group_vars/all/key.yml
 
-tar czf assets.tgz debs-jammy.tar binaries.tar containers-adminhost containers-helm.tar containers-system.tar ansible charts values bin debian-builds.json
+tar czf assets.tgz debs-jammy.tar binaries.tar containers-adminhost containers-helm.tar containers-system.tar ansible charts values bin debian-builds.json deploy-builds.json
 
 echo "Done"
