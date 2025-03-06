@@ -40,7 +40,7 @@ function write-debian-builds-json() {
   find debs-jammy/pool/ -type f -name "*.deb" | while read -r pkg; do
     name=$(dpkg-deb --info "$pkg" | awk '/Package:/ {print $2}')
     version=$(dpkg-deb --info "$pkg" | awk '/Version:/ {print $2}')
-    source=$(dpkg-deb --info "$pkg" | awl '/Source:/ {print $2}')
+    source=$(dpkg-deb --info "$pkg" | awk '/Source:/ {print $2}')
     jq --arg name "$name" --arg version "$version" \
       '. += [{ name: $name, version: $version, source: $source }]' debian-builds.json > debian-builds.tmp && mv debian-builds.tmp debian-builds.json
   done
