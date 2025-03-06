@@ -41,7 +41,7 @@ function write-debian-builds-json() {
     name=$(dpkg-deb --info "$pkg" | awk '/Package:/ {print $2}')
     version=$(dpkg-deb --info "$pkg" | awk '/Version:/ {print $2}')
     source=$(dpkg-deb --info "$pkg" | awk '/Source:/ {print $2}')
-    jq --arg name "$name" --arg version "$version" \
+    jq --arg name "$name" --arg version "$version" --arg source "$source" \
       '. += [{ name: $name, version: $version, source: $source }]' debian-builds.json > debian-builds.tmp && mv debian-builds.tmp debian-builds.json
   done
 }
