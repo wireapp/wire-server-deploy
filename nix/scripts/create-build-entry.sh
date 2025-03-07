@@ -18,11 +18,13 @@ fi
 echo "Writing $1 to deploy-builds.json"
 
 temp_dir=$(mktemp -d)
+echo "Temp dir created: $temp_dir"
 
 # Extract repositories file from the tarball
 tar -xvf "$tarball_file" $repositories_file_name -C "$temp_dir"
 
-ls $temp_dir
+echo "Files in temp dir after extraction:"
+ls -lR "$temp_dir"
 
 repositories_file="$temp_dir/$repositories_file_name"
 
