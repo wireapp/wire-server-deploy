@@ -18,22 +18,18 @@ fi
 echo "Writing $1 to deploy-builds.json"
 
 temp_dir=$(mktemp -d)
-echo "Temp dir created: $temp_dir"
 
 # Extract repositories file from the tarball
-tar -xvf "$tarball_file" $repositories_file_name -C "$temp_dir"
+tar -xvf "$tarball_file" $repositories_file_name
 
-echo "Files in temp dir after extraction:"
-ls -lR "$temp_dir"
+mv $repositories_file_name $temp_dir
 
 repositories_file="$temp_dir/$repositories_file_name"
-
-echo $repositories_file
 
 if [[ ! -f "$repositories_file" ]]; then
   echo "Repositories file not present in the tarball."
   rm -rf "$temp_dir"
-  # Dont return 1 (error) so the script execution stops, we will "skip" it instead
+  # Dont return 1 (error) else the script execution stops, we will "skip" it instead
   exit 0
 fi
 
