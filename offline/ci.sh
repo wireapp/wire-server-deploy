@@ -32,8 +32,24 @@ container_image=$(nix-build --no-out-link -A container)
 mkdir -p containers-{helm,other,system,adminhost}
 install -m755 "$container_image" "containers-adminhost/container-wire-server-deploy.tgz"
 
+function write-debian-builds-json() {
+  if [ ! -f debian-builds.json ]; then
+    echo "[]" > debian-builds.json
+  fi
+
+  find debs-jammy/pool/ -type f -name "*.deb" | while read -r pkg; do
+    name=$(dpkg-deb --info "$pkg" | awk '/Package:/ {print $2}')
+    version=$(dpkg-deb --info "$pkg" | awk '/Version:/ {print $2}')
+    source=$(dpkg-deb --info "$pkg" | awk '/Source:/ {print $2}')
+    jq --arg name "$name" --arg version "$version" --arg source "$source" \
+      '. += [{ name: $name, version: $version, source: $source }]' debian-builds.json > debian-builds.tmp && mv debian-builds.tmp debian-builds.json
+  done
+}
+
 mirror-apt-jammy debs-jammy
 tar cf debs-jammy.tar debs-jammy
+echo "Writing debian-builds.json"
+write-debian-builds-json
 rm -r debs-jammy
 
 fingerprint=$(echo "$GPG_PRIVATE_KEY" | gpg --with-colons --import-options show-only --import --fingerprint  | awk -F: '$1 == "fpr" {print $10; exit}')
@@ -216,6 +232,6 @@ tar cf containers-helm.tar containers-helm
 
 echo "docker_ubuntu_repo_repokey: '${fingerprint}'" > ansible/inventory/offline/group_vars/all/key.yml
 
-tar czf assets.tgz debs-jammy.tar binaries.tar containers-adminhost containers-helm.tar containers-system.tar ansible charts values bin
+tar czf assets.tgz debs-jammy.tar binaries.tar containers-adminhost containers-helm.tar containers-system.tar ansible charts values bin debian-builds.json deploy-builds.json
 
 echo "Done"

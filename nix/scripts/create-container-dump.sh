@@ -13,6 +13,7 @@ mkdir -p $1
 # If this errors out for you, copy default-policy.json from the skopeo repo to
 # /etc/containers/policy.json
 while IFS= read -r image; do
+    echo $image
     # sanitize the image file name, replace slashes with underscores, suffix with .tar
     image_filename=$(sed -r "s/[:\/]/_/g" <<< $image)
     image_path=$(realpath $1)/${image_filename}.tar
@@ -36,5 +37,6 @@ while IFS= read -r image; do
           docker://$image_trimmed docker-archive:${image_path} --additional-tag $image
       fi
       echo "${image_filename}.tar" >> $(realpath "$1")/index.txt
+      create-build-entry $image_path
     fi
 done
