@@ -55,7 +55,7 @@ super: {
     }
     ''
       install -Dm755 ${./scripts/create-container-dump.sh} $out/bin/create-container-dump
-        wrapProgram $out/bin/create-container-dump --prefix PATH : '${super.lib.makeBinPath [ self.skopeo ]}'
+        wrapProgram $out/bin/create-container-dump --prefix PATH : '${super.lib.makeBinPath [ self.skopeo self.create-build-entry ]}'
     '';
 
 
@@ -79,7 +79,7 @@ super: {
 
   create-build-entry = super.runCommandNoCC "create-build-entry"
   {
-    nativeBuildInputs = [ super.makeWrapper super.jq super.gnutar ];
+    nativeBuildInputs = [ super.makeWrapper ];
   }
   ''
     install -Dm755 ${./scripts/create-build-entry.sh} $out/bin/create-build-entry
