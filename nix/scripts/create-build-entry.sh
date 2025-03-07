@@ -38,7 +38,7 @@ while IFS= read -r line; do
   # Check if valid JSON
   if [[ "$line" =~ ^\{.*\}$ ]]; then
     # Append to deploy-builds.json
-    jq ". += [$line]" "$json_file" > "$json_file.tmp" && mv "$json_file.tmp" "$json_file"
+    jq ". += [$line]" "$deploy_builds" > "$deploy_builds.tmp" && mv "$deploy_builds.tmp" "$deploy_builds"
   fi
 done < "$repositories_file"
 
