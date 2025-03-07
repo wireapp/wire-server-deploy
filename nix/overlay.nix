@@ -83,6 +83,6 @@ super: {
   }
   ''
     install -Dm755 ${./scripts/create-build-entry.sh} $out/bin/create-build-entry
-    wrapProgram $out/bin/create-build-entry --prefix PATH : '${super.lib.makeBinPath [ super.jq super.gnutar ]}'
+      wrapProgram $out/bin/create-build-entry --prefix PATH : '${super.lib.makeBinPath (with self; [ jq gnutar ])}'
   '';
 }
