@@ -22,11 +22,17 @@ temp_dir=$(mktemp -d)
 # Extract repositories file from the tarball
 tar -xvf "$tarball_file" $repositories_file_name -C "$temp_dir"
 
+ls $temp_dir
+
 repositories_file="$temp_dir/$repositories_file_name"
+
+echo $repositories_file
+
 if [[ ! -f "$repositories_file" ]]; then
   echo "Repositories file not present in the tarball."
   rm -rf "$temp_dir"
-  exit 1
+  # Dont return 1 (error) so the script execution stops, we will "skip" it instead
+  exit 0
 fi
 
 # Loop through each line
