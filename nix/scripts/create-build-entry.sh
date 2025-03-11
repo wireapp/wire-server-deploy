@@ -33,13 +33,8 @@ if [[ ! -f "$repositories_file" ]]; then
   exit 0
 fi
 
-# Loop through each line
-while IFS= read -r line; do
-  # Check if valid JSON
-  if [[ "$line" =~ ^\{.*\}$ ]]; then
-    # Append to deploy-builds.json
-    jq ". += [$line]" "$deploy_builds" > "$deploy_builds.tmp" && mv "$deploy_builds.tmp" "$deploy_builds"
-  fi
-done < "$repositories_file"
+## else append repositories content to deploy-buids.json
+
+jq ". += [$(cat "$repositories_file")]" "$deploy_builds" > "$deploy_builds.tmp" && mv "$deploy_builds.tmp" "$deploy_builds"
 
 rm -rf "$temp_dir"
