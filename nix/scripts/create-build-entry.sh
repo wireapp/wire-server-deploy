@@ -7,7 +7,7 @@ if [[ -z "$1" ]]; then
 fi
 
 tarball_file="$1"
-json_file="deploy-builds.json"
+json_file="$2.json"
 repositories_file_name="repositories"
 
 # Check if deploy-builds.json exists, if not, instantiate it
