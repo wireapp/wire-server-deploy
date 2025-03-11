@@ -7,15 +7,15 @@ if [[ -z "$1" ]]; then
 fi
 
 tarball_file="$1"
-deploy_builds="deploy-builds.json"
+json_file="deploy-builds.json"
 repositories_file_name="repositories"
 
 # Check if deploy-builds.json exists, if not, instantiate it
-if [[ ! -f "$deploy_builds" ]]; then
-  echo "[]" > "$deploy_builds"
+if [[ ! -f "$json_file" ]]; then
+  echo "[]" > "$json_file"
 fi
 
-echo "Writing $1 to deploy-builds.json"
+echo "Writing $1 to $2.json"
 
 temp_dir=$(mktemp -d)
 
@@ -35,6 +35,6 @@ fi
 
 ## else append repositories content to deploy-buids.json
 
-jq ". += [$(cat "$repositories_file")]" "$deploy_builds" > "$deploy_builds.tmp" && mv "$deploy_builds.tmp" "$deploy_builds"
+jq ". += [$(cat "$repositories_file")]" "$json_file" > "$json_file.tmp" && mv "$json_file.tmp" "$json_file"
 
 rm -rf "$temp_dir"
