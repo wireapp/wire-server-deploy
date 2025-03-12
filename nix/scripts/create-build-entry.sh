@@ -1,8 +1,8 @@
 #!/bin/bash
 
 # Initial check for args
-if [[ -z "$1" ]]; then
-  echo "Usage: $0 <tarball-name>"
+if [[ -z "$1" || -z "$2" ]]; then
+  echo "Usage: $0 <tarball-name> <containers-type>"
   exit 1
 fi
 
