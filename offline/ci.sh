@@ -203,6 +203,24 @@ wire_build_chart_release "$wire_build" | pull_charts
 wire_version=$(helm show chart ./charts/wire-server | yq -r .version)
 echo "quay.io/wire/zauth:$wire_version" | create-container-dump containers-adminhost
 
+function write_wire_binaries_json() {
+  echo "Writing wire binaries into wire-binaries.json"
+  # "Get" all the binaries from the .nix file
+  sed -n '/_version/p' nix/pkgs/wire-binaries.nix | grep -v '\.version' | grep -v 'url' > wire-binaries.json.tmp
+
+  echo "[" > wire-binaries.json.tmp
+  # Format it into JSON
+  sed -E '/\.url|\.version/!s/([a-z_]+)_version = "(.*)";/{\n  "\1": { "version": "\2" }\n},/' wire-binaries.json.tmp >> wire-binaries.json.tmp
+  # remove trailing comma -.-
+  sed -i '$ s/,$//' wire-binaries.json.tmp
+
+  echo "]" >> wire-binaries.json.tmp
+
+  mv wire-binaries.json.tmp wire-binaries.json
+} 
+
+write_wire_binaries_json
+
 ###################################
 ####### DIRTY HACKS GO HERE #######
 ###################################
@@ -233,6 +251,6 @@ tar cf containers-helm.tar containers-helm
 
 echo "docker_ubuntu_repo_repokey: '${fingerprint}'" > ansible/inventory/offline/group_vars/all/key.yml
 
-tar czf assets.tgz debs-jammy.tar binaries.tar containers-adminhost containers-helm.tar containers-system.tar ansible charts values bin
+tar czf assets.tgz debs-jammy.tar binaries.tar containers-adminhost containers-helm.tar containers-system.tar ansible charts values bin debian-builds.json deploy-builds.json wire-builds.json wire-binaries.json
 
 echo "Done"
