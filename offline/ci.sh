@@ -232,8 +232,10 @@ tar cf containers-helm.tar containers-helm
 
 echo "docker_ubuntu_repo_repokey: '${fingerprint}'" > ansible/inventory/offline/group_vars/all/key.yml
 
-# "Get" all the binaries from the .nix file, output it as a valid json into wire-binaries.json
-sed -E 's/([a-z_]+)_version = "(.*)";/{ "\1": { "version": "\2" } },/' ./nix/pkgs/wire-binaries.nix | sed '$ s/,$//' | jq -s '.' > wire-binaries.json
+# "Get" all the binaries from the .nix file
+sed -n '/_version/p' nix/pkgs/wire-binaries.nix | grep -v '\.version' | grep -v 'url' > wire-binaries.json.tmp
+# Format it into JSON
+echo "[ $(sed -E '/\.url|\.version/!s/([a-z_]+)_version = "(.*)";/{ "\1": { "version": "\2" } },/' wire-binaries.json.tmp | sed '$ s/,$//') ]" > wire-binaries.json.tmp && mv wire-binaries.json.tmp wire-binaries.json
 
 tar czf assets.tgz debs-jammy.tar binaries.tar containers-adminhost containers-helm.tar containers-system.tar ansible charts values bin debian-builds.json deploy-builds.json wire-builds.json wire-binaries.json
 
