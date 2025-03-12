@@ -10,7 +10,7 @@ fi
 skip="containers-adminhost"
 
 if [["$2" == "$skip"]]; then
-  echo "Skipping zauth container"
+  echo "Skipping creating entry for zauth container"
   # return 0 to continue parent script execution
   exit 0
 fi
@@ -19,17 +19,17 @@ tarball_file="$1"
 json_file="$2.json"
 repositories_file_name="repositories"
 
-# Check if deploy-builds.json exists, if not, instantiate it
+# Check if json exists, if not, create it
 if [[ ! -f "$json_file" ]]; then
   echo "[]" > "$json_file"
 fi
 
-echo "Writing $1 to $2.json"
+echo "Writing $1 entry to $2.json"
 
 temp_dir=$(mktemp -d)
 
 # Extract repositories file from the tarball
-tar -xvf "$tarball_file" $repositories_file_name
+tar -xf "$tarball_file" $repositories_file_name
 
 mv $repositories_file_name $temp_dir
 
@@ -38,11 +38,11 @@ repositories_file="$temp_dir/$repositories_file_name"
 if [[ ! -f "$repositories_file" ]]; then
   echo "Repositories file not present in the tarball."
   rm -rf "$temp_dir"
-  # Dont return 1 (error) else the script execution stops, we will "skip" it instead
+  # return 0 so parent script doesnt stop execution
   exit 0
 fi
 
-## else append repositories content to deploy-buids.json
+## else append repositories content to json
 
 jq ". += [$(cat "$repositories_file")]" "$json_file" > "$json_file.tmp" && mv "$json_file.tmp" "$json_file"
 
