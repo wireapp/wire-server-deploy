@@ -11,18 +11,18 @@ containers_helm="containers-helm"
 containers_system="containers-system"
 
 # Dont create an entry for zauth
-if [["$2" == "$containers_adminhost" ]]; then
+if [[ "$2" == "$containers_adminhost" ]]; then
   echo "Skipping creating entry for zauth container and helm"
   # return 0 to continue parent script execution
   exit 0
 fi
 
-if [["$2" == "$containers_helm"]]; then
+if [[ "$2" == "$containers_helm"]]; then
   json_file="wire-builds.json"
-elif [["$2" == "$containers_system"]]; then
+elif [[ "$2" == "$containers_system"]]; then
   json_file="deploy-builds.json"
 else
-  echo "Unhandles container name. Exiting with error"
+  echo "Unhandled container name. Exiting with error"
   exit 1
 fi
 
