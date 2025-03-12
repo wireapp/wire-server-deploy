@@ -6,6 +6,15 @@ if [[ -z "$1" || -z "$2" ]]; then
   exit 1
 fi
 
+# Dont create an entry for zauth
+skip="containers-adminhost"
+
+if [["$2" == "$skip"]]; then
+  echo "Skipping zauth container"
+  # return 0 to continue parent script execution
+  exit 0
+fi
+
 tarball_file="$1"
 json_file="$2.json"
 repositories_file_name="repositories"
