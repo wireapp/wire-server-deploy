@@ -232,6 +232,9 @@ tar cf containers-helm.tar containers-helm
 
 echo "docker_ubuntu_repo_repokey: '${fingerprint}'" > ansible/inventory/offline/group_vars/all/key.yml
 
-tar czf assets.tgz debs-jammy.tar binaries.tar containers-adminhost containers-helm.tar containers-system.tar ansible charts values bin debian-builds.json deploy-builds.json wire-builds.json
+# "Get" all the binaries from the .nix file, output it as a valid json into wire-binaries.json
+sed -E 's/([a-z_]+)_version = "(.*)";/{ "\1": { "version": "\2" } },/' ./nix/pkgs/wire-binaries.nix | sed '$ s/,$//' | jq -s '.' > wire-binaries.json
+
+tar czf assets.tgz debs-jammy.tar binaries.tar containers-adminhost containers-helm.tar containers-system.tar ansible charts values bin debian-builds.json deploy-builds.json wire-builds.json wire-binaries.json
 
 echo "Done"
