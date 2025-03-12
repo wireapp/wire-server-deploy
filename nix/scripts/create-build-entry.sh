@@ -6,17 +6,18 @@ if [[ -z "$1" || -z "$2" ]]; then
   exit 1
 fi
 
-# Dont create an entry for zauth
-skip="containers-adminhost"
+# Dont create an entry for zauth or helm
+containers_adminhost="containers-adminhost"
+containers_helm="containers-helm"
 
-if [["$2" == "$skip"]]; then
-  echo "Skipping creating entry for zauth container"
+if [["$2" == "$containers_adminhost" || "$2" == "$containers_helm"]]; then
+  echo "Skipping creating entry for zauth container and helm"
   # return 0 to continue parent script execution
   exit 0
 fi
 
 tarball_file="$1"
-json_file="$2.json"
+json_file="deploy-builds.json"
 repositories_file_name="repositories"
 
 # Check if json exists, if not, create it
