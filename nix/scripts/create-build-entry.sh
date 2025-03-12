@@ -6,18 +6,27 @@ if [[ -z "$1" || -z "$2" ]]; then
   exit 1
 fi
 
-# Dont create an entry for zauth or helm
 containers_adminhost="containers-adminhost"
 containers_helm="containers-helm"
+containers_system="containers-system"
 
-if [["$2" == "$containers_adminhost" || "$2" == "$containers_helm"]]; then
+# Dont create an entry for zauth
+if [["$2" == "$containers_adminhost" ]]; then
   echo "Skipping creating entry for zauth container and helm"
   # return 0 to continue parent script execution
   exit 0
 fi
 
+if [["$2" == "$containers_helm"]]; then
+  json_file="wire-builds.json"
+elif [["$2" == "$containers_system"]]; then
+  json_file="deploy-builds.json"
+else
+  echo "Unhandles container name. Exiting with error"
+  exit 1
+fi
+
 tarball_file="$1"
-json_file="deploy-builds.json"
 repositories_file_name="repositories"
 
 # Check if json exists, if not, create it
