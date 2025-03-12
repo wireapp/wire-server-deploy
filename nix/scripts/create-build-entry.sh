@@ -17,9 +17,9 @@ if [[ "$2" == "$containers_adminhost" ]]; then
   exit 0
 fi
 
-if [[ "$2" == "$containers_helm"]]; then
+if [[ "$2" == "$containers_helm" ]]; then
   json_file="wire-builds.json"
-elif [[ "$2" == "$containers_system"]]; then
+elif [[ "$2" == "$containers_system" ]]; then
   json_file="deploy-builds.json"
 else
   echo "Unhandled container name. Exiting with error"
