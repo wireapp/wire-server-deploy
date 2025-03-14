@@ -47,7 +47,7 @@ table ip nat {
     iifname { $INF_WAN, virbr0 } tcp dport 3478 fib daddr type local dnat to $COTURNIP comment "COTURN control TCP"
     iifname { $INF_WAN, virbr0 } udp dport 3478 fib daddr type local dnat to $COTURNIP comment "COTURN control UDP"
 
-    iifname { $INF_WAN, virbr0 } udp dport 32768-61000 fib daddr type local dnat to $COTURNIP comment "COTURN UDP range"
+    iifname { $INF_WAN, virbr0 } udp dport 49152-65535 fib daddr type local dnat to $COTURNIP comment "COTURN UDP range"
 
     fib daddr type local counter jump DOCKER
   }
