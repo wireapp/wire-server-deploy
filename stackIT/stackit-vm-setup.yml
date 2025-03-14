@@ -579,7 +579,7 @@
         protocol: udp
         jump: DNAT
         destination: "{{ default_interface_ip.stdout }}"
-        destination_ports: "32768:61000"
+        destination_ports: "49152:65535"
         in_interface: "{{ default_interface.stdout }}"
         to_destination: "{{ coturn_k8s_node_ip.stdout }}"
         state: present
