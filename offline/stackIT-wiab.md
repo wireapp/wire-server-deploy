@@ -26,6 +26,8 @@ This guide outlines the steps to set up and deploy Wire in a StackIT environment
 | udp      | ingress   | 3478       | 3478     | IPv4       | Any        | Allow STUN/TURN traffic for Coturn          |
 | udp      | ingress   | 49152      |  65535   | IPv4       | 0.0.0.0/0  | Allow calling traffic for Coturn over UDP   |
 
+- Note: If outbound traffic is restricted, port range mentioned [here](https://docs.wire.com/understand/notes/port-ranges.html) should be followed.
+
 ## Steps to Deploy WIAB from local environment (or on stackIT node)
 
 ### 1. Clone the repository
