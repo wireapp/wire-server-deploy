@@ -90,6 +90,11 @@ This guide outlines the steps to set up and deploy Wire in a StackIT environment
       ```bash
       d bash -x bin/offline-cluster.sh
       ```
+      *Confirm whether Cassandra, Elasticsearch, and MinIO are set up, or if any previous playbook caused subsequent playbooks to be skipped:*
+      ```
+      cat ~/wire-server-deploy/values/cassandra-external/values.yaml
+      ```
+      If the above file exists with the correct values, we can assume that the tasks ran successfully. If not, run the playbooks again by commenting out the already executed Ansible playbooks in `~/wire-server-deploy/bin/offline-cluster.sh`.
 
    3. **Deploy Helm charts:**
       Use the following script to set up Helm chart values and deploy them:
