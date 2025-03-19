@@ -82,7 +82,7 @@ This guide outlines the steps to set up and deploy Wire in a StackIT environment
 
    1. **Generate secrets:**
       ```bash
-      d bash -x bin/offline-secrets.sh
+      bash -x bin/offline-secrets.sh
       ```
 
    2. **Set up and configure the environment:**
