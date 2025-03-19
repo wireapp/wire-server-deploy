@@ -32,7 +32,7 @@
     target_domain: "example.com"
 
     # artifact_hash
-    artifact_hash: "3a18fae3106968b48b5a3b35f1bd0817ca4e5569"
+    artifact_hash: "812ae6bdf3c159f6a03059b7d779c20d6599e01b"
 
     # networking iptables dnat rules
     # This should be the ip address of k8s node where ngnix-ingress-controller is running
@@ -579,7 +579,7 @@
         protocol: udp
         jump: DNAT
         destination: "{{ default_interface_ip.stdout }}"
-        destination_ports: "32768:61000"
+        destination_ports: "49152:65535"
         in_interface: "{{ default_interface.stdout }}"
         to_destination: "{{ coturn_k8s_node_ip.stdout }}"
         state: present
