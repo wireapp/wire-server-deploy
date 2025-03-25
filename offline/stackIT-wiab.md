@@ -24,7 +24,7 @@ This guide outlines the steps to set up and deploy Wire in a StackIT environment
 | tcp      | ingress   | 80         | 80       | IPv4       | 0.0.0.0/0  | Allow HTTP traffic                          |
 | tcp      | ingress   | 3478       | 3478     | IPv4       | 0.0.0.0/0  | Allow alternative STUN/TURN traffic over TCP|
 | udp      | ingress   | 3478       | 3478     | IPv4       | Any        | Allow STUN/TURN traffic for Coturn          |
-| udp      | ingress   | 49152      |  65535   | IPv4       | 0.0.0.0/0  | Allow calling traffic for Coturn over UDP   |
+| udp      | ingress   | 49152      | 65535    | IPv4       | 0.0.0.0/0  | Allow calling traffic for Coturn over UDP   |
 
 - Note: If outbound traffic is restricted, port range mentioned [here](https://docs.wire.com/understand/notes/port-ranges.html) should be followed.
 
