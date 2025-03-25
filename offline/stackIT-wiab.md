@@ -24,7 +24,9 @@ This guide outlines the steps to set up and deploy Wire in a StackIT environment
 | tcp      | ingress   | 80         | 80       | IPv4       | 0.0.0.0/0  | Allow HTTP traffic                          |
 | tcp      | ingress   | 3478       | 3478     | IPv4       | 0.0.0.0/0  | Allow alternative STUN/TURN traffic over TCP|
 | udp      | ingress   | 3478       | 3478     | IPv4       | Any        | Allow STUN/TURN traffic for Coturn          |
-| udp      | ingress   | 32768      | 61000    | IPv4       | 0.0.0.0/0  | Allow calling traffic for Coturn over UDP   |
+| udp      | ingress   | 49152      | 65535    | IPv4       | 0.0.0.0/0  | Allow calling traffic for Coturn over UDP   |
+
+- Note: If outbound traffic is restricted, port range mentioned [here](https://docs.wire.com/understand/notes/port-ranges.html) should be followed.
 
 ## Steps to Deploy WIAB from local environment (or on stackIT node)
 
@@ -80,7 +82,7 @@ This guide outlines the steps to set up and deploy Wire in a StackIT environment
 
    1. **Generate secrets:**
       ```bash
-      d bash -x bin/offline-secrets.sh
+      bash -x bin/offline-secrets.sh
       ```
 
    2. **Set up and configure the environment:**
@@ -88,6 +90,11 @@ This guide outlines the steps to set up and deploy Wire in a StackIT environment
       ```bash
       d bash -x bin/offline-cluster.sh
       ```
+      *Confirm whether Cassandra, Elasticsearch, and MinIO are set up, or if any previous playbook caused subsequent playbooks to be skipped:*
+      ```
+      cat ~/wire-server-deploy/values/cassandra-external/values.yaml
+      ```
+      If the above file exists with the correct values, we can assume that the tasks ran successfully. If not, run the playbooks again by commenting out the already executed Ansible playbooks in `~/wire-server-deploy/bin/offline-cluster.sh`.
 
    3. **Deploy Helm charts:**
       Use the following script to set up Helm chart values and deploy them:
