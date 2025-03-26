@@ -7,6 +7,13 @@
 # The list is sorted and deduplicated, then printed to stdout.
 set -eou pipefail
 
+# Ensure we have a single argument
+if [[ ! $# -eq 1 ]]; then
+  echo "usage: $0 chart_images" >&2
+  exit 1
+fi
+chart_images=$1
+
 # Some of these images don't contain a "latest" tag. We don't to download /ALL/
 # of them, but only :latest in that case - it's bad enough there's no proper
 # versioning here.
@@ -35,5 +42,10 @@ while IFS= read -r chart; do
     --set federate.dtls.tls.crt=emptyString \
     $( [[ -f ./values/$(basename $chart)/prod-values.example.yaml ]] && echo "-f ./values/$(basename $chart)/prod-values.example.yaml" ) \
     $( [[ -f ./values/$(basename $chart)/prod-secrets.example.yaml ]] && echo "-f ./values/$(basename $chart)/prod-secrets.example.yaml" ) \
-    | yq -r '..|.image? | select(.)' | optionally_complain | sort -u
+    | yq -r '..|.image? | select(.)' | optionally_complain | sort -u > /tmp/images
+  
+  echo "${chart}" >> "${chart_images}"
+  cat /tmp/images >> "${chart_images}"
+  echo "\n" >> "${chart_images}"
+  cat /tmp/images
 done | sort -u
