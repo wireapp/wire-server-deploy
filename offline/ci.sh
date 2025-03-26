@@ -82,46 +82,6 @@ list-system-containers | create-container-dump containers-system
 tar cf containers-system.tar containers-system
 [[ "$INCREMENTAL" -eq 0 ]] && rm -r containers-system
 
-legacy_chart_release() {
-  # Note: if you want to ship from the develop branch, replace 'repo' url below
-  # repo=https://s3-eu-west-1.amazonaws.com/public.wire.com/charts-develop
-  repo=https://s3-eu-west-1.amazonaws.com/public.wire.com/charts
-  wire_version="4.41.0"
-  wire_calling_version="4.40.0"
-  
-  charts=(
-    # backoffice
-    # commented out for now, points to a 2.90.0 container image which doesn't
-    # seem to exist on quay.io
-    # TODO: uncomment once its dependencies are pinned!
-    # local-path-provisioner
-    ingress-nginx-controller
-    nginx-ingress-services
-    reaper
-    cassandra-external
-    databases-ephemeral
-    demo-smtp
-    elasticsearch-external
-    fake-aws
-    minio-external
-    wire-server
-    rabbitmq
-    rabbitmq-external
-    # federator
-  )
-  for chartName in "${charts[@]}"; do
-    echo "$chartName $repo $wire_version"
-  done
-
-  calling_charts=(
-    sftd
-    coturn
-  )
-  for chartName in "${calling_charts[@]}"; do
-    echo "$chartName $repo $wire_calling_version"
-  done
-}
-
 wire_build_chart_release () {
   set -euo pipefail
   wire_build="$1"
@@ -176,10 +136,6 @@ pull_charts() {
 wire_build="https://raw.githubusercontent.com/wireapp/wire-builds/baee36bd6adaf114f6216ca8e0a61b1b127c18ca/build.json"
 wire_build_chart_release "$wire_build" | pull_charts
 
-# Uncomment if you want to create non-wire-build release
-# and uncomment the other pull_charts call from aboe
-# legacy_chart_release | pull_charts
-
 # TODO: Awaiting some fixes in wire-server regarding tagless images
 
 # Download zauth; as it's needed to generate certificates
@@ -201,9 +157,10 @@ rm -v charts/step-certificates/charts/step-certificates/templates/tests/*
 
 # Get and dump required containers from Helm charts. Omit integration test
 # containers (e.g. `quay.io_wire_galley-integration_4.22.0`.)
+touch chart-images.txt
 for chartPath in "$(pwd)"/charts/*; do
   echo "$chartPath"
-done | list-helm-containers | grep -v "\-integration:" | create-container-dump containers-helm
+done | list-helm-containers chart_images.txt | grep -v "\-integration:" | create-container-dump containers-helm
 
 # Undo changes on wire-server values.yaml
 sed -i -Ee 's/useSharedFederatorSecret: true/useSharedFederatorSecret: false/' "$(pwd)"/charts/wire-server/charts/federator/values.yaml
@@ -216,6 +173,6 @@ tar cf containers-helm.tar containers-helm
 
 echo "docker_ubuntu_repo_repokey: '${fingerprint}'" > ansible/inventory/offline/group_vars/all/key.yml
 
-tar czf assets.tgz debs-jammy.tar binaries.tar containers-adminhost containers-helm.tar containers-system.tar ansible charts values bin
+tar czf assets.tgz debs-jammy.tar binaries.tar containers-adminhost containers-helm.tar containers-system.tar ansible charts values bin chart-images.txt
 
 echo "Done"
