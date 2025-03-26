@@ -55,7 +55,7 @@ super: {
     }
     ''
       install -Dm755 ${./scripts/create-container-dump.sh} $out/bin/create-container-dump
-        wrapProgram $out/bin/create-container-dump --prefix PATH : '${super.lib.makeBinPath [ self.skopeo ]}'
+        wrapProgram $out/bin/create-container-dump --prefix PATH : '${super.lib.makeBinPath [ self.skopeo self.create-build-entry ]}'
     '';
 
 
@@ -76,4 +76,13 @@ super: {
       install -Dm755 ${./scripts/patch-ingress-controller-images.sh} $out/bin/patch-ingress-controller-images
         wrapProgram $out/bin/patch-ingress-controller-images --prefix PATH : '${super.lib.makeBinPath [ self.containerd ]}'
     '';
+
+  create-build-entry = super.runCommandNoCC "create-build-entry"
+    {
+      nativeBuildInputs = [ super.makeWrapper ];
+    }
+  ''
+    install -Dm755 ${./scripts/create-build-entry.sh} $out/bin/create-build-entry
+      wrapProgram $out/bin/create-build-entry --prefix PATH : '${super.lib.makeBinPath (with self; [ jq gnutar ])}'
+  '';
 }
