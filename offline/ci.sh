@@ -205,13 +205,13 @@ for chartPath in "$(pwd)"/charts/*; do
   echo "$chartPath"
 done | list-helm-containers | grep -v "\-integration:" > images
 
-cat images | grep -v federation | create-container-dump containers-helm
+grep -v federation images | create-container-dump containers-helm
 
 patch-ingress-controller-images "$(pwd)"
 
 tar cf containers-helm-demo.tar containers-helm
 
-cat images | grep -i federation | create-container-dump containers-helm
+grep -i federation images | create-container-dump containers-helm
 
 tar cf containers-helm.tar containers-helm
 [[ "$INCREMENTAL" -eq 0 ]] && rm -r containers-helm
