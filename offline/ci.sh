@@ -203,19 +203,32 @@ rm -v charts/step-certificates/charts/step-certificates/templates/tests/*
 # containers (e.g. `quay.io_wire_galley-integration_4.22.0`.)
 for chartPath in "$(pwd)"/charts/*; do
   echo "$chartPath"
-done | list-helm-containers | grep -v "\-integration:" | create-container-dump containers-helm
+done | list-helm-containers | grep -v "\-integration:" > images
+
+cat images | grep -v federation | create-container-dump containers-helm
+
+patch-ingress-controller-images "$(pwd)"
+
+tar cf containers-helm-demo.tar containers-helm
+
+cat images | grep -i federation | create-container-dump containers-helm
+
+tar cf containers-helm.tar containers-helm
+[[ "$INCREMENTAL" -eq 0 ]] && rm -r containers-helm
 
 # Undo changes on wire-server values.yaml
 sed -i -Ee 's/useSharedFederatorSecret: true/useSharedFederatorSecret: false/' "$(pwd)"/charts/wire-server/charts/federator/values.yaml
 sed -i -Ee 's/federation: true/federation: false/' "$(pwd)"/values/wire-server/prod-values.example.yaml
 
-patch-ingress-controller-images "$(pwd)"
-
-tar cf containers-helm.tar containers-helm
-[[ "$INCREMENTAL" -eq 0 ]] && rm -r containers-helm
-
 echo "docker_ubuntu_repo_repokey: '${fingerprint}'" > ansible/inventory/offline/group_vars/all/key.yml
 
 tar czf assets.tgz debs-jammy.tar binaries.tar containers-adminhost containers-helm.tar containers-system.tar ansible charts values bin
+
+# overwrite federate domain to local
+sed -i -Ee 's/federator: federator.example.com/federator: federator.local/' "$(pwd)"/values/nginx-ingress-services/prod-values.example.yaml
+# to include setFederationDomain value along with all federationDomain
+sed -i -Ee 's/ederationDomain: example.com/ederationDomain: local/' "$(pwd)"/values/wire-server/prod-values.example.yaml
+
+tar czf assets-demo.tgz debs-jammy.tar binaries.tar containers-adminhost containers-helm-demo.tar containers-system.tar ansible charts values bin
 
 echo "Done"
