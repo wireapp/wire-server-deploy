@@ -20,8 +20,8 @@ docker_ubuntu_repo_gpgkey: "{{ ubuntu_repos }}/gpg"
 binaries_url: "http://{{ assethost_host }}/binaries"
 nodelocaldns_ip: 10.233.0.10
 
-kube_version: "v1.28.2"
-etcd_version: "v3.5.10"
+kube_version: "v1.29.10"
+etcd_version: "v3.5.16"
 
 kubeadm_download_url: "{{ binaries_url }}/kubeadm"
 kubectl_download_url: "{{ binaries_url }}/kubectl"
@@ -67,7 +67,7 @@ syslog_target_ip: 12.34.56.78
 # OVERRIDES
 
 coredns_version: "v1.11.4"
-ingress_nginx_version: "v1.10.6"
+ingress_nginx_version: "v1.12.1"
 metrics_server_version: "v0.7.2"
 ingress_nginx_kube_webhook_certgen_image_tag: "v20231011-8b53cabe0"
 cert_manager_version: "v1.16.3"
