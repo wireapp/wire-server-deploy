@@ -1,7 +1,14 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-echo "Creating system containers tarball ..."
+if [[ ! $# -eq 1 ]]; then
+  echo "usage: $0 OUTPUT-DIR" >&2
+  exit 1
+fi
+
+OUTPUT_DIR="$1"
+
+echo "Creating system containers tarball ${OUTPUT_DIR} ..."
 
 function list-system-containers() {
 # These are manually updated with values from
@@ -36,6 +43,6 @@ registry.k8s.io/ingress-nginx/kube-webhook-certgen:v20231011-8b53cabe0
 EOF
 }
 
-list-system-containers | create-container-dump containers-system
-tar cf containers-system.tar containers-system
-[[ "$INCREMENTAL" -eq 0 ]] && rm -r containers-system
+list-system-containers | create-container-dump ${OUTPUT_DIR}/containers-system
+tar cf ${OUTPUT_DIR}/containers-system.tar ${OUTPUT_DIR}/containers-system
+rm -r ${OUTPUT_DIR}/containers-system

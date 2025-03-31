@@ -8,7 +8,7 @@ fi
 
 OUTPUT_DIR="$1"
 
-echo "Running pre-chart process script 0 in dir $OUTPUT_DIR..."
+echo "Running pre-chart process script 0 in dir $OUTPUT_DIR ..."
 
 # Patch wire-server values.yaml to include federator
 # This is needed to bundle it's image.
