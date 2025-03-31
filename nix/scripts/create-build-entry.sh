@@ -22,7 +22,7 @@ if [[ "$2" == "$containers_helm" ]]; then
 elif [[ "$2" == "$containers_system" ]]; then
   json_file="deploy-builds.json"
 else
-  echo "Unhandled container name "$2". Exiting with error"
+  echo "Unhandled container name $2. Exiting with error"
   exit 1
 fi
 
@@ -41,7 +41,7 @@ temp_dir=$(mktemp -d)
 # Extract repositories file from the tarball
 tar -xf "$tarball_file" $repositories_file_name
 
-mv $repositories_file_name $temp_dir
+mv $repositories_file_name "$temp_dir"
 
 repositories_file="$temp_dir/$repositories_file_name"
 
