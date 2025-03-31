@@ -210,7 +210,7 @@ function write_wire_binaries_json() {
 
   echo "[" > wire-binaries.json.tmp
   # Format it into JSON
-  sed -E '/\.url|\.version/!s/([a-z_]+)_version = "(.*)";/{\n  "\1": { "version": "\2" }\n},/' wire-binaries.json.tmp >> wire-binaries.json.formatted
+  sed -E '/\.url|\.version/!s/([a-z_]+)_version = "(.*)";/{\n  "\1": { "version": "\2" }\n},/' wire-binaries.json.tmp > wire-binaries.json.formatted
   # remove trailing comma -.-
   sed -i '$ s/,$//' wire-binaries.json.formatted
   # remove tmp file
