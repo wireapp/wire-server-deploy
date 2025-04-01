@@ -218,7 +218,7 @@ function write_wire_binaries_json() {
 
   echo "]" >> wire-binaries.json.formatted
 
-  mv wire-binaries.json.tmp.formatted wire-binaries.json
+  mv wire-binaries.json.formatted wire-binaries.json
 } 
 
 write_wire_binaries_json
