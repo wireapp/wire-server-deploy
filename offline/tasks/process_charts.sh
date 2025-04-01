@@ -43,5 +43,9 @@ done | list-helm-containers | grep -v "\-integration:" > "${OUTPUT_DIR}"/images
 
 grep -vE "$EXCLUDE_PATTERN"  "${OUTPUT_DIR}"/images | create-container-dump  "${OUTPUT_DIR}"/containers-helm
 
-tar cf "${OUTPUT_DIR}"/containers-helm.tar "${OUTPUT_DIR}"/containers-helm
-rm -r "${OUTPUT_DIR}"/containers-helm
+ORIGINAL_DIR="$PWD"
+cd "${OUTPUT_DIR}" || { echo "Error: Cannot change to directory ${OUTPUT_DIR}/debs-jammy"; exit 1; }
+tar cf containers-helm.tar containers-helm
+rm -r containers-helm
+
+cd "$ORIGINAL_DIR" || { echo "Error: Cannot change back to original directory"; exit 1; }
