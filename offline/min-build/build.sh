@@ -36,7 +36,7 @@ TASKS_DIR="${SCRIPT_DIR}/../tasks"
 cp -r "${ROOT_DIR}"/values "${OUTPUT_DIR}"/
 
 # removing the values/$chart directories in values directory if not required
-pre_clean_values_1.sh VALUES_DIR="${OUTPUT_DIR}/values" HELM_CHART_EXCLUDE_LIST="inbucket,wire-server-enterprise,k8ssandra-operator,k8ssandra-test-cluster,elasticsearch-ephemeral,elasticsearch-curator,rabbitmq,demo-smtp,fake-aws,fake-aws-s3,fake-aws-sqs,postgresql,keycloakx,openebs"
+"${SCRIPT_DIR}"/pre_clean_values_1.sh VALUES_DIR="${OUTPUT_DIR}/values" HELM_CHART_EXCLUDE_LIST="inbucket,wire-server-enterprise,k8ssandra-operator,k8ssandra-test-cluster,elasticsearch-ephemeral,elasticsearch-curator,rabbitmq,demo-smtp,fake-aws,fake-aws-s3,fake-aws-sqs,postgresql,keycloakx,openebs"
 
 # all basic chart pre-processing tasks
 "${TASKS_DIR}"/pre_chart_process_0.sh "${OUTPUT_DIR}"
@@ -62,8 +62,9 @@ pre_clean_values_1.sh VALUES_DIR="${OUTPUT_DIR}/values" HELM_CHART_EXCLUDE_LIST=
 # Following tasks are independent from each other
 # --------------------------
 
-# building admin host containers, has dependenct on the helm charts
-"${TASKS_DIR}"/build_adminhost_containers.sh "${OUTPUT_DIR}"
+# Just need to ship the zauth container in containers-adminhost
+wire_version=$(helm show chart "${OUTPUT_DIR}"/charts/wire-server | yq -r .version)
+echo "quay.io/wire/zauth:$wire_version" | create-container-dump "${OUTPUT_DIR}"/containers-adminhost
 
 # --------------------------
 
