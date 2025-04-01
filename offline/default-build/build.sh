@@ -16,6 +16,10 @@ OUTPUT_TAR="${OUTPUT_DIR}/assets.tgz"
 
 TASKS_DIR="${SCRIPT_DIR}/../tasks"
 
+# for optmization purposes, if these tarballs are already processed by previous profiles check wire-server-deploy/.github/workflows/offline.yml, one can copy those artifacts from previous profiles to your profile by using
+#cp $SCRIPT_DIR/../<profile-dir>/output/containers-helm.tar "${OUTPUT_DIR}"/
+# one need to comment the tasks below for which one wants to optimize the build
+
 # Any of the tasks can be skipped by commenting them out 
 # however, mind the dependencies between them and how they are grouped
 
@@ -70,10 +74,6 @@ cp -r "${ROOT_DIR}"/values "${OUTPUT_DIR}"/
 # process_ansible.sh
 # process_bin.sh
 # --------------------------
-
-# for optmization purposes, if these tarballs are already processed by previous profiles check wire-server-deploy/.github/workflows/offline.yml, one can copy those artifacts from previous profiles to your profile by using 
-#cp $SCRIPT_DIR/../<profile-dir>/output/containers-helm.tar "${OUTPUT_DIR}"/
-# one need to comment the tasks above for which one wants to optimize the build
 
 # List of directories and files to include in the tar archive
 ITEMS_TO_ARCHIVE=(
