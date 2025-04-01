@@ -24,13 +24,6 @@ jobs:
       - name: Install nix environment
         run: nix-env -f default.nix -iA env
 
-      # deafult profile build
-      - name: Process the default profile build
-        run: ./offline/default-build/build.sh
-        env:
-          GPG_PRIVATE_KEY: '${{ secrets.GPG_PRIVATE_KEY }}'
-          DOCKER_LOGIN: '${{ secrets.DOCKER_LOGIN }}'
-
       - name: Get upload name
         id: upload_name
         run: |
@@ -39,7 +32,31 @@ jobs:
           echo ::set-output name=UPLOAD_NAME::$GITHUB_SHA
           # echo ::set-output name=UPLOAD_NAME::${SOURCE_TAG:-$GITHUB_SHA}
 
-      - name: Copy assets tarball to S3
+      # min profile build
+      - name: Process the min profile build
+        run: ./offline/min-build/build.sh
+        env:
+          GPG_PRIVATE_KEY: '${{ secrets.GPG_PRIVATE_KEY }}'
+          DOCKER_LOGIN: '${{ secrets.DOCKER_LOGIN }}'
+
+      - name: Copy min build assets tarball to S3
+        run: |
+          # Upload tarball for each profile by specifying their OUTPUT_TAR path
+          aws s3 cp offline/min-build/output/assets.tgz s3://public.wire.com/artifacts/wire-server-deploy-static-min-${{ steps.upload_name.outputs.UPLOAD_NAME }}.tgz
+          echo "Uploaded to: https://s3-$AWS_REGION.amazonaws.com/public.wire.com/artifacts/wire-server-deploy-static-min-${{ steps.upload_name.outputs.UPLOAD_NAME }}.tgz"
+        env:
+          AWS_ACCESS_KEY_ID: '${{ secrets.AWS_ACCESS_KEY_ID }}'
+          AWS_SECRET_ACCESS_KEY: '${{ secrets.AWS_SECRET_ACCESS_KEY }}'
+          AWS_REGION: "eu-west-1"
+
+      # deafult profile build
+      - name: Process the default profile build
+        run: ./offline/default-build/build.sh
+        env:
+          GPG_PRIVATE_KEY: '${{ secrets.GPG_PRIVATE_KEY }}'
+          DOCKER_LOGIN: '${{ secrets.DOCKER_LOGIN }}'
+
+      - name: Copy default build assets tarball to S3
         run: |
           # Upload tarball for each profile by specifying their OUTPUT_TAR path
           aws s3 cp offline/default-build/output/assets.tgz s3://public.wire.com/artifacts/wire-server-deploy-static-${{ steps.upload_name.outputs.UPLOAD_NAME }}.tgz
@@ -76,19 +93,3 @@ jobs:
         env:
           HCLOUD_TOKEN: '${{ secrets.HCLOUD_TOKEN }}'
 
-      # min profile build
-      - name: Process the min profile build
-        run: ./offline/min-build/build.sh
-        env:
-          GPG_PRIVATE_KEY: '${{ secrets.GPG_PRIVATE_KEY }}'
-          DOCKER_LOGIN: '${{ secrets.DOCKER_LOGIN }}'
-
-      - name: Copy assets tarball to S3
-        run: |
-          # Upload tarball for each profile by specifying their OUTPUT_TAR path
-          aws s3 cp offline/min-build/output/assets.tgz s3://public.wire.com/artifacts/wire-server-deploy-static-min-${{ steps.upload_name.outputs.UPLOAD_NAME }}.tgz
-          echo "Uploaded to: https://s3-$AWS_REGION.amazonaws.com/public.wire.com/artifacts/wire-server-deploy-static-min-${{ steps.upload_name.outputs.UPLOAD_NAME }}.tgz"
-        env:
-          AWS_ACCESS_KEY_ID: '${{ secrets.AWS_ACCESS_KEY_ID }}'
-          AWS_SECRET_ACCESS_KEY: '${{ secrets.AWS_SECRET_ACCESS_KEY }}'
-          AWS_REGION: "eu-west-1"
