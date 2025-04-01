@@ -71,21 +71,24 @@ cp -r "${ROOT_DIR}"/values "${OUTPUT_DIR}"/
 # process_bin.sh
 # --------------------------
 
-# for optmization purposes, if these tarballs are already processed by previous profiles check wire-server-deploy/.github/workflows/offline.yml, one can specify those paths as well <profile_dir>/output/containers-helm.tar <profile_dir>/output/containers-system.tar in the ITEMS_TO_ARCHIVE list below and skip the processing above accordingly
+# for optmization purposes, if these tarballs are already processed by previous profiles check wire-server-deploy/.github/workflows/offline.yml, one can copy those artifacts from previous profiles to your profile by using 
+#cp $SCRIPT_DIR/../<profile-dir>/output/containers-helm.tar "${OUTPUT_DIR}"/
+# one need to comment the tasks above for which one wants to optimize the build
 
 # List of directories and files to include in the tar archive
 ITEMS_TO_ARCHIVE=(
-  "${OUTPUT_DIR}/debs-jammy.tar"
-  "${OUTPUT_DIR}/binaries.tar"
-  "${OUTPUT_DIR}/containers-adminhost"
-  "${OUTPUT_DIR}/containers-helm.tar"
-  "${OUTPUT_DIR}/containers-system.tar"
-  "${OUTPUT_DIR}/charts"
-  "${OUTPUT_DIR}/values"
-  "${ROOT_DIR}/ansible"
-  "${ROOT_DIR}/bin"
+  "debs-jammy.tar"
+  "binaries.tar"
+  "containers-adminhost"
+  "containers-helm.tar"
+  "containers-system.tar"
+  "charts"
+  "values"
+  "../../../ansible"
+  "../../../bin"
 )
 
+# Function to check if an item exists
 check_item_exists() {
   local item=$1
   if [[ ! -e "$item" ]]; then
@@ -94,10 +97,12 @@ check_item_exists() {
   fi
 }
 
+cd "$OUTPUT_DIR" || { echo "Error: Cannot change to directory $OUTPUT_DIR"; exit 1; }
+
 for item in "${ITEMS_TO_ARCHIVE[@]}"; do
   check_item_exists "$item"
 done
 
+# Create the tar archive with relative paths
 tar czf "$OUTPUT_TAR" "${ITEMS_TO_ARCHIVE[@]}"
-
 echo "Done"
