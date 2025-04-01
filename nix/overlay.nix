@@ -37,7 +37,7 @@ super: {
 
       install -Dm755 ${./scripts/generate-gpg1-key.sh} $out/bin/generate-gpg1-key
       # we *--set* PATH here, to ensure we don't pick wrong gpgs
-      wrapProgram $out/bin/generate-gpg1-key --set PATH '${super.lib.makeBinPath (with self; [ bash coreutils gnupg ])}'
+      wrapProgram $out/bin/generate-gpg1-key --set PATH '${super.lib.makeBinPath (with self; [ bash coreutils gnupg1 ])}'
     '';
   mirror-apt-jammy = super.runCommandNoCC "mirror-apt-jammy"
     {
@@ -46,7 +46,7 @@ super: {
     ''
       install -Dm755 ${./scripts/mirror-apt-jammy.sh} $out/bin/mirror-apt-jammy
       # we need to *--set* PATH here, otherwise aptly will pick the wrong gpg
-      wrapProgram $out/bin/mirror-apt-jammy --set PATH '${super.lib.makeBinPath (with self; [ aptly bash coreutils curl gnupg gnused gnutar ])}'
+      wrapProgram $out/bin/mirror-apt-jammy --set PATH '${super.lib.makeBinPath (with self; [ aptly bash coreutils curl gnupg1 gnused gnutar ])}'
     '';
 
   create-container-dump = super.runCommandNoCC "create-container-dump"
