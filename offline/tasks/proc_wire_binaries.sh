@@ -10,6 +10,6 @@ OUTPUT_DIR="$1"
 
 echo "Processing wire binaries ${OUTPUT_DIR} ..."
 
-install -m755 "$(nix-build --no-out-link -A pkgs.wire-binaries)/"* ${OUTPUT_DIR}/binaries/
-tar cf ${OUTPUT_DIR}/binaries.tar ${OUTPUT_DIR}/binaries
-rm -r ${OUTPUT_DIR}/binaries
+install -m755 "$(nix-build --no-out-link -A pkgs.wire-binaries)/"* "${OUTPUT_DIR}"/binaries/
+tar cf "${OUTPUT_DIR}"/binaries.tar "${OUTPUT_DIR}"/binaries
+rm -r "${OUTPUT_DIR}"/binaries

@@ -50,7 +50,7 @@ wire_build_chart_release () {
 # on stdin
 pull_charts() {
   echo "Pulling charts into ${OUTPUT_DIR}/charts ..."
-  mkdir -p ${OUTPUT_DIR}/charts
+  mkdir -p "${OUTPUT_DIR}"/charts
 
   home=$(mktemp -d)
   export HELM_CACHE_HOME="$home"
@@ -78,7 +78,7 @@ pull_charts() {
       helm repo add "$repo_short_name" "$repo"
       helm repo update "$repo_short_name"
     fi
-    (cd ${OUTPUT_DIR}/charts; helm pull --version "$version" --untar "$repo_short_name/$name")
+    (cd "${OUTPUT_DIR}"/charts; helm pull --version "$version" --untar "$repo_short_name/$name")
   done
   echo "Pulling charts done."
 }

@@ -28,7 +28,7 @@ if [[ -z "$OUTPUT_DIR" ]]; then
   exit 1
 fi
 
-echo "Processing Helm charts in $OUTPUT_DIR"
+echo "Processing Helm charts in ${OUTPUT_DIR}"
 
 # Check if IMAGE_EXCLUDE_LIST is set, otherwise use a default pattern that matches nothing
 EXCLUDE_PATTERN=${IMAGE_EXCLUDE_LIST:-".^"}
@@ -37,11 +37,11 @@ echo "Excluding images matching the pattern: $EXCLUDE_PATTERN"
 
 # Get and dump required containers from Helm charts. Omit integration test
 # containers (e.g. `quay.io_wire_galley-integration_4.22.0`.)
-for chartPath in ${OUTPUT_DIR}/charts/*; do
+for chartPath in "${OUTPUT_DIR}"/charts/*; do
   echo "$chartPath"
-done | list-helm-containers | grep -v "\-integration:" > ${OUTPUT_DIR}/images
+done | list-helm-containers | grep -v "\-integration:" > "${OUTPUT_DIR}"/images
 
-grep -vE "$EXCLUDE_PATTERN"  ${OUTPUT_DIR}/images | create-container-dump  ${OUTPUT_DIR}/containers-helm
+grep -vE "$EXCLUDE_PATTERN"  "${OUTPUT_DIR}"/images | create-container-dump  "${OUTPUT_DIR}"/containers-helm
 
-tar cf ${OUTPUT_DIR}/containers-helm.tar ${OUTPUT_DIR}/containers-helm
-rm -r ${OUTPUT_DIR}/containers-helm
+tar cf "${OUTPUT_DIR}"/containers-helm.tar "${OUTPUT_DIR}"/containers-helm
+rm -r "${OUTPUT_DIR}"/containers-helm

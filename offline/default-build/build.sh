@@ -9,7 +9,7 @@ OUTPUT_DIR="$SCRIPT_DIR/output"
 # /wire-server-deploy/ansible
 ROOT_DIR="${SCRIPT_DIR}/../../"
 
-mkdir -p ${OUTPUT_DIR}/containers-{helm,other,system,adminhost} ${OUTPUT_DIR}/binaries
+mkdir -p "${OUTPUT_DIR}"/containers-{helm,other,system,adminhost} "${OUTPUT_DIR}"/binaries
 
 # Define the output tar file
 OUTPUT_TAR="${OUTPUT_DIR}/assets.tgz"
@@ -23,13 +23,13 @@ TASKS_DIR="${SCRIPT_DIR}/../tasks"
 # --------------------------
 
 # pulling the charts, charts to be skipped are passed as arguments HELM_CHART_EXCLUDE_LIST
-${TASKS_DIR}/proc_pull_charts.sh OUTPUT_DIR=$OUTPUT_DIR # HELM_CHART_EXCLUDE_LIST="inbucket,wire-server-enterprise,coturn"
+"${TASKS_DIR}"/proc_pull_charts.sh OUTPUT_DIR="${OUTPUT_DIR}" # HELM_CHART_EXCLUDE_LIST="inbucket,wire-server-enterprise,coturn"
 
 # copy local copy of values from root directory to output directory
-cp -r ${ROOT_DIR}/values ${OUTPUT_DIR}/
+cp -r "${ROOT_DIR}"/values "${OUTPUT_DIR}"/
 
 # all basic chart pre-processing tasks
-${TASKS_DIR}/pre_chart_process_0.sh $OUTPUT_DIR
+"${TASKS_DIR}"/pre_chart_process_0.sh "${OUTPUT_DIR}"
 
 # all extra pre chart processing tasks for this profile should come here
 # pre_chart_process_1.sh 
@@ -38,10 +38,10 @@ ${TASKS_DIR}/pre_chart_process_0.sh $OUTPUT_DIR
 # processing the charts
 # here we also filter the images post processing the helm charts
 # pass the image names to be filtered as arguments as regex #IMAGE_EXCLUDE_LIST='brig|galley'
-${TASKS_DIR}/process_charts.sh OUTPUT_DIR=$OUTPUT_DIR #IMAGE_EXCLUDE_LIST=""
+"${TASKS_DIR}"/process_charts.sh OUTPUT_DIR="${OUTPUT_DIR}" #IMAGE_EXCLUDE_LIST=""
 
 # all basic chart pre-processing tasks
-${TASKS_DIR}/post_chart_process_0.sh $OUTPUT_DIR
+"${TASKS_DIR}"/post_chart_process_0.sh "${OUTPUT_DIR}"
 
 # all extra post chart processing tasks for this profile should come here
 # post_chart_process_1.sh
@@ -53,16 +53,16 @@ ${TASKS_DIR}/post_chart_process_0.sh $OUTPUT_DIR
 # --------------------------
 
 # building admin host containers, has dependenct on the helm charts
-${TASKS_DIR}/build_adminhost_containers.sh $OUTPUT_DIR
+"${TASKS_DIR}"/build_adminhost_containers.sh "${OUTPUT_DIR}"
 
 # build linux packages
-${TASKS_DIR}/build_linux_pkgs.sh $OUTPUT_DIR $ROOT_DIR
+"${TASKS_DIR}"/build_linux_pkgs.sh "${OUTPUT_DIR}" "${ROOT_DIR}"
 
 # Creating system containers tarball
-${TASKS_DIR}/proc_system_containers.sh $OUTPUT_DIR
+"${TASKS_DIR}"/proc_system_containers.sh "${OUTPUT_DIR}"
 
 # Processing wire binaries
-${TASKS_DIR}/proc_wire_binaries.sh $OUTPUT_DIR
+"${TASKS_DIR}"/proc_wire_binaries.sh "${OUTPUT_DIR}"
 # --------------------------
 
 # custom scripts to work on ansible and bin directories
