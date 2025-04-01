@@ -60,7 +60,6 @@ rec {
       profileEnv
     ] ++ lib.optionals pkgs.stdenv.isLinux [
       pkgs.containerd
-      patch-ingress-controller-images # depends on containerd, TODO: migrate to skopeo?
 
 
       # for RTP session debugging

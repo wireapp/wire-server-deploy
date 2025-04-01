@@ -68,12 +68,4 @@ super: {
       wrapProgram $out/bin/list-helm-containers --prefix PATH : '${super.lib.makeBinPath [ self.kubernetes-helm ]}'
     '';
 
-  patch-ingress-controller-images = super.runCommandNoCC "patch-ingress-controller-images"
-    {
-      nativeBuildInputs = [ super.makeWrapper ];
-    }
-    ''
-      install -Dm755 ${./scripts/patch-ingress-controller-images.sh} $out/bin/patch-ingress-controller-images
-        wrapProgram $out/bin/patch-ingress-controller-images --prefix PATH : '${super.lib.makeBinPath [ self.containerd ]}'
-    '';
 }
