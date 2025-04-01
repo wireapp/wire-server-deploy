@@ -15,7 +15,7 @@ cd "${OUTPUT_DIR}" || { echo "Error: Cannot change to directory ${OUTPUT_DIR}/de
 
 # Build the container image
 container_image=$(nix-build --no-out-link -A container)
-install -m755 "$container_image" containers-adminhost/container-wire-server-deploy.tgz"
+install -m755 "$container_image" containers-adminhost/container-wire-server-deploy.tgz
 
 # Download zauth; as it's needed to generate certificates
 wire_version=$(helm show chart charts/wire-server | yq -r .version)
