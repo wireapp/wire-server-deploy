@@ -63,8 +63,7 @@ cp -r "${ROOT_DIR}"/values "${OUTPUT_DIR}"/
 # --------------------------
 
 # Just need to ship the zauth container in containers-adminhost
-wire_version=$(helm show chart "${OUTPUT_DIR}"/charts/wire-server | yq -r .version)
-echo "quay.io/wire/zauth:$wire_version" | create-container-dump "${OUTPUT_DIR}"/containers-adminhost
+"${TASKS_DIR}"/build_adminhost_containers.sh "${OUTPUT_DIR}" --zauth
 
 # --------------------------
 

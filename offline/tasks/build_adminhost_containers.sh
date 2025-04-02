@@ -1,24 +1,52 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-if [[ ! $# -eq 1 ]]; then
-  echo "usage: $0 OUTPUT-DIR" >&2
+usage() {
+  echo "usage: $0 OUTPUT-DIR [--adminhost] [--zauth]" >&2
   exit 1
+}
+
+if [[ $# -lt 1 ]]; then
+  usage
 fi
 
 OUTPUT_DIR="$1"
+shift
 
-echo "Building admin container images ${OUTPUT_DIR} ..."
+ADMINHOST=false
+ZAUTH=false
 
-# Build the container image
-container_image=$(nix-build --no-out-link -A container)
+while [[ $# -gt 0 ]]; do
+  case $1 in
+    --adminhost)
+      ADMINHOST=true
+      ;;
+    --zauth)
+      ZAUTH=true
+      ;;
+    *)
+      usage
+      ;;
+  esac
+  shift
+done
 
-ORIGINAL_DIR="$PWD"
-cd "${OUTPUT_DIR}" || { echo "Error: Cannot change to directory ${OUTPUT_DIR}/debs-jammy"; exit 1; }
-install -m755 "$container_image" containers-adminhost/container-wire-server-deploy.tgz
+if [ "$ADMINHOST" = false ] && [ "$ZAUTH" = false ]; then
+  echo "Error: Neither --adminhost nor --zauth option was passed. At least one is required." >&2
+  usage
+fi
 
-# Download zauth; as it's needed to generate certificates
-wire_version=$(helm show chart charts/wire-server | yq -r .version)
-echo "quay.io/wire/zauth:$wire_version" | create-container-dump containers-adminhost
+if [ "$ADMINHOST" = true ]; then
+  echo "Building adminhost container images in ${OUTPUT_DIR} ..."
+  container_image=$(nix-build --no-out-link -A container)
+  ORIGINAL_DIR="$PWD"
+  cd "${OUTPUT_DIR}" || { echo "Error: Cannot change to directory ${OUTPUT_DIR}"; exit 1; }
+  install -m755 "$container_image" containers-adminhost/container-wire-server-deploy.tgz
+  cd "$ORIGINAL_DIR" || { echo "Error: Cannot change back to original directory"; exit 1; }
+fi
 
-cd "$ORIGINAL_DIR" || { echo "Error: Cannot change back to original directory"; exit 1; }
+if [ "$ZAUTH" = true ]; then
+  echo "Building zauth container image in ${OUTPUT_DIR} ..."
+  wire_version=$(helm show chart "${OUTPUT_DIR}"/charts/wire-server | yq -r .version)
+  echo "quay.io/wire/zauth:$wire_version" | create-container-dump "${OUTPUT_DIR}"/containers-adminhost
+fi

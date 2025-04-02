@@ -57,7 +57,7 @@ cp -r "${ROOT_DIR}"/values "${OUTPUT_DIR}"/
 # --------------------------
 
 # building admin host containers, has dependenct on the helm charts
-"${TASKS_DIR}"/build_adminhost_containers.sh "${OUTPUT_DIR}"
+"${TASKS_DIR}"/build_adminhost_containers.sh "${OUTPUT_DIR}" --adminhost --zauth
 
 # build linux packages
 "${TASKS_DIR}"/build_linux_pkgs.sh "${OUTPUT_DIR}" "${ROOT_DIR}"
