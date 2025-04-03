@@ -22,6 +22,8 @@ aptly_root=$1
 mkdir -p "$aptly_root"
 shift
 
+export APTLY_SKIP_GPG_VERSION_CHECK=1
+
 
 # NOTE:  These are all the packages needed for all our playbooks to succeed. This list was created by trial and error
 packages=(

@@ -32,7 +32,7 @@ rec {
       apacheHttpd
       awscli2
       gnumake
-      gnupg
+      gnupg1
 
       kubernetes-tools
 
