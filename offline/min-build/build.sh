@@ -6,7 +6,6 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 OUTPUT_DIR="$SCRIPT_DIR/output"
 # ROOT_DIR points to dir where ansible,bin, values etc can be located
 # expected structure to be: /wire-server-deploy/offline/default-build/build.sh
-# /wire-server-deploy/ansible
 ROOT_DIR="${SCRIPT_DIR}/../../"
 
 mkdir -p "${OUTPUT_DIR}"/containers-{helm,other,system,adminhost} "${OUTPUT_DIR}"/binaries

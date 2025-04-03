@@ -4,17 +4,11 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # this directory will be created to store all the output files
 OUTPUT_DIR="$SCRIPT_DIR/output"
-# ROOT_DIR points to dir where ansible,bin, values etc can be located
-# expected structure to be: /wire-server-deploy/offline/default-build/build.sh
-# /wire-server-deploy/ansible
-ROOT_DIR="${SCRIPT_DIR}/../../"
 
 mkdir -p "${OUTPUT_DIR}"/containers-{helm,other,system,adminhost} "${OUTPUT_DIR}"/binaries
 
 # Define the output tar file
 OUTPUT_TAR="${OUTPUT_DIR}/assets.tgz"
-
-TASKS_DIR="${SCRIPT_DIR}/../tasks"
 
 # for optmization purposes, if these tarballs are already processed by previous profiles check wire-server-deploy/.github/workflows/offline.yml, one can copy those artifacts from previous profiles to your profile by using
 #cp $SCRIPT_DIR/../<profile-dir>/output/containers-helm.tar "${OUTPUT_DIR}"/
@@ -36,7 +30,7 @@ cp -r "${SCRIPT_DIR}"/../default-build/output/values "${OUTPUT_DIR}"/s
 cp -r "${SCRIPT_DIR}"/../default-build/output/containers-helm "${OUTPUT_DIR}"/
 
 # here removing the federation image from cintainers-helm directory
-post_chart_process_1.sh "${OUTPUT_DIR}"/
+"${SCRIPT_DIR}"/post_chart_process_1.sh "${OUTPUT_DIR}"/
 # --------------------------
 
 # Following tasks are independent from each other
