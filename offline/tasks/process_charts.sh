@@ -30,6 +30,8 @@ fi
 
 echo "Processing Helm charts in ${OUTPUT_DIR}"
 
+touch "${OUTPUT_DIR}"/containers-helm/helm_image_tree.txt
+
 # Check if IMAGE_EXCLUDE_LIST is set, otherwise use a default pattern that matches nothing
 EXCLUDE_PATTERN=${IMAGE_EXCLUDE_LIST:-".^"}
 
@@ -39,13 +41,12 @@ echo "Excluding images matching the pattern: $EXCLUDE_PATTERN"
 # containers (e.g. `quay.io_wire_galley-integration_4.22.0`.)
 for chartPath in "${OUTPUT_DIR}"/charts/*; do
   echo "$chartPath"
-done | list-helm-containers | grep -v "\-integration:" > "${OUTPUT_DIR}"/images
+done | list-helm-containers VALUES_DIR="${OUTPUT_DIR}"/values HELM_IMAGE_TREE_FILE="${OUTPUT_DIR}"/containers-helm/chart-images.txt | grep -v "\-integration:" > "${OUTPUT_DIR}"/images
 
 grep -vE "$EXCLUDE_PATTERN"  "${OUTPUT_DIR}"/images | create-container-dump  "${OUTPUT_DIR}"/containers-helm
 
 ORIGINAL_DIR="$PWD"
 cd "${OUTPUT_DIR}" || { echo "Error: Cannot change to directory ${OUTPUT_DIR}/debs-jammy"; exit 1; }
 tar cf containers-helm.tar containers-helm
-rm -r containers-helm
 
 cd "$ORIGINAL_DIR" || { echo "Error: Cannot change back to original directory"; exit 1; }

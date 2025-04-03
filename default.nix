@@ -52,8 +52,11 @@ rec {
       generate-gpg1-key
       # Linting
       shellcheck
+
+      # general utilities for bash operations
       jq
       gnused
+
       niv
       nix-prefetch-docker
     ] ++ [
