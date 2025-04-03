@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # This consumes a list of containers from stdin and produces a `skopeo sync`
 # dir at $1.
-set -eou pipefail
+set -x -eou pipefail
 
 if [[ ! $# -eq 1 ]]; then
   echo "usage: $0 OUTPUT-DIR" >&2
