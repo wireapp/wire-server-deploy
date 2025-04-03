@@ -52,7 +52,7 @@ rec {
       generate-gpg1-key
       # Linting
       shellcheck
-
+      jq
       niv
       nix-prefetch-docker
     ] ++ [
