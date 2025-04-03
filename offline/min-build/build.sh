@@ -27,7 +27,7 @@ TASKS_DIR="${SCRIPT_DIR}/../tasks"
 # --------------------------
 
 # pulling the charts, charts to be skipped are passed as arguments HELM_CHART_EXCLUDE_LIST
-"${TASKS_DIR}"/proc_pull_charts.sh OUTPUT_DIR="${OUTPUT_DIR}" HELM_CHART_EXCLUDE_LIST="inbucket,wire-server-enterprise,k8ssandra-operator,k8ssandra-test-cluster,elasticsearch-ephemeral,elasticsearch-curator,rabbitmq,demo-smtp,fake-aws,fake-aws-s3,fake-aws-sqs,postgresql,keycloakx,openebs"
+"${TASKS_DIR}"/proc_pull_charts.sh OUTPUT_DIR="${OUTPUT_DIR}" HELM_CHART_EXCLUDE_LIST="inbucket,wire-server-enterprise,k8ssandra-operator,k8ssandra-test-cluster,elasticsearch-ephemeral,elasticsearch-curator,rabbitmq,demo-smtp,fake-aws,fake-aws-s3,fake-aws-sqs,postgresql,keycloakx,openebs,nginx-ingress-controller,kibana,restund,fluent-bit"
 
 # optionally if we want to remove the following
 # smallstep-accomp,step-certificates,reaper,redis-cluster,redis-ephemeral
@@ -36,7 +36,7 @@ TASKS_DIR="${SCRIPT_DIR}/../tasks"
 cp -r "${ROOT_DIR}"/values "${OUTPUT_DIR}"/
 
 # removing the values/$chart directories in values directory if not required
-"${SCRIPT_DIR}"/pre_clean_values_1.sh VALUES_DIR="${OUTPUT_DIR}/values" HELM_CHART_EXCLUDE_LIST="inbucket,wire-server-enterprise,k8ssandra-operator,k8ssandra-test-cluster,elasticsearch-ephemeral,elasticsearch-curator,rabbitmq,demo-smtp,fake-aws,fake-aws-s3,fake-aws-sqs,postgresql,keycloakx,openebs"
+"${SCRIPT_DIR}"/pre_clean_values_1.sh VALUES_DIR="${OUTPUT_DIR}/values" HELM_CHART_EXCLUDE_LIST="inbucket,wire-server-enterprise,k8ssandra-operator,k8ssandra-test-cluster,elasticsearch-ephemeral,elasticsearch-curator,rabbitmq,demo-smtp,fake-aws,fake-aws-s3,fake-aws-sqs,postgresql,keycloakx,openebs,nginx-ingress-controller,kibana,restund,fluent-bit"
 
 # all basic chart pre-processing tasks
 "${TASKS_DIR}"/pre_chart_process_0.sh "${OUTPUT_DIR}"
