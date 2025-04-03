@@ -24,7 +24,6 @@ shift
 
 export APTLY_SKIP_GPG_VERSION_CHECK=1
 
-
 # NOTE:  These are all the packages needed for all our playbooks to succeed. This list was created by trial and error
 packages=(
   python3-apt
@@ -109,37 +108,37 @@ aptly_config=$(mktemp)
 trap 'rm -Rf -- "$aptly_config $GNUPGHOME"' EXIT
 
 cat > "$aptly_config" <<FOO
-{ "rootDir": "$aptly_root", "downloadConcurrency": 10, "gpgProvider": "internal" }
+{ "rootDir": "$aptly_root", "downloadConcurrency": 10, "gpgProvider": "gpg2" }
 FOO
 
 aptly="aptly -config=${aptly_config} "
 
 echo "Info"
-gpg --version
-gpg --fingerprint
-gpg --no-default-keyring --keyring trustedkeys.gpg --fingerprint
+gpg2 --version
+gpg2 --fingerprint
+gpg2 --no-default-keyring --keyring trustedkeys.gpg --fingerprint
 
 
 # Import our signing key to our keyring
-echo -e "$GPG_PRIVATE_KEY" | gpg --import
+echo -e "$GPG_PRIVATE_KEY" | gpg2 --import
 
 echo "Printing the public key ids..."
-gpg --list-keys
+gpg2 --list-keys
 echo "Printing the secret key ids..."
-gpg --list-secret-keys
+gpg2 --list-secret-keys
 
 
 # import the ubuntu and docker signing keys
 # TODO: Do we want to pin these better? Verify them?
-curl 'https://keyserver.ubuntu.com/pks/lookup?op=get&search=0x790bc7277767219c42c86f933b4fe6acc0b21f32' | gpg --no-default-keyring --keyring=trustedkeys.gpg --import
-curl 'https://keyserver.ubuntu.com/pks/lookup?op=get&search=0xf6ecb3762474eda9d21b7022871920d1991bc93c' | gpg --no-default-keyring --keyring=trustedkeys.gpg --import
-curl https://download.docker.com/linux/ubuntu/gpg | gpg --no-default-keyring --keyring=trustedkeys.gpg --import
-curl -1sLf "https://keys.openpgp.org/vks/v1/by-fingerprint/0A9AF2115F4687BD29803A206B73A36E6026DFCA" | gpg --no-default-keyring --keyring=trustedkeys.gpg --import
-curl -1sLf "https://keyserver.ubuntu.com/pks/lookup?op=get&search=0xf77f1eda57ebb1cc" | gpg --no-default-keyring --keyring=trustedkeys.gpg --import
-curl -1sLf "https://packagecloud.io/rabbitmq/rabbitmq-server/gpgkey" | gpg --no-default-keyring --keyring=trustedkeys.gpg --import
+curl 'https://keyserver.ubuntu.com/pks/lookup?op=get&search=0x790bc7277767219c42c86f933b4fe6acc0b21f32' | gpg2 --no-default-keyring --keyring=trustedkeys.gpg --import
+curl 'https://keyserver.ubuntu.com/pks/lookup?op=get&search=0xf6ecb3762474eda9d21b7022871920d1991bc93c' | gpg2 --no-default-keyring --keyring=trustedkeys.gpg --import
+curl https://download.docker.com/linux/ubuntu/gpg | gpg2 --no-default-keyring --keyring=trustedkeys.gpg --import
+curl -1sLf "https://keys.openpgp.org/vks/v1/by-fingerprint/0A9AF2115F4687BD29803A206B73A36E6026DFCA" | gpg2 --no-default-keyring --keyring=trustedkeys.gpg --import
+curl -1sLf "https://keyserver.ubuntu.com/pks/lookup?op=get&search=0xf77f1eda57ebb1cc" | gpg2 --no-default-keyring --keyring=trustedkeys.gpg --import
+curl -1sLf "https://packagecloud.io/rabbitmq/rabbitmq-server/gpgkey" | gpg2 --no-default-keyring --keyring=trustedkeys.gpg --import
 
 echo "Trusted"
-gpg --list-keys --no-default-keyring --keyring=trustedkeys.gpg
+gpg2 --list-keys --no-default-keyring --keyring=trustedkeys.gpg
 
 $aptly mirror create -architectures=amd64 -filter="${packages_}" -filter-with-deps jammy http://de.archive.ubuntu.com/ubuntu/ jammy main universe
 $aptly mirror create -architectures=amd64 -filter="${packages_}" -filter-with-deps jammy-security http://de.archive.ubuntu.com/ubuntu/ jammy-security main universe
@@ -158,6 +157,6 @@ $aptly snapshot create docker-ce from mirror docker-ce
 
 $aptly snapshot merge wire jammy jammy-security jammy-updates docker-ce
 
-$aptly publish snapshot -gpg-key="gpg@wire.com" -secret-keyring="$GNUPGHOME/secring.gpg" -distribution jammy wire
+$aptly publish snapshot --gpg-provider=gpg2 -gpg-key="gpg@wire.com" -secret-keyring="$GNUPGHOME/secring.gpg" -distribution jammy wire
 
-gpg --export gpg@wire.com -a > "$aptly_root/public/gpg"
+gpg2 --export gpg@wire.com -a > "$aptly_root/public/gpg"
