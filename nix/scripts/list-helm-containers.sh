@@ -70,4 +70,4 @@ while IFS= read -r chart; do
   echo "\n" >> "${HELM_IMAGE_TREE_FILE}"
   echo "$current_images"
 done
-echo -e "$images" | sort -u
+echo -e "$images" | tr -s ' ' '\n' | sort -u
