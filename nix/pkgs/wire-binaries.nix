@@ -11,10 +11,10 @@ let
   kube_version = "v1.29.10";
   etcd_version = "v3.5.16";
   cni_version = "v1.3.0";
-  calico_version = "v3.26.4";
-  crictl_version = "v1.28.0";
-  runc_version = "v1.1.10";
-  nerdctl_version = "1.7.1";
+  calico_version = "v3.27.4";
+  crictl_version = "v1.29.0";
+  runc_version = "v1.1.14";
+  nerdctl_version = "1.7.7";
   containerd_version = "1.7.22";
   minio_version = "RELEASE.2023-07-07T07-13-57Z";
   mc_version = "RELEASE.2023-10-24T05-18-28Z";
