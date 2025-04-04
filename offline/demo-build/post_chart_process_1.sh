@@ -7,7 +7,7 @@ if [[ ! $# -eq 2 ]]; then
 fi
 
 OUTPUT_DIR="$1"
-CONTAINERS_HELM_DIR="$2"
+PROFILE_OUT_DIR="$2"
 
 echo "Running post-chart process script 1 in dir ${OUTPUT_DIR} from profile output dir ${PROFILE_OUT_DIR} ..."
 
