@@ -46,3 +46,4 @@ EOF
 list-system-containers | create-container-dump "${OUTPUT_DIR}"/containers-system
 tar cf "${OUTPUT_DIR}"/containers-system.tar -C "${OUTPUT_DIR}" containers-system
 rm -r "${OUTPUT_DIR}"/containers-system
+list-system-containers > "${OUTPUT_DIR}"/versions/containers-system.txt

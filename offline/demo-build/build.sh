@@ -38,15 +38,16 @@ SOURCE_OUTPUT_DIR="${SCRIPT_DIR}/../default-build/output"
 ln -sf "${SOURCE_OUTPUT_DIR}/containers-adminhost" "${OUTPUT_DIR}/containers-adminhost"
 
 # link debs-jammy.tar from the default build
-ln -sf "${SOURCE_DIR}/debs-jammy.tar" "${OUTPUT_DIR}/debs-jammy.tar"
+ln -sf "${SOURCE_OUTPUT_DIR}/debs-jammy.tar" "${OUTPUT_DIR}/debs-jammy.tar"
 
 # link containers-system.tar from the default build
-ln -sf "${SOURCE_DIR}/containers-system.tar" "${OUTPUT_DIR}/containers-system.tar"
+ln -sf "${SOURCE_OUTPUT_DIR}/containers-system.tar" "${OUTPUT_DIR}/containers-system.tar"
 
 # copy binaries.tar from the default build
-ln -sf "${SOURCE_DIR}/binaries.tar" "${OUTPUT_DIR}/binaries.tar"
+ln -sf "${SOURCE_OUTPUT_DIR}/binaries.tar" "${OUTPUT_DIR}/binaries.tar"
 
-cp "${SOURCE_DIR}/versions/wire-binaries.json" "${OUTPUT_DIR}/versions/"
+cp "${SOURCE_OUTPUT_DIR}/versions/wire-binaries.json" "${OUTPUT_DIR}/versions/"
+cp "${SOURCE_OUTPUT_DIR}/versions/containers-system.txt" "${OUTPUT_DIR}/versions/"
 # --------------------------
 
 # List of directories and files to include in the tar archive
