@@ -26,27 +26,25 @@ cp -r "${SCRIPT_DIR}"/../default-build/output/charts "${OUTPUT_DIR}"/
 # copy values from the default build
 cp -r "${SCRIPT_DIR}"/../default-build/output/values "${OUTPUT_DIR}"/
 
-# copying containers-helm directory from the default build
-cp -r "${SCRIPT_DIR}"/../default-build/output/containers-helm "${OUTPUT_DIR}"/
-
 # here removing the federation image from cintainers-helm directory
-"${SCRIPT_DIR}"/post_chart_process_1.sh "${OUTPUT_DIR}"/
+"${SCRIPT_DIR}"/post_chart_process_1.sh "${OUTPUT_DIR}"/ "${SCRIPT_DIR}"/../default-build/output/containers-helm
 # --------------------------
 
 # Following tasks are independent from each other
 # --------------------------
+SOURCE_OUTPUT_DIR="${SCRIPT_DIR}/../default-build/output"
 
-# copying containers-adminhost directory from the default build
-cp -r "${SCRIPT_DIR}"/../default-build/output/containers-adminhost "${OUTPUT_DIR}"/
+# linking containers-adminhost directory from the default build
+ln -sf "${SOURCE_OUTPUT_DIR}/containers-adminhost" "${OUTPUT_DIR}/containers-adminhost"
 
-# copy debs-jammy.tar from the default build
-cp -r "${SCRIPT_DIR}"/../default-build/output/debs-jammy.tar "${OUTPUT_DIR}"/
+# link debs-jammy.tar from the default build
+ln -sf "${SOURCE_DIR}/debs-jammy.tar" "${OUTPUT_DIR}/debs-jammy.tar"
 
-# copy containers-system.tar from the default build
-cp -r "${SCRIPT_DIR}"/../default-build/output/containers-system.tar "${OUTPUT_DIR}"/
+# link containers-system.tar from the default build
+ln -sf "${SOURCE_DIR}/containers-system.tar" "${OUTPUT_DIR}/containers-system.tar"
 
 # copy binaries.tar from the default build
-cp -r "${SCRIPT_DIR}"/../default-build/output/binaries.tar "${OUTPUT_DIR}"/
+ln -sf "${SOURCE_DIR}/binaries.tar" "${OUTPUT_DIR}/binaries.tar"
 
 # --------------------------
 
