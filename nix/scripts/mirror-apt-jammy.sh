@@ -22,7 +22,7 @@ aptly_root=$1
 mkdir -p "$aptly_root"
 shift
 
-export APTLY_SKIP_GPG_VERSION_CHECK=1
+#export APTLY_SKIP_GPG_VERSION_CHECK=1
 
 # NOTE:  These are all the packages needed for all our playbooks to succeed. This list was created by trial and error
 packages=(
@@ -157,6 +157,6 @@ $aptly snapshot create docker-ce from mirror docker-ce
 
 $aptly snapshot merge wire jammy jammy-security jammy-updates docker-ce
 
-$aptly publish snapshot --gpg-provider=gpg2 -gpg-key="gpg@wire.com" -secret-keyring="$GNUPGHOME/secring.gpg" -distribution jammy wire
+$aptly publish snapshot -gpg-key="gpg@wire.com" -secret-keyring=trustedkeys.gpg -distribution jammy wire
 
 gpg2 --export gpg@wire.com -a > "$aptly_root/public/gpg"
