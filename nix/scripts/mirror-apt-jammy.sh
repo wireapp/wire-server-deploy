@@ -140,6 +140,10 @@ curl -1sLf "https://packagecloud.io/rabbitmq/rabbitmq-server/gpgkey" | gpg2 --no
 echo "Trusted"
 gpg2 --list-keys --no-default-keyring --keyring=trustedkeys.gpg
 
+echo "secring.gpg"
+gpg2 --list-keys --no-default-keyring --keyring="$GNUPGHOME/secring.gpg"
+
+
 $aptly mirror create -architectures=amd64 -filter="${packages_}" -filter-with-deps jammy http://de.archive.ubuntu.com/ubuntu/ jammy main universe
 $aptly mirror create -architectures=amd64 -filter="${packages_}" -filter-with-deps jammy-security http://de.archive.ubuntu.com/ubuntu/ jammy-security main universe
 $aptly mirror create -architectures=amd64 -filter="${packages_}" -filter-with-deps jammy-updates http://de.archive.ubuntu.com/ubuntu/ jammy-updates main universe
@@ -157,6 +161,6 @@ $aptly snapshot create docker-ce from mirror docker-ce
 
 $aptly snapshot merge wire jammy jammy-security jammy-updates docker-ce
 
-$aptly publish snapshot --gpg-provider=gpg2 -gpg-key="gpg@wire.com" -secret-keyring="$GNUPGHOME/secring.gpg" -distribution jammy wire
+$aptly publish snapshot -gpg-key="gpg@wire.com" -secret-keyring="$GNUPGHOME/secring.gpg" -distribution jammy wire
 
 gpg2 --export gpg@wire.com -a > "$aptly_root/public/gpg"
