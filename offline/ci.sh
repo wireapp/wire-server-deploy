@@ -32,7 +32,24 @@ container_image=$(nix-build --no-out-link -A container)
 mkdir -p containers-{helm,other,system,adminhost}
 install -m755 "$container_image" "containers-adminhost/container-wire-server-deploy.tgz"
 
+# Read basic info from .deb packages, write it into debian-builds.json
+function write-debian-builds-json() {
+  if [ ! -f debian-builds.json ]; then
+    echo "[]" > debian-builds.json
+  fi
+
+  find debs-jammy/pool/ -type f -name "*.deb" | while read -r pkg; do
+    name=$(dpkg-deb --info "$pkg" | awk '/Package:/ {print $2}')
+    version=$(dpkg-deb --info "$pkg" | awk '/Version:/ {print $2}')
+    source=$(dpkg-deb --info "$pkg" | awk '/Source:/ {print $2}')
+    jq --arg name "$name" --arg version "$version" --arg source "$source" \
+      '. += [{ name: $name, version: $version, source: $source }]' debian-builds.json > debian-builds.tmp && mv debian-builds.tmp debian-builds.json
+  done
+}
+
 mirror-apt-jammy debs-jammy
+echo "Writing debian-builds.json"
+write-debian-builds-json
 tar cf debs-jammy.tar debs-jammy
 rm -r debs-jammy
 
@@ -173,7 +190,7 @@ pull_charts() {
   echo "Pulling charts done."
 }
 
-wire_build="https://raw.githubusercontent.com/wireapp/wire-builds/9782a2b54cf1ff01ae086495a52bad0b8e2a243e/build.json"
+wire_build="https://raw.githubusercontent.com/wireapp/wire-builds/5443da20184574e097ec71a048cfc32d9f85a628/build.json"
 wire_build_chart_release "$wire_build" | pull_charts
 
 # Uncomment if you want to create non-wire-build release
@@ -185,6 +202,26 @@ wire_build_chart_release "$wire_build" | pull_charts
 # Download zauth; as it's needed to generate certificates
 wire_version=$(helm show chart ./charts/wire-server | yq -r .version)
 echo "quay.io/wire/zauth:$wire_version" | create-container-dump containers-adminhost
+
+function write_wire_binaries_json() {
+  echo "Writing wire binaries into wire-binaries.json"
+  # "Get" all the binaries from the .nix file
+  sed -n '/_version/p' nix/pkgs/wire-binaries.nix | grep -v '\.version' | grep -v 'url' > wire-binaries.json.tmp
+
+  echo "[" > wire-binaries.json.tmp
+  # Format it into JSON
+  sed -E '/\.url|\.version/!s/([a-z_]+)_version = "(.*)";/{\n  "\1": { "version": "\2" }\n},/' wire-binaries.json.tmp > wire-binaries.json.formatted
+  # remove trailing comma -.-
+  sed -i '$ s/,$//' wire-binaries.json.formatted
+  # remove tmp file
+  rm wire-binaries.json.tmp
+
+  echo "]" >> wire-binaries.json.formatted
+
+  mv wire-binaries.json.formatted wire-binaries.json
+} 
+
+write_wire_binaries_json
 
 ###################################
 ####### DIRTY HACKS GO HERE #######
@@ -216,6 +253,6 @@ tar cf containers-helm.tar containers-helm
 
 echo "docker_ubuntu_repo_repokey: '${fingerprint}'" > ansible/inventory/offline/group_vars/all/key.yml
 
-tar czf assets.tgz debs-jammy.tar binaries.tar containers-adminhost containers-helm.tar containers-system.tar ansible charts values bin
+tar czf assets.tgz debs-jammy.tar binaries.tar containers-adminhost containers-helm.tar containers-system.tar ansible charts values bin debian-builds.json deploy-builds.json wire-builds.json wire-binaries.json
 
 echo "Done"
