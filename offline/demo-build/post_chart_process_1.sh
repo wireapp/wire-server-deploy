@@ -29,3 +29,4 @@ rm -f "${containers_dir}/${fed_image}"
 sed -i "/${fed_image}/d" "${index_file}"
 sed -i "/${fed_image}/d" "${helm_image_tree_file}"
 
+tar cf "${OUTPUT_DIR}"/containers-helm.tar -C "${OUTPUT_DIR}" containers-helm
