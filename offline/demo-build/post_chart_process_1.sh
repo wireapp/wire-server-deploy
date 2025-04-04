@@ -11,7 +11,7 @@ CONTAINERS_HELM_DIR="$2"
 
 echo "Running post-chart process script 1 in dir ${OUTPUT_DIR} with containers_helm_dir ${CONTAINERS_HELM_DIR} ..."
 
-containers_dir="${CONTAINERS_HELM_DIR}"/containers-helm
+containers_dir="${CONTAINERS_HELM_DIR}"
 index_file="${containers_dir}"/index.txt
 helm_image_tree_file="${containers_dir}"/helm_image_tree.txt
 
