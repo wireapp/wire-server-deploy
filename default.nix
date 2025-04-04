@@ -53,13 +53,17 @@ rec {
       # Linting
       shellcheck
 
+      # general utilities for bash operations
+      jq
+      gnused
+      curl
+
       niv
       nix-prefetch-docker
     ] ++ [
       profileEnv
     ] ++ lib.optionals pkgs.stdenv.isLinux [
       pkgs.containerd
-      patch-ingress-controller-images # depends on containerd, TODO: migrate to skopeo?
 
 
       # for RTP session debugging
