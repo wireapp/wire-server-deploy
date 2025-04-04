@@ -39,10 +39,7 @@ fi
 if [ "$ADMINHOST" = true ]; then
   echo "Building adminhost container images in ${OUTPUT_DIR} ..."
   container_image=$(nix-build --no-out-link -A container)
-  ORIGINAL_DIR="$PWD"
-  cd "${OUTPUT_DIR}" || { echo "Error: Cannot change to directory ${OUTPUT_DIR}"; exit 1; }
-  install -m755 "$container_image" containers-adminhost/container-wire-server-deploy.tgz
-  cd "$ORIGINAL_DIR" || { echo "Error: Cannot change back to original directory"; exit 1; }
+  install -m755 "$container_image" "${OUTPUT_DIR}"/containers-adminhost/container-wire-server-deploy.tgz
 fi
 
 if [ "$ZAUTH" = true ]; then

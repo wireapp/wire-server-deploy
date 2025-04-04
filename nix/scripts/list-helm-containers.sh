@@ -57,11 +57,11 @@ images=""
 # render the charts, and assemble the list of images this would fetch.
 while IFS= read -r chart; do
   echo "Running helm template on chart ${chart}…" >&2
-  current_images=$(helm template --debug "$chart" \
+  current_images=$(helm template --debug "${chart}" \
     --set federate.dtls.tls.key=emptyString \
     --set federate.dtls.tls.crt=emptyString \
-    $( [[ -f "${VALUES_DIR}"/$(basename $chart)/prod-values.example.yaml ]] && echo "-f ${VALUES_DIR}/$(basename $chart)/prod-values.example.yaml" ) \
-    $( [[ -f "${VALUES_DIR}"/$(basename $chart)/prod-secrets.example.yaml ]] && echo "-f ${VALUES_DIR}/$(basename $chart)/prod-secrets.example.yaml" ) \
+    $( [[ -f "${VALUES_DIR}"/$(basename "${chart}")/prod-values.example.yaml ]] && echo "-f ${VALUES_DIR}/$(basename "${chart}")/prod-values.example.yaml" ) \
+    $( [[ -f "${VALUES_DIR}"/$(basename "${chart}")/prod-secrets.example.yaml ]] && echo "-f ${VALUES_DIR}/$(basename "${chart}")/prod-secrets.example.yaml" ) \
     | yq -r '..|.image? | select(.)' | optionally_complain | sort -u)
 
   images+="$current_images\n"

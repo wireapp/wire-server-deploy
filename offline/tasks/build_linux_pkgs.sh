@@ -11,14 +11,9 @@ ROOT_DIR="$2"
 
 echo "Building Linux packages ${OUTPUT_DIR} ..."
 
-ORIGINAL_DIR="$PWD"
-cd "${OUTPUT_DIR}" || { echo "Error: Cannot change to directory ${OUTPUT_DIR}/debs-jammy"; exit 1; }
-
-mirror-apt-jammy debs-jammy
-tar cf debs-jammy.tar debs-jammy
-rm -r debs-jammy
-
-cd "$ORIGINAL_DIR" || { echo "Error: Cannot change back to original directory"; exit 1; }
+mirror-apt-jammy "${OUTPUT_DIR}"/debs-jammy
+tar cf "${OUTPUT_DIR}"/debs-jammy.tar -C "${OUTPUT_DIR}" debs-jammy
+rm -r "${OUTPUT_DIR}"/debs-jammy
 
 fingerprint=$(echo "$GPG_PRIVATE_KEY" | gpg --with-colons --import-options show-only --import --fingerprint  | awk -F: '$1 == "fpr" {print $10; exit}')
 

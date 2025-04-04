@@ -43,11 +43,6 @@ registry.k8s.io/ingress-nginx/kube-webhook-certgen:v20231011-8b53cabe0
 EOF
 }
 
-ORIGINAL_DIR="$PWD"
-cd "${OUTPUT_DIR}" || { echo "Error: Cannot change to directory ${OUTPUT_DIR}"; exit 1; }
-
-list-system-containers | create-container-dump containers-system
-tar cf containers-system.tar containers-system
-rm -r containers-system
-
-cd "$ORIGINAL_DIR" || { echo "Error: Cannot change back to original directory"; exit 1; }
+list-system-containers | create-container-dump "${OUTPUT_DIR}"/containers-system
+tar cf "${OUTPUT_DIR}"/containers-system.tar -C "${OUTPUT_DIR}" containers-system
+rm -r "${OUTPUT_DIR}"/containers-system
