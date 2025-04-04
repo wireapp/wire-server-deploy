@@ -24,7 +24,7 @@ OUTPUT_TAR="${OUTPUT_DIR}/assets.tgz"
 cp -r "${SCRIPT_DIR}"/../default-build/output/charts "${OUTPUT_DIR}"/
 
 # copy values from the default build
-cp -r "${SCRIPT_DIR}"/../default-build/output/values "${OUTPUT_DIR}"/s
+cp -r "${SCRIPT_DIR}"/../default-build/output/values "${OUTPUT_DIR}"/
 
 # copying containers-helm directory from the default build
 cp -r "${SCRIPT_DIR}"/../default-build/output/containers-helm "${OUTPUT_DIR}"/

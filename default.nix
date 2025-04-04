@@ -56,6 +56,7 @@ rec {
       # general utilities for bash operations
       jq
       gnused
+      curl
 
       niv
       nix-prefetch-docker

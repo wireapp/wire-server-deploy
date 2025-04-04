@@ -68,6 +68,5 @@ while IFS= read -r chart; do
   echo "${chart}" >> "${HELM_IMAGE_TREE_FILE}"
   echo "$current_images" >> "${HELM_IMAGE_TREE_FILE}"
   echo "\n" >> "${HELM_IMAGE_TREE_FILE}"
-  echo "$current_images"
 done
-echo -e "$images" | tr -s ' ' '\n' | sort -u
+echo -e "$images" | grep . | sort -u 

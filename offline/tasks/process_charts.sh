@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-set -x -euo pipefail
+set -euo pipefail
 
 OUTPUT_DIR=""
 # Default exclude list
@@ -42,8 +42,6 @@ echo "Excluding images matching the pattern: $EXCLUDE_PATTERN"
 for chartPath in "${OUTPUT_DIR}"/charts/*; do
   echo "$chartPath"
 done | list-helm-containers VALUES_DIR="${OUTPUT_DIR}"/values HELM_IMAGE_TREE_FILE="${OUTPUT_DIR}"/containers-helm/chart-images.txt | grep -v "\-integration:" > "${OUTPUT_DIR}"/images
-
-cat "${OUTPUT_DIR}"/images
 
 grep -vE "$EXCLUDE_PATTERN"  "${OUTPUT_DIR}"/images | create-container-dump  "${OUTPUT_DIR}"/containers-helm
 
