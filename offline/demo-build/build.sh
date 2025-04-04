@@ -5,7 +5,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # this directory will be created to store all the output files
 OUTPUT_DIR="$SCRIPT_DIR/output"
 
-mkdir -p "${OUTPUT_DIR}"/containers-{helm,other,system,adminhost} "${OUTPUT_DIR}"/binaries
+mkdir -p "${OUTPUT_DIR}"/containers-{helm,other,system,adminhost} "${OUTPUT_DIR}"/binaries "${OUTPUT_DIR}"/versions
 
 # Define the output tar file
 OUTPUT_TAR="${OUTPUT_DIR}/assets.tgz"
@@ -27,7 +27,7 @@ cp -r "${SCRIPT_DIR}"/../default-build/output/charts "${OUTPUT_DIR}"/
 cp -r "${SCRIPT_DIR}"/../default-build/output/values "${OUTPUT_DIR}"/
 
 # here removing the federation image from cintainers-helm directory
-"${SCRIPT_DIR}"/post_chart_process_1.sh "${OUTPUT_DIR}"/ "${SCRIPT_DIR}"/../default-build/output/containers-helm
+"${SCRIPT_DIR}"/post_chart_process_1.sh "${OUTPUT_DIR}"/ "${SCRIPT_DIR}/../default-build/output"
 # --------------------------
 
 # Following tasks are independent from each other
@@ -46,12 +46,7 @@ ln -sf "${SOURCE_DIR}/containers-system.tar" "${OUTPUT_DIR}/containers-system.ta
 # copy binaries.tar from the default build
 ln -sf "${SOURCE_DIR}/binaries.tar" "${OUTPUT_DIR}/binaries.tar"
 
-# --------------------------
-
-# custom scripts to work on ansible and bin directories
-
-# process_ansible.sh
-# process_bin.sh
+cp "${SOURCE_DIR}/versions/wire-binaries.json" "${OUTPUT_DIR}/versions/"
 # --------------------------
 
 # List of directories and files to include in the tar archive
@@ -65,6 +60,7 @@ ITEMS_TO_ARCHIVE=(
   "values"
   "../../../ansible"
   "../../../bin"
+  "versions"
 )
 
 # Function to check if an item exists

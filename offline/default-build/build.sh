@@ -8,7 +8,7 @@ OUTPUT_DIR="$SCRIPT_DIR/output"
 # expected structure to be: /wire-server-deploy/offline/default-build/build.sh
 ROOT_DIR="${SCRIPT_DIR}/../../"
 
-mkdir -p "${OUTPUT_DIR}"/containers-{helm,other,system,adminhost} "${OUTPUT_DIR}"/binaries
+mkdir -p "${OUTPUT_DIR}"/containers-{helm,other,system,adminhost} "${OUTPUT_DIR}"/binaries "${OUTPUT_DIR}"/versions 
 
 # Define the output tar file
 OUTPUT_TAR="${OUTPUT_DIR}/assets.tgz"
@@ -65,7 +65,7 @@ cp -r "${ROOT_DIR}"/values "${OUTPUT_DIR}"/
 "${TASKS_DIR}"/proc_system_containers.sh "${OUTPUT_DIR}"
 
 # Processing wire binaries
-"${TASKS_DIR}"/proc_wire_binaries.sh "${OUTPUT_DIR}"
+"${TASKS_DIR}"/proc_wire_binaries.sh "${OUTPUT_DIR}" "${ROOT_DIR}"
 # --------------------------
 
 # custom scripts to work on ansible and bin directories
@@ -85,6 +85,7 @@ ITEMS_TO_ARCHIVE=(
   "values"
   "../../../ansible"
   "../../../bin"
+  "versions"
 )
 
 # Function to check if an item exists

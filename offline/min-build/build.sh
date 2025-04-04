@@ -8,7 +8,7 @@ OUTPUT_DIR="$SCRIPT_DIR/output"
 # expected structure to be: /wire-server-deploy/offline/default-build/build.sh
 ROOT_DIR="${SCRIPT_DIR}/../../"
 
-mkdir -p "${OUTPUT_DIR}"/containers-{helm,other,system,adminhost} "${OUTPUT_DIR}"/binaries
+mkdir -p "${OUTPUT_DIR}"/containers-{helm,other,system,adminhost} "${OUTPUT_DIR}"/binaries "${OUTPUT_DIR}"/versions
 
 # Define the output tar file
 OUTPUT_TAR="${OUTPUT_DIR}/assets.tgz"
@@ -72,6 +72,7 @@ ITEMS_TO_ARCHIVE=(
   "containers-helm.tar"
   "charts"
   "values"
+  "versions"
 )
 
 # Function to check if an item exists
