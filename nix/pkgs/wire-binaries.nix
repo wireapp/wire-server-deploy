@@ -16,6 +16,8 @@ let
   runc_version = "v1.1.10";
   nerdctl_version = "1.7.1";
   containerd_version = "1.7.11";
+  minio_version = "RELEASE.2023-07-07T07-13-57Z";
+  mc_version = "RELEASE.2023-10-24T05-18-28Z";
 
 
   # Note: If you change a version, replace the checksum with zeros, run « nix-build --no-out-link -A pkgs.wire-binaries », it will complain and give you the right checksum, use that checksum in this file, run it again and it should build without complaining.
@@ -90,12 +92,12 @@ let
     };
     minio = fetchurl rec {
       passthru.url = url;
-      url = "https://dl.min.io/server/minio/release/linux-amd64/archive/minio.RELEASE.2023-07-07T07-13-57Z";
+      url = "https://dl.min.io/server/minio/release/linux-amd64/archive/minio.${ minio_version }";
       sha256 = "sha256-9tGq30uuwVVogOZZdI1/vGvI0trDVU+BbpVJLTiBZgo=";
     };
     mc = fetchurl rec {
       passthru.url = url;
-      url = "https://dl.min.io/client/mc/release/linux-amd64/archive/mc.RELEASE.2023-10-24T05-18-28Z";
+      url = "https://dl.min.io/client/mc/release/linux-amd64/archive/mc.${ mc_version }";
       sha256 = "sha256-XxKSa2RrUzzeoaVIxURgpNrXjye4sX05m6Av9O42jk0=";
     };
     elasticsearch = fetchurl rec {
