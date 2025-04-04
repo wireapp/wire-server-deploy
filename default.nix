@@ -26,13 +26,13 @@ rec {
   env = pkgs.buildEnv {
     name = "wire-server-deploy";
     paths = with pkgs; [
-      ansible_2_15
+      ansible_2_16
       pythonForAnsible
       jmespath
       apacheHttpd
       awscli2
       gnumake
-      gnupg
+      gnupg1
 
       kubernetes-tools
 
