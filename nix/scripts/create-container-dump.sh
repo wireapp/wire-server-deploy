@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # This consumes a list of containers from stdin and produces a `skopeo sync`
 # dir at $1.
-set -x -eou pipefail
+set -eou pipefail
 
 if [[ ! $# -eq 1 ]]; then
   echo "usage: $0 OUTPUT-DIR" >&2
@@ -36,6 +36,6 @@ while IFS= read -r image; do
           docker://$image_trimmed docker-archive:${image_path} --additional-tag $image
       fi
       echo "${image_filename}.tar" >> $(realpath "$1")/index.txt
-      create-build-entry $image_path $1
+      #create-build-entry $image_path $1
     fi
 done
