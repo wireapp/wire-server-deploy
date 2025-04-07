@@ -31,6 +31,7 @@ cp -r "${SCRIPT_DIR}"/../default-build/output/values "${OUTPUT_DIR}"/
 # --------------------------
 
 # Following tasks are independent from each other
+# linking the output from the SOURCE_OUTPUT_DIR to the OUTPUT_DIR to confirm if they exist
 # --------------------------
 SOURCE_OUTPUT_DIR="${SCRIPT_DIR}/../default-build/output"
 
@@ -80,5 +81,9 @@ for item in "${ITEMS_TO_ARCHIVE[@]}"; do
 done
 
 # Create the tar archive with relative paths
-tar czf "$OUTPUT_TAR" "${ITEMS_TO_ARCHIVE[@]}"
+# for the outputs from other other profiles, their paths should be mentioned here
+tar czf "$OUTPUT_TAR" \
+  -C "${SOURCE_OUTPUT_DIR}" debs-jammy.tar binaries.tar containers-adminhost containers-helm.tar containers-system.tar charts values versions \
+  -C "${SCRIPT_DIR}/../../.." ansible bin
+
 echo "Done"
