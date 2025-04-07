@@ -122,10 +122,16 @@ gpg2 --no-default-keyring --keyring trustedkeys.gpg --fingerprint
 # Import our signing key to our keyring
 echo -e "$GPG_PRIVATE_KEY" | gpg2 --import
 
+echo "GPG dir: $GNUPGHOME"
+
 echo "Printing the public key ids..."
 gpg2 --list-keys
 echo "Printing the secret key ids..."
 gpg2 --list-secret-keys
+
+echo "Print trustedkeys.gpg"
+gpg2 --no-default-keyring --keyring=$GNUPGHOME/trustedkeys.gpg --list-keys
+gpg2 --no-default-keyring --keyring=$GNUPGHOME/trustedkeys.gpg --list-secret-keys
 
 
 # import the ubuntu and docker signing keys
