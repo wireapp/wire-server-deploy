@@ -15,15 +15,6 @@ OUTPUT_TAR="${OUTPUT_DIR}/assets.tgz"
 
 TASKS_DIR="${SCRIPT_DIR}/../tasks"
 
-# build linux packages
-"${TASKS_DIR}"/build_linux_pkgs.sh "${OUTPUT_DIR}" "${ROOT_DIR}"
-
-# Creating system containers tarball
-"${TASKS_DIR}"/proc_system_containers.sh "${OUTPUT_DIR}"
-
-# Processing wire binaries
-"${TASKS_DIR}"/proc_wire_binaries.sh "${OUTPUT_DIR}" "${ROOT_DIR}"
-
 # for optmization purposes, if these tarballs are already processed by previous profiles check wire-server-deploy/.github/workflows/offline.yml, one can copy those artifacts from previous profiles to your profile by using
 #cp $SCRIPT_DIR/../<profile-dir>/output/containers-helm.tar "${OUTPUT_DIR}"/
 # one need to comment the tasks below for which one wants to optimize the build
@@ -67,6 +58,14 @@ cp -r "${ROOT_DIR}"/values "${OUTPUT_DIR}"/
 # building admin host containers, has dependenct on the helm charts
 "${TASKS_DIR}"/build_adminhost_containers.sh "${OUTPUT_DIR}" --adminhost --zauth
 
+# build linux packages
+"${TASKS_DIR}"/build_linux_pkgs.sh "${OUTPUT_DIR}" "${ROOT_DIR}"
+
+# Creating system containers tarball
+"${TASKS_DIR}"/proc_system_containers.sh "${OUTPUT_DIR}"
+
+# Processing wire binaries
+"${TASKS_DIR}"/proc_wire_binaries.sh "${OUTPUT_DIR}" "${ROOT_DIR}"
 
 # --------------------------
 

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-set -x -euo pipefail
+set -euo pipefail
 
 if [[ ! $# -eq 2 ]]; then
   echo "usage: $0 OUTPUT-DIR ROOT-DIR" >&2
