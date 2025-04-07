@@ -65,7 +65,10 @@ while IFS= read -r chart; do
     | yq -r '..|.image? | select(.)' | optionally_complain | sort -u)
 
   images+="$current_images\n"
-  basename "${chart}" >> "${HELM_IMAGE_TREE_FILE}"
-  echo "$current_images" >> "${HELM_IMAGE_TREE_FILE}"
+  if [[ -n "$current_images" ]]; then
+    basename "${chart}" >> "${HELM_IMAGE_TREE_FILE}"
+    echo -e "$current_images\n" >> "${HELM_IMAGE_TREE_FILE}"
+    #echo -e "\n" >> "${HELM_IMAGE_TREE_FILE}"
+  fi
 done
 echo -e "$images" | grep . | sort -u 
