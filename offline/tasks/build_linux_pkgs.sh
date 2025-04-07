@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-set -euo pipefail
+set -x -euo pipefail
 
 if [[ ! $# -eq 2 ]]; then
   echo "usage: $0 OUTPUT-DIR ROOT-DIR" >&2
@@ -28,8 +28,6 @@ function write-debian-builds-json() {
 }
 
 mirror-apt-jammy "${OUTPUT_DIR}"/debs-jammy
-
-echo "Writing debian-builds.json"
 write-debian-builds-json
 
 tar cf "${OUTPUT_DIR}"/debs-jammy.tar -C "${OUTPUT_DIR}" debs-jammy
