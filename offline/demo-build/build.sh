@@ -83,7 +83,7 @@ done
 # Create the tar archive with relative paths
 # for the outputs from other other profiles, their paths should be mentioned here
 tar czf "$OUTPUT_TAR" \
-  -C "${SOURCE_OUTPUT_DIR}" debs-jammy.tar binaries.tar containers-adminhost containers-helm.tar containers-system.tar charts values versions \
-  -C "${SCRIPT_DIR}/../../.." ansible bin
-
+  -C "${SOURCE_OUTPUT_DIR}" debs-jammy.tar binaries.tar containers-adminhost containers-system.tar \
+  -C "${ROOT_DIR}" ansible bin \
+  -C "${OUTPUT_DIR}" charts values versions containers-helm.tar
 echo "Done"
