@@ -36,14 +36,20 @@ if [ "$ADMINHOST" = false ] && [ "$ZAUTH" = false ]; then
   usage
 fi
 
-if [ "$ADMINHOST" = true ]; then
-  echo "Building adminhost container images in ${OUTPUT_DIR} ..."
-  container_image=$(nix-build --no-out-link -A container)
-  install -m755 "$container_image" "${OUTPUT_DIR}"/containers-adminhost/container-wire-server-deploy.tgz
-fi
+INDEX_FILE="${OUTPUT_DIR}/containers-adminhost/index.txt"
 
 if [ "$ZAUTH" = true ]; then
   echo "Building zauth container image in ${OUTPUT_DIR} ..."
   wire_version=$(helm show chart "${OUTPUT_DIR}"/charts/wire-server | yq -r .version)
   echo "quay.io/wire/zauth:$wire_version" | create-container-dump "${OUTPUT_DIR}"/containers-adminhost
 fi
+
+if [ "$ADMINHOST" = true ]; then
+  echo "Building adminhost container images in ${OUTPUT_DIR} ..."
+  container_image=$(nix-build --no-out-link -A container)
+  install -m755 "$container_image" "${OUTPUT_DIR}"/containers-adminhost/container-wire-server-deploy.tgz
+  echo "container-wire-server-deploy.tgz" >> "${INDEX_FILE}" 
+fi
+
+if [[ -e "$INDEX_FILE"]];then
+  cp "$INDEX_FILE" "${OUTPUT_DIR}"/versions/containers-adminhost.txt

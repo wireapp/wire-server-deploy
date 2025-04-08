@@ -51,3 +51,4 @@ sed -i '/-integration/d' "${HELM_IMAGE_TREE_FILE}"
 grep -vE "$EXCLUDE_PATTERN"  "${OUTPUT_DIR}"/images | create-container-dump  "${OUTPUT_DIR}"/containers-helm
 
 tar cf "${OUTPUT_DIR}"/containers-helm.tar -C "${OUTPUT_DIR}" containers-helm
+cp "${OUTPUT_DIR}"/containers-helm/index.txt "${OUTPUT_DIR}"/versions/containers-helm.txt
