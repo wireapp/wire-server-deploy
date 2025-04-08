@@ -38,7 +38,9 @@ cp "${helm_image_tree_file}" "${OUTPUT_DIR}/versions/helm_image_tree.txt"
 mv "${containers_dir}/${fed_image_tar_name}" "${temp_dir}/"
 # removing the federator image from the index file and helm_image_tree file
 sed -i "/${fed_image_tar_name}/d" "${index_file}"
-sed -i "/${fed_docker_image}/d" "${OUTPUT_DIR}/versions/helm_image_tree.txt"
+
+escaped_pattern=$(echo "${fed_docker_image}" | sed 's/[]\/$*.^[]/\\&/g')
+sed -i "\|${escaped_pattern}|d" "${OUTPUT_DIR}/versions/helm_image_tree.txt"
 
 cp "${containers_dir}/index.txt" "${OUTPUT_DIR}/versions/containers-helm.txt"
 tar cf "${OUTPUT_DIR}"/containers-helm.tar -C "${containers_dir}/../" --exclude="$(basename "${temp_dir}")" containers-helm
