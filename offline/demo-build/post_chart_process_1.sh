@@ -19,10 +19,12 @@ helm_image_tree_file="${PROFILE_OUT_DIR}/versions/helm_image_tree.txt"
 # assuming that path of federator image won't change or we need to re-process all the charts again
 # just for safety will add a check if the federator image is not persent here, that will mark as indicator that path has changed
 fed_image_tar_name=$(grep -i "quay.io_wire_federator" "${index_file}")
-fed_docker_image=$(grep -i "quay.io_wire_federator" "${helm_image_tree_file}")
+fed_docker_image=$(grep -i "quay.io/wire/federator" "${helm_image_tree_file}")
 
-if [[ -z "${fed_image_tar_name}" ]]; then
-  echo "Federator image not found in index file. Exiting to confrim the new pattern of image"
+line_count=$(echo "${fed_image_tar_name}" | wc -l)
+
+if [[ ${line_count} -ne 1 ]]; then
+  echo "Federator image is not found in index file or multiple entries has been found. Exiting to confrim the new pattern of image ${fed_image_tar_name}"
   exit 1
 fi
 
