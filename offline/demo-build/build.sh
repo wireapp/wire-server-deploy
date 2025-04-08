@@ -24,10 +24,10 @@ OUTPUT_TAR="${OUTPUT_DIR}/assets.tgz"
 # --------------------------
 
 # copying charts from the default build
-cp -r "${SCRIPT_DIR}"/../default-build/output/charts "${OUTPUT_DIR}"/
+cp -r "${SCRIPT_DIR}"/../default-build/output/charts "${OUTPUT_DIR}/"
 
 # copy values from the default build
-cp -r "${SCRIPT_DIR}"/../default-build/output/values "${OUTPUT_DIR}"/
+cp -r "${SCRIPT_DIR}"/../default-build/output/values "${OUTPUT_DIR}/"
 
 # here removing the federation image from cintainers-helm directory
 "${SCRIPT_DIR}"/post_chart_process_1.sh "${OUTPUT_DIR}"/ "${SCRIPT_DIR}/../default-build/output"
@@ -53,6 +53,9 @@ ln -sf "${SOURCE_OUTPUT_DIR}/binaries.tar" "${OUTPUT_DIR}/binaries.tar"
 cp "${SOURCE_OUTPUT_DIR}/versions/wire-binaries.json" "${OUTPUT_DIR}/versions/"
 cp "${SOURCE_OUTPUT_DIR}/versions/containers-system.txt" "${OUTPUT_DIR}/versions/"
 cp "${SOURCE_OUTPUT_DIR}/versions/debian-builds.json" "${OUTPUT_DIR}/versions/"
+cp "${SOURCE_OUTPUT_DIR}/versions/containers-adminhost.txt" "${OUTPUT_DIR}/versions/"
+cp "${SOURCE_OUTPUT_DIR}/versions/containers-system.txt" "${OUTPUT_DIR}/versions/"
+
 # --------------------------
 
 # List of directories and files to include in the tar archive
