@@ -53,3 +53,4 @@ fi
 
 if [[ -e "$INDEX_FILE" ]];then
   cp "$INDEX_FILE" "${OUTPUT_DIR}/versions/containers-adminhost.txt"
+fi
