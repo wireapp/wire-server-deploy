@@ -120,14 +120,20 @@ gpg2 --no-default-keyring --keyring trustedkeys.gpg --fingerprint
 
 
 # Import our signing key to our keyring
-echo -e "$GPG_PRIVATE_KEY" | gpg2 --import
+echo -e "$GPG_PRIVATE_KEY" | gpg2 --no-default-keyring --keyring "$GNUPGHOME/pubring.gpg" --secret-keyring "$GNUPGHOME/secring.gpg" --import 
 
 echo "GPG dir: $GNUPGHOME"
 
-echo "Printing the public key ids..."
+echo "Printing the public key ids from default keyring..."
 gpg2 --list-keys
-echo "Printing the secret key ids..."
+echo "Printing the secret key ids from default keyring..."
 gpg2 --list-secret-keys
+
+echo "Printing the public key ids from pubring.gpg... old format"
+gpg2 --no-default-keyring --keyring "$GNUPGHOME/pubring.gpg" --list-keys
+
+echo "Printing the secret key ids from secring.gpg... old format"
+gpg2 --no-default-keyring --secret-keyring "$GNUPGHOME/secring.gpg" --list-secret-keys
 
 echo "Print trustedkeys.gpg"
 gpg2 --no-default-keyring --keyring=$GNUPGHOME/trustedkeys.gpg --list-keys
@@ -163,6 +169,6 @@ $aptly snapshot create docker-ce from mirror docker-ce
 
 $aptly snapshot merge wire jammy jammy-security jammy-updates docker-ce
 
-$aptly publish snapshot -gpg-key="gpg@wire.com" -secret-keyring="$GNUPGHOME/pubring.kbx" -distribution jammy wire
+$aptly publish snapshot -gpg-key="gpg@wire.com" -kering="$GNUPGHOME/pubring.gpg" -secret-keyring="$GNUPGHOME/secring.gpg" -distribution jammy wire
 
 gpg2 --export gpg@wire.com -a > "$aptly_root/public/gpg"
