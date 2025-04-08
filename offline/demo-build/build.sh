@@ -52,6 +52,7 @@ ln -sf "${SOURCE_OUTPUT_DIR}/binaries.tar" "${OUTPUT_DIR}/binaries.tar"
 
 cp "${SOURCE_OUTPUT_DIR}/versions/wire-binaries.json" "${OUTPUT_DIR}/versions/"
 cp "${SOURCE_OUTPUT_DIR}/versions/containers-system.txt" "${OUTPUT_DIR}/versions/"
+cp "${SOURCE_OUTPUT_DIR}/versions/debian-builds.json" "${OUTPUT_DIR}/versions/"
 # --------------------------
 
 # List of directories and files to include in the tar archive

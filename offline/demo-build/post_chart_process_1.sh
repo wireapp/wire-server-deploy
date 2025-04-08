@@ -18,9 +18,10 @@ helm_image_tree_file="${PROFILE_OUT_DIR}/versions/helm_image_tree.txt"
 # this script is based on pre_processing of charts for optimization reasons
 # assuming that path of federator image won't change or we need to re-process all the charts again
 # just for safety will add a check if the federator image is not persent here, that will mark as indicator that path has changed
-fed_image=$(grep -i "quay.io_wire_federator" "${index_file}")
+fed_image_tar_name=$(grep -i "quay.io_wire_federator" "${index_file}")
+fed_docker_image=$(grep -i "quay.io_wire_federator" "${helm_image_tree_file}")
 
-if [[ -z "${fed_image}" ]]; then
+if [[ -z "${fed_image_tar_name}" ]]; then
   echo "Federator image not found in index file. Exiting to confrim the new pattern of image"
   exit 1
 fi
@@ -32,14 +33,14 @@ cp "${index_file}" "${temp_dir}/index.txt"
 # creating a copy of previous output to 
 cp "${helm_image_tree_file}" "${OUTPUT_DIR}/versions/helm_image_tree.txt"
 
-mv "${containers_dir}/${fed_image}" "${temp_dir}/"
+mv "${containers_dir}/${fed_image_tar_name}" "${temp_dir}/"
 # removing the federator image from the index file and helm_image_tree file
-sed -i "/${fed_image}/d" "${index_file}"
-sed -i "/${fed_image}/d" "${OUTPUT_DIR}/versions/helm_image_tree.txt"
+sed -i "/${fed_image_tar_name}/d" "${index_file}"
+sed -i "/${fed_docker_image}/d" "${OUTPUT_DIR}/versions/helm_image_tree.txt"
 
 tar cf "${OUTPUT_DIR}"/containers-helm.tar -C "${containers_dir}/../" --exclude="./containers-helm/$(basename "${temp_dir}")" containers-helm
 
 # restoring the original state
-mv "${temp_dir}/${fed_image}" "${containers_dir}/"
+mv "${temp_dir}/${fed_image_tar_name}" "${containers_dir}/"
 mv "${temp_dir}/index.txt" "${index_file}"
 rm -rf "${temp_dir}"
