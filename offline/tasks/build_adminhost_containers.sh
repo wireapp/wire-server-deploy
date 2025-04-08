@@ -51,5 +51,5 @@ if [ "$ADMINHOST" = true ]; then
   echo "container-wire-server-deploy.tgz" >> "${INDEX_FILE}" 
 fi
 
-if [[ -e "$INDEX_FILE"]];then
-  cp "$INDEX_FILE" "${OUTPUT_DIR}"/versions/containers-adminhost.txt
+if [[ -e "$INDEX_FILE" ]];then
+  cp "$INDEX_FILE" "${OUTPUT_DIR}/versions/containers-adminhost.txt"

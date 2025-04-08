@@ -40,7 +40,7 @@ mv "${containers_dir}/${fed_image_tar_name}" "${temp_dir}/"
 sed -i "/${fed_image_tar_name}/d" "${index_file}"
 sed -i "/${fed_docker_image}/d" "${OUTPUT_DIR}/versions/helm_image_tree.txt"
 
-cp "${containers_dir}/index.txt "${OUTPUT_DIR}"/versions/containers-helm.txt
+cp "${containers_dir}/index.txt" "${OUTPUT_DIR}/versions/containers-helm.txt"
 tar cf "${OUTPUT_DIR}"/containers-helm.tar -C "${containers_dir}/../" --exclude="$(basename "${temp_dir}")" containers-helm
 
 # restoring the original state
