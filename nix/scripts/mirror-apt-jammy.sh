@@ -169,6 +169,6 @@ $aptly snapshot create docker-ce from mirror docker-ce
 
 $aptly snapshot merge wire jammy jammy-security jammy-updates docker-ce
 
-$aptly publish snapshot -gpg-key="gpg@wire.com" -kering="$GNUPGHOME/pubring.gpg" -secret-keyring="$GNUPGHOME/secring.gpg" -distribution jammy wire
+$aptly publish snapshot -gpg-key="gpg@wire.com" -keyring="$GNUPGHOME/pubring.gpg" -secret-keyring="$GNUPGHOME/pubring.gpg" -distribution jammy wire
 
 gpg2 --export gpg@wire.com -a > "$aptly_root/public/gpg"
