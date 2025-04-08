@@ -44,6 +44,10 @@ for chartPath in "${OUTPUT_DIR}"/charts/*; do
   echo "$chartPath"
 done | list-helm-containers VALUES_DIR="${OUTPUT_DIR}"/values HELM_IMAGE_TREE_FILE="$HELM_IMAGE_TREE_FILE" | grep -v "\-integration:" > "${OUTPUT_DIR}"/images
 
+# Omit integration test
+# containers (e.g. `quay.io_wire_galley-integration_4.22.0`.)
+sed -i '/-integration/d' "${HELM_IMAGE_TREE_FILE}"
+
 grep -vE "$EXCLUDE_PATTERN"  "${OUTPUT_DIR}"/images | create-container-dump  "${OUTPUT_DIR}"/containers-helm
 
 tar cf "${OUTPUT_DIR}"/containers-helm.tar -C "${OUTPUT_DIR}" containers-helm
