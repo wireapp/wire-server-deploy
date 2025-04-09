@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 #step-certificates:
 #  image:
 #    repository: cr.step.sm/smallstep/step-ca
@@ -11,6 +12,12 @@
   # bootstrap:
   #   enabled: false
   #   configmaps: false
+=======
+step-certificates:
+  bootstrap:
+    enabled: false
+    configmaps: false
+>>>>>>> master
 
   # inject:
   #   enabled: false
