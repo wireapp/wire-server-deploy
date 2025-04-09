@@ -173,3 +173,6 @@ gpg --armor --export "gpg@wire.com"
 $aptly publish snapshot -gpg-key="gpg@wire.com" -distribution jammy wire
 
 gpg --export gpg@wire.com -a > "$aptly_root/public/gpg"
+
+echo "Check repo signature"
+gpg --verify "$aptly_root/public/dists/jammy/Release.gpg"
