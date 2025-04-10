@@ -114,29 +114,29 @@ FOO
 aptly="aptly -config=${aptly_config} "
 
 echo "Info"
-gpg1 --version
-gpg1 --fingerprint
-gpg1 --no-default-keyring --keyring trustedkeys.gpg --fingerprint
+gpg --version
+gpg --fingerprint
+gpg --no-default-keyring --keyring trustedkeys.gpg --fingerprint
 
 
 # Import our signing key to our keyring
-echo -e "$GPG_PRIVATE_KEY" | gpg1 --import 
+echo -e "$GPG_PRIVATE_KEY" | gpg --import 
 
 echo "GPG dir: $GNUPGHOME"
 
 echo "Printing the public key ids from default keyring..."
-gpg1 --list-keys
+gpg --list-keys
 echo "Printing the secret key ids from default keyring..."
-gpg1 --list-secret-keys
+gpg --list-secret-keys
 
 # import the ubuntu and docker signing keys
 # TODO: Do we want to pin these better? Verify them?
-curl 'https://keyserver.ubuntu.com/pks/lookup?op=get&search=0x790bc7277767219c42c86f933b4fe6acc0b21f32' | gpg1 --no-default-keyring --keyring=trustedkeys.gpg --import
-curl 'https://keyserver.ubuntu.com/pks/lookup?op=get&search=0xf6ecb3762474eda9d21b7022871920d1991bc93c' | gpg1 --no-default-keyring --keyring=trustedkeys.gpg --import
-curl https://download.docker.com/linux/ubuntu/gpg | gpg1 --no-default-keyring --keyring=trustedkeys.gpg --import
-curl -1sLf "https://keys.openpgp.org/vks/v1/by-fingerprint/0A9AF2115F4687BD29803A206B73A36E6026DFCA" | gpg1 --no-default-keyring --keyring=trustedkeys.gpg --import
-curl -1sLf "https://keyserver.ubuntu.com/pks/lookup?op=get&search=0xf77f1eda57ebb1cc" | gpg1 --no-default-keyring --keyring=trustedkeys.gpg --import
-curl -1sLf "https://packagecloud.io/rabbitmq/rabbitmq-server/gpgkey" | gpg1 --no-default-keyring --keyring=trustedkeys.gpg --import
+curl 'https://keyserver.ubuntu.com/pks/lookup?op=get&search=0x790bc7277767219c42c86f933b4fe6acc0b21f32' | gpg --no-default-keyring --keyring=trustedkeys.gpg --import
+curl 'https://keyserver.ubuntu.com/pks/lookup?op=get&search=0xf6ecb3762474eda9d21b7022871920d1991bc93c' | gpg --no-default-keyring --keyring=trustedkeys.gpg --import
+curl https://download.docker.com/linux/ubuntu/gpg | gpg --no-default-keyring --keyring=trustedkeys.gpg --import
+curl -1sLf "https://keys.openpgp.org/vks/v1/by-fingerprint/0A9AF2115F4687BD29803A206B73A36E6026DFCA" | gpg --no-default-keyring --keyring=trustedkeys.gpg --import
+curl -1sLf "https://keyserver.ubuntu.com/pks/lookup?op=get&search=0xf77f1eda57ebb1cc" | gpg --no-default-keyring --keyring=trustedkeys.gpg --import
+curl -1sLf "https://packagecloud.io/rabbitmq/rabbitmq-server/gpgkey" | gpg --no-default-keyring --keyring=trustedkeys.gpg --import
 
 echo "Trusted"
 gpg1 --list-keys --no-default-keyring --keyring=trustedkeys.gpg
@@ -161,21 +161,17 @@ $aptly snapshot merge wire jammy jammy-security jammy-updates docker-ce
 echo "Verify GPG key by ID before publish:"
 
 # Re-fetch or re-list key explicitly by ID
-gpg1 --list-secret-keys --keyid-format LONG "gpg@wire.com"
+gpg --list-secret-keys --keyid-format LONG "gpg@wire.com"
 
 # show public portion
-gpg1 --list-keys --keyid-format LONG "gpg@wire.com"
-
-# export ASCII-armored public key for confirmation
-echo "exporting public key (ASCII-armored):"
-gpg1 --armor --export "gpg@wire.com"
+gpg --list-keys --keyid-format LONG "gpg@wire.com"
 
 $aptly publish snapshot -gpg-key="gpg@wire.com" -distribution jammy wire
 
-gpg1 --export-secret-subkeys gpg@wire.com -a > "$aptly_root/public/gpg"
+gpg --export gpg@wire.com -a > "$aptly_root/public/gpg"
 
 echo "Check if the exported public key contains the subkey"
-gpg1 --show-keys --with-subkey-fingerprints "$aptly_root/public/gpg"
+gpg --show-keys --with-subkey-fingerprints "$aptly_root/public/gpg"
 
 echo "Check repo signature"
-gpg1 --verify "$aptly_root/public/dists/jammy/Release.gpg" "$aptly_root/public/dists/jammy/Release"
+gpg --verify "$aptly_root/public/dists/jammy/Release.gpg" "$aptly_root/public/dists/jammy/Release"
