@@ -11,18 +11,17 @@ nginx:
     # hostname: "acme.alpha.example.com"
     path: "/proxyCrl"
     pathType: "Prefix"
-
+      
     # extraTls: 
     #   - 
     #     hosts: [ "acme.alpha.example.com" ]
     #     secretName: "smallstep-step-certificates-ingress-cert"
-
-cors_allow_origins: []
+    #
 
 upstreams:
   enabled: true
-  # dnsResolver: 9.9.9.9
-
+  dnsResolver: 9.9.9.9
+  
   # Note: include the smallstep host of the own domain here as well
   proxiedHosts: []
   # proxiedHosts: 
@@ -30,7 +29,6 @@ upstreams:
   #   - acme.beta.example.com
   #   - acme.gamma.example.com
 
-stepFullName: smallstep-step-certificates
 
 caPassword:
   enabled: true
@@ -54,7 +52,7 @@ stepConfig:
 
   address: "0.0.0.0:9000"
 
-  # dnsName: acme.alpha.example.com
+  dnsName: acme.alpha.example.com
 
   # additionalDNSNames: 
   #   - localhost
@@ -89,13 +87,13 @@ stepConfig:
     claims:
       maxTLSCertDuration: 87701h
 
-    # jwk: |-
-    #   {
-    #     "type": "JWK",
-    #     "name": "..example.com",
-    #     "key": { ... },
-    #     "encryptedKey": "e..."
-    #   }
+    jwk: |-
+      {
+        "type": "JWK",
+        "name": "..example.com",
+        "key": { ... },
+        "encryptedKey": "e..."
+      }
 
     acme:
       name: keycloakteams
@@ -108,13 +106,13 @@ stepConfig:
         minTLSCertDuration: 60s
 
       dpop:
+        key: "someBAse64Key"
         wireDomain: alpha.example.com
-        # key: <base64 string>
 
       oidc:
         clientId: wireapp
-        # discoveryBaseUrl: https://keycloak.example.com/auth/realms/master
-        # issuerUrl: https://keycloak.example.com/auth/realms/master?client_id=wireapp
+        discoveryBaseUrl: https://keycloak.example.com/auth/realms/master
+        issuerUrl: https://keycloak.example.com/auth/realms/master?client_id=wireapp
         signatureAlgorithms:
           - RS256
           - ES256
@@ -127,7 +125,7 @@ stepConfig:
          }
 
       x509:
-        # organization: alpha.example.com
+        organization: alpha.example.com
         template: |
           {
             "subject": {
@@ -205,5 +203,3 @@ stepConfig:
     {{- if .Values.stepConfig.extraConfig }}
     {{ .Values.stepConfig.extraconfig | toYaml }}
     {{- end }}
-
-
