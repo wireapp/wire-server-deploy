@@ -56,6 +56,9 @@ rm -r debs-jammy
 fingerprint=$(echo "$GPG_PRIVATE_KEY" | gpg --with-colons --import-options show-only --import --fingerprint  | awk -F: '$1 == "fpr" {print $10; exit}')
 
 echo "$fingerprint"
+echo "more debugs"
+gpg --show-keys --with-subkey-fingerprints
+gpg --verify "debs-jammy/public/dists/jammy/Release.gpg" "debs-jammy/public/dists/jammy/Release"
 
 mkdir -p binaries
 install -m755 "$(nix-build --no-out-link -A pkgs.wire-binaries)/"* binaries/
