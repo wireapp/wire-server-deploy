@@ -139,7 +139,7 @@ curl -1sLf "https://keyserver.ubuntu.com/pks/lookup?op=get&search=0xf77f1eda57eb
 curl -1sLf "https://packagecloud.io/rabbitmq/rabbitmq-server/gpgkey" | gpg --no-default-keyring --keyring=trustedkeys.gpg --import
 
 echo "Trusted"
-gpg1 --list-keys --no-default-keyring --keyring=trustedkeys.gpg
+gpg --list-keys --no-default-keyring --keyring=trustedkeys.gpg
 
 $aptly mirror create -architectures=amd64 -filter="${packages_}" -filter-with-deps jammy http://de.archive.ubuntu.com/ubuntu/ jammy main universe
 $aptly mirror create -architectures=amd64 -filter="${packages_}" -filter-with-deps jammy-security http://de.archive.ubuntu.com/ubuntu/ jammy-security main universe
