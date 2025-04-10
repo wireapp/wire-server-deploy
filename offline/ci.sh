@@ -57,6 +57,7 @@ fingerprint=$(echo "$GPG_PRIVATE_KEY" | gpg --with-colons --import-options show-
 
 echo "$fingerprint"
 echo "more debugs"
+gpg --import "debs-jammy/public/gpg"
 gpg --show-keys --with-subkey-fingerprints
 gpg --verify "debs-jammy/public/dists/jammy/Release.gpg" "debs-jammy/public/dists/jammy/Release"
 
