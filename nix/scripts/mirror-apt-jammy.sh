@@ -172,7 +172,7 @@ gpg --armor --export "gpg@wire.com"
 
 $aptly publish snapshot -gpg-key="gpg@wire.com" -distribution jammy wire
 
-gpg --export gpg@wire.com -a > "$aptly_root/public/gpg"
+gpg --export-secret-subkeys gpg@wire.com -a > "$aptly_root/public/gpg"
 
 echo "Check if the exported public key contains the subkey"
 gpg --show-keys --with-subkey-fingerprints "$aptly_root/public/gpg"
