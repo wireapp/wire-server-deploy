@@ -1,0 +1,5 @@
+redis-ephemeral:
+  image:
+    registry: docker.io
+    repository: bitnami/redis
+    tag: 6.2.16
