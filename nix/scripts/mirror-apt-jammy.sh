@@ -108,7 +108,7 @@ aptly_config=$(mktemp)
 trap 'rm -Rf -- "$aptly_config $GNUPGHOME"' EXIT
 
 cat > "$aptly_config" <<FOO
-{ "rootDir": "$aptly_root", "downloadConcurrency": 10, "gpgProvider": "gpg" }
+{ "rootDir": "$aptly_root", "downloadConcurrency": 10, "gpgProvider": "gpg2" }
 FOO
 
 aptly="aptly -config=${aptly_config} "
@@ -120,9 +120,7 @@ gpg --no-default-keyring --keyring trustedkeys.gpg --fingerprint
 
 
 # Import our signing key to our keyring
-echo -e "$GPG_PRIVATE_KEY" | gpg --import 
-# Import signing key to trustedkeys
-echo -e "$GPG_PRIVATE_KEY" | gpg --no-default-keyring --keyring trustedkeys.gpg --import
+echo -e "$GPG_PRIVATE_KEY" | gpg --import
 
 echo "GPG dir: $GNUPGHOME"
 
@@ -172,9 +170,9 @@ gpg --list-secret-keys --keyid-format LONG "gpg@wire.com"
 # show public portion
 gpg --list-keys --keyid-format LONG "gpg@wire.com"
 
-$aptly publish snapshot -gpg-key="gpg@wire.com" -keyring="trustedkeys.gpg" -distribution jammy wire
+$aptly publish snapshot -gpg-key="A054D0B66346B27919CE5EC02872CB8EEBD99578" -distribution jammy wire
 
-gpg --no-default-keyring --keyring trustedkeys.gpg --export --export-options export-minimal gpg@wire.com -a > "$aptly_root/public/gpg"
+gpg --export --export-options export-minimal gpg@wire.com -a > "$aptly_root/public/gpg"
 
 echo "Check if the exported public key contains the subkey"
 gpg --show-keys "$aptly_root/public/gpg"
