@@ -159,7 +159,7 @@ $aptly snapshot create docker-ce from mirror docker-ce
 $aptly snapshot merge wire jammy jammy-security jammy-updates docker-ce
 
 # TODO: hardcoded
-gpg --delete-secret-key 128696F420731E19BC0D36C516691483A7637513
+gpg --batch --yes --delete-secret-key 128696F420731E19BC0D36C516691483A7637513
 #gpg --delete-key 16691483A7637513
 
 echo "Verify GPG key by ID before publish:"
