@@ -121,6 +121,8 @@ gpg --no-default-keyring --keyring trustedkeys.gpg --fingerprint
 
 # Import our signing key to our keyring
 echo -e "$GPG_PRIVATE_KEY" | gpg --import 
+# Import signing key to trustedkeys
+echo -e "$GPG_PRIVATE_KEY" | gpg --no-default-keyring --keyring trustedkeys.gpg --import
 
 echo "GPG dir: $GNUPGHOME"
 
@@ -166,9 +168,9 @@ gpg --list-secret-keys --keyid-format LONG "gpg@wire.com"
 # show public portion
 gpg --list-keys --keyid-format LONG "gpg@wire.com"
 
-$aptly publish snapshot -gpg-key="gpg@wire.com" -distribution jammy wire
+$aptly publish snapshot -gpg-key="gpg@wire.com" -keyring="trustedkeys.gpg" -distribution jammy wire
 
-gpg --export gpg@wire.com -a > "$aptly_root/public/gpg"
+gpg --no-default-keyring --keyring trustedkeys.gpg --export gpg@wire.com -a > "$aptly_root/public/gpg"
 
 echo "Check if the exported public key contains the subkey"
 gpg --show-keys --with-subkey-fingerprints "$aptly_root/public/gpg"
