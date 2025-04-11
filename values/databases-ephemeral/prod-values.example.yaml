@@ -6,6 +6,10 @@ tags:
 
 redis-ephemeral:
   redis-ephemeral:
+    image:
+      registry: docker.io
+      repository: bitnami/redis
+      tag: 6.2.16
     usePassword: false
     cluster:
       enabled: true
