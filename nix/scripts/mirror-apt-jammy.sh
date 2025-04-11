@@ -160,6 +160,10 @@ $aptly snapshot create docker-ce from mirror docker-ce
 
 $aptly snapshot merge wire jammy jammy-security jammy-updates docker-ce
 
+# TODO: hardcoded
+gpg --delete-secret-subkey 16691483A7637513
+gpg --delete-key 16691483A7637513
+
 echo "Verify GPG key by ID before publish:"
 
 # Re-fetch or re-list key explicitly by ID
@@ -173,7 +177,7 @@ $aptly publish snapshot -gpg-key="gpg@wire.com" -keyring="trustedkeys.gpg" -dist
 gpg --no-default-keyring --keyring trustedkeys.gpg --export gpg@wire.com -a > "$aptly_root/public/gpg"
 
 echo "Check if the exported public key contains the subkey"
-gpg --show-keys --with-subkey-fingerprints "$aptly_root/public/gpg"
+gpg --show-keys "$aptly_root/public/gpg"
 
 echo "Check repo signature"
 gpg --verify "$aptly_root/public/dists/jammy/Release.gpg" "$aptly_root/public/dists/jammy/Release"
