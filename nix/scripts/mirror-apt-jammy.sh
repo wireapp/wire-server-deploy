@@ -164,9 +164,6 @@ gpg --batch --yes --delete-secret-key 128696F420731E19BC0D36C516691483A7637513
 
 echo "Verify GPG key by ID before publish:"
 
-# Re-fetch or re-list key explicitly by ID
-gpg --list-secret-keys --keyid-format LONG "gpg@wire.com"
-
 # show public portion
 gpg --list-keys --keyid-format LONG "gpg@wire.com"
 
