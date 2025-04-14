@@ -93,4 +93,3 @@ tar czf "$OUTPUT_TAR" \
   -C "${SOURCE_OUTPUT_DIR}" debs-jammy.tar binaries.tar containers-adminhost containers-system.tar \
   -C "${ROOT_DIR}" ansible bin \
   -C "${OUTPUT_DIR}" charts values versions containers-helm.tar
-echo "Done"

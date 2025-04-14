@@ -39,5 +39,7 @@ for CHART in "${EXCLUDE_ARRAY[@]}"; do
   if [[ -d "$CHART_DIR" ]]; then
     echo "Removing values directory: $CHART_DIR"
     rm -rf "$CHART_DIR"
+  else
+      echo "Directory does not exist: $CHART_DIR"
   fi
 done 

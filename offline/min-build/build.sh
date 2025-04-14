@@ -89,4 +89,3 @@ done
 
 # Create the tar archive with relative paths
 tar czf "$OUTPUT_TAR" "${ITEMS_TO_ARCHIVE[@]}"
-echo "Done"

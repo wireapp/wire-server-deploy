@@ -20,7 +20,6 @@ function write_wire_binaries_json() {
   temp_dir=$(mktemp -d -p "${OUTPUT_DIR}")
 
   # "Get" all the binaries from the .nix file
-  ls "${ROOT_DIR}/nix/pkgs/wire-binaries.nix"
   sed -n '/_version/p' "${ROOT_DIR}/nix/pkgs/wire-binaries.nix" | grep -v '\.version' | grep -v 'url' > "${temp_dir}/wire-binaries.json.tmp"
 
   echo "[" > "${temp_dir}/wire-binaries.json.formatted"

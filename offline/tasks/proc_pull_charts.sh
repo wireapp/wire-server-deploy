@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Default exclude list
 OUTPUT_DIR=""
+# Default exclude lists
 HELM_CHART_EXCLUDE_LIST="inbucket,wire-server-enterprise"
 
 # Parse the arguments
@@ -34,7 +34,7 @@ HELM_CHART_EXCLUDE_LIST=$(echo "$HELM_CHART_EXCLUDE_LIST" | jq -R 'split(",")')
 echo "Excluding following charts from the release: $HELM_CHART_EXCLUDE_LIST"
 
 wire_build_chart_release () {
-  set -euo pipefail
+
   wire_build="$1"
   curl "$wire_build" | jq -r --argjson HELM_CHART_EXCLUDE_LIST "$HELM_CHART_EXCLUDE_LIST" '
   .helmCharts
