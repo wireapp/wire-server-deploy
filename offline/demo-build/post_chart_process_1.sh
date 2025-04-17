@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-set -x -euo pipefail
+set -euo pipefail
 
 if [[ ! $# -eq 2 ]]; then
   echo "usage: $0 OUTPUT_DIR PROFILE_OUT_DIR" >&2
@@ -13,7 +13,8 @@ echo "Running post-chart process script 1 in dir ${OUTPUT_DIR} from profile outp
 
 containers_dir="${PROFILE_OUT_DIR}/containers-helm"
 index_file="${containers_dir}"/index.txt
-helm_image_tree_file="${PROFILE_OUT_DIR}/versions/helm_image_tree.txt"
+images_json_file="${PROFILE_OUT_DIR}/versions/containers_helm_images.json"
+helm_image_tree_file="${PROFILE_OUT_DIR}/versions/helm_image_tree.json"
 
 # this script is based on pre_processing of charts for optimization reasons
 # assuming that path of federator image won't change or we need to re-process all the charts again
@@ -32,15 +33,19 @@ fi
 temp_dir=$(mktemp -d -p "${containers_dir}")
 cp "${index_file}" "${temp_dir}/index.txt"
 
-# creating a copy of previous output to 
-cp "${helm_image_tree_file}" "${OUTPUT_DIR}/versions/helm_image_tree.txt"
+# creating a copy of previous output to versions directory
+cp "${helm_image_tree_file}" "${OUTPUT_DIR}/versions/helm_image_tree.json"
+cp "${images_json_file}" "${OUTPUT_DIR}/versions/containers_helm_images.json"
 
 mv "${containers_dir}/${fed_image_tar_name}" "${temp_dir}/"
-# removing the federator image from the index file and helm_image_tree file
+# removing the federator image from the index file
 sed -i "/${fed_image_tar_name}/d" "${index_file}"
 
+# escape pattern is used to find the image with '/' in name
+# removing escaped pattern directly in the output_dir/versions/ for containers_helm_images and helm_image_tree file
 escaped_pattern=$(echo "${fed_docker_image}" | sed 's/[]\/$*.^[]/\\&/g')
-sed -i "\|${escaped_pattern}|d" "${OUTPUT_DIR}/versions/helm_image_tree.txt"
+sed -i "\|${escaped_pattern}|d" "${OUTPUT_DIR}/versions/helm_image_tree.json"
+sed -i "\|${escaped_pattern}|d" "${OUTPUT_DIR}/versions/containers_helm_images.json"
 
 tar cf "${OUTPUT_DIR}"/containers-helm.tar -C "${containers_dir}/../" --exclude="$(basename "${temp_dir}")" containers-helm
 
