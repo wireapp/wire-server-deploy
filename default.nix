@@ -50,6 +50,7 @@ rec {
       list-helm-containers
       mirror-apt-jammy
       generate-gpg1-key
+      create-build-entry
       # Linting
       shellcheck
 
@@ -57,6 +58,7 @@ rec {
       jq
       gnused
       curl
+      gawk
 
       niv
       nix-prefetch-docker
