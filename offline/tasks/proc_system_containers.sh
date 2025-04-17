@@ -45,4 +45,5 @@ EOF
 
 list-system-containers | create-container-dump "${OUTPUT_DIR}"/containers-system
 tar cf "${OUTPUT_DIR}"/containers-system.tar -C "${OUTPUT_DIR}" containers-system
+mv "${OUTPUT_DIR}/containers-system/images.json" "${OUTPUT_DIR}"/versions/containers_system_images.json
 rm -r "${OUTPUT_DIR}"/containers-system

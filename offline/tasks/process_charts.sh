@@ -30,8 +30,7 @@ fi
 
 echo "Processing Helm charts in ${OUTPUT_DIR}"
 
-HELM_IMAGE_TREE_FILE="${OUTPUT_DIR}/versions/helm_image_tree.txt"
-touch "${HELM_IMAGE_TREE_FILE}"
+HELM_IMAGE_TREE_FILE="${OUTPUT_DIR}/versions/helm_image_tree.json"
 
 # Check if IMAGE_EXCLUDE_LIST is set, otherwise use a default pattern that matches nothing
 EXCLUDE_PATTERN=${IMAGE_EXCLUDE_LIST:-".^"}
@@ -51,3 +50,4 @@ sed -i '/-integration/d' "${HELM_IMAGE_TREE_FILE}"
 grep -vE "$EXCLUDE_PATTERN"  "${OUTPUT_DIR}"/images | create-container-dump  "${OUTPUT_DIR}"/containers-helm
 
 tar cf "${OUTPUT_DIR}"/containers-helm.tar -C "${OUTPUT_DIR}" containers-helm
+mv "${OUTPUT_DIR}/containers-helm/images.json" "${OUTPUT_DIR}"/versions/containers_helm_images.json
