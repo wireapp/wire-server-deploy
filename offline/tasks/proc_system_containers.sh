@@ -45,5 +45,4 @@ EOF
 
 list-system-containers | create-container-dump "${OUTPUT_DIR}"/containers-system
 tar cf "${OUTPUT_DIR}"/containers-system.tar -C "${OUTPUT_DIR}" containers-system
-cp "${OUTPUT_DIR}/containers-system/index.txt" "${OUTPUT_DIR}"/versions/containers-system.txt
 rm -r "${OUTPUT_DIR}"/containers-system

@@ -50,7 +50,3 @@ if [ "$ADMINHOST" = true ]; then
   install -m755 "$container_image" "${OUTPUT_DIR}"/containers-adminhost/container-wire-server-deploy.tgz
   echo "container-wire-server-deploy.tgz" >> "${INDEX_FILE}" 
 fi
-
-if [[ -e "$INDEX_FILE" ]];then
-  cp "$INDEX_FILE" "${OUTPUT_DIR}/versions/containers-adminhost.txt"
-fi
