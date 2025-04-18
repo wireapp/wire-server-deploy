@@ -83,7 +83,7 @@ while IFS= read -r chart; do
   if [[ -n "$current_images" ]]; then
     current_images=$(echo "$current_images" | awk NF)
     image_array=$(jq -Rn --arg images "$current_images" '$images | split("\n")')
-    append_chart_entry "$chart" "$image_array" "${HELM_IMAGE_TREE_FILE}"
+    append_chart_entry "$(basename $chart)" "$image_array" "${HELM_IMAGE_TREE_FILE}"
   fi
 done
 echo -e "$images" | grep . | sort -u 
