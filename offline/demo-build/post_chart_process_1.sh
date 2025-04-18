@@ -38,7 +38,7 @@ mv "${containers_dir}/${fed_image_tar_name}" "${temp_dir}/"
 sed -i "/${fed_image_tar_name}/d" "${index_file}"
 
 # removing fed_image directly in the output_dir/versions/ for containers_helm_images.json and helm_image_tree.json file
-jq --arg pattern "${fed_docker_image}" 'map( .images |= map(select(. | test($pattern) | not)))' "${helm_image_tree_file}" > ${OUTPUT_DIR}/versions/helm_image_tree.json"
+jq --arg pattern "${fed_docker_image}" 'map( .images |= map(select(. | test($pattern) | not)))' "${helm_image_tree_file}" > "${OUTPUT_DIR}/versions/helm_image_tree.json"
 jq --arg pattern "${fed_docker_image}" 'map( select(keys[0] | test($pattern) | not))' "${images_json_file}" > "${OUTPUT_DIR}/versions/containers_helm_images.json"
 
 tar cf "${OUTPUT_DIR}"/containers-helm.tar -C "${containers_dir}/../" --exclude="$(basename "${temp_dir}")" containers-helm
