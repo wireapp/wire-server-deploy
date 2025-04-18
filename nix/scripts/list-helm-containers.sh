@@ -33,6 +33,21 @@ if [[ -z "$VALUES_DIR" || -z "$HELM_IMAGE_TREE_FILE" ]]; then
   exit 1
 fi
 
+# create a dependency tree between helm chart and images
+append_chart_entry() {
+  local chart=$1
+  local images=$2
+  local json_file=$3
+
+  if [ ! -f "$json_file" ]; then
+    echo '[]' > "$json_file"
+  fi
+
+  existing_content=$(jq '.' "$json_file")
+  new_entry=$(jq -n --arg chart "$chart" --argjson images "$images" '{"chart": $chart, "images": $images}')
+  updated_content=$(echo "$existing_content" | jq --argjson new_entry "$new_entry" '. += [$new_entry]')
+  echo "$updated_content" | jq '.' > "$json_file"
+}
 
 # Some of these images don't contain a "latest" tag. We don't to download /ALL/
 # of them, but only :latest in that case - it's bad enough there's no proper
@@ -66,9 +81,9 @@ while IFS= read -r chart; do
 
   images+="$current_images\n"
   if [[ -n "$current_images" ]]; then
-    basename "${chart}" >> "${HELM_IMAGE_TREE_FILE}"
-    echo -e "$current_images\n" >> "${HELM_IMAGE_TREE_FILE}"
-    #echo -e "\n" >> "${HELM_IMAGE_TREE_FILE}"
+    current_images=$(echo "$current_images" | awk NF)
+    image_array=$(jq -Rn --arg images "$current_images" '$images | split("\n")')
+    append_chart_entry "$(basename $chart)" "$image_array" "${HELM_IMAGE_TREE_FILE}"
   fi
 done
 echo -e "$images" | grep . | sort -u 
