@@ -20,7 +20,7 @@ helm_image_tree_file="${PROFILE_OUT_DIR}/versions/helm_image_tree.json"
 # assuming that path of federator image won't change or we need to re-process all the charts again
 # just for safety will add a check if the federator image is not persent here, that will mark as indicator that path has changed
 fed_docker_image="quay.io/wire/federator"
-fed_image_tar_name=$(grep -i `echo ${fed_docker_image} | sed -r "s/[:\/]/_/g"` "${index_file}")
+fed_image_tar_name=$(grep -i $(echo ${fed_docker_image} | sed -r "s/[:\/]/_/g") "${index_file}")
 
 line_count=$(echo "${fed_image_tar_name}" | wc -l)
 
