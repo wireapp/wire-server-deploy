@@ -16,6 +16,7 @@ OUTPUT_TAR="${OUTPUT_DIR}/assets.tgz"
 # for optmization purposes, if these tarballs are already processed by previous profiles check wire-server-deploy/.github/workflows/offline.yml, one can copy those artifacts from previous profiles to your profile by using
 #cp $SCRIPT_DIR/../<profile-dir>/output/containers-helm.tar "${OUTPUT_DIR}"/
 # one need to comment the tasks below for which one wants to optimize the build
+SOURCE_OUTPUT_DIR="${SCRIPT_DIR}/../default-build/output"
 
 # Any of the tasks can be skipped by commenting them out 
 # however, mind the dependencies between them and how they are grouped
@@ -24,10 +25,10 @@ OUTPUT_TAR="${OUTPUT_DIR}/assets.tgz"
 # --------------------------
 
 # copying charts from the default build
-cp -r "${SCRIPT_DIR}"/../default-build/output/charts "${OUTPUT_DIR}/"
+cp -r "${SOURCE_OUTPUT_DIR}/charts" "${OUTPUT_DIR}/"
 
 # copy values from the default build
-cp -r "${SCRIPT_DIR}"/../default-build/output/values "${OUTPUT_DIR}/"
+cp -r "${SOURCE_OUTPUT_DIR}/values" "${OUTPUT_DIR}/"
 
 # here removing the federation image from cintainers-helm directory
 "${SCRIPT_DIR}"/post_chart_process_1.sh "${OUTPUT_DIR}"/ "${SCRIPT_DIR}/../default-build/output"
@@ -36,7 +37,6 @@ cp -r "${SCRIPT_DIR}"/../default-build/output/values "${OUTPUT_DIR}/"
 # Following tasks are independent from each other
 # linking the output from the SOURCE_OUTPUT_DIR to the OUTPUT_DIR to confirm if they exist
 # --------------------------
-SOURCE_OUTPUT_DIR="${SCRIPT_DIR}/../default-build/output"
 
 # linking containers-adminhost directory from the default build
 ln -sf "${SOURCE_OUTPUT_DIR}/containers-adminhost" "${OUTPUT_DIR}/containers-adminhost"
@@ -51,11 +51,9 @@ ln -sf "${SOURCE_OUTPUT_DIR}/containers-system.tar" "${OUTPUT_DIR}/containers-sy
 ln -sf "${SOURCE_OUTPUT_DIR}/binaries.tar" "${OUTPUT_DIR}/binaries.tar"
 
 cp "${SOURCE_OUTPUT_DIR}/versions/wire-binaries.json" "${OUTPUT_DIR}/versions/"
-cp "${SOURCE_OUTPUT_DIR}/versions/containers-system.txt" "${OUTPUT_DIR}/versions/"
 cp "${SOURCE_OUTPUT_DIR}/versions/debian-builds.json" "${OUTPUT_DIR}/versions/"
-cp "${SOURCE_OUTPUT_DIR}/versions/containers-adminhost.txt" "${OUTPUT_DIR}/versions/"
-cp "${SOURCE_OUTPUT_DIR}/versions/containers-system.txt" "${OUTPUT_DIR}/versions/"
-
+cp "${SOURCE_OUTPUT_DIR}/versions/containers_adminhost_images.json" "${OUTPUT_DIR}/versions/"
+cp "${SOURCE_OUTPUT_DIR}/versions/containers_system_images.json" "${OUTPUT_DIR}/versions/"
 # --------------------------
 
 # List of directories and files to include in the tar archive
