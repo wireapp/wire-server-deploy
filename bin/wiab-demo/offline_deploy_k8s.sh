@@ -5,53 +5,59 @@ set -Eeuo pipefail
 BASE_DIR="/wire-server-deploy"
 TARGET_SYSTEM="example.com"
 CERT_MASTER_EMAIL="certmaster@example.com"
+
+# make sure these align with the iptables rules
+# picking first node for sft
+SFT_NODE="minikube"
+# picking 2nd node for nginx
+NGINX_K8S_NODE="minikube-m02"
+# picking 3rd node for coturn
+COTURN_NODE="minikube-m03"
+
 # this IP should match the DNS A record for TARGET_SYSTEM
 HOST_IP=$(wget -qO- https://api.ipify.org)
-SFT_NODE="minikube"
-COTURN_NODE="minikube-m03"
+# to find IP address of coturn NODE
 COTURN_NODE_IP=$(kubectl get node $COTURN_NODE -o jsonpath='{.status.addresses[?(@.type=="InternalIP")].address}')
-CHART_URL="https://charts.jetstack.io/charts/cert-manager-v1.13.2.tgz"
-NGINX_K8S_NODE="minikube-m02"
 
-# it create the values.yaml from prod-values.example.yaml/example.yaml to values.yaml
+CHART_URL="https://charts.jetstack.io/charts/cert-manager-v1.13.2.tgz"
+
+# it creates the values.yaml from prod-values.example.yaml and secrets.yaml from prod-secrets.example.yaml to values.yaml
 process_charts() {  
   
+  ENV=$1
+
+  if [ "$ENV" != "prod" ] && [ "$ENV" != "demo" ]; then
+    echo "ENV is neither prod nor demo"
+    exit 1
+  fi 
+
   # values for cassandra-external, elasticsearch-external, minio-external are created from offline-cluster.sh - helm_external.yml
   # List of Helm charts to process values are here:
   charts=(
     fake-aws demo-smtp
     rabbitmq databases-ephemeral reaper wire-server webapp account-pages
     team-settings smallstep-accomp cert-manager-ns
-    nginx-ingress-services sftd coturn
+    nginx-ingress-services sftd coturn ingress-nginx-controller
   )
 
   for chart in "${charts[@]}"; do
     chart_dir="$BASE_DIR/values/$chart"
 
     if [[ -d "$chart_dir" ]]; then
-      if [[ -f "$chart_dir/prod-values.example.yaml" ]]; then
+      if [[ -f "$chart_dir/${ENV}-values.example.yaml" ]]; then
         if [[ ! -f "$chart_dir/values.yaml" ]]; then
-          cp "$chart_dir/prod-values.example.yaml" "$chart_dir/values.yaml"
-          echo "Used template prod-values.example.yaml to create $chart_dir/values.yaml"
+          cp "$chart_dir/${ENV}-values.example.yaml" "$chart_dir/values.yaml"
+          echo "Used template ${ENV}-values.example.yaml to create $chart_dir/values.yaml"
         fi
+        if [[ ! -f "$chart_dir/secrets.yaml" ]]; then
+          cp "$chart_dir/${ENV}-secrets.example.yaml" "$chart_dir/secrets.yaml"
+          echo "Used template ${ENV}-secrets.example.yaml to create $chart_dir/secrets.yaml"
+        fi
+
       fi
     fi
 
   done
-
-  # some manual secrets
-  if [[ ! -f "$BASE_DIR/values/rabbitmq/secrets.yaml" ]]; then
-  cp "$BASE_DIR/values/rabbitmq/prod-secrets.example.yaml" "$BASE_DIR/values/rabbitmq/secrets.yaml"
-  echo "Used template prod-secrets.example.yaml to create $BASE_DIR/values/rabbitmq/secrets.yaml"
-  fi
-  if [[ ! -f "$BASE_DIR/values/team-settings/secrets.yaml" ]]; then
-  cp "$BASE_DIR/values/team-settings/prod-secrets.example.yaml" "$BASE_DIR/values/team-settings/secrets.yaml"
-  echo "Used template prod-secrets.example.yaml to create $BASE_DIR/values/team-settings/secrets.yaml"
-  fi
-  if [[ ! -f "$BASE_DIR/values/ingress-nginx-controller/values.yaml" ]]; then
-  cp "$BASE_DIR/values/ingress-nginx-controller/hetzner-ci.example.yaml" "$BASE_DIR/values/ingress-nginx-controller/values.yaml"
-  echo "Used template hetzner-ci.example.yaml to create $BASE_DIR/values/ingress-nginx-controller/values.yaml"
-  fi
 }
 
 process_values() {
@@ -142,7 +148,6 @@ deploy_charts() {
   echo "Printing current pods status:"
   kubectl get pods --sort-by=.metadata.creationTimestamp
 
-
   echo "Deploying wire-server, webapp, account-pages, team-settings, smallstep-accomp, ingress-nginx-controller"
 
   helm upgrade --install --wait --timeout=15m0s wire-server $BASE_DIR/charts/wire-server --values $BASE_DIR/values/wire-server/values.yaml --values $BASE_DIR/values/wire-server/secrets.yaml
@@ -188,6 +193,6 @@ deploy_charts() {
 
 }
 
-process_charts
+process_charts "demo"
 process_values
 deploy_charts
