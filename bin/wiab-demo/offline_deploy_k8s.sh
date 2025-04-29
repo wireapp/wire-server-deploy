@@ -45,16 +45,20 @@ process_charts() {
 
     if [[ -d "$chart_dir" ]]; then
       if [[ -f "$chart_dir/${ENV}-values.example.yaml" ]]; then
+        # assuming if the values.yaml exist, it won't replace it again to make it idempotent
         if [[ ! -f "$chart_dir/values.yaml" ]]; then
           cp "$chart_dir/${ENV}-values.example.yaml" "$chart_dir/values.yaml"
           echo "Used template ${ENV}-values.example.yaml to create $chart_dir/values.yaml"
         fi
+      fi
+      if [[ -f "$chart_dir/${ENV}-secrets.example.yaml" ]]; then
+      # assuming if the secrets.yaml exist, it won't replace it again to make it idempotent
         if [[ ! -f "$chart_dir/secrets.yaml" ]]; then
           cp "$chart_dir/${ENV}-secrets.example.yaml" "$chart_dir/secrets.yaml"
           echo "Used template ${ENV}-secrets.example.yaml to create $chart_dir/secrets.yaml"
         fi
-
       fi
+
     fi
 
   done
@@ -88,15 +92,14 @@ process_values() {
     echo -e "    nodeSelector:\n      kubernetes.io/hostname: $NGINX_K8S_NODE" >> "$TEMP_DIR/ingress-nginx-controller-values.yaml"
   fi 
 
-  # Fixing SFTD hosts and setting the cert-manager to http01 and setting the replicaCount to 1
+  # Fixing SFTD hosts and setting the cert-manager to http01
   sed -e "s/webapp.example.com/webapp.$TARGET_SYSTEM/" \
       -e "s/sftd.example.com/sftd.$TARGET_SYSTEM/" \
       -e 's/name: letsencrypt-prod/name: letsencrypt-http01/' \
-      -e "s/replicaCount: 3/replicaCount: 1/" \
       "$BASE_DIR/values/sftd/values.yaml" > "$TEMP_DIR/sftd-values.yaml"
 
   # Creating coturn values and secrets
-  ZREST_SECRET=$(grep -A1 turn "$BASE_DIR/values/wire-server/secrets.yaml" | grep secret | tr -d '"' | awk '{print $NF}')
+  ZREST_SECRET=$(yq '.brig.secrets.turn.secret' "$BASE_DIR/values/wire-server/secrets.yaml" | tr -d '"')
   cat >"$TEMP_DIR/coturn-secrets.yaml"<<EOF
 secrets:
   zrestSecrets:
@@ -132,43 +135,57 @@ EOF
   fi
 }
 
+deploy_external_stores() {
 
-deploy_charts() {
-  echo "Deploying cassandra, elasticsearch-external, minio-external, fake-aws, demo-smtp, rabbitmq, databases-ephemeral, reaper"
+  echo "Deploying cassandra-external, elasticsearch-external and minio-external"
 
   helm upgrade --install --wait cassandra-external $BASE_DIR/charts/cassandra-external --values $BASE_DIR/values/cassandra-external/values.yaml
   helm upgrade --install --wait elasticsearch-external $BASE_DIR/charts/elasticsearch-external --values $BASE_DIR/values/elasticsearch-external/values.yaml
   helm upgrade --install --wait minio-external $BASE_DIR/charts/minio-external --values $BASE_DIR/values/minio-external/values.yaml
-  helm upgrade --install --wait fake-aws $BASE_DIR/charts/fake-aws --values $BASE_DIR/values/fake-aws/values.yaml
-  helm upgrade --install --wait demo-smtp $BASE_DIR/charts/demo-smtp --values $BASE_DIR/values/demo-smtp/values.yaml
-  helm upgrade --install --wait rabbitmq $BASE_DIR/charts/rabbitmq --values $BASE_DIR/values/rabbitmq/values.yaml --values $BASE_DIR/values/rabbitmq/secrets.yaml
-  helm upgrade --install --wait databases-ephemeral $BASE_DIR/charts/databases-ephemeral --values $BASE_DIR/values/databases-ephemeral/values.yaml
-  helm upgrade --install --wait reaper $BASE_DIR/charts/reaper
+}
 
-  echo "Printing current pods status:"
-  kubectl get pods --sort-by=.metadata.creationTimestamp
+deploy_charts() {
+  local charts=("$@")
+  echo "Following charts will be deployed: ${charts[*]}"
 
-  echo "Deploying wire-server, webapp, account-pages, team-settings, smallstep-accomp, ingress-nginx-controller"
+  for chart in "${charts[@]}"; do
+    chart_dir="$BASE_DIR/charts/$chart"
+    values_file="$BASE_DIR/values/$chart/values.yaml"
+    secrets_file="$BASE_DIR/values/$chart/secrets.yaml"
 
-  helm upgrade --install --wait --timeout=15m0s wire-server $BASE_DIR/charts/wire-server --values $BASE_DIR/values/wire-server/values.yaml --values $BASE_DIR/values/wire-server/secrets.yaml
-  if [ -d "$BASE_DIR/charts/webapp" ]; then
-      helm upgrade --install --wait --timeout=15m0s webapp $BASE_DIR/charts/webapp --values $BASE_DIR/values/webapp/values.yaml
-  fi
-  if [ -d "$BASE_DIR/charts/account-pages" ]; then
-      helm upgrade --install --wait --timeout=15m0s account-pages $BASE_DIR/charts/account-pages --values $BASE_DIR/values/account-pages/values.yaml
-  fi
-  if [ -d "$BASE_DIR/charts/team-settings" ]; then
-      helm upgrade --install --wait --timeout=15m0s team-settings $BASE_DIR/charts/team-settings --values $BASE_DIR/values/team-settings/values.yaml --values $BASE_DIR/values/team-settings/secrets.yaml
-  fi
+    if [[ ! -d "$chart_dir" ]]; then
+      echo "Error: Chart directory $chart_dir does not exist."
+      continue
+    fi
 
-  helm upgrade --install --wait --timeout=15m0s smallstep-accomp $BASE_DIR/charts/smallstep-accomp --values $BASE_DIR/values/smallstep-accomp/values.yaml
-  helm upgrade --install --wait --timeout=15m0s ingress-nginx-controller $BASE_DIR/charts/ingress-nginx-controller --values $BASE_DIR/values/ingress-nginx-controller/values.yaml
+    if [[ ! -f "$values_file" ]]; then
+      echo "Warning: Values file $values_file does not exist. Deploying without values."
+      values_file=""
+    fi
 
-  echo "Printing current pods status:"
-  kubectl get pods --sort-by=.metadata.creationTimestamp
+    if [[ ! -f "$secrets_file" ]]; then
+      secrets_file=""
+    fi
 
-  echo "Deploying cert-manager-ns, nginx-ingress-services, sftd, coturn"
+    helm_command="helm upgrade --install --wait --timeout=15m0s $chart $chart_dir"
 
+    if [[ -n "$values_file" ]]; then
+      helm_command+=" --values $values_file"
+    fi
+
+    if [[ -n "$secrets_file" ]]; then
+      helm_command+=" --values $secrets_file"
+    fi
+
+    echo "Deploying $chart as $helm_command"
+    eval $helm_command
+  done
+
+  # display running pods post deploying all helm charts
+  kubectl get pods --sort-by=.metadata.creationTimestamp -n cert-manager-ns
+}
+
+deploy_cert_manager() {
   # downloading the chart if not present
   if [[ ! -d "$BASE_DIR/charts/cert-manager" ]]; then
     wget -qO- "$CHART_URL" | tar -xz -C "$BASE_DIR/charts"
@@ -176,10 +193,13 @@ deploy_charts() {
 
   kubectl get namespace cert-manager-ns || kubectl create namespace cert-manager-ns
   helm upgrade --install -n cert-manager-ns --set 'installCRDs=true' cert-manager  $BASE_DIR/charts/cert-manager
+  
+  # display running pods
+  kubectl get pods --sort-by=.metadata.creationTimestamp -n cert-manager-ns
+}
 
-  helm upgrade --install nginx-ingress-services charts/nginx-ingress-services -f  $BASE_DIR/values/nginx-ingress-services/values.yaml
-  kubectl get certificate
-
+deploy_calling_services() {
+  echo "Deploying sftd and coturn"
   # select the node to deploy sftd
   kubectl label node $SFT_NODE wire.com/role=sftd
   helm upgrade --install sftd $BASE_DIR/charts/sftd --set 'nodeSelector.wire\.com/role=sftd' --set 'node_annotations="{'wire\.com/external-ip': '"$HOST_IP"'}"' --values  $BASE_DIR/values/sftd/values.yaml
@@ -187,12 +207,22 @@ deploy_charts() {
   kubectl label node $COTURN_NODE wire.com/role=coturn
   kubectl annotate node $COTURN_NODE wire.com/external-ip="$HOST_IP" --overwrite
   helm upgrade --install coturn ./charts/coturn --values  $BASE_DIR/values/coturn/values.yaml --values  $BASE_DIR/values/coturn/secrets.yaml
-
-  kubectl get pods --sort-by=.metadata.creationTimestamp
-  kubectl get pods --sort-by=.metadata.creationTimestamp -n cert-manager-ns
-
 }
 
+# process_charts can process demo or prod values
 process_charts "demo"
 process_values
-deploy_charts
+# deploying cert manager to issue certs, by default letsencrypt-http01 issuer is configured
+deploy_cert_manager
+
+# deploying with external datastores, useful for prod setup
+#deploy_charts cassandra-external elasticsearch-external minio-external fake-aws demo-smtp rabbitmq databases-ephemeral reaper wire-server webapp account-pages team-settings smallstep-accomp ingress-nginx-controller nginx-ingress-services
+
+# deploying with ephemeral datastores, useful for all k8s setup withou external datastore requirement
+deploy_charts fake-aws demo-smtp rabbitmq databases-ephemeral reaper wire-server webapp account-pages team-settings smallstep-accomp ingress-nginx-controller nginx-ingress-services
+
+# deploying sft and coturn services
+deploy_calling_services
+
+# print status of certs
+kubectl get certificate
