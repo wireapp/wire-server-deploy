@@ -188,6 +188,7 @@
       failed_when: false
       changed_when: false
 
+    # fix the version of minikube and kicbase images
     - name: Start Minikube with specified configurations
       shell: |
         minikube start \
@@ -483,21 +484,73 @@
     become: yes
     become_user: "{{ ansible_user }}"
     block:
+    - name: Generate random strings for zrest, minio_access_key, and minio_secret_key
+      shell: "tr -dc A-Za-z0-9 </dev/urandom | head -c {{ item.length }}"
+      register: random_strings
+      changed_when: false
+      with_items:
+        - { name: 'zrest', length: 64 }
+        - { name: 'minio_access_key', length: 20 }
+        - { name: 'minio_secret_key', length: 42 }
 
-    - name: Create secrets
-      shell: bash -x "/home/{{ ansible_user }}/wire-server-deploy/bin/offline-secrets.sh"
+    - name: Set generated random strings as facts
+      set_fact:
+        "{{ item.item.name }}": "{{ item.stdout }}"
+      with_items: "{{ random_strings.results }}"
+
+    - name: find zauth container image name
+      shell: ls /home/{{ ansible_user }}/wire-server-deploy/containers-adminhost/quay.io_wire_zauth_*.tar
+      register: zauth_docker_image
+
+    - name: Load ZAUTH Docker image
+      shell: |
+        docker load -i "{{ zauth_docker_image.stdout }}" | awk '{print $3}'
+      register: zauth_container
+
+    - name: Generate zauth keypair
+      shell: docker run "{{ zauth_container.stdout }}" -m gen-keypair -i 1
+      register: zauth_output
+      changed_when: false
+
+    - name: Extract zauth keys
+      set_fact:
+        zauth_public: "{{ zauth_output.stdout_lines[0].split()[1] }}"
+        zauth_private: "{{ zauth_output.stdout_lines[1].split()[1] }}"
+
+    - name: Created following secrets
+      debug:
+        msg:
+          - "zrest: {{ zrest }}"
+          - "minio_access_key: {{ minio_access_key }}"
+          - "minio_secret_key: {{ minio_secret_key }}"
+          - "zauth_public: {{ zauth_public }}"
+          - "zauth_private: {{ zauth_private }}"
+
+    - name: Update values in secrets.yaml using Python yq
+      shell: |
+        yq -yi '.brig.secrets.turn.secret = "{{ zrest }}"' {{ secrets_yaml_path }}
+        yq -yi '.cargohold.secrets.awsKeyId = "{{ minio_access_key }}"' {{ secrets_yaml_path }}
+        yq -yi '.cargohold.secrets.awsSecretKey = "{{ minio_secret_key }}"' {{ secrets_yaml_path }}
+        yq -yi '.brig.secrets.zAuth.publicKeys = "{{ zauth_public }}"' {{ secrets_yaml_path }}
+        yq -yi '.brig.secrets.zAuth.privateKeys = "{{ zauth_private }}"' {{ secrets_yaml_path }}
+        yq -yi '.nginz.secrets.zAuth.publicKeys = "{{ zauth_public }}"' {{ secrets_yaml_path }}
+      args:
+        executable: /bin/bash
+      vars:
+        secrets_yaml_path: "/home/{{ ansible_user }}/wire-server-deploy/values/wire-server/demo-secrets.example.yaml"
 
     when: skip_wire_secrets | default(false) == false
+
+  - name: Load WSD Docker image
+    shell: |
+      docker load -i "/home/{{ ansible_user }}/wire-server-deploy/containers-adminhost/container-wire-server-deploy.tgz" | awk '{print $3}'
+    register: wsd_container
+    when: (skip_wire_assets | default(false) == false) or (skip_helm_install | default(false) == false)
 
   - name: Setting up asset serving
     become: yes
     become_user: "{{ ansible_user }}"
     block:
-    - name: Load WSD Docker image
-      shell: |
-        docker load -i "/home/{{ ansible_user }}/wire-server-deploy/containers-adminhost/container-wire-server-deploy.tgz" | awk '{print $3}'
-      register: wsd_container
-
     - name: Run ansible pipeline update-kicbase-gpg-keys.yml against minikube nodes
       shell: |
         docker run --network=host \
@@ -519,3 +572,21 @@
           "{{ wsd_container.stdout }}" bash -x "/wire-server-deploy/bin/wiab-demo/setup_assets.sh"
 
     when: skip_wire_assets | default(false) == false
+
+  # fix the domain name from this playbook itself
+  - name: Installing helm charts
+    become: yes
+    become_user: "{{ ansible_user }}"
+    block:
+
+    - name: Installing all the required helm charts 
+      shell: |
+        docker run --network=host \
+          -v "/home/{{ ansible_user }}/.ssh":/root/.ssh \
+          -v "/home/{{ ansible_user }}/wire-server-deploy/":/wire-server-deploy \
+          -v "/home/{{ ansible_user }}/.kube/config":/root/.kube/config \
+          -v "/home/{{ ansible_user }}/.minikube":/home/ubuntu/.minikube \
+          -e KUBECONFIG=/root/.kube/config \
+          "{{ wsd_container.stdout }}" bash -x "/wire-server-deploy/bin/wiab-demo/offline_deploy_k8s.sh" 2>&1
+
+    when: skip_helm_install | default(false) == false
