@@ -260,9 +260,9 @@ spar:
 #  tls:
 #    useSharedFederatorSecret: true
 
-#background-worker:
-#  config:
-#    cassandra:
-#      host: cassandra-ephemeral
-#    # Enable for federation
-#    enableFederation: false
+background-worker:
+  config:
+    cassandra:
+      host: cassandra-ephemeral
+    # Enable for federation
+    enableFederation: false
