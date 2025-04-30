@@ -15,8 +15,9 @@
     pod_network_cidr: "10.233.0.0/16"
     minikube_node_subnet: "192.168.99.0/24"
 
-    # same value as the target_system in setting-values.sh
-    target_domain: "example.com"
+    # it should have all dns records configured as per DNS requirements
+    # https://docs.wire.com/latest/how-to/install/includes/helm_dns-ingress-troubleshooting.inc.html 
+    target_domain: "stackit-c-demo.zinfradev.com"
 
     # artifact_hash
     artifact_hash: "78fd19efb18920796d96ab9fb36a5995886ffa1b"
@@ -573,11 +574,22 @@
 
     when: skip_wire_assets | default(false) == false
 
-  # fix the domain name from this playbook itself
   - name: Installing helm charts
     become: yes
     become_user: "{{ ansible_user }}"
     block:
+
+    - name: Replace TARGET_SYSTEM example.com with target_domain in offline_deploy_k8s
+      lineinfile:
+        path: /home/{{ ansible_user }}/wire-server-deploy/bin/wiab-demo/offline_deploy_k8s.sh
+        regexp: '^TARGET_SYSTEM="example\.com"'
+        line: 'TARGET_SYSTEM="{{ target_domain }}"'
+
+    - name: Replace CERT_MASTER_EMAIL example.com with target_domain in offline_deploy_k8s
+      lineinfile:
+        path: /home/{{ ansible_user }}/wire-server-deploy/bin/wiab-demo/offline_deploy_k8s.sh
+        regexp: '^CERT_MASTER_EMAIL="certmaster@example\.com"'
+        line: 'CERT_MASTER_EMAIL="certmaster@{{ target_domain }}"'
 
     - name: Installing all the required helm charts 
       shell: |
@@ -587,6 +599,41 @@
           -v "/home/{{ ansible_user }}/.kube/config":/root/.kube/config \
           -v "/home/{{ ansible_user }}/.minikube":/home/ubuntu/.minikube \
           -e KUBECONFIG=/root/.kube/config \
-          "{{ wsd_container.stdout }}" bash -x "/wire-server-deploy/bin/wiab-demo/offline_deploy_k8s.sh" 2>&1
+          "{{ wsd_container.stdout }}" bash -x "/wire-server-deploy/bin/wiab-demo/offline_deploy_k8s.sh" > /tmp/deployment.log
+      register: helm_install
 
     when: skip_helm_install | default(false) == false
+
+  - name: Check DNS A records
+    vars:
+      dns_records:
+        - sftd.{{ target_domain }}
+        - nginz-https.{{ target_domain }}
+        - nginz-ssl.{{ target_domain }}
+        - webapp.{{ target_domain }}
+        - assets.{{ target_domain }}
+        - teams.{{ target_domain }}
+        - account.{{ target_domain }}
+    block:
+    - name: Resolve the IP address of the inventory hostname
+      command: "dig +short {{ inventory_hostname }}"
+      register: resolved_ip
+      changed_when: false
+
+    - name: Set the resolved IP address as a fact
+      set_fact:
+        host_ip: "{{ resolved_ip.stdout.strip() }}"
+
+    - name: Resolve DNS A record for {{ item }}
+      command: "dig +short {{ item }}"
+      register: dns_result
+      failed_when: false
+      changed_when: false
+      with_items: "{{ dns_records }}"
+
+    - name: Log if DNS record does not match the inventory hostname IP
+      shell: "echo 'DNS record {{ item.item }} does not match with the inventory hostname IP {{ host_ip }}'"
+      when: item.stdout | trim != host_ip
+      with_items: "{{ dns_result.results }}"
+
+    when: skip_verify_dns | default(false) == false

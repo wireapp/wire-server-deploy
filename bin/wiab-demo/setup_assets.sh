@@ -5,8 +5,6 @@ set -eou pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ANSIBLE_DIR="$(cd "$SCRIPT_DIR/../../ansible" && pwd)"
 
-ls $ANSIBLE_DIR/inventory/offline
-
 if [ -f "$ANSIBLE_DIR/inventory/offline/hosts.ini" ]; then
   INVENTORY_FILE="$ANSIBLE_DIR/inventory/offline/hosts.ini"
 elif [ -f "$ANSIBLE_DIR/inventory/offline/inventory.yml" ]; then

@@ -178,7 +178,7 @@ deploy_charts() {
     fi
 
     echo "Deploying $chart as $helm_command"
-    eval $helm_command
+    eval "$helm_command"
   done
 
   # display running pods post deploying all helm charts
