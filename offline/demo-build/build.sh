@@ -42,29 +42,25 @@ SOURCE_OUTPUT_DIR="${SCRIPT_DIR}/../default-build/output"
 ln -sf "${SOURCE_OUTPUT_DIR}/containers-adminhost" "${OUTPUT_DIR}/containers-adminhost"
 
 # link debs-jammy.tar from the default build
-ln -sf "${SOURCE_OUTPUT_DIR}/debs-jammy.tar" "${OUTPUT_DIR}/debs-jammy.tar"
+# ln -sf "${SOURCE_OUTPUT_DIR}/debs-jammy.tar" "${OUTPUT_DIR}/debs-jammy.tar"
 
 # link containers-system.tar from the default build
-ln -sf "${SOURCE_OUTPUT_DIR}/containers-system.tar" "${OUTPUT_DIR}/containers-system.tar"
+# ln -sf "${SOURCE_OUTPUT_DIR}/containers-system.tar" "${OUTPUT_DIR}/containers-system.tar"
 
 # copy binaries.tar from the default build
-ln -sf "${SOURCE_OUTPUT_DIR}/binaries.tar" "${OUTPUT_DIR}/binaries.tar"
+# ln -sf "${SOURCE_OUTPUT_DIR}/binaries.tar" "${OUTPUT_DIR}/binaries.tar"
 
-cp "${SOURCE_OUTPUT_DIR}/versions/wire-binaries.json" "${OUTPUT_DIR}/versions/"
-cp "${SOURCE_OUTPUT_DIR}/versions/containers-system.txt" "${OUTPUT_DIR}/versions/"
-cp "${SOURCE_OUTPUT_DIR}/versions/debian-builds.json" "${OUTPUT_DIR}/versions/"
+#cp "${SOURCE_OUTPUT_DIR}/versions/wire-binaries.json" "${OUTPUT_DIR}/versions/"
+#cp "${SOURCE_OUTPUT_DIR}/versions/containers-system.txt" "${OUTPUT_DIR}/versions/"
+#cp "${SOURCE_OUTPUT_DIR}/versions/debian-builds.json" "${OUTPUT_DIR}/versions/"
 cp "${SOURCE_OUTPUT_DIR}/versions/containers-adminhost.txt" "${OUTPUT_DIR}/versions/"
-cp "${SOURCE_OUTPUT_DIR}/versions/containers-system.txt" "${OUTPUT_DIR}/versions/"
 
 # --------------------------
 
 # List of directories and files to include in the tar archive
 ITEMS_TO_ARCHIVE=(
-  "debs-jammy.tar"
-  "binaries.tar"
   "containers-adminhost"
   "containers-helm.tar"
-  "containers-system.tar"
   "charts"
   "values"
   "../../../ansible"
@@ -90,6 +86,6 @@ done
 # Create the tar archive with relative paths
 # for the outputs from other other profiles, their paths should be mentioned here
 tar czf "$OUTPUT_TAR" \
-  -C "${SOURCE_OUTPUT_DIR}" debs-jammy.tar binaries.tar containers-adminhost containers-system.tar \
+  -C "${SOURCE_OUTPUT_DIR}" containers-adminhost \
   -C "${ROOT_DIR}" ansible bin \
   -C "${OUTPUT_DIR}" charts values versions containers-helm.tar
