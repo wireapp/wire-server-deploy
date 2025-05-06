@@ -15,12 +15,9 @@
     pod_network_cidr: "10.233.0.0/16"
     minikube_node_subnet: "192.168.99.0/24"
 
-    # it should have all dns records configured as per DNS requirements
-    # https://docs.wire.com/latest/how-to/install/includes/helm_dns-ingress-troubleshooting.inc.html 
-    target_domain: "stackit-c-demo.zinfradev.com"
 
     # artifact_hash
-    artifact_hash: "78fd19efb18920796d96ab9fb36a5995886ffa1b"
+    artifact_hash: "71b746f5515f254756fce9c422b5e19add382903"
 
     # networking iptables dnat rules
     # This should be the ip address of k8s node where ngnix-ingress-controller is running
@@ -58,6 +55,7 @@
         apt:
           name:
           # common packages
+            - yq
             - aptitude
             - bind9-host
             - debian-goodies
@@ -108,6 +106,7 @@
         apt:
           update_cache: yes
 
+      # fix: static version for docker packages
       - name: Install Docker packages
         apt:
           name:
@@ -133,12 +132,14 @@
       - name: Reset SSH connection to apply docker group membership changes
         meta: reset_connection
 
+      # fix: static path for a minikube version
       - name: Install Minikube
         get_url:
           url: "https://github.com/kubernetes/minikube/releases/latest/download/minikube-linux-amd64"
           dest: /usr/local/bin/minikube
           mode: '0755'
 
+      # fix: static path for a kubectl version
       - name: Install kubectl
         get_url:
           url: "https://dl.k8s.io/release/{{ kubernetes_version }}/bin/linux/amd64/kubectl"
@@ -168,6 +169,11 @@
       args:
         creates: "/home/{{ ansible_user }}/.ssh/id_rsa"
 
+    - name: Read the private key
+      slurp:
+        src: "/home/{{ ansible_user }}/.ssh/id_rsa"
+      register: ssh_key_private
+
     - name: Read the public key content
       slurp:
         src: "/home/{{ ansible_user }}/.ssh/id_rsa.pub"
@@ -176,8 +182,18 @@
     - name: Set the public key as a fact
       set_fact:
         ssh_public_key: "{{ ssh_key_content['content'] | b64decode }}"
-  
-    when: skip_ssh | default(false) == false
+
+    - name: Set the private key as a fact
+      set_fact:
+        ssh_private_key: "{{ ssh_key_private['content'] | b64decode }}"
+
+    - name: Add SSH key to the node to use it as a assethost
+      authorized_key:
+        user: "{{ ansible_user }}"
+        state: present
+        key: "{{ ssh_public_key }}"
+
+    when: ((skip_minikube | default(false) == false) or (skip_download | default(false) == false) or (skip_wire_assets | default(false) == false) or (skip_setup_offline_seed | default(false) == false))
 
   - name: start k8s(minikube) cluster 
     become: yes
@@ -252,9 +268,6 @@
         docker network inspect "{{ minikube_network_name }}" | jq -r '.[0].IPAM.Config[0].Gateway'
       register: host_ip
 
-    - name: Add SSH key to host node itself as well
-      shell: echo '{{ ssh_public_key }}' >> "/home/{{ ansible_user }}/.ssh/authorized_keys"
-
     - name: Create dictionary for Kubernetes nodes and container IPs
       set_fact:
         host_ips:
@@ -264,6 +277,20 @@
           # ip address of the minikube network interface on the machine
           assethost: "{{ host_ip.stdout }}"
 
+    - name: Save variables to be used by imported playbooks
+      copy:
+        content: |
+          ---
+          host_ips:
+            kubenode1: "{{ kubernetes_node_ips[0] }}"
+            kubenode2: "{{ kubernetes_node_ips[1] }}"
+            kubenode3: "{{ kubernetes_node_ips[2] }}"
+            assethost: "{{ host_ip.stdout }}"
+          ansible_user: "{{ ansible_user }}"
+          assethost_host: "{{ host_ip.stdout }}:8080"
+        dest: "/tmp/shared_ansible_vars.yml"
+        mode: '0644'
+
     - name: Generate hosts.ini content
       set_fact:
         hosts_ini_content: |
@@ -271,7 +298,7 @@
           kubenode1 ansible_host={{ host_ips.kubenode1 }} ansible_user=docker
           kubenode2 ansible_host={{ host_ips.kubenode2 }} ansible_user=docker
           kubenode3 ansible_host={{ host_ips.kubenode3 }} ansible_user=docker
-          assethost ansible_host={{ host_ips.assethost }} ansible_user=ubuntu
+          assethost ansible_host={{ host_ips.assethost }} ansible_user="{{ ansible_user }}"
 
           [all:vars]
           ansible_ssh_common_args = '-o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no'
@@ -295,7 +322,7 @@
           kube-master
           kube-node
 
-    when: skip_inventory | default(false) == false
+    when: ((skip_minikube | default(false) == false) or (skip_download | default(false) == false) or (skip_wire_assets | default(false) == false) or (skip_setup_offline_seed | default(false) == false))
 
   - name: Download wire artifact
     become: yes
@@ -309,17 +336,28 @@
           group: "{{ ansible_user }}"
           mode: 0775
 
-      - name: check if wire-server-deploy-static-{{ artifact_hash }}.tgz exists
+      - name: check if wire-server-deploy-static-demo-{{ artifact_hash }}.tgz exists
         stat:
-          path: /home/{{ ansible_user }}/wire-server-deploy-static-{{ artifact_hash }}.tgz
+          path: /home/{{ ansible_user }}/wire-server-deploy-static-demo-{{ artifact_hash }}.tgz
           get_checksum: False
-
         register: artifact_archive_file_check
+
       - name: download wire-server-deploy archive
         shell:
-          cmd: curl -fsSLo /home/{{ ansible_user }}/wire-server-deploy-static-{{ artifact_hash }}.tgz https://s3-eu-west-1.amazonaws.com/public.wire.com/artifacts/wire-server-deploy-static-{{ artifact_hash }}.tgz
-          creates: /home/{{ ansible_user }}/wire-server-deploy-static-{{ artifact_hash }}.tgz
+          cmd: curl -fsSLo /home/{{ ansible_user }}/wire-server-deploy-static-demo-{{ artifact_hash }}.tgz https://s3-eu-west-1.amazonaws.com/public.wire.com/artifacts/wire-server-deploy-static-demo-{{ artifact_hash }}.tgz
+          creates: /home/{{ ansible_user }}/wire-server-deploy-static-demo-{{ artifact_hash }}.tgz
         when: not artifact_archive_file_check.stat.exists
+        register: artifact_archive
+        async: 1200
+        poll: 0
+
+      - name: Waiting on async task artifact_archive
+        async_status:
+          jid: "{{ artifact_archive.ansible_job_id }}"
+        register: res
+        until: res.finished
+        retries: 20
+        delay: 60
 
       - name: check if wire-server-deploy folder contents exist
         stat:
@@ -329,9 +367,20 @@
 
       - name: unpack wire-server-deploy archive
         unarchive:
-          src: /home/{{ ansible_user }}/wire-server-deploy-static-{{ artifact_hash }}.tgz
+          src: /home/{{ ansible_user }}/wire-server-deploy-static-demo-{{ artifact_hash }}.tgz
           dest: /home/{{ ansible_user }}/wire-server-deploy
           remote_src: yes
+        register: unpack_archive
+        async: 1200
+        poll: 0
+
+      - name: Waiting on async task unpack_archive
+        async_status:
+          jid: "{{ unpack_archive.ansible_job_id }}"
+        register: res
+        until: res.finished
+        retries: 20
+        delay: 60
 
         when: not artifact_folder_content_check.stat.exists
       - name: set permissions inside wire-server-deploy via shell command (fails when using ansible directive)
@@ -340,16 +389,11 @@
 
     when: skip_download | default(false) == false
 
-  - name: Delete /tmp/wire-deploy directory with contents
-    file:
-      path: /tmp/wire-deploy
-      state: absent
-
   - name: Write updated hosts.ini to file
     copy:
       dest:  /home/{{ ansible_user }}/wire-server-deploy/ansible/inventory/offline/hosts.ini
       content: "{{ hosts_ini_content }}"
-    when: skip_inventory | default(false) == false
+    when: ((skip_minikube | default(false) == false) or (skip_download | default(false) == false) or (skip_wire_assets | default(false) == false) or (skip_setup_offline_seed | default(false) == false))
 
   - name: Configure iptables rules
     become: yes
@@ -479,7 +523,114 @@
     - name: Save iptables rules
       shell: iptables-save -f /etc/iptables/rules.v4 
 
-    when: skip_iptables | default(false) == false
+    when: skip_minikube | default(false) == false
+
+  - name: Setup ssh proxy access to k8s-cluster nodes
+    become: no
+    block:
+    - name: Create a temporary directory
+      tempfile:
+        state: directory
+        suffix: _ssh_keys
+      register: temp_dir
+      delegate_to: localhost
+
+    - name: Write the private key to a file
+      copy:
+        content: "{{ ssh_private_key }}"
+        dest: "{{ temp_dir.path }}/id_rsa"
+        mode: '0600'
+      delegate_to: localhost
+
+    - name: Add containers to inventory
+      become: yes
+      become_user: "{{ ansible_user }}"
+      add_host:
+        name: "{{ item }}"
+        groups: k8s-cluster
+        ansible_user: docker
+        ansible_ssh_common_args: >-
+          -o ProxyCommand="ssh -W %h:%p -q {{ ansible_user }}@{{ ansible_host }}"
+          -o StrictHostKeyChecking=no
+          -i {{ temp_dir.path }}/id_rsa
+      loop: "{{ kubernetes_node_ips }}"
+
+    - name: Define inventory for the assethost to match the hostname in setup-offline-sources.yml
+      become: yes
+      become_user: "{{ ansible_user }}"
+      add_host:
+        name: "{{ host_ips.assethost }}"
+        group: assethost
+        ansible_user: "{{ ansible_user }}"
+        ansible_ssh_common_args: >-
+          -o ProxyCommand="ssh -W %h:%p -q {{ ansible_user }}@{{ ansible_host }}"
+          -o StrictHostKeyChecking=no
+
+    - name: Set assethost_host variable
+      set_fact:
+        assethost_host: "{{ host_ips.assethost }}"
+      delegate_to: localhost
+      delegate_facts: true
+
+    - name: Set original_node variable
+      set_fact:
+        original_node: "{{ ansible_host }}"
+      delegate_to: localhost
+      delegate_facts: true
+
+    when: ((skip_wire_assets | default(false) == false) or (skip_setup_offline_seed | default(false) == false))
+
+- name: Setup offline sources on asset host
+  import_playbook: ../setup-offline-sources.yml
+  vars:
+    src_path: "/home/{{ ansible_user }}/wire-server-deploy"
+    remote_src: yes
+    assethost_host: "{{ hostvars['localhost']['assethost_host'] }}:8080"
+  when: skip_wire_assets | default(false) == false
+
+- name: Fix gpg keys issue with kicbase container nodes
+  import_playbook: ./update-kicbase-gpg-keys.yml
+  when: skip_setup_offline_seed | default(false) == false
+    
+- name: Seed the containers in k8s-cluster nodes
+  import_playbook: ../seed-offline-containerd.yml
+  vars:
+    assethost_host: "{{ hostvars['localhost']['assethost_host'] }}:8080"
+    docker_permission_fix: true
+  when: skip_setup_offline_seed | default(false) == false
+
+- name: Continue operations without the ssh proxy
+  hosts: all
+  gather_facts: yes
+  vars:
+    # it should have all dns records configured as per DNS requirements
+    # https://docs.wire.com/latest/how-to/install/includes/helm_dns-ingress-troubleshooting.inc.html 
+    target_domain: "stackit-d-demo.zinfradev.com"
+    ansible_user: ubuntu
+    docker_cmd_base: >-
+      docker run --network=host
+      -v "/home/{{ ansible_user }}/.ssh":/root/.ssh
+      -v "/home/{{ ansible_user }}/wire-server-deploy/":/wire-server-deploy
+      -v "/home/{{ ansible_user }}/.kube/config":/root/.kube/config
+      -v "/home/{{ ansible_user }}/.minikube":/home/ubuntu/.minikube
+      -e KUBECONFIG=/root/.kube/config
+      "{{ wsd_container.stdout }}"
+    charts_to_deploy:
+      - fake-aws
+      - demo-smtp
+      - rabbitmq
+      - databases-ephemeral
+      - reaper
+      - wire-server
+      - webapp
+      - account-pages
+      - team-settings
+      - smallstep-accomp
+      - ingress-nginx-controller
+      - nginx-ingress-services
+  become_user: "{{ ansible_user }}"
+  become: yes
+  tasks:
 
   - name: Creating wire secrets
     become: yes
@@ -540,43 +691,9 @@
       vars:
         secrets_yaml_path: "/home/{{ ansible_user }}/wire-server-deploy/values/wire-server/demo-secrets.example.yaml"
 
-    when: skip_wire_secrets | default(false) == false
-
-  - name: Load WSD Docker image
-    shell: |
-      docker load -i "/home/{{ ansible_user }}/wire-server-deploy/containers-adminhost/container-wire-server-deploy.tgz" | awk '{print $3}'
-    register: wsd_container
-    when: (skip_wire_assets | default(false) == false) or (skip_helm_install | default(false) == false)
-
-  - name: Setting up asset serving
-    become: yes
-    become_user: "{{ ansible_user }}"
-    block:
-    - name: Run ansible pipeline update-kicbase-gpg-keys.yml against minikube nodes
-      shell: |
-        docker run --network=host \
-          -v "/home/{{ ansible_user }}/.ssh":/root/.ssh \
-          -v "/home/{{ ansible_user }}/wire-server-deploy/":/wire-server-deploy \
-          -v "/home/{{ ansible_user }}/.kube/config":/root/.kube/config \
-          -v "/home/{{ ansible_user }}/.minikube":/home/ubuntu/.minikube \
-          -e KUBECONFIG=/root/.kube/config \
-          "{{ wsd_container.stdout }}" ansible-playbook -i /wire-server-deploy/ansible/inventory/offline/hosts.ini  /wire-server-deploy/ansible/wiab-demo/update-kicbase-gpg-keys.yml
-
-    - name: Setting up the asset host service using WSD container
-      shell: |
-        docker run --network=host \
-          -v "/home/{{ ansible_user }}/.ssh":/root/.ssh \
-          -v "/home/{{ ansible_user }}/wire-server-deploy/":/wire-server-deploy \
-          -v "/home/{{ ansible_user }}/.kube/config":/root/.kube/config \
-          -v "/home/{{ ansible_user }}/.minikube":/home/ubuntu/.minikube \
-          -e KUBECONFIG=/root/.kube/config \
-          "{{ wsd_container.stdout }}" bash -x "/wire-server-deploy/bin/wiab-demo/setup_assets.sh"
-
-    when: skip_wire_assets | default(false) == false
+    when: ((skip_wire_secrets | default(false) == false) and (skip_helm_install | default(false) == false))
 
   - name: Installing helm charts
-    become: yes
-    become_user: "{{ ansible_user }}"
     block:
 
     - name: Replace TARGET_SYSTEM example.com with target_domain in offline_deploy_k8s
@@ -584,23 +701,53 @@
         path: /home/{{ ansible_user }}/wire-server-deploy/bin/wiab-demo/offline_deploy_k8s.sh
         regexp: '^TARGET_SYSTEM="example\.com"'
         line: 'TARGET_SYSTEM="{{ target_domain }}"'
+        backrefs: yes
 
     - name: Replace CERT_MASTER_EMAIL example.com with target_domain in offline_deploy_k8s
       lineinfile:
         path: /home/{{ ansible_user }}/wire-server-deploy/bin/wiab-demo/offline_deploy_k8s.sh
         regexp: '^CERT_MASTER_EMAIL="certmaster@example\.com"'
         line: 'CERT_MASTER_EMAIL="certmaster@{{ target_domain }}"'
+        backrefs: yes
 
-    - name: Installing all the required helm charts 
+    #- name: Setting up values for helm charts
+    #  shell: /wire-server-deploy/bin/wiab-demo/set_helm_values.sh demo
+
+    - name: Load WSD Docker image
       shell: |
-        docker run --network=host \
-          -v "/home/{{ ansible_user }}/.ssh":/root/.ssh \
-          -v "/home/{{ ansible_user }}/wire-server-deploy/":/wire-server-deploy \
-          -v "/home/{{ ansible_user }}/.kube/config":/root/.kube/config \
-          -v "/home/{{ ansible_user }}/.minikube":/home/ubuntu/.minikube \
-          -e KUBECONFIG=/root/.kube/config \
-          "{{ wsd_container.stdout }}" bash -x "/wire-server-deploy/bin/wiab-demo/offline_deploy_k8s.sh" > /tmp/deployment.log
-      register: helm_install
+        docker load -i "/home/{{ ansible_user }}/wire-server-deploy/containers-adminhost/container-wire-server-deploy.tgz" | awk '{print $3}'
+      register: wsd_container
+
+    - name: Process charts for demo environment
+      shell: |
+        {{ docker_cmd_base }} bash -c "source /wire-server-deploy/bin/wiab-demo/offline_deploy_k8s.sh && process_charts demo"
+      args:
+        executable: /bin/bash
+    
+    - name: Process values
+      shell: |
+        {{ docker_cmd_base }} bash -c "source /wire-server-deploy/bin/wiab-demo/offline_deploy_k8s.sh && process_values"
+      args:
+        executable: /bin/bash
+    
+    - name: Deploy cert manager
+      shell: |
+        {{ docker_cmd_base }} bash -c "source /wire-server-deploy/bin/wiab-demo/offline_deploy_k8s.sh && deploy_cert_manager"
+      args:
+        executable: /bin/bash
+    
+    - name: Deploy chart
+      shell: |
+        {{ docker_cmd_base }} bash -c "source /wire-server-deploy/bin/wiab-demo/offline_deploy_k8s.sh && deploy_charts {{ item }}"
+      args:
+        executable: /bin/bash
+      loop: "{{ charts_to_deploy }}"
+
+    - name: Deploy calling stack
+      shell: |
+        {{ docker_cmd_base }} bash -c "source /wire-server-deploy/bin/wiab-demo/offline_deploy_k8s.sh && deploy_calling_services"
+      args:
+        executable: /bin/bash
 
     when: skip_helm_install | default(false) == false
 
@@ -637,3 +784,8 @@
       with_items: "{{ dns_result.results }}"
 
     when: skip_verify_dns | default(false) == false
+
+  - name: Delete /tmp/wire-deploy directory with contents
+    file:
+      path: /tmp/wire-deploy
+      state: absent
