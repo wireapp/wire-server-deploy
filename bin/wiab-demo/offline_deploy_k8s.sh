@@ -1,3 +1,4 @@
+
 #!/usr/bin/env bash
 # shellcheck disable=SC2087
 set -Eeuo pipefail
@@ -13,11 +14,6 @@ SFT_NODE="minikube"
 NGINX_K8S_NODE="minikube-m02"
 # picking 3rd node for coturn
 COTURN_NODE="minikube-m03"
-
-# this IP should match the DNS A record for TARGET_SYSTEM
-HOST_IP=$(wget -qO- https://api.ipify.org)
-# to find IP address of coturn NODE
-COTURN_NODE_IP=$(kubectl get node $COTURN_NODE -o jsonpath='{.status.addresses[?(@.type=="InternalIP")].address}')
 
 CHART_URL="https://charts.jetstack.io/charts/cert-manager-v1.13.2.tgz"
 
@@ -67,6 +63,11 @@ process_charts() {
 process_values() {
   TEMP_DIR=$(mktemp -d)
   trap 'rm -rf $TEMP_DIR' EXIT
+
+  # this IP should match the DNS A record for TARGET_SYSTEM
+  HOST_IP=$(wget -qO- https://api.ipify.org)
+  # to find IP address of coturn NODE
+  COTURN_NODE_IP=$(kubectl get node $COTURN_NODE -o jsonpath='{.status.addresses[?(@.type=="InternalIP")].address}')
 
   # Fixing the hosts with TARGET_SYSTEM and setting the turn server
   sed -e "s/example.com/$TARGET_SYSTEM/g" \
@@ -135,15 +136,6 @@ EOF
   fi
 }
 
-deploy_external_stores() {
-
-  echo "Deploying cassandra-external, elasticsearch-external and minio-external"
-
-  helm upgrade --install --wait cassandra-external $BASE_DIR/charts/cassandra-external --values $BASE_DIR/values/cassandra-external/values.yaml
-  helm upgrade --install --wait elasticsearch-external $BASE_DIR/charts/elasticsearch-external --values $BASE_DIR/values/elasticsearch-external/values.yaml
-  helm upgrade --install --wait minio-external $BASE_DIR/charts/minio-external --values $BASE_DIR/values/minio-external/values.yaml
-}
-
 deploy_charts() {
   local charts=("$@")
   echo "Following charts will be deployed: ${charts[*]}"
@@ -199,6 +191,10 @@ deploy_cert_manager() {
 }
 
 deploy_calling_services() {
+
+  # this IP should match the DNS A record for TARGET_SYSTEM
+  HOST_IP=$(wget -qO- https://api.ipify.org)
+
   echo "Deploying sftd and coturn"
   # select the node to deploy sftd
   kubectl label node $SFT_NODE wire.com/role=sftd
@@ -209,6 +205,8 @@ deploy_calling_services() {
   helm upgrade --install coturn ./charts/coturn --values  $BASE_DIR/values/coturn/values.yaml --values  $BASE_DIR/values/coturn/secrets.yaml
 }
 
+# if required, this function can be run manually
+run_manually() {
 # process_charts can process demo or prod values
 process_charts "demo"
 process_values
@@ -226,3 +224,4 @@ deploy_calling_services
 
 # print status of certs
 kubectl get certificate
+}
