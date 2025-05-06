@@ -4,7 +4,10 @@ let
   sources = import ./nix/sources.nix;
   pkgs = import sources.nixpkgs {
     inherit system;
-    config = { };
+    config = {
+      # To get Terraform (OpenTofu is not a full drop-in replacement)
+      allowUnfree = true;
+    };
     overlays = [
       (import ./nix/overlay.nix)
     ];
@@ -44,6 +47,7 @@ rec {
       moreutils
       skopeo
       sops
+      terraform
       opentofu
       yq
       create-container-dump
