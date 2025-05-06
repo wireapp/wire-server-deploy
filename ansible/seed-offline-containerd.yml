@@ -3,11 +3,33 @@
   hosts: k8s-cluster
   tags: system-containers
   tasks:
+    # useful for minikube setup as docker user doesn't have permissions to access to the socket
+    - name: Ensure containerd socket has correct permissions for docker user
+      file:
+        path: /run/containerd/containerd.sock
+        owner: root
+        group: docker
+        mode: '0660'
+      become: yes
+      when: docker_permission_fix | default(false) == true
+
     - name: load containers
       shell: |
         for container in $(curl -q {{ assethost_host }}/containers-system/index.txt);do
           curl -q "{{ assethost_host }}/containers-system/$container" | ctr -n=k8s.io images import -
         done
+      register: load_containers
+      async: 1200
+      poll: 0
+
+    - name: Waiting on async task load_containers
+      async_status:
+        jid: "{{ load_containers.ansible_job_id }}"
+      register: res
+      until: res.finished
+      retries: 20
+      delay: 60
+
 
 - name: Download helm containers
   hosts: k8s-cluster
@@ -19,7 +41,17 @@
           curl -q "{{ assethost_host }}/containers-helm/$container" | ctr -n=k8s.io images import -
         done
 
+      register: load_helm_containers
+      async: 1200
+      poll: 0
 
+    - name: Waiting on async task load_helm_containers
+      async_status:
+        jid: "{{ load_helm_containers.ansible_job_id }}"
+      register: res
+      until: res.finished
+      retries: 20
+      delay: 60
 ################################### Hack to tag the ingress-nginx container images ###############
 #- name: Load ingress-controller containers
 #  hosts: k8s-cluster
