@@ -1,7 +1,5 @@
-- name: Seed system containers
-  # Add etcd group here if you are deploying separate worker and master clusters
+- name: Fix containerd socker permission
   hosts: k8s-cluster
-  tags: system-containers
   tasks:
     # useful for minikube setup as docker user doesn't have permissions to access to the socket
     - name: Ensure containerd socket has correct permissions for docker user
@@ -13,6 +11,11 @@
       become: yes
       when: docker_permission_fix | default(false) == true
 
+- name: Seed system containers
+  # Add etcd group here if you are deploying separate worker and master clusters
+  hosts: k8s-cluster
+  tags: system-containers
+  tasks:
     - name: load containers
       shell: |
         for container in $(curl -q {{ assethost_host }}/containers-system/index.txt);do
@@ -21,6 +24,7 @@
       register: load_containers
       async: 1200
       poll: 0
+      when: skip_seed_system_containers | default(false) == false
 
     - name: Waiting on async task load_containers
       async_status:
@@ -29,7 +33,7 @@
       until: res.finished
       retries: 20
       delay: 60
-
+      when: skip_seed_system_containers | default(false) == false
 
 - name: Download helm containers
   hosts: k8s-cluster
