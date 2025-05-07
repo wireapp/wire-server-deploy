@@ -17,7 +17,7 @@
 
 
     # artifact_hash
-    artifact_hash: "4852fbea812d81f86f2c40a453e3a1f3b14fe1ee"
+    artifact_hash: "415b930df09b4281a81b0decb2c31e98342f1c64"
 
     # networking iptables dnat rules
     # This should be the ip address of k8s node where ngnix-ingress-controller is running
