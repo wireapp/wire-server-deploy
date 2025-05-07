@@ -51,9 +51,9 @@ ln -sf "${SOURCE_OUTPUT_DIR}/containers-adminhost" "${OUTPUT_DIR}/containers-adm
 # ln -sf "${SOURCE_OUTPUT_DIR}/binaries.tar" "${OUTPUT_DIR}/binaries.tar"
 
 #cp "${SOURCE_OUTPUT_DIR}/versions/wire-binaries.json" "${OUTPUT_DIR}/versions/"
-#cp "${SOURCE_OUTPUT_DIR}/versions/containers-system.txt" "${OUTPUT_DIR}/versions/"
 #cp "${SOURCE_OUTPUT_DIR}/versions/debian-builds.json" "${OUTPUT_DIR}/versions/"
-cp "${SOURCE_OUTPUT_DIR}/versions/containers-adminhost.txt" "${OUTPUT_DIR}/versions/"
+cp "${SOURCE_OUTPUT_DIR}/versions/containers_adminhost_images.json" "${OUTPUT_DIR}/versions/"
+#cp "${SOURCE_OUTPUT_DIR}/versions/containers_system_images.json" "${OUTPUT_DIR}/versions/"
 
 # --------------------------
 
