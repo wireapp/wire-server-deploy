@@ -1,6 +1,6 @@
 ---
 - name: Setup Minikube Cluster and Configure Nodes
-  hosts: all
+  hosts: deploy_node
   become: yes
   vars:
     # to ssh into the machine and run the playbook
@@ -17,7 +17,7 @@
 
 
     # artifact_hash
-    artifact_hash: "71b746f5515f254756fce9c422b5e19add382903"
+    artifact_hash: "4852fbea812d81f86f2c40a453e3a1f3b14fe1ee"
 
     # networking iptables dnat rules
     # This should be the ip address of k8s node where ngnix-ingress-controller is running
@@ -358,6 +358,7 @@
         until: res.finished
         retries: 20
         delay: 60
+        when: not artifact_archive_file_check.stat.exists
 
       - name: check if wire-server-deploy folder contents exist
         stat:
@@ -365,24 +366,13 @@
           get_checksum: False
         register: artifact_folder_content_check
 
-      - name: unpack wire-server-deploy archive
+      - name: unpack wire-server-deploy archive, will take a few mins
         unarchive:
           src: /home/{{ ansible_user }}/wire-server-deploy-static-demo-{{ artifact_hash }}.tgz
           dest: /home/{{ ansible_user }}/wire-server-deploy
           remote_src: yes
-        register: unpack_archive
-        async: 1200
-        poll: 0
-
-      - name: Waiting on async task unpack_archive
-        async_status:
-          jid: "{{ unpack_archive.ansible_job_id }}"
-        register: res
-        until: res.finished
-        retries: 20
-        delay: 60
-
         when: not artifact_folder_content_check.stat.exists
+
       - name: set permissions inside wire-server-deploy via shell command (fails when using ansible directive)
         shell:
           cmd: sudo chmod -R 0775 /home/{{ ansible_user }}/wire-server-deploy; sudo chown -R {{ ansible_user }}:{{ ansible_user }} /home/{{ ansible_user }}
@@ -580,32 +570,58 @@
 
     when: ((skip_wire_assets | default(false) == false) or (skip_setup_offline_seed | default(false) == false))
 
-- name: Setup offline sources on asset host
-  import_playbook: ../setup-offline-sources.yml
-  vars:
-    src_path: "/home/{{ ansible_user }}/wire-server-deploy"
-    remote_src: yes
-    assethost_host: "{{ hostvars['localhost']['assethost_host'] }}:8080"
-  when: skip_wire_assets | default(false) == false
+  - name: Setup offline sources on asset host
+    become: yes
+    block:
+    - file:
+        path: /opt/assets
+        state: directory
 
-- name: Fix gpg keys issue with kicbase container nodes
-  import_playbook: ./update-kicbase-gpg-keys.yml
-  when: skip_setup_offline_seed | default(false) == false
+    - name: Copy helm containers
+      unarchive:
+        src: "/home/{{ ansible_user }}/wire-server-deploy/containers-helm.tar"
+        dest: /opt/assets
+        remote_src: yes
+    - name: Create serve-assets systemd service
+      copy:
+        src: ../files/serve-assets.service
+        dest: /etc/systemd/system/serve-assets.service
+    - name: Setup serve-assets systemd service
+      systemd:
+        name: serve-assets
+        state: restarted
+        enabled: yes
+        daemon-reload: yes
+    when: skip_wire_assets | default(false) == false
+
+#- name: Setup offline sources on asset host
+#  import_playbook: ../setup-offline-sources.yml
+#  vars:
+#    src_path: "/home/{{ ansible_user }}/wire-server-deploy"
+#    remote_src: yes
+#    assethost_host: "{{ hostvars['localhost']['assethost_host'] }}:8080"
+#    skip_setup_binary_system_containers: true
+#  when: skip_wire_assets | default(false) == false
+
+#- name: Fix gpg keys issue with kicbase container nodes
+#  import_playbook: ./update-kicbase-gpg-keys.yml
+#  when: skip_setup_offline_seed | default(false) == false
     
 - name: Seed the containers in k8s-cluster nodes
   import_playbook: ../seed-offline-containerd.yml
   vars:
     assethost_host: "{{ hostvars['localhost']['assethost_host'] }}:8080"
     docker_permission_fix: true
+    skip_seed_system_containers: true
   when: skip_setup_offline_seed | default(false) == false
 
 - name: Continue operations without the ssh proxy
-  hosts: all
+  hosts: deploy_node
   gather_facts: yes
   vars:
     # it should have all dns records configured as per DNS requirements
     # https://docs.wire.com/latest/how-to/install/includes/helm_dns-ingress-troubleshooting.inc.html 
-    target_domain: "stackit-d-demo.zinfradev.com"
+    target_domain: "example.com"
     ansible_user: ubuntu
     docker_cmd_base: >-
       docker run --network=host
