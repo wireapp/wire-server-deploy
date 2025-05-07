@@ -16,7 +16,7 @@ COTURN_NODE="minikube-m03"
 
 CHART_URL="https://charts.jetstack.io/charts/cert-manager-v1.13.2.tgz"
 
-# it creates the values.yaml from prod-values.example.yaml and secrets.yaml from prod-secrets.example.yaml to values.yaml
+# it creates the values.yaml from prod-values.example.yaml and secrets.yaml from prod-secrets.example.yaml, it works on the directory $BASE_DIR"/values/ in the bundle
 process_charts() {  
   
   ENV=$1
@@ -26,17 +26,7 @@ process_charts() {
     exit 1
   fi 
 
-  # values for cassandra-external, elasticsearch-external, minio-external are created from offline-cluster.sh - helm_external.yml
-  # List of Helm charts to process values are here:
-  charts=(
-    fake-aws demo-smtp
-    rabbitmq databases-ephemeral reaper wire-server webapp account-pages
-    team-settings smallstep-accomp cert-manager-ns
-    nginx-ingress-services sftd coturn ingress-nginx-controller
-  )
-
-  for chart in "${charts[@]}"; do
-    chart_dir="$BASE_DIR/values/$chart"
+  for chart_dir in "$BASE_DIR"/values/*/; do
 
     if [[ -d "$chart_dir" ]]; then
       if [[ -f "$chart_dir/${ENV}-values.example.yaml" ]]; then
@@ -46,6 +36,7 @@ process_charts() {
           echo "Used template ${ENV}-values.example.yaml to create $chart_dir/values.yaml"
         fi
       fi
+
       if [[ -f "$chart_dir/${ENV}-secrets.example.yaml" ]]; then
       # assuming if the secrets.yaml exist, it won't replace it again to make it idempotent
         if [[ ! -f "$chart_dir/secrets.yaml" ]]; then
@@ -59,6 +50,8 @@ process_charts() {
   done
 }
 
+# selectively setting values of following charts which requires additional values
+# wire-server, webapp, team-settings, account-pages, nginx-ingress-services, ingress-nginx-controller, sftd and coturn
 process_values() {
   TEMP_DIR=$(mktemp -d)
   trap 'rm -rf $TEMP_DIR' EXIT
