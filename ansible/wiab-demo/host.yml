@@ -1,7 +1,7 @@
 wiab:
   hosts:
     deploy_node:
-      ansible_host: stackit-c-demo.zinfradev.com
+      ansible_host: example.com
       ansible_ssh_common_args: '-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null'
       ansible_user: 'ubuntu'
 
@@ -14,7 +14,7 @@ wiab:
 
     # it should have all dns records configured as per DNS requirements
     # https://docs.wire.com/latest/how-to/install/includes/helm_dns-ingress-troubleshooting.inc.html 
-    target_domain: "stackit-c-demo.zinfradev.com"
+    target_domain: "example.com"
 
     # artifact_hash
     artifact_hash: "415b930df09b4281a81b0decb2c31e98342f1c64"
