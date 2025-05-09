@@ -24,14 +24,31 @@ SOURCE_OUTPUT_DIR="${SCRIPT_DIR}/../default-build/output"
 # Processing helm charts
 # --------------------------
 
+# pulling the charts, charts to be skipped are passed as arguments HELM_CHART_EXCLUDE_LIST
+"${TASKS_DIR}"/proc_pull_charts.sh OUTPUT_DIR="${OUTPUT_DIR}" HELM_CHART_EXCLUDE_LIST="inbucket,wire-server-enterprise,k8ssandra-operator,k8ssandra-test-cluster,elasticsearch-curator,postgresql,keycloakx,openebs,nginx-ingress-controller,kibana,restund,fluent-bit,aws-ingress,redis-cluster,calling-test"
+
+# copy local copy of values from root directory to output directory
+cp -r "${ROOT_DIR}"/values "${OUTPUT_DIR}"/
+
+# removing the values/$chart directories in values directory if not required
+"${TASKS_DIR}"/pre_clean_values_0.sh VALUES_DIR="${OUTPUT_DIR}/values" HELM_CHART_EXCLUDE_LIST="inbucket,wire-server-enterprise,k8ssandra-operator,k8ssandra-test-cluster,elasticsearch-curator,postgresql,keycloakx,openebs,nginx-ingress-controller,kibana,restund,fluent-bit,aws-ingress,redis-cluster,calling-test"
+
+# processing the charts
+# here we also filter the images post processing the helm charts
+# pass the image names to be filtered as arguments as regex #IMAGE_EXCLUDE_LIST='brig|galley'
+"${TASKS_DIR}"/process_charts.sh OUTPUT_DIR="${OUTPUT_DIR}" IMAGE_EXCLUDE_LIST="quay.io/wire/federator"
+
+# all basic chart pre-processing tasks
+"${TASKS_DIR}"/post_chart_process_0.sh "${OUTPUT_DIR}"
+
 # copying charts from the default build
-cp -r "${SOURCE_OUTPUT_DIR}/charts" "${OUTPUT_DIR}/"
+#cp -r "${SOURCE_OUTPUT_DIR}/charts" "${OUTPUT_DIR}/"
 
 # copy values from the default build
-cp -r "${SOURCE_OUTPUT_DIR}/values" "${OUTPUT_DIR}/"
+#cp -r "${SOURCE_OUTPUT_DIR}/values" "${OUTPUT_DIR}/"
 
 # here removing the federation image from cintainers-helm directory
-"${SCRIPT_DIR}"/post_chart_process_1.sh "${OUTPUT_DIR}"/ "${SCRIPT_DIR}/../default-build/output"
+#"${SCRIPT_DIR}"/post_chart_process_1.sh "${OUTPUT_DIR}"/ "${SCRIPT_DIR}/../default-build/output"
 # --------------------------
 
 # Following tasks are independent from each other
@@ -63,7 +80,6 @@ ITEMS_TO_ARCHIVE=(
   "containers-helm.tar"
   "charts"
   "values"
-  "../../../ansible"
   "../../../bin"
   "versions"
 )
@@ -87,5 +103,5 @@ done
 # for the outputs from other other profiles, their paths should be mentioned here
 tar czf "$OUTPUT_TAR" \
   -C "${SOURCE_OUTPUT_DIR}" containers-adminhost \
-  -C "${ROOT_DIR}" ansible bin \
+  -C "${ROOT_DIR}" bin \
   -C "${OUTPUT_DIR}" charts values versions containers-helm.tar
