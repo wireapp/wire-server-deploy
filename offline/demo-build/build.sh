@@ -13,11 +13,6 @@ mkdir -p "${OUTPUT_DIR}"/containers-{helm,other,system,adminhost} "${OUTPUT_DIR}
 # Define the output tar file
 OUTPUT_TAR="${OUTPUT_DIR}/assets.tgz"
 
-# for optmization purposes, if these tarballs are already processed by previous profiles check wire-server-deploy/.github/workflows/offline.yml, one can copy those artifacts from previous profiles to your profile by using
-#cp $SCRIPT_DIR/../<profile-dir>/output/containers-helm.tar "${OUTPUT_DIR}"/
-# one need to comment the tasks below for which one wants to optimize the build
-SOURCE_OUTPUT_DIR="${SCRIPT_DIR}/../default-build/output"
-
 # Any of the tasks can be skipped by commenting them out 
 # however, mind the dependencies between them and how they are grouped
 
@@ -41,36 +36,9 @@ cp -r "${ROOT_DIR}"/values "${OUTPUT_DIR}"/
 # all basic chart pre-processing tasks
 "${TASKS_DIR}"/post_chart_process_0.sh "${OUTPUT_DIR}"
 
-# copying charts from the default build
-#cp -r "${SOURCE_OUTPUT_DIR}/charts" "${OUTPUT_DIR}/"
-
-# copy values from the default build
-#cp -r "${SOURCE_OUTPUT_DIR}/values" "${OUTPUT_DIR}/"
-
-# here removing the federation image from cintainers-helm directory
-#"${SCRIPT_DIR}"/post_chart_process_1.sh "${OUTPUT_DIR}"/ "${SCRIPT_DIR}/../default-build/output"
 # --------------------------
-
-# Following tasks are independent from each other
-# linking the output from the SOURCE_OUTPUT_DIR to the OUTPUT_DIR to confirm if they exist
-# --------------------------
-
-# linking containers-adminhost directory from the default build
-ln -sf "${SOURCE_OUTPUT_DIR}/containers-adminhost" "${OUTPUT_DIR}/containers-adminhost"
-
-# link debs-jammy.tar from the default build
-# ln -sf "${SOURCE_OUTPUT_DIR}/debs-jammy.tar" "${OUTPUT_DIR}/debs-jammy.tar"
-
-# link containers-system.tar from the default build
-# ln -sf "${SOURCE_OUTPUT_DIR}/containers-system.tar" "${OUTPUT_DIR}/containers-system.tar"
-
-# copy binaries.tar from the default build
-# ln -sf "${SOURCE_OUTPUT_DIR}/binaries.tar" "${OUTPUT_DIR}/binaries.tar"
-
-#cp "${SOURCE_OUTPUT_DIR}/versions/wire-binaries.json" "${OUTPUT_DIR}/versions/"
-#cp "${SOURCE_OUTPUT_DIR}/versions/debian-builds.json" "${OUTPUT_DIR}/versions/"
-cp "${SOURCE_OUTPUT_DIR}/versions/containers_adminhost_images.json" "${OUTPUT_DIR}/versions/"
-#cp "${SOURCE_OUTPUT_DIR}/versions/containers_system_images.json" "${OUTPUT_DIR}/versions/"
+# building admin host containers, has dependenct on the helm charts
+"${TASKS_DIR}"/build_adminhost_containers.sh "${OUTPUT_DIR}" --adminhost --zauth
 
 # --------------------------
 

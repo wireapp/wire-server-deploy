@@ -63,8 +63,8 @@ jobs:
           # Upload tarball for each profile by specifying their OUTPUT_TAR path
           aws s3 cp offline/default-build/output/assets.tgz s3://public.wire.com/artifacts/wire-server-deploy-static-${{ steps.upload_name.outputs.UPLOAD_NAME }}.tgz
           echo "Uploaded to: https://s3-$AWS_REGION.amazonaws.com/public.wire.com/artifacts/wire-server-deploy-static-${{ steps.upload_name.outputs.UPLOAD_NAME }}.tgz"
-          # remove the archives from the build to optimize the space on the server
-          rm offline/default-build/output/containers-helm.tar
+          # removing everything except assets.tgz as it is not required anymore in the further builds
+          find offline/default-build/output/ -mindepth 1 -maxdepth 1 ! -name 'assets.tgz' -exec rm -r {} +
         env:
           AWS_ACCESS_KEY_ID: '${{ secrets.AWS_ACCESS_KEY_ID }}'
           AWS_SECRET_ACCESS_KEY: '${{ secrets.AWS_SECRET_ACCESS_KEY }}'
@@ -84,8 +84,6 @@ jobs:
           echo "Uploaded to: https://s3-$AWS_REGION.amazonaws.com/public.wire.com/artifacts/wire-server-deploy-static-demo-${{ steps.upload_name.outputs.UPLOAD_NAME }}.tgz"
           # remove the assets from the build to optimize the space on the server
           rm -rf offline/demo-build/output/*
-          # removing everything except assets.tgz as it is not required anymore in the further builds
-          find offline/default-build/output/ -mindepth 1 -maxdepth 1 ! -name 'assets.tgz' -exec rm -r {} +
         env:
           AWS_ACCESS_KEY_ID: '${{ secrets.AWS_ACCESS_KEY_ID }}'
           AWS_SECRET_ACCESS_KEY: '${{ secrets.AWS_SECRET_ACCESS_KEY }}'
@@ -117,4 +115,3 @@ jobs:
         run: (cd terraform/examples/wire-server-deploy-offline-hetzner ; terraform init && terraform destroy -auto-approve)
         env:
           HCLOUD_TOKEN: '${{ secrets.HCLOUD_TOKEN }}'
-
