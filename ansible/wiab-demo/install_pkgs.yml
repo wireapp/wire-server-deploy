@@ -1,0 +1,100 @@
+- name: Package installation and configuration
+  hosts: deploy_node
+  become: yes
+  tasks:
+  - name: apt update
+    apt: update_cache=yes force_apt_get=yes
+
+  - name: apt upgrade
+    apt: upgrade=dist force_apt_get=yes
+
+  - name: Install dependencies
+    apt:
+      name:
+      # common packages
+        - yq
+        - aptitude
+        - bind9-host
+        - debian-goodies
+        - dnsutils
+        - git
+        - dnsmasq
+        - less
+        - lsof
+        - net-tools
+        - rsyslog
+        - screen
+        - sudo
+        - vim
+        - wget
+        - whois
+        - telnet
+        - python3-lxml
+        - apt-transport-https
+        - ca-certificates
+        - curl
+        - software-properties-common
+        - bridge-utils
+      # team collaboration
+        - tmate
+        - asciinema
+      state: present
+      update_cache: yes
+
+  - name: Create /etc/apt/keyrings directory
+    file:
+      path: /etc/apt/keyrings
+      state: directory
+      mode: '0755'
+
+  - name: Download Docker GPG key
+    get_url:
+      url: https://download.docker.com/linux/ubuntu/gpg
+      dest: /etc/apt/keyrings/docker.asc
+      mode: '0644'
+
+  - name: Add Docker repository to apt sources
+    shell: |
+      echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu $(. /etc/os-release && echo $VERSION_CODENAME) stable" > /etc/apt/sources.list.d/docker.list
+    args:
+      executable: /bin/bash
+
+  - name: Update apt package index
+    apt:
+      update_cache: yes
+
+  # fix: static version for docker packages
+  - name: Install Docker packages
+    apt:
+      name:
+      - docker-ce={{ docker_ce_version }}
+      - docker-ce-cli={{ docker_ce_version }}
+      - containerd.io={{ containerd_version }}
+      state: present
+
+  - name: Add ubuntu user to the docker group
+    user:
+      name: "{{ ansible_user }}" # Replace with the username you want to modify
+      groups: docker
+      append: yes
+
+  - name: Enable and start Docker service
+    systemd:
+      name: docker
+      enabled: yes
+      state: started
+
+  - name: Reset SSH connection to apply docker group membership changes
+    meta: reset_connection
+
+  - name: Install Minikube
+    get_url:
+      url: "https://github.com/kubernetes/minikube/releases/download/{{ minikube_version }}/minikube-linux-amd64"
+      dest: /usr/local/bin/minikube
+      mode: '0755'
+
+  - name: Install kubectl
+    get_url:
+      url: "https://dl.k8s.io/release/{{ kubernetes_version }}/bin/linux/amd64/kubectl"
+      dest: /usr/local/bin/kubectl
+      mode: '0755'

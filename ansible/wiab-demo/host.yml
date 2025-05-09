@@ -1,0 +1,75 @@
+wiab:
+  hosts:
+    deploy_node:
+      ansible_host: stackit-c-demo.zinfradev.com
+      ansible_ssh_common_args: '-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null'
+      ansible_user: 'ubuntu'
+
+  vars:
+    # requirements
+    # ubuntu 24.04
+    # amd64 architecture
+    # Public IP address available on the node with DNS records configured
+    # Following ports to be available on it from stack-it guide
+
+    # it should have all dns records configured as per DNS requirements
+    # https://docs.wire.com/latest/how-to/install/includes/helm_dns-ingress-troubleshooting.inc.html 
+    target_domain: "stackit-c-demo.zinfradev.com"
+
+    # artifact_hash
+    artifact_hash: "415b930df09b4281a81b0decb2c31e98342f1c64"
+
+    # docker vars
+    docker_ce_version: "5:28.1.1-1~ubuntu.24.04~noble"
+    containerd_version: "1.7.27-1"
+
+    # minikube vars
+    minikube_version: "v1.35.0"
+    kubernetes_version: "v1.28.2"
+    container_runtime: "containerd"
+    minikube_nodes: 3
+    minikube_cpus: 6
+    minikube_memory: "8192"
+    minikube_disk_size: "100g"
+    minikube_network_name: "minikube-wire-network"
+    pod_network_cidr: "10.233.0.0/16"
+    minikube_node_subnet: "192.168.99.0/24"
+
+    # networking iptables dnat rules
+    # This should be the ip address of k8s node where ngnix-ingress-controller is running
+    # check NGINX_K8S_NODE in setting-values.sh
+    k8s_ingress_controller_node: "minikube-m02"
+    http_dnat_rules:
+      - { protocol: "tcp", port: 443, to_port: 31773 }
+      - { protocol: "tcp", port: 80,  to_port: 31772 }
+    # This should be the ip address of k8s node where coturn is running
+    # check COTURN_NODE in setting-values.sh
+    coturn_k8s_node: "minikube-m03"
+    turn_dnat_rules:
+      - { protocol: "tcp", port: 3478,  to_port: 3478 }
+      - { protocol: "udp", port: 3478,  to_port: 3478 }
+
+    # list of helm charts to deploy
+    charts_to_deploy:
+      - fake-aws
+      - demo-smtp
+      - rabbitmq
+      - databases-ephemeral
+      - reaper
+      - wire-server
+      - webapp
+      - account-pages
+      - team-settings
+      - smallstep-accomp
+      - ingress-nginx-controller
+      - nginx-ingress-services
+
+    # admin container definition for WSD (wire-server-deploy) 
+    docker_cmd_base: >-
+      docker run --network=host
+      -v "/home/{{ ansible_user }}/.ssh":/root/.ssh
+      -v "/home/{{ ansible_user }}/wire-server-deploy/":/wire-server-deploy
+      -v "/home/{{ ansible_user }}/.kube/config":/root/.kube/config
+      -v "/home/{{ ansible_user }}/.minikube":/home/ubuntu/.minikube
+      -e KUBECONFIG=/root/.kube/config
+      "{{ wsd_container.stdout }}"
