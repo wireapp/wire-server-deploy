@@ -2,46 +2,40 @@
 - name: Setup Minikube Cluster and Configure Nodes
   hosts: deploy_node
   become: yes
-  vars:
-    # to ssh into the machine and run the playbook
-    ansible_user: ubuntu
-    kubernetes_version: "v1.28.2"
-    container_runtime: "containerd"
-    minikube_nodes: 3
-    minikube_cpus: 6
-    minikube_memory: "8192"
-    minikube_disk_size: "100g"
-    minikube_network_name: "minikube-wire-network"
-    pod_network_cidr: "10.233.0.0/16"
-    minikube_node_subnet: "192.168.99.0/24"
-
-
-    # artifact_hash
-    artifact_hash: "415b930df09b4281a81b0decb2c31e98342f1c64"
-
-    # networking iptables dnat rules
-    # This should be the ip address of k8s node where ngnix-ingress-controller is running
-    # check NGINX_K8S_NODE in setting-values.sh
-    k8s_ingress_controller_node: "minikube-m02"
-    http_dnat_rules:
-      - { protocol: "tcp", port: 443, to_port: 31773 }
-      - { protocol: "tcp", port: 80,  to_port: 31772 }
-    # This should be the ip address of k8s node where coturn is running
-    # check COTURN_NODE in setting-values.sh
-    coturn_k8s_node: "minikube-m03"
-    turn_dnat_rules:
-      - { protocol: "tcp", port: 3478,  to_port: 3478 }
-      - { protocol: "udp", port: 3478,  to_port: 3478 }
-    
   tasks:
-  # for temporary files
-  - name: Create /tmp/wire-deploy directory
-    become: yes
-    become_user: "{{ ansible_user }}"
-    file:
-      path: /tmp/wire-deploy
-      state: directory
-      mode: '0700'
+  - name: Check DNS A records
+    vars:
+      dns_records:
+        - sftd.{{ target_domain }}
+        - nginz-https.{{ target_domain }}
+        - nginz-ssl.{{ target_domain }}
+        - webapp.{{ target_domain }}
+        - assets.{{ target_domain }}
+        - teams.{{ target_domain }}
+        - account.{{ target_domain }}
+    block:
+    - name: Resolve the IP address of the inventory hostname
+      command: "dig +short {{ inventory_hostname }}"
+      register: resolved_ip
+      changed_when: false
+
+    - name: Set the resolved IP address as a fact
+      set_fact:
+        host_ip: "{{ resolved_ip.stdout.strip() }}"
+
+    - name: Resolve DNS A record for {{ item }}
+      command: "dig +short {{ item }}"
+      register: dns_result
+      failed_when: false
+      changed_when: false
+      with_items: "{{ dns_records }}"
+
+    - name: Log if DNS record does not match the inventory hostname IP
+      shell: "echo 'DNS record {{ item.item }} does not match with the inventory hostname IP {{ host_ip }}'"
+      when: item.stdout | trim != host_ip
+      with_items: "{{ dns_result.results }}"
+
+    when: skip_verify_dns | default(false) == false
 
   - name: Package installation and configuration
     block:
@@ -110,11 +104,9 @@
       - name: Install Docker packages
         apt:
           name:
-            - docker-ce
-            - docker-ce-cli
-            - containerd.io
-            - docker-buildx-plugin
-            - docker-compose-plugin
+          - docker-ce={{ docker_ce_version }}
+          - docker-ce-cli={{ docker_ce_version }}
+          - containerd.io={{ containerd_version }}
           state: present
 
       - name: Add ubuntu user to the docker group
@@ -135,7 +127,7 @@
       # fix: static path for a minikube version
       - name: Install Minikube
         get_url:
-          url: "https://github.com/kubernetes/minikube/releases/latest/download/minikube-linux-amd64"
+          url: "https://github.com/kubernetes/minikube/releases/download/{{ minikube_version }}/minikube-linux-amd64"
           dest: /usr/local/bin/minikube
           mode: '0755'
 
@@ -276,20 +268,6 @@
           kubenode3: "{{ kubernetes_node_ips[2] }}"
           # ip address of the minikube network interface on the machine
           assethost: "{{ host_ip.stdout }}"
-
-    - name: Save variables to be used by imported playbooks
-      copy:
-        content: |
-          ---
-          host_ips:
-            kubenode1: "{{ kubernetes_node_ips[0] }}"
-            kubenode2: "{{ kubernetes_node_ips[1] }}"
-            kubenode3: "{{ kubernetes_node_ips[2] }}"
-            assethost: "{{ host_ip.stdout }}"
-          ansible_user: "{{ ansible_user }}"
-          assethost_host: "{{ host_ip.stdout }}:8080"
-        dest: "/tmp/shared_ansible_vars.yml"
-        mode: '0644'
 
     - name: Generate hosts.ini content
       set_fact:
@@ -618,39 +596,12 @@
 - name: Continue operations without the ssh proxy
   hosts: deploy_node
   gather_facts: yes
-  vars:
-    # it should have all dns records configured as per DNS requirements
-    # https://docs.wire.com/latest/how-to/install/includes/helm_dns-ingress-troubleshooting.inc.html 
-    target_domain: "example.com"
-    ansible_user: ubuntu
-    docker_cmd_base: >-
-      docker run --network=host
-      -v "/home/{{ ansible_user }}/.ssh":/root/.ssh
-      -v "/home/{{ ansible_user }}/wire-server-deploy/":/wire-server-deploy
-      -v "/home/{{ ansible_user }}/.kube/config":/root/.kube/config
-      -v "/home/{{ ansible_user }}/.minikube":/home/ubuntu/.minikube
-      -e KUBECONFIG=/root/.kube/config
-      "{{ wsd_container.stdout }}"
-    charts_to_deploy:
-      - fake-aws
-      - demo-smtp
-      - rabbitmq
-      - databases-ephemeral
-      - reaper
-      - wire-server
-      - webapp
-      - account-pages
-      - team-settings
-      - smallstep-accomp
-      - ingress-nginx-controller
-      - nginx-ingress-services
   become_user: "{{ ansible_user }}"
   become: yes
   tasks:
 
   - name: Creating wire secrets
     become: yes
-    become_user: "{{ ansible_user }}"
     block:
     - name: Generate random strings for zrest, minio_access_key, and minio_secret_key
       shell: "tr -dc A-Za-z0-9 </dev/urandom | head -c {{ item.length }}"
@@ -726,9 +677,6 @@
         line: 'CERT_MASTER_EMAIL="certmaster@{{ target_domain }}"'
         backrefs: yes
 
-    #- name: Setting up values for helm charts
-    #  shell: /wire-server-deploy/bin/wiab-demo/set_helm_values.sh demo
-
     - name: Load WSD Docker image
       shell: |
         docker load -i "/home/{{ ansible_user }}/wire-server-deploy/containers-adminhost/container-wire-server-deploy.tgz" | awk '{print $3}'
@@ -767,41 +715,3 @@
 
     when: skip_helm_install | default(false) == false
 
-  - name: Check DNS A records
-    vars:
-      dns_records:
-        - sftd.{{ target_domain }}
-        - nginz-https.{{ target_domain }}
-        - nginz-ssl.{{ target_domain }}
-        - webapp.{{ target_domain }}
-        - assets.{{ target_domain }}
-        - teams.{{ target_domain }}
-        - account.{{ target_domain }}
-    block:
-    - name: Resolve the IP address of the inventory hostname
-      command: "dig +short {{ inventory_hostname }}"
-      register: resolved_ip
-      changed_when: false
-
-    - name: Set the resolved IP address as a fact
-      set_fact:
-        host_ip: "{{ resolved_ip.stdout.strip() }}"
-
-    - name: Resolve DNS A record for {{ item }}
-      command: "dig +short {{ item }}"
-      register: dns_result
-      failed_when: false
-      changed_when: false
-      with_items: "{{ dns_records }}"
-
-    - name: Log if DNS record does not match the inventory hostname IP
-      shell: "echo 'DNS record {{ item.item }} does not match with the inventory hostname IP {{ host_ip }}'"
-      when: item.stdout | trim != host_ip
-      with_items: "{{ dns_result.results }}"
-
-    when: skip_verify_dns | default(false) == false
-
-  - name: Delete /tmp/wire-deploy directory with contents
-    file:
-      path: /tmp/wire-deploy
-      state: absent
