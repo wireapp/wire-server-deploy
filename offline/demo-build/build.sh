@@ -13,6 +13,8 @@ mkdir -p "${OUTPUT_DIR}"/containers-{helm,other,system,adminhost} "${OUTPUT_DIR}
 # Define the output tar file
 OUTPUT_TAR="${OUTPUT_DIR}/assets.tgz"
 
+TASKS_DIR="${SCRIPT_DIR}/../tasks"
+
 # Any of the tasks can be skipped by commenting them out 
 # however, mind the dependencies between them and how they are grouped
 
