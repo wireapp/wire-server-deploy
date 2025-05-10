@@ -47,7 +47,7 @@ This guide outlines the steps to set up and deploy Wire in a StackIT environment
 
 - Use the following command to set up the VM:
   ```bash
-  ansible-playbook -i stackIT/host.ini stackIT/stackit-vm-setup.yml
+  ansible-playbook -i ansible/wiab-demo/host.ini ansible/wiab-demo/vm-setup.yml
   ```
 
 - **Optional Skips:**
@@ -76,7 +76,7 @@ This guide outlines the steps to set up and deploy Wire in a StackIT environment
 
 - **Load the environment:**
    ```bash
-   source stackIT/offline-env.sh
+   source bin/wiab-demo/offline-env.sh
    ```
    It will load WSD_CONTAINER container on your StackIT host and it has all the tools required to further deploy the services using ansible and helm charts on nodes. `d` is an alias to run the container with all the required tools.
 
@@ -99,7 +99,7 @@ This guide outlines the steps to set up and deploy Wire in a StackIT environment
    3. **Deploy Helm charts:**
       Use the following script to set up Helm chart values and deploy them:
       ```bash
-      d bash -x stackIT/setting-values.sh
+      d bash -x bin/wiab-demo/offline_deploy_k8s.sh
       ```
 
 ---

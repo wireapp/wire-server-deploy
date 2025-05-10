@@ -1,0 +1,45 @@
+- name: Manage SSH keys
+  hosts: deploy_node
+  become: yes
+  become_user: "{{ ansible_user }}"  
+  tasks:
+  # store creds in the {{ ansible_user }} user's home directory
+  - name: Ensure the .ssh directory exists
+    file:
+      path: "/home/{{ ansible_user }}/.ssh"
+      state: directory
+      mode: '0700'
+      owner: "{{ ansible_user }}"
+      group: "{{ ansible_user }}"
+
+  - name: Generate SSH key if it does not exist
+    shell: |
+      if [ ! -f "/home/{{ ansible_user }}/.ssh/id_rsa" ]; then
+        ssh-keygen -t rsa -b 4096 -f "/home/{{ ansible_user }}/.ssh/id_rsa" -N "" -C "ansible-generated-key";
+      fi
+    args:
+      creates: "/home/{{ ansible_user }}/.ssh/id_rsa"
+
+  - name: Read the private key
+    slurp:
+      src: "/home/{{ ansible_user }}/.ssh/id_rsa"
+    register: ssh_key_private
+
+  - name: Read the public key content
+    slurp:
+      src: "/home/{{ ansible_user }}/.ssh/id_rsa.pub"
+    register: ssh_key_content
+
+  - name: Set the public key as a fact
+    set_fact:
+      ssh_public_key: "{{ ssh_key_content['content'] | b64decode }}"
+
+  - name: Set the private key as a fact
+    set_fact:
+      ssh_private_key: "{{ ssh_key_private['content'] | b64decode }}"
+
+  - name: Add SSH key to the node to use it as a assethost
+    authorized_key:
+      user: "{{ ansible_user }}"
+      state: present
+      key: "{{ ssh_public_key }}"
