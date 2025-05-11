@@ -70,8 +70,4 @@ for item in "${ITEMS_TO_ARCHIVE[@]}"; do
 done
 
 # Create the tar archive with relative paths
-# for the outputs from other other profiles, their paths should be mentioned here
-tar czf "$OUTPUT_TAR" \
-  -C "${SOURCE_OUTPUT_DIR}" containers-adminhost \
-  -C "${ROOT_DIR}" bin \
-  -C "${OUTPUT_DIR}" charts values versions containers-helm.tar
+tar czf "$OUTPUT_TAR" "${ITEMS_TO_ARCHIVE[@]}"
