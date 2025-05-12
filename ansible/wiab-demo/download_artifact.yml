@@ -9,7 +9,7 @@
       state: directory
       owner: "{{ ansible_user }}"
       group: "{{ ansible_user }}"
-      mode: 0775
+      mode: 0755
 
   - name: check if wire-server-deploy-static-demo-{{ artifact_hash }}.tgz exists
     stat:

@@ -17,7 +17,7 @@ wiab:
     target_domain: "example.com"
 
     # artifact_hash
-    artifact_hash: "415b930df09b4281a81b0decb2c31e98342f1c64"
+    artifact_hash: "2e01dff31a58832c41e4940f4006b7159866fecd"
 
     # docker vars
     docker_ce_version: "5:28.1.1-1~ubuntu.24.04~noble"
