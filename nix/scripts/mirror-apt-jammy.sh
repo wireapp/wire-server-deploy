@@ -22,6 +22,7 @@ aptly_root=$1
 mkdir -p "$aptly_root"
 shift
 
+#export APTLY_SKIP_GPG_VERSION_CHECK=1
 
 # NOTE:  These are all the packages needed for all our playbooks to succeed. This list was created by trial and error
 packages=(
@@ -69,6 +70,7 @@ packages=(
   vi
   tcpdump
   gnupg
+  gnupg2
   bzip2
   # Dependencies for the rabbitmq-server package
   erlang-base
@@ -107,7 +109,7 @@ aptly_config=$(mktemp)
 trap 'rm -Rf -- "$aptly_config $GNUPGHOME"' EXIT
 
 cat > "$aptly_config" <<FOO
-{ "rootDir": "$aptly_root", "downloadConcurrency": 10, "gpgProvider": "internal" }
+{ "rootDir": "$aptly_root", "downloadConcurrency": 10, "gpgProvider": "gpg2" }
 FOO
 
 aptly="aptly -config=${aptly_config} "
@@ -121,11 +123,12 @@ gpg --no-default-keyring --keyring trustedkeys.gpg --fingerprint
 # Import our signing key to our keyring
 echo -e "$GPG_PRIVATE_KEY" | gpg --import
 
-echo "Printing the public key ids..."
-gpg --list-keys
-echo "Printing the secret key ids..."
-gpg --list-secret-keys
+echo "GPG dir: $GNUPGHOME"
 
+echo "Printing the public key ids from default keyring..."
+gpg --list-keys
+echo "Printing the secret key ids from default keyring..."
+gpg --list-secret-keys
 
 # import the ubuntu and docker signing keys
 # TODO: Do we want to pin these better? Verify them?
@@ -156,6 +159,6 @@ $aptly snapshot create docker-ce from mirror docker-ce
 
 $aptly snapshot merge wire jammy jammy-security jammy-updates docker-ce
 
-$aptly publish snapshot -gpg-key="gpg@wire.com" -secret-keyring="$GNUPGHOME/secring.gpg" -distribution jammy wire
+$aptly publish snapshot -gpg-key="gpg@wire.com" -distribution jammy wire
 
 gpg --export gpg@wire.com -a > "$aptly_root/public/gpg"
