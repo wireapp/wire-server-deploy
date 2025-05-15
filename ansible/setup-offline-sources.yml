@@ -42,9 +42,9 @@
 - name: Set up offline repositories and remove online ones
   hosts: k8s-cluster:etcd:cassandra:elasticsearch:minio:rmq-cluster
   tasks:
-    - name: Bail if GPG is not installed or installable.
+    - name: Bail if GPG2 is not installed or installable.
       apt:
-        name: gpg
+        name: gnupg2
         state: present
     - name: Remove /etc/apt/sources.list to remove all online debian package repos
       file:

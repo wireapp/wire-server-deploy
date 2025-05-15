@@ -70,6 +70,7 @@ packages=(
   vi
   tcpdump
   gnupg
+  gnupg2
   bzip2
   # Dependencies for the rabbitmq-server package
   erlang-base
@@ -158,21 +159,6 @@ $aptly snapshot create docker-ce from mirror docker-ce
 
 $aptly snapshot merge wire jammy jammy-security jammy-updates docker-ce
 
-# TODO: hardcoded
-gpg --batch --yes --delete-secret-key 128696F420731E19BC0D36C516691483A7637513
-#gpg --delete-key 16691483A7637513
+$aptly publish snapshot -gpg-key="gpg@wire.com" -distribution jammy wire
 
-echo "Verify GPG key by ID before publish:"
-
-# show public portion
-gpg --list-keys --keyid-format LONG "gpg@wire.com"
-
-$aptly publish snapshot -gpg-key="A054D0B66346B27919CE5EC02872CB8EEBD99578" -distribution jammy wire
-
-gpg --export --export-options export-minimal gpg@wire.com -a > "$aptly_root/public/gpg"
-
-echo "Check if the exported public key contains the subkey"
-gpg --show-keys "$aptly_root/public/gpg"
-
-echo "Check repo signature"
-gpg --verify "$aptly_root/public/dists/jammy/Release.gpg" "$aptly_root/public/dists/jammy/Release"
+gpg --export gpg@wire.com -a > "$aptly_root/public/gpg"
