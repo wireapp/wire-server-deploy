@@ -32,7 +32,7 @@ TASKS_DIR="${SCRIPT_DIR}/../tasks"
 cp -r "${ROOT_DIR}"/values "${OUTPUT_DIR}"/
 
 # removing the values/$chart directories in values directory if not required
-"${SCRIPT_DIR}"/pre_clean_values_1.sh VALUES_DIR="${OUTPUT_DIR}/values" HELM_CHART_EXCLUDE_LIST="inbucket,wire-server-enterprise,k8ssandra-operator,k8ssandra-test-cluster,elasticsearch-ephemeral,elasticsearch-curator,rabbitmq,demo-smtp,fake-aws,fake-aws-s3,postgresql,keycloakx,openebs,nginx-ingress-controller,kibana,restund,fluent-bit,aws-ingress,databases-ephemeral,redis-cluster,calling-test"
+"${TASKS_DIR}"/pre_clean_values_0.sh VALUES_DIR="${OUTPUT_DIR}/values" HELM_CHART_EXCLUDE_LIST="inbucket,wire-server-enterprise,k8ssandra-operator,k8ssandra-test-cluster,elasticsearch-ephemeral,elasticsearch-curator,rabbitmq,demo-smtp,fake-aws,fake-aws-s3,postgresql,keycloakx,openebs,nginx-ingress-controller,kibana,restund,fluent-bit,aws-ingress,databases-ephemeral,redis-cluster,calling-test"
 
 # all basic chart pre-processing tasks
 "${TASKS_DIR}"/pre_chart_process_0.sh "${OUTPUT_DIR}"
