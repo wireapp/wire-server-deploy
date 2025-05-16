@@ -1,0 +1,181 @@
+- name: Clean the installation
+  hosts: deploy_node
+  become: yes
+  tasks:
+  # stopping the cluster defined in minikube_cluster playbook
+  - name: clean minikube
+    block:
+    - name: Check if Minikube is running
+      shell: minikube status --profile=k8s-wire
+      register: minikube_status
+      failed_when: false
+      changed_when: false
+
+    - name: stop the k8s cluster
+      shell: |
+        minikube stop --profile=k8s-wire
+      when: "'Running' not in minikube_status.stdout"
+
+    - name: delete the k8s cluster
+      shell: |
+        minikube delete --profile=k8s-wire
+      when: "'Running' not in minikube_status.stdout"
+
+    when: remove_minikube | default(false) == true
+
+  # following packages were installed in install_pkgs playbook
+  # these packages can only be removed post stopping the minikube cluster
+  - name: remove packages
+    block:
+    - name: Remove Minikube
+      file:
+        path: /usr/local/bin/minikube
+        state: absent
+
+    - name: Remove kubectl
+      file:
+        path: /usr/local/bin/kubectl
+        state: absent
+
+    - name: Remove Docker packages
+      apt:
+        name:
+          - docker-ce
+          - docker-ce-cli
+          - containerd.io
+        state: absent
+        autoremove: yes
+
+    - name: Remove Docker GPG key
+      file:
+        path: /etc/apt/keyrings/docker.asc
+        state: absent
+
+    - name: Remove Docker repository from apt sources
+      file:
+        path: /etc/apt/sources.list.d/docker.list
+        state: absent
+
+    - name: Remove user from docker group
+      user:
+        name: "{{ ansible_user }}"
+        groups: docker
+        append: no
+  
+    - name: Remove dependencies
+      apt:
+        name:
+          - yq
+          - nc
+        state: absent
+        autoremove: yes
+
+    - name: Update apt package index
+      apt:
+        update_cache: yes
+
+    when: ((uninstall_pkgs | default(false)) and (remove_minikube | default(false)))
+
+  # remove the iptables rules defined by iptables_rules playbook
+  # it makes sense to remove them when removing the k8s cluster or individually to clean them
+  - name: remove iptables rules
+    vars:
+      iptables_rules_comment: "Wire Iptables Rules"
+      iptables_save_dir: "/home/{{ ansible_user }}/wire-iptables-rules"
+    block:
+
+    - name: Check if pre_wire IPv4 ruleset file exists
+      stat:
+        path: "{{ iptables_save_dir }}/rules_pre_wire.v4"
+      register: rules_file
+
+    - name: Restore pre_wire IPv4 ruleset
+      shell: iptables-restore < "{{ iptables_save_dir }}/rules_pre_wire.v4"
+      when: rules_file.stat.exists
+
+    - name: Check in filter table if wire rules exist
+      shell: |
+        iptables -t filter -L -nv --line-numbers | grep "{{ iptables_rules_comment }}"
+      register: iptables_rules_output
+      ignore_errors: yes
+      changed_when: false
+
+    - name: Display debug output
+      debug:
+        var: iptables_rules_output.stdout_lines
+
+    - name: Fail if wire rules still exist in filter table
+      fail:
+        msg: "Wire rules with comment '{{ iptables_rules_comment }}' still exist."
+      when: iptables_rules_output.stdout_lines | length > 0
+
+    - name: Check in nat table if wire rules exist
+      shell: |
+        iptables -t nat -L -nv --line-numbers | grep "{{ iptables_rules_comment }}"
+      register: iptables_rules_output_nat
+      ignore_errors: yes
+      changed_when: false
+
+    - name: Display debug output
+      debug:
+        var: iptables_rules_output_nat.stdout_lines
+
+    - name: Fail if wire rules still exist in nat table
+      fail:
+        msg: "Wire rules with comment '{{ iptables_rules_comment }}' still exist."
+      when: iptables_rules_output_nat.stdout_lines | length > 0
+
+    - name: Remove wire rules files
+      file:
+        path: "{{ item }}"
+        state: absent
+      loop:
+        - "{{ iptables_save_dir }}/rules_pre_wire.v4"
+        - "{{ iptables_save_dir }}/rules_post_wire.v4"
+        - "{{ iptables_save_dir }}"
+
+    when: ((remove_iptables | default(false)) or (remove_minikube | default(false)))
+
+  - name: Remove ssh keys
+    block:
+    - name: Remove SSH key if it exist
+      shell: |
+        if [ -f "/home/{{ ansible_user }}/.ssh/id_rsa_wire" ]; then
+          rm "/home/{{ ansible_user }}/.ssh/id_rsa_wire"
+        fi
+    when: remove_ssh | default(false) == true
+  
+  - name: remove the downloaded artifacts 
+    file:
+      path: "{{ item }}"
+      state: absent
+    loop:
+      - "/home/{{ ansible_user }}/wire-server-deploy"
+      - "/home/{{ ansible_user }}/wire-server-deploy-static-demo-{{ artifact_hash }}.tgz"
+    when: remove_artifacts | default(false) == true
+
+  - name: clean asset_host artifacts and remove service
+    block:
+    - name: Stop and disable serve-assets systemd service
+      systemd:
+        name: serve-assets
+        state: stopped
+        enabled: no
+      ignore_errors: yes
+
+    - name: Remove serve-assets systemd service file
+      file:
+        path: /etc/systemd/system/serve-assets.service
+        state: absent
+
+    - name: Reload systemd daemon
+      systemd:
+        daemon_reload: yes
+
+    - name: Remove extracted helm containers
+      file:
+        path: /opt/assets/containers-helm
+        state: absent
+
+    when: clean_assethost | default(false) == true
+      
