@@ -9,8 +9,9 @@
       - assets.{{ target_domain }}
       - teams.{{ target_domain }}
       - account.{{ target_domain }}
+    test_port: 3478
   tasks:
-  - name: Resolve DNS A record for {{ item }}
+  - name: Check DNS A records
     command: "dig +short {{ item }}"
     register: dns_result
     failed_when: false

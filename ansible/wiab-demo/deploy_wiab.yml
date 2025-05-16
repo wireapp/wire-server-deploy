@@ -2,13 +2,39 @@
   import_playbook: ./verify_dns.yml
   when: skip_verify_dns | default(false) == false
 
+- name: Execute common tasks for the node
+  hosts: deploy_node
+  become: yes
+  tasks:
+  # this is an exception to install_pkgs, as it expects netcat before other tasks take place
+  - name: Install Netcat
+    apt:
+      name:
+        - ncat
+      state: present
+      update_cache: yes
+  # if number of nodes increase, the logic can change to divide the node for different services
+  - name: Set facts for various Kubernetes nodes, for 1 node, it will be name of profile
+    set_fact:
+      k8s_ingress_controller_node: "{{ minikube_profile }}"
+      k8s_coturn_node: "{{ minikube_profile }}"
+      k8s_sft_node: "{{ minikube_profile }}"
+
+# shouldn't be skipped, it is neccessary to identify the network ingress
+# potentially we can write the information on the node to avoid running it everytime
+# read it from the node if not found
+- name: Check Public IP access
+  import_playbook: ./verify_public_ip.yml
+
 - name: Install required packages
   import_playbook: ./install_pkgs.yml
-  when: skip_install | default(false) == false
+  when: skip_verify_dns | default(false) == false
 
 - name: Manage SSH keys for minikube node and ssh proxy
   import_playbook: ./setup_ssh.yml
   when: ((skip_minikube | default(false) == false) or (skip_asset_host | default(false) == false) or (skip_setup_offline_seed | default(false) == false))
+
+
 
 - name: Configure minikube cluster
   import_playbook: ./minikube_cluster.yml
@@ -51,10 +77,14 @@
       register: temp_dir
       delegate_to: localhost
 
+    - name: Debug message for private key writing
+      ansible.builtin.debug:
+        msg: "Creating a key {{ temp_dir.path }}/id_rsa_wire on the localhost to enable access to minikube nodes via ssh proxy"
+
     - name: Write the private key to a file
       copy:
         content: "{{ ssh_private_key }}"
-        dest: "{{ temp_dir.path }}/id_rsa"
+        dest: "{{ temp_dir.path }}/id_rsa_wire"
         mode: '0600'
       delegate_to: localhost
 
@@ -68,7 +98,7 @@
         ansible_ssh_common_args: >-
           -o ProxyCommand="ssh -W %h:%p -q {{ ansible_user }}@{{ ansible_host }}"
           -o StrictHostKeyChecking=no
-          -i {{ temp_dir.path }}/id_rsa
+          -i {{ temp_dir.path }}/id_rsa_wire
       loop: "{{ kubernetes_node_ips }}"
 
     - name: Define inventory for the assethost to match the hostname in setup-offline-sources.yml
@@ -81,7 +111,7 @@
         ansible_ssh_common_args: >-
           -o ProxyCommand="ssh -W %h:%p -q {{ ansible_user }}@{{ ansible_host }}"
           -o StrictHostKeyChecking=no
-
+          -i {{ temp_dir.path }}/id_rsa_wire
     - name: Set assethost_host fact for each node in k8s-cluster
       set_fact:
         assethost_host: "{{ host_ip.stdout }}:8080"
@@ -92,7 +122,9 @@
     when: ((skip_asset_host | default(false) == false) or (skip_setup_offline_seed | default(false) == false))
 
 - name: Setup Asset Host
-  import_playbook: ./asset_host.yml
+  import_playbook: ../setup-offline-sources.yml
+  vars:
+    demo_deploy: true
   when: skip_asset_host | default(false) == false
 
 - name: Seed the containers in k8s-cluster nodes
