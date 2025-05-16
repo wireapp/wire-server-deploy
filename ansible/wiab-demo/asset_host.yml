@@ -1,5 +1,5 @@
 - name: Setup offline sources on asset host
-  hosts: deploy_node
+  hosts: assethost
   become: yes
   tasks:
   - file:

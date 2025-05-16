@@ -8,6 +8,7 @@
     - file:
         path: /opt/assets
         state: directory
+
     - name: Copy debs jammy
       unarchive:
         src: "{{ src_path }}/debs-jammy.tar"
@@ -15,6 +16,8 @@
         remote_src: "{{ remote_src }}"
       tags:
         - debs
+      when: demo_deploy | default(false) == false
+
     - name: Copy binaries
       unarchive:
         src: "{{ src_path }}/binaries.tar"
@@ -22,6 +25,8 @@
         remote_src: "{{ remote_src }}"
       tags:
         - binaries
+      when: demo_deploy | default(false) == false
+
     - name: Copy system containers
       unarchive:
         src: "{{ src_path }}/containers-system.tar"
@@ -30,6 +35,8 @@
       tags:
         - containers-system
         - containers
+      when: demo_deploy | default(false) == false
+
     - name: Copy helm containers
       unarchive:
         src: "{{ src_path }}/containers-helm.tar"
@@ -38,31 +45,37 @@
       tags:
         - containers-helm
         - containers
-    - copy:
-        src: files/serve-assets.service
-        dest: /etc/systemd/system/serve-assets.service
-    - systemd:
-        name: serve-assets
-        state: restarted
-        enabled: yes
-        daemon-reload: yes
+      when: demo_deploy | default(false) == false
+            
+    - name: setup serve-assets
+      block:
+      - copy:
+          src: files/serve-assets.service
+          dest: /etc/systemd/system/serve-assets.service
+      - systemd:
+          name: serve-assets
+          state: restarted
+          enabled: yes
+          daemon-reload: yes
 
 - name: Set up offline repositories and remove online ones
   become: yes
   hosts: k8s-cluster:etcd:cassandra:elasticsearch:minio:rmq-cluster
   tasks:
-    - name: Bail if GPG is not installed or installable.
-      apt:
-        name: gpg
-        state: present
-    - name: Remove /etc/apt/sources.list to remove all online debian package repos
-      file:
-        path: /etc/apt/sources.list
-        state: absent
-    - name: Remove /etc/apt/sources.list.d/ to remove all online debian package repos
-      file:
-        path: /etc/apt/sources.list.d/
-        state: absent
+  - when: demo_deploy | default(false) == false
+    block:
+      - name: Bail if GPG is not installed or installable.
+        apt:
+          name: gpg
+          state: present
+      - name: Remove /etc/apt/sources.list to remove all online debian package repos
+        file:
+          path: /etc/apt/sources.list
+          state: absent
+      - name: Remove /etc/apt/sources.list.d/ to remove all online debian package repos
+        file:
+          path: /etc/apt/sources.list.d/
+          state: absent
 
 #######################################################################
 # If your offline repo's debian key has expired, uncomment this block.
@@ -84,16 +97,15 @@
 #############################
 # Otherwise, trust the repo.
 #############################
-    - name: Register offline repo key
-      apt_key:
-        url: "{{ ubuntu_repo_gpgkey }}"
-        state: present
+      - name: Register offline repo key
+        apt_key:
+          url: "{{ ubuntu_repo_gpgkey }}"
+          state: present
 
-    - name: Register offline repo
-      apt_repository:
-        repo: "deb {{ ubuntu_repo_base_url }} {{ ansible_distribution_release }} main"
-        state: present
-    - name: Apt update
-      apt:
-        update_cache: yes
-
+      - name: Register offline repo
+        apt_repository:
+          repo: "deb {{ ubuntu_repo_base_url }} {{ ansible_distribution_release }} main"
+          state: present
+      - name: Apt update
+        apt:
+          update_cache: yes
