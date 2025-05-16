@@ -22,7 +22,7 @@
           curl -q "{{ assethost_host }}/containers-system/$container" | ctr -n=k8s.io images import -
         done
       register: load_containers
-      async: 1200
+      async: 3600
       poll: 0
       when: skip_seed_system_containers | default(false) == false
 
@@ -31,7 +31,7 @@
         jid: "{{ load_containers.ansible_job_id }}"
       register: res
       until: res.finished
-      retries: 20
+      retries: 60
       delay: 60
       when: skip_seed_system_containers | default(false) == false
 
@@ -46,7 +46,7 @@
         done
 
       register: load_helm_containers
-      async: 1200
+      async: 3600
       poll: 0
 
     - name: Waiting on async task load_helm_containers
@@ -54,7 +54,7 @@
         jid: "{{ load_helm_containers.ansible_job_id }}"
       register: res
       until: res.finished
-      retries: 20
+      retries: 60
       delay: 60
 ################################### Hack to tag the ingress-nginx container images ###############
 #- name: Load ingress-controller containers
