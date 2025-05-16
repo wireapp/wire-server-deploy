@@ -1,7 +1,31 @@
 - name: Configure Iptable rules
   hosts: deploy_node
   become: yes
+  vars:
+    iptables_rules_comment: "Wire Iptables Rules"
+    iptables_save_dir: "/home/{{ ansible_user }}/wire-iptables-rules"
   tasks:
+  - name: Ensure iptables directory exists
+    file:
+      path: "{{ iptables_save_dir }}"
+      state: directory
+      owner: root
+      group: root
+      mode: '0755'
+
+  # incase, this pipeline is running again, we try to preserve initial state
+  - name: Check if pre_wire IPv4 ruleset file exists
+    stat:
+      path: "{{ iptables_save_dir }}/rules_pre_wire.v4"
+    register: rules_file
+
+  - name: Restore pre_wire IPv4 ruleset
+    shell: iptables-restore < "{{ iptables_save_dir }}/rules_pre_wire.v4"
+    when: rules_file.stat.exists
+
+  - name: Save iptables rules
+    shell: iptables-save -f "{{ iptables_save_dir }}"/rules_pre_wire.v4
+
   - name: Get the default interface for the default route
     shell: ip route | awk '/default/ {print $5}' | head -n 1
     register: default_interface
@@ -14,7 +38,7 @@
 
   - name: Get the IP address of the k8s_ingress_controller node
     shell: |
-      kubectl get node {{ k8s_ingress_controller_node }} -o json | jq -r '.status.addresses[] | select(.type=="InternalIP").address'
+      kubectl --kubeconfig="/home/{{ ansible_user }}/.kube/config"  get node {{ k8s_ingress_controller_node }} -o json | jq -r '.status.addresses[] | select(.type=="InternalIP").address'
     register: k8s_ingress_controller_ip
     become: yes
     become_user: "{{ ansible_user }}"
@@ -32,6 +56,7 @@
       to_destination: "{{ k8s_ingress_controller_ip.stdout }}:{{ item.to_port }}"
       state: present
       action: insert
+      comment: "{{ iptables_rules_comment }}"
     loop: "{{ http_dnat_rules }}"
     loop_control:
       label: "Setting DNAT rule for port {{ item.port }} -> {{ k8s_ingress_controller_ip.stdout | default('undefined') }}:{{ item.to_port }}"
@@ -68,6 +93,7 @@
       jump: ACCEPT
       state: present
       action: insert
+      comment: "{{ iptables_rules_comment }}"
 
   - name: Ensure FORWARD rule for traffic from ingress controller to main interface
     iptables:
@@ -78,14 +104,17 @@
       jump: ACCEPT
       state: present
       action: insert
+      comment: "{{ iptables_rules_comment }}"
 
   - name: Get the IP address of the coturn node
     shell: |
-      kubectl get node {{ coturn_k8s_node }} -o json | jq -r '.status.addresses[] | select(.type=="InternalIP").address'
-    register: coturn_k8s_node_ip
-    become: yes
-    become_user: "{{ ansible_user }}"
+      kubectl --kubeconfig="/home/{{ ansible_user }}/.kube/config" get node {{ k8s_coturn_node }} -o json | jq -r '.status.addresses[] | select(.type=="InternalIP").address'
+    register: k8s_coturn_node_ip
     changed_when: false
+
+  - name: Display k8s_coturn_node
+    debug:
+      msg: "coturn node: {{ k8s_coturn_node }}, ip: {{ k8s_coturn_node_ip }}"
 
   - name: Configure DNAT rule to send UDP traffic for coturn to coturn server on k8s node
     iptables:
@@ -96,11 +125,12 @@
       destination: "{{ default_interface_ip.stdout }}"
       destination_ports: "49152:65535"
       in_interface: "{{ default_interface.stdout }}"
-      to_destination: "{{ coturn_k8s_node_ip.stdout }}"
+      to_destination: "{{ k8s_coturn_node_ip.stdout }}"
       state: present
       action: insert
+      comment: "{{ iptables_rules_comment }}"
 
-  - name: Configure DNAT rules to reach turn servers running on k8s node
+  - name: Configure DNAT rules to reach coturn servers running on k8s node
     iptables:
       table: nat
       chain: PREROUTING
@@ -109,20 +139,13 @@
       in_interface: "{{ default_interface.stdout }}"
       destination: "{{ default_interface_ip.stdout }}"
       destination_port: "{{ item.port }}"
-      to_destination: "{{ coturn_k8s_node_ip.stdout }}:{{ item.to_port }}"
+      to_destination: "{{ k8s_coturn_node_ip.stdout }}:{{ item.to_port }}"
       state: present
       action: insert
+      comment: "{{ iptables_rules_comment }}"
     loop: "{{ turn_dnat_rules }}"
     loop_control:
-      label: "Setting DNAT rule for port {{ item.port }} -> {{ coturn_k8s_node_ip.stdout | default('undefined') }}:{{ item.to_port }}"
+      label: "Setting DNAT rule for port {{ item.port }} -> {{ k8s_coturn_node_ip.stdout | default('undefined') }}:{{ item.to_port }}"
 
-  - name: Ensure /etc/iptables directory exists
-    ansible.builtin.file:
-      path: /etc/iptables
-      state: directory
-      owner: root
-      group: root
-      mode: '0755'
-
-  - name: Save iptables rules
-    shell: iptables-save -f /etc/iptables/rules.v4
+  - name: Preserve the Iptables rules
+    shell: iptables-save -f "{{ iptables_save_dir }}"/rules_post_wire.v4
