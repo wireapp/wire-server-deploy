@@ -1,47 +1,48 @@
 - name: Configure minikube cluster
   hosts: deploy_node
   become: yes
-  become_user: "{{ ansible_user }}"  
+  become_user: "{{ ansible_user }}"
   tasks:
-  - name: Check if Minikube is running
-    shell: minikube status
-    register: minikube_status
-    failed_when: false
-    changed_when: false
+  - name: start minikube cluster
+    block: 
+    - name: Check if Minikube is running
+      shell: minikube status --profile="{{ minikube_profile }}"
+      register: minikube_status
+      failed_when: false
+      changed_when: false
 
-  # fix the version of minikube and kicbase images
-  - name: Start Minikube with specified configurations
-    shell: |
-      minikube start \
-        --nodes={{ minikube_nodes }} \
-        --cpus={{ minikube_cpus }} \
-        --memory={{ minikube_memory }} \
-        --disk-size={{ minikube_disk_size }} \
-        --kubernetes-version="{{ kubernetes_version }}" \
-        --container-runtime="{{ container_runtime }}" \
-        --driver=docker \
-        --extra-config=kubeadm.pod-network-cidr={{ pod_network_cidr }} \
-        --network={{ minikube_network_name }} \
-        --subnet={{ minikube_node_subnet }} \
-        --wait=all
-    when: "'Running' not in minikube_status.stdout"
+    - name: Start Minikube with specified configurations
+      shell: |
+        minikube start \
+          --nodes={{ minikube_nodes }} \
+          --cpus={{ minikube_cpus }} \
+          --memory={{ minikube_memory }} \
+          --disk-size={{ minikube_disk_size }} \
+          --kubernetes-version="{{ kubernetes_version }}" \
+          --container-runtime="{{ container_runtime }}" \
+          --driver=docker \
+          --extra-config=kubeadm.pod-network-cidr={{ pod_network_cidr }} \
+          --network={{ minikube_network_name }} \
+          --subnet={{ minikube_node_subnet }} \
+          --profile="{{ minikube_profile }}" \
+          --wait=all
+      when: "'Running' not in minikube_status.stdout"
 
-  - name: Get list of running Minikube nodes
-    shell: minikube node list | awk '{print $1}'
-    register: minikube_nodes_raw
+    - name: Get list of running Minikube nodes
+      shell: minikube node list --profile="{{ minikube_profile }}" | awk '{print $1}'
+      register: minikube_nodes_raw
 
-  - name: Add SSH key to all Minikube nodes
-    shell: |
-      minikube ssh --native-ssh=false -n {{ item }} -- "
-        mkdir -p ~/.ssh &&
-        if ! grep -q '{{ ssh_public_key }}' ~/.ssh/authorized_keys; then
-          echo '{{ ssh_public_key }}' >> ~/.ssh/authorized_keys &&
-          chmod 600 ~/.ssh/authorized_keys
-        fi
-      "
-    args:
-      executable: /bin/bash
-    with_items: "{{ minikube_nodes_raw.stdout_lines }}"
-    async: 30
-    poll: 5
-
+    - name: Add SSH key to all Minikube nodes
+      shell: |
+        minikube ssh --profile="{{ minikube_profile }}" --native-ssh=false -n {{ item }} -- "
+          mkdir -p ~/.ssh &&
+          if ! grep -q 'ansible_generated_key_wire' ~/.ssh/authorized_keys; then
+            echo '{{ ssh_public_key }}' >> ~/.ssh/authorized_keys &&
+            chmod 600 ~/.ssh/authorized_keys
+          fi
+        "
+      args:
+        executable: /bin/bash
+      with_items: "{{ minikube_nodes_raw.stdout_lines }}"
+      async: 30
+      poll: 5
