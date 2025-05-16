@@ -2,6 +2,16 @@
   hosts: deploy_node
   become: yes
   become_user: "{{ ansible_user }}"
+  vars:
+    # admin container definition for WSD (wire-server-deploy) 
+    docker_cmd_base: >-
+      docker run --network=host
+      -v "/home/{{ ansible_user }}/.ssh":/root/.ssh
+      -v "/home/{{ ansible_user }}/wire-server-deploy/":/wire-server-deploy
+      -v "/home/{{ ansible_user }}/.kube/config":/root/.kube/config
+      -v "/home/{{ ansible_user }}/.minikube":/home/ubuntu/.minikube
+      -e KUBECONFIG=/root/.kube/config
+      "{{ wsd_container.stdout }}"
   tasks:
 
   - name: Replace TARGET_SYSTEM example.com with target_domain in offline_deploy_k8s
@@ -16,6 +26,34 @@
       path: /home/{{ ansible_user }}/wire-server-deploy/bin/wiab-demo/offline_deploy_k8s.sh
       regexp: '^CERT_MASTER_EMAIL="certmaster@example\.com"'
       line: 'CERT_MASTER_EMAIL="certmaster@{{ target_domain }}"'
+      backrefs: yes
+
+  - name: Add HOST_IP with public_ip in offline_deploy_k8s
+    lineinfile:
+      path: /home/{{ ansible_user }}/wire-server-deploy/bin/wiab-demo/offline_deploy_k8s.sh
+      regexp: '^HOST_IP=""'
+      line: 'HOST_IP="{{ public_ip }}"'
+      backrefs: yes
+
+  - name: Update SFT_NODE in the offline_deploy_k8s
+    lineinfile:
+      path: /home/{{ ansible_user }}/wire-server-deploy/bin/wiab-demo/offline_deploy_k8s.sh
+      regexp: '^SFT_NODE="K8S_SFT_NODE"'
+      line: 'SFT_NODE="{{ k8s_sft_node }}"'
+      backrefs: yes
+
+  - name: Update NGINX_K8S_NODE in the offline_deploy_k8s
+    lineinfile:
+      path: /home/{{ ansible_user }}/wire-server-deploy/bin/wiab-demo/offline_deploy_k8s.sh
+      regexp: '^NGINX_K8S_NODE="NGINX_K8S_NODE"'
+      line: 'NGINX_K8S_NODE="{{ k8s_ingress_controller_node }}"'
+      backrefs: yes
+
+  - name: Update COTURN_NODE in the offline_deploy_k8s
+    lineinfile:
+      path: /home/{{ ansible_user }}/wire-server-deploy/bin/wiab-demo/offline_deploy_k8s.sh
+      regexp: '^COTURN_NODE="K8S_COTURN_NODE"'
+      line: 'COTURN_NODE="{{ k8s_coturn_node }}"'
       backrefs: yes
 
   - name: Load WSD Docker image
