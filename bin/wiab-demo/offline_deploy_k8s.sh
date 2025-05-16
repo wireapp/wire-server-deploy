@@ -6,13 +6,12 @@ BASE_DIR="/wire-server-deploy"
 TARGET_SYSTEM="example.com"
 CERT_MASTER_EMAIL="certmaster@example.com"
 
-# make sure these align with the iptables rules
-# picking first node for sft
-SFT_NODE="minikube"
-# picking 2nd node for nginx
-NGINX_K8S_NODE="minikube-m02"
-# picking 3rd node for coturn
-COTURN_NODE="minikube-m03"
+# make sure these align with the iptables rules, has to be manually updated
+SFT_NODE="K8S_SFT_NODE"
+# picking a node for nginx
+NGINX_K8S_NODE="NGINX_K8S_NODE"
+# picking a node for coturn
+COTURN_NODE="K8S_COTURN_NODE"
 
 CHART_URL="https://charts.jetstack.io/charts/cert-manager-v1.13.2.tgz"
 
@@ -57,7 +56,23 @@ process_values() {
   trap 'rm -rf $TEMP_DIR' EXIT
 
   # this IP should match the DNS A record for TARGET_SYSTEM
-  HOST_IP=$(wget -qO- https://api.ipify.org)
+  # keeping it empty to be replaced
+  HOST_IP=""
+
+  # Check if HOST_IP is empty
+  if [ -z "$HOST_IP" ]; then
+      # Attempt to retrieve the public IP address
+      HOST_IP=$(wget -qO- https://api.ipify.org)
+
+      # Check if the retrieval was successful
+      if [ -z "$HOST_IP" ]; then
+          echo "No proper IP address is specified."
+          exit 1
+      else
+          echo "coturn public IP would be: $HOST_IP"
+      fi
+  fi
+
   # to find IP address of coturn NODE
   COTURN_NODE_IP=$(kubectl get node $COTURN_NODE -o jsonpath='{.status.addresses[?(@.type=="InternalIP")].address}')
 
@@ -189,10 +204,10 @@ deploy_calling_services() {
 
   echo "Deploying sftd and coturn"
   # select the node to deploy sftd
-  kubectl label node $SFT_NODE wire.com/role=sftd
+  kubectl label node $SFT_NODE wire.com/role=sftd --overwrite
   helm upgrade --install sftd $BASE_DIR/charts/sftd --set 'nodeSelector.wire\.com/role=sftd' --set 'node_annotations="{'wire\.com/external-ip': '"$HOST_IP"'}"' --values  $BASE_DIR/values/sftd/values.yaml
 
-  kubectl label node $COTURN_NODE wire.com/role=coturn
+  kubectl label node $COTURN_NODE wire.com/role=coturn --overwrite
   kubectl annotate node $COTURN_NODE wire.com/external-ip="$HOST_IP" --overwrite
   helm upgrade --install coturn ./charts/coturn --values  $BASE_DIR/values/coturn/values.yaml --values  $BASE_DIR/values/coturn/secrets.yaml
 }
