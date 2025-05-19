@@ -93,8 +93,13 @@ packages=(
   rabbitmq-server
 )
 
+noble=(
+  gnupg2
+)
+
 # shellcheck disable=SC2001
 packages_=$(echo "${packages[@]}" | sed 's/\s/ \| /g')
+noble_=$(echo "${noble[@]}" | sed 's/\s/ \| /g')
 
 echo "$packages_"
 
@@ -147,17 +152,27 @@ $aptly mirror create -architectures=amd64 -filter="${packages_}" -filter-with-de
 $aptly mirror create -architectures=amd64 -filter="${packages_}" -filter-with-deps jammy-updates http://de.archive.ubuntu.com/ubuntu/ jammy-updates main universe
 $aptly mirror create -architectures=amd64 -filter="${docker_packages}" -filter-with-deps docker-ce https://download.docker.com/linux/ubuntu jammy stable
 
+$aptly mirror create -architectures=amd64 -filter="${noble_}" -filter-with-deps noble http://de.archive.ubuntu.com/ubuntu/ noble main universe
+$aptly mirror create -architectures=amd64 -filter="${noble_}" -filter-with-deps noble-updates http://de.archive.ubuntu.com/ubuntu/ noble-updates main universe
+$aptly mirror create -architectures=amd64 -filter="${noble_}" -filter-with-deps noble-security http://de.archive.ubuntu.com/ubuntu/ noble-security main universe
+
 $aptly mirror update jammy
 $aptly mirror update jammy-security
 $aptly mirror update jammy-updates
+$aptly mirror update noble
+$aptly mirror update noble-security
+$aptly mirror update noble-updates
 $aptly mirror update docker-ce
 
 $aptly snapshot create jammy from mirror jammy
 $aptly snapshot create jammy-security from mirror jammy-security
 $aptly snapshot create jammy-updates from mirror jammy-updates
+$aptly snapshot create noble from mirror noble
+$aptly snapshot create noble-security from mirror noble-security
+$aptly snapshot create noble-updates from mirror noble-updates
 $aptly snapshot create docker-ce from mirror docker-ce
 
-$aptly snapshot merge wire jammy jammy-security jammy-updates docker-ce
+$aptly snapshot merge wire jammy jammy-security jammy-updates docker-ce noble noble-security noble-updates
 
 $aptly publish snapshot -gpg-key="gpg@wire.com" -distribution jammy wire
 
