@@ -25,3 +25,5 @@
     with_items: "{{ dns_result.results }}"
     loop_control:
       label: "{% if item.stdout is defined %}{{ item.item }}{% else %}checking{% endif %}"
+
+  # create dns entries on the deploy_node in /etc/hosts and suggest dns records creation in case of a private ip

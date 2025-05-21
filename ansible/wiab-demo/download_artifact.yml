@@ -41,7 +41,7 @@
       get_checksum: False
     register: artifact_folder_content_check
 
-  - name: unpack wire-server-deploy archive, will take a few mins
+  - name: Unpack wire-server-deploy archive, will take a few mins - grab a coffee
     unarchive:
       src: /home/{{ ansible_user }}/wire-server-deploy-static-demo-{{ artifact_hash }}.tgz
       dest: /home/{{ ansible_user }}/wire-server-deploy

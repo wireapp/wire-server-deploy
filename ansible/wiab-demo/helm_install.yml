@@ -73,7 +73,7 @@
     args:
       executable: /bin/bash
     
-  - name: Deploy cert manager
+  - name: Deploy cert manager # disable if running in a private env
     shell: |
       {{ docker_cmd_base }} bash -c "source /wire-server-deploy/bin/wiab-demo/offline_deploy_k8s.sh && deploy_cert_manager"
     args:
