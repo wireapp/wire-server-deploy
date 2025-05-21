@@ -115,6 +115,54 @@ demo@Ubuntu-2204-jammy-amd64-base:~$ ssh assethost
 Hint: resolving VM hostnames from inside the dedicated server should work, since the script is appending entries to /etc/hosts during VM creation.
 But this does not work for resolving hostnames between VMs at this point. We'll be using IP addresses only going forward.
 
+### To get a domain for WIAB experimentation
+
+using: https://github.com/Gandi/gandi.cli
+
+```
+sudo apt install pipx
+pipx install gandi-cli
+pipx ensurepath
+(logout, log back in)
+```
+
+```
+gandi setup
+```
+the API key from the gandi web interface should be entered in the "Api key (rest)" and "Api key (xmlrpc)".
+
+If you need to nuke it, it's stored in ~/.config/gandi/config.yaml
+
+Once this is set up properly, you should be able to "gandi dns list <domain>", for domains you own with gandi.
+
+I then built the following shell script.
+
+domains-kittensonfire.sh
+```
+#!/bin/bash
+domains="nginz-https nginz-ssl webapp assets account teams federator"
+sft_domains="sftd"
+ipaddr=65.109.105.243
+
+# one of the staging SFT servers.
+sft_ipaddr=168.119.168.239
+
+# update the domain itsself
+gandi dns update kittensonfire.com -ttl 600 @ A $ipaddr
+
+# update subrecords of kittensonfire.com
+for each in $domains; do
+    gandi dns update kittensonfire.com --ttl 600 $each A $ipaddr
+    sleep 5
+done
+
+# separately update the SFT subrecords of kittensonfire.com
+for each in $sft_domains; do
+    gandi dns update kittensonfire.com --ttl 600 $each A $sft_ipaddr
+    sleep 5
+done
+```
+
 ### From this point:
 
 Switch to [the Ubuntu 22.04 Wire install docs](docs_ubuntu_22.04.md)
