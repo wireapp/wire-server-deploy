@@ -1,10 +1,10 @@
 wiab:
   hosts:
     deploy_node:
-      ansible_host: example.com
+      ansible_host: example.com.com
       ansible_ssh_common_args: '-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null'
       ansible_user: 'ubuntu'
-      #ansible_ssh_private_key_file: "~/.ssh/aws-wiab-demo.pem"
+      ansible_ssh_private_key_file: "~/.ssh/wiab-demo.pem"
 
   vars:
     # requirements
@@ -14,7 +14,7 @@ wiab:
 
     # it should have all dns records configured as per DNS requirements
     # https://docs.wire.com/latest/how-to/install/includes/helm_dns-ingress-troubleshooting.inc.html 
-    target_domain: "example.com"
+    target_domain: "example.com.com"
     
     # define this variable in case, deploying it in a private network
     # specify the external (Gateway) IP of the network where the deploy_node is present
@@ -22,7 +22,7 @@ wiab:
     wire_ip: ""
 
     # artifact_hash
-    artifact_hash: "2e01dff31a58832c41e4940f4006b7159866fecd"
+    artifact_hash: "eb937b70f8c7ad923f9a5e3e7b5da0b814c111d1"
   
     # docker vars
     docker_ce_version: "5:28.1.1-1~ubuntu.24.04~noble"

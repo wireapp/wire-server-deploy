@@ -29,7 +29,7 @@
 
 - name: Install required packages
   import_playbook: ./install_pkgs.yml
-  when: skip_verify_dns | default(false) == false
+  when: skip_install_pkgs | default(false) == false
 
 - name: Manage SSH keys for minikube node and ssh proxy
   import_playbook: ./setup_ssh.yml
