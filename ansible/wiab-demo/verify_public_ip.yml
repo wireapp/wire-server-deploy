@@ -3,70 +3,108 @@
   vars:
     test_port: 3478
   tasks:
-  - name: Get public IP address
-    uri:
-      url: https://api.ipify.org
-      return_content: yes
-    register: public_ip_result
-    failed_when: public_ip_result.status != 200
-    retries: 3
-    delay: 2
-      
-  - name: Store public IP and set facts
+  - name: Check if coturn_public_ip is defined
     set_fact:
-      public_ip: "{{ public_ip_result.content | trim }}"
+      public_ip: "{{ coturn_public_ip }}"
+    when: coturn_public_ip is defined and coturn_public_ip | length != 0
+
+  - name: Check if wire_public_ip file exists
+    stat:
+      path: "/home/{{ ansible_user }}/wire_public_ip"
+    register: wire_public_ip_file
+
+  - name: Read public IP from file if it exists
+    set_fact:
+      public_ip: "{{ lookup('file', '/home/{{ ansible_user }}/wire_public_ip') | trim }}"
+    when: wire_public_ip_file.stat.exists
+
+  - name: Fail if coturn_public_ip is defined and does not match wire_public_ip
+    fail:
+      msg: "coturn_public_ip is not the same as wire_public_ip calculated earlier. Either delete the file or modify the coturn_public_ip."
+    when:
+      - coturn_public_ip is defined
+      - wire_public_ip_file.stat.exists
+      - coturn_public_ip != public_ip
+
+  - name: Store public IP in file
+    copy:
+      dest: "/home/{{ ansible_user }}/wire_public_ip"
+      content: "{{ public_ip }}"
+    when: public_ip is defined
+
+  - name: Find public IP
+    when: public_ip is not defined
+    block:
+    - name: Get public IP address from ipify
+      uri:
+        url: https://api.ipify.org
+        return_content: yes
+      register: public_ip_result
+      failed_when: public_ip_result.status != 200
+      retries: 3
+      delay: 2
+
+    - name: Store public IP and set facts
+      set_fact:
+        temp_public_ip: "{{ public_ip_result.content | trim }}"
         
-  - name: Display public IP address
-    debug:
-      msg: "Public IP address: {{ public_ip }}"
+    - name: Display public IP address
+      debug:
+        msg: "Public IP address found: {{ temp_public_ip }}"
 
-  - name: Create temporary listening port
-    shell: |
-      nc -k -l -p {{ test_port }} &
-      echo $! > /tmp/nc_pid_{{ test_port }}
-    async: 1
-    poll: 0
-    register: tcp_service
-    ignore_errors: yes
+    - name: Create temporary listening port
+      shell: |
+        nc -k -l -p {{ test_port }} &
+        echo $! > /tmp/nc_pid_{{ test_port }}
+      async: 1
+      poll: 0
+      register: tcp_service
+      ignore_errors: yes
 
-  - name: Wait for listening service to start
-    wait_for:
-      port: "{{ test_port }}"
-      state: started
-      timeout: 5
-      delay: 1
-    ignore_errors: yes
+    - name: Wait for listening service to start
+      wait_for:
+        port: "{{ test_port }}"
+        state: started
+        timeout: 5
+        delay: 1
+      ignore_errors: yes
 
-  - name: Attempt to connect to the TCP service
-    ansible.builtin.shell: |
-      nc -zv -w 5 {{ public_ip }} {{ test_port }}
-    register: connection_test
-    ignore_errors: yes
-    delegate_to: localhost
+    - name: Attempt to connect to the TCP service
+      ansible.builtin.shell: |
+        nc -zv -w 5 {{ temp_public_ip }} {{ test_port }}
+      register: connection_test
+      ignore_errors: yes
+      delegate_to: localhost
 
-  - name: Display connection test result
-    ansible.builtin.debug:
-      msg: "{{ 'Public IP assigned to the node is reachable' if connection_test.rc == 0 else 'Connection test failed' }}"
+    - name: Display connection test result
+      ansible.builtin.debug:
+        msg: "{{ 'Public IP {{ temp_public_ip }} assigned to the node is reachable' if connection_test.rc == 0 else 'Connection test failed' }}"
 
-  - name: Stop TCP service
-    ansible.builtin.shell: |
-      if [ -f /tmp/nc_pid_{{ test_port }} ]; then
-        kill $(cat /tmp/nc_pid_{{ test_port }})
-        rm -f /tmp/nc_pid_{{ test_port }}
-      fi
-    ignore_errors: yes
+    - name: Stop TCP service
+      ansible.builtin.shell: |
+        if [ -f /tmp/nc_pid_{{ test_port }} ]; then
+          kill $(cat /tmp/nc_pid_{{ test_port }})
+          rm -f /tmp/nc_pid_{{ test_port }}
+        fi
+      ignore_errors: yes
 
-  - name: Set public IP for TURN service (if provided)
-    ansible.builtin.set_fact:
-      public_ip : "{{ coturn_public_ip | default('') }}"
-    when: connection_test is failed
+    - name: Warn when public IP has not been found
+      ansible.builtin.fail:
+        msg: >
+          Network connectivity test failed. Unable to reach port {{ test_port }} on the public IP ({{ temp_public_ip }}).
+          Please check your network configuration:
+          1. Verify network routes and firewall rules
+          2. Ensure TCP traffic to port {{ test_port }} is allowed on the public IP. Note: In case, iptables_rules playbook had run previously, clean them using clean_cluster -e remove_iptables=true
+          3. If you're deploying in a private network environment, you must specify the 'coturn_public_ip' variable with the publicly accessible IP address for the TURN server.
+      when: connection_test is failed
 
-  - name: Check if alternative public IP is provided
-    ansible.builtin.fail:
-      msg: >
-        Network connectivity test failed. Unable to reach port {{ test_port }} on the public IP ({{ public_ip }}).
-        Please check your network configuration:
-        1. Verify network routes and firewall rules
-        2. Ensure TCP traffic to port {{ test_port }} is allowed on the public IP. Note: In case, iptables_rules playbook had run previously, clean them using clean_cluster -e remove_iptables=true
-        3. If you're deploying in a private network environment, you must specify the 'coturn_public_ip' variable with the publicly accessible IP address for the TURN server.
-    when: connection_test is failed and (coturn_public_ip is not defined or coturn_public_ip | length == 0)  
+    - name: Store public IP in file
+      copy:
+        dest: "/home/{{ ansible_user }}/wire_public_ip"
+        content: "{{ temp_public_ip }}"
+      when: connection_test.rc == 0
+
+    - name: set fact public_ip
+      set_fact:
+        public_ip: "{{ temp_public_ip }}"
+      when: connection_test.rc == 0
