@@ -13,8 +13,9 @@
         - ncat
       state: present
       update_cache: yes
-  # if number of nodes increase, the logic can change to divide the node for different services
-  - name: Set facts for various Kubernetes nodes, for 1 node, it will be name of profile
+
+  # if number of nodes increase, the logic can be adapted to change nodes for different services
+  - name: Set facts for various Kubernetes nodes (for a single node), it will be name of profile
     set_fact:
       k8s_ingress_controller_node: "{{ minikube_profile }}"
       k8s_coturn_node: "{{ minikube_profile }}"
@@ -33,8 +34,6 @@
 - name: Manage SSH keys for minikube node and ssh proxy
   import_playbook: ./setup_ssh.yml
   when: ((skip_minikube | default(false) == false) or (skip_asset_host | default(false) == false) or (skip_setup_offline_seed | default(false) == false))
-
-
 
 - name: Configure minikube cluster
   import_playbook: ./minikube_cluster.yml
@@ -112,6 +111,7 @@
           -o ProxyCommand="ssh -W %h:%p -q {{ ansible_user }}@{{ ansible_host }}"
           -o StrictHostKeyChecking=no
           -i {{ temp_dir.path }}/id_rsa_wire
+
     - name: Set assethost_host fact for each node in k8s-cluster
       set_fact:
         assethost_host: "{{ host_ip.stdout }}:8080"
@@ -125,6 +125,8 @@
   import_playbook: ../setup-offline-sources.yml
   vars:
     demo_deploy: true
+    remote_src: yes
+    src_path: /home/{{ ansible_user }}/wire-server-deploy
   when: skip_asset_host | default(false) == false
 
 - name: Seed the containers in k8s-cluster nodes

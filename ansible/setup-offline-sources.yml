@@ -45,14 +45,14 @@
       tags:
         - containers-helm
         - containers
-      when: demo_deploy | default(false) == false
+      when: demo_deploy | default(false) == true
             
     - name: setup serve-assets
       block:
-      - copy:
+      - Copy serve-assets.service file:
           src: files/serve-assets.service
           dest: /etc/systemd/system/serve-assets.service
-      - systemd:
+      - Running serve-assets systemd service:
           name: serve-assets
           state: restarted
           enabled: yes
