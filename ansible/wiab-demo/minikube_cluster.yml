@@ -32,7 +32,7 @@
       shell: minikube node list --profile="{{ minikube_profile }}" | awk '{print $1}'
       register: minikube_nodes_raw
 
-    - name: Add SSH key to all Minikube nodes
+    - name: Check if ssh key is required and add it to all Minikube nodes
       shell: |
         minikube ssh --profile="{{ minikube_profile }}" --native-ssh=false -n {{ item }} -- "
           mkdir -p ~/.ssh &&

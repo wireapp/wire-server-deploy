@@ -1,0 +1,101 @@
+- name: Check accessiblity of public IP
+  hosts: deploy_node
+  vars:
+    test_port: 3478
+  tasks:
+
+  - name: Continue finding wire_ip on the node
+    when: wire_ip is not defined
+    block:
+    - name: Check if wire_ip file exists
+      stat:
+        path: "/home/{{ ansible_user }}/wire_ip"
+      register: wire_ip_file
+
+    - name: Read Wire IP from file if it exists
+      slurp:
+        src: "/home/{{ ansible_user }}/wire_ip"
+      register: wire_ip_content
+      when: wire_ip_file.stat.exists
+
+    - name: set wire_ip as fact
+      set_fact:
+        wire_ip: "{{ wire_ip_content.content | b64decode | trim }}"
+      when: wire_ip_file.stat.exists
+
+  - name: Find Wire IP via public reachability
+    when: wire_ip is not defined
+    block:
+    - name: Get public IP address from ipify
+      uri:
+        url: https://api.ipify.org
+        return_content: yes
+      register: wire_ip_result
+      failed_when: wire_ip_result.status != 200
+      retries: 3
+      delay: 2
+
+    - name: Store public IP and set facts
+      set_fact:
+        temp_wire_ip: "{{ wire_ip_result.content | trim }}"
+        
+    - name: Display public IP address
+      debug:
+        msg: "Public IP address found: {{ temp_wire_ip }}"
+
+    - name: Create temporary listening port
+      shell: |
+        nc -k -l -p {{ test_port }} &
+        echo $! > /tmp/nc_pid_{{ test_port }}
+      async: 1
+      poll: 0
+      register: tcp_service
+      ignore_errors: yes
+
+    - name: Wait for listening service to start
+      wait_for:
+        port: "{{ test_port }}"
+        state: started
+        timeout: 5
+        delay: 1
+      ignore_errors: yes
+
+    - name: Attempt to connect to the TCP service
+      ansible.builtin.shell: |
+        nc -zv -w 5 {{ temp_wire_ip }} {{ test_port }}
+      register: connection_test
+      ignore_errors: yes
+      delegate_to: localhost
+
+    - name: Display connection test result
+      ansible.builtin.debug:
+        msg: "{{ 'Public IP {{ temp_wire_ip }} assigned to the node is reachable' if connection_test.rc == 0 else 'Connection test failed, trying setting wire_ip to avoid testing access' }}"
+
+    - name: Stop TCP service
+      ansible.builtin.shell: |
+        if [ -f /tmp/nc_pid_{{ test_port }} ]; then
+          kill $(cat /tmp/nc_pid_{{ test_port }})
+          rm -f /tmp/nc_pid_{{ test_port }}
+        fi
+      ignore_errors: yes
+
+    - name: Warn when public IP has not been found
+      ansible.builtin.fail:
+        msg: >
+          Network connectivity test failed. Unable to reach port {{ test_port }} on the public IP ({{ temp_wire_ip }}).
+          Please check your network configuration:
+          1. Verify network routes and firewall rules
+          2. Ensure TCP traffic to port {{ test_port }} is allowed on the public IP. Note: In case, iptables_rules playbook had run previously, clean them using clean_cluster -e remove_iptables=true
+          3. If you're deploying in a private network environment, you must specify the 'wire_ip' variable with the publicly accessible IP address for the TURN server.
+      when: connection_test is failed
+
+    - name: Store public IP in file
+      copy:
+        dest: "/home/{{ ansible_user }}/wire_ip"
+        content: "{{ temp_wire_ip }}"
+      when: connection_test.rc == 0
+
+    - name: set fact public_ip
+      set_fact:
+        wire_ip: "{{ temp_wire_ip }}"
+      when: connection_test.rc == 0

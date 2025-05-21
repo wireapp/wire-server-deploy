@@ -24,8 +24,8 @@
 # shouldn't be skipped, it is neccessary to identify the network ingress
 # potentially we can write the information on the node to avoid running it everytime
 # read it from the node if not found
-- name: Check Public IP access
-  import_playbook: ./verify_public_ip.yml
+- name: Check Wire IP access
+  import_playbook: ./verify_wire_ip.yml
 
 - name: Install required packages
   import_playbook: ./install_pkgs.yml
@@ -95,9 +95,10 @@
         groups: k8s-cluster
         ansible_user: docker
         ansible_ssh_common_args: >-
-          -o ProxyCommand="ssh -W %h:%p -q {{ ansible_user }}@{{ ansible_host }}"
+          -o ProxyCommand="ssh {% if ansible_ssh_private_key_file is defined %}-i {{ ansible_ssh_private_key_file }}{% endif %} -W %h:%p -q {{ ansible_user }}@{{ ansible_host }}"
           -o StrictHostKeyChecking=no
           -i {{ temp_dir.path }}/id_rsa_wire
+          -o UserKnownHostsFile=/dev/null
       loop: "{{ kubernetes_node_ips }}"
 
     - name: Define inventory for the assethost to match the hostname in setup-offline-sources.yml
@@ -108,9 +109,9 @@
         group: assethost
         ansible_user: "{{ ansible_user }}"
         ansible_ssh_common_args: >-
-          -o ProxyCommand="ssh -W %h:%p -q {{ ansible_user }}@{{ ansible_host }}"
+          -o ProxyCommand="ssh {% if ansible_ssh_private_key_file is defined %}-i {{ ansible_ssh_private_key_file }}{% endif %} -W %h:%p -q {{ ansible_user }}@{{ ansible_host }}"
           -o StrictHostKeyChecking=no
-          -i {{ temp_dir.path }}/id_rsa_wire
+          -o UserKnownHostsFile=/dev/null
 
     - name: Set assethost_host fact for each node in k8s-cluster
       set_fact:
@@ -143,3 +144,29 @@
 - name: Install Helm charts
   import_playbook: ./helm_install.yml
   when: skip_helm_install | default(false) == false
+
+# since, the temp_dir are created in a different set of tasks, these directories need to be searched 
+- name: Clean up temporary directories
+  hosts: localhost
+  tasks:
+    - name: Find all temporary directories
+      find:
+        paths: /tmp
+        patterns: "ansible.*_ssh_keys"
+        file_type: directory
+      register: temp_dirs
+
+    - name: List all temporary directories
+      debug:
+        msg: "Found temporary directory: {{ item.path }}"
+      loop: "{{ temp_dirs.files }}"
+      loop_control:
+        label: "{{ item.path }}"
+
+    - name: Delete all temporary directories
+      file:
+        path: "{{ item.path }}"
+        state: absent
+      loop: "{{ temp_dirs.files }}"
+      loop_control:
+        label: "{{ item.path }}"

@@ -28,11 +28,11 @@
       line: 'CERT_MASTER_EMAIL="certmaster@{{ target_domain }}"'
       backrefs: yes
 
-  - name: Add HOST_IP with public_ip in offline_deploy_k8s
+  - name: Add HOST_IP with wire_ip in offline_deploy_k8s
     lineinfile:
       path: /home/{{ ansible_user }}/wire-server-deploy/bin/wiab-demo/offline_deploy_k8s.sh
       regexp: '^HOST_IP=""'
-      line: 'HOST_IP="{{ public_ip }}"'
+      line: 'HOST_IP="{{ wire_ip }}"'
       backrefs: yes
 
   - name: Update SFT_NODE in the offline_deploy_k8s

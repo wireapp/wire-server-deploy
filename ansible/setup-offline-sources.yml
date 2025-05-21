@@ -49,10 +49,12 @@
             
     - name: setup serve-assets
       block:
-      - Copy serve-assets.service file:
+      - name: Copy serve-assets.service file
+        copy:
           src: files/serve-assets.service
           dest: /etc/systemd/system/serve-assets.service
-      - Running serve-assets systemd service:
+      - name: Running serve-assets systemd service
+        systemd:
           name: serve-assets
           state: restarted
           enabled: yes
