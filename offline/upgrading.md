@@ -36,37 +36,26 @@ sudo apt clean
 Remove wire-server images from two releases ago, or from the current release that we know are unused. For instance,
 
 ```
-sudo docker image ls
-# look at the output of the last command, to find
-VERSION="2.106.0"
-sudo docker image ls | grep -E "^quay.io/wire/([bcg]|spar|nginz)" | grep $VERSION | sed "s/.*[ ]*\([0-9a-f]\{12\}\).*/sudo docker image rm \1/"
-```
-
-If you are not running SFT in your main cluster (for example, do not use SFT, or have SFT in a separate DMZ'd cluster).. then remove SFT images from the Wire Kubernetes cluster.
-
-```
-sudo docker image ls | grep -E "^quay.io/wire/sftd" | sed "s/.*[ ]*\([0-9a-f]\{12\}\).*/sudo docker image rm \1/"
-```
-
-For newer versions of wire-server (post 4.20.0) use `crictl` instead of docker. For example:
-
-```
 sudo crictl image ls
 # look at the output of the last command, to find
 VERSION="4.20.0"
 sudo crictl image ls | grep -E "^quay.io/wire/([bcg]|spar|nginz)" | grep $VERSION | sed "s/.*[ ]*\([0-9a-f]\{13\}\).*/sudo crictl rmi \1/"
 ```
 
-#### SFT Cluster
-
-If you are running a DMZ deployment, prune the old wire-server images and their dependencies on the SFT kubernetes hosts...
+If you are not running calling services (SFTD/COTURN) in your main cluster (for example, do not use calling services, or have them in a separate DMZ'd cluster).. then remove those images from the Wire Kubernetes cluster.
 
 ```
-sudo docker image ls | grep -E "^quay.io/wire/(team-settings|account|webapp|ixdotai-smtp)" | sed "s/.*[ ]*\([0-9a-f]\{12\}\).*/sudo docker image rm \1/"
-sudo docker image ls | grep -E "^(bitnami/redis|airdock/fake-sqs|localstack/localstack)" | sed "s/.*[ ]*\([0-9a-f]\{12\}\).*/sudo docker image rm \1/"
+sudo crictl image ls | grep -E "^quay.io/wire/(sftd|coturn)" | sed "s/.*[ ]*\([0-9a-f]\{12\}\).*/sudo crictl rmi \1/"
 ```
 
-For newer versions of wire-server (post 4.20.0) use `crictl image ls` and `crictl rmi` instead of docker commands, like in previous example.
+#### Calling Cluster
+
+If you are running a DMZ deployment, prune the old wire-server images and their dependencies on the Calling Cluster kubernetes hosts...
+
+```
+sudo crictl image ls | grep -E "^quay.io/wire/(team-settings|account|webapp|ixdotai-smtp)" | sed "s/.*[ ]*\([0-9a-f]\{12\}\).*/sudo docker image rm \1/"
+sudo crictl image ls | grep -E "^(bitnami/redis|airdock/fake-sqs|localstack/localstack)" | sed "s/.*[ ]*\([0-9a-f]\{12\}\).*/sudo crictl rmi \1/"
+```
 
 ## Preparing for deployment
 
@@ -276,12 +265,6 @@ Since docker is already installed on all nodes that need it, push the new contai
 
 ```
 d ansible-playbook -i ./ansible/inventory/offline/hosts.ini ansible/setup-offline-sources.yml
-d ansible-playbook -i ./ansible/inventory/offline/hosts.ini ansible/seed-offline-docker.yml
-```
-
-If you are using newer version of wire-server (post 4.20)
-
-```
 d ansible-playbook -i ./ansible/inventory/offline/hosts.ini ansible/seed-offline-containerd.yml
 ```
 
