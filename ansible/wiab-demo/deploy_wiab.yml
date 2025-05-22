@@ -95,10 +95,14 @@
         groups: k8s-cluster
         ansible_user: docker
         ansible_ssh_common_args: >-
-          -o ProxyCommand="ssh {% if ansible_ssh_private_key_file is defined %}-i {{ ansible_ssh_private_key_file }}{% endif %} -W %h:%p -q {{ ansible_user }}@{{ ansible_host }}"
+          -o ProxyCommand="ssh {% if ansible_ssh_private_key_file is defined %}-i {{ ansible_ssh_private_key_file }}{% endif %}
           -o StrictHostKeyChecking=no
-          -i {{ temp_dir.path }}/id_rsa_wire
           -o UserKnownHostsFile=/dev/null
+          -W %h:%p -q {{ ansible_user }}@{{ ansible_host }}"
+          -o StrictHostKeyChecking=no
+          -o UserKnownHostsFile=/dev/null
+          -i {{ temp_dir.path }}/id_rsa_wire
+          -o BatchMode=yes
       loop: "{{ kubernetes_node_ips }}"
 
     - name: Define inventory for the assethost to match the hostname in setup-offline-sources.yml
@@ -109,9 +113,14 @@
         group: assethost
         ansible_user: "{{ ansible_user }}"
         ansible_ssh_common_args: >-
-          -o ProxyCommand="ssh {% if ansible_ssh_private_key_file is defined %}-i {{ ansible_ssh_private_key_file }}{% endif %} -W %h:%p -q {{ ansible_user }}@{{ ansible_host }}"
+          -o ProxyCommand="ssh {% if ansible_ssh_private_key_file is defined %}-i {{ ansible_ssh_private_key_file }}{% endif %}
           -o StrictHostKeyChecking=no
           -o UserKnownHostsFile=/dev/null
+          -W %h:%p -q {{ ansible_user }}@{{ ansible_host }}"
+          -o StrictHostKeyChecking=no
+          -o UserKnownHostsFile=/dev/null
+          -o BatchMode=yes
+          {% if ansible_ssh_private_key_file is defined %}-i {{ ansible_ssh_private_key_file }}{% endif %}
 
     - name: Set assethost_host fact for each node in k8s-cluster
       set_fact:

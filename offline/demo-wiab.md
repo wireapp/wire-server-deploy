@@ -13,7 +13,7 @@ For more detailed instructions on each task, please refer to the [Deployment Flo
   - CPU cores >= 16
   - Memory > 16 GiB
   - Disk > 200 GiB 
-- **Network**: No interference from UFW, and IP forwarding enabled between network cards
+- **Network**: No interference from UFW or other system specific firewalls, and IP forwarding enabled between network cards. Public internet access to download Wire artifacts and Ubuntu packages.
 - **Packages**: Ansible and Git installed on the localhost
   - Ansible version: [core 2.16.3] or compatible
 - **Permissions**: Sudo access required for installation on remote_node
