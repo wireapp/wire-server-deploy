@@ -1,7 +1,11 @@
 
 # Wire-in-a-Box Deployment Guide
 
-This guide explains how to deploy Wire-in-a-Box (WIAB) using Ansible on an Ubuntu 24.04 system.
+This guide provides detailed instructions for deploying Wire-in-a-Box (WIAB) using Ansible on an Ubuntu 24.04 system. The deployment process is structured into multiple blocks within the Ansible playbook, offering flexibility in execution.
+
+Typically, the deployment process runs seamlessly without requiring any external flags. However, if needed, you have the option to skip certain tasks based on their conditional flags. For instance, if you wish to bypass the [Wire Artifact Download tasks](#8-wire-artifact-download) —which can be time-consuming—you can manage the artifacts independently and skip this step in the Ansible workflow by using the flag `-e skip_download=true`.
+
+For more detailed instructions on each task, please refer to the [Deployment Flow section](#deployment-flow).
 
 ## Requirements
 
@@ -34,6 +38,8 @@ This guide explains how to deploy Wire-in-a-Box (WIAB) using Ansible on an Ubunt
 | udp      | ingress   | 3478       | 3478     | IPv4       | Any        | Allow STUN/TURN traffic for Coturn          |
 | udp      | ingress   | 49152      | 65535    | IPv4       | 0.0.0.0/0  | Allow calling traffic for Coturn over UDP   |
 
+- Note: If outbound traffic is restricted, [Note on port ranges](https://docs.wire.com/latest/understand/notes/port-ranges.html) should be followed.
+
 ## Getting Started
 
 Start by cloning the repository and running the deployment playbook:
@@ -52,13 +58,14 @@ The deployment process follows these steps as defined in the main playbook:
 
 The playbook starts by verifying DNS records to ensure proper name resolution:
 - Imports [verify_dns.yml](../ansible/wiab-demo/verify_dns.yml)
-- Can be skipped by setting `skip_verify_dns: true`
-- Checks for basic DNS record requirements as mentioned [here](https://docs.wire.com/latest/how-to/install/helm.html#how-to-set-up-dns-records) .
+- Can be skipped by setting `skip_verify_dns=true`
+- Checks for basic DNS record requirements as explained in the document [How to set up DNS records](https://docs.wire.com/latest/how-to/install/helm.html#how-to-set-up-dns-records) .
 
 ### 2. Common Setup Tasks
 
 - Installs Netcat (ncat) on the deployment node, required to find a accessible IP address.
-- Sets up facts for Kubernetes nodes based on the Minikube profile and number of nodes.
+- Sets up variables (facts required by ansible) for Kubernetes nodes based on the Minikube profile and number of nodes.
+- We are defining the purpose of nodes in the Minikube cluster.
 
 ### 3. Network Verification
 
@@ -69,7 +76,7 @@ The playbook starts by verifying DNS records to ensure proper name resolution:
 ### 4. Package Installation
 
 - Imports [install_pkgs.yml](../ansible/wiab-demo/install_pkgs.yml)  to install required dependencies
-- Can be skipped by setting `skip_install_pkgs: true`
+- Can be skipped by setting `skip_install_pkgs=true`
 
 ### 5. SSH Key Management
 
@@ -83,7 +90,7 @@ The playbook starts by verifying DNS records to ensure proper name resolution:
 
 - Imports [minikube_cluster.yml](../ansible/wiab-demo/minikube_cluster.yml) to set up a Kubernetes cluster using Minikube
 - All minikube configurable parameters are available in [host.yml](../ansible/inventory/demo/host.yml)
-- Can be skipped with `skip_minikube: true`
+- Can be skipped with `skip_minikube=true`
 
 ### 7. IPTables Rules
 
@@ -95,7 +102,7 @@ The playbook starts by verifying DNS records to ensure proper name resolution:
 
 - Imports [download_artifact.yml](../ansible/wiab-demo/download_artifact.yml) to fetch the Wire components
 - It is required to download all the artifacts required for further installation
-- Can be skipped with `skip_download: true`
+- Can be skipped with `skip_download=true`
 
 ### 9. Minikube Node Inventory Setup
 
@@ -110,13 +117,13 @@ The playbook then configures access to the Kubernetes nodes:
 
 - Imports [setup-offline-sources.yml](../ansible/setup-offline-sources.yml) to configure the asset host
 - It will offer wire deployment artifacts as service for further installation
-- Can be skipped with `skip_asset_host: true`
+- Can be skipped with `skip_asset_host=true`
 
 ### 11. Container Seeding
 
 - Imports [seed-offline-containerd.yml](../ansible/seed-offline-containerd.yml) to seed containers in K8s cluster nodes
 - It will seed the docker images shipped for the wire related helm charts in the minikube k8s nodes
-- Can be skipped with `skip_setup_offline_seed: true`
+- Can be skipped with `skip_setup_offline_seed=true`
 
 ### 12. Wire Secrets Creation
 
@@ -127,7 +134,7 @@ The playbook then configures access to the Kubernetes nodes:
 
 - Imports [helm_install.yml](../ansible/wiab-demo/helm_install.yml) to deploy Wire components using Helm
 - These charts can be configured in [host.yml](../ansible/inventory/demo/host.yml)
-- Can be skipped with `skip_helm_install: true`
+- Can be skipped with `skip_helm_install=true`
 
 ### 14. Temporary Cleanup
 
@@ -147,7 +154,7 @@ SSH proxying is configured with:
 
 ## Notes
 
-- This deployment is only meant for testing, all the datastores are ephemeral.
+- This deployment is only meant for testing, all the datastores are ephemeral
 - The playbook is designed to be idempotent, with skip flags for each major section
 - Temporary SSH keys are created and cleaned up automatically
 - The deployment creates a single-node Kubernetes cluster with all Wire services
