@@ -37,6 +37,7 @@
         - containers
       when: demo_deploy | default(false) == false
 
+    # this task needs to run everytime, we assume it a basic requirement in all types of deployment
     - name: Copy helm containers
       unarchive:
         src: "{{ src_path }}/containers-helm.tar"
@@ -45,7 +46,6 @@
       tags:
         - containers-helm
         - containers
-      when: demo_deploy | default(false) == true
             
     - name: setup serve-assets
       block:

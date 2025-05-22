@@ -1,7 +1,7 @@
 wiab:
   hosts:
     deploy_node:
-      ansible_host: example.com.com
+      ansible_host: example.com
       ansible_ssh_common_args: '-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null'
       ansible_user: 'ubuntu'
       ansible_ssh_private_key_file: "~/.ssh/wiab-demo.pem"
@@ -14,7 +14,7 @@ wiab:
 
     # it should have all dns records configured as per DNS requirements
     # https://docs.wire.com/latest/how-to/install/includes/helm_dns-ingress-troubleshooting.inc.html 
-    target_domain: "example.com.com"
+    target_domain: "example.com"
     
     # define this variable in case, deploying it in a private network
     # specify the external (Gateway) IP of the network where the deploy_node is present
