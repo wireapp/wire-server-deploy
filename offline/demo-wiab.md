@@ -1,7 +1,7 @@
 
 # Wire-in-a-Box Deployment Guide
 
-This guide provides detailed instructions for deploying Wire-in-a-Box (WIAB) using Ansible on an Ubuntu 24.04 system. The deployment process is structured into multiple blocks within the Ansible playbook, offering flexibility in execution.
+This guide provides detailed instructions for deploying Wire-in-a-Box (WIAB) using Ansible on an Ubuntu 24.04 system. The deployment process is structured into multiple blocks within the Ansible playbook, offering flexibility in execution. It is designed to configure a remote node, such as example.com (referred to as deploy_node), to install Wire with a custom domain, example.com (referred to as target_domain). These variables must be verified in the file [../ansible/inventory/demo/host.yml](../ansible/inventory/demo/host.yml) before running the pipeline.
 
 Typically, the deployment process runs seamlessly without requiring any external flags. However, if needed, you have the option to skip certain tasks based on their conditional flags. For instance, if you wish to bypass the [Wire Artifact Download tasks](#8-wire-artifact-download) —which can be time-consuming—you can manage the artifacts independently and skip this step in the Ansible workflow by using the flag `-e skip_download=true`.
 
@@ -17,7 +17,7 @@ For more detailed instructions on each task, please refer to the [Deployment Flo
 - **Packages**: Ansible and Git installed on the localhost
   - Ansible version: [core 2.16.3] or compatible
 - **Permissions**: Sudo access required for installation on remote_node
-- **Deployment requirements**: Edit the file [host.yml](../ansible/inventory/demo/host.yml) (post cloning) to update and verify the following default variables:
+- **Deployment requirements**: Edit the file [../ansible/inventory/demo/host.yml](../ansible/inventory/demo/host.yml) (post cloning) to update and verify the following default variables:
     - ansible_host: deploy_node IP address or hostname (Mandatory)
     - ansible_user: deploy_node username (Mandatory)
     - ansible_ssh_private_key_file: SSH key file path for username@deploy_node (Mandatory)
@@ -168,12 +168,12 @@ ansible-playbook -i ansible/inventory/demo/host.yml ansible/wiab-demo/deploy_wia
 The deployment includes a cleanup playbook that can be used to remove all components:
 
 ```bash
-ansible-playbook -i ansible/inventory/demo/host.yml ansible/wiab-demo/clean_wiab.yml -e "remove_minikube=true uninstall_pkgs=true remove_iptables=true remove_ssh=true remove_artifacts=true clean_assethost=true"
+ansible-playbook -i ansible/inventory/demo/host.yml ansible/wiab-demo/clean_cluster.yml -e "remove_minikube=true remove_iptables=true remove_ssh=true remove_artifacts=true clean_assethost=true"
 ```
 
 The cleanup process handles:
 - **Minikube**: Stops and deletes the Kubernetes cluster (optional `remove_minikube=true`)
-- **Packages**: Removes installed dependencies including Docker, kubectl, yq, etc. (optional `uninstall_pkgs=true`)
+- **Packages**: Removes installed dependencies including Docker, kubectl, yq, etc. (optional `uninstall_pkgs=true`). **Note**: Verify the playbook before removing packages, it might remove pre-existing packages.
 - **IPTables**: Restores pre-installation network rules (optional `remove_iptables=true`)
 - **SSH Keys**: Removes generated SSH keys (optional `remove_ssh=true`)
 - **Artifacts**: Deletes downloaded deployment artifacts (optional `remove_artifacts=true`)
