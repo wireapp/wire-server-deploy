@@ -110,7 +110,8 @@ pull_from_wire_helm_charts() {
     local requirements_file="$tmp_dir/charts/$chart_name/requirements.yaml"
     if [[ -f "$requirements_file" ]]; then
       echo "Parsing dependencies from $requirements_file..."
-      local dependencies=$(yq eval '.dependencies[] | "\(.name) \(.repository) \(.version)"' "$requirements_file")
+      local dependencies
+      dependencies=$(yq eval '.dependencies[] | "\(.name) \(.repository) \(.version)"' "$requirements_file")
       echo "$dependencies" | pull_charts "$output_dir/$chart_name/charts"
     else
       echo "No requirements.yaml file found for $chart_name."
