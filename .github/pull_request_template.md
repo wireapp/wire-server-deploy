@@ -23,6 +23,7 @@ Fixes ${ISSUE_URL}
 
 ### Tracking
 
+* [ ] I added a new entry in an appropriate subdirectory of `changelog.d`
 * [ ] I mentioned this PR in Jira, OR I mentioned the Jira ticket in this PR.
 * [ ] I mentioned this PR in one of the issues attached to one of our repositories.
 
