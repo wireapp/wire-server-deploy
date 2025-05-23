@@ -91,10 +91,16 @@ pull_charts() {
 }
 
 pull_from_wire_helm_charts() {
+  # Do not pull the chart if the chart is in the exclude list
+  if echo "$HELM_CHART_EXCLUDE_LIST" | jq -e ". | index(\"$1\")" >/dev/null; then
+    echo "Chart '$1' is in the exclude list, skipping."
+    return
+  fi
+  
   local chart_name="$1"
   local repo_owner="wireapp"
   local repo_name="helm-charts"
-  local branch="cert-manager-in-bundle"  # Change to PR branch name if needed, e.g. "pull/27/head"
+  local branch="cert-manager-in-bundle"
   local output_dir="${OUTPUT_DIR}/charts"
 
   echo "Fetching $chart_name chart from $repo_owner/$repo_name ($branch)..."
