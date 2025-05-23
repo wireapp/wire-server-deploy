@@ -1,0 +1,29 @@
+- name: Check DNS A records
+  hosts: deploy_node
+  vars:
+    dns_records:
+      - sftd.{{ target_domain }}
+      - nginz-https.{{ target_domain }}
+      - nginz-ssl.{{ target_domain }}
+      - webapp.{{ target_domain }}
+      - assets.{{ target_domain }}
+      - teams.{{ target_domain }}
+      - account.{{ target_domain }}
+    test_port: 3478
+  tasks:
+  - name: Check DNS A records
+    command: "dig +short {{ item }}"
+    register: dns_result
+    failed_when: false
+    changed_when: false
+    with_items: "{{ dns_records }}"
+
+  - name: Check if DNS records exist
+    fail:
+      msg: "DNS record {{ item.item }} does not exist."
+    when: item.stdout | trim == ''
+    with_items: "{{ dns_result.results }}"
+    loop_control:
+      label: "{% if item.stdout is defined %}{{ item.item }}{% else %}checking{% endif %}"
+
+  # create dns entries on the deploy_node in /etc/hosts and suggest dns records creation in case of a private ip

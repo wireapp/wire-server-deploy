@@ -1,0 +1,53 @@
+- name: Download wire artifact
+  hosts: deploy_node
+  become: yes
+  become_user: "{{ ansible_user }}"  
+  tasks:
+  - name: create wire-server-deploy directory for {{ ansible_user }} user
+    file:
+      path: /home/{{ ansible_user }}/wire-server-deploy
+      state: directory
+      owner: "{{ ansible_user }}"
+      group: "{{ ansible_user }}"
+      mode: 0755
+
+  - name: check if wire-server-deploy-static-demo-{{ artifact_hash }}.tgz exists
+    stat:
+      path: /home/{{ ansible_user }}/wire-server-deploy-static-demo-{{ artifact_hash }}.tgz
+      get_checksum: False
+    register: artifact_archive_file_check
+
+  - name: download wire-server-deploy archive
+    shell:
+      cmd: curl -fsSLo /home/{{ ansible_user }}/wire-server-deploy-static-demo-{{ artifact_hash }}.tgz https://s3-eu-west-1.amazonaws.com/public.wire.com/artifacts/wire-server-deploy-static-demo-{{ artifact_hash }}.tgz
+      creates: /home/{{ ansible_user }}/wire-server-deploy-static-demo-{{ artifact_hash }}.tgz
+    when: not artifact_archive_file_check.stat.exists
+    register: artifact_archive
+    async: 1200
+    poll: 0
+
+  - name: Waiting on async task artifact_archive
+    async_status:
+      jid: "{{ artifact_archive.ansible_job_id }}"
+    register: res
+    until: res.finished
+    retries: 20
+    delay: 60
+    when: not artifact_archive_file_check.stat.exists
+
+  - name: check if wire-server-deploy folder contents exist
+    stat:
+      path: /home/{{ ansible_user }}/wire-server-deploy/containers-helm.tar
+      get_checksum: False
+    register: artifact_folder_content_check
+
+  - name: Unpack wire-server-deploy archive, will take a few mins - grab a coffee
+    unarchive:
+      src: /home/{{ ansible_user }}/wire-server-deploy-static-demo-{{ artifact_hash }}.tgz
+      dest: /home/{{ ansible_user }}/wire-server-deploy
+      remote_src: yes
+    when: not artifact_folder_content_check.stat.exists
+
+  - name: set permissions inside wire-server-deploy via shell command (fails when using ansible directive)
+    shell:
+      cmd: sudo chmod -R 0775 /home/{{ ansible_user }}/wire-server-deploy; sudo chown -R {{ ansible_user }}:{{ ansible_user }} /home/{{ ansible_user }}
