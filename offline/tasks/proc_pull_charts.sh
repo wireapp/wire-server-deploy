@@ -3,7 +3,7 @@ set -euo pipefail
 
 OUTPUT_DIR=""
 # Default exclude lists
-HELM_CHART_EXCLUDE_LIST="inbucket,wire-server-enterprise,cert-manager"
+HELM_CHART_EXCLUDE_LIST="inbucket,wire-server-enterprise"
 
 # Parse the arguments
 for arg in "$@"
@@ -117,7 +117,8 @@ pull_from_wire_helm_charts() {
     if [[ -f "$requirements_file" ]]; then
       echo "Parsing dependencies from $requirements_file..."
       local dependencies
-      dependencies=$(yq eval '.dependencies[] | "\(.name) \(.repository) \(.version)"' "$requirements_file")
+     
+      dependencies=$(cat "$requirements_file" | yq -r '.dependencies[] | "\(.name) \(.repository) \(.version)"')
       echo "$dependencies" | pull_charts "$output_dir/$chart_name/charts"
     else
       echo "No requirements.yaml file found for $chart_name."
