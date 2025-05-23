@@ -31,7 +31,7 @@
   - name: Add HOST_IP with wire_ip in offline_deploy_k8s
     lineinfile:
       path: /home/{{ ansible_user }}/wire-server-deploy/bin/wiab-demo/offline_deploy_k8s.sh
-      regexp: '^HOST_IP=""'
+      regexp: '^HOST_IP="WIRE_IP"'
       line: 'HOST_IP="{{ wire_ip }}"'
       backrefs: yes
 

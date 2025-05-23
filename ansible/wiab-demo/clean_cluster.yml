@@ -15,12 +15,12 @@
     - name: stop the k8s cluster
       shell: |
         minikube stop --profile="{{ minikube_profile }}"
-      when: "'Running' not in minikube_status.stdout"
+      when: "'Running' in minikube_status.stdout"
 
     - name: delete the k8s cluster
       shell: |
         minikube delete --profile="{{ minikube_profile }}"
-      when: "'Running' not in minikube_status.stdout"
+      when: "'Running' in minikube_status.stdout"
 
     when: "remove_minikube is defined and remove_minikube | bool"
 
@@ -153,6 +153,7 @@
     loop:
       - "/home/{{ ansible_user }}/wire-server-deploy"
       - "/home/{{ ansible_user }}/wire-server-deploy-static-demo-{{ artifact_hash }}.tgz"
+      - "/home/{{ ansible_user }}/wire_ip"
     when: "remove_artifacts is defined and remove_artifacts | bool"
 
   - name: clean asset_host artifacts and remove service
