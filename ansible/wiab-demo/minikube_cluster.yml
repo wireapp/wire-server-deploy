@@ -25,6 +25,7 @@
           --network={{ minikube_network_name }} \
           --subnet={{ minikube_node_subnet }} \
           --profile="{{ minikube_profile }}" \
+          --wait-timeout=15m0s \
           --wait=all
       when: "'Running' not in minikube_status.stdout"
 
@@ -32,17 +33,35 @@
       shell: minikube node list --profile="{{ minikube_profile }}" | awk '{print $1}'
       register: minikube_nodes_raw
 
-    - name: Check if ssh key is required and add it to all Minikube nodes
+    - name: Get authorized_keys from minikube nodes
       shell: |
-        minikube ssh --profile="{{ minikube_profile }}" --native-ssh=false -n {{ item }} -- "
-          mkdir -p ~/.ssh &&
-          if ! grep -q 'ansible_generated_key_wire' ~/.ssh/authorized_keys; then
-            echo '{{ ssh_public_key }}' >> ~/.ssh/authorized_keys &&
-            chmod 600 ~/.ssh/authorized_keys
-          fi
-        "
+        minikube cp --profile="{{ minikube_profile }}" {{ item }}:/home/docker/.ssh/authorized_keys "/home/{{ ansible_user }}/{{ item }}_authorized_keys"
       args:
         executable: /bin/bash
       with_items: "{{ minikube_nodes_raw.stdout_lines }}"
       async: 30
       poll: 5
+
+    - name: Ensure our SSH key is present
+      lineinfile:
+        path: "/home/{{ ansible_user }}/{{ item }}_authorized_keys"
+        line: "{{ ssh_public_key }}"
+        create: yes
+        mode: '0600'
+      with_items: "{{ minikube_nodes_raw.stdout_lines }}"
+      register: ssh_key_result
+
+    - name: Put back the authorized_keys file back to the minikube nodes
+      shell: minikube cp --profile="{{ minikube_profile }}" "/home/{{ ansible_user }}/{{ item }}_authorized_keys" {{ item }}:/home/docker/.ssh/authorized_keys
+      args:
+        executable: /bin/bash
+      with_items: "{{ minikube_nodes_raw.stdout_lines }}"
+      async: 30
+      poll: 5
+      when: ssh_key_result is changed
+
+    - name: Clean the copied authorized_keys
+      shell: rm "/home/{{ ansible_user }}/{{ item }}_authorized_keys"
+      args:
+        executable: /bin/bash
+      with_items: "{{ minikube_nodes_raw.stdout_lines }}"
