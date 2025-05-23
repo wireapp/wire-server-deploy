@@ -13,6 +13,10 @@ NGINX_K8S_NODE="NGINX_K8S_NODE"
 # picking a node for coturn
 COTURN_NODE="K8S_COTURN_NODE"
 
+# this IP should match the DNS A record for TARGET_SYSTEM
+# keeping it empty to be replaced
+HOST_IP="WIRE_IP"
+
 CHART_URL="https://charts.jetstack.io/charts/cert-manager-v1.13.2.tgz"
 
 # it creates the values.yaml from prod-values.example.yaml and secrets.yaml from prod-secrets.example.yaml, it works on the directory $BASE_DIR"/values/ in the bundle
@@ -55,32 +59,15 @@ process_values() {
   TEMP_DIR=$(mktemp -d)
   trap 'rm -rf $TEMP_DIR' EXIT
 
-  # this IP should match the DNS A record for TARGET_SYSTEM
-  # keeping it empty to be replaced
-  HOST_IP=""
-
-  # Check if HOST_IP is empty
-  if [ -z "$HOST_IP" ]; then
-      # Attempt to retrieve the public IP address
-      HOST_IP=$(wget -qO- https://api.ipify.org)
-
-      # Check if the retrieval was successful
-      if [ -z "$HOST_IP" ]; then
-          echo "No proper IP address is specified."
-          exit 1
-      else
-          echo "coturn public IP would be: $HOST_IP"
-      fi
-  fi
-
   # to find IP address of coturn NODE
   COTURN_NODE_IP=$(kubectl get node $COTURN_NODE -o jsonpath='{.status.addresses[?(@.type=="InternalIP")].address}')
 
   # Fixing the hosts with TARGET_SYSTEM and setting the turn server
   sed -e "s/example.com/$TARGET_SYSTEM/g" \
-      -e "s/# - \"turn:<IP of restund1>:80\"/- \"turn:$HOST_IP:3478\"/g" \
-      -e "s/# - \"turn:<IP of restund1>:80?transport=tcp\"/- \"turn:$HOST_IP:3478?transport=tcp\"/g" \
       "$BASE_DIR/values/wire-server/values.yaml" > "$TEMP_DIR/wire-server-values.yaml"
+
+  # fixing the turnStatic values
+  yq -i -Y ".brig.turnStatic.v2 = [\"turn:$HOST_IP:3478\", \"turn:$HOST_IP:3478?transport=tcp\"]" "$TEMP_DIR/wire-server-values.yaml"
 
   # Fixing the hosts in webapp team-settings and account-pages charts
   for chart in webapp team-settings account-pages; do
@@ -198,9 +185,6 @@ deploy_cert_manager() {
 }
 
 deploy_calling_services() {
-
-  # this IP should match the DNS A record for TARGET_SYSTEM
-  HOST_IP=$(wget -qO- https://api.ipify.org)
 
   echo "Deploying sftd and coturn"
   # select the node to deploy sftd
