@@ -5,7 +5,7 @@
   tasks:
 
   - name: Continue finding wire_ip on the node
-    when: wire_ip is not defined
+    when: wire_ip is not defined or wire_ip == ''
     block:
     - name: Check if wire_ip file exists
       stat:
@@ -24,7 +24,7 @@
       when: wire_ip_file.stat.exists
 
   - name: Find Wire IP via public reachability
-    when: wire_ip is not defined
+    when: wire_ip is not defined or wire_ip == ''
     block:
     - name: Get public IP address from ipify
       uri:
