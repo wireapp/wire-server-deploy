@@ -117,8 +117,6 @@ aptly="aptly -config=${aptly_config} "
 
 echo "Info"
 gpg --version
-echo "System GPG Version"
-/usr/bin/gpg --version
 gpg --fingerprint
 gpg --no-default-keyring --keyring trustedkeys.gpg --fingerprint
 
