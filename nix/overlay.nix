@@ -1,3 +1,4 @@
+gnupg1orig:
 self:
 let helm-mapkubeapis = self.callPackage ./pkgs/helm-mapkubeapis.nix { };
 in
@@ -46,7 +47,7 @@ super: {
     ''
       install -Dm755 ${./scripts/mirror-apt-jammy.sh} $out/bin/mirror-apt-jammy
       # we need to *--set* PATH here, otherwise aptly will pick the wrong gpg
-      wrapProgram $out/bin/mirror-apt-jammy --set PATH '${super.lib.makeBinPath (with self; [ aptly bash coreutils curl gnupg1 gnused gnutar ])}'
+      wrapProgram $out/bin/mirror-apt-jammy --set PATH '${super.lib.makeBinPath (with self; [ aptly bash coreutils curl gnupg1orig gnused gnutar ])}'
     '';
 
   create-container-dump = super.runCommandNoCC "create-container-dump"

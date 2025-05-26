@@ -2,11 +2,18 @@
 
 let
   sources = import ./nix/sources.nix;
+  oldpkgs = import sources.oldpkgs {
+    inherit system;
+    config = { };
+  };
+
+  gnupg1orig = oldpkgs.gnupg1orig;
+
   pkgs = import sources.nixpkgs {
     inherit system;
     config = { };
     overlays = [
-      (import ./nix/overlay.nix)
+      (import ./nix/overlay.nix gnupg1orig)
     ];
   };
   profileEnv = pkgs.writeTextFile {
@@ -32,7 +39,7 @@ rec {
       apacheHttpd
       awscli2
       gnumake
-      gnupg1
+      gnupg1orig
 
       kubernetes-tools
 
