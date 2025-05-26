@@ -49,9 +49,8 @@ wire_build_chart_release () {
 # <chart-name> <repo-url> <chart-version>
 # on stdin
 pull_charts() {
-  local dest_dir="${1:-${OUTPUT_DIR}/charts}"
-  echo "Pulling charts into $dest_dir ..."
-  mkdir -p "$dest_dir"
+  echo "Pulling charts into ${OUTPUT_DIR}/charts ..."
+  mkdir -p "${OUTPUT_DIR}"/charts
 
   home=$(mktemp -d)
   export HELM_CACHE_HOME="$home"
@@ -79,58 +78,10 @@ pull_charts() {
       helm repo add "$repo_short_name" "$repo"
       helm repo update "$repo_short_name"
     fi
-    # Check if the chart is already pulled
-    if [ -d "$dest_dir/$name" ]; then
-      echo "Chart directory $dest_dir/$name already exists, skipping pull."
-      continue
-    fi
-    echo "Pulling chart $name from $repo_short_name with version $version..."
-    helm pull --version "$version" --untar -d "$dest_dir" "$repo_short_name/$name"
+    (cd "${OUTPUT_DIR}"/charts; helm pull --version "$version" --untar "$repo_short_name/$name")
   done
   echo "Pulling charts done."
 }
 
-pull_from_wire_helm_charts() {
-  # Do not pull the chart if the chart is in the exclude list
-  if echo "$HELM_CHART_EXCLUDE_LIST" | jq -e ". | index(\"$1\")" >/dev/null; then
-    echo "Chart '$1' is in the exclude list, skipping."
-    return
-  fi
-  
-  local chart_name="$1"
-  local repo_owner="wireapp"
-  local repo_name="helm-charts"
-  local branch="cert-manager-in-bundle"
-  local output_dir="${OUTPUT_DIR}/charts"
-
-  echo "Fetching $chart_name chart from $repo_owner/$repo_name ($branch)..."
-
-  local tmp_dir
-  tmp_dir=$(mktemp -d)
-  git clone --depth 1 --branch "$branch" "https://github.com/${repo_owner}/${repo_name}.git" "$tmp_dir"
-  if [[ -d "$tmp_dir/charts/$chart_name" ]]; then
-    mkdir -p "$output_dir"
-    cp -R "$tmp_dir/charts/$chart_name" "$output_dir/"
-    
-    # Parse the dependencies from the requirements.yaml file and pull them untarred
-    local requirements_file="$tmp_dir/charts/$chart_name/requirements.yaml"
-    if [[ -f "$requirements_file" ]]; then
-      echo "Parsing dependencies from $requirements_file..."
-      local dependencies
-     
-      dependencies=$(yq -r '.dependencies[] | "\(.name) \(.repository) \(.version)"' "$requirements_file")
-      echo "$dependencies" | pull_charts "$output_dir/$chart_name/charts"
-    else
-      echo "No requirements.yaml file found for $chart_name."
-    fi
-  else
-    echo "Chart '$chart_name' not found in repo."
-  fi
-  rm -rf "$tmp_dir"
-}
-
 wire_build="https://raw.githubusercontent.com/wireapp/wire-builds/6074076265c6b456330116574c11b12906f1c158/build.json"
 wire_build_chart_release "$wire_build" | pull_charts
-
-# Pulls the charts from https://github.com/wireapp/helm-charts
-pull_from_wire_helm_charts "cert-manager"
