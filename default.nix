@@ -40,6 +40,7 @@ rec {
       awscli2
       gnumake
       gnupg1orig
+      gnupg1
 
       kubernetes-tools
 
