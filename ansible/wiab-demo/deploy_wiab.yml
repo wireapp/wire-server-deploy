@@ -15,6 +15,7 @@
       update_cache: yes
 
   # if number of nodes increase, the logic can be adapted to change nodes for different services
+  # currently it is pointing to the first node
   - name: Set facts for various Kubernetes nodes (for a single node), it will be name of profile
     set_fact:
       k8s_ingress_controller_node: "{{ minikube_profile }}"
