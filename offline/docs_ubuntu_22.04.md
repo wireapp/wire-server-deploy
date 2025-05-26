@@ -812,13 +812,10 @@ taint the node
 d kubectl cordon kubenode1
 ```
 
-first, download cert manager, and place it in the appropriate location:
-```
-wget https://charts.jetstack.io/charts/cert-manager-v1.13.2.tgz
-tar -C ./charts -xvzf cert-manager-v1.13.2.tgz
-```
+Next step is to install and configure the cert-manager using the cert-manager charts from the offline package.
+ 
+If `values.yaml` and `secrets.yaml` do not exist yet in `./values/nginx-ingress-services`, create them from the provided example templates:
 
-In case `values.yaml` and `secrets.yaml` doesn't exist yet in `./values/nginx-ingress-services` create them from templates
 ```
 cp ./values/nginx-ingress-services/prod-secrets.example.yaml ./values/nginx-ingress-services/secrets.yaml
 cp ./values/nginx-ingress-services/prod-values.example.yaml ./values/nginx-ingress-services/values.yaml
