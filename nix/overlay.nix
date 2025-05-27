@@ -1,4 +1,3 @@
-gnupg1orig:
 self:
 let helm-mapkubeapis = self.callPackage ./pkgs/helm-mapkubeapis.nix { };
 in
@@ -38,7 +37,7 @@ super: {
 
       install -Dm755 ${./scripts/generate-gpg1-key.sh} $out/bin/generate-gpg1-key
       # we *--set* PATH here, to ensure we don't pick wrong gpgs
-      wrapProgram $out/bin/generate-gpg1-key --set PATH '${super.lib.makeBinPath (with self; [ bash coreutils gnupg1 ])}'
+      wrapProgram $out/bin/generate-gpg1-key --set PATH '${super.lib.makeBinPath (with self; [ bash coreutils gnupg1orig ])}'
     '';
   mirror-apt-jammy = super.runCommandNoCC "mirror-apt-jammy"
     {

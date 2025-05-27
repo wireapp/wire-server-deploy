@@ -13,7 +13,10 @@ let
     inherit system;
     config = { };
     overlays = [
-      (import ./nix/overlay.nix gnupg1orig)
+      (self: super: {
+        gnupg1orig = gnupg1orig;
+      })
+      (import ./nix/overlay.nix)
     ];
   };
   profileEnv = pkgs.writeTextFile {
