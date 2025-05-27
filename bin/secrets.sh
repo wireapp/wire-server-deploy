@@ -52,6 +52,8 @@ else
     echo "re-using existing restund secret"
 fi
 
+echo "Sanity check debug"
+
 if [[ ! -f $zpriv || ! -f $zpub ]]; then
     echo "Generate private and public keys (used both by brig and nginz)..."
     TMP_KEYS=$(mktemp "/tmp/demo.keys.XXXXXXXXXXX")

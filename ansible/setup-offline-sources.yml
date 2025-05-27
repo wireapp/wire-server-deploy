@@ -44,7 +44,7 @@
   tasks:
     - name: Bail if GPG2 is not installed or installable.
       apt:
-        name: gnupg2
+        name: gnupg
         state: present
     - name: Remove /etc/apt/sources.list to remove all online debian package repos
       file:
