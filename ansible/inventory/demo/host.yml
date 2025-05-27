@@ -1,0 +1,65 @@
+wiab:
+  hosts:
+    deploy_node:
+      ansible_host: example.com
+      ansible_ssh_common_args: '-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null'
+      ansible_user: 'ubuntu'
+      ansible_ssh_private_key_file: "~/.ssh/wiab-demo.pem"
+
+  vars:
+    # requirements
+    # ubuntu 24.04
+    # amd64 architecture
+    # Following ports to be available on it from stack-it guide
+
+    # it should have all dns records configured as per DNS requirements
+    # https://docs.wire.com/latest/how-to/install/includes/helm_dns-ingress-troubleshooting.inc.html 
+    target_domain: "example.com"
+    
+    # define this variable in case, deploying it in a private network
+    # specify the external (Gateway) IP of the network where the deploy_node is present
+    # by default, public ip address attached to the node will be used, if accessible over test_port in verify_wire_ip playbook
+    wire_ip: ""
+
+    # artifact_hash
+    artifact_hash: "83c373394ff86ec4c96e110e327fc46b617c22ff"
+  
+    # docker vars
+    docker_ce_version: "5:28.1.1-1~ubuntu.24.04~noble"
+    containerd_version: "1.7.27-1"
+
+    # minikube vars
+    minikube_profile: "k8s-wire" 
+    minikube_version: "v1.35.0"
+    kubernetes_version: "v1.28.2"
+    container_runtime: "containerd"
+    minikube_nodes: 1
+    minikube_cpus: 15
+    minikube_memory: "16384"
+    minikube_disk_size: "200g"
+    minikube_network_name: "minikube-wire-network"
+    pod_network_cidr: "10.233.0.0/16"
+    minikube_node_subnet: "192.168.99.0/24"
+
+    # networking iptables dnat rules
+    http_dnat_rules:
+      - { protocol: "tcp", port: 443, to_port: 31773 }
+      - { protocol: "tcp", port: 80,  to_port: 31772 }
+    turn_dnat_rules:
+      - { protocol: "tcp", port: 3478,  to_port: 3478 }
+      - { protocol: "udp", port: 3478,  to_port: 3478 }
+
+    # list of helm charts to deploy
+    charts_to_deploy:
+      - fake-aws
+      - demo-smtp
+      - rabbitmq
+      - databases-ephemeral
+      - reaper
+      - wire-server
+      - webapp
+      - account-pages
+      - team-settings
+      - smallstep-accomp
+      - ingress-nginx-controller
+      - nginx-ingress-services
