@@ -30,6 +30,9 @@ cp -r "${ROOT_DIR}"/values "${OUTPUT_DIR}"/
 # removing the values/$chart directories in values directory if not required
 "${TASKS_DIR}"/pre_clean_values_0.sh VALUES_DIR="${OUTPUT_DIR}/values" HELM_CHART_EXCLUDE_LIST="inbucket,wire-server-enterprise,k8ssandra-operator,k8ssandra-test-cluster,elasticsearch-curator,postgresql,keycloakx,openebs,nginx-ingress-controller,kibana,restund,fluent-bit,aws-ingress,redis-cluster,calling-test"
 
+# all basic chart pre-processing tasks
+"${TASKS_DIR}"/pre_chart_process_0.sh "${OUTPUT_DIR}"
+
 # processing the charts
 # here we also filter the images post processing the helm charts
 # pass the image names to be filtered as arguments as regex #IMAGE_EXCLUDE_LIST='brig|galley'
