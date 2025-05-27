@@ -67,7 +67,7 @@
       apt:
         name:
           - yq
-          - nc
+          - ncat
         state: absent
         autoremove: yes
 

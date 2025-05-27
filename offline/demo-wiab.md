@@ -180,11 +180,13 @@ ansible-playbook -i ansible/inventory/demo/host.yml ansible/wiab-demo/deploy_wia
 
 ## Cleaning/Uninstalling Wire-in-a-Box
 
-The deployment includes a cleanup playbook that can be used to remove all components:
+The deployment includes a cleanup playbook that can be used to remove all the components. For example, the following command includes flags for removing the Minikube cluster (remove_minikube), removing the iptables rules (remove_iptables), removing SSH keys from the deploy_node (remove_ssh), deleting artifacts and Wire files from the deploy_node (remove_artifacts), and removing artifact hosting services from the deploy node (clean_assethost):
 
 ```bash
 ansible-playbook -i ansible/inventory/demo/host.yml ansible/wiab-demo/clean_cluster.yml -e "remove_minikube=true remove_iptables=true remove_ssh=true remove_artifacts=true clean_assethost=true"
 ```
+
+**Note:** The above command does not uninstall the Debian packages and binaries installed during the setup. This is an intentional design choice to avoid removing packages that may be required by the other users on the deploy_node later. If you wish to proceed with cleaning these packages, you can add the variable -e uninstall_pkgs=true.
 
 The cleanup process handles:
 - **Minikube**: Stops and deletes the Kubernetes cluster (optional `remove_minikube=true`)
