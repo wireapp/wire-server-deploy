@@ -33,4 +33,4 @@ service:
   useFakeS3: true
   s3:
     externalPort: 9000
-    serviceName: minio-external
+    serviceName: fake-aws-s3
