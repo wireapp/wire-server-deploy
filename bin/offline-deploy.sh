@@ -11,8 +11,13 @@ loop_pid=$!
 
 trap 'kill "$loop_pid"' EXIT
 
+echo "Debug failing -i flag (ZAUTH)"
+ls $SCRIPT_DIR/../containers-adminhost/
+
 ZAUTH_CONTAINER=$(sudo docker load -i $SCRIPT_DIR/../containers-adminhost/quay.io_wire_zauth_*.tar | awk '{print $3}')
 export ZAUTH_CONTAINER
+
+echo "Debug failing -i flag (WSD_CONTAINER)"
 
 WSD_CONTAINER=$(sudo docker load -i $SCRIPT_DIR/../containers-adminhost/container-wire-server-deploy.tgz | awk '{print $3}')
 
