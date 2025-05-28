@@ -46,7 +46,7 @@ rec {
       apacheHttpd
       awscli2
       gnumake
-      gnupg
+      gnupg1
       # injected dependacy gnupg1orig
       gnupg1orig
 
