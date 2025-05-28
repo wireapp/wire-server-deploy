@@ -3,7 +3,7 @@ let helm-mapkubeapis = self.callPackage ./pkgs/helm-mapkubeapis.nix { };
 in
 super: {
   pythonForAnsible = (self.python3.withPackages (_: self.ansible.requiredPythonModules ++ [
-    super.python3Packages.boto
+    super.python3Packages.botocore
     super.python3Packages.boto3
     super.python3Packages.cryptography
     super.python3Packages.six
