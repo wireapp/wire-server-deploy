@@ -2,8 +2,14 @@ on:
   push:
     branches: [master, develop]
     tags: [ v* ]
+    paths-ignore:
+      - '*.md'
+      - '**/*.md'
   pull_request:
     branches: [master, develop]
+    paths-ignore:
+      - '*.md'
+      - '**/*.md'
 jobs:
   offline:
     name: Prepare offline package

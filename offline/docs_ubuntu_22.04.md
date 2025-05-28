@@ -812,23 +812,13 @@ taint the node
 d kubectl cordon kubenode1
 ```
 
-first, download cert manager, and place it in the appropriate location:
-```
-wget https://charts.jetstack.io/charts/cert-manager-v1.13.2.tgz
-tar -C ./charts -xvzf cert-manager-v1.13.2.tgz
-```
+Next step is to install and configure the cert-manager using the cert-manager charts from the offline package.
 
-In case `values.yaml` and `secrets.yaml` doesn't exist yet in `./values/nginx-ingress-services` create them from templates
-```
-cp ./values/nginx-ingress-services/prod-secrets.example.yaml ./values/nginx-ingress-services/secrets.yaml
-cp ./values/nginx-ingress-services/prod-values.example.yaml ./values/nginx-ingress-services/values.yaml
-```
-and customize.
+To enable and configure automatic SSL/TLS certification management for nginx ingress resources, update the `values/nginx-ingress-services/values.yaml` with:
 
-Edit `values.yaml`:
+ * set `useCertManager: true` : to tell the nginx-ingress-service to use cert-manager for obtaining and managing SSL certificates, rather than expecting you to provide your own certificates manually.
+ * set `certmasterEmail: <your email address>` : is used by cert-manager when requesting certificates from certificate authorities like Let's Encrypt. This email address is important for receiving notifications about certificate expiration or issues.
 
- * set `useCertManager: true`
- * set `certmasterEmail: <your email address>`
 
 Set your domain name with sed:
 ```
