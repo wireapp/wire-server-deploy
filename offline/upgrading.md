@@ -53,7 +53,7 @@ sudo crictl image ls | grep -E "^quay.io/wire/(sftd|coturn)" | sed "s/.*[ ]*\([0
 If you are running a DMZ deployment, prune the old wire-server images and their dependencies on the Calling Cluster kubernetes hosts...
 
 ```
-sudo crictl image ls | grep -E "^quay.io/wire/(team-settings|account|webapp|ixdotai-smtp)" | sed "s/.*[ ]*\([0-9a-f]\{12\}\).*/sudo docker image rm \1/"
+sudo crictl image ls | grep -E "^quay.io/wire/(team-settings|account|webapp|ixdotai-smtp)" | sed "s/.*[ ]*\([0-9a-f]\{12\}\).*/sudo crictl rmi \1/"
 sudo crictl image ls | grep -E "^(bitnami/redis|airdock/fake-sqs|localstack/localstack)" | sed "s/.*[ ]*\([0-9a-f]\{12\}\).*/sudo crictl rmi \1/"
 ```
 
