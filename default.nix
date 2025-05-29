@@ -103,6 +103,7 @@ rec {
       pkgs.bashInteractive
       pkgs.openssh # ansible needs this too, even with paramiko
       pkgs.sshpass # needed for password login
+      pkgs.jmespath # jmespath not nested deep enough to be accessible in WSD container???
 
       # The enivronment
       env
