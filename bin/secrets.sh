@@ -56,7 +56,7 @@ if [[ ! -f $zpriv || ! -f $zpub ]]; then
     echo "Generate private and public keys (used both by brig and nginz)..."
     TMP_KEYS=$(mktemp "/tmp/demo.keys.XXXXXXXXXXX")
     zauth -m gen-keypair >"$TMP_KEYS" 2>/dev/null ||
-        docker run --rm "$ZAUTH_CONTAINER" -m gen-keypair -i 1 >"$TMP_KEYS"
+        docker run --rm "$ZAUTH_CONTAINER" -m gen-keypair >"$TMP_KEYS"
     cat "$TMP_KEYS" | sed -n 's/public: \(.*\)/\1/p' >"$zpub"
     cat "$TMP_KEYS" | sed -n 's/secret: \(.*\)/\1/p' >"$zpriv"
 else
