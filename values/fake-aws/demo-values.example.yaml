@@ -1,0 +1,3 @@
+# Disable since prod should use an externally provided minio
+fake-aws-s3:
+  enabled: true
