@@ -7,18 +7,13 @@ wiab:
       ansible_ssh_private_key_file: "~/.ssh/wiab-demo.pem"
 
   vars:
-    # requirements
-    # ubuntu 24.04
-    # amd64 architecture
-    # Following ports to be available on it from stack-it guide
-
-    # it should have all dns records configured as per DNS requirements
+    # you should have all of the dns records of the given domain configured as per the DNS requirements at:
     # https://docs.wire.com/latest/how-to/install/includes/helm_dns-ingress-troubleshooting.inc.html 
     target_domain: "example.com"
     
-    # define this variable in case, deploying it in a private network
+    # define this variable in case you are deploying wire on a private network, for local users only.
     # specify the external (Gateway) IP of the network where the deploy_node is present
-    # by default, public ip address attached to the node will be used, if accessible over test_port in verify_wire_ip playbook
+    # by default, the public ip address attached directly to the target will be used, if it is accessible over test_port in verify_wire_ip playbook
     wire_ip: ""
 
     # artifact_hash

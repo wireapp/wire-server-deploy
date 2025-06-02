@@ -2,10 +2,24 @@
 
 let
   sources = import ./nix/sources.nix;
+  # for injecting old gnupg dependancy
+  oldpkgs = import sources.oldpkgs {
+    inherit system;
+    config = { };
+  };
+  # extract the module for injecting
+  gnupg1orig = oldpkgs.gnupg1orig;
+
   pkgs = import sources.nixpkgs {
     inherit system;
     config = { };
+    # layering is important here, the lowest takes precedance in case of overlaps
     overlays = [
+      # custom overlay for injections 
+      (self: super: {
+        gnupg1orig = gnupg1orig;
+      })
+      # main overlay
       (import ./nix/overlay.nix)
     ];
   };
@@ -26,13 +40,15 @@ rec {
   env = pkgs.buildEnv {
     name = "wire-server-deploy";
     paths = with pkgs; [
-      ansible_2_15
+      ansible_2_16
       pythonForAnsible
       jmespath
       apacheHttpd
       awscli2
       gnumake
-      gnupg
+      gnupg1
+      # injected dependacy gnupg1orig
+      gnupg1orig
 
       kubernetes-tools
 
@@ -87,6 +103,7 @@ rec {
       pkgs.bashInteractive
       pkgs.openssh # ansible needs this too, even with paramiko
       pkgs.sshpass # needed for password login
+      pkgs.jmespath # jmespath not nested deep enough to be accessible in WSD container???
 
       # The enivronment
       env
