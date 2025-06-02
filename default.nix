@@ -104,7 +104,7 @@ rec {
       pkgs.openssh # ansible needs this too, even with paramiko
       pkgs.sshpass # needed for password login
       pkgs.jmespath # TEST: jmespath not nested deep enough to be accessible in WSD container???
-
+      pkgs.jmespath-bin
       # The enivronment
       env
       # provide /usr/bin/env and /tmp in the container too :-)
