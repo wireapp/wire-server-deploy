@@ -2,7 +2,8 @@
 
 let
   sources = import ./nix/sources.nix;
-  # for injecting old gnupg dependancy
+
+  # for injecting old gnupg dependency
   oldpkgs = import sources.oldpkgs {
     inherit system;
     config = { };
@@ -23,6 +24,12 @@ let
       (import ./nix/overlay.nix)
     ];
   };
+
+  pythonForAnsible = pkgs.python3.withPackages (ps: with ps; [
+    ansible
+    jmespath
+  ]);
+
   profileEnv = pkgs.writeTextFile {
     name = "profile-env";
     destination = "/.profile";
@@ -32,24 +39,21 @@ let
     '';
   };
 
-
 in
 rec {
-  inherit pkgs profileEnv;
+  inherit pkgs profileEnv pythonForAnsible;
 
   env = pkgs.buildEnv {
     name = "wire-server-deploy";
     paths = with pkgs; [
       ansible_2_16
       pythonForAnsible
-      jmespath
       apacheHttpd
       awscli2
       gnumake
       gnupg1
       # injected dependacy gnupg1orig
       gnupg1orig
-
       kubernetes-tools
 
       # Note: This is overriden in nix/overlay.nix to have plugins. This is
