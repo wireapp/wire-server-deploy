@@ -25,11 +25,6 @@ let
     ];
   };
 
-  pythonForAnsible = pkgs.python3.withPackages (ps: with ps; [
-    ansible
-    jmespath
-  ]);
-
   profileEnv = pkgs.writeTextFile {
     name = "profile-env";
     destination = "/.profile";
@@ -39,15 +34,17 @@ let
     '';
   };
 
-in
-rec {
-  inherit pkgs profileEnv pythonForAnsible;
+  # Add jmespath to the Ansible Python environment
+  pythonWithJmespath = pkgs.python3.withPackages (ps: with ps; [ jmespath ]);
+
+in rec {
+  inherit pkgs profileEnv;
 
   env = pkgs.buildEnv {
     name = "wire-server-deploy";
     paths = with pkgs; [
       ansible_2_16
-      pythonForAnsible
+      pythonWithJmespath
       apacheHttpd
       awscli2
       gnumake
@@ -107,7 +104,7 @@ rec {
       pkgs.bashInteractive
       pkgs.openssh # ansible needs this too, even with paramiko
       pkgs.sshpass # needed for password login
-      pkgs.pythonForAnsible
+      pythonWithJmespath
       # The enivronment
       env
       # provide /usr/bin/env and /tmp in the container too :-)
