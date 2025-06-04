@@ -122,6 +122,7 @@ in rec {
         "KUBECONFIG=/wire-server-deploy/ansible/inventory/offline/artifacts/admin.conf"
         "ANSIBLE_CONFIG=/wire-server-deploy/ansible/ansible.cfg"
         "LOCALHOST_PYTHON=${env}/bin/python"
+        "ANSIBLE_PYTHON_INTERPRETER=/bin/python" # TEST:
       ];
     };
   };
