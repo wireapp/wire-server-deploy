@@ -30,9 +30,9 @@ let
   ]);
 
   # override python used in ansible-core with our custom jmespath injected python package
-  ansibleWithJmespath = pkgs.ansible_2_16.override {
+  ansibleWithJmespath = pkgs.ansible_2_16.overridePythonAttrs (oldAttrs: {
     python = pythonWithJmespath;
-  };
+  });
 
   profileEnv = pkgs.writeTextFile {
     name = "profile-env";
