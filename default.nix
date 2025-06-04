@@ -24,13 +24,13 @@ let
     ];
   };
 
-  # inject jmespath into a python package
+  # inject jmespath into a python package, so we are absolutely sure it is there
   pythonWithJmespath = pkgs.python3.withPackages (ps: with ps; [
     jmespath
   ]);
 
-  # override python used in pythonForAnsible with our custom jmespath injected package
-  pythonForAnsibleWithJmespath = pkgs.pythonForAnsible.override {
+  # override python used in ansible-core with our custom jmespath injected python package
+  ansibleWithJmespath = pkgs.ansible_2_16.override {
     python = pythonWithJmespath;
   };
 
@@ -51,7 +51,7 @@ rec {
   env = pkgs.buildEnv {
     name = "wire-server-deploy";
     paths = with pkgs; [
-      ansible_2_16
+      ansibleWithJmespath
       pythonForAnsible
       jmespath
       apacheHttpd
@@ -131,7 +131,7 @@ rec {
       Env = [
         "KUBECONFIG=/wire-server-deploy/ansible/inventory/offline/artifacts/admin.conf"
         "ANSIBLE_CONFIG=/wire-server-deploy/ansible/ansible.cfg"
-        "LOCALHOST_PYTHON=${env}/bin/python" # is this even referencing the correct python used by ansible and is this even relevant for setting what is being used?
+        "LOCALHOST_PYTHON=${env}/bin/python" # this is useless, I think xD, TEST THIS!
       ];
     };
   };
