@@ -11,6 +11,7 @@ super: {
     super.python3Packages.pyshark
     super.python3Packages.matplotlib
     super.python3Packages.jmespath
+    super.python3Packages.ansible-core
   ]));
 
   # kubeadm and kubectl
