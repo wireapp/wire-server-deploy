@@ -53,7 +53,6 @@ rec {
     paths = with pkgs; [
       ansibleWithJmespath
       pythonForAnsible
-      jmespath
       apacheHttpd
       awscli2
       gnumake
@@ -131,7 +130,8 @@ rec {
       Env = [
         "KUBECONFIG=/wire-server-deploy/ansible/inventory/offline/artifacts/admin.conf"
         "ANSIBLE_CONFIG=/wire-server-deploy/ansible/ansible.cfg"
-        "LOCALHOST_PYTHON=${env}/bin/python" # this is useless, I think xD, TEST THIS!
+        "ANSIBLE_PYTHON_INTERPRETER=${env}/bin/python"
+        "LOCALHOST_PYTHON=${env}/bin/python"
       ];
     };
   };
