@@ -40,9 +40,7 @@ rec {
   env = pkgs.buildEnv {
     name = "wire-server-deploy";
     paths = with pkgs; [
-      ansible_2_16
       pythonForAnsible
-      jmespath
       apacheHttpd
       awscli2
       gnumake
@@ -103,7 +101,6 @@ rec {
       pkgs.bashInteractive
       pkgs.openssh # ansible needs this too, even with paramiko
       pkgs.sshpass # needed for password login
-      pkgs.jmespath # jmespath not nested deep enough to be accessible in WSD container???
 
       # The enivronment
       env
