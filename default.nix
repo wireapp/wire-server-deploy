@@ -2,7 +2,7 @@
 
 let
   sources = import ./nix/sources.nix;
-  # for injecting old gnupg dependency
+  # for injecting old gnupg dependancy
   oldpkgs = import sources.oldpkgs {
     inherit system;
     config = { };
@@ -23,17 +23,6 @@ let
       (import ./nix/overlay.nix)
     ];
   };
-
-  # inject jmespath into a python package, so we are absolutely sure it is there
-  pythonWithJmespath = pkgs.python3.withPackages (ps: with ps; [
-    jmespath
-  ]);
-
-  # override python used in ansible-core with our custom jmespath injected python package
-  ansibleWithJmespath = pkgs.ansible_2_16.overridePythonAttrs (oldAttrs: {
-    python = pythonWithJmespath;
-  });
-
   profileEnv = pkgs.writeTextFile {
     name = "profile-env";
     destination = "/.profile";
@@ -51,7 +40,7 @@ rec {
   env = pkgs.buildEnv {
     name = "wire-server-deploy";
     paths = with pkgs; [
-      ansibleWithJmespath
+      ansible_2_16
       pythonForAnsible
       apacheHttpd
       awscli2
