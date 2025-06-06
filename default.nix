@@ -12,7 +12,12 @@ let
 
   pkgs = import sources.nixpkgs {
     inherit system;
-    config = { };
+    config = {
+      # there is a unfree package in current nixpkgs version that will refuse to evaluate
+      # so allowUnfree has to be set
+      # The package in question (vault-1.16.2) is not being used
+      allowUnfree = true;
+    };
     # layering is important here, the lowest takes precedance in case of overlaps
     overlays = [
       # custom overlay for injections 
