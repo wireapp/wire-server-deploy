@@ -45,7 +45,7 @@ rec {
   env = pkgs.buildEnv {
     name = "wire-server-deploy";
     paths = with pkgs; [
-      pythonForAnsible
+      customAnsible
       apacheHttpd
       awscli2
       gnumake
