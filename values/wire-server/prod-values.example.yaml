@@ -99,7 +99,7 @@ brig:
       # - "turn:<IP of coturn2>:3478?transport=tcp"
   metrics:
     serviceMonitor:
-      enabled: false # Enable to scrape brig metrics with prometheus operator
+      enabled: true
 
 proxy:
   replicaCount: 3
@@ -114,7 +114,7 @@ proxy:
 #        - "10.23.0.0/16"
   metrics:
     serviceMonitor:
-      enabled: false # Enable to scrape proxy metrics with prometheus operator
+      enabled: true
 cannon:
   replicaCount: 3
 #  image:
@@ -126,7 +126,7 @@ cannon:
       host: cassandra-external
   metrics:
     serviceMonitor:
-      enabled: false # Enable to scrape cannon metrics with prometheus operator
+      enabled: true
 cargohold:
   replicaCount: 3
 #  image:
@@ -149,7 +149,7 @@ cargohold:
 #        - "10.23.0.0/16"
   metrics:
     serviceMonitor:
-      enabled: false # Enable to scrape cargohold metrics with prometheus operator
+      enabled: true
 galley:
   replicaCount: 3
 #  image:
@@ -181,7 +181,7 @@ galley:
 #        - "10.23.0.0/16"
   metrics:
     serviceMonitor:
-      enabled: false # Enable to scrape galley metrics with prometheus operator
+      enabled: true
 gundeck:
   replicaCount: 3
 #  image:
@@ -205,7 +205,7 @@ gundeck:
 #        - "10.23.0.0/16"
   metrics:
     serviceMonitor:
-      enabled: false # Enable to scrape gundeck metrics with prometheus operator
+      enabled: true
 nginz:
   replicaCount: 3
   config:
@@ -237,7 +237,7 @@ nginz:
   terminationGracePeriodSeconds: 30
   metrics:
     serviceMonitor:
-      enabled: false # Enable to scrape nginz metrics with prometheus operator
+      enabled: true
 spar:
   replicaCount: 3
 #  image:
@@ -264,7 +264,7 @@ spar:
 #        - "10.23.0.0/16"
   metrics:
     serviceMonitor:
-      enabled: false # Enable to scrape spar metrics with prometheus operator
+      enabled: true
 
 # Only needed when legalhold is enabled
 legalhold:
@@ -272,14 +272,14 @@ legalhold:
   wireApiHost: "https://nginz-https.example.com"
   metrics:
     serviceMonitor:
-      enabled: false # Enable to scrape legalhold metrics with prometheus operator
+      enabled: true
 # Only needed when federation is enabled
 federator:
   tls:
     useSharedFederatorSecret: true
   metrics:
     serviceMonitor:
-      enabled: false # Enable to scrape federator metrics with prometheus operator
+      enabled: true
 background-worker:
   config:
     cassandra:
@@ -288,4 +288,4 @@ background-worker:
     enableFederation: false
   metrics:
     serviceMonitor:
-      enabled: false # Enable to scrape background-worker metrics with prometheus operator
+      enabled: true
