@@ -16,7 +16,7 @@ $ chmod +x  .bin/grafana-vm.sh
 $ .bin/grafana-vm.sh
 ```
 
-This script will setup a VM with ip address `192.168.122.100` and name `grafananode`. This may take up to 30 minutes depending on your hardware. When it's done the VM state will be `Shut Off` and then it's need to started manually
+This script will setup a VM with ip address `192.168.122.100` and name `grafananode`. This may take up to 30 minutes depending on your hardware. When it's done the VM state will be `Shut Off` and then it's need to started manually.
 
 #### Check VM state and restart
 
@@ -65,47 +65,7 @@ What values need to be modified are documented in the values.yaml file
 ```bash
 cat charts/kube-prometheus-stack/values.yaml
 ```
-```yaml
-kube-prometheus-stack:
-  prometheus:
-    ingress:
-      enabled: true
-      annotations:
-        cert-manager.io/cluster-issuer: letsencrypt-http01 # cluster issuer name
-        nginx.ingress.kubernetes.io/auth-type: basic
-        nginx.ingress.kubernetes.io/auth-secret: prometheus-basic-auth
-        nginx.ingress.kubernetes.io/auth-realm: "Authentication Required - Prometheus"
-      ingressClassName: nginx
-      hosts:
-        - "prometheus.<domain_name>" #replace with your domain
-      # The secretName is used to store the TLS certificate and key for the Prometheus ingress.
-      path: /
-      tls:
-      - hosts:
-        - prometheus.<domain_name> #replace with your domain
-        secretName: <tls_secret_name> # replace with your preferred secret name (eg. prometheus-tls-cert), cert-manager will create this automatically
-    service:
-      type: ClusterIP
-
-  # Both Grafana and Alertmanager is disabled in this configuration.
-  grafana:
-    enabled: false
-  alertmanager:
-    enabled: false
-  # This section is used to create a secret for basic authentication in the Prometheus ingress.
-  # The secret contains a base64 encoded username and password.
-  # NOTE: crete this secret using the following command:
-  # htpasswd -nb <user> <secure_password> | base64
-  extraManifests:
-    - apiVersion: v1
-      kind: Secret
-      metadata:
-        name: prometheus-basic-auth
-        namespace: monitoring # replace with your namespace
-      type: Opaque
-      data:
-        auth: <base64_encoded_username_password> # replace with your base64 encoded username and password
-```
+And update the values based on your configurations.
 
 #### Get the domain name and certificate
 
@@ -116,6 +76,8 @@ kube-prometheus-stack:
 ```bash
 d kubectl get certificate prometheus-tls-cert -n <namespace> -o yaml
 ```
+
+The spec of the certificate will look like the following:
 
 ```yaml
 ...
@@ -142,6 +104,27 @@ Paste the resulting base64 string into the data.auth field of your secret.
 
 Note: Make sure to replace <user> and <secure_password> with your actual username and password
 
+#### Setup PVC to store prometheus data
+With this setup prometheus will use locally created PV and storage class to store data on `kubenode3`
+
+The prometheus pod is pinned to kubenode3, so that when the pod get crashed, it will always schedules on `kubenode3` where PV is created. If you want to modify this values, please do so in the `storageSpec:` and `affinity:` section of the `prometheusSpec:` field, also change the values of `persistentvolume.yaml` file in templates.
+
+But to make it working there is a tiny manual task to do:
+
+Create the volume mount path in the kubenode3 VM and provide necessary permissions for prometheus to access it. Here is how you do it.
+
+```ssh
+ssh kubenode3
+sudo mkdir -p /mnt/prometheus-data
+sudo chown -R 65534:65534 /mnt/prometheus-data
+sudo chmod 755 /mnt/prometheus-data
+```
+
+- ssh to kubenode3
+- create the mount path directory stated in the `charts/kube-prometheus-stack/templates/persistentvolume.yaml`
+- set Ownership to UID 65534 (nobody). Prometheus runs as a non-root user inside the container for security reasons.In prometheusSpec.securityContext, unless overridden, it runs as 65534
+- set the permissions of the directory so that Prometheus (running as a non-root user) can access and write to it.
+
 ### Install the helm chart
 
 Before proceeding to this step, make sure the values.yaml file has been updated with the correct values. Now install the kube-prometheus-stack helm.
@@ -166,3 +149,7 @@ Now open the grafana with the browser and click the Data sources tab.
 - Choose TLS Client Authentication (optional) or you can also skip it.
 
 Test you data source by clicking the Metrics in the Drilldown section. Choose you configured datasource and you should be able to see the metrics.
+
+### Dashboards
+
+Import the dashboards from dashboards directory to get started.
