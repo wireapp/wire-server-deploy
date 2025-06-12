@@ -105,11 +105,15 @@ Paste the resulting base64 string into the data.auth field of your secret.
 Note: Make sure to replace <user> and <secure_password> with your actual username and password
 
 #### Setup PVC to store prometheus data
-With this setup prometheus will use locally created PV and storage class to store data on `kubenode3`
+With this setup prometheus will use locally created PV and storage class to store data on `kubenode3` as default.
 
-The prometheus pod is pinned to kubenode3, so that when the pod get crashed, it will always schedules on `kubenode3` where PV is created. If you want to modify this values, please do so in the `storageSpec:` and `affinity:` section of the `prometheusSpec:` field, also change the values of `persistentvolume.yaml` file in templates.
+The prometheus pod is pinned to`kubenode3` as default, so that when the pod get crashed, it will always schedules on `kubenode3` where PV is created. 
+If you want to modify this values, do the following:
 
-But to make it working there is a tiny manual task to do:
+- update the PV specif values in the `values.yaml`
+- match the updated values specifically `nodeName` and `storageSize` in the `prometheusSpec:` field
+
+**But to make it working there is a tiny manual task to do:**
 
 Create the volume mount path in the kubenode3 VM and provide necessary permissions for prometheus to access it. Here is how you do it.
 
@@ -121,9 +125,9 @@ sudo chmod 755 /mnt/prometheus-data
 ```
 
 - ssh to kubenode3
-- create the mount path directory stated in the `charts/kube-prometheus-stack/templates/persistentvolume.yaml`
-- set Ownership to UID 65534 (nobody). Prometheus runs as a non-root user inside the container for security reasons.In prometheusSpec.securityContext, unless overridden, it runs as 65534
-- set the permissions of the directory so that Prometheus (running as a non-root user) can access and write to it.
+- creates the mount path directory stated in the `charts/kube-prometheus-stack/templates/persistentvolume.yaml`
+- sets the Ownership to UID 65534 (nobody). Prometheus runs as a non-root user inside the container for security reasons. In prometheusSpec.securityContext, unless overridden, it runs as 65534
+- sets the permissions of the directory so that Prometheus (running as a non-root user) can access and write to it.
 
 ### Install the helm chart
 
