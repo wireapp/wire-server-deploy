@@ -1,0 +1,5 @@
+# TODO: look deeper into requirements and make a solid, commented values example file
+postgresql:
+  primary:
+    persistence:
+      enabled: false

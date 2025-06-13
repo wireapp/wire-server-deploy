@@ -15,6 +15,11 @@ function list-system-containers() {
 # https://github.com/kubernetes-sigs/kubespray/blob/release-2.24/roles/kubespray-defaults/defaults/main/download.yml
 # TODO: Automate this. This is very wieldy :)
   cat <<EOF
+registry.k8s.io/pause:3.9
+registry.k8s.io/coredns/coredns:v1.11.4
+registry.k8s.io/dns/k8s-dns-node-cache:1.22.28
+registry.k8s.io/cpa/cluster-proportional-autoscaler:v1.8.8
+registry.k8s.io/metrics-server/metrics-server:v0.7.2
 registry.k8s.io/ingress-nginx/controller:v1.12.1
 registry.k8s.io/kube-apiserver:v1.29.10
 registry.k8s.io/kube-controller-manager:v1.29.10
@@ -35,6 +40,8 @@ docker.io/library/nginx:1.25.4-alpine
 bats/bats:1.11.1
 cr.step.sm/smallstep/step-ca:0.25.3-rc7
 registry.k8s.io/ingress-nginx/kube-webhook-certgen:v20231011-8b53cabe0
+docker.io/bitnami/bitnami-shell:11-debian-11-r38
+docker.io/bitnami/postgresql:14.5.0-debian-11-r24
 EOF
 }
 
