@@ -149,3 +149,34 @@ Test you data source by clicking the Metrics in the Drilldown section. Choose yo
 ### Dashboards
 
 Import the dashboard JSON's from dashboards directory to get started.
+There are two ways dashboards could be uploaded, one is via API and another is manually. Dashboards json has different format for manual and api based upload.
+
+#### Upload via API
+
+In the artifacts dashboards directory, there is a script `dashboards/grafana_sync.sh` which will take care of the uploading all the dashboards from `dashboards/api_upload` directory. Before proceeding to run the script, it requires an API token and Grafana url where the dashboards will be uploaded.
+
+**How to get the API token**
+
+On the left side panel of Grafana, find the `Administration` link, then extend the button or click it.
+- Go to `Users and Access` section
+- Go to `Service Accounts`
+- Add a new service account (provide a display name and Role as either `Editor` or `Admin`)
+- Proceed to create the account and then create the token (do not forget to copy the token in safer space)
+
+Then replace the `<GRAFANA_URL>` and `<API_TOKEN>`  with yours
+
+```ssh
+cat dashboards/grafana_sync.sh
+```
+Then run the script
+
+```ssh
+chmod +x dashboards/grafana_sync.sh
+./dashboards/grafana_sync.sh
+```
+
+All the dashboards should be uploaded.
+
+#### Manual Upload
+
+To upload manually copy the dashboards json from `dashboards/manual_upload` directory and import to your grafana instance one by one.
