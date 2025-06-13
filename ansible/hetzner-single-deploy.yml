@@ -47,6 +47,7 @@
       - libvirt-daemon-system
       - virtinst
       - bridge-utils
+      - apache2-utils
   - name: generate german locales
     locale_gen:
       name: de_DE.UTF-8

@@ -92,27 +92,6 @@ spec:
   ....
 ```
 
-#### Create credentials for basic auth
-
-We need to create an auth secret for basic auth. Here is how to do it:
-
-```bash
-htpasswd -nb <user> <secure_password> | base64
-```
-This command will generate a base64-encoded string of the username and password in the format required for basic authentication in Kubernetes secrets.
-Paste the resulting base64 string into the data.auth field of your secret.
-
-Note: Make sure to replace <user> and <secure_password> with your actual username and password
-
-#### Setup PVC to store prometheus data
-With this setup prometheus will use locally created PV and storage class to store data on `kubenode3` as default.
-
-The prometheus pod is pinned to`kubenode3` as default, so that when the pod get crashed, it will always schedules on `kubenode3` where PV is created. 
-If you want to modify this values, do the following:
-
-- update the PV specif values in the `values.yaml`
-- match the updated values specifically `nodeName` and `storageSize` in the `prometheusSpec:` field
-
 **But to make it working there is a tiny manual task to do:**
 
 Create the volume mount path in the kubenode3 VM and provide necessary permissions for prometheus to access it. Here is how you do it.
@@ -134,16 +113,29 @@ sudo chmod 755 /mnt/prometheus-data
 Before proceeding to this step, make sure the values.yaml file has been updated with the correct values. Now install the kube-prometheus-stack helm.
 
 ```bash
-d helm upgrade --install wire-server ./charts/kube-prometheus-stack/ -f charts/kube-prometheus-stack/values.yaml --namespace monitoring --create-namespace
+d helm upgrade --install wire-server \
+  ./charts/kube-prometheus-stack/ \
+  -f charts/kube-prometheus-stack/values.yaml \
+  -f values/kube-prometheus-stack/authsecret.yaml \
+  --namespace monitoring \ 
+  --create-namespace
 ```
 
-- This command installs (or upgrades) the kube-prometheus-stack Helm chart with the release name wire-server in the monitoring namespace, using your custom values.yaml.
+- This command installs (or upgrades) the kube-prometheus-stack Helm chart with the release name wire-server in the monitoring namespace, using custom values.yaml.
+- Sets the auth secret for basic auth for prometheus endpoint
 - The `--create-namespace` flag will create the namespace if it does not exist.
 - Prometheus instances created by the operator are configured to *only discover ServiceMonitors and PodMonitors that have the same release label and are in the same namespace* (unless you explicitly change the selectors). So, having a consistent release name is very import for prometheus to scrape metrics correctly.
 
 After successful deployment of the Chart, we should be able to browse the prometheus with https://prometheus.<domain>. Check the targets health once prometheus is ready: https://prometheus.<domain_name>/targets. 
 
-You need to provide the user:password for authentication which has been created and updated the `auth` field in the values.yaml.
+### How to get the secret to login to prometheus query endpoint and configure as datasource
+
+The auth secret is auto generated user and password through wire deployment process. Look into the `plainTextAuth` value which is formatted as
+`user:password`
+
+```ssh
+cat values/kube-prometheus-stack/authsecret.yaml`
+```
 
 ### Setup prometheus as datasource for grafana
 
@@ -156,4 +148,4 @@ Test you data source by clicking the Metrics in the Drilldown section. Choose yo
 
 ### Dashboards
 
-Import the dashboards from dashboards directory to get started.
+Import the dashboard JSON's from dashboards directory to get started.

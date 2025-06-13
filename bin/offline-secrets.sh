@@ -17,6 +17,9 @@ zauth="$(sudo docker run $ZAUTH_CONTAINER -m gen-keypair)"
 zauth_public=$(echo "$zauth" | awk 'NR==1{ print $2}')
 zauth_private=$(echo "$zauth" | awk 'NR==2{ print $2}')
 
+prometheus_user="$(tr -dc A-Za-z0-9 </dev/urandom | head -c 8)"
+prometheus_pass="$(tr -dc A-Za-z0-9 </dev/urandom | head -c 16)"
+
 
 if [[ ! -f $VALUES_DIR/wire-server/secrets.yaml ]]; then
   echo "Writing $VALUES_DIR/wire-server/secrets.yaml"
@@ -93,4 +96,16 @@ if [[ ! -f $ANSIBLE_DIR/inventory/offline/group_vars/all/secrets.yaml ]]; then
 minio_access_key: "$minio_access_key"
 minio_secret_key: "$minio_secret_key"
 EOT
+fi
+
+PROM_AUTH_FILE="$VALUES_DIR/kube-prometheus-stack/authsecret.yaml"
+PROM_HTPASSWD_B64="$(htpasswd -nb "$prometheus_user" "$prometheus_pass")"
+if [[ ! -f $PROM_AUTH_FILE ]]; then
+  echo "Writing $PROM_AUTH_FILE"
+  mkdir -p "$(dirname "$PROM_AUTH_FILE")"
+  cat <<EOF > $PROM_AUTH_FILE
+prometheus:
+  plainTextAuth: "${prometheus_user}:${prometheus_pass}"
+  auth: "${PROM_HTPASSWD_B64}"
+EOF
 fi
