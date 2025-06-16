@@ -58,6 +58,8 @@ Before installing the helm chart, there are some work todo.
 
 ### Update the values.yaml
 
+All the values defined in the values.yaml file are default values. Before install/upgrade, please carefully check those values by following the comments in the file.
+
 Get the `kube-prometheus-stack` helm charts in the `/charts` directory then modify the `kube-prometheus-stack/values.yaml`. Here is the step by step guidelines:
 
 What values need to be modified are documented in the values.yaml file
@@ -72,6 +74,33 @@ And update the values based on your configurations.
 - hosts: Assuming that the sub domain name for prometheus starts with `prometheus`. So the sub domain would be `prometheus.<domain_name>`. Put the right domain in the `hosts` and `tls.hosts` field.
 
 - secretName: pick a secretName for certificate, for example it could be `prometheus-tls-cert`. After applying this chart cert-manager will create a certificate named `prometheus-tls-cert` and the issuer will be `clusterIssuer` with the following spec:
+
+** Get the issuer from k8s env**
+
+```bash
+d kubectl get clusterissuer
+```
+Make sure the `clusterIssuer` present in the k8s environment and if it does not match what we have in the `values.yaml`, replace it with the right one.
+
+**Manually create the mount path directory to configure the PV**
+
+With the default values, the chart will create a persistent volume in the `kubenode3` with the `storageClassName`, `storageSize` and `volumeMountPath` as defined in the `values.yaml`. And the prometheus POD will be pinned to the `kubenode3` with `nodeAffinity` so that the pod can always reschedule on this very node to use the PVC created on this node. The volume mount path needs to be created manually.
+
+Create the volume mount path in the kubenode3 VM and provide necessary permissions for prometheus to access it. Here is how you do it.
+
+```ssh
+ssh kubenode3
+sudo mkdir -p /mnt/prometheus-data
+sudo chown -R 65534:65534 /mnt/prometheus-data
+sudo chmod 755 /mnt/prometheus-data
+```
+
+- ssh to kubenode3
+- creates the mount path directory stated in the `charts/kube-prometheus-stack/templates/persistentvolume.yaml`
+- sets the Ownership to UID 65534 (nobody). Prometheus runs as a non-root user inside the container for security reasons. In prometheusSpec.securityContext, unless overridden, it runs as 65534
+- sets the permissions of the directory so that Prometheus (running as a non-root user) can access and write to it.
+
+**Test the issuer after applying the chart**
 
 ```bash
 d kubectl get certificate prometheus-tls-cert -n <namespace> -o yaml
@@ -91,22 +120,6 @@ spec:
   secretName: prometheus-tls-cert
   ....
 ```
-
-**But to make it working there is a tiny manual task to do:**
-
-Create the volume mount path in the kubenode3 VM and provide necessary permissions for prometheus to access it. Here is how you do it.
-
-```ssh
-ssh kubenode3
-sudo mkdir -p /mnt/prometheus-data
-sudo chown -R 65534:65534 /mnt/prometheus-data
-sudo chmod 755 /mnt/prometheus-data
-```
-
-- ssh to kubenode3
-- creates the mount path directory stated in the `charts/kube-prometheus-stack/templates/persistentvolume.yaml`
-- sets the Ownership to UID 65534 (nobody). Prometheus runs as a non-root user inside the container for security reasons. In prometheusSpec.securityContext, unless overridden, it runs as 65534
-- sets the permissions of the directory so that Prometheus (running as a non-root user) can access and write to it.
 
 ### Install the helm chart
 
