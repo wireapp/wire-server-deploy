@@ -97,7 +97,9 @@ brig:
       # - "turn:<IP of coturn2>:3478"
       # - "turn:<IP of coturn1>:3478?transport=tcp"
       # - "turn:<IP of coturn2>:3478?transport=tcp"
-
+  metrics:
+    serviceMonitor:
+      enabled: true
 
 proxy:
   replicaCount: 1
@@ -110,7 +112,9 @@ proxy:
 #      noProxyList:
 #        - "local.example.com"
 #        - "10.23.0.0/16"
-
+  metrics:
+    serviceMonitor:
+      enabled: true
 cannon:
   replicaCount: 1
 #  image:
@@ -120,6 +124,9 @@ cannon:
   config:
     cassandra: 
       host: cassandra-ephemeral
+  metrics:
+    serviceMonitor:
+      enabled: true
 
 cargohold:
   replicaCount: 1
@@ -140,7 +147,9 @@ cargohold:
 #      noProxyList:
 #        - "local.example.com"
 #        - "10.23.0.0/16"
-
+  metrics:
+    serviceMonitor:
+      enabled: true
 
 galley:
   replicaCount: 1
@@ -171,6 +180,9 @@ galley:
 #      noProxyList:
 #        - "local.example.com"
 #        - "10.23.0.0/16"
+  metrics:
+    serviceMonitor:
+      enabled: true
 
 gundeck:
   replicaCount: 1
@@ -193,6 +205,9 @@ gundeck:
 #      noProxyList:
 #        - "local.example.com"
 #        - "10.23.0.0/16"
+  metrics:
+    serviceMonitor:
+      enabled: true
 
 nginz:
   replicaCount: 1
@@ -223,7 +238,9 @@ nginz:
   # For demo mode only, we don't need to keep websocket connections open on upgrade:
   drainTimeout: 10
   terminationGracePeriodSeconds: 30
-
+  metrics:
+    serviceMonitor:
+      enabled: true
 spar:
   replicaCount: 1
 #  image:
@@ -248,7 +265,9 @@ spar:
 #      noProxyList:
 #        - "local.example.com"
 #        - "10.23.0.0/16"
-
+  metrics:
+    serviceMonitor:
+      enabled: true
 
 # Only needed when legalhold is enabled
 #legalhold:
@@ -266,3 +285,6 @@ background-worker:
       host: cassandra-ephemeral
     # Enable for federation
     enableFederation: false
+  metrics:
+    serviceMonitor:
+      enabled: true
