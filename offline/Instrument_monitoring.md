@@ -92,7 +92,7 @@ With the default values, the chart will create a persistent volume in the `kuben
 
 Create the volume mount path in the kubenode3 VM and provide necessary permissions for prometheus to access it. Here is how you do it.
 
-```ssh
+```bash
 ssh kubenode3
 sudo mkdir -p /mnt/prometheus-data
 sudo chown -R 65534:65534 /mnt/prometheus-data
@@ -157,7 +157,7 @@ spec:
 Before proceeding to this step, make sure the values.yaml file has been updated with the correct values. Now install the kube-prometheus-stack helm.
 
 ```bash
-d helm upgrade --install wire-server \
+d helm upgrade --install prometheus \
   ./charts/kube-prometheus-stack/ \
   -f charts/kube-prometheus-stack/values.yaml \
   --namespace monitoring \ 
@@ -167,7 +167,6 @@ d helm upgrade --install wire-server \
 - This command installs (or upgrades) the kube-prometheus-stack Helm chart with the release name wire-server in the monitoring namespace, using custom values.yaml.
 - Sets the auth secret for basic auth for prometheus endpoint
 - The `--create-namespace` flag will create the namespace if it does not exist.
-- Prometheus instances created by the operator are configured to *only discover ServiceMonitors and PodMonitors that have the same release label and are in the same namespace* (unless you explicitly change the selectors). So, having a consistent release name is very import for prometheus to scrape metrics correctly.
 
 After successful deployment of the Chart, we should be able to browse the prometheus with https://prometheus.<domain>. Check the targets health once prometheus is ready: https://prometheus.<domain_name>/targets. Provide the credentials to login to the prometheus which will be found in the `auth` field of `values.yaml`
 
@@ -199,12 +198,12 @@ On the left side panel of Grafana, find the `Administration` link, then extend t
 
 Then replace the `<GRAFANA_URL>` and `<API_TOKEN>`  with yours
 
-```ssh
+```bash
 cat dashboards/grafana_sync.sh
 ```
 Then run the script
 
-```ssh
+```bash
 chmod +x dashboards/grafana_sync.sh
 ./dashboards/grafana_sync.sh
 ```
