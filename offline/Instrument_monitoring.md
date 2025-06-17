@@ -54,13 +54,13 @@ Prometheus operator will be configured to scrape metrics from k8s cluster and wi
 - Automatic certificate creation with cert-manager (Assuming cert-manager is already present in the k8s cluster)
 - Disable both Alertmanager and grafana operator which is part of the helm stack.
 
-Before installing the helm chart, there are some work todo.
+Before installing the helm chart, there are some works todo.
 
 ### Update the values.yaml
 
-All the values defined in the values.yaml file are default values. Before install/upgrade, please carefully check those values by following the comments in the file.
+All the values defined in the values.yaml file are default values and some place holders where the user needs to set the values. Before install/upgrade, please carefully check those values by following the comments in the file.
 
-Get the `kube-prometheus-stack` helm charts in the `/charts` directory then modify the `kube-prometheus-stack/values.yaml`. Here is the step by step guidelines:
+Get the `kube-prometheus-stack` helm charts in the `/charts` directory, then modify the `kube-prometheus-stack/values.yaml`. Here is the step by step guidelines:
 
 What values need to be modified are documented in the values.yaml file
 
@@ -69,18 +69,22 @@ cat charts/kube-prometheus-stack/values.yaml
 ```
 And update the values based on your configurations.
 
-#### Get the domain name and certificate
+#### Define values to create a Local PV
 
-- hosts: Assuming that the sub domain name for prometheus starts with `prometheus`. So the sub domain would be `prometheus.<domain_name>`. Put the right domain in the `hosts` and `tls.hosts` field.
+Check the default values to create a persistent volume in the cluster on a certain node (e.g. kubenode3) where the prometheus pod is also pinned.
 
-- secretName: pick a secretName for certificate, for example it could be `prometheus-tls-cert`. After applying this chart cert-manager will create a certificate named `prometheus-tls-cert` and the issuer will be `clusterIssuer` with the following spec:
-
-** Get the issuer from k8s env**
-
-```bash
-d kubectl get clusterissuer
+```yaml
+nodeName: kubenode3
+storageSize: 50Gi
+storageClassName: local-prometheus-storage
+volumeMountPath: /mnt/prometheus-data
 ```
-Make sure the `clusterIssuer` present in the k8s environment and if it does not match what we have in the `values.yaml`, replace it with the right one.
+- nodeName: The specific node where the PV will be created, if the nodeName gets changed please update the nodeName in the `nodeAffinity` field too
+- storageSize: Give a volume size to the PV
+- storageClassName: This class will be used by prometheus to claim the the volume
+- volumeMountPath: Node local disk directory where prometheus will store the data
+
+If any of the values get changed, please adjust the corresponding values in the `kube-prometheus-stack.prometheusSpec:` fields and `kube-prometheus-stack.storageSpec:` fields.
 
 **Manually create the mount path directory to configure the PV**
 
@@ -99,6 +103,33 @@ sudo chmod 755 /mnt/prometheus-data
 - creates the mount path directory stated in the `charts/kube-prometheus-stack/templates/persistentvolume.yaml`
 - sets the Ownership to UID 65534 (nobody). Prometheus runs as a non-root user inside the container for security reasons. In prometheusSpec.securityContext, unless overridden, it runs as 65534
 - sets the permissions of the directory so that Prometheus (running as a non-root user) can access and write to it.
+
+#### Ingress and Basic auth credentials
+By default the `ingress` is disabled for prometheus, you need to enable it when prometheus will be used as datasource outside the k8s cluster. To enable the `ingress` update the `kube-prometheus-stack.prometheus.ingress:` field .
+
+The user of this helm chart requires to set the `username` and `password` if ingress is enabled.
+
+```yaml
+# Basic authentication credentials for Prometheus ingress.
+# set both username and password.
+auth:
+  username:
+  password:
+```
+If the auth is not set and ingress is enabled, the helm chart will render an error. Follow that error message to fix it.
+
+#### Get the domain name and certificate
+
+- hosts: Assuming that the sub domain name for prometheus starts with `prometheus`. So the sub domain would be `prometheus.<domain_name>`. Put the right domain in the `hosts` and `tls.hosts` field.
+
+- secretName: pick a secretName for certificate, for example it could be `prometheus-tls-cert`. After applying this chart cert-manager will create a certificate named `prometheus-tls-cert` and the issuer will be `clusterIssuer` with the following spec:
+
+** Get the issuer from k8s env**
+
+```bash
+d kubectl get clusterissuer
+```
+Make sure the `clusterIssuer` present in the k8s environment and if it does not match what we have in the `values.yaml`, replace it with the right one.
 
 **Test the issuer after applying the chart**
 
@@ -129,7 +160,6 @@ Before proceeding to this step, make sure the values.yaml file has been updated 
 d helm upgrade --install wire-server \
   ./charts/kube-prometheus-stack/ \
   -f charts/kube-prometheus-stack/values.yaml \
-  -f values/kube-prometheus-stack/authsecret.yaml \
   --namespace monitoring \ 
   --create-namespace
 ```
@@ -139,16 +169,7 @@ d helm upgrade --install wire-server \
 - The `--create-namespace` flag will create the namespace if it does not exist.
 - Prometheus instances created by the operator are configured to *only discover ServiceMonitors and PodMonitors that have the same release label and are in the same namespace* (unless you explicitly change the selectors). So, having a consistent release name is very import for prometheus to scrape metrics correctly.
 
-After successful deployment of the Chart, we should be able to browse the prometheus with https://prometheus.<domain>. Check the targets health once prometheus is ready: https://prometheus.<domain_name>/targets. 
-
-### How to get the secret to login to prometheus query endpoint and configure as datasource
-
-The auth secret is auto generated user and password through wire deployment process. Look into the `plainTextAuth` value which is formatted as
-`user:password`
-
-```ssh
-cat values/kube-prometheus-stack/authsecret.yaml`
-```
+After successful deployment of the Chart, we should be able to browse the prometheus with https://prometheus.<domain>. Check the targets health once prometheus is ready: https://prometheus.<domain_name>/targets. Provide the credentials to login to the prometheus which will be found in the `auth` field of `values.yaml`
 
 ### Setup prometheus as datasource for grafana
 
