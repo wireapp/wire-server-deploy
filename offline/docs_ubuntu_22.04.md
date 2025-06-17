@@ -364,10 +364,9 @@ Minio and coturn services have shared secrets with the `wire-server` helm chart.
 ./bin/offline-secrets.sh
 ```
 
-This should generate three files. 
+This should generate two secret files. 
 - `./ansible/inventory/group_vars/all/secrets.yaml` 
 - `values/wire-server/secrets.yaml`
-- `values/kube-prometheus-stack/authsecret.yaml`
 
 
 ### WORKAROUND: old debian key
