@@ -2,7 +2,7 @@
 set -euo pipefail
 
 GRAFANA_URL="<GRAFANA_URL>"  # Replace with your Grafana URL
-API_TOKEN="API_TOKEN"  # Replace with your Grafana API token
+API_TOKEN="<API_TOKEN>"  # Replace with your Grafana API token
 DASHBOARD_DIR="./api_upload"
 
 for file in "$DASHBOARD_DIR"/*.json; do
