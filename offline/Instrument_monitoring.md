@@ -164,6 +164,20 @@ we should be able to browse the prometheus with `https://prometheus.<domain>`. C
 
 Check the output with helm status command `$ helm status prometheus -n monitoring`
 
+### Metrics Collection via Prometheus Operator
+
+The **Prometheus Operator** is responsible for scraping metrics from various sources using ServiceMonitors and PodMonitors.
+
+**Metrics Sources:**
+
+- Wire Services: Application-level metrics from all Wire components
+- Kube-State Metrics: Resource state information from Kubernetes objects
+- Node Metrics: CPU, memory, disk, and other resource usage from all Kubernetes nodes
+- API Server Metrics: Performance and request metrics from the Kubernetes API server
+- NGINX Ingress Controller Metrics: Request, latency, and error metrics from the Ingress controller
+
+These metrics are discovered and scraped based on label selectors defined in the respective ServiceMonitor and PodMonitor resources.
+
 ### Setup prometheus as datasource for grafana
 
 Now open the grafana with the browser and click the Data sources tab. 
