@@ -3,7 +3,7 @@
 	url = https://github.com/kubernetes-sigs/kubespray.git
 [submodule "ansible/roles-external/elasticsearch"]
 	path = ansible/roles-external/elasticsearch
-	url = https://github.com/elastic/ansible-elasticsearch.git
+	url = https://github.com/wireapp/wire-elasticsearch-fork.git
 [submodule "ansible/roles-external/hostname"]
 	path = ansible/roles-external/hostname
 	url = https://github.com/ANXS/hostname.git
