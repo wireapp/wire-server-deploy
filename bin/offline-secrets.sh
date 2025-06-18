@@ -85,9 +85,9 @@ background-worker:
       username: wire-server
       password: verysecurepassword
 prometheus:
-    auth:
-      username: admin
-      password: "${prometheus_pass}"
+  auth:
+    username: admin
+    password: "${prometheus_pass}"
 EOF
 
 fi
