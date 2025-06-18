@@ -17,8 +17,6 @@ COTURN_NODE="K8S_COTURN_NODE"
 # keeping it empty to be replaced
 HOST_IP="WIRE_IP"
 
-CHART_URL="https://charts.jetstack.io/charts/cert-manager-v1.13.2.tgz"
-
 # it creates the values.yaml from prod-values.example.yaml and secrets.yaml from prod-secrets.example.yaml, it works on the directory $BASE_DIR"/values/ in the bundle
 process_charts() {  
   
@@ -174,7 +172,8 @@ deploy_charts() {
 deploy_cert_manager() {
   # downloading the chart if not present
   if [[ ! -d "$BASE_DIR/charts/cert-manager" ]]; then
-    wget -qO- "$CHART_URL" | tar -xz -C "$BASE_DIR/charts"
+    echo "cert-manager helm chart is missing"
+    exit 1
   fi
 
   kubectl get namespace cert-manager-ns || kubectl create namespace cert-manager-ns
