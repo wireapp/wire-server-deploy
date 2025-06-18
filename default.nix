@@ -12,7 +12,12 @@ let
 
   pkgs = import sources.nixpkgs {
     inherit system;
-    config = { };
+    config = {
+      # there is a unfree package in current nixpkgs version that will refuse to evaluate
+      # so allowUnfree has to be set
+      # The package in question (vault-1.16.2) is not being used
+      allowUnfree = true;
+    };
     # layering is important here, the lowest takes precedance in case of overlaps
     overlays = [
       # custom overlay for injections 
@@ -40,9 +45,7 @@ rec {
   env = pkgs.buildEnv {
     name = "wire-server-deploy";
     paths = with pkgs; [
-      ansible_2_16
-      pythonForAnsible
-      jmespath
+      customAnsible
       apacheHttpd
       awscli2
       gnumake
@@ -103,7 +106,6 @@ rec {
       pkgs.bashInteractive
       pkgs.openssh # ansible needs this too, even with paramiko
       pkgs.sshpass # needed for password login
-      pkgs.jmespath # jmespath not nested deep enough to be accessible in WSD container???
 
       # The enivronment
       env

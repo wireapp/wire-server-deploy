@@ -23,6 +23,7 @@ if [[ ! -f $VALUES_DIR/wire-server/secrets.yaml ]]; then
   cat <<EOF > $VALUES_DIR/wire-server/secrets.yaml
 brig:
   secrets:
+    pgPassword: verysecurepassword
     smtpPassword: dummyPassword
     zAuth:
       publicKeys: "$zauth_public"

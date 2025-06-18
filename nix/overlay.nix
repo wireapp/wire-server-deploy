@@ -2,7 +2,13 @@ self:
 let helm-mapkubeapis = self.callPackage ./pkgs/helm-mapkubeapis.nix { };
 in
 super: {
-  pythonForAnsible = (self.python3.withPackages (_: self.ansible.requiredPythonModules ++ [
+  customAnsible = (self.python3.withPackages (_: self.ansible.requiredPythonModules ++ [
+    # due to ansible package from nixpkgs missing some dependancies to run kubespray playbook
+    # we are making our own custom ansible package and python interpreter, current ansible-core is 2.16.5
+    super.python3Packages.ansible-core
+
+    # DEPENDENCIES
+    super.python3Packages.jmespath
     super.python3Packages.botocore
     super.python3Packages.boto3
     super.python3Packages.cryptography
