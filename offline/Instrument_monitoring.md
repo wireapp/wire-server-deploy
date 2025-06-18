@@ -105,18 +105,7 @@ sudo chmod 755 /mnt/prometheus-data
 - sets the permissions of the directory so that Prometheus (running as a non-root user) can access and write to it.
 
 #### Ingress and Basic auth credentials
-By default the `ingress` is disabled for prometheus, you need to enable it when prometheus will be used as datasource outside the k8s cluster. To enable the `ingress` update the `kube-prometheus-stack.prometheus.ingress:` field .
-
-The user of this helm chart requires to set the `username` and `password` if ingress is enabled.
-
-```yaml
-# Basic authentication credentials for Prometheus ingress.
-# set both username and password.
-auth:
-  username:
-  password:
-```
-If the auth is not set and ingress is enabled, the helm chart will render an error. Follow that error message to fix it.
+By default the `ingress` is disabled for prometheus, you need to enable it when prometheus will be used as datasource outside the k8s cluster. To enable the `ingress` update the `kube-prometheus-stack.prometheus.ingress:` field . And prometheus ingress uses `basic-auth` for authetication.
 
 #### Get the domain name and certificate
 
@@ -160,22 +149,27 @@ Before proceeding to this step, make sure the values.yaml file has been updated 
 d helm upgrade --install prometheus \
   ./charts/kube-prometheus-stack/ \
   -f charts/kube-prometheus-stack/values.yaml \
+  -f values/wire-server/secrets.yaml \
   --namespace monitoring \ 
   --create-namespace
 ```
 
 - This command installs (or upgrades) the kube-prometheus-stack Helm chart with the release name wire-server in the monitoring namespace, using custom values.yaml.
 - Sets the auth secret for basic auth for prometheus endpoint
+- Gets the basic auth secrets from `values/wire-server/secrets.yaml` created with `offline-secrets.sh` script.
 - The `--create-namespace` flag will create the namespace if it does not exist.
 
-After successful deployment of the Chart, we should be able to browse the prometheus with https://prometheus.<domain>. Check the targets health once prometheus is ready: https://prometheus.<domain_name>/targets. Provide the credentials to login to the prometheus which will be found in the `auth` field of `values.yaml`
+After successful deployment of the Chart, the output will show all the configured resources including basic auth info.
+we should be able to browse the prometheus with `https://prometheus.<domain>`. Check the targets health once prometheus is ready: `https://prometheus.<domain_name>/targets`.
+
+Check the output with helm status command `$ helm status prometheus -n monitoring`
 
 ### Setup prometheus as datasource for grafana
 
 Now open the grafana with the browser and click the Data sources tab. 
 - Choose Prometheus as data source and put the prometheus ingress endpoint as connection parameter.
 - Select Basic Authentication in the Authentication part and provide the prometheus credentials
-- Choose TLS Client Authentication (optional) or you can also skip it.
+- Skip TLS Client Authentication or choose it if you have all the certificate info at hand.
 
 Test you data source by clicking the Metrics in the Drilldown section. Choose you configured datasource and you should be able to see the metrics.
 
