@@ -1,4 +1,8 @@
 #!/usr/bin/env bash
+# This script creates a VM named 'grafananode' with IP 192.168.122.100 where a grafana instance will be deployed.
+# It uses cloud-init for initial setup and requires libvirt and virt-install to be installed on the host machine.
+# It is intended for testing or development purposes and should not be used for production setups.
+
 
 set -Eeuo pipefail
 
@@ -22,10 +26,7 @@ cleanup() {
 SCRIPT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" &>/dev/null && pwd -P)
 DEPLOY_DIR="$(cd "$SCRIPT_DIR/../" && pwd)"
 NOCLOUD_DIR=$DEPLOY_DIR/nocloud
-
-if [ ! -d "$NOCLOUD_DIR" ]; then
-  mkdir -p "$NOCLOUD_DIR"
-fi
+mkdir -p "$NOCLOUD_DIR"
 
 VM_NAME="grafananode"
 VM_IP="192.168.122.100"
@@ -40,7 +41,7 @@ done
 if [[ -f "$HOME"/.ssh/authorized_keys && -s "$HOME"/.ssh/authorized_keys ]]; then
   SSHKEY_HUMAN=$(head -n 1 ~/.ssh/authorized_keys)
 else
-  read -r -p "No local SSH keys for current user $USER found; please enter a valid key now: " SSHKEY_HUMAN
+    read -r -p "No existing SSH keys found in ~/.ssh/authorized_keys for the current user ($USER). Please enter a valid SSH public key to proceed: " SSHKEY_HUMAN
 fi
 
 if [[ -f "$HOME"/.ssh/id_ed25519 && -f "$HOME"/.ssh/id_ed25519.pub ]]; then
@@ -55,7 +56,7 @@ else
 fi
 
 msg ""
-msg "Including the following SSH Keys for VM deployment:"
+msg "Preparing to use the following SSH keys for VM deployment:"
 msg "Existing key from ~/.ssh/authorized_keys: $SSHKEY_HUMAN"
 msg "Local keypair key from ~/.ssh/id_ed25519: $SSHKEY_DEMO"
 msg ""
