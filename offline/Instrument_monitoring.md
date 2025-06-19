@@ -1,9 +1,9 @@
 # Instrument wire application for monitoring
 
-Follow the guidelines on how to instrument the wire app for monitoring by setting the prometheus operator with kube-prometheus-helm stack to scrape metrics and use the prometheus as datasource for Grafana instance.
+Follow these guidelines to instrument your deployed wire cluster for monitoring. These instructions bring you through  setting up the prometheus operator (with the kube-prometheus-helm stack) to scrape metrics, exposing those metrics as a datasource for Grafana. Additionally, if you are using our wire-in-a-box setup, we setup a grafana VM, with dashboards.
 
 ## Setup Grafana:
-If there is no existing grafana in your environment then setup/install grafana on a VM. Here is how to do it by running couple of scripts.
+If there is no existing grafana in your environment then you can setup/install grafana on a VM. Here is how to do it by running couple of scripts, in a virsh (wire-in-a-box) environment:
 
 ### Configure a VM for grafana
 
