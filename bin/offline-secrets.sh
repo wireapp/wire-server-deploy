@@ -17,6 +17,7 @@ zauth="$(sudo docker run $ZAUTH_CONTAINER -m gen-keypair)"
 zauth_public=$(echo "$zauth" | awk 'NR==1{ print $2}')
 zauth_private=$(echo "$zauth" | awk 'NR==2{ print $2}')
 
+prometheus_pass="$(tr -dc A-Za-z0-9 </dev/urandom | head -c 16)"
 
 if [[ ! -f $VALUES_DIR/wire-server/secrets.yaml ]]; then
   echo "Writing $VALUES_DIR/wire-server/secrets.yaml"
@@ -83,6 +84,10 @@ background-worker:
     rabbitmq:
       username: wire-server
       password: verysecurepassword
+prometheus:
+  auth:
+    username: admin
+    password: "${prometheus_pass}"
 EOF
 
 fi
