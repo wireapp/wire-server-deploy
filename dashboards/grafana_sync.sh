@@ -21,13 +21,14 @@ for file in "$DASHBOARD_DIR"/*.json; do
     -X POST "$GRAFANA_URL/api/dashboards/db" \
     -d "$clean_payload")
 
- 
+  # Check if the response contains both body and HTTP code. Then parse them.
+  # If the response is shorter than 3 characters, assume it's just the body.
     if [[ ${#response} -ge 3 ]]; then
-    http_code="${response: -3}"
-    body="${response:0:${#response}-3}"
+      http_code="${response: -3}"
+      body="${response:0:${#response}-3}"
     else
-    http_code="000"
-    body="$response"
+      http_code="000"
+      body="$response"
     fi
 
   if [[ "$http_code" == "200" ]]; then

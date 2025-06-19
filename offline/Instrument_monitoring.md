@@ -3,7 +3,11 @@
 Follow these guidelines to instrument your deployed wire cluster for monitoring. These instructions bring you through  setting up the prometheus operator (with the kube-prometheus-helm stack) to scrape metrics, exposing those metrics as a datasource for Grafana. Additionally, if you are using our wire-in-a-box setup, we setup a grafana VM, with dashboards.
 
 ## Setup Grafana:
-If there is no existing grafana in your environment then you can setup/install grafana on a VM. Here is how to do it by running couple of scripts, in a virsh (wire-in-a-box) environment:
+We do not provide grafana instrumentation for the production environment. We expect the customers/clients will bring their own grafana instance and can connect the prometheus datasource which will get shipped to production environment.
+
+If you already have a grafana instance in your environment or you need to configure the grafana for the production we encourage to follow the upstream [grafana installation document](https://grafana.com/docs/grafana/latest/setup-grafana/installation/).
+
+In a test environment if there is no existing grafana then you can setup/install grafana by configuring a VM. Here is how to do it by running couple of scripts, in a virsh (wire-in-a-box) environment:
 
 ### Configure a VM for grafana
 
