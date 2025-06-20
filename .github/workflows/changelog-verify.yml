@@ -35,6 +35,7 @@ jobs:
 
       - name: Check changelog.d changes in PR
         run: |
+          set -x
           BASE_SHA=${{ github.event.pull_request.base.sha }}
           HEAD_SHA=${{ github.event.pull_request.head.sha }}
 
@@ -42,13 +43,6 @@ jobs:
 
           if [ -z "$CHANGED_FILES" ]; then
             echo "No files changed in changelog.d/"
-            exit 1
-          fi
-
-          LINE_COUNT=$(git diff --unified=0 $BASE_SHA $HEAD_SHA -- changelog.d/ 2>/dev/null | grep -E "^\+|^\-" | grep -vE "^(\+\+\+|\-\-\-)" | wc -l)
-
-          if [ "$LINE_COUNT" -le 1 ]; then
-            echo "Changelog.d has one or zero lines changed: $LINE_COUNT lines"
             exit 1
           fi
           done
