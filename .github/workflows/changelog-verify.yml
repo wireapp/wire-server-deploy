@@ -1,0 +1,83 @@
+name: Changelog verification
+on:
+  pull_request:
+    branches: [master]
+  push:
+    branches: [master]
+
+permissions:
+  contents: read
+
+jobs:
+  commitlint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: true
+      - name: Setup node
+        uses: actions/setup-node@v4
+        with:
+          node-version: lts/*
+          cache: npm
+      - name: Install commitlint
+        run: npm install -D @commitlint/cli @commitlint/config-conventional
+      - name: Print versions
+        run: |
+          git --version
+          node --version
+          npm --version
+          npx commitlint --version
+
+      - name: Validate current commit (last commit) with commitlint
+        if: github.event_name == 'push'
+        run: npx commitlint --last --verbose
+
+      - name: Validate PR commits with commitlint
+        if: github.event_name == 'pull_request'
+        run: npx commitlint --from ${{ github.event.pull_request.base.sha }} --to ${{ github.event.pull_request.head.sha }} --verbose
+
+      - name: Check changelog.d changes in PR
+        run: |
+          BASE_SHA=${{ github.event.pull_request.base.sha }}
+          HEAD_SHA=${{ github.event.pull_request.head.sha }}
+
+          if ! git ls-tree -d -r $HEAD_SHA | grep -q "changelog.d/"; then
+            echo "Directory changelog.d/ does not exist in the PR"
+            exit 1
+          fi
+
+          CHANGED_FILES=$(git diff --name-only $BASE_SHA $HEAD_SHA -- changelog.d/ | grep -vE "^$")
+
+          if [ -z "$CHANGED_FILES" ]; then
+            echo "No files changed in changelog.d/"
+            exit 1
+          fi
+
+          LINE_COUNT=$(git diff --unified=0 $BASE_SHA $HEAD_SHA -- changelog.d/ 2>/dev/null | grep -E "^\+|^\-" | grep -vE "^(\+\+\+|\-\-\-)" | wc -l)
+
+          if [ "$LINE_COUNT" -le 1 ]; then
+            echo "Changelog.d has one or zero lines changed: $LINE_COUNT lines"
+            exit 1
+          fi
+
+          # Validate each changed file's content with commitlint
+          for file in $CHANGED_FILES; do
+            echo "Checking file: $file"
+
+            FILE_CONTENT=$(git show $HEAD_SHA:$file 2>/dev/null)
+
+            if [ -z "$FILE_CONTENT" ]; then
+              echo "File $file is empty"
+              exit 1
+              continue
+            fi
+            
+            echo "$FILE_CONTENT" > temp_commit_msg.txt
+            if ! npx commitlint --edit temp_commit_msg.txt; then
+              echo "Commitlint failed for file: $file"
+              echo "Content:"
+              cat temp_commit_msg.txt
+              exit 1
+            fi
+          done
