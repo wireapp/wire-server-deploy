@@ -5,7 +5,7 @@
 # those.
 # In cases where no container image tag has been specified, it'll use `latest`.
 # The list is sorted and deduplicated, then printed to stdout.
-set -eou pipefail
+set -eoux pipefail
 
 VALUES_DIR=""
 HELM_IMAGE_TREE_FILE=""
