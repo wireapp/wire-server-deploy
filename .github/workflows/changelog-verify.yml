@@ -38,6 +38,7 @@ jobs:
           set -x
           echo $PWD
           ls
+          echo "export default { extends: ['@commitlint/config-conventional'] };" > /tmp/commitlint.config.js 
           BASE_SHA=${{ github.event.pull_request.base.sha }}
           HEAD_SHA=${{ github.event.pull_request.head.sha }}
 
@@ -73,7 +74,7 @@ jobs:
             fi
             
             echo "$FILE_CONTENT" > temp_commit_msg.txt
-            if ! npx commitlint --edit temp_commit_msg.txt; then
+            if ! npx commitlint -g /tmp/commitlint.config.js --edit temp_commit_msg.txt; then
               echo "Commitlint failed for file: $file"
               echo "Content:"
               cat temp_commit_msg.txt
