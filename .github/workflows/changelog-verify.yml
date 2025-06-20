@@ -35,16 +35,8 @@ jobs:
 
       - name: Check changelog.d changes in PR
         run: |
-          set -x
-          echo $PWD
-          ls
           BASE_SHA=${{ github.event.pull_request.base.sha }}
           HEAD_SHA=${{ github.event.pull_request.head.sha }}
-
-          if ! git ls-tree -d -r $HEAD_SHA | grep -q "changelog.d/"; then
-            echo "Changes in changelog.d/ does not exist in the PR"
-            exit 1
-          fi
 
           CHANGED_FILES=$(git diff --name-only $BASE_SHA $HEAD_SHA -- changelog.d/ | grep -vE "^$")
 
