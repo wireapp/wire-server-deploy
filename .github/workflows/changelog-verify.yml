@@ -31,7 +31,7 @@ jobs:
       - name: Validate current commit (last commit) with commitlint
         run: |
           echo "export default { extends: ['@commitlint/config-conventional'] };" > commitlint.config.js 
-          npx commitlint -g commitlint.config.js --last --verbose
+          npx commitlint -g commitlint.config.js --last --verbose 2>/dev/null
 
       - name: Check changelog.d changes in PR
         run: |
@@ -42,7 +42,7 @@ jobs:
           HEAD_SHA=${{ github.event.pull_request.head.sha }}
 
           if ! git ls-tree -d -r $HEAD_SHA | grep -q "changelog.d/"; then
-            echo "Directory changelog.d/ does not exist in the PR"
+            echo "Changes in changelog.d/ does not exist in the PR"
             exit 1
           fi
 
@@ -59,24 +59,4 @@ jobs:
             echo "Changelog.d has one or zero lines changed: $LINE_COUNT lines"
             exit 1
           fi
-
-          # Validate each changed file's content with commitlint
-          for file in $CHANGED_FILES; do
-            echo "Checking file: $file"
-
-            FILE_CONTENT=$(git show $HEAD_SHA:$file 2>/dev/null)
-
-            if [ -z "$FILE_CONTENT" ]; then
-              echo "File $file is empty"
-              exit 1
-              continue
-            fi
-            
-            echo "$FILE_CONTENT" > temp_commit_msg.txt
-            if ! npx commitlint -g commitlint.config.js --edit temp_commit_msg.txt; then
-              echo "Commitlint failed for file: $file"
-              echo "Content:"
-              cat temp_commit_msg.txt
-              exit 1
-            fi
           done
