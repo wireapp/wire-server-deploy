@@ -3,3 +3,7 @@ postgresql:
   primary:
     persistence:
       enabled: false
+  volumePermissions:
+    image:
+      repository: bitnami/os-shell
+      tag: 12-debian-12-r46
