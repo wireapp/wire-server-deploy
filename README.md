@@ -35,4 +35,41 @@ Every PR should add a new file in the appropriate subdirectory of `changelog.d`,
 
 Example: create the file ./changelog.d/2-wire-builds/wire-chart-bump-5.13 with one-line content like:
 ```
-Wire backend upgrade to 5.13, see [docs](link-to-docs)```
+Wire backend upgrade to 5.13, see [docs](link-to-docs) 
+```
+
+All changelog entries in the `changelog.d/` directory must follow commit message standards based on the [Conventional Commits specification](https://github.com/conventional-changelog/commitlint/blob/master/@commitlint/config-conventional/src/index.ts). Below are examples of properly formatted commit messages for each subdirectory in our changelog structure, along with descriptions of what content belongs in each subdirectory. 
+
+**NOTE**: The commit messages and changelog.d entries will be verified using the github workflow [Changelog verification](.github/workflows/changelog-verify.yml).
+
+#### Directory Structure
+
+##### 0-release-notes
+This directory contains extra notes about the release. It is intended for high-level release notes that provide an overview of what's new, what's changed, and any important information about the release. This is typically used for communicating with stakeholders and end-users.
+
+*commit message example:* `release: v0.0.0 Major Release`
+
+##### 1-debian-builds
+Contains notes about changes related to Debian package builds. This includes modifications to build scripts (e.g., `build_linux_pkgs.sh`), changes in dependencies, and any other updates related to the creation of Debian packages.
+
+*commit message example:* `fix(debian_build): resolve dependency issue for gngpg package`
+
+##### 2-wire-builds
+Documents changes related to the `wire-builds` repository. This includes updates to the values directory, modifications to Helm charts for Wire components, and any other changes specific to the Wire builds process.
+
+*commit message example:* `feat(wire_build): add support for postgresql to support wire release 5.17.0`
+
+##### 3-deploy-builds
+Used to document changes in deployment processes and upgrades. Examples include Kubernetes upgrades via Ansible, changes in the `/offline/tasks` directory, and other deployment-related modifications.
+
+*commit message example:* `feat(deploy): add support for Kubernetes 1.29.10`
+
+##### 4-docs
+Contains documentation related to deployment or bundling processes. This includes updates to installation guides, configuration instructions, and any other relevant documentation.
+
+*commit message example:* `docs(deploy): add guide for wiab-demo solution`
+
+##### 5-bug-fixes
+Documents bug fixes for any existing solutions. This includes fixes for issues in the deployment process, build scripts, or any other component of the project.
+
+*commit message example:* `fix(build): fix the postgresql dependency on old non-existing images`
