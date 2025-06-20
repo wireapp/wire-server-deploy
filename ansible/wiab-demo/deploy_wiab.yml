@@ -1,0 +1,182 @@
+- name: Verify the dns records before starting to install
+  import_playbook: ./verify_dns.yml
+  when: skip_verify_dns | default(false) == false
+
+- name: Execute common tasks for the node
+  hosts: deploy_node
+  become: yes
+  tasks:
+  # this is an exception to install_pkgs, as it expects netcat before other tasks take place
+  - name: Install Netcat
+    apt:
+      name:
+        - ncat
+      state: present
+      update_cache: yes
+
+  # if number of nodes increase, the logic can be adapted to change nodes for different services
+  # currently it is pointing to the first node
+  - name: Set facts for various Kubernetes nodes (for a single node), it will be name of profile
+    set_fact:
+      k8s_ingress_controller_node: "{{ minikube_profile }}"
+      k8s_coturn_node: "{{ minikube_profile }}"
+      k8s_sft_node: "{{ minikube_profile }}"
+
+# shouldn't be skipped, it is neccessary to identify the network ingress
+# potentially we can write the information on the node to avoid running it everytime
+# read it from the node if not found
+- name: Check Wire IP access
+  import_playbook: ./verify_wire_ip.yml
+
+- name: Install required packages
+  import_playbook: ./install_pkgs.yml
+  when: skip_install_pkgs | default(false) == false
+
+- name: Manage SSH keys for minikube node and ssh proxy
+  import_playbook: ./setup_ssh.yml
+  when: ((skip_minikube | default(false) == false) or (skip_asset_host | default(false) == false) or (skip_setup_offline_seed | default(false) == false))
+
+- name: Configure minikube cluster
+  import_playbook: ./minikube_cluster.yml
+  when: skip_minikube | default(false) == false
+
+- name: Configure Iptables rules
+  import_playbook: ./iptables_rules.yml
+  when: skip_minikube | default(false) == false
+
+- name: Download wire artifact
+  import_playbook: ./download_artifact.yml
+  when: skip_download | default(false) == false
+
+- name: Add minikube nodes to ansible inventory
+  hosts: deploy_node
+  become: yes
+  become_user: "{{ ansible_user }}"
+  tasks:
+  - name: Extract IPs of Minikube nodes
+    shell: |
+      kubectl get nodes -o json | jq -r '.items[].status.addresses[] | select(.type=="InternalIP").address'
+    register: kube_ips
+
+  - name: Store Minikube node IPs as variable
+    set_fact:
+      kubernetes_node_ips: "{{ kube_ips.stdout_lines }}"
+
+  - name: Extract IP of "{{ minikube_network_name }}" interface on host machine
+    shell: |
+      docker network inspect "{{ minikube_network_name }}" | jq -r '.[0].IPAM.Config[0].Gateway'
+    register: host_ip
+
+  - name: Setup ssh proxy access to k8s-cluster nodes
+    become: no
+    block:
+    - name: Create a temporary directory
+      tempfile:
+        state: directory
+        suffix: _ssh_keys
+      register: temp_dir
+      delegate_to: localhost
+
+    - name: Debug message for private key writing
+      ansible.builtin.debug:
+        msg: "Creating a key {{ temp_dir.path }}/id_rsa_wire on the localhost to enable access to minikube nodes via ssh proxy"
+
+    - name: Write the private key to a file
+      copy:
+        content: "{{ ssh_private_key }}"
+        dest: "{{ temp_dir.path }}/id_rsa_wire"
+        mode: '0600'
+      delegate_to: localhost
+
+    - name: Add containers to inventory
+      become: yes
+      become_user: "{{ ansible_user }}"
+      add_host:
+        name: "{{ item }}"
+        groups: k8s-cluster
+        ansible_user: docker
+        ansible_ssh_common_args: >-
+          -o ProxyCommand="ssh {% if ansible_ssh_private_key_file is defined %}-i {{ ansible_ssh_private_key_file }}{% endif %}
+          -o StrictHostKeyChecking=no
+          -o UserKnownHostsFile=/dev/null
+          -W %h:%p -q {{ ansible_user }}@{{ ansible_host }}"
+          -o StrictHostKeyChecking=no
+          -o UserKnownHostsFile=/dev/null
+          -i {{ temp_dir.path }}/id_rsa_wire
+          -o BatchMode=yes
+      loop: "{{ kubernetes_node_ips }}"
+
+    - name: Define inventory for the assethost to match the hostname in setup-offline-sources.yml
+      become: yes
+      become_user: "{{ ansible_user }}"
+      add_host:
+        name: "{{ host_ip.stdout }}"
+        group: assethost
+        ansible_user: "{{ ansible_user }}"
+        ansible_ssh_common_args: >-
+          -o ProxyCommand="ssh {% if ansible_ssh_private_key_file is defined %}-i {{ ansible_ssh_private_key_file }}{% endif %}
+          -o StrictHostKeyChecking=no
+          -o UserKnownHostsFile=/dev/null
+          -W %h:%p -q {{ ansible_user }}@{{ ansible_host }}"
+          -o StrictHostKeyChecking=no
+          -o UserKnownHostsFile=/dev/null
+          -o BatchMode=yes
+          {% if ansible_ssh_private_key_file is defined %}-i {{ ansible_ssh_private_key_file }}{% endif %}
+
+    - name: Set assethost_host fact for each node in k8s-cluster
+      set_fact:
+        assethost_host: "{{ host_ip.stdout }}:8080"
+      delegate_to: "{{ item }}"
+      delegate_facts: true
+      with_items: "{{ groups['k8s-cluster'] }}"
+
+    when: ((skip_asset_host | default(false) == false) or (skip_setup_offline_seed | default(false) == false))
+
+- name: Setup Asset Host
+  import_playbook: ../setup-offline-sources.yml
+  vars:
+    demo_deploy: true
+    remote_src: yes
+    src_path: /home/{{ ansible_user }}/wire-server-deploy
+  when: skip_asset_host | default(false) == false
+
+- name: Seed the containers in k8s-cluster nodes
+  import_playbook: ../seed-offline-containerd.yml
+  vars:
+    docker_permission_fix: true
+    skip_seed_system_containers: true
+  when: skip_setup_offline_seed | default(false) == false
+
+- name: Create wire secrets
+  import_playbook: ./wire_secrets.yml
+  when: ((skip_wire_secrets | default(false) == false) and (skip_helm_install | default(false) == false))
+
+- name: Install Helm charts
+  import_playbook: ./helm_install.yml
+  when: skip_helm_install | default(false) == false
+
+# since, the temp_dir are created in a different set of tasks, these directories need to be searched 
+- name: Clean up temporary directories
+  hosts: localhost
+  tasks:
+    - name: Find all temporary directories
+      find:
+        paths: /tmp
+        patterns: "ansible.*_ssh_keys"
+        file_type: directory
+      register: temp_dirs
+
+    - name: List all temporary directories
+      debug:
+        msg: "Found temporary directory: {{ item.path }}"
+      loop: "{{ temp_dirs.files }}"
+      loop_control:
+        label: "{{ item.path }}"
+
+    - name: Delete all temporary directories
+      file:
+        path: "{{ item.path }}"
+        state: absent
+      loop: "{{ temp_dirs.files }}"
+      loop_control:
+        label: "{{ item.path }}"

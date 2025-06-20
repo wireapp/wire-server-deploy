@@ -15,7 +15,7 @@ ssh_private_key=$(cd terraform/examples/wire-server-deploy-offline-hetzner ; ter
 eval `ssh-agent`
 ssh-add - <<< "$ssh_private_key"
 
-ssh -oStrictHostKeyChecking=accept-new -oConnectionAttempts=10 "root@$adminhost" tar xzv < ./assets.tgz
+ssh -oStrictHostKeyChecking=accept-new -oConnectionAttempts=10 "root@$adminhost" tar xzv < offline/default-build/output/assets.tgz
 
 (cd terraform/examples/wire-server-deploy-offline-hetzner; terraform output -json static-inventory)| ssh "root@$adminhost" tee ./ansible/inventory/offline/inventory.yml
 
