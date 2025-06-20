@@ -22,7 +22,7 @@ jobs:
         with:
           submodules: true
       - uses: cachix/install-nix-action@v27
-      # - uses: cachix/cachix-action@v15
+      - uses: cachix/cachix-action@v15
         with:
           name: wire-server
           signingKey: "${{ secrets.CACHIX_SIGNING_KEY }}"
