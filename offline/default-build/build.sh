@@ -62,7 +62,7 @@ cp -r "${ROOT_DIR}"/values "${OUTPUT_DIR}"/
 "${TASKS_DIR}"/build_linux_pkgs.sh "${OUTPUT_DIR}" "${ROOT_DIR}"
 
 # Creating system containers tarball
-"${TASKS_DIR}"/proc_system_containers.sh "${OUTPUT_DIR}"
+bash -x "${TASKS_DIR}"/proc_system_containers.sh "${OUTPUT_DIR}"
 
 # Processing wire binaries
 "${TASKS_DIR}"/proc_wire_binaries.sh "${OUTPUT_DIR}" "${ROOT_DIR}"
