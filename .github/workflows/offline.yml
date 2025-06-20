@@ -27,10 +27,17 @@ jobs:
           name: wire-server
           signingKey: "${{ secrets.CACHIX_SIGNING_KEY }}"
 
-      # - name: Install nix environment
-      #   run: nix-env -f default.nix -iA env
-      - name: Build Nix environment (no cache)
-        run: nix-build default.nix -A env --option build-use-substitutes false
+      - name: Remove stale bitnami-shell from nix store (optional)
+        run: |
+          paths=$(nix path-info -r -f default.nix env | grep bitnami-shell || true)
+          if [ -n "$paths" ]; then
+            echo "Deleting stale bitnami-shell paths"
+            sudo nix-store --delete $paths
+          else
+            echo "Nothing to delete."
+          fi
+      - name: Install nix environment
+        run: nix-env -f default.nix -iA env
       - name: Get upload name
         id: upload_name
         run: |
