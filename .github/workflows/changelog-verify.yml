@@ -1,0 +1,47 @@
+name: Changelog verification
+on:
+  pull_request:
+    branches: [master]
+  push:
+    branches: [master]
+
+permissions:
+  contents: read
+
+jobs:
+  commitlint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: true
+          fetch-depth: 0 
+      - name: Setup node
+        uses: actions/setup-node@v4
+        with:
+          node-version: lts/*
+      - name: Install commitlint
+        run: npm install -D @commitlint/cli @commitlint/config-conventional
+      - name: Print versions
+        run: |
+          git --version
+          node --version
+          npm --version
+          npx commitlint --version
+
+      - name: Validate current commit (last commit) with commitlint
+        run: |
+          echo "export default { extends: ['@commitlint/config-conventional'] };" > commitlint.config.js 
+          npx commitlint -g commitlint.config.js --last --verbose 2>/dev/null
+
+      - name: Check for entry in changelog.d changes in the PR
+        run: |
+          BASE_SHA=${{ github.event.pull_request.base.sha }}
+          HEAD_SHA=${{ github.event.pull_request.head.sha }}
+
+          CHANGED_FILES=$(git diff --name-only $BASE_SHA $HEAD_SHA -- changelog.d/ | grep -vE "^$")
+
+          if [ -z "$CHANGED_FILES" ]; then
+            echo "No files changed in changelog.d/"
+            exit 1
+          fi
