@@ -27,9 +27,17 @@ jobs:
           name: wire-server
           signingKey: "${{ secrets.CACHIX_SIGNING_KEY }}"
 
-      - name: Install nix environment
-        run: nix-env -f default.nix -iA env
-
+      # - name: Install nix environment
+      #   run: nix-env -f default.nix -iA env
+      - name: Build Nix environment (with optional cache skip)
+        run: |
+          if echo "${{ github.event.head_commit.message }}" | grep -q "\[no-cache\]"; then
+            echo "Skipping binary cache: forcing full rebuild..."
+            nix-build default.nix -A env --option build-use-substitutes false -L
+          else
+            echo "Using cache to build env..."
+            nix-build default.nix -A env -L
+          fi
       - name: Get upload name
         id: upload_name
         run: |
