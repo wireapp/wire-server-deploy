@@ -1,6 +1,16 @@
-# Instrument wire application for monitoring
+# Purpose
+
+This document explains how to instrument the Wire server Kubernetes deployment with Prometheus and Grafana monitoring.
 
 Follow these guidelines to instrument your deployed wire cluster for monitoring. These instructions bring you through  setting up the prometheus operator (with the kube-prometheus-helm stack) to scrape metrics, exposing those metrics as a datasource for Grafana. Additionally, if you are using our wire-in-a-box setup, we setup a grafana VM, with dashboards.
+
+## Instrumentation Overview
+
+- Setup Grafana (optional as the section describes how to setup grafana on a VM for test purpose)
+- Configure Prometheus with customized kube-prometheus-stack helm chart
+- Configure Prometheus scrape job for wire services
+- Importing dashboards into Grafana
+
 
 ## Setup Grafana:
 We do not provide grafana instrumentation for the production environment. We expect the customers/clients will bring their own grafana instance and can connect the prometheus datasource which will get shipped to the production environment.
@@ -59,20 +69,28 @@ Prometheus operator will be configured to scrape metrics from k8s cluster and wi
 - Setup a local persistent volume to use as prometheus data storage on a certain node
 - Disable both Alertmanager and grafana operator which is part of the helm stack.
 
-Before installing the helm chart, there are some works todo. First make sure the `wire-server-deploy` bundle has the `kube-prometheus-stack` chart. If the chart is not there, get it from one of the latest bundle and copy it to the current `charts` directory of the `wire-server-deploy` bundle . In case the `kube-prometheus-stack` chart needs to be copied in the running `wire-server-deploy` bundle there are some extra configurations needs to be made to have a successful deployment. The following sections cover both cases.
+Before installing the helm chart, there are some works todo. First make sure the `wire-server-deploy` bundle has the `kube-prometheus-stack` chart. If the chart is not there, get it from one of the latest bundle and copy it to the current `charts` directory of the `wire-server-deploy` bundle. In case the `kube-prometheus-stack` chart needs to be copied in the running `wire-server-deploy` bundle there are some extra configurations needs to be made to have a successful deployment. The following sections cover both cases.
 
-### Update the values.yaml
+### Instrument prometheus to scrape metrics
 
-All the values defined in the values.yaml file are default values and some place holders where the user needs to set the values. Before install/upgrade, please carefully check those values by following the comments in the file.
+All the configuration values are defined in the `values.yaml` file in the chart. Before running install/upgrade of the helm chart, please carefully check those values by following the comments in the file.
 
 Get the `kube-prometheus-stack` helm charts in the `/charts` directory, then modify the `kube-prometheus-stack/values.yaml`. Here is the step by step guidelines:
 
-What values need to be modified are documented in the values.yaml file
+Open the `values.yaml` file and read the configurations.
 
 ```bash
 cat charts/kube-prometheus-stack/values.yaml
 ```
-And update the values based on your configurations.
+There are several configurable parts in values file
+
+- The global part where we define the values to create a local persistent volume in a fixed k8s node.
+- Then in the `prometheus:` field we set up the ingress (default value is `false`), certification and basic-auth
+- In the `prometheusSpec:` field we first configure the operator to scrape metrics from all the service and pod monitors from any namespace
+- In the `prometheusSpec.affinity:` field we configure the prometheus to be pinned on the node where the PV got created.
+- In the `storageSpec:` field we configure the storage for prometheus data.
+
+All the sections below described how and what to modify to have a successful prometheus instrumentation.
 
 #### Define values to create a Local PV
 
@@ -126,7 +144,7 @@ prometheus:
     password: <password>
 ```
 
-#### Get the domain name and certificate
+#### Get the domain name and certificate for the prometheus ingress
 
 - hosts: Assuming that the sub domain name for prometheus starts with `prometheus`. So the sub domain would be `prometheus.<domain_name>`. Put the right domain in the `hosts` and `tls.hosts` field.
 
@@ -160,7 +178,7 @@ spec:
   ....
 ```
 
-### Install the helm chart
+#### Install the helm chart
 
 Before proceeding to this step, make sure the values.yaml file has been updated with the correct values. Now install the kube-prometheus-stack helm.
 
@@ -179,12 +197,46 @@ d helm upgrade --install prometheus \
 - The `--create-namespace` flag will create the namespace if it does not exist.
 
 After successful deployment of the Chart, the output will show all the configured resources including basic auth info.
-we should be able to browse the prometheus with `https://prometheus.<domain>`. Check the targets health once prometheus is ready: `https://prometheus.<domain_name>/targets`.
+You should be able to browse the prometheus endpoint with `https://prometheus.<domain>`. Check the targets health once prometheus is ready: `https://prometheus.<domain_name>/targets`.
 
 Check the output with helm status command `$ helm status prometheus -n monitoring`
 
+#### Scrape the metric from ingress-nginx
 
-### Get the metrics from wire services
+To scrape ingress-nginx metrics, `serviceMonitor` needs to be enabled in the `values/ingress-nginx-controller/values.yaml` file. If the `metrics.serviceMonitor` enablement block is not present in the file, it needs to be manually added in the file.
+
+First take a look if the values have the `metrics.serviceMonitor` enablement block. If the block is present then ingress-nginx is ready to get scraped.
+
+```bash
+cat values/ingress-nginx-controller/values.yaml
+```
+
+If not then add the following block to the end of the file within `ingress-nginx.controller:` field
+
+```yaml
+ingress-nginx:
+  controller:
+  .....
+    # Enable prometheus operator to scrape metrics from the ingress-nginx controller with servicemonitor.
+    metrics:
+      enabled: true
+      serviceMonitor:
+        enabled: true
+```
+Save the file and upgrade the ingress-nginx helm chart.
+
+Before and after running the helm upgrade, find out on which node the ingress-nginx-controller pod is running.
+
+```bash
+d kubectl get pods -l app.kubernetes.io/name=ingress-nginx -o=custom-columns=NAME:.metadata.name,NODE:.spec.nodeName,IP:.status.hostIP
+```
+
+```bash
+d helm upgrade --install ingress-nginx-controller ./charts/ingress-nginx-controller --values ./values/ingress-nginx-controller/values.yaml
+```
+Note: After the helm upgrade it might happen that the ingress is scheduled to a different node () which will cause drop of the outbound traffic and you will get a 503 error. To resolve that please follow the [Incoming SSL Traffic section](./docs_ubuntu_22.04.md#incoming-ssl-traffic).
+
+#### Scrape the metrics from the wire services
 
 After the kube-prometheus-stack helm install, the k8s metrics will be scraped by the prometheus operator but not the wire service metrics. To scrape wire service metrics with prometheus, `ServiceMonitor` CRD needs to be enabled for wire services.
 
@@ -219,7 +271,7 @@ background-worker:
     serviceMonitor:
       enabled: true
 ```
-Add the metrics block to the all above mentioned services.
+Add the metrics block to all the above-mentioned services.
 
 When `serviceMonitor` enablement block is enabled, please upgrade the wire-server helm chart like:
 
@@ -273,12 +325,8 @@ Now open the grafana with the browser and click the Data sources tab.
 
 Test your datasource by clicking the Metrics in the Drilldown section. By choosing the configured datasource you should be able to see the metrics.
 
-### Dashboards
 
-Import the dashboard JSON's from dashboards directory to get started.
-There are two ways dashboards could be uploaded, one is via API and another is manually. Dashboards json has different format for manual and api based upload.
-
-#### Upload via API
+### Importing dashboards into Grafana 
 
 In the artifacts dashboards directory, there is a script `dashboards/grafana_sync.sh` which will take care of the uploading all the dashboards from `dashboards/api_upload` directory. Before proceeding to run the script, it requires an API token and Grafana url where the dashboards will be uploaded.
 
@@ -288,7 +336,7 @@ On the left side panel of Grafana, find the `Administration` link, then extend t
 - Go to `Users and Access` section
 - Go to `Service Accounts`
 - Add a new service account (provide a display name and Role as either `Editor` or `Admin`)
-- Proceed to create the account and then create the token (do not forget to copy the token a safe place)
+- Proceed to create the account and then create the token (do not forget to copy the token to a safe place)
 
 Then replace the `<GRAFANA_URL>` and `<API_TOKEN>`  with yours
 

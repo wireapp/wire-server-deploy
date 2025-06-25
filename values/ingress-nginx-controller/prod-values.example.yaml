@@ -17,5 +17,3 @@ ingress-nginx:
       enabled: true
       serviceMonitor:
         enabled: true
-        additionalLabels:
-          release: wire-server # to align with prometheus operator and other servicemonitors
