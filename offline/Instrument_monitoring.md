@@ -3,11 +3,11 @@
 Follow these guidelines to instrument your deployed wire cluster for monitoring. These instructions bring you through  setting up the prometheus operator (with the kube-prometheus-helm stack) to scrape metrics, exposing those metrics as a datasource for Grafana. Additionally, if you are using our wire-in-a-box setup, we setup a grafana VM, with dashboards.
 
 ## Setup Grafana:
-We do not provide grafana instrumentation for the production environment. We expect the customers/clients will bring their own grafana instance and can connect the prometheus datasource which will get shipped to production environment.
+We do not provide grafana instrumentation for the production environment. We expect the customers/clients will bring their own grafana instance and can connect the prometheus datasource which will get shipped to the production environment.
 
-If you already have a grafana instance in your environment or you need to configure the grafana for the production we encourage to follow the upstream [grafana installation document](https://grafana.com/docs/grafana/latest/setup-grafana/installation/).
+If there is an exiting grafana instance or a new instance needs to be configured for the production environment, we encourage to follow the upstream [grafana installation document](https://grafana.com/docs/grafana/latest/setup-grafana/installation/).
 
-In a test environment if there is no existing grafana then you can setup/install grafana by configuring a VM. Here is how to do it by running couple of scripts, in a virsh (wire-in-a-box) environment:
+In a test environment if there is no existing grafana then configuring a grafana instance on a VM will be good enough. Here is how to do it by running couple of scripts, in a virsh (wire-in-a-box) environment:
 
 ### Configure a VM for grafana
 
@@ -53,12 +53,13 @@ Note: exposing Grafana to the network may have security implications and users s
 
 Prometheus operator will be configured to scrape metrics from k8s cluster and wire services by installing (kube-prometheus-stack)[https://github.com/prometheus-community/helm-charts/blob/main/charts/kube-prometheus-stack/README.md] helm chart. We have configured this chart with overridden values which will setup the followings:
 
-- An `ingress` to expose the prometheus endpoint
+- An `ingress` to expose the prometheus endpoint if enabled
 - Basic authentication to the endpoint
 - Automatic certificate creation with cert-manager (Assuming cert-manager is already present in the k8s cluster)
+- Setup a local persistent volume to use as prometheus data storage on a certain node
 - Disable both Alertmanager and grafana operator which is part of the helm stack.
 
-Before installing the helm chart, there are some works todo.
+Before installing the helm chart, there are some works todo. First make sure the `wire-server-deploy` bundle has the `kube-prometheus-stack` chart. If the chart is not there, get it from one of the latest bundle and copy it to the current `charts` directory of the `wire-server-deploy` bundle . In case the `kube-prometheus-stack` chart needs to be copied in the running `wire-server-deploy` bundle there are some extra configurations needs to be made to have a successful deployment. The following sections cover both cases.
 
 ### Update the values.yaml
 
@@ -109,7 +110,21 @@ sudo chmod 755 /mnt/prometheus-data
 - sets the permissions of the directory so that Prometheus (running as a non-root user) can access and write to it.
 
 #### Ingress and Basic auth credentials
-By default the `ingress` is disabled for prometheus, you need to enable it when prometheus will be used as datasource outside the k8s cluster. To enable the `ingress` update the `kube-prometheus-stack.prometheus.ingress:` field . And prometheus ingress uses `basic-auth` for authetication.
+
+By default the `ingress` is disabled for prometheus, Ingress needs to be enabled for prometheus to use as datasource outside the k8s cluster. To enable the `ingress` update the `kube-prometheus-stack.prometheus.ingress:` field.
+
+Prometheus ingress is configured with `basic-auth` for authetication. Basic auth secrets got created with `offline-secrets.sh` in the `values/wire-server/secrets.yaml` file during the preparation phase of the deployment. Please check `values/wire-server/secrets.yaml` file, if the basic auth credentials are present. 
+
+If not that means wire-server-deploy bundle does not have the necessary prometheus configuration components in it. To resolve it, either get the get the `offline-secrets.sh` from the latest bundle and recreate the secrets (required to delete the old `values/wire-server/secrets.yaml`) or edit the existing `values/wire-server/secrets.yaml` to add basic auth credentials there as following:
+
+Add prometheus auth credentials in the end of the secrets.yaml
+
+```yaml
+prometheus:
+  auth:
+    username: <username>
+    password: <password>
+```
 
 #### Get the domain name and certificate
 
@@ -158,7 +173,7 @@ d helm upgrade --install prometheus \
   --create-namespace
 ```
 
-- This command installs (or upgrades) the kube-prometheus-stack Helm chart with the release name wire-server in the monitoring namespace, using custom values.yaml.
+- This command installs (or upgrades) the kube-prometheus-stack Helm chart with the release name `prometheus` in the `monitoring` namespace, using custom values.yaml.
 - Sets the auth secret for basic auth for prometheus endpoint
 - Gets the basic auth secrets from `values/wire-server/secrets.yaml` created with `offline-secrets.sh` script.
 - The `--create-namespace` flag will create the namespace if it does not exist.
@@ -167,6 +182,73 @@ After successful deployment of the Chart, the output will show all the configure
 we should be able to browse the prometheus with `https://prometheus.<domain>`. Check the targets health once prometheus is ready: `https://prometheus.<domain_name>/targets`.
 
 Check the output with helm status command `$ helm status prometheus -n monitoring`
+
+
+### Get the metrics from wire services
+
+After the kube-prometheus-stack helm install, the k8s metrics will be scraped by the prometheus operator but not the wire service metrics. To scrape wire service metrics with prometheus, `ServiceMonitor` CRD needs to be enabled for wire services.
+
+If the wire server was configured with the bundle which has kube-prometheus-stack helm chart in the `charts` directory, then enable `ServiceMonitor` for all the wire services in the `values/wire-server/values.yaml` file. 
+
+If the `values/wire-server/values.yaml` contains metrics value like:
+
+```yaml
+brig: # as like brig all the services will have the serviceMonitor value in the file.
+  ...
+  metrics:
+    serviceMonitor:
+      enabled: false
+```
+
+You can run the following command to enable serviceMonitor for all the services
+
+```bash
+sed -i '/serviceMonitor:/ {n; s/enabled: .*/enabled: true/;}' values/wire-server/values.yaml
+```
+
+Incase the `values/wire-server/values.yaml` file does not contain the  `serviceMonitor` enablement block then it needs to be manually added. As shown above, add the `serviceMonitor` enablement block with `metrics.serviceMonitor.enabled: true` setting for each wire services: `brig, proxy, cannon, cargohold, galley, gundeck, nginz, spar, legalhold, federator, background-worker`. As an example it will look like:
+
+```yaml
+background-worker:
+  config:
+    cassandra:
+      host: cassandra-external
+    # Enable for federation
+    enableFederation: false
+  metrics:
+    serviceMonitor:
+      enabled: true
+```
+Add the metrics block to the all above mentioned services.
+
+When `serviceMonitor` enablement block is enabled, please upgrade the wire-server helm chart like:
+
+```bash
+d helm upgrade --install wire-server ./charts/wire-server --timeout=15m0s --values ./values/wire-server/values.yaml --values ./values/wire-server/secrets.yaml
+```
+
+After a successful run, it will create `ServiceMonitor` CRD for each wire service which will get scraped by the prometheus operator.
+Now the prometheus targets `https://prometheus.<domain_name>/targets` will find the ServiceMonitors of wire services for scraping. Also check any particular metric with labels in the within prometheus query window by providing a metric name, such as: `http_request_duration_seconds_bucket` and run execute.
+
+### Troubleshoot
+
+If the prometheus datasource/query endpoint does not return 200 rather a 503 which means there is something wrong with the configurations. Check the prometheus pod status first.
+
+```bash
+d kubectl get pods -n monitoring -owide
+```
+if the pod `prometheus-prometheus-kube-prometheus-prometheus-*` is not in the `Running` state and still in the initializing phase then take a look at the k8s events
+
+```bash
+d kubectl describe pod prometheus-prometheus-kube-prometheus-prometheus-o -n monitoring -oyaml
+```
+
+The k8s events will provide enough hints to figure out whats the real issue, if it could not find/attach the storageclass and the volume, just got created via the helm chart. In that case check if the PVC is bound to the right storageclass
+
+```bash
+d kubectl get pvc -n monitoring
+```
+If there is no `bound` then it might require to remove the stale PV and create a new one. And finally check the PV has the `CLAIM` to the prometheus.
 
 ### Metrics Collection via Prometheus Operator
 
@@ -189,7 +271,7 @@ Now open the grafana with the browser and click the Data sources tab.
 - Select Basic Authentication in the Authentication part and provide the prometheus credentials
 - Skip TLS Client Authentication or choose it if you have all the certificate info at hand.
 
-Test you data source by clicking the Metrics in the Drilldown section. Choose you configured datasource and you should be able to see the metrics.
+Test your datasource by clicking the Metrics in the Drilldown section. By choosing the configured datasource you should be able to see the metrics.
 
 ### Dashboards
 
@@ -206,7 +288,7 @@ On the left side panel of Grafana, find the `Administration` link, then extend t
 - Go to `Users and Access` section
 - Go to `Service Accounts`
 - Add a new service account (provide a display name and Role as either `Editor` or `Admin`)
-- Proceed to create the account and then create the token (do not forget to copy the token in safer space)
+- Proceed to create the account and then create the token (do not forget to copy the token a safe place)
 
 Then replace the `<GRAFANA_URL>` and `<API_TOKEN>`  with yours
 
