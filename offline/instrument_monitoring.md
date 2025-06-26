@@ -178,7 +178,7 @@ tls:
   # NOTE: enable to automate certificate issuing with jetstack/cert-manager instead of
   #       providing your own certs in secrets.yaml. Cert-manager is not installed automatically,
   #       it needs to be installed beforehand (see ./../../charts/certificate-manager/README.md)
-  useCertManager: false
+  useCertManager: true
   issuer:
     kind: ClusterIssuer
 ```
