@@ -84,10 +84,6 @@ background-worker:
     rabbitmq:
       username: wire-server
       password: verysecurepassword
-prometheus:
-  auth:
-    username: admin
-    password: "${prometheus_pass}"
 EOF
 
 fi
@@ -98,4 +94,15 @@ if [[ ! -f $ANSIBLE_DIR/inventory/offline/group_vars/all/secrets.yaml ]]; then
 minio_access_key: "$minio_access_key"
 minio_secret_key: "$minio_secret_key"
 EOT
+fi
+
+PROM_AUTH_FILE="$VALUES_DIR/kube-prometheus-stack/secrets.yaml"
+if [[ ! -f $PROM_AUTH_FILE ]]; then
+  echo "Writing $PROM_AUTH_FILE"
+  cat <<EOF > $PROM_AUTH_FILE
+prometheus:
+  auth:
+    username: admin
+    password: "${prometheus_pass}"
+EOF
 fi

@@ -61,7 +61,7 @@ Note: exposing Grafana to the network may have security implications and users s
 
 ## Configure Prometheus
 
-Prometheus operator will be configured to scrape metrics from k8s cluster and wire services by installing (kube-prometheus-stack)[https://github.com/prometheus-community/helm-charts/blob/main/charts/kube-prometheus-stack/README.md] helm chart. We have configured this chart with overridden values which will setup the followings:
+Prometheus operator will be configured to scrape metrics from k8s cluster and wire services by installing [kube-prometheus-stack](https://github.com/prometheus-community/helm-charts/blob/main/charts/kube-prometheus-stack/README.md) helm chart. We have configured this chart with overridden values which will setup the followings:
 
 - An `ingress` to expose the prometheus endpoint if enabled
 - Basic authentication to the endpoint
@@ -131,11 +131,15 @@ sudo chmod 755 /mnt/prometheus-data
 
 By default the `ingress` is disabled for prometheus, Ingress needs to be enabled for prometheus to use as datasource outside the k8s cluster. To enable the `ingress` update the `kube-prometheus-stack.prometheus.ingress:` field.
 
-Prometheus ingress is configured with `basic-auth` for authetication. Basic auth secrets got created with `offline-secrets.sh` in the `values/wire-server/secrets.yaml` file during the preparation phase of the deployment. Please check `values/wire-server/secrets.yaml` file, if the basic auth credentials are present. 
+Prometheus ingress is configured with `basic-auth` for authetication. Basic auth secrets got created with `offline-secrets.sh` in the `values/kube-prometheus-stack/secrets.yaml` file during the preparation phase of the deployment. Please check the existence of the `values/kube-prometheus-stack/secrets.yaml` file
 
-If not that means wire-server-deploy bundle does not have the necessary prometheus configuration components in it. To resolve it, either get the get the `offline-secrets.sh` from the latest bundle and recreate the secrets (required to delete the old `values/wire-server/secrets.yaml`) or edit the existing `values/wire-server/secrets.yaml` to add basic auth credentials there as following:
+If there is no `values/kube-prometheus-stack/secrets.yaml` file that means wire-server-deploy bundle does not have the necessary prometheus configuration components in it. To resolve it, either get the `offline-secrets.sh` from the latest bundle and create the secrets or create a `values/kube-prometheus-stack/secrets.yaml` file manually and add the basic auth credentials there as following:
 
-Add prometheus auth credentials in the end of the secrets.yaml
+```bash
+touch values/kube-prometheus-stack/secrets.yaml
+nano values/kube-prometheus-stack/secrets.yaml
+```
+Add prometheus auth credentials in the secrets.yaml
 
 ```yaml
 prometheus:
@@ -148,14 +152,66 @@ prometheus:
 
 - hosts: Assuming that the sub domain name for prometheus starts with `prometheus`. So the sub domain would be `prometheus.<domain_name>`. Put the right domain in the `hosts` and `tls.hosts` field.
 
-- secretName: pick a secretName for certificate, for example it could be `prometheus-tls-cert`. After applying this chart cert-manager will create a certificate named `prometheus-tls-cert` and the issuer will be `clusterIssuer` with the following spec:
+- secretName: pick a secretName for certificate, for example it could be `prometheus-tls-cert`. After applying this chart cert-manager will create a certificate named `prometheus-tls-cert` and the issuer will be `clusterIssuer`
 
-** Get the issuer from k8s env**
+Cert-manager will facilitate creating managing the TLS signed Certificate resource for the prometheus ingress automatically as we are annotating cert-manager with the ingress-shim for prometheus ingress. It is defined in the `values.yaml` as following:
+
+```yaml
+...
+annotations:
+  cert-manager.io/cluster-issuer: letsencrypt-http01
+```
+We are using cluster-issuer to acquire the certificate required for this Ingress. It does not matter which namespace your Ingress resides, as ClusterIssuers are non-namespaced resources.
+
+**Get the issuer from k8s env**
 
 ```bash
 d kubectl get clusterissuer
 ```
 Make sure the `clusterIssuer` present in the k8s environment and if it does not match what we have in the `values.yaml`, replace it with the right one.
+
+If the clusterIssuer does not exist and you only have namespaced scoped `issuer` then convert the `issuer` to `clusterIssuer` by updating the `issuer` `kind` in the `values/nginx-ingress-services/values.yaml`
+
+```yaml
+tls:
+  enabled: true
+  # NOTE: enable to automate certificate issuing with jetstack/cert-manager instead of
+  #       providing your own certs in secrets.yaml. Cert-manager is not installed automatically,
+  #       it needs to be installed beforehand (see ./../../charts/certificate-manager/README.md)
+  useCertManager: false
+  issuer:
+    kind: ClusterIssuer
+```
+Save the file and upgrade the nginx-ingress-service helm chart with:
+
+```bash
+d helm upgrade --install nginx-ingress-services ./charts/nginx-ingress-services --values ./values/nginx-ingress-services/values.yaml --values ./values/nginx-ingress-services/secrets.yaml
+```
+
+Now the check the issuer again to make sure there is a clusterIssuer in the environment. Also check existing certificates are no have `clusterIssuer` as `issueRef`.
+
+#### Install the helm chart
+
+Before proceeding to this step, make sure the values.yaml file has been updated with the correct values. Now install the kube-prometheus-stack helm.
+
+```bash
+d helm upgrade --install prometheus \
+  ./charts/kube-prometheus-stack/ \
+  -f charts/kube-prometheus-stack/values.yaml \
+  -f values/wire-server/secrets.yaml \
+  --namespace monitoring \
+  --create-namespace
+```
+
+- This command installs (or upgrades) the kube-prometheus-stack Helm chart with the release name `prometheus` in the `monitoring` namespace, using custom values.yaml.
+- Sets the auth secret for basic auth for prometheus endpoint
+- Gets the basic auth secrets from `values/wire-server/secrets.yaml` created with `offline-secrets.sh` script.
+- The `--create-namespace` flag will create the namespace if it does not exist.
+
+After successful deployment of the Chart, the output will show all the configured resources including basic auth info.
+You should be able to browse the prometheus endpoint with `https://prometheus.<domain>`. Check the targets health once prometheus is ready: `https://prometheus.<domain_name>/targets`.
+
+Check the output with helm status command `$ helm status prometheus -n monitoring`
 
 **Test the issuer after applying the chart**
 
@@ -177,29 +233,7 @@ spec:
   secretName: prometheus-tls-cert
   ....
 ```
-
-#### Install the helm chart
-
-Before proceeding to this step, make sure the values.yaml file has been updated with the correct values. Now install the kube-prometheus-stack helm.
-
-```bash
-d helm upgrade --install prometheus \
-  ./charts/kube-prometheus-stack/ \
-  -f charts/kube-prometheus-stack/values.yaml \
-  -f values/wire-server/secrets.yaml \
-  --namespace monitoring \ 
-  --create-namespace
-```
-
-- This command installs (or upgrades) the kube-prometheus-stack Helm chart with the release name `prometheus` in the `monitoring` namespace, using custom values.yaml.
-- Sets the auth secret for basic auth for prometheus endpoint
-- Gets the basic auth secrets from `values/wire-server/secrets.yaml` created with `offline-secrets.sh` script.
-- The `--create-namespace` flag will create the namespace if it does not exist.
-
-After successful deployment of the Chart, the output will show all the configured resources including basic auth info.
-You should be able to browse the prometheus endpoint with `https://prometheus.<domain>`. Check the targets health once prometheus is ready: `https://prometheus.<domain_name>/targets`.
-
-Check the output with helm status command `$ helm status prometheus -n monitoring`
+The certificate should also be in the `Ready` state.
 
 #### Scrape the metric from ingress-nginx
 
@@ -211,7 +245,7 @@ First take a look if the values have the `metrics.serviceMonitor` enablement blo
 cat values/ingress-nginx-controller/values.yaml
 ```
 
-If not then add the following block to the end of the file within `ingress-nginx.controller:` field
+If the metrics block is not in the values file then add the following block to the end of the file within `ingress-nginx.controller:` field
 
 ```yaml
 ingress-nginx:
@@ -234,7 +268,7 @@ d kubectl get pods -l app.kubernetes.io/name=ingress-nginx -o=custom-columns=NAM
 ```bash
 d helm upgrade --install ingress-nginx-controller ./charts/ingress-nginx-controller --values ./values/ingress-nginx-controller/values.yaml
 ```
-Note: After the helm upgrade it might happen that the ingress is scheduled to a different node () which will cause drop of the outbound traffic and you will get a 503 error. To resolve that please follow the [Incoming SSL Traffic section](./docs_ubuntu_22.04.md#incoming-ssl-traffic).
+Note: After the helm upgrade it might happen that the ingress is scheduled to a different node which may cause the drop of the outbound traffic and you will get a 503 error. To resolve that please follow the [Incoming SSL Traffic section](./docs_ubuntu_22.04.md#incoming-ssl-traffic).
 
 #### Scrape the metrics from the wire services
 
@@ -350,7 +384,7 @@ chmod +x dashboards/grafana_sync.sh
 ./dashboards/grafana_sync.sh
 ```
 
-All the dashboards should be uploaded.
+All the dashboards should be uploaded. If the dashboard does not show any graph, refresh the dashboard or open the individual dashboard panel in the `edit` mode and refresh the `Query inspector`.
 
 #### Manual Upload
 
