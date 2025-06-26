@@ -198,17 +198,17 @@ Before proceeding to this step, make sure the values.yaml file has been updated 
 d helm upgrade --install prometheus \
   ./charts/kube-prometheus-stack/ \
   -f charts/kube-prometheus-stack/values.yaml \
-  -f values/wire-server/secrets.yaml \
+  -f values/kube-prometheus-stack/secrets.yaml \
   --namespace monitoring \
   --create-namespace
 ```
 
 - This command installs (or upgrades) the kube-prometheus-stack Helm chart with the release name `prometheus` in the `monitoring` namespace, using custom values.yaml.
-- Sets the auth secret for basic auth for prometheus endpoint
-- Gets the basic auth secrets from `values/wire-server/secrets.yaml` created with `offline-secrets.sh` script.
+- Overrides the values of the upstream chart `kube-prometheus-stack` with custom values defined in the `charts/kube-prometheus-stack/values.yaml`
+- Sets the auth secret for basic auth defined in the `values/kube-prometheus-stack/secrets.yaml`.
 - The `--create-namespace` flag will create the namespace if it does not exist.
 
-After successful deployment of the Chart, the output will show all the configured resources including basic auth info.
+After a successful deployment of the Chart, the output will show all the configured resources including basic auth info.
 You should be able to browse the prometheus endpoint with `https://prometheus.<domain>`. Check the targets health once prometheus is ready: `https://prometheus.<domain_name>/targets`.
 
 Check the output with helm status command `$ helm status prometheus -n monitoring`
