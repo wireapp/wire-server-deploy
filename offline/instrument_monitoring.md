@@ -334,7 +334,7 @@ The k8s events will provide enough hints to figure out whats the real issue, if 
 ```bash
 d kubectl get pvc -n monitoring
 ```
-If there is no `bound` then it might require to remove the stale PV and create a new one. And finally check the PV has the `CLAIM` to the prometheus.
+If the status is not `Bound` then it might require to remove the stale PV and create a new one by rerunning the helm.
 
 ### Metrics Collection via Prometheus Operator
 
@@ -349,6 +349,32 @@ The **Prometheus Operator** is responsible for scraping metrics from various sou
 - NGINX Ingress Controller Metrics: Request, latency, and error metrics from the Ingress controller
 
 These metrics are discovered and scraped based on label selectors defined in the respective ServiceMonitor and PodMonitor resources.
+
+#### Metrics for calling services
+
+**COTURN Metrics**
+
+Coturn metrics are scraped by prometheus operator with a `scrapeConfig` job defined in the charts values.yaml file. So, when the chart is installed it will automatically configure the `coturn-with-fallback` job. It's defined this way to add `fallback_scrape_protocol: "PrometheusText0.0.4"` content-type for prometheus operator to scrape metrics. By default the content-type is blank and prometheus rejects to scrape.
+
+**SFTD metrics*
+
+To enable SFTD metrics, you need to enable the SFTD `serviceMonitor` in the `charts/sftd/values.yaml` file.
+
+Open the values.yaml in the edit mode and update to `metrics.serviceMonitor.enabled` field to `true`.
+
+```bash
+nano charts/sftd/values.yaml
+```
+```yaml
+metrics:
+  serviceMonitor:
+    enabled: true
+```
+Then run the `sftd` helm upgrade command
+
+```bash
+d helm upgrade --install sftd ./charts/sftd --set 'nodeSelector.wire\.com/role=sftd' --values values/sftd/values.yaml
+```
 
 ### Setup prometheus as datasource for grafana
 
