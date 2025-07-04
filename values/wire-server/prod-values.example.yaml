@@ -97,7 +97,9 @@ brig:
       # - "turn:<IP of coturn2>:3478"
       # - "turn:<IP of coturn1>:3478?transport=tcp"
       # - "turn:<IP of coturn2>:3478?transport=tcp"
-
+  metrics:
+    serviceMonitor:
+      enabled: false
 
 proxy:
   replicaCount: 3
@@ -110,7 +112,9 @@ proxy:
 #      noProxyList:
 #        - "local.example.com"
 #        - "10.23.0.0/16"
-
+  metrics:
+    serviceMonitor:
+      enabled: false
 cannon:
   replicaCount: 3
 #  image:
@@ -120,7 +124,9 @@ cannon:
   config:
     cassandra: 
       host: cassandra-external
-
+  metrics:
+    serviceMonitor:
+      enabled: false
 cargohold:
   replicaCount: 3
 #  image:
@@ -141,7 +147,9 @@ cargohold:
 #      noProxyList:
 #        - "local.example.com"
 #        - "10.23.0.0/16"
-
+  metrics:
+    serviceMonitor:
+      enabled: false
 galley:
   replicaCount: 3
 #  image:
@@ -171,7 +179,9 @@ galley:
 #      noProxyList:
 #        - "local.example.com"
 #        - "10.23.0.0/16"
-
+  metrics:
+    serviceMonitor:
+      enabled: false
 gundeck:
   replicaCount: 3
 #  image:
@@ -193,7 +203,9 @@ gundeck:
 #      noProxyList:
 #        - "local.example.com"
 #        - "10.23.0.0/16"
-
+  metrics:
+    serviceMonitor:
+      enabled: false
 nginz:
   replicaCount: 3
   config:
@@ -223,7 +235,9 @@ nginz:
   # For demo mode only, we don't need to keep websocket connections open on upgrade:
   drainTimeout: 10
   terminationGracePeriodSeconds: 30
-
+  metrics:
+    serviceMonitor:
+      enabled: false
 spar:
   replicaCount: 3
 #  image:
@@ -248,21 +262,30 @@ spar:
 #      noProxyList:
 #        - "local.example.com"
 #        - "10.23.0.0/16"
-
+  metrics:
+    serviceMonitor:
+      enabled: false
 
 # Only needed when legalhold is enabled
 legalhold:
   host: "legalhold.example.com"
   wireApiHost: "https://nginz-https.example.com"
-
+  metrics:
+    serviceMonitor:
+      enabled: false
 # Only needed when federation is enabled
 federator:
   tls:
     useSharedFederatorSecret: true
-
+  metrics:
+    serviceMonitor:
+      enabled: false
 background-worker:
   config:
     cassandra:
       host: cassandra-external
     # Enable for federation
     enableFederation: false
+  metrics:
+    serviceMonitor:
+      enabled: false
