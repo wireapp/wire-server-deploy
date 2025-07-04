@@ -44,7 +44,7 @@ When the VM is ready, you will be able to `ssh` to the VM. Now we can start inst
 
 Run `install-grafana.sh` on grafananode VM. You can copy the file from `/bin` directory to the grafananode and can run from the host machine as following:
 
-```ssh
+```bash
 scp -i ~/.ssh/id_ed25519 ./bin/install-grafana.sh demo@192.168.122.100:/tmp/
 ssh demo@192.168.122.100 'bash /tmp/install-grafana.sh'
 ```
@@ -388,7 +388,12 @@ Test your datasource by clicking the Metrics in the Drilldown section. By choosi
 
 ### Importing dashboards into Grafana 
 
-In the artifacts dashboards directory, there is a script `dashboards/grafana_sync.sh` which will take care of the uploading all the dashboards from `dashboards/api_upload` directory. Before proceeding to run the script, it requires an API token and Grafana url where the dashboards will be uploaded.
+In the artifacts dashboards directory, there is a script `dashboards/grafana_sync.sh` which will take care of the uploading all the dashboards from `dashboards/api_upload` directory. This directory contains the JSON formatted dashboards which are tailored to upload via API. Dashboards JSON's comes with two different flavour, one for manual upload and one for api upload. The following sections describe both options:
+
+
+#### Upload via API
+
+Before proceeding to run the script, it requires an API token and Grafana url where the dashboards will be uploaded.
 
 **How to get the API token**
 
@@ -398,7 +403,7 @@ On the left side panel of Grafana, find the `Administration` link, then extend t
 - Add a new service account (provide a display name and Role as either `Editor` or `Admin`)
 - Proceed to create the account and then create the token (do not forget to copy the token to a safe place)
 
-Then replace the `<GRAFANA_URL>` and `<API_TOKEN>`  with yours
+Replace the `<GRAFANA_URL>` and `<API_TOKEN>`  with the granafa instance URL where the dashboards will be uploaded and the token you just created. Make sure you can ping the grafana url from the machine where with script will run.
 
 ```bash
 cat dashboards/grafana_sync.sh
@@ -410,8 +415,14 @@ chmod +x dashboards/grafana_sync.sh
 ./dashboards/grafana_sync.sh
 ```
 
-All the dashboards should be uploaded. If the dashboard does not show any graph, refresh the dashboard or open the individual dashboard panel in the `edit` mode and refresh the `Query inspector`.
-
 #### Manual Upload
 
-To upload manually copy the dashboards json from `dashboards/manual_upload` directory and import to your grafana instance one by one.
+`dashboards/manual_upload` directory consists the dashboard JSON's which can be uploaded manually. To upload manually,
+
+- Go to the left menu → **Dashboards → Import**
+- Click **Upload JSON file** and select your file from `dashboards/manual_upload` directory
+- Set the Prometheus datasource (usually detected automatically)
+- Click "Import"
+
+
+All the dashboards should be uploaded. If the dashboard does not show any graph, refresh the dashboard or open the individual dashboard panel in the `edit` mode and refresh the `Query inspector`.

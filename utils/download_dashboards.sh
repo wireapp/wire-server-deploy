@@ -2,7 +2,7 @@
 
 GRAFANA_URL="<GRAFANA_URL>"  # Replace with your Grafana URL
 API_TOKEN="<API_TOKEN>"  # Replace with your Grafana API token
-OUTPUT_DIR="./downloaded_dashboards"
+OUTPUT_DIR="./dashboards/api_upload" # create the directory where dashboards will be saved
 
 mkdir -p "$OUTPUT_DIR"
 
