@@ -40,8 +40,6 @@ docker.io/library/nginx:1.25.4-alpine
 bats/bats:1.11.1
 cr.step.sm/smallstep/step-ca:0.25.3-rc7
 registry.k8s.io/ingress-nginx/kube-webhook-certgen:v20231011-8b53cabe0
-docker.io/bitnami/bitnami-shell:11-debian-11-r38
-docker.io/bitnami/postgresql:14.5.0-debian-11-r24
 EOF
 }
 
