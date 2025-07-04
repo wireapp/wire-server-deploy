@@ -51,7 +51,7 @@
         kubeadm kubeconfig user --client-name system:kube-controller-manager --config /etc/kubernetes/kubeadm-config.yaml > /etc/kubernetes/controller-manager.conf
         kubeadm kubeconfig user --client-name system:kube-scheduler --config /etc/kubernetes/kubeadm-config.yaml > /etc/kubernetes/scheduler.conf
         # note: if apiserver_loadbalancer_domain_name is not defined it might be that you talk to the cps directly
-        # in that case replace {{ apiserver_loadbalancer_domain_name }} with the public ip / domain of the cps
+        # in that case replace pass apiserver_loadbalancer_domain_name to ansible with `-e` flag and with the public ip / domain of the cps
         kubeadm kubeconfig user --client-name system:node:$(hostname) --org system:nodes --config /etc/kubernetes/kubeadm-config.yaml > /etc/kubernetes/kubelet.conf
 
         kubeadm kubeconfig user --client-name kubernetes-admin --org system:masters --config /etc/kubernetes/kubeadm-config.yaml > /etc/kubernetes/admin.conf
