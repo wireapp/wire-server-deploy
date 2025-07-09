@@ -2,7 +2,7 @@
 
 This document explains how to instrument the Wire server Kubernetes deployment with Prometheus and Grafana monitoring.
 
-Follow these guidelines to instrument your deployed wire cluster for monitoring. These instructions bring you through  setting up the prometheus operator (with the kube-prometheus-helm stack) to scrape metrics, exposing those metrics as a datasource for Grafana. Additionally, if you are using our wire-in-a-box setup, we setup a grafana VM, with dashboards.
+Follow these guidelines to instrument your deployed wire cluster for monitoring. These instructions bring you through setting up the prometheus operator (with the kube-prometheus-helm stack) to scrape metrics, exposing those metrics as a datasource for Grafana. Additionally, if you are using our wire-in-a-box setup, we setup a grafana VM, with dashboards.
 
 ## Instrumentation Overview
 
@@ -48,7 +48,7 @@ Run `install-grafana.sh` on grafananode VM. You can copy the file from `/bin` di
 scp -i ~/.ssh/id_ed25519 ./bin/install-grafana.sh demo@192.168.122.100:/tmp/
 ssh demo@192.168.122.100 'bash /tmp/install-grafana.sh'
 ```
-This script will install grafana on the VM which is not accessible outside of the host machine. To make it accessible, we need to update the `iptables` rule of the host machine:
+This script will install grafana on the VM, however that VM is not accessible outside of the host machine. To make it accessible, we need to update the `iptables` rule of the host machine:
 
 ```bash
 sudo iptables -t nat -A PREROUTING -p tcp --dport 3000 -j DNAT --to-destination 192.168.122.100:3000
@@ -61,7 +61,7 @@ Note: exposing Grafana to the network may have security implications and users s
 
 ## Configure Prometheus
 
-Prometheus operator will be configured to scrape metrics from k8s cluster and wire services by installing [kube-prometheus-stack](https://github.com/prometheus-community/helm-charts/blob/main/charts/kube-prometheus-stack/README.md) helm chart. We have configured this chart with overridden values which will setup the followings:
+Prometheus operator will be configured to scrape metrics from k8s cluster and wire services by installing the [kube-prometheus-stack](https://github.com/prometheus-community/helm-charts/blob/main/charts/kube-prometheus-stack/README.md) helm chart. We have configured this chart with overridden values which will setup the following:
 
 - An `ingress` to expose the prometheus endpoint if enabled
 - Basic authentication to the endpoint
@@ -69,7 +69,7 @@ Prometheus operator will be configured to scrape metrics from k8s cluster and wi
 - Setup a local persistent volume to use as prometheus data storage on a certain node
 - Disable both Alertmanager and grafana operator which is part of the helm stack.
 
-Before installing the helm chart, there are some works todo. First make sure the `wire-server-deploy` bundle has the `kube-prometheus-stack` chart. If the chart is not there, get it from one of the latest bundle and copy it to the current `charts` directory of the `wire-server-deploy` bundle. In case the `kube-prometheus-stack` chart needs to be copied in the running `wire-server-deploy` bundle there are some extra configurations needs to be made to have a successful deployment. The following sections cover both cases.
+Before we can install the helm chart, there are some items we need to take care of. First make sure the `wire-server-deploy` bundle has the `kube-prometheus-stack` chart. If the chart is not there, get it from one of the latest bundle and copy it to the current `charts` directory of your `wire-server-deploy` bundle. In case the `kube-prometheus-stack` chart needs to be copied in the running `wire-server-deploy` bundle there are some extra configurations needs to be made to have a successful deployment. The following sections cover both cases.
 
 ### Instrument prometheus to scrape metrics
 

@@ -38,7 +38,7 @@ jobs:
           echo ::set-output name=UPLOAD_NAME::$GITHUB_SHA
           # echo ::set-output name=UPLOAD_NAME::${SOURCE_TAG:-$GITHUB_SHA}
 
-      # deafult profile build
+      # default profile build
       - name: Process the default profile build
         run: ./offline/default-build/build.sh
         env:

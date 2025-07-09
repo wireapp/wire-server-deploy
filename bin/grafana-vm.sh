@@ -61,7 +61,7 @@ msg "Existing key from ~/.ssh/authorized_keys: $SSHKEY_HUMAN"
 msg "Local keypair key from ~/.ssh/id_ed25519: $SSHKEY_DEMO"
 msg ""
 
-nohup python3 -m http.server 3003 -d "$NOCLOUD_DIR" </dev/null >/dev/null 2>&1 &
+nohup python3 -m http.server 3003 -d "$NOCLOUD_DIR" </dev/null &>/dev/null &
 
 prepare_config() {
   VM_DIR=$NOCLOUD_DIR/$VM_NAME
