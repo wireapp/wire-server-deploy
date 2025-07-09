@@ -58,6 +58,7 @@ sudo iptables -A FORWARD -p tcp -d 192.168.122.100 --dport 3000 -j ACCEPT
 Now the grafana can be accessed via a Web browser with the address: `http://<host-machine-ip>:3000`.
 Note: exposing Grafana to the network may have security implications and users should secure their instance (change default password, use firewalls, etc.)
 
+To log in to Grafana for the first time, use the default credentials provided by Grafana. After logging in, immediately change the credentials as recommended in [the grafana document](https://grafana.com/docs/grafana/latest/setup-grafana/sign-in-to-grafana/).
 
 ## Configure Prometheus
 
@@ -93,6 +94,10 @@ There are several configurable parts in values file
 All the sections below described how and what to modify to have a successful prometheus instrumentation.
 
 #### Define values to create a Local PV
+
+A local Persistent Volume (local PV) is used in this setup to provide reliable, high-performance, and persistent storage for Prometheus data within an air-gapped or on-premises Kubernetes environment.
+
+In air-gapped environments without access to cloud storage or external networked storage, a local PV is a practical way to provide persistent storage using the node’s own disks.
 
 Check the default values to create a persistent volume in the cluster on a certain node (e.g. kubenode3) where the prometheus pod is also pinned.
 
