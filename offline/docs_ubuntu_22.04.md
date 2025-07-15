@@ -364,7 +364,9 @@ Minio and coturn services have shared secrets with the `wire-server` helm chart.
 ./bin/offline-secrets.sh
 ```
 
-This should generate two files. `./ansible/inventory/group_vars/all/secrets.yaml` and `values/wire-server/secrets.yaml`.
+This should generate two secret files. 
+- `./ansible/inventory/group_vars/all/secrets.yaml` 
+- `values/wire-server/secrets.yaml`
 
 
 ### WORKAROUND: old debian key
@@ -954,6 +956,10 @@ d helm upgrade --install fluent-bit ./charts/fluent-bit --values values/fluent-b
 
 Make sure that traffic is allowed from your kubernetes nodes to your destination server (elasticsearch or syslog).
 
+## Configure Prometheus
+
+To scrape metrics from wire systems and export those to your desired Observability tool, preferably grafana, configure prometheus operator.
+Follow the [Instrument monitoring guidelines](./instrument_monitoring.md) to setup monitoring for wire.
 
 ## Appendixes
 

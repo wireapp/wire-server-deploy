@@ -31,6 +31,9 @@ TASKS_DIR="${SCRIPT_DIR}/../tasks"
 # copy local copy of values from root directory to output directory
 cp -r "${ROOT_DIR}"/values "${OUTPUT_DIR}"/
 
+# copy local copy of dashboards from root directory to output directory
+cp -r "${ROOT_DIR}"/dashboards "${OUTPUT_DIR}"/
+
 # all basic chart pre-processing tasks
 "${TASKS_DIR}"/pre_chart_process_0.sh "${OUTPUT_DIR}"
 
@@ -87,6 +90,7 @@ ITEMS_TO_ARCHIVE=(
   "../../../ansible"
   "../../../bin"
   "versions"
+  "dashboards"
 )
 
 # Function to check if an item exists
