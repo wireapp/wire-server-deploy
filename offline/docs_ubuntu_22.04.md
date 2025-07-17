@@ -505,21 +505,21 @@ d helm install reaper ./charts/reaper
 
 #### SMTP
 
-For onboarding users via e-mail, update the configuration for `brig.config.smtp` with your SMTP. We also ship a `demo-smtp` package with our bundle for demo/testing purposes, which is also possible to be used outside that scope, as an actual SMTP relay. For a generic setup, please read [docs.md](smtp.md) for more details.
+For onboarding users via e-mail, update the configuration for `brig.config.smtp` with your SMTP. We also ship a `smtp` package with our bundle for demo/testing purposes, which is also possible to be used outside that scope, as an actual SMTP relay. For a generic setup, please read [docs.md](smtp.md) for more details.
 
 For a temporary SMTP service:
 
 ### ensure that the RELAY_NETWORKS value is set to the podCIDR
 
 ```
-SMTP_VALUES_FILE="./values/demo-smtp/prod-values.example.yaml"
+SMTP_VALUES_FILE="./values/smtp/prod-values.example.yaml"
 podCIDR=$(d kubectl get configmap -n kube-system kubeadm-config -o yaml | grep -i 'podSubnet' | awk '{print $2}' 2>/dev/null)
 if [[ $? -eq 0 && -n "$podCIDR" ]]; then
   sed -i "s|RELAY_NETWORKS: \".*\"|RELAY_NETWORKS: \":${podCIDR}\"|" $SMTP_VALUES_FILE
 else
     echo "Failed to fetch podSubnet. Attention using the default value: $(grep -i RELAY_NETWORKS $SMTP_VALUES_FILE)"
 fi
-d helm install demo-smtp ./charts/demo-smtp --values $SMTP_VALUES_FILE
+d helm install smtp ./charts/smtp --values $SMTP_VALUES_FILE
 ```
 
 #### Preparing your values
