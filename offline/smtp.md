@@ -1,151 +1,108 @@
-# SMTP service
+# SMTP Service
 
-## DNS
+## DNS Setup
 
-Generate your public/private key pair:
+Generate a DKIM public/private key pair for email signing:
 
-```
-openssl genrsa -out dkim.private
-openssl rsa -in dkim.private -out dkim.public -pubout -outform PEM
-```
-
-Then, with the contents of the public key, create a DNS record for DKIM:
-
-```
-dkim._domainkey 10800 IN TXT "v=DKIM1; k=rsa; p="your public key here, you will have to split it into multiple string chunks or DNS will fail to validate"
-```
-SPF:
-```
-@ 1350 IN TXT "v=spf1 a mx ip4:smtp.public.ip.address -all"
-```
-DMARC:
-```
-_dmarc 10800 IN TXT "v=DMARC1; p=quarantine; rua=mailto:mailbox-to-your-dmarc; ruf=mailto:mailbox-to-your-dmarc; fo=1; pct=100; sp=none;"
+```bash
+openssl genrsa -out dkim.private 2048
+openssl rsa -in dkim.private -pubout -out dkim.public.pem
 ```
 
-For DMARC, a dedicated mailbox should be used.
+### DKIM DNS Record
 
-## Deploying demo-smtp
-
-Create a generic secret from the private key:
+Create a TXT DNS record for DKIM with the public key:
 
 ```
-d kubectl create secret generic dkim-private-key --from-file=dkim.private
+dkim._domainkey 10800 IN TXT "v=DKIM1; k=rsa; p=<your public key here>"
+```
+> **Note:** The public key must be split into multiple quoted strings if it's too long, because DNS TXT records have length limits. For example:
+
+"v=DKIM1; k=rsa; p=MIIBIjANBgkqh..." "AQEFAAOCAQ8A..."
+
+### SPF Record
+
+Add an SPF record to authorize your SMTP server IP to send e-mails for your domain:
+
+@ 1350 IN TXT "v=spf1 a mx ip4:<smtp.public.ip.address> -all"
+
+### DMARC Record
+
+Configure DMARC to specify policy and reporting addresses:
+
+_dmarc 10800 IN TXT "v=DMARC1; p=quarantine; rua=mailto:<dmarc-report@your-domain>; ruf=mailto:<dmarc-report@your-domain>; fo=1; pct=100; sp=none;"
+
+> Use a dedicated mailbox to receive DMARC reports.
+
+---
+
+## Deploying SMTP Service in Kubernetes
+
+### Create DKIM Secret
+
+Create a Kubernetes secret containing your DKIM private key:
+
+```bash
+kubectl create secret generic dkim-private-key --from-file=dkim.private
 ```
 
-Then, create a copy of default `demo-smtp` values:
+### Prepare Values File
+
+Copy the example values file:
 
 ```
-cp values/demo-smtp/prod-values.example.yaml values/demo-smtp/values.yaml
+cp values/smtp/prod-values.example.yaml values/smtp/values.yaml
 ```
 
-Open it, and edit:
+Edit `values.yaml`:
 
 ```
 MAILNAME: "your-domain-here"
 DKIM_DOMAIN: "your-domain-here"
 DKIM_PRIVATE_KEY: "/etc/exim4/dkim.key"
 DKIM_KEY_PATH: "/secrets/dkim.key"
-
-add the following sections
-
-extraVolumes:
-  - name: dkim-key
-    secret:
-      secretName: dkim-private-key
-
-extraVolumeMounts:
-  - name: dkim-key
-    mountPath: /secrets/dkim.key
-    subPath: dkim.private
-    readOnly: true
 ```
 
-### WIP (to-be-removed)
-Current charts do not support mounting extra volumes, some hacking required before a fork of current charts has been made.
+Uncomment and update the `extraVolumes` and `extraVolumeMounts` sections to mount the `dkim-private-key` secret at the correct path inside the pod.
 
-Replace `charts/demo-smtp/templates/deployment.yaml` with:
+### Deploy with Helm
+
+Deploy SMTP chart:
+
 ```
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: {{ template "demo-smtp.fullname" . }}
-  labels:
-    app: {{ template "demo-smtp.name" . }}
-    chart: {{ template "demo-smtp.chart" . }}
-    release: {{ .Release.Name }}
-    heritage: {{ .Release.Service }}
+helm upgrade --install smtp charts/smtp -f values/smtp/values.yaml
+```
+---
+
+## Deploying SMTP for External Access
+
+If you want your SMTP service to be accessible from outside the cluster (e.g., another Kubernetes cluster relaying mail), change the service type in `values/smtp/values.yaml` to NodePort:
+
+service:
+  type: NodePort
+
+Add to the corresponding service template (`charts/demo-smtp/templates/service.yaml`) to expose the NodePort:
+
 spec:
-  replicas: {{ .Values.replicaCount }}
-  selector:
-    matchLabels:
-      app: {{ template "demo-smtp.name" . }}
-      release: {{ .Release.Name }}
-  template:
-    metadata:
-      labels:
-        app: {{ template "demo-smtp.name" . }}
-        release: {{ .Release.Name }}
-    spec:
-      topologySpreadConstraints:
-        - maxSkew: 1
-          topologyKey: "kubernetes.io/hostname"
-          whenUnsatisfiable: ScheduleAnyway
-          labelSelector:
-            matchLabels:
-              app: {{ template "demo-smtp.name" . }}
-      containers:
-        - name: {{ .Chart.Name }}
-          image: "{{ .Values.image }}"
-          env:
-        {{- range $key, $val := .Values.envVars }}
-            - name: {{ $key }}
-              value: {{ $val | quote }}
-        {{- end }}
-          ports:
-            - name: smtp
-              containerPort: 25
-              protocol: TCP
-          resources:
-{{ toYaml .Values.resources | indent 12 }}
-          {{- if .Values.extraVolumeMounts }}
-          volumeMounts:
-          {{- toYaml .Values.extraVolumeMounts | nindent 10 }}
-          {{- end }}
-      {{- if .Values.extraVolumes }}
-      volumes:
-      {{- toYaml .Values.extraVolumes | nindent 6 }}
-      {{- end }}
-```
-
-Special use-case for Cloud Temple.
-Replace `charts/demo-smtp/templates/service.yaml` with:
-
-```
-apiVersion: v1
-kind: Service
-metadata:
-  name: {{ template "demo-smtp.fullname" . }}
-  labels:
-    app: {{ template "demo-smtp.name" . }}
-    chart: {{ template "demo-smtp.chart" . }}
-    release: {{ .Release.Name }}
-    heritage: {{ .Release.Service }}
-spec:
-  type: LoadBalancer
-  loadBalancerIP: <STATIC_IP>  # replace this with the static IP
+  type: NodePort
   ports:
     - port: {{ .Values.service.port }}
       targetPort: smtp
       protocol: TCP
       name: smtp
-  selector:
-    app: {{ template "demo-smtp.name" . }}
-    release: {{ .Release.Name }}
-```
+      nodePort: 30025 # add nodePort
 
-Deploy `demo-smtp`:
+> Ensure the `nodePort` is in the range 30000-32767.
 
-```
-d helm upgrade --install demo-smtp charts/demo-smtp -f values/demo-smtp/values.yaml
-```
+Redeploy with:
+
+helm upgrade --install smtp charts/smtp -f values/smtp/values.yaml
+
+---
+
+### Additional Notes
+
+- Use internal/private IP addresses if both clusters are in the same secure network to avoid public exposure.
+- If using a public IP, ensure firewall rules allow SMTP traffic on port 25.
+- Update secrets if keys change, and redeploy pods to reload them.
+- Monitor logs for connection issues or DNS problems.
