@@ -1,0 +1,24 @@
+#!/bin/sh
+# Define the pattern for the commit message
+pattern='^(build|chore|ci|docs|feat|fix|perf|refactor|revert|style|test|BREAKING CHANGE)(\([^)]+\))?: .+'
+pattern2='(wpb|WPB)-[0-9]+'
+
+# Read the commit message from the file passed as the first argument
+commit_msg_file=$1
+commit_message=$(cat "$commit_msg_file")
+
+# Check if the commit message matches the pattern
+if ! echo "$commit_message" | grep -E "$pattern" | grep -E "$pattern2"; then
+    echo "\nCOMMIT FAILED!"
+    echo "\nPlease enter commit message in the conventional format with Jira ticket ID and try to commit again. Examples:"
+    echo "\n  build: WPB-1234 update build configuration"
+    echo "  feat(parser): add new parsing rules WPB-1234"
+    echo "  fix(ui): wpb-1234 correct button alignment"
+    echo "  ci: update CI pipeline wpb-1234"
+    echo "  docs: update wpb-1234 README"
+    echo "  refactor: wpb-1234 clean up code"
+    echo "  test: add unit tests wpb-1234"
+    echo "  chore!: WPB-1234 drop support for k8s 1.16 - add a 'BREAKING CHANGE:' statement"
+    echo "Read more about it here: https://www.conventionalcommits.org/en/v1.0.0/"
+    exit 1
+fi
