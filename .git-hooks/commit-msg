@@ -1,13 +1,10 @@
 #!/bin/sh
-# Define the pattern for the commit message
 pattern='^(build|chore|ci|docs|feat|fix|perf|refactor|revert|style|test|BREAKING CHANGE)(\([^)]+\))?: .+'
 pattern2='(wpb|WPB)-[0-9]+'
 
-# Read the commit message from the file passed as the first argument
 commit_msg_file=$1
 commit_message=$(cat "$commit_msg_file")
 
-# Check if the commit message matches the pattern
 if ! echo "$commit_message" | grep -E "$pattern" | grep -E "$pattern2"; then
     echo "\nCOMMIT FAILED!"
     echo "\nPlease enter commit message in the conventional format with Jira ticket ID and try to commit again. Examples:"
