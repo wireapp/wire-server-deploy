@@ -496,7 +496,7 @@ cp values/databases-ephemeral/prod-values.example.yaml values/databases-ephemera
 d helm install databases-ephemeral ./charts/databases-ephemeral/ --values ./values/databases-ephemeral/values.yaml
 ```
 
-Next, two more services that need no additional configuration need to be deployed:
+Next, two more services will be deployed without additional configuration:
 ```
 d helm install fake-aws ./charts/fake-aws --values ./values/fake-aws/prod-values.example.yaml
 

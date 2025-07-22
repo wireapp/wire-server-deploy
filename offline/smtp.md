@@ -18,20 +18,25 @@ dkim._domainkey 10800 IN TXT "v=DKIM1; k=rsa; p=<your public key here>"
 ```
 > **Note:** The public key must be split into multiple quoted strings if it's too long, because DNS TXT records have length limits. For example:
 
+```
 "v=DKIM1; k=rsa; p=MIIBIjANBgkqh..." "AQEFAAOCAQ8A..."
+```
 
 ### SPF Record
 
 Add an SPF record to authorize your SMTP server IP to send e-mails for your domain:
 
+```
 @ 1350 IN TXT "v=spf1 a mx ip4:<smtp.public.ip.address> -all"
+```
 
 ### DMARC Record
 
 Configure DMARC to specify policy and reporting addresses:
 
+```
 _dmarc 10800 IN TXT "v=DMARC1; p=quarantine; rua=mailto:<dmarc-report@your-domain>; ruf=mailto:<dmarc-report@your-domain>; fo=1; pct=100; sp=none;"
-
+```
 > Use a dedicated mailbox to receive DMARC reports.
 
 ---
@@ -50,13 +55,13 @@ kubectl create secret generic dkim-private-key --from-file=dkim.private
 
 Copy the example values file:
 
-```
+```bash
 cp values/smtp/prod-values.example.yaml values/smtp/values.yaml
 ```
 
 Edit `values.yaml`:
 
-```
+```yaml
 MAILNAME: "your-domain-here"
 DKIM_DOMAIN: "your-domain-here"
 DKIM_PRIVATE_KEY: "/etc/exim4/dkim.key"
@@ -69,7 +74,7 @@ Uncomment and update the `extraVolumes` and `extraVolumeMounts` sections to moun
 
 Deploy SMTP chart:
 
-```
+```bash
 helm upgrade --install smtp charts/smtp -f values/smtp/values.yaml
 ```
 ---
@@ -78,11 +83,14 @@ helm upgrade --install smtp charts/smtp -f values/smtp/values.yaml
 
 If you want your SMTP service to be accessible from outside the cluster (e.g., another Kubernetes cluster relaying mail), change the service type in `values/smtp/values.yaml` to NodePort:
 
+```yaml
 service:
   type: NodePort
+```
 
 Add to the corresponding service template (`charts/demo-smtp/templates/service.yaml`) to expose the NodePort:
 
+```yaml
 spec:
   type: NodePort
   ports:
@@ -91,13 +99,15 @@ spec:
       protocol: TCP
       name: smtp
       nodePort: 30025 # add nodePort
+```
 
 > Ensure the `nodePort` is in the range 30000-32767.
 
 Redeploy with:
 
+```bash
 helm upgrade --install smtp charts/smtp -f values/smtp/values.yaml
-
+```
 ---
 
 ### Additional Notes
