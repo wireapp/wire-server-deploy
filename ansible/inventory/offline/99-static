@@ -31,6 +31,10 @@
 # rabbitmq2 ansible_host=XXXX
 # rabbitmq3 ansible_host=XXXX
 #
+# postgres1 ansible_host=XXXX
+# postgres2 ansible_host=XXXX
+# postgres3 ansible_host=XXXX
+
 # If you are in an offline environment, add an assethost here, from which
 # artifacts are served
 # assethost ansible_host=100.89.14.74 ip=10.114.0.9
