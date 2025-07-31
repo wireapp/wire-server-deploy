@@ -50,6 +50,8 @@ ansible-playbook -i $INVENTORY_FILE $ANSIBLE_DIR/kubernetes.yml --skip-tags boot
 ansible-playbook -i $INVENTORY_FILE $ANSIBLE_DIR/cassandra.yml
 ansible-playbook -i $INVENTORY_FILE $ANSIBLE_DIR/elasticsearch.yml
 ansible-playbook -i $INVENTORY_FILE $ANSIBLE_DIR/minio.yml
+ansible-playbook -i $INVENTORY_FILE $ANSIBLE_DIR/postgres-install.yml
+ansible-playbook -i $INVENTORY_FILE $ANSIBLE_DIR/postgres-deploy.yml
 
 # create helm values that tell our helm charts what the IP addresses of cassandra, elasticsearch and minio are:
 ansible-playbook -i $INVENTORY_FILE $ANSIBLE_DIR/helm_external.yml --skip-tags=rabbitmq-external
