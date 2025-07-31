@@ -1,0 +1,76 @@
+---
+- name: Install PostgreSQL packages
+  hosts: postgres1,postgres2,postgres3
+  become: yes
+  gather_facts: yes
+  vars:
+    postgresql_version: 17
+    postgresql_use_repository: false  # Set to true to use local packages from urls
+    postgresql_pkgs: 
+    - name: postgresql-17
+      url: "https://apt.postgresql.org/pub/repos/apt/pool/main/p/postgresql-17/postgresql-17_17.5-1.pgdg22.04%2b1_amd64.deb"
+      checksum: "sha256:0ba8064cee5800f290485c3974081b399736feca050ad6ae06dd26d2c26cf167"
+    - name: postgresql-client-17
+      url: "https://apt.postgresql.org/pub/repos/apt/pool/main/p/postgresql-17/postgresql-client-17_17.5-1.pgdg22.04%2b1_amd64.deb"
+      checksum: "sha256:1b3e96f9f488f234734266a7a212c7c3ac189ba763939a313906e3f2fe5492bb"
+    - name: libpq-dev
+      url: "https://apt.postgresql.org/pub/repos/apt/pool/main/p/postgresql-17/libpq-dev_17.5-1.pgdg22.04%2b1_amd64.deb"
+      checksum: "sha256:b7321ed5a86b4774562af6df5e4f501c8bee7cb451ac8cc286b906fc1b810951"
+    - name: python3-psycopg2
+      url: "https://apt.postgresql.org/pub/repos/apt/pool/main/p/psycopg2/python3-psycopg2_2.9.10-1.pgdg22.04%2b1_amd64.deb"
+      checksum: "sha256:cc2f749e3af292a67e012edeb4aa5d284f57f2d66a9a09fe5b81e5ffda73cab4"
+
+  tasks:
+    - name: Install PostgreSQL and dependencies
+      ansible.builtin.apt:
+        name:
+          - postgresql-{{ postgresql_version }}
+          - postgresql-client-{{ postgresql_version }}
+          - libpq-dev
+          - python3-psycopg2
+        state: present
+        update_cache: yes
+      when: postgresql_use_repository
+
+    - name: Check installed versions of PostgreSQL packages
+      ansible.builtin.command: dpkg -s {{ item.name }}
+      loop: "{{ postgresql_pkgs }}"
+      register: pkg_check
+      ignore_errors: yes
+      changed_when: false
+      when: not postgresql_use_repository
+
+    - name: Download PostgreSQL packages
+      ansible.builtin.get_url:
+        url: "{{ item.url }}"
+        dest: "/tmp/{{ item.url | basename }}"
+        checksum: "{{ item.checksum }}"
+        validate_certs: no
+      loop: "{{ postgresql_pkgs }}"
+      when: 
+        - not postgresql_use_repository
+        - pkg_check.results[item_loop_index].rc != 0 
+      loop_control:
+        index_var: item_loop_index
+
+    - name: Install PostgreSQL packages from downloaded files
+      become: yes
+      ansible.builtin.apt:
+        deb: "/tmp/{{ item.url | basename }}"
+      loop: "{{ postgresql_pkgs }}"
+      when: 
+        - not postgresql_use_repository
+        - pkg_check.results[item_loop_index].rc != 0 
+      loop_control:
+        index_var: item_loop_index
+
+    - name: Clean up downloaded PostgreSQL packages
+      ansible.builtin.file:
+        path: "/tmp/{{ item.url | basename }}"
+        state: absent
+      loop: "{{ postgresql_pkgs }}"
+      when:
+        - not postgresql_use_repository
+        - pkg_check.results[item_loop_index].rc != 0
+      loop_control:
+        index_var: item_loop_index

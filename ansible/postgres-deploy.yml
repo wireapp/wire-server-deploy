@@ -1,5 +1,5 @@
 ---
-- name: Deploy PostgreSQL cluster with streaming replication
+- name: Deploy PostgreSQL cluster with streaming replication (no installation)
   hosts: postgres1,postgres2,postgres3
   become: yes
   gather_facts: yes
@@ -17,22 +17,6 @@
       postgres3: "{{ hostvars['postgres3']['ansible_default_ipv4']['address'] | default(hostvars['postgres3']['ansible_host'] | default('postgres3')) }}"
 
   tasks:
-    - name: Gather facts from all hosts
-      ansible.builtin.setup:
-      delegate_to: "{{ item }}"
-      delegate_facts: yes
-      loop: "{{ groups['all'] }}"
-      run_once: true
-
-    - name: Install PostgreSQL and dependencies
-      ansible.builtin.apt:
-        name:
-          - postgresql-{{ postgresql_version }}
-          - postgresql-client-{{ postgresql_version }}
-          - libpq-dev
-          - python3-psycopg2
-        state: present
-        update_cache: yes
 
     # Check replication status to determine if setup is needed
     - name: Check if replica is already configured
@@ -74,7 +58,6 @@
         group: postgres
         mode: '0640'
         backup: yes
-      when: inventory_hostname == "postgres1"
 
     - name: Configure primary node PostgreSQL settings
       ansible.builtin.template:
