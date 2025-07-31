@@ -62,7 +62,8 @@ kubeconfig_localhost: true
 is_aws_environment: False
 
 # IP address for the logging (for example QRadar) server
-syslog_target_ip: 12.34.56.78
+# this is not used in offline mode, but is here if required
+# syslog_target_ip: 12.34.56.78
 
 # OVERRIDES
 
@@ -72,3 +73,21 @@ metrics_server_version: "v0.7.2"
 ingress_nginx_kube_webhook_certgen_image_tag: "v20231011-8b53cabe0"
 cert_manager_version: "v1.16.3"
 nginx_image_tag: "1.25.4-alpine"
+
+# postgresql configuration
+# to use the local packages, set postgresql_use_repository to false
+postgresql_use_repository: false  # Set to true to use local packages from urls
+# when updating the packages, update the checksums too in wire-server-deploy/nix/pkgs/wire-binaries.nix
+postgresql_pkgs: 
+- name: postgresql-17
+  url: "{{ binaries_url }}//postgresql-17_17.5-1.pgdg22.04%2b1_amd64.deb"
+  checksum: "sha256:0ba8064cee5800f290485c3974081b399736feca050ad6ae06dd26d2c26cf167"
+- name: postgresql-client-17
+  url: "{{ binaries_url }}//postgresql-client-17_17.5-1.pgdg22.04%2b1_amd64.deb"
+  checksum: "sha256:1b3e96f9f488f234734266a7a212c7c3ac189ba763939a313906e3f2fe5492bb"
+- name: libpq-dev
+  url: "{{ binaries_url }}//libpq-dev_17.5-1.pgdg22.04%2b1_amd64.deb"
+  checksum: "sha256:b7321ed5a86b4774562af6df5e4f501c8bee7cb451ac8cc286b906fc1b810951"
+- name: python3-psycopg2
+  url: "{{ binaries_url }}/python3-psycopg2_2.9.10-1.pgdg22.04%2b1_amd64.deb"
+  checksum: "sha256:cc2f749e3af292a67e012edeb4aa5d284f57f2d66a9a09fe5b81e5ffda73cab4"

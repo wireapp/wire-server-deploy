@@ -46,3 +46,14 @@
         server_type: rmq-cluster
         network_interface: "{{ rabbitmq_network_interface }}"
   tags: rabbitmq-external
+
+- hosts: "postgres"
+  become: false
+  tasks:
+    - name: Generate postgres IPs for helm
+      include_tasks: tasks/helm_external.yml
+      vars:
+        external_dir_name: postgres-external
+        server_type: postgres
+        network_interface: "{{ postgres_network_interface }}"
+
