@@ -105,6 +105,27 @@ let
       url = "https://artifacts.elastic.co/downloads/elasticsearch/elasticsearch-oss-${elasticsearch_version}.deb";
       sha256 = "sha256:0s7m49rvg5n6mrjzg5snbg3092mq0n661qs9209phjzka1lqajvb";
     };
+    # when updating the packages, update the checksums too in wire-server-deploy/ansible/inventory/offline/group_vars/all/offline.yml
+    postgresql = fetchurl rec {
+      passthru.url = url;
+      url = "https://apt.postgresql.org/pub/repos/apt/pool/main/p/postgresql-17/postgresql-17_17.5-1.pgdg22.04%2b1_amd64.deb";
+      sha256 = "sha256:0ba8064cee5800f290485c3974081b399736feca050ad6ae06dd26d2c26cf167";
+    };
+    postgresql-client = fetchurl rec {
+      passthru.url = url;
+      url = "https://apt.postgresql.org/pub/repos/apt/pool/main/p/postgresql-17/postgresql-client-17_17.5-1.pgdg22.04%2b1_amd64.deb";
+      sha256 = "sha256:1b3e96f9f488f234734266a7a212c7c3ac189ba763939a313906e3f2fe5492bb";
+    };
+    libpq-dev = fetchurl rec {
+      passthru.url = url;
+      url = "https://apt.postgresql.org/pub/repos/apt/pool/main/p/postgresql-17/libpq-dev_17.5-1.pgdg22.04%2b1_amd64.deb";
+      sha256 = "sha256:b7321ed5a86b4774562af6df5e4f501c8bee7cb451ac8cc286b906fc1b810951";
+    };
+    python3-psycopg2 = fetchurl rec {
+      passthru.url = url;
+      url = "https://apt.postgresql.org/pub/repos/apt/pool/main/p/psycopg2/python3-psycopg2_2.9.10-1.pgdg22.04%2b1_amd64.deb";
+      sha256 = "sha256:cc2f749e3af292a67e012edeb4aa5d284f57f2d66a9a09fe5b81e5ffda73cab4";
+    };
   };
 in
 runCommandNoCC "wire-binaries"
