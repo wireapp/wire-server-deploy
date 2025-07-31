@@ -4,6 +4,7 @@ locals {
   minio_count         = 2
   elasticsearch_count = 2
   cassandra_count     = 3
+  postgresql_count    = 3
   ssh_keys            = [hcloud_ssh_key.adminhost.name]
 
   # TODO: IPv6
@@ -186,5 +187,25 @@ resource "hcloud_server" "minio" {
 resource "hcloud_server_network" "minio" {
   count     = local.minio_count
   server_id = hcloud_server.minio[count.index].id
+  subnet_id = hcloud_network_subnet.main.id
+}
+
+resource "random_pet" "postgresql" {
+  count = local.postgresql_count
+}
+
+resource "hcloud_server" "postgresql" {
+  count       = local.postgresql_count
+  location    = "nbg1"
+  name        = "postgresql-${random_pet.postgresql[count.index].id}"
+  image       = "ubuntu-22.04"
+  ssh_keys    = local.ssh_keys
+  server_type = "cx22"
+  # user_data   = local.disable_network_cfg
+}
+
+resource "hcloud_server_network" "postgresql" {
+  count     = local.postgresql_count
+  server_id = hcloud_server.postgresql[count.index].id
   subnet_id = hcloud_network_subnet.main.id
 }

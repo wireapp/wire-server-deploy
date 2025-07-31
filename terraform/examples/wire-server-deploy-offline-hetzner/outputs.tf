@@ -96,5 +96,19 @@ output "static-inventory" {
         minio_network_interface = "eth0"
       }
     }
+    postgresql = {
+      hosts = {
+        for index, server in hcloud_server.postgresql : server.name => {
+          ansible_host = hcloud_server_network.postgresql[index].ip
+          ansible_user = "root"
+        }
+      }
+      vars = {
+        postgresql_network_interface = "eth0"
+      }
+    }
+    postgresql_seed = {
+      hosts = { (hcloud_server.postgresql[0].name) = {} }
+    }
   }
 }
