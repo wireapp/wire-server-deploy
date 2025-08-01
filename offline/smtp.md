@@ -88,7 +88,7 @@ service:
   type: NodePort
 ```
 
-Add to the corresponding service template (`charts/demo-smtp/templates/service.yaml`) to expose the NodePort:
+Add to the corresponding service template (`charts/smtp/templates/service.yaml`) to expose the NodePort:
 
 ```yaml
 spec:
