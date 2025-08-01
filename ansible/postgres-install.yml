@@ -1,7 +1,6 @@
 ---
 - name: Install PostgreSQL packages
-  hosts: postgres1,postgres2,postgres3
-  become: yes
+  hosts: postgresql
   gather_facts: yes
   vars:
     postgresql_version: 17

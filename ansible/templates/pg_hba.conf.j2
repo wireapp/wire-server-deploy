@@ -14,7 +14,7 @@ host    all             all             ::1/128                 md5
 
 # Allow replication connections from replica nodes
 {% for node_name, node_ip in postgres_nodes.items() %}
-{% if node_name != 'postgres1' %}
+{% if node_name != 'postgresql1' %}
 host    replication     {{ repmgr_user }}     {{ node_ip }}/32    md5
 host    all             {{ repmgr_user }}     {{ node_ip }}/32    md5
 {% endif %}

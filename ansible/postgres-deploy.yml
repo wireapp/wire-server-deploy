@@ -1,6 +1,6 @@
 ---
 - name: Deploy PostgreSQL cluster with streaming replication (no installation)
-  hosts: postgres1,postgres2,postgres3
+  hosts: postgresql
   become: yes
   gather_facts: yes
   vars:
@@ -12,9 +12,9 @@
     repmgr_database: repmgr_db
     # Define IPs explicitly or use inventory_hostname
     postgres_nodes:
-      postgres1: "{{ hostvars['postgres1']['ansible_default_ipv4']['address'] | default(hostvars['postgres1']['ansible_host'] | default('postgres1')) }}"
-      postgres2: "{{ hostvars['postgres2']['ansible_default_ipv4']['address'] | default(hostvars['postgres2']['ansible_host'] | default('postgres2')) }}"
-      postgres3: "{{ hostvars['postgres3']['ansible_default_ipv4']['address'] | default(hostvars['postgres3']['ansible_host'] | default('postgres3')) }}"
+      postgresql1: "{{ hostvars['postgresql1']['ansible_default_ipv4']['address'] | default(hostvars['postgresql1']['ansible_host'] | default('postgresql1')) }}"
+      postgresql2: "{{ hostvars['postgresql2']['ansible_default_ipv4']['address'] | default(hostvars['postgresql2']['ansible_host'] | default('postgresql2')) }}"
+      postgresql3: "{{ hostvars['postgresql3']['ansible_default_ipv4']['address'] | default(hostvars['postgresql3']['ansible_host'] | default('postgresql3')) }}"
 
   tasks:
 
@@ -23,12 +23,12 @@
       ansible.builtin.stat:
         path: "{{ postgresql_data_dir }}/standby.signal"
       register: replica_configured
-      when: inventory_hostname in ["postgres2", "postgres3"]
+      when: inventory_hostname in ["postgresql2", "postgresql3"]
 
     - name: Check if PostgreSQL is running on replicas
       ansible.builtin.service_facts:
       register: service_status
-      when: inventory_hostname in ["postgres2", "postgres3"]
+      when: inventory_hostname in ["postgresql2", "postgresql3"]
 
     - name: Check replication user exists on primary
       community.postgresql.postgresql_query:
@@ -37,17 +37,17 @@
       register: repl_user_exists
       become: yes
       become_user: postgres
-      when: inventory_hostname == "postgres1"
+      when: inventory_hostname == "postgresql1"
       ignore_errors: yes
 
     - name: Check replication slots exist on primary
       community.postgresql.postgresql_query:
         login_db: postgres
-        query: "SELECT slot_name FROM pg_replication_slots WHERE slot_name IN ('postgres2', 'postgres3')"
+        query: "SELECT slot_name FROM pg_replication_slots WHERE slot_name IN ('postgresql2', 'postgresql3')"
       register: existing_slots
       become: yes
       become_user: postgres
-      when: inventory_hostname == "postgres1"
+      when: inventory_hostname == "postgresql1"
       ignore_errors: yes
 
     - name: Configure pg_hba.conf for all nodes
@@ -67,7 +67,7 @@
         group: postgres
         mode: '0640'
         backup: yes
-      when: inventory_hostname == "postgres1"
+      when: inventory_hostname == "postgresql1"
       register: primary_conf_result
 
     - name: restart postgresql primary
@@ -76,7 +76,7 @@
         state: restarted
       become: yes
       when: 
-          - inventory_hostname == "postgres1"
+          - inventory_hostname == "postgresql1"
           - primary_conf_result.changed
 
     - name: Configure replica nodes PostgreSQL settings
@@ -87,7 +87,7 @@
         group: postgres
         mode: '0640'
         backup: yes
-      when: inventory_hostname in ["postgres2", "postgres3"]
+      when: inventory_hostname in ["postgresql2", "postgresql3"]
       register: replica_conf_result
 
     - name: restart postgresql replica
@@ -96,7 +96,7 @@
         state: restarted
       become: yes
       when: 
-        - inventory_hostname in ["postgres2", "postgres3"]
+        - inventory_hostname in ["postgresql2", "postgresql3"]
         - replica_conf_result is defined
         - replica_conf_result.changed
 
@@ -106,15 +106,15 @@
         name: postgresql
         state: started
         enabled: yes
-      when: inventory_hostname == "postgres1"
+      when: inventory_hostname == "postgresql1"
 
     - name: Wait for PostgreSQL to be ready on primary
       ansible.builtin.wait_for:
         port: 5432
-        host: "{{ postgres_nodes['postgres1'] }}"
+        host: "{{ postgres_nodes['postgresql1'] }}"
         delay: 5
         timeout: 60
-      when: inventory_hostname == "postgres1"
+      when: inventory_hostname == "postgresql1"
 
     - name: Create replication user on primary node 
       community.postgresql.postgresql_user:
@@ -126,7 +126,7 @@
       become: yes
       become_user: postgres
       when: 
-        - inventory_hostname == "postgres1"
+        - inventory_hostname == "postgresql1"
         - repl_user_exists.failed or (repl_user_exists.query_result | length == 0)
 
     - name: Create replication slots for replicas on primary 
@@ -136,12 +136,12 @@
         state: present
         login_db: postgres
       loop:
-        - "postgres2"
-        - "postgres3"
+        - "postgresql2"
+        - "postgresql3"
       become: yes
       become_user: postgres
       when: 
-        - inventory_hostname == "postgres1"
+        - inventory_hostname == "postgresql1"
         - existing_slots.failed or (item not in (existing_slots.query_result | default([]) | map(attribute='slot_name') | list))
 
     # Configure replicas only if not already set up
@@ -150,7 +150,7 @@
         name: postgresql
         state: stopped
       when: 
-        - inventory_hostname in ["postgres2", "postgres3"]
+        - inventory_hostname in ["postgresql2", "postgresql3"]
         - not replica_configured.stat.exists
 
     - name: Clean replica data directories only if replication not configured
@@ -158,7 +158,7 @@
         path: "{{ postgresql_data_dir }}"
         state: absent
       when: 
-        - inventory_hostname in ["postgres2", "postgres3"]
+        - inventory_hostname in ["postgresql2", "postgresql3"]
         - not replica_configured.stat.exists
       become: yes
 
@@ -166,7 +166,7 @@
       ansible.builtin.command:
         cmd: >
           /usr/bin/pg_basebackup 
-          -h {{ postgres_nodes['postgres1'] }} 
+          -h {{ postgres_nodes['postgresql1'] }} 
           -U {{ repmgr_user }} 
           -p 5432 
           -D {{ postgresql_data_dir }} 
@@ -174,7 +174,7 @@
       environment:
         PGPASSWORD: "{{ repmgr_password }}"
       when: 
-        - inventory_hostname in ["postgres2", "postgres3"]
+        - inventory_hostname in ["postgresql2", "postgresql3"]
         - not replica_configured.stat.exists
       become: yes
       become_user: postgres
@@ -187,7 +187,7 @@
         group: postgres
         mode: '0640'
       when: 
-        - inventory_hostname in ["postgres2", "postgres3"]
+        - inventory_hostname in ["postgresql2", "postgresql3"]
         - not replica_configured.stat.exists
 
     - name: Start PostgreSQL service on replica nodes
@@ -195,14 +195,14 @@
         name: postgresql
         state: started
         enabled: yes
-      when: inventory_hostname in ["postgres2", "postgres3"]
+      when: inventory_hostname in ["postgresql2", "postgresql3"]
 
     - name: Wait for replicas to be ready
       ansible.builtin.wait_for:
         port: 5432
         delay: 10
         timeout: 120
-      when: inventory_hostname in ["postgres2", "postgres3"]
+      when: inventory_hostname in ["postgresql2", "postgresql3"]
 
     # Verification tasks
     - name: Verify streaming replication status on primary
@@ -221,17 +221,17 @@
               ELSE 'LAGGING'
             END as status
           FROM pg_stat_replication
-          WHERE application_name IN ('postgres2', 'postgres3')
+          WHERE application_name IN ('postgresql2', 'postgresql3')
           ORDER BY application_name;
       register: replication_status
       become: yes
       become_user: postgres
-      when: inventory_hostname == "postgres1"
+      when: inventory_hostname == "postgresql1"
 
     - name: Display streaming replication status
       ansible.builtin.debug:
         var: replication_status.query_result
-      when: inventory_hostname == "postgres1"
+      when: inventory_hostname == "postgresql1"
 
     - name: Verify replication slots are active
       community.postgresql.postgresql_query:
@@ -246,17 +246,17 @@
               ELSE 'INACTIVE - CHECK REPLICA'
             END as slot_status
           FROM pg_replication_slots
-          WHERE slot_name IN ('postgres2', 'postgres3')
+          WHERE slot_name IN ('postgresql2', 'postgresql3')
           ORDER BY slot_name;
       register: slot_status
       become: yes
       become_user: postgres
-      when: inventory_hostname == "postgres1"
+      when: inventory_hostname == "postgresql1"
 
     - name: Display replication slots status
       ansible.builtin.debug:
         var: slot_status.query_result
-      when: inventory_hostname == "postgres1"
+      when: inventory_hostname == "postgresql1"
 
     - name: Check WAL disk usage on primary
       community.postgresql.postgresql_query:
@@ -274,11 +274,11 @@
       register: wal_usage
       become: yes
       become_user: postgres
-      when: inventory_hostname == "postgres1"
+      when: inventory_hostname == "postgresql1"
 
     - name: Display WAL usage status
       ansible.builtin.debug:
         var: wal_usage.query_result
-      when: inventory_hostname == "postgres1"
+      when: inventory_hostname == "postgresql1"
 
 
