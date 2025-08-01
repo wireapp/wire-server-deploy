@@ -47,13 +47,26 @@
         network_interface: "{{ rabbitmq_network_interface }}"
   tags: rabbitmq-external
 
-- hosts: "postgres"
+- hosts: "postgresql"
   become: false
   tasks:
-    - name: Generate postgres IPs for helm
-      include_tasks: tasks/helm_external.yml
-      vars:
-        external_dir_name: postgres-external
-        server_type: postgres
-        network_interface: "{{ postgres_network_interface }}"
+  - name: Create external IP directory for postgresql
+    file:
+      state: directory
+      path: "{{ playbook_dir }}/../values/postgresql-external"
+    delegate_to: localhost
 
+  - name: Create values.yaml file for PostgreSQL external helm chart
+    ansible.builtin.copy:
+      dest: "{{ playbook_dir }}/../values/postgresql-external/values.yaml"
+      content: |
+        RWIPs:
+          {% for host in groups['postgresql-rw'] %}
+          - {{ hostvars[host]["ansible_" + (postgresql_network_interface | default(hostvars[host].ansible_default_ipv4.interface, true)) ]["ipv4"]["address"] }}
+          {% endfor %}
+
+        ROIPs:
+          {% for host in groups['postgresql-ro'] %}
+          - {{ hostvars[host]["ansible_" + (postgresql_network_interface | default(hostvars[host].ansible_default_ipv4.interface, true)) ]["ipv4"]["address"] }}
+          {% endfor %}
+    delegate_to: localhost
