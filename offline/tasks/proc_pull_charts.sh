@@ -3,7 +3,7 @@ set -euo pipefail
 
 OUTPUT_DIR=""
 # Default exclude lists
-HELM_CHART_EXCLUDE_LIST="inbucket,wire-server-enterprise"
+HELM_CHART_EXCLUDE_LIST="inbucket,wire-server-enterprise,demo-smtp"
 
 # Parse the arguments
 for arg in "$@"
