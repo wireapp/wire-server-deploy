@@ -45,7 +45,7 @@ echo "NAMESPACE = $NAMESPACE"
 
 phase_0_charts_metallb=( metallb )
 phase_0_charts_ingress_controller=( ingress-nginx-controller )
-phase_1_charts_pre=( fake-aws databases-ephemeral demo-smtp )
+phase_1_charts_pre=( fake-aws databases-ephemeral smtp )
 phase_2_charts_main=( wire-server )
 # charts for ingress, creating ELB's and DNS records
 phase_3_charts_ingress=( nginx-ingress-services )

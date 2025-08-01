@@ -339,25 +339,25 @@ d helm upgrade reaper ./charts/reaper/
 
 #### Upgrading the demo SMTP service
 
-Compare your demo-smtp configuration files, and decide whether you need to change them or not.
+Compare your smtp configuration files, and decide whether you need to change them or not.
 
 ```
-diff -u ../<OLD_PACKAGE_DIR>/values/demo-smtp/values.yaml values/demo-smtp/values.yaml
+diff -u ../<OLD_PACKAGE_DIR>/values/smtp/values.yaml values/smtp/values.yaml
 ```
 
 If there are no differences, copy these files into your new tree.
 
 ```
-cp ../<OLD_PACKAGE_DIR>/values/demo-smtp/values.yaml values/demo-smtp/values.yaml
+cp ../<OLD_PACKAGE_DIR>/values/smtp/values.yaml values/smtp/values.yaml
 ```
 
 ```
-d helm upgrade demo-smtp ./charts/demo-smtp/ --values ./values/demo-smtp/values.yaml
+d helm upgrade smtp ./charts/smtp/ --values ./values/smtp/values.yaml
 ```
 
 #### Upgrading the NginX ingress
 
-Compare your demo-smtp configuration files, and decide whether you need to change them or not.
+Compare your smtp configuration files, and decide whether you need to change them or not.
 
 ```
 diff -u ../<OLD_PACKAGE_DIR>/values/nginx-ingress-services/values.yaml values/nginx-ingress-services/prod-values.example.yaml

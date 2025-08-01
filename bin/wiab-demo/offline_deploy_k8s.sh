@@ -205,10 +205,10 @@ process_values
 deploy_cert_manager
 
 # deploying with external datastores, useful for prod setup
-#deploy_charts cassandra-external elasticsearch-external minio-external fake-aws demo-smtp rabbitmq databases-ephemeral reaper wire-server webapp account-pages team-settings smallstep-accomp ingress-nginx-controller nginx-ingress-services
+#deploy_charts cassandra-external elasticsearch-external minio-external fake-aws smtp rabbitmq databases-ephemeral reaper wire-server webapp account-pages team-settings smallstep-accomp ingress-nginx-controller nginx-ingress-services
 
 # deploying with ephemeral datastores, useful for all k8s setup withou external datastore requirement
-deploy_charts fake-aws demo-smtp rabbitmq databases-ephemeral reaper wire-server webapp account-pages team-settings smallstep-accomp ingress-nginx-controller nginx-ingress-services
+deploy_charts fake-aws smtp rabbitmq databases-ephemeral reaper wire-server webapp account-pages team-settings smallstep-accomp ingress-nginx-controller nginx-ingress-services
 
 # deploying sft and coturn services
 deploy_calling_services
