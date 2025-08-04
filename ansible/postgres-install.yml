@@ -4,10 +4,25 @@
   gather_facts: yes
   vars:
     postgresql_version: 17
-    postgresql_use_repository: true
+    postgresql_use_repository: false
 
   tasks:
-    - name: Install PostgreSQL and dependencies
+    - name: Install PostgreSQL dependencies
+      become: yes
+      ansible.builtin.apt:
+        name:
+          - libssl-dev
+          - libllvm15
+          - sysstat
+          - ssl-cert
+          - libjson-perl
+          - libipc-run-perl
+        state: present
+        update_cache: yes
+      when: postgresql_use_repository
+
+    - name: Install PostgreSQL packages from repository
+      become: yes
       ansible.builtin.apt:
         name:
           - postgresql-{{ postgresql_version }}

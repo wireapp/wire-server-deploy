@@ -108,23 +108,33 @@ let
     # when updating the packages, update the checksums too in wire-server-deploy/ansible/inventory/offline/group_vars/all/offline.yml
     postgresql = fetchurl rec {
       passthru.url = url;
-      url = "https://apt.postgresql.org/pub/repos/apt/pool/main/p/postgresql-17/postgresql-17_17.5-1.pgdg22.04%2b1_amd64.deb";
+      url = "https://apt.postgresql.org/pub/repos/apt/pool/main/p/postgresql-17/postgresql-17_17.5-1.pgdg22.04+1_amd64.deb";
       sha256 = "sha256:0ba8064cee5800f290485c3974081b399736feca050ad6ae06dd26d2c26cf167";
     };
     postgresql-client = fetchurl rec {
       passthru.url = url;
-      url = "https://apt.postgresql.org/pub/repos/apt/pool/main/p/postgresql-17/postgresql-client-17_17.5-1.pgdg22.04%2b1_amd64.deb";
+      url = "https://apt.postgresql.org/pub/repos/apt/pool/main/p/postgresql-17/postgresql-client-17_17.5-1.pgdg22.04+1_amd64.deb";
       sha256 = "sha256:1b3e96f9f488f234734266a7a212c7c3ac189ba763939a313906e3f2fe5492bb";
     };
-    libpq-dev = fetchurl rec {
+    libpq5 = fetchurl rec {
       passthru.url = url;
-      url = "https://apt.postgresql.org/pub/repos/apt/pool/main/p/postgresql-17/libpq-dev_17.5-1.pgdg22.04%2b1_amd64.deb";
-      sha256 = "sha256:b7321ed5a86b4774562af6df5e4f501c8bee7cb451ac8cc286b906fc1b810951";
+      url = "https://apt.postgresql.org/pub/repos/apt/pool/main/p/postgresql-17/libpq5_17.5-1.pgdg22.04+1_amd64.deb";
+      sha256 = "sha256:97cec98aa147de384066a027693e5a0864009e2209d170f891cb0d7583735936";
     };
-    python3-psycopg2 = fetchurl rec {
+    postgresql-client-common = fetchurl rec {
       passthru.url = url;
-      url = "https://apt.postgresql.org/pub/repos/apt/pool/main/p/psycopg2/python3-psycopg2_2.9.10-1.pgdg22.04%2b1_amd64.deb";
-      sha256 = "sha256:cc2f749e3af292a67e012edeb4aa5d284f57f2d66a9a09fe5b81e5ffda73cab4";
+      url = "https://apt.postgresql.org/pub/repos/apt/pool/main/p/postgresql-common/postgresql-client-common_281.pgdg22.04+1_all.deb";
+      sha256 = "sha256:c5ee58fea51a19753ac0496d06538c6a194705b11aef27683047e9c4ebff2c5e";
+    };
+    postgresql-common = fetchurl rec {
+      passthru.url = url;
+      url = "https://apt.postgresql.org/pub/repos/apt/pool/main/p/postgresql-common/postgresql-common_281.pgdg22.04+1_all.deb";
+      sha256 = "sha256:317308f1eaeb8c3f93fdc3eaa5430290e5bce62b4bba3f78045ff339d6a8e7a1";
+    };
+    postgresql-common-dev = fetchurl rec {
+      passthru.url = url;
+      url = "https://apt.postgresql.org/pub/repos/apt/pool/main/p/postgresql-common/postgresql-common-dev_281.pgdg22.04+1_all.deb";
+      sha256 = "sha256:aa116b0861d149dcba5cbf0cb6af611d9d59bd83178ee9c66c60363ce6cf77d0";
     };
   };
 in
