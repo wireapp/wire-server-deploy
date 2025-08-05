@@ -177,15 +177,15 @@ elasticsearch
 
 # Add all postgresql nodes here
 [postgresql]
-#postgresql1
-#postgresql2
-#postgresql3
+postgresql1
+postgresql2
+postgresql3
 
 # Add all postgresql primary nodes here
 [postgresql-rw]
-#postgresql1
+postgresql1
 
 # Add all postgresql read-only nodes here i.e. replicas
 [postgresql-ro]
-#postgresql2
-#postgresql3
+postgresql2
+postgresql3

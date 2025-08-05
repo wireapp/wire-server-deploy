@@ -98,7 +98,7 @@ output "static-inventory" {
     }
     postgresql = {
       hosts = {
-        for index, server in hcloud_server.postgresql : server.name => {
+        for index, server in hcloud_server.postgresql :  "postgresql${index + 1}" => {
           ansible_host = hcloud_server_network.postgresql[index].ip
           ansible_user = "root"
         }
@@ -107,8 +107,12 @@ output "static-inventory" {
         postgresql_network_interface = "eth0"
       }
     }
-    postgresql_seed = {
-      hosts = { (hcloud_server.postgresql[0].name) = {} }
+    postgresql_rw = {
+      hosts = { "postgresql1" = {} }
+    }
+    postgresql_ro = {
+      hosts = { "postgresql2" = {},
+                "postgresql3" = {} }
     }
   }
 }
