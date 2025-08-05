@@ -18,7 +18,6 @@
           - libipc-run-perl
         state: present
         update_cache: yes
-      when: postgresql_use_repository
 
     - name: Install PostgreSQL packages from repository
       become: yes
@@ -26,8 +25,6 @@
         name:
           - postgresql-{{ postgresql_version }}
           - postgresql-client-{{ postgresql_version }}
-          - libpq-dev
-          - python3-psycopg2
         state: present
         update_cache: yes
       when: postgresql_use_repository

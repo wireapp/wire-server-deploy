@@ -1,11 +1,11 @@
 - name: Install PostgreSQL packages
-  import_playbook: postgresql-playbooks/postgres-install.yml
+  import_playbook: postgresql-playbooks/postgresql-install.yml
 
 - name: Deploy PostgreSQL primary node
-  import_playbook: postgresql-playbooks/postgres-deploy-primary.yml
+  import_playbook: postgresql-playbooks/postgresql-deploy-primary.yml
 
 - name: Deploy PostgreSQL replica nodes
-  import_playbook: postgresql-playbooks/postgresql-replica-deploy.yml
+  import_playbook: postgresql-playbooks/postgresql-deploy-replica.yml
 
 - name: Verify PostgreSQL deployment
-  import_playbook: postgresql-playbooks/postgres-verify.yml
+  import_playbook: postgresql-playbooks/postgresql-verify-HA.yml
