@@ -1,0 +1,106 @@
+---
+- name: Deploy PostgreSQL replica services with streaming replication
+  hosts: postgresql-ro
+  become: yes
+  gather_facts: yes
+  vars:
+    primary_node: "{{ hostvars[(groups.get('postgresql-rw', []) | first) | default('postgresql1')]['ansible_default_ipv4']['address'] | default(hostvars[(groups.get('postgresql-rw', []) | first) | default('postgresql1')]['ansible_host'] | default((groups.get('postgresql-rw', []) | first) | default('postgresql1'))) }}"
+
+  tasks:
+    - name: Check if replica is already configured
+      ansible.builtin.stat:
+        path: "{{ postgresql_data_dir }}/standby.signal"
+      register: replica_configured
+      
+
+    - name: Check if PostgreSQL is running 
+      ansible.builtin.service_facts:
+      register: service_status
+      
+
+    - name: Configure pg_hba.conf for all nodes
+      ansible.builtin.template:
+        src: ../templates/pg_hba.conf.j2
+        dest: "{{ postgresql_conf_dir }}/pg_hba.conf"
+        owner: postgres
+        group: postgres
+        mode: '0640'
+        backup: yes
+
+    - name: Configure replica nodes PostgreSQL settings
+      ansible.builtin.template:
+        src: ../templates/postgresql_replica.conf.j2
+        dest: "{{ postgresql_conf_dir }}/postgresql.conf"
+        owner: postgres
+        group: postgres
+        mode: '0640'
+        backup: yes
+      
+      register: replica_conf_result
+
+    - name: restart postgresql replica
+      ansible.builtin.service:
+        name: postgresql
+        state: restarted
+      become: yes
+      when: 
+        - inventory_hostname in ["postgresql2", "postgresql3"]
+        - replica_conf_result is defined
+        - replica_conf_result.changed
+
+    - name: Stop PostgreSQL if replication not configured
+      ansible.builtin.service:
+        name: postgresql
+        state: stopped
+      when: 
+        - inventory_hostname in ["postgresql2", "postgresql3"]
+        - not replica_configured.stat.exists
+
+    - name: Clean replica data directories only if replication not configured
+      ansible.builtin.file:
+        path: "{{ postgresql_data_dir }}"
+        state: absent
+      when: 
+        - inventory_hostname in ["postgresql2", "postgresql3"]
+        - not replica_configured.stat.exists
+      become: yes
+
+    - name: Run pg_basebackup for replicas
+      ansible.builtin.command:
+        cmd: >
+          /usr/bin/pg_basebackup 
+          -h {{ postgres_nodes['postgresql1'] }} 
+          -U {{ repmgr_user }} 
+          -p 5432 
+          -D {{ postgresql_data_dir }} 
+          -P -R -X stream
+      environment:
+        PGPASSWORD: "{{ repmgr_password }}"
+      when: 
+        - inventory_hostname in ["postgresql2", "postgresql3"]
+        - not replica_configured.stat.exists
+      become: yes
+      become_user: postgres
+
+    - name: Create standby.signal file for replicas
+      ansible.builtin.file:
+        path: "{{ postgresql_data_dir }}/standby.signal"
+        state: touch
+        owner: postgres
+        group: postgres
+        mode: '0640'
+      when: 
+        - inventory_hostname in ["postgresql2", "postgresql3"]
+        - not replica_configured.stat.exists
+
+    - name: Start PostgreSQL service 
+      ansible.builtin.service:
+        name: postgresql
+        state: started
+        enabled: yes
+      
+    - name: Wait for replicas to be ready
+      ansible.builtin.wait_for:
+        port: 5432
+        delay: 10
+        timeout: 120

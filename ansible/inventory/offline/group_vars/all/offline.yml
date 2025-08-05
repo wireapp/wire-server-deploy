@@ -75,6 +75,12 @@ cert_manager_version: "v1.16.3"
 nginx_image_tag: "1.25.4-alpine"
 
 # postgresql configuration
+postgresql_version: 17
+postgresql_data_dir: /var/lib/postgresql/{{ postgresql_version }}/main
+postgresql_conf_dir: /etc/postgresql/{{ postgresql_version }}/main
+repmgr_user: repmgr
+repmgr_password: "securepassword"
+repmgr_database: repmgr_db
 # to use the local packages, set postgresql_use_repository to false
 postgresql_use_repository: false  # Set to true to use local packages from urls
 # when updating the packages, update the checksums too in wire-server-deploy/nix/pkgs/wire-binaries.nix

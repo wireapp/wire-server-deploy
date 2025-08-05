@@ -13,7 +13,7 @@ port = 5432
 superuser_reserved_connections = 3
 
 # Streaming replication configuration
-primary_conninfo = 'host={{ postgres_nodes['postgresql1'] }} port=5432 user={{ repmgr_user }} password={{ repmgr_password }} application_name={{ inventory_hostname }}'
+primary_conninfo = 'host={{ primary_node }} port=5432 user={{ repmgr_user }} password={{ repmgr_password }} application_name={{ inventory_hostname }}'
 primary_slot_name = '{{ inventory_hostname }}'
 
 # Memory Settings (optimized for 4GB RAM, read workloads)

@@ -3,7 +3,6 @@
   hosts: postgresql
   gather_facts: yes
   vars:
-    postgresql_version: 17
     postgresql_use_repository: false
 
   tasks:
