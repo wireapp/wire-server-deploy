@@ -1,6 +1,6 @@
 ---
 - name: Verify PostgreSQL HA setup
-  hosts: postgresql-rw
+  hosts: postgresql_rw
   become: yes
   gather_facts: yes
   tasks:

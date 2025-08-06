@@ -1,10 +1,12 @@
 ---
 - name: Deploy PostgreSQL replica services with streaming replication
-  hosts: postgresql-ro
+  hosts: postgresql_ro
   become: yes
   gather_facts: yes
   vars:
-    primary_node: "{{ hostvars[(groups.get('postgresql-rw', []) | first) | default('postgresql1')]['ansible_default_ipv4']['address'] | default(hostvars[(groups.get('postgresql-rw', []) | first) | default('postgresql1')]['ansible_host'] | default((groups.get('postgresql-rw', []) | first) | default('postgresql1'))) }}"
+    primary_node: "{{ hostvars[(groups.get('postgresql_rw', []) | first) | default('postgresql1')]['ansible_default_ipv4']['address'] | default(hostvars[(groups.get('postgresql_rw', []) | first) | default('postgresql1')]['ansible_host'] | default((groups.get('postgresql_rw', []) | first) | default('postgresql1'))) }}"
+    replica_node1: "{{ hostvars[(groups.get('postgresql_ro', []) | first) | default('postgresql2')]['ansible_default_ipv4']['address'] | default(hostvars[(groups.get('postgresql_ro', []) | first) | default('postgresql2')]['ansible_host'] | default((groups.get('postgresql_ro', []) | first) | default('postgresql2'))) }}"
+    replica_node2: "{{ hostvars[(groups.get('postgresql_ro', []) | last) | default('postgresql3')]['ansible_default_ipv4']['address'] | default(hostvars[(groups.get('postgresql_ro', []) | last) | default('postgresql3')]['ansible_host'] | default((groups.get('postgresql_ro', []) | last) | default('postgresql3'))) }}"
 
   tasks:
     - name: Check if replica is already configured
@@ -69,7 +71,7 @@
       ansible.builtin.command:
         cmd: >
           /usr/bin/pg_basebackup 
-          -h {{ postgres_nodes['postgresql1'] }} 
+          -h {{ primary_node }} 
           -U {{ repmgr_user }} 
           -p 5432 
           -D {{ postgresql_data_dir }} 

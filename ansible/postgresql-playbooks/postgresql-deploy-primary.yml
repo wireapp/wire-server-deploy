@@ -1,7 +1,11 @@
 - name: Deploy PostgreSQL Primary node
-  hosts: postgresql-rw
+  hosts: postgresql_rw
   become: yes
   gather_facts: yes
+  vars:
+    primary_node: "{{ hostvars[(groups.get('postgresql_rw', []) | first) | default('postgresql1')]['ansible_default_ipv4']['address'] | default(hostvars[(groups.get('postgresql_rw', []) | first) | default('postgresql1')]['ansible_host'] | default((groups.get('postgresql_rw', []) | first) | default('postgresql1'))) }}"
+    replica_node1: "{{ hostvars[(groups.get('postgresql_ro', []) | first) | default('postgresql2')]['ansible_default_ipv4']['address'] | default(hostvars[(groups.get('postgresql_ro', []) | first) | default('postgresql2')]['ansible_host'] | default((groups.get('postgresql_ro', []) | first) | default('postgresql2'))) }}"
+    replica_node2: "{{ hostvars[(groups.get('postgresql_ro', []) | last) | default('postgresql3')]['ansible_default_ipv4']['address'] | default(hostvars[(groups.get('postgresql_ro', []) | last) | default('postgresql3')]['ansible_host'] | default((groups.get('postgresql_ro', []) | last) | default('postgresql3'))) }}"
 
   tasks:
     - name: Check replication user exists
@@ -57,7 +61,7 @@
     - name: Wait for PostgreSQL to be ready 
       ansible.builtin.wait_for:
         port: 5432
-        host: "{{ postgres_nodes['postgresql1'] }}"
+        host: "{{ primary_node }}"
         delay: 5
         timeout: 60
 
