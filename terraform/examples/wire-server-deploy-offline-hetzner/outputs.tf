@@ -107,10 +107,10 @@ output "static-inventory" {
         postgresql_network_interface = "eth0"
       }
     }
-    postgresql_rw = {
+    postgresql-rw = {
       hosts = { "postgresql1" = {} }
     }
-    postgresql_ro = {
+    postgresql-ro = {
       hosts = { "postgresql2" = {},
                 "postgresql3" = {} }
     }
