@@ -104,5 +104,5 @@ postgresql_pkgs:
   url: "{{ binaries_url }}/postgresql-17_17.5-1.pgdg22.04+1_amd64.deb"
   checksum: "sha256:0ba8064cee5800f290485c3974081b399736feca050ad6ae06dd26d2c26cf167"
 - name: python3-psycopg2
-  url: "{{ binaries_url }}/python3-psycopg2_2.9.10-1.pgdg22.04+b1_amd64.deb"
+  url: "{{ binaries_url }}/python3-psycopg2_2.9.10-1.pgdg22.04+1_amd64.deb"
   checksum: "sha256:cc2f749e3af292a67e012edeb4aa5d284f57f2d66a9a09fe5b81e5ffda73cab4"

@@ -138,7 +138,7 @@ let
     };
     python3-psycopg2 = fetchurl rec {
       passthru.url = url;
-      url = "https://apt.postgresql.org/pub/repos/apt/pool/main/p/psycopg2/python3-psycopg2_2.9.10-1.pgdg22.04+b1_amd64.deb";
+      url = "https://apt.postgresql.org/pub/repos/apt/pool/main/p/psycopg2/python3-psycopg2_2.9.10-1.pgdg22.04+1_amd64.deb";
       sha256 = "sha256:cc2f749e3af292a67e012edeb4aa5d284f57f2d66a9a09fe5b81e5ffda73cab4";
     };
   };
