@@ -82,7 +82,11 @@
 # cassandra_backup_s3_bucket = <bucketname>
 
 [postgresql:vars]
-# postgresql_network_interface = enp1s0
+postgresql_network_interface = enp1s0
+wire_dbname = wire-server
+wire_user = wire-server
+# if not defined, a random password will be generated
+# wire_pass = verysecurepassword
 
 [elasticsearch:vars]
 # elasticsearch_network_interface = enp1s0
@@ -182,10 +186,10 @@ postgresql2
 postgresql3
 
 # Add all postgresql primary nodes here
-[postgresql-rw]
+[postgresql_rw]
 postgresql1
 
 # Add all postgresql read-only nodes here i.e. replicas
-[postgresql-ro]
+[postgresql_ro]
 postgresql2
 postgresql3

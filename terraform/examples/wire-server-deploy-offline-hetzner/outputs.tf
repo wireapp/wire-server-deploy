@@ -101,16 +101,19 @@ output "static-inventory" {
         for index, server in hcloud_server.postgresql :  "postgresql${index + 1}" => {
           ansible_host = hcloud_server_network.postgresql[index].ip
           ansible_user = "root"
+          wire_dbname = "wire-server"
+          wire_user = "wire-server"
+          wire_pass = "verysecurepassword"
         }
       }
       vars = {
         postgresql_network_interface = "eth0"
       }
     }
-    postgresql-rw = {
+    postgresql_rw = {
       hosts = { "postgresql1" = {} }
     }
-    postgresql-ro = {
+    postgresql_ro = {
       hosts = { "postgresql2" = {},
                 "postgresql3" = {} }
     }
