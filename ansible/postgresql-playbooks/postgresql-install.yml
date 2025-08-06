@@ -25,6 +25,7 @@
         name:
           - postgresql-{{ postgresql_version }}
           - postgresql-client-{{ postgresql_version }}
+          - python3-psycopg2
         state: present
         update_cache: yes
       when: postgresql_use_repository
