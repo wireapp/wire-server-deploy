@@ -1,11 +1,19 @@
 - name: Install PostgreSQL packages
   import_playbook: postgresql-playbooks/postgresql-install.yml
+  when: skip_postgresql_install | default(false) == false
 
 - name: Deploy PostgreSQL primary node
   import_playbook: postgresql-playbooks/postgresql-deploy-primary.yml
+  when: skip_postgresql_primary | default(false) == false
 
 - name: Deploy PostgreSQL replica nodes
   import_playbook: postgresql-playbooks/postgresql-deploy-replica.yml
+  when: skip_postgresql_replica | default(false) == false
 
 - name: Verify PostgreSQL deployment
   import_playbook: postgresql-playbooks/postgresql-verify-HA.yml
+  when: skip_postgresql_verify | default(false) == false
+
+- name: Setup wire-server postgresql database and user
+  import_playbook: postgresql-playbooks/postgresql-wire-setup.yml
+  when: skip_postgresql_wire_setup | default(false) == false
