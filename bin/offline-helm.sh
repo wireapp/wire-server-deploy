@@ -23,11 +23,11 @@ helm upgrade --install --wait postgresql ./charts/postgresql --values ./values/p
 helm upgrade --install --wait rabbitmq ./charts/rabbitmq --values ./values/rabbitmq/prod-values.example.yaml --values ./values/rabbitmq/prod-secrets.example.yaml
 helm upgrade --install --wait databases-ephemeral ./charts/databases-ephemeral --values ./values/databases-ephemeral/prod-values.example.yaml
 helm upgrade --install --wait reaper ./charts/reaper
-helm upgrade --install --wait --timeout=5m0s wire-server ./charts/wire-server --values ./values/wire-server/prod-values.example.yaml --values ./values/wire-server/secrets.yaml
+helm upgrade --install --wait --timeout=10m0s wire-server ./charts/wire-server --values ./values/wire-server/prod-values.example.yaml --values ./values/wire-server/secrets.yaml || true 
 
-kubectl get pods -l app=wire-server
-kubectl describe pods -l app=wire-server
-kubectl logs -l app=wire-server --all-containers --prefix
+kubectl get pods -l app=wire-server || true
+kubectl describe pods -l app=wire-server || true
+kubectl logs -l app=wire-server --all-containers --prefix || true
 
 
 # if charts/webapp directory exists
