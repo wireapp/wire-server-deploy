@@ -1,0 +1,1 @@
+Fix pg-service path for current production which is prostgresql, later it will be changed to prostgresql-external-rw which will be used for production.

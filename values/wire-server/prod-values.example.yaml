@@ -28,7 +28,7 @@ brig:
     rabbitmq:
       host: rabbitmq-external # name of the rabbitmq service, either `rabbitmq-external` or `rabbitmq`
     postgresql:
-      host: postgresql-external-rw # DNS name without protocol
+      host: postgresql # name of the postgresql service, either `postgresql-external-rw or `postgresql`
       port: "5432"
       user: wire-server
       dbname: wire-server
