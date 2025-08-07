@@ -27,6 +27,11 @@ brig:
       host: elasticsearch-ephemeral
     rabbitmq:
       host: rabbitmq # name of the rabbitmq service, either `rabbitmq-external` or `rabbitmq`
+    postgresql:
+      host: postgresql # DNS name without protocol
+      port: "5432"
+      user: wire-server
+      dbname: wire-server
     useSES: false
     # Set to false if you want to hand out DynamoDB to store prekeys
     randomPrekeys: true    
