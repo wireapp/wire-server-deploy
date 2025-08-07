@@ -17,7 +17,7 @@ superuser_reserved_connections = 2
 shared_preload_libraries = 'pg_stat_statements'
 
 # Memory Settings (optimized for 1GB RAM, 1 core)
-https://www.postgresql.org/docs/17/runtime-config-resource.html
+# https://www.postgresql.org/docs/17/runtime-config-resource.html
 shared_buffers = 128MB                    # ~12.5% of total RAM (conservative for limited memory)
 effective_cache_size = 512MB              # ~50% of total RAM for OS cache
 work_mem = 2MB                            # Limited for constrained memory
@@ -30,8 +30,8 @@ max_parallel_workers_per_gather = 0        # Disable parallel workers for single
 # Write-Ahead Logging (WAL) - Optimized for 50GB disk constraint
 # https://www.postgresql.org/docs/17/runtime-config-wal.html
 wal_level = replica
-max_wal_senders = 2                       # Limited for resource constraints
-max_replication_slots = 2                 # Conservative number of slots
+max_wal_senders = 4                       # Limited for resource constraints
+max_replication_slots = 4                 # Conservative number of slots
 wal_keep_size = 2GB                       # 4% of disk space for WAL retention
 wal_sender_timeout = 60s
 max_slot_wal_keep_size = 3GB              # 6% of disk space maximum
