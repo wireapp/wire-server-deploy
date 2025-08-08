@@ -36,6 +36,7 @@ brig:
     rabbitmq:
       username: wire-server
       password: verysecurepassword
+    pgPassword: verysecurepassword
     # These are only necessary if you wish to support sign up via SMS/calls
     # And require accounts at twilio.com / nexmo.com
     setTwilio: |-
