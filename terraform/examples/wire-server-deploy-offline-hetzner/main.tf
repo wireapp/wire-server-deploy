@@ -104,11 +104,13 @@ resource "hcloud_server" "assethost" {
     ipv4_enabled = false
     ipv6_enabled = false
   }
-}
-
-resource "hcloud_server_network" "assethost" {
-  server_id = hcloud_server.assethost.id
-  subnet_id = hcloud_network_subnet.main.id
+  network {
+  network_id = hcloud_network.main.id
+  ip         = ""
+  }
+  depends_on = [
+    hcloud_network_subnet.main
+  ]
 }
 
 resource "random_pet" "kubenode" {
@@ -127,14 +129,14 @@ resource "hcloud_server" "kubenode" {
     ipv4_enabled = false
     ipv6_enabled = false
   }
+  network {
+  network_id = hcloud_network.main.id
+  ip         = ""
+  }
+  depends_on = [
+    hcloud_network_subnet.main
+  ]
 }
-
-resource "hcloud_server_network" "kubenode" {
-  count     = local.kubenode_count
-  server_id = hcloud_server.kubenode[count.index].id
-  subnet_id = hcloud_network_subnet.main.id
-}
-
 
 resource "random_pet" "cassandra" {
   count = local.cassandra_count
@@ -151,15 +153,15 @@ resource "hcloud_server" "cassandra" {
     ipv4_enabled = false
     ipv6_enabled = false
   }
+  network {
+  network_id = hcloud_network.main.id
+  ip         = ""
+  }
+  depends_on = [
+    hcloud_network_subnet.main
+  ]
   # user_data   = local.disable_network_cfg
 }
-
-resource "hcloud_server_network" "cassandra" {
-  count     = local.cassandra_count
-  server_id = hcloud_server.cassandra[count.index].id
-  subnet_id = hcloud_network_subnet.main.id
-}
-
 
 resource "random_pet" "elasticsearch" {
   count = local.elasticsearch_count
@@ -176,15 +178,15 @@ resource "hcloud_server" "elasticsearch" {
     ipv4_enabled = false
     ipv6_enabled = false
   }
+  network {
+  network_id = hcloud_network.main.id
+  ip         = ""
+  }
+  depends_on = [
+    hcloud_network_subnet.main
+  ]
   # user_data   = local.disable_network_cfg
 }
-
-resource "hcloud_server_network" "elasticsearch" {
-  count     = local.elasticsearch_count
-  server_id = hcloud_server.elasticsearch[count.index].id
-  subnet_id = hcloud_network_subnet.main.id
-}
-
 
 resource "random_pet" "minio" {
   count = local.minio_count
@@ -201,13 +203,14 @@ resource "hcloud_server" "minio" {
     ipv4_enabled = false
     ipv6_enabled = false
   }
+  network {
+  network_id = hcloud_network.main.id
+  ip         = ""
+  }
+  depends_on = [
+    hcloud_network_subnet.main
+  ]
   # user_data   = local.disable_network_cfg
-}
-
-resource "hcloud_server_network" "minio" {
-  count     = local.minio_count
-  server_id = hcloud_server.minio[count.index].id
-  subnet_id = hcloud_network_subnet.main.id
 }
 
 resource "random_pet" "postgresql" {
@@ -226,10 +229,11 @@ resource "hcloud_server" "postgresql" {
     ipv6_enabled = false
   }
   # user_data   = local.disable_network_cfg
-}
-
-resource "hcloud_server_network" "postgresql" {
-  count     = local.postgresql_count
-  server_id = hcloud_server.postgresql[count.index].id
-  subnet_id = hcloud_network_subnet.main.id
+  network {
+  network_id = hcloud_network.main.id
+  ip         = ""
+  }
+  depends_on = [
+    hcloud_network_subnet.main
+  ]
 }

@@ -10,19 +10,18 @@ output "adminhost" {
 output "static-inventory" {
   sensitive = true
   value = {
-
-    assethost = {
-      hosts = {
-        "assethost" = {
-          ansible_host = hcloud_server_network.assethost.ip
-          ansible_user = "root"
-        }
-      }
-    }
     adminhost = {
       hosts = {
         "adminhost" = {
           ansible_host = hcloud_server.adminhost.ipv4_address
+          ansible_user = "root"
+        }
+      }
+    }
+    assethost = {
+      hosts = {
+        "assethost" = {
+          ansible_host = tolist(hcloud_server.assethost.network)[0].ip
           ansible_user = "root"
         }
       }
@@ -36,8 +35,8 @@ output "static-inventory" {
     kube-node = {
       hosts = {
         for index, server in hcloud_server.kubenode : server.name => {
-          ansible_host     = hcloud_server_network.kubenode[index].ip
-          ip               = hcloud_server_network.kubenode[index].ip
+          ansible_host     = tolist(hcloud_server.kubenode[index].network)[0].ip
+          ip               = tolist(hcloud_server.kubenode[index].network)[0].ip
           ansible_user     = "root"
           etcd_member_name = server.name
         }
@@ -60,7 +59,7 @@ output "static-inventory" {
     cassandra = {
       hosts = {
         for index, server in hcloud_server.cassandra : server.name => {
-          ansible_host = hcloud_server_network.cassandra[index].ip
+          ansible_host = tolist(hcloud_server.cassandra[index].network)[0].ip
           ansible_user = "root"
         }
       }
@@ -74,7 +73,7 @@ output "static-inventory" {
     elasticsearch = {
       hosts = {
         for index, server in hcloud_server.elasticsearch : server.name => {
-          ansible_host = hcloud_server_network.elasticsearch[index].ip
+          ansible_host = tolist(hcloud_server.elasticsearch[index].network)[0].ip
           ansible_user = "root"
         }
       }
@@ -88,7 +87,7 @@ output "static-inventory" {
     minio = {
       hosts = {
         for index, server in hcloud_server.minio : server.name => {
-          ansible_host = hcloud_server_network.minio[index].ip
+          ansible_host = tolist(hcloud_server.minio[index].network)[0].ip
           ansible_user = "root"
         }
       }
@@ -99,7 +98,7 @@ output "static-inventory" {
     postgresql = {
       hosts = {
         for index, server in hcloud_server.postgresql :  "postgresql${index + 1}" => {
-          ansible_host = hcloud_server_network.postgresql[index].ip
+          ansible_host = tolist(hcloud_server.postgresql[index].network)[0].ip
           ansible_user = "root"
           wire_dbname = "wire-server"
           wire_user = "wire-server"
