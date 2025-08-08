@@ -100,6 +100,10 @@ resource "hcloud_server" "assethost" {
   ssh_keys    = local.ssh_keys
   server_type = "cpx41"
   user_data   = local.disable_network_cfg
+  public_net {
+    ipv4_enabled = false
+    ipv6_enabled = false
+  }
 }
 
 resource "hcloud_server_network" "assethost" {
@@ -119,6 +123,10 @@ resource "hcloud_server" "kubenode" {
   ssh_keys    = local.ssh_keys
   server_type = "cpx41"
   user_data   = local.disable_network_cfg
+    public_net {
+    ipv4_enabled = false
+    ipv6_enabled = false
+  }
 }
 
 resource "hcloud_server_network" "kubenode" {
@@ -139,6 +147,10 @@ resource "hcloud_server" "cassandra" {
   image       = "ubuntu-22.04"
   ssh_keys    = local.ssh_keys
   server_type = "cx22"
+  public_net {
+    ipv4_enabled = false
+    ipv6_enabled = false
+  }
   # user_data   = local.disable_network_cfg
 }
 
@@ -160,6 +172,10 @@ resource "hcloud_server" "elasticsearch" {
   image       = "ubuntu-22.04"
   ssh_keys    = local.ssh_keys
   server_type = "cx22"
+  public_net {
+    ipv4_enabled = false
+    ipv6_enabled = false
+  }
   # user_data   = local.disable_network_cfg
 }
 
@@ -181,6 +197,10 @@ resource "hcloud_server" "minio" {
   image       = "ubuntu-22.04"
   ssh_keys    = local.ssh_keys
   server_type = "cx22"
+  public_net {
+    ipv4_enabled = false
+    ipv6_enabled = false
+  }
   # user_data   = local.disable_network_cfg
 }
 
@@ -201,6 +221,10 @@ resource "hcloud_server" "postgresql" {
   image       = "ubuntu-22.04"
   ssh_keys    = local.ssh_keys
   server_type = "cx22"
+  public_net {
+    ipv4_enabled = false
+    ipv6_enabled = false
+  }
   # user_data   = local.disable_network_cfg
 }
 
