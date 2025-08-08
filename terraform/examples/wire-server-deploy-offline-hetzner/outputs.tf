@@ -64,7 +64,7 @@ output "static-inventory" {
         }
       }
       vars = {
-        cassandra_network_interface = "eth0"
+        cassandra_network_interface = "enp7s0"
       }
     }
     cassandra_seed = {
@@ -78,7 +78,7 @@ output "static-inventory" {
         }
       }
       vars = {
-        elasticsearch_network_interface = "eth0"
+        elasticsearch_network_interface = "enp7s0"
       }
     }
     elasticsearch_master = {
@@ -92,7 +92,7 @@ output "static-inventory" {
         }
       }
       vars = {
-        minio_network_interface = "eth0"
+        minio_network_interface = "enp7s0"
       }
     }
     postgresql = {
@@ -106,7 +106,7 @@ output "static-inventory" {
         }
       }
       vars = {
-        postgresql_network_interface = "eth0"
+        postgresql_network_interface = "enp7s0"
       }
     }
     postgresql_rw = {
