@@ -4,6 +4,7 @@ set -euo pipefail
 set -x
 
 helm upgrade --install --wait cassandra-external ./charts/cassandra-external --values ./values/cassandra-external/values.yaml
+helm upgrade --install --wait postgresql-external ./charts/postgresql-external --values ./values/postgresql-external/values.yaml
 helm upgrade --install --wait elasticsearch-external ./charts/elasticsearch-external --values ./values/elasticsearch-external/values.yaml
 helm upgrade --install --wait minio-external ./charts/minio-external --values ./values/minio-external/values.yaml
 helm upgrade --install --wait fake-aws ./charts/fake-aws --values ./values/fake-aws/prod-values.example.yaml
