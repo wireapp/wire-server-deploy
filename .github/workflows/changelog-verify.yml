@@ -22,6 +22,18 @@ jobs:
           set -x
           BASE_SHA=${{ github.event.pull_request.base.sha }}
           HEAD_SHA=${{ github.event.pull_request.head.sha }}
+          
+          # Check if commit is by zebot with wire-build update message
+          COMMIT_AUTHOR=$(git log --format="%an" -1 $HEAD_SHA)
+          COMMIT_MESSAGE=$(git log --format="%s" -1 $HEAD_SHA)
+          
+          if [[ "$COMMIT_AUTHOR" == "zebot" && "$COMMIT_MESSAGE" == "Update wire-build to version"* ]]; then
+            echo "Skipping changelog check for zebot wire-build update commit"
+            echo "Author: $COMMIT_AUTHOR"
+            echo "Message: $COMMIT_MESSAGE"
+            exit 0
+          fi
+          
           CHANGED_FILES=$(git diff --name-only $BASE_SHA $HEAD_SHA -- changelog.d/ | grep -vE "^$")
 
           if [ -z "$CHANGED_FILES" ]; then
