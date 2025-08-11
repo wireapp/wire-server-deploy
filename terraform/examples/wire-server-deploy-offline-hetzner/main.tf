@@ -148,7 +148,7 @@ resource "hcloud_server" "cassandra" {
   name        = "cassandra-${random_pet.cassandra[count.index].id}"
   image       = "ubuntu-22.04"
   ssh_keys    = local.ssh_keys
-  server_type = "cx22"
+  server_type = "cpx11"
   public_net {
     ipv4_enabled = false
     ipv6_enabled = false
@@ -173,7 +173,7 @@ resource "hcloud_server" "elasticsearch" {
   name        = "elasticsearch-${random_pet.elasticsearch[count.index].id}"
   image       = "ubuntu-22.04"
   ssh_keys    = local.ssh_keys
-  server_type = "cx22"
+  server_type = "cpx11"
   public_net {
     ipv4_enabled = false
     ipv6_enabled = false
@@ -198,7 +198,7 @@ resource "hcloud_server" "minio" {
   name        = "minio-${random_pet.minio[count.index].id}"
   image       = "ubuntu-22.04"
   ssh_keys    = local.ssh_keys
-  server_type = "cx22"
+  server_type = "cpx11"
   public_net {
     ipv4_enabled = false
     ipv6_enabled = false
@@ -223,7 +223,7 @@ resource "hcloud_server" "postgresql" {
   name        = "postgresql-${random_pet.postgresql[count.index].id}"
   image       = "ubuntu-22.04"
   ssh_keys    = local.ssh_keys
-  server_type = "cx22"
+  server_type = "cpx11"
   public_net {
     ipv4_enabled = false
     ipv6_enabled = false
