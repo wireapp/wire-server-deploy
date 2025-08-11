@@ -160,7 +160,11 @@ resource "hcloud_server" "cassandra" {
   depends_on = [
     hcloud_network_subnet.main
   ]
-  # user_data   = local.disable_network_cfg
+  user_data   = <<-EOF
+  #cloud-config
+  runcmd:
+    - ip route add default via "${hcloud_network_subnet.main.gateway}"
+  EOF
 }
 
 resource "random_pet" "elasticsearch" {
@@ -185,7 +189,11 @@ resource "hcloud_server" "elasticsearch" {
   depends_on = [
     hcloud_network_subnet.main
   ]
-  # user_data   = local.disable_network_cfg
+  user_data   = <<-EOF
+  #cloud-config
+  runcmd:
+    - ip route add default via "${hcloud_network_subnet.main.gateway}"
+  EOF
 }
 
 resource "random_pet" "minio" {
@@ -210,7 +218,11 @@ resource "hcloud_server" "minio" {
   depends_on = [
     hcloud_network_subnet.main
   ]
-  # user_data   = local.disable_network_cfg
+  user_data   = <<-EOF
+  #cloud-config
+  runcmd:
+    - ip route add default via "${hcloud_network_subnet.main.gateway}"
+  EOF
 }
 
 resource "random_pet" "postgresql" {
@@ -228,7 +240,6 @@ resource "hcloud_server" "postgresql" {
     ipv4_enabled = false
     ipv6_enabled = false
   }
-  # user_data   = local.disable_network_cfg
   network {
   network_id = hcloud_network.main.id
   ip         = ""
@@ -236,4 +247,9 @@ resource "hcloud_server" "postgresql" {
   depends_on = [
     hcloud_network_subnet.main
   ]
+  user_data   = <<-EOF
+  #cloud-config
+  runcmd:
+    - ip route add default via "${hcloud_network_subnet.main.gateway}"
+  EOF
 }
