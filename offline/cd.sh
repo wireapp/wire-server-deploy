@@ -22,4 +22,4 @@ ssh -oStrictHostKeyChecking=accept-new -oConnectionAttempts=10 "root@$adminhost"
 ssh "root@$adminhost" cat ./ansible/inventory/offline/inventory.yml || true
 
 # NOTE: Agent is forwarded; so that the adminhost can provision the other boxes
-ssh -A "root@$adminhost" ./bin/offline-deploy.sh
+ssh -A "root@$adminhost" ./bin/offline-deploy.sh || true
