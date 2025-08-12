@@ -13,16 +13,16 @@ locals {
   runcmd:
 
     # Allow DNS
-    - iptables -A OUTPUT -o eth0 -p udp --dport 53  -j ACCEPT
-    - ip6tables -A OUTPUT -o eth0 -p udp --dport 53  -j ACCEPT
+    - iptables -A OUTPUT -o enp7s0 -p udp --dport 53  -j ACCEPT
+    - ip6tables -A OUTPUT -o enp7s0 -p udp --dport 53  -j ACCEPT
 
     # Allow NTP
-    - iptables -A OUTPUT -o eth0 -p udp --dport 123 -j ACCEPT
-    - ip6tables -A OUTPUT -o eth0 -p udp --dport 123 -j ACCEPT
+    - iptables -A OUTPUT -o enp7s0 -p udp --dport 123 -j ACCEPT
+    - ip6tables -A OUTPUT -o enp7s0 -p udp --dport 123 -j ACCEPT
 
     # Drop all other traffic
-    - iptables -A OUTPUT -o eth0 -j DROP
-    - ip6tables -A OUTPUT -o eth0 -j DROP
+    - iptables -A OUTPUT -o enp7s0 -j DROP
+    - ip6tables -A OUTPUT -o enp7s0 -j DROP
 
   EOF
 }
@@ -66,6 +66,46 @@ resource "hcloud_server" "adminhost" {
   server_type = "cpx41"
   user_data   = <<-EOF
   #cloud-config
+  runcmd:
+    # This is a workaround for the Hetzner Cloud's DNS issues
+    # it will set up a dnsmasq server on the adminhost
+    # that will receieve DNS requests from the kubenodes
+
+    - sudo systemctl disable systemd-resolved
+    - sudo systemctl stop systemd-resolved
+
+    - sudo unlink /etc/resolv.conf
+    - echo "nameserver 8.8.8.8" | sudo tee /etc/resolv.conf
+
+    - apt update
+    - apt install -y dnsmasq
+    - sudo systemctl stop dnsmasq
+
+    - |
+      for i in {1..60}; do
+        if ip addr show enp7s0 >/dev/null 2>&1; then
+          PRIV_IP=$(ip -o -4 addr show enp7s0 | awk '{print $4}' | cut -d'/' -f1)
+          if [ -n "$PRIV_IP" ]; then
+            break
+          fi
+        fi
+        echo "Waiting for enp7s0 interface... attempt $i"
+        sleep 2
+      done
+
+      cat > /etc/dnsmasq.conf << EOD
+      port=53
+      domain-needed
+      bogus-priv
+      bind-interfaces
+      listen-address=$PRIV_IP
+      listen-address=127.0.0.1
+      EOD
+
+    - systemctl restart dnsmasq
+
+    - iptables -A OUTPUT -p udp --dport 53  -j ACCEPT
+    - iptables -I INPUT -p udp -s 10.0.0.0/8 --dport 53  -j ACCEPT
   apt:
     sources:
       docker.list:
@@ -81,18 +121,21 @@ resource "hcloud_server" "adminhost" {
       shell: /bin/bash
       ssh_authorized_keys:
         - "${tls_private_key.admin.public_key_openssh}"
+
   EOF
-}
-
-resource "hcloud_server_network" "adminhost" {
-  server_id = hcloud_server.adminhost.id
-  subnet_id = hcloud_network_subnet.main.id
-}
-
-resource "random_pet" "assethost" {
+  network {
+  network_id = hcloud_network.main.id
+  ip         = ""
+  }
+  depends_on = [
+    hcloud_network_subnet.main
+  ]
 }
 
 # The server hosting all the bootstrap assets
+resource "random_pet" "assethost" {
+}
+
 resource "hcloud_server" "assethost" {
   location    = "nbg1"
   name        = "assethost-${random_pet.assethost.id}"
@@ -124,8 +167,30 @@ resource "hcloud_server" "kubenode" {
   image       = "ubuntu-22.04"
   ssh_keys    = local.ssh_keys
   server_type = "cpx41"
-  user_data   = local.disable_network_cfg
-    public_net {
+  user_data = <<-EOF
+  #cloud-config
+  runcmd:
+    - |
+      for i in {1..60}; do
+        if systemctl is-active --quiet systemd-resolved; then
+          break
+        fi
+        echo "Waiting for systemd-resolved to be active... attempt $i"
+        sleep 2
+      done
+
+    - |
+      for i in {1..60}; do
+        if ip addr show enp7s0 >/dev/null 2>&1; then
+          break
+        fi
+        echo "Waiting for enp7s0 interface... attempt $i"
+        sleep 2
+      done
+
+    - resolvectl dns enp7s0 "${tolist(hcloud_server.adminhost.network)[0].ip}"
+  EOF
+  public_net {
     ipv4_enabled = false
     ipv6_enabled = false
   }
@@ -148,7 +213,7 @@ resource "hcloud_server" "cassandra" {
   name        = "cassandra-${random_pet.cassandra[count.index].id}"
   image       = "ubuntu-22.04"
   ssh_keys    = local.ssh_keys
-  server_type = "cpx11"
+  server_type = "cx22"
   public_net {
     ipv4_enabled = false
     ipv6_enabled = false
@@ -177,7 +242,7 @@ resource "hcloud_server" "elasticsearch" {
   name        = "elasticsearch-${random_pet.elasticsearch[count.index].id}"
   image       = "ubuntu-22.04"
   ssh_keys    = local.ssh_keys
-  server_type = "cpx11"
+  server_type = "cx22"
   public_net {
     ipv4_enabled = false
     ipv6_enabled = false
@@ -206,7 +271,7 @@ resource "hcloud_server" "minio" {
   name        = "minio-${random_pet.minio[count.index].id}"
   image       = "ubuntu-22.04"
   ssh_keys    = local.ssh_keys
-  server_type = "cpx11"
+  server_type = "cx22"
   public_net {
     ipv4_enabled = false
     ipv6_enabled = false
@@ -235,7 +300,7 @@ resource "hcloud_server" "postgresql" {
   name        = "postgresql-${random_pet.postgresql[count.index].id}"
   image       = "ubuntu-22.04"
   ssh_keys    = local.ssh_keys
-  server_type = "cpx11"
+  server_type = "cx22"
   public_net {
     ipv4_enabled = false
     ipv6_enabled = false
