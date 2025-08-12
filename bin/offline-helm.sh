@@ -20,8 +20,10 @@ else
 fi
 helm upgrade --install --wait demo-smtp ./charts/demo-smtp --values $SMTP_VALUES_FILE
 
-helm upgrade --install --wait postgresql ./charts/postgresql --values ./values/postgresql/prod-values.example.yaml --values ./values/postgresql/prod-secrets.example.yaml
+# remove postgresql chart as postgresql is now external
+# helm upgrade --install --wait postgresql ./charts/postgresql --values ./values/postgresql/prod-values.example.yaml --values ./values/postgresql/prod-secrets.example.yaml
 helm upgrade --install --wait rabbitmq ./charts/rabbitmq --values ./values/rabbitmq/prod-values.example.yaml --values ./values/rabbitmq/prod-secrets.example.yaml
+# it will only deploy the redis cluster
 helm upgrade --install --wait databases-ephemeral ./charts/databases-ephemeral --values ./values/databases-ephemeral/prod-values.example.yaml
 helm upgrade --install --wait reaper ./charts/reaper
 helm upgrade --install --wait --timeout=10m0s wire-server ./charts/wire-server --values ./values/wire-server/prod-values.example.yaml --values ./values/wire-server/secrets.yaml || true 
@@ -29,7 +31,6 @@ helm upgrade --install --wait --timeout=10m0s wire-server ./charts/wire-server -
 kubectl get pods -l app=wire-server || true
 kubectl describe pods -l app=wire-server || true
 kubectl logs -l app=wire-server --all-containers --prefix || true
-
 
 # if charts/webapp directory exists
 if [ -d "./charts/webapp" ]; then
