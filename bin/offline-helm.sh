@@ -26,11 +26,7 @@ helm upgrade --install --wait rabbitmq ./charts/rabbitmq --values ./values/rabbi
 # it will only deploy the redis cluster
 helm upgrade --install --wait databases-ephemeral ./charts/databases-ephemeral --values ./values/databases-ephemeral/prod-values.example.yaml
 helm upgrade --install --wait reaper ./charts/reaper
-helm upgrade --install --wait --timeout=10m0s wire-server ./charts/wire-server --values ./values/wire-server/prod-values.example.yaml --values ./values/wire-server/secrets.yaml || true 
-
-kubectl get pods -l app=wire-server || true
-kubectl describe pods -l app=wire-server || true
-kubectl logs -l app=wire-server --all-containers --prefix || true
+helm upgrade --install --wait --timeout=10m0s wire-server ./charts/wire-server --values ./values/wire-server/prod-values.example.yaml --values ./values/wire-server/secrets.yaml
 
 # if charts/webapp directory exists
 if [ -d "./charts/webapp" ]; then
