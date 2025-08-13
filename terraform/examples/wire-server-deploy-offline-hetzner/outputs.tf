@@ -76,11 +76,6 @@ output "static-inventory" {
       }
       vars = {
         cassandra_network_interface = "enp7s0"
-        ansible_default_ipv4 = {
-          address = tolist(hcloud_server.cassandra[0].network)[0].ip
-          interface = cassandra_network_interface
-          gateway = gateway_ip
-        }
       }
     }
     cassandra_seed = {
