@@ -55,6 +55,24 @@
       ignore_errors: yes
       when: user_check_result.rowcount == 0
 
+    - name: Grant privileges to the user
+      community.postgresql.postgresql_privs:
+        database: "{{ wire_dbname }}"
+        roles: "{{ wire_user }}"
+        privs: ALL
+        type: database
+      become: yes
+      become_user: postgres
+      when: user_creation_result.changed
+
+    - name: Grant CREATE on public schema to the user
+      community.postgresql.postgresql_query:
+        db: "{{ wire_dbname }}"
+        query: "GRANT CREATE ON SCHEMA public TO \"{{ wire_user }}\";"
+      become: yes
+      become_user: postgres
+      when: user_creation_result.changed
+
     - name: Display PostgreSQL user credentials if creation was successful
       debug:
         msg: "PostgreSQL user '{{ wire_user }}' created successfully. Password: {{ wire_pass }}"
