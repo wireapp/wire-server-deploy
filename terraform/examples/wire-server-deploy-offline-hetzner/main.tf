@@ -6,25 +6,6 @@ locals {
   cassandra_count     = 3
   postgresql_count    = 3
   ssh_keys            = [hcloud_ssh_key.adminhost.name]
-
-  # TODO: IPv6
-  disable_network_cfg = <<-EOF
-  #cloud-config
-  runcmd:
-
-    # Allow DNS
-    - iptables -A OUTPUT -o enp7s0 -p udp --dport 53  -j ACCEPT
-    - ip6tables -A OUTPUT -o enp7s0 -p udp --dport 53  -j ACCEPT
-
-    # Allow NTP
-    - iptables -A OUTPUT -o enp7s0 -p udp --dport 123 -j ACCEPT
-    - ip6tables -A OUTPUT -o enp7s0 -p udp --dport 123 -j ACCEPT
-
-    # Drop all other traffic
-    - iptables -A OUTPUT -o enp7s0 -j DROP
-    - ip6tables -A OUTPUT -o enp7s0 -j DROP
-
-  EOF
 }
 
 
@@ -64,65 +45,6 @@ resource "hcloud_server" "adminhost" {
   image       = "ubuntu-22.04"
   ssh_keys    = local.ssh_keys
   server_type = "cpx41"
-  user_data   = <<-EOF
-  #cloud-config
-  runcmd:
-    # This is a workaround for the Hetzner Cloud's DNS issues
-    # it will set up a dnsmasq server on the adminhost
-    # that will receieve DNS requests from the kubenodes
-
-    - sudo systemctl disable systemd-resolved
-    - sudo systemctl stop systemd-resolved
-
-    - sudo unlink /etc/resolv.conf
-    - echo "nameserver 8.8.8.8" | sudo tee /etc/resolv.conf
-
-    - apt update
-    - apt install -y dnsmasq
-    - sudo systemctl stop dnsmasq
-
-    - |
-      for i in {1..60}; do
-        if ip addr show enp7s0 >/dev/null 2>&1; then
-          PRIV_IP=$(ip -o -4 addr show enp7s0 | awk '{print $4}' | cut -d'/' -f1)
-          if [ -n "$PRIV_IP" ]; then
-            break
-          fi
-        fi
-        echo "Waiting for enp7s0 interface... attempt $i"
-        sleep 2
-      done
-
-      cat > /etc/dnsmasq.conf << EOD
-      port=53
-      domain-needed
-      bogus-priv
-      bind-interfaces
-      listen-address=$PRIV_IP
-      listen-address=127.0.0.1
-      EOD
-
-    - systemctl restart dnsmasq
-
-    - iptables -A OUTPUT -p udp --dport 53  -j ACCEPT
-    - iptables -I INPUT -p udp -s 10.0.0.0/8 --dport 53  -j ACCEPT
-  apt:
-    sources:
-      docker.list:
-        source: deb [arch=amd64] https://download.docker.com/linux/ubuntu $RELEASE stable
-        keyid: 9DC858229FC7DD38854AE2D88D81803C0EBFCD88
-  packages:
-    - docker-ce
-    - docker-ce-cli
-  users:
-    - name: admin
-      groups:
-        - sudo
-      shell: /bin/bash
-      ssh_authorized_keys:
-        - "${tls_private_key.admin.public_key_openssh}"
-
-  EOF
   network {
   network_id = hcloud_network.main.id
   ip         = ""
@@ -142,7 +64,6 @@ resource "hcloud_server" "assethost" {
   image       = "ubuntu-22.04"
   ssh_keys    = local.ssh_keys
   server_type = "cpx41"
-  user_data   = local.disable_network_cfg
   public_net {
     ipv4_enabled = false
     ipv6_enabled = false
@@ -167,29 +88,6 @@ resource "hcloud_server" "kubenode" {
   image       = "ubuntu-22.04"
   ssh_keys    = local.ssh_keys
   server_type = "cpx41"
-  user_data = <<-EOF
-  #cloud-config
-  runcmd:
-    - |
-      for i in {1..60}; do
-        if systemctl is-active --quiet systemd-resolved; then
-          break
-        fi
-        echo "Waiting for systemd-resolved to be active... attempt $i"
-        sleep 2
-      done
-
-    - |
-      for i in {1..60}; do
-        if ip addr show enp7s0 >/dev/null 2>&1; then
-          break
-        fi
-        echo "Waiting for enp7s0 interface... attempt $i"
-        sleep 2
-      done
-
-    - resolvectl dns enp7s0 "${tolist(hcloud_server.adminhost.network)[0].ip}"
-  EOF
   public_net {
     ipv4_enabled = false
     ipv6_enabled = false
@@ -225,11 +123,6 @@ resource "hcloud_server" "cassandra" {
   depends_on = [
     hcloud_network_subnet.main
   ]
-  user_data   = <<-EOF
-  #cloud-config
-  runcmd:
-    - ip route add default via "${hcloud_network_subnet.main.gateway}"
-  EOF
 }
 
 resource "random_pet" "elasticsearch" {
@@ -254,11 +147,6 @@ resource "hcloud_server" "elasticsearch" {
   depends_on = [
     hcloud_network_subnet.main
   ]
-  user_data   = <<-EOF
-  #cloud-config
-  runcmd:
-    - ip route add default via "${hcloud_network_subnet.main.gateway}"
-  EOF
 }
 
 resource "random_pet" "minio" {
@@ -283,11 +171,6 @@ resource "hcloud_server" "minio" {
   depends_on = [
     hcloud_network_subnet.main
   ]
-  user_data   = <<-EOF
-  #cloud-config
-  runcmd:
-    - ip route add default via "${hcloud_network_subnet.main.gateway}"
-  EOF
 }
 
 resource "random_pet" "postgresql" {
@@ -312,9 +195,4 @@ resource "hcloud_server" "postgresql" {
   depends_on = [
     hcloud_network_subnet.main
   ]
-  user_data   = <<-EOF
-  #cloud-config
-  runcmd:
-    - ip route add default via "${hcloud_network_subnet.main.gateway}"
-  EOF
 }
