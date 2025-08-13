@@ -147,20 +147,19 @@
   become: yes
     
   tasks:
-    - name: Check if systemd-resolved is active
-      shell: systemctl is-active systemd-resolved
-      register: resolved_check
-      retries: 60
-      delay: 2
-      until: resolved_check.rc == 0
-      
-    - name: Check if private interface exists
-      shell: ip addr show {{ private_interface }}
-      register: interface_check
-      retries: 60
-      delay: 2
-      until: interface_check.rc == 0
-            
-    - name: Set DNS for interface via resolvectl (runtime)
-      shell: resolvectl dns {{ private_interface }} {{ adminhost_ip }}
-      when: adminhost_ip is defined
+    - name: Disable systemd-resolved
+      systemd:
+        name: systemd-resolved
+        enabled: no
+        state: stopped
+        
+    - name: Remove existing resolv.conf symlink
+      file:
+        path: /etc/resolv.conf
+        state: absent
+        
+    - name: Create new resolv.conf with Adminhost dnsmasq service
+      copy:
+        content: "nameserver {{ adminhost_ip }}\n"
+        dest: /etc/resolv.conf
+        mode: '0644'
