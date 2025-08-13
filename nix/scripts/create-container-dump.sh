@@ -8,6 +8,9 @@ if [[ ! $# -eq 1 ]]; then
   exit 1
 fi
 
+export HTTP_TIMEOUT=600     # Timeout in seconds (default is typically 90)
+export REGISTRY_TIMEOUT=600 # Registry specific timeout
+
 output_dir=$1
 mkdir -p $1
 # Download all the docker images into $1, and append its name to an index.txt
@@ -30,10 +33,10 @@ while IFS= read -r image; do
       # If an image has both a tag and digest, remove the tag. Return the original if there is no match.
       image_trimmed=$(echo "$image" | sed -E 's/(.+)(:.+(@.+))/\1\3/')
       if [[ -n "${DOCKER_LOGIN:-}" && "$image" =~ quay.io/wire ]];then
-        skopeo copy --insecure-policy --src-creds "$DOCKER_LOGIN" \
+        skopeo copy --insecure-policy --src-creds "$DOCKER_LOGIN" --retry-times 10 --retry-delay 10s \
           docker://$image_trimmed docker-archive:${image_path} --additional-tag $image
       else
-        skopeo copy --insecure-policy \
+        skopeo copy --insecure-policy --retry-times 10 --retry-delay 10s \
           docker://$image_trimmed docker-archive:${image_path} --additional-tag $image
       fi
       echo "${image_filename}.tar" >> $(realpath "$1")/index.txt
