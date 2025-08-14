@@ -50,6 +50,7 @@ ansible-playbook -i $INVENTORY_FILE $ANSIBLE_DIR/kubernetes.yml --skip-tags boot
 ansible-playbook -i $INVENTORY_FILE $ANSIBLE_DIR/cassandra.yml
 ansible-playbook -i $INVENTORY_FILE $ANSIBLE_DIR/elasticsearch.yml
 ansible-playbook -i $INVENTORY_FILE $ANSIBLE_DIR/minio.yml
+ansible-playbook -i $INVENTORY_FILE $ANSIBLE_DIR/postgresql-deploy.yml
 
 # Uncomment to deploy external RabbitMQ (temporarily commented out until implemented in CD), PS. remote --skip-tags=rabbitmq-external from the next section
 #ansible-playbook -i $INVENTORY_FILE $ANSIBLE_DIR/roles/rabbitmq-cluster/tasks/configure_dns.yml

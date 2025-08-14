@@ -1,0 +1,79 @@
+---
+- name: Create PostgreSQL database and user for wire-server
+  hosts: postgresql_rw
+  tasks:
+    - name: Check if PostgreSQL database exists
+      community.postgresql.postgresql_query:
+        query: "SELECT 1 FROM pg_database WHERE datname = '{{ wire_dbname }}'"
+      become: yes
+      become_user: postgres
+      register: db_check_result
+      ignore_errors: yes
+
+    - name: Create PostgreSQL database
+      community.postgresql.postgresql_db:
+        name: "{{ wire_dbname }}"
+        state: present
+      become: yes
+      become_user: postgres
+      when: db_check_result.rowcount == 0
+
+    - name: Display message if database already exists
+      debug:
+        msg: "PostgreSQL database '{{ wire_dbname }}' already exists."
+      when: db_check_result.rowcount > 0
+
+    - name: Check if PostgreSQL user exists
+      community.postgresql.postgresql_query:
+        query: "SELECT 1 FROM pg_roles WHERE rolname = '{{ wire_user }}'"
+      become: yes
+      become_user: postgres
+      register: user_check_result
+      ignore_errors: yes
+
+    - name: Display message if user already exists
+      debug:
+        msg: "PostgreSQL user '{{ wire_user }}' already exists."
+      when: user_check_result.rowcount > 0
+
+    - name: Generate random password if wire_pass is not defined
+      set_fact:
+        wire_pass: "{{ lookup('password', '/dev/null length=15 chars=ascii_letters,digits') }}"
+      when:
+        - wire_pass is not defined or wire_pass == ""
+        - user_check_result.rowcount == 0
+
+    - name: Create PostgreSQL user
+      community.postgresql.postgresql_user:
+        name: "{{ wire_user }}"
+        password: "{{ wire_pass }}"
+        db: "{{ wire_dbname }}"
+        state: present
+      become: yes
+      become_user: postgres
+      register: user_creation_result
+      ignore_errors: yes
+      when: user_check_result.rowcount == 0
+
+    - name: Grant privileges to the user
+      community.postgresql.postgresql_privs:
+        database: "{{ wire_dbname }}"
+        roles: "{{ wire_user }}"
+        privs: ALL
+        type: database
+      become: yes
+      become_user: postgres
+      when: user_creation_result.changed
+
+    - name: Grant CREATE on public schema to the user
+      community.postgresql.postgresql_query:
+        db: "{{ wire_dbname }}"
+        query: "GRANT CREATE ON SCHEMA public TO \"{{ wire_user }}\";"
+      become: yes
+      become_user: postgres
+      when: user_creation_result.changed
+
+    - name: Display PostgreSQL user credentials if creation was successful
+      debug:
+        msg: "PostgreSQL user '{{ wire_user }}' created successfully. Password: {{ wire_pass }}"
+      when: user_creation_result is defined and user_creation_result.changed

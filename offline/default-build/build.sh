@@ -25,8 +25,11 @@ TASKS_DIR="${SCRIPT_DIR}/../tasks"
 # Processing helm charts
 # --------------------------
 
-# pulling the charts, charts to be skipped are passed as arguments HELM_CHART_EXCLUDE_LIST
+# pulling the charts based on builds.json, charts to be skipped are passed as arguments HELM_CHART_EXCLUDE_LIST
 "${TASKS_DIR}"/proc_pull_charts.sh OUTPUT_DIR="${OUTPUT_DIR}" # HELM_CHART_EXCLUDE_LIST="inbucket,wire-server-enterprise,coturn"
+
+# pulling the charts from helm-charts repo, charts to be included are passed as arguments HELM_CHART_INCLUDE_LIST
+"${TASKS_DIR}"/proc_pull_ext_charts.sh OUTPUT_DIR="${OUTPUT_DIR}" HELM_CHART_INCLUDE_LIST="postgresql-external"
 
 # copy local copy of values from root directory to output directory
 cp -r "${ROOT_DIR}"/values "${OUTPUT_DIR}"/
