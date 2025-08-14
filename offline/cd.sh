@@ -41,4 +41,4 @@ ansible-playbook -i inventory.yml setup_nodes.yml --private-key "ssh_private_key
   -e "ansible_ssh_common_args='-o ProxyCommand=\"ssh -W %h:%p -q root@$adminhost -i ssh_private_key\" -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null'"
 
 # NOTE: Agent is forwarded; so that the adminhost can provision the other boxes
-ssh -A "root@$adminhost" "$BIN_DIR/offline-deploy.sh"
+ssh -A "root@$adminhost" ./bin/offline-deploy.sh
