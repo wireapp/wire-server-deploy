@@ -2,6 +2,15 @@ output "ssh_private_key" {
   sensitive = true
   value = tls_private_key.admin.private_key_pem
 }
+
+output "selected_server_types" {
+  description = "Server types selected after checking availability"
+  value = {
+    small_server_type  = local.small_server_type
+    medium_server_type = local.medium_server_type
+  }
+}
+
 output "adminhost" {
   sensitive = true
   value = hcloud_server.adminhost.ipv4_address
