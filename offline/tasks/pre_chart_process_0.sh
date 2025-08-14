@@ -19,3 +19,4 @@ sed -i -Ee 's/useSharedFederatorSecret: false/useSharedFederatorSecret: true/' "
 # cf. https://github.com/smallstep/helm-charts/pull/196/files
 rm -v "${OUTPUT_DIR}"/charts/step-certificates/charts/step-certificates/templates/tests/*
 rm -v "${OUTPUT_DIR}"/charts/smtp/charts/smtp/templates/tests/*
+sed -i -Ee 's/kube-dns.kube-system.svc/coredns.kube-system.svc/' "${OUTPUT_DIR}"/charts/wire-server/charts/nginz/templates/conf/_nginx.conf.tpl
