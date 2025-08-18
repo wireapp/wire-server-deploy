@@ -18,7 +18,7 @@ docker_ubuntu_repo_gpgkey: "{{ ubuntu_repos }}/gpg"
 # docker_ubuntu_repo_repokey: "9DC858229FC7DD38854AE2D88D81803C0EBFCD88"
 
 binaries_url: "http://{{ assethost_host }}/binaries"
-nodelocaldns_ip: 10.233.0.10
+# nodelocaldns_ip: 10.233.0.10
 
 kube_version: "v1.29.10"
 etcd_version: "v3.5.16"

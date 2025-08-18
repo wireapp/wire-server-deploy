@@ -75,6 +75,7 @@ output "static-inventory" {
         calico_veth_mtu = 1430
         # NOTE: relax handling a list with more than 3 items; required on Hetzner
         docker_dns_servers_strict = false
+        upstream_dns_servers = [tolist(hcloud_server.adminhost.network)[0].ip]
       }
     }
     cassandra = {
