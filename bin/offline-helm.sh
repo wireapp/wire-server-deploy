@@ -10,7 +10,7 @@ helm upgrade --install --wait minio-external ./charts/minio-external --values ./
 helm upgrade --install --wait fake-aws ./charts/fake-aws --values ./values/fake-aws/prod-values.example.yaml
 
 # ensure that the RELAY_NETWORKS value is set to the podCIDR
-SMTP_VALUES_FILE="./values/demo-smtp/prod-values.example.yaml"
+SMTP_VALUES_FILE="./values/smtp/prod-values.example.yaml"
 podCIDR=$(kubectl get configmap -n kube-system kubeadm-config -o yaml | grep -i 'podSubnet' | awk '{print $2}' 2>/dev/null)
 
 if [[ $? -eq 0 && -n "$podCIDR" ]]; then
@@ -18,7 +18,7 @@ if [[ $? -eq 0 && -n "$podCIDR" ]]; then
 else
     echo "Failed to fetch podSubnet. Attention using the default value: $(grep -i RELAY_NETWORKS $SMTP_VALUES_FILE)"
 fi
-helm upgrade --install --wait demo-smtp ./charts/demo-smtp --values $SMTP_VALUES_FILE
+helm upgrade --install --wait smtp ./charts/smtp --values $SMTP_VALUES_FILE
 
 # remove postgresql chart as postgresql is now external
 # helm upgrade --install --wait postgresql ./charts/postgresql --values ./values/postgresql/prod-values.example.yaml --values ./values/postgresql/prod-secrets.example.yaml
