@@ -13,7 +13,7 @@
 - [Best Practices](#best-practices)
 - [Security Considerations](#security-considerations)
 
-## OverviewostgreSQL Cluster Deployment
+## Overview of PostgreSQL Cluster Deployment
 
 ## Overview
 The [`postgresql-deploy.yml`](../ansible/postgresql-deploy.yml) playbook is designed to deploy a highly available PostgreSQL cluster using streaming replication. The cluster consists of one primary (read-write) node and two replica (read-only) nodes, providing fault tolerance and read scaling capabilities. The deployment includes tasks for installing PostgreSQL packages, deploying the primary node, deploying replica nodes, verifying the deployment, and setting up the Wire server database and user.

@@ -46,7 +46,7 @@ commit_siblings = 5
 # Streaming Replication Settings - Asynchronous for resource efficiency
 # https://www.postgresql.org/docs/17/runtime-config-replication.html
 synchronous_standby_names = ''            # Async replication to reduce resource usage
-synchronous_commit = off                  # Async commits for better performance with limited resources
+synchronous_commit = on                   # Default to synchronous commit
 wal_receiver_status_interval = 10s         # Less frequent updates to save resources
 max_standby_streaming_delay = 120s         # Longer delays acceptable for resource constraints
 max_standby_archive_delay = 120s
