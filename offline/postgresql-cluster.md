@@ -110,27 +110,48 @@ postgresql3
 ### Running the Playbook
 
 To run the [`postgresql-deploy.yml`](../ansible/postgresql-deploy.yml) playbook, use the following command:
-```
-ansible-playbook -i ansible/inventory/offline/hosts.ini ansible/postgresql-deploy.yml # -e "skip_postgresql_wire_setup=true"
+```bash
+ansible-playbook -i ansible/inventory/offline/hosts.ini ansible/postgresql-deploy.yml
 ```
 
 **Note**: The ansible commands should be run using the WSD_CONTAINER container as explained in the [Making tooling available in your environment](./docs_ubuntu_22.04.md#making-tooling-available-in-your-environment) documentation.
 
-#### Skip Tags and Use Cases
+#### Tags and Selective Execution
 
-The playbook includes several tasks that can be skipped by setting specific variables to `true`. These variables default to `false` if not specified, meaning the tasks will be executed unless explicitly skipped.
+The playbook uses tags to allow selective execution of specific components. You can run only specific parts of the deployment by using the `--tags` or `--skip-tags` options:
 
-- `skip_postgresql_install`: Skip [PostgreSQL package installation](#postgresql-packages-installation-playbook). Useful if PostgreSQL is already installed.
-- `skip_postgresql_primary`: Skip [primary PostgreSQL node deployment](#primary-node-deployment-process). Useful if the primary node is already set up.
-- `skip_postgresql_replica`: Skip [replica PostgreSQL node deployment](#replica-node-deployment-process). Useful if replicas are already set up.
-- `skip_postgresql_verify`: Skip [verification of the PostgreSQL deployment](#automated-verification-process). Useful if verification is not needed or has already been done.
-- `skip_postgresql_wire_setup`: Skip [setup of the Wire server PostgreSQL database and user](#wire-server-database-setup). Useful if the database and user are already set up.
+**Tag Reference Table:**
 
-**Example with skip options**:
+| Component | Tag | Description |
+|-----------|-----|-------------|
+| Package Installation | `install` | Installs PostgreSQL packages and dependencies |
+| Primary Node | `primary` | Deploys and configures the primary PostgreSQL node |
+| Replica Nodes | `replica` | Deploys and configures replica PostgreSQL nodes |
+| Verification | `verify` | Verifies cluster health and replication status |
+| Wire Setup | `wire-setup` | Creates Wire database and user account |
+| All Components | `postgresql` | Runs all PostgreSQL deployment tasks |
+
+**Example usage with tags**:
+
 ```bash
-ansible-playbook -i ansible/inventory/offline/hosts.ini ansible/postgresql-deploy.yml -e "skip_postgresql_wire_setup=true"
-```
+# Install packages only
+ansible-playbook -i ansible/inventory/offline/hosts.ini ansible/postgresql-deploy.yml --tags "install"
 
+# Deploy only primary node
+ansible-playbook -i ansible/inventory/offline/hosts.ini ansible/postgresql-deploy.yml --tags "primary"
+
+# Deploy primary and replicas, skip -  wire setup, install and verify
+ansible-playbook -i ansible/inventory/offline/hosts.ini ansible/postgresql-deploy.yml --tags "primary,replica"
+
+# Skip installation (if PostgreSQL is already installed)
+ansible-playbook -i ansible/inventory/offline/hosts.ini ansible/postgresql-deploy.yml --skip-tags "install"
+
+# Skip wire setup and verification
+ansible-playbook -i ansible/inventory/offline/hosts.ini ansible/postgresql-deploy.yml --skip-tags "wire-setup,verify"
+
+# Run only verification
+ansible-playbook -i ansible/inventory/offline/hosts.ini ansible/postgresql-deploy.yml --tags "verify"
+```
 
 ## PostgreSQL Packages Installation Playbook
 
@@ -224,6 +245,12 @@ To run the [`postgresql-install.yml`](../ansible/postgresql-playbooks/postgresql
 
 ```bash
 ansible-playbook -i ansible/inventory/offline/hosts.ini ansible/postgresql-playbooks/postgresql-install.yml
+```
+
+Alternatively, you can run just the installation step from the main playbook using tags:
+
+```bash
+ansible-playbook -i ansible/inventory/offline/hosts.ini ansible/postgresql-deploy.yml --tags "install"
 ```
 
 ## Deployment Architecture
@@ -428,6 +455,18 @@ This playbook is automatically executed as part of the main `postgresql-deploy.y
 
 ```bash
 ansible-playbook -i ansible/inventory/offline/hosts.ini ansible/postgresql-playbooks/postgresql-wire-setup.yml
+```
+
+Alternatively, you can run just the wire setup from the main playbook using tags:
+
+```bash
+ansible-playbook -i ansible/inventory/offline/hosts.ini ansible/postgresql-deploy.yml --tags "wire-setup"
+```
+
+To skip the wire setup when running the full deployment:
+
+```bash
+ansible-playbook -i ansible/inventory/offline/hosts.ini ansible/postgresql-deploy.yml --skip-tags "wire-setup"
 ```
 
 #### Important Notes

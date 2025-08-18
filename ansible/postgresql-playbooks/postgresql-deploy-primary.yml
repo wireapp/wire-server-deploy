@@ -11,7 +11,7 @@
     - name: Check replication user exists
       community.postgresql.postgresql_query:
         login_db: postgres
-        query: "SELECT 1 FROM pg_roles WHERE rolname = '{{ repmgr_user }}'"
+        query: "SELECT 1 FROM pg_roles WHERE rolname = '{{ repsvc_user }}'"
       register: repl_user_exists
       become: yes
       become_user: postgres
@@ -67,8 +67,8 @@
 
     - name: Create replication user
       community.postgresql.postgresql_user:
-        name: "{{ repmgr_user }}"
-        password: "{{ repmgr_password }}"
+        name: "{{ repsvc_user }}"
+        password: "{{ repsvc_password }}"
         role_attr_flags: "REPLICATION,LOGIN"
         login_db: postgres
         state: present

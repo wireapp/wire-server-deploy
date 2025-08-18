@@ -72,12 +72,12 @@
         cmd: >
           /usr/bin/pg_basebackup 
           -h {{ primary_node }} 
-          -U {{ repmgr_user }} 
+          -U {{ repsvc_user }} 
           -p 5432 
           -D {{ postgresql_data_dir }} 
           -P -R -X stream
       environment:
-        PGPASSWORD: "{{ repmgr_password }}"
+        PGPASSWORD: "{{ repsvc_password }}"
       when: 
         - inventory_hostname in ["postgresql2", "postgresql3"]
         - not replica_configured.stat.exists
