@@ -14,8 +14,8 @@ host    all             all             ::1/128                 md5
 
 {% if inventory_hostname in groups['postgresql_rw'] %}
 {# Allow replication connections from replica nodes #}
-host    replication     {{ repmgr_user }}     {{ replica_node1 }}/32    md5
-host    replication     {{ repmgr_user }}     {{ replica_node2 }}/32    md5
+host    replication     {{ repsvc_user }}     {{ replica_node1 }}/32    md5
+host    replication     {{ repsvc_user }}     {{ replica_node2 }}/32    md5
 {% endif %}
 
 {% if inventory_hostname in groups['postgresql_rw'] or inventory_hostname in groups['postgresql_ro'] %}

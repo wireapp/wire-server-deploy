@@ -17,7 +17,7 @@ shared_preload_libraries = 'pg_stat_statements'
 
 # Streaming replication configuration
 # https://www.postgresql.org/docs/17/runtime-config-replication.html
-primary_conninfo = 'host={{ primary_node }} port=5432 user={{ repmgr_user }} password={{ repmgr_password }} application_name={{ inventory_hostname }}'
+primary_conninfo = 'host={{ primary_node }} port=5432 user={{ repsvc_user }} password={{ repsvc_password }} application_name={{ inventory_hostname }}'
 primary_slot_name = '{{ inventory_hostname }}'
 
 # Memory Settings (optimized for 1GB RAM, 1 core)

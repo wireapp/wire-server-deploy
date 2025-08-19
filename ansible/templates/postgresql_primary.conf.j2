@@ -43,7 +43,7 @@ wal_writer_flush_after = 1MB
 commit_delay = 0                          # No artificial delay
 commit_siblings = 5
 
-# Streaming Replication Settings - Asynchronous for resource efficiency
+# Streaming Replication Settings - Synchronous for resource efficiency
 # https://www.postgresql.org/docs/17/runtime-config-replication.html
 synchronous_standby_names = ''            # Async replication to reduce resource usage
 synchronous_commit = on                   # Default to synchronous commit
