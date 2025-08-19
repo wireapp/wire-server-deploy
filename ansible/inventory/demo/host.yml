@@ -50,6 +50,7 @@ wiab:
       - smtp
       - rabbitmq
       - databases-ephemeral
+      - postgresql # it is ephemeral version of postgresql
       - reaper
       - wire-server
       - webapp
