@@ -18,6 +18,7 @@ let
   containerd_version = "1.7.22";
   minio_version = "RELEASE.2023-07-07T07-13-57Z";
   mc_version = "RELEASE.2023-10-24T05-18-28Z";
+  repmgr_version = "5.5.0";
 
 
   # Note: If you change a version, replace the checksum with zeros, run « nix-build --no-out-link -A pkgs.wire-binaries », it will complain and give you the right checksum, use that checksum in this file, run it again and it should build without complaining.
@@ -140,6 +141,21 @@ let
       passthru.url = url;
       url = "https://apt.postgresql.org/pub/repos/apt/pool/main/p/psycopg2/python3-psycopg2_2.9.10-1.pgdg22.04+1_amd64.deb";
       sha256 = "sha256:cc2f749e3af292a67e012edeb4aa5d284f57f2d66a9a09fe5b81e5ffda73cab4";
+    };
+    repmgr = fetchurl rec {
+      passthru.url = url;
+      url = "http://apt.postgresql.org/pub/repos/apt/pool/main/r/repmgr/repmgr_${repmgr_version}+debpgdg-1.pgdg22.04+1_all.deb";
+      sha256 = "sha256-20c280811e758106335df1eb9954b61aa552823d3129f1e38c488fbd5efe0567";
+    };
+    repmgr-common = fetchurl rec {
+      passthru.url = url;
+      url = "http://apt.postgresql.org/pub/repos/apt/pool/main/r/repmgr/repmgr-common_${repmgr_version}+debpgdg-1.pgdg22.04+1_all.deb";
+      sha256 = "sha256-34c660c66a9710fd4f20a66cc932741d3399dbba7e7ae4b67468b3e18f65f61c";
+    };
+    postgresql-17-repmgr = fetchurl rec {
+      passthru.url = url;
+      url = "http://apt.postgresql.org/pub/repos/apt/pool/main/r/repmgr/postgresql-17-repmgr_${repmgr_version}+debpgdg-1.pgdg22.04+1_amd64.deb";
+      sha256 = "sha256-520d6ed4d540a2bb9174ac8276f8cb686c0268c13cccb89b28a9cdbd12049df8";
     };
   };
 in
