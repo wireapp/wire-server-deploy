@@ -95,6 +95,41 @@
         - inventory_hostname in ["postgresql2", "postgresql3"]
         - not replica_configured.stat.exists
 
+    # repmgr specific tasks
+
+    - name: Deploy repmgr configuration for standby
+      become: yes
+      ansible.builtin.template:
+        src: ../templates/repmgr.conf.j2
+        dest: "/etc/repmgr/{{ postgresql_version }}/repmgr.conf"
+        owner: postgres
+        group: postgres
+        mode: '0644'
+      when: repmgr_enabled | default(false)
+
+    - name: Deploy fencing and safety scripts for standby
+      ansible.builtin.template:
+        src: "{{ item.src }}"
+        dest: "{{ item.dest }}"
+        owner: postgres
+        group: postgres
+        mode: '0755'
+      loop:
+        - { src: "../templates/simple_fence.sh.j2", dest: "/opt/repmgr/scripts/simple_fence.sh" }
+        - { src: "../templates/startup_check.sh.j2", dest: "/opt/repmgr/scripts/startup_check.sh" }
+      when: repmgr_enabled | default(false)
+      become: yes
+
+    - name: Create .pgpass file for standby
+      ansible.builtin.template:
+        src: ../templates/pgpass.j2
+        dest: "/var/lib/postgresql/.pgpass"
+        owner: postgres
+        group: postgres
+        mode: '0600'
+      when: repmgr_enabled | default(false)
+      become: yes
+
     - name: Start PostgreSQL service 
       ansible.builtin.service:
         name: postgresql
@@ -106,3 +141,25 @@
         port: 5432
         delay: 10
         timeout: 120
+
+    # register standby node with repmgr
+    - name: Register standby node with repmgr
+      ansible.builtin.command:
+        cmd: sudo -u postgres repmgr -f /etc/repmgr/{{ postgresql_version }}/repmgr.conf standby register
+      when:
+        - repmgr_enabled | default(false)
+        - inventory_hostname in groups['postgresql_ro']
+      become: yes
+      register: repmgr_standby_register
+      failed_when:
+        - repmgr_standby_register.rc != 0
+        - "'already registered' not in repmgr_standby_register.stderr"
+
+    - name: Start and enable repmgrd service
+      ansible.builtin.systemd:
+        name: "repmgrd@{{ postgresql_version }}"
+        state: started
+        enabled: yes
+        daemon_reload: yes
+      when: repmgr_enabled | default(false)
+      become: yes

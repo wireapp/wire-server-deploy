@@ -13,11 +13,11 @@ external_pid_file = '/var/run/postgresql/{{ postgresql_version }}-main.pid'
 listen_addresses = '*'
 port = 5432
 superuser_reserved_connections = 2
-shared_preload_libraries = 'pg_stat_statements'
+shared_preload_libraries = 'pg_stat_statements,repmgr'
 
 # Streaming replication configuration
 # https://www.postgresql.org/docs/17/runtime-config-replication.html
-primary_conninfo = 'host={{ primary_node }} port=5432 user={{ repsvc_user }} password={{ repsvc_password }} application_name={{ inventory_hostname }}'
+primary_conninfo = 'host={{ primary_node }} port=5432 user={{ repmgr_user }} password={{ repmgr_password }} application_name={{ inventory_hostname }}'
 primary_slot_name = '{{ inventory_hostname }}'
 
 # Memory Settings (optimized for 1GB RAM, 1 core)
@@ -41,6 +41,9 @@ commit_siblings = 5                       # ADDED: Commit siblings setting
 # Write-Ahead Logging (WAL) - Replica settings
 # https://www.postgresql.org/docs/17/runtime-config-wal.html
 wal_level = replica                       # Must match primary minimum
+wal_log_hints = on                        # Enable WAL hints for replication
+max_wal_senders = 5                       # Limited for resource constraints
+max_replication_slots = 4                 # Conservative number of slots
 wal_keep_size = 500MB                     # Less than primary
 max_slot_wal_keep_size = 1GB
 
@@ -133,3 +136,7 @@ lc_monetary = 'en_US.UTF-8'
 lc_numeric = 'en_US.UTF-8'
 lc_time = 'en_US.UTF-8'
 default_text_search_config = 'pg_catalog.english'
+
+# Archive settings
+archive_mode = on
+archive_command = '/bin/true'

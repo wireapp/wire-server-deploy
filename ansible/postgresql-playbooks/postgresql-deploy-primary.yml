@@ -45,26 +45,6 @@
         backup: yes
       register: primary_conf_result
 
-    - name: restart postgresql primary
-      ansible.builtin.service:
-        name: postgresql
-        state: restarted
-      become: yes
-      when: primary_conf_result.changed
-
-    - name: Ensure PostgreSQL service is running 
-      ansible.builtin.service:
-        name: postgresql
-        state: started
-        enabled: yes
-
-    - name: Wait for PostgreSQL to be ready 
-      ansible.builtin.wait_for:
-        port: 5432
-        host: "{{ primary_node }}"
-        delay: 5
-        timeout: 60
-
     - name: Create replication user
       community.postgresql.postgresql_user:
         name: "{{ repsvc_user }}"
@@ -90,3 +70,90 @@
       become_user: postgres
       when: 
         - existing_slots.failed or (item not in (existing_slots.query_result | default([]) | map(attribute='slot_name') | list))
+    # repmgr specific tasks
+
+    - name: Create repmgr user and database
+      become: yes
+      block:
+        - name: Create repmgr user
+          community.postgresql.postgresql_user:
+            name: "{{ repmgr_user }}"
+            password: "{{ repmgr_password }}"
+            role_attr_flags: SUPERUSER,REPLICATION
+            login_db: postgres
+            state: present
+          become_user: postgres
+
+        - name: Create repmgr database
+          community.postgresql.postgresql_db:
+            name: "{{ repmgr_database }}"
+            owner: "{{ repmgr_user }}"
+            state: present
+          become_user: postgres
+
+        - name: Create .pgpass file for postgres user
+          ansible.builtin.template:
+            src: ../templates/pgpass.j2
+            dest: "/var/lib/postgresql/.pgpass"
+            owner: postgres
+            group: postgres
+            mode: '0600'
+      when: repmgr_enabled | default(false)
+
+    - name: Deploy repmgr configuration
+      become: yes
+      ansible.builtin.template:
+        src: ../templates/repmgr.conf.j2
+        dest: "/etc/repmgr/{{ postgresql_version }}/repmgr.conf"
+        owner: postgres
+        group: postgres
+        mode: '0644'
+      when: repmgr_enabled | default(false)
+
+    - name: Deploy fencing and safety scripts
+      become: yes
+      ansible.builtin.template:
+        src: "{{ item.src }}"
+        dest: "{{ item.dest }}"
+        owner: postgres
+        group: postgres
+        mode: '0755'
+      loop:
+        - { src: "../templates/simple_fence.sh.j2", dest: "/opt/repmgr/scripts/simple_fence.sh" }
+        - { src: "../templates/startup_check.sh.j2", dest: "/opt/repmgr/scripts/startup_check.sh" }
+      when: repmgr_enabled | default(false)
+
+    # service restart wull happen after the configuration is done
+
+    - name: restart postgresql primary
+      ansible.builtin.service:
+        name: postgresql
+        state: restarted
+      become: yes
+      when: primary_conf_result.changed
+
+    - name: Ensure PostgreSQL service is running
+      ansible.builtin.service:
+        name: postgresql
+        state: started
+        enabled: yes
+
+    - name: Wait for PostgreSQL to be ready
+      ansible.builtin.wait_for:
+        port: 5432
+        host: "{{ primary_node }}"
+        delay: 5
+        timeout: 60
+
+    # Register primary node with repmgr
+    - name: Register primary node with repmgr
+      become: yes
+      ansible.builtin.command:
+        cmd: sudo -u postgres repmgr -f /etc/repmgr/{{ postgresql_version }}/repmgr.conf primary register
+      when:
+        - repmgr_enabled | default(false)
+        - inventory_hostname in groups['postgresql_rw']
+      register: repmgr_primary_register
+      failed_when:
+        - repmgr_primary_register.rc != 0
+        - "'already registered' not in repmgr_primary_register.stderr"

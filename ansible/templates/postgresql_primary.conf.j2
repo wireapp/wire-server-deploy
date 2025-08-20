@@ -14,7 +14,7 @@ listen_addresses = '*'
 port = 5432
 max_connections = 20                      
 superuser_reserved_connections = 2
-shared_preload_libraries = 'pg_stat_statements'
+shared_preload_libraries = 'pg_stat_statements,repmgr'
 
 # Memory Settings (optimized for 1GB RAM, 1 core)
 # https://www.postgresql.org/docs/17/runtime-config-resource.html
@@ -25,12 +25,13 @@ maintenance_work_mem = 32MB               # Conservative for maintenance operati
 wal_buffers = 4MB                         # Smaller WAL buffer
 max_worker_processes = 1                  # Match core count
 max_parallel_workers = 1                  # Match single core
-max_parallel_workers_per_gather = 0        # Disable parallel workers for single core
+max_parallel_workers_per_gather = 0       # Disable parallel workers for single core
 
 # Write-Ahead Logging (WAL) - Optimized for 50GB disk constraint
 # https://www.postgresql.org/docs/17/runtime-config-wal.html
 wal_level = replica
-max_wal_senders = 4                       # Limited for resource constraints
+wal_log_hints = on
+max_wal_senders = 5                       # Limited for resource constraints
 max_replication_slots = 4                 # Conservative number of slots
 wal_keep_size = 2GB                       # 4% of disk space for WAL retention
 wal_sender_timeout = 60s
@@ -118,3 +119,7 @@ lc_monetary = 'en_US.UTF-8'
 lc_numeric = 'en_US.UTF-8'
 lc_time = 'en_US.UTF-8'
 default_text_search_config = 'pg_catalog.english'
+
+# Archive settings (required for repmgr)
+archive_mode = on
+archive_command = '/bin/true'  # Placeholder for air-gapped environments

@@ -72,3 +72,36 @@
         - pkg_check.results[item_loop_index].rc != 0
       loop_control:
         index_var: item_loop_index
+    # Install and configure repmgr if enabled
+    - name: Install repmgr packages
+      become: yes
+      ansible.builtin.apt:
+        deb: "{{ item.url }}"
+        state: present
+      loop: "{{ postgresql_pkgs | selectattr('name', 'match', '^repmgr.*') | list }}"
+      when:
+        - repmgr_enabled | default(false)
+        - not postgresql_use_repository
+
+    - name: Create repmgr directories
+      become: yes
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: directory
+        owner: postgres
+        group: postgres
+        mode: '0755'
+      loop:
+        - "/etc/repmgr/{{ postgresql_version }}"
+        - "/opt/repmgr/scripts"
+        - "/var/log/postgresql"
+      when: repmgr_enabled | default(false)
+
+    - name: Create repmgrd systemd service
+      become: yes
+      ansible.builtin.template:
+        src: ../templates/repmgrd@.service.j2
+        dest: "/etc/systemd/system/repmgrd@.service"
+        mode: '0644'
+      when: repmgr_enabled | default(false)
+      notify: reload systemd
