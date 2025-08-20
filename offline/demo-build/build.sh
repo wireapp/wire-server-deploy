@@ -40,7 +40,7 @@ cp -r "${ROOT_DIR}"/dashboards "${OUTPUT_DIR}"/
 # processing the charts
 # here we also filter the images post processing the helm charts
 # pass the image names to be filtered as arguments as regex #IMAGE_EXCLUDE_LIST='brig|galley'
-"${TASKS_DIR}"/process_charts.sh OUTPUT_DIR="${OUTPUT_DIR}" IMAGE_EXCLUDE_LIST="quay.io/wire/federator"
+"${TASKS_DIR}"/process_charts.sh OUTPUT_DIR="${OUTPUT_DIR}" IMAGE_EXCLUDE_LIST="quay.io/wire/federator" VALUES_TYPE="demo"
 
 # all basic chart pre-processing tasks
 "${TASKS_DIR}"/post_chart_process_0.sh "${OUTPUT_DIR}"

@@ -26,7 +26,7 @@ TASKS_DIR="${SCRIPT_DIR}/../tasks"
 # --------------------------
 
 # pulling the charts based on builds.json, charts to be skipped are passed as arguments HELM_CHART_EXCLUDE_LIST
-"${TASKS_DIR}"/proc_pull_charts.sh OUTPUT_DIR="${OUTPUT_DIR}" # HELM_CHART_EXCLUDE_LIST="inbucket,wire-server-enterprise,coturn"
+"${TASKS_DIR}"/proc_pull_charts.sh OUTPUT_DIR="${OUTPUT_DIR}" HELM_CHART_EXCLUDE_LIST="inbucket,wire-server-enterprise,coturn,postgresql"
 
 # pulling the charts from helm-charts repo, charts to be included are passed as arguments HELM_CHART_INCLUDE_LIST
 "${TASKS_DIR}"/proc_pull_ext_charts.sh OUTPUT_DIR="${OUTPUT_DIR}" HELM_CHART_INCLUDE_LIST="postgresql-external"
@@ -47,7 +47,7 @@ cp -r "${ROOT_DIR}"/dashboards "${OUTPUT_DIR}"/
 # processing the charts
 # here we also filter the images post processing the helm charts
 # pass the image names to be filtered as arguments as regex #IMAGE_EXCLUDE_LIST='brig|galley'
-"${TASKS_DIR}"/process_charts.sh OUTPUT_DIR="${OUTPUT_DIR}" #IMAGE_EXCLUDE_LIST=""
+"${TASKS_DIR}"/process_charts.sh OUTPUT_DIR="${OUTPUT_DIR}" VALUES_TYPE="prod" #IMAGE_EXCLUDE_LIST=""
 
 # all basic chart pre-processing tasks
 "${TASKS_DIR}"/post_chart_process_0.sh "${OUTPUT_DIR}"
