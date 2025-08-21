@@ -47,7 +47,7 @@ wiab:
     # list of helm charts to deploy
     charts_to_deploy:
       - fake-aws
-      - smtp
+      - demo-smtp
       - rabbitmq
       - databases-ephemeral
       - reaper
