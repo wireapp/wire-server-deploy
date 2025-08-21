@@ -145,17 +145,17 @@ let
     repmgr = fetchurl rec {
       passthru.url = url;
       url = "http://apt.postgresql.org/pub/repos/apt/pool/main/r/repmgr/repmgr_${repmgr_version}+debpgdg-1.pgdg22.04+1_all.deb";
-      sha256 = "sha256-20c280811e758106335df1eb9954b61aa552823d3129f1e38c488fbd5efe0567";
+      sha256 = "sha256:20c280811e758106335df1eb9954b61aa552823d3129f1e38c488fbd5efe0567";
     };
     repmgr-common = fetchurl rec {
       passthru.url = url;
       url = "http://apt.postgresql.org/pub/repos/apt/pool/main/r/repmgr/repmgr-common_${repmgr_version}+debpgdg-1.pgdg22.04+1_all.deb";
-      sha256 = "sha256-34c660c66a9710fd4f20a66cc932741d3399dbba7e7ae4b67468b3e18f65f61c";
+      sha256 = "sha256:34c660c66a9710fd4f20a66cc932741d3399dbba7e7ae4b67468b3e18f65f61c";
     };
     postgresql-17-repmgr = fetchurl rec {
       passthru.url = url;
       url = "http://apt.postgresql.org/pub/repos/apt/pool/main/r/repmgr/postgresql-17-repmgr_${repmgr_version}+debpgdg-1.pgdg22.04+1_amd64.deb";
-      sha256 = "sha256-520d6ed4d540a2bb9174ac8276f8cb686c0268c13cccb89b28a9cdbd12049df8";
+      sha256 = "sha256:520d6ed4d540a2bb9174ac8276f8cb686c0268c13cccb89b28a9cdbd12049df8";
     };
   };
 in
