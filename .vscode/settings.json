@@ -1,0 +1,10 @@
+{
+    "cSpell.words": [
+        "hostvars",
+        "repmgr",
+        "repmgrd"
+    ],
+    "files.trimTrailingWhitespace": true,
+    "editor.formatOnSave": true,
+    "editor.renderWhitespace": "all"
+}

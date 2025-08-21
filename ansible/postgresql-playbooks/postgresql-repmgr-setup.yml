@@ -1,0 +1,77 @@
+---
+- name: Setup repmgr HA Cluster
+  hosts: postgresql_rw:postgresql_ro
+  become: yes
+  gather_facts: yes
+  serial: 1 # Process one node at a time for proper sequencing
+  vars:
+    primary_node: "{{ hostvars[(groups.get('postgresql_rw', []) | first) | default('postgresql1')]['ansible_default_ipv4']['address'] | default(hostvars[(groups.get('postgresql_rw', []) | first) | default('postgresql1')]['ansible_host'] | default((groups.get('postgresql_rw', []) | first) | default('postgresql1'))) }}"
+
+  tasks:
+    - name: Verify repmgr is enabled
+      ansible.builtin.fail:
+        msg: "repmgr is not enabled. Set repmgr_enabled: true to proceed."
+      when: not (repmgr_enabled | default(false))
+
+    - name: Wait for PostgreSQL to be ready
+      ansible.builtin.wait_for:
+        port: 5432
+        host: "{{ ansible_default_ipv4.address | default(ansible_host) }}"
+        delay: 5
+        timeout: 60
+
+    - name: Check if repmgr extension exists
+      community.postgresql.postgresql_query:
+        login_db: "{{ repmgr_database }}"
+        login_user: "{{ repmgr_user }}"
+        login_password: "{{ repmgr_password }}"
+        query: "SELECT 1 FROM pg_extension WHERE extname = 'repmgr'"
+      register: repmgr_extension_check
+      become_user: postgres
+      ignore_errors: yes
+
+    - name: Create repmgr extension
+      community.postgresql.postgresql_ext:
+        name: repmgr
+        db: "{{ repmgr_database }}"
+        login_user: "{{ repmgr_user }}"
+        login_password: "{{ repmgr_password }}"
+        state: present
+      become_user: postgres
+      when:
+        - repmgr_extension_check.failed or (repmgr_extension_check.query_result | length == 0)
+        - inventory_hostname in groups['postgresql_rw']
+
+    - name: Check repmgr cluster status
+      ansible.builtin.command:
+        cmd: sudo -u postgres repmgr -f /etc/repmgr/{{ postgresql_version }}/repmgr.conf cluster show
+      register: repmgr_cluster_status
+      ignore_errors: yes
+      changed_when: false
+
+    - name: Display current cluster status
+      ansible.builtin.debug:
+        msg: "{{ repmgr_cluster_status.stdout_lines }}"
+      when: repmgr_cluster_status.rc == 0
+
+    - name: Start repmgrd service on standbys
+      ansible.builtin.systemd:
+        name: "repmgrd@{{ postgresql_version }}"
+        state: started
+        enabled: yes
+        daemon_reload: yes
+      when: inventory_hostname in groups['postgresql_ro']
+
+    - name: Verify repmgrd is running on standbys
+      ansible.builtin.systemd:
+        name: "repmgrd@{{ postgresql_version }}"
+        state: started
+      when: inventory_hostname in groups['postgresql_ro']
+      register: repmgrd_status
+
+    - name: Display repmgrd status
+      ansible.builtin.debug:
+        msg: "repmgrd service is {{ repmgrd_status.status.ActiveState }} on {{ inventory_hostname }}"
+      when:
+        - inventory_hostname in groups['postgresql_ro']
+        - repmgrd_status is defined

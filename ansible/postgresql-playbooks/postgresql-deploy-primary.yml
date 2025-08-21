@@ -32,7 +32,7 @@
         dest: "{{ postgresql_conf_dir }}/pg_hba.conf"
         owner: postgres
         group: postgres
-        mode: '0640'
+        mode: "0640"
         backup: yes
 
     - name: Configure primary node PostgreSQL settings
@@ -41,7 +41,7 @@
         dest: "{{ postgresql_conf_dir }}/postgresql.conf"
         owner: postgres
         group: postgres
-        mode: '0640'
+        mode: "0640"
         backup: yes
       register: primary_conf_result
 
@@ -54,10 +54,10 @@
         state: present
       become: yes
       become_user: postgres
-      when: 
+      when:
         - repl_user_exists.failed or (repl_user_exists.query_result | length == 0)
 
-    - name: Create replication slots for replicas  
+    - name: Create replication slots for replicas
       community.postgresql.postgresql_slot:
         name: "{{ item }}"
         slot_type: physical
@@ -68,7 +68,7 @@
         - "postgresql3"
       become: yes
       become_user: postgres
-      when: 
+      when:
         - existing_slots.failed or (item not in (existing_slots.query_result | default([]) | map(attribute='slot_name') | list))
     # repmgr specific tasks
 
@@ -97,7 +97,7 @@
             dest: "/var/lib/postgresql/.pgpass"
             owner: postgres
             group: postgres
-            mode: '0600'
+            mode: "0600"
       when: repmgr_enabled | default(false)
 
     - name: Deploy repmgr configuration
@@ -107,7 +107,7 @@
         dest: "/etc/repmgr/{{ postgresql_version }}/repmgr.conf"
         owner: postgres
         group: postgres
-        mode: '0644'
+        mode: "0644"
       when: repmgr_enabled | default(false)
 
     - name: Deploy fencing and safety scripts
@@ -117,10 +117,16 @@
         dest: "{{ item.dest }}"
         owner: postgres
         group: postgres
-        mode: '0755'
+        mode: "0755"
       loop:
-        - { src: "../templates/simple_fence.sh.j2", dest: "/opt/repmgr/scripts/simple_fence.sh" }
-        - { src: "../templates/startup_check.sh.j2", dest: "/opt/repmgr/scripts/startup_check.sh" }
+        - {
+            src: "../templates/simple_fence.sh.j2",
+            dest: "/opt/repmgr/scripts/simple_fence.sh",
+          }
+        - {
+            src: "../templates/startup_check.sh.j2",
+            dest: "/opt/repmgr/scripts/startup_check.sh",
+          }
       when: repmgr_enabled | default(false)
 
     # service restart wull happen after the configuration is done

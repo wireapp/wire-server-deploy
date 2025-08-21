@@ -12,7 +12,7 @@ repsvc_database: repsvc_db
 repmgr_enabled: true
 repmgr_user: repmgr
 repmgr_password: "securepassword"
-repmgr_database: repmgr\
+repmgr_database: repmgr
 
 # Node configuration for repmgr
 repmgr_node_config:
