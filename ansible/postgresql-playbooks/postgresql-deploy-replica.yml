@@ -1,110 +1,60 @@
 ---
-- name: Deploy PostgreSQL replica services with streaming replication
+- name: Deploy PostgreSQL replica services with repmgr streaming replication
   hosts: postgresql_ro
   become: yes
   gather_facts: yes
+  serial: 1 # Deploy replicas one at a time
   vars:
     primary_node: "{{ hostvars[(groups.get('postgresql_rw', []) | first) | default('postgresql1')]['ansible_default_ipv4']['address'] | default(hostvars[(groups.get('postgresql_rw', []) | first) | default('postgresql1')]['ansible_host'] | default((groups.get('postgresql_rw', []) | first) | default('postgresql1'))) }}"
     replica_node1: "{{ hostvars[(groups.get('postgresql_ro', []) | first) | default('postgresql2')]['ansible_default_ipv4']['address'] | default(hostvars[(groups.get('postgresql_ro', []) | first) | default('postgresql2')]['ansible_host'] | default((groups.get('postgresql_ro', []) | first) | default('postgresql2'))) }}"
     replica_node2: "{{ hostvars[(groups.get('postgresql_ro', []) | last) | default('postgresql3')]['ansible_default_ipv4']['address'] | default(hostvars[(groups.get('postgresql_ro', []) | last) | default('postgresql3')]['ansible_host'] | default((groups.get('postgresql_ro', []) | last) | default('postgresql3'))) }}"
 
   tasks:
-    - name: Check if replica is already configured
+    - name: Check if replica is already configured with repmgr
+      ansible.builtin.command:
+        cmd: sudo -u postgres repmgr -f /etc/repmgr/{{ postgresql_version }}/repmgr.conf node status
+      register: repmgr_node_status
+      failed_when: false
+      changed_when: false
+      when: repmgr_enabled | default(false)
+
+    - name: Check if standby.signal exists (indicates replica is configured)
       ansible.builtin.stat:
         path: "{{ postgresql_data_dir }}/standby.signal"
       register: replica_configured
-      
 
-    - name: Check if PostgreSQL is running 
-      ansible.builtin.service_facts:
-      register: service_status
-      
+    - name: Display current repmgr status
+      ansible.builtin.debug:
+        msg: "Current repmgr status: {{ repmgr_node_status.stdout_lines | default('Not configured') }}"
+      when: repmgr_enabled | default(false)
 
-    - name: Configure pg_hba.conf for all nodes
+    # Configure templates first (needed for repmgr clone)
+    - name: Configure pg_hba.conf for replica nodes
       ansible.builtin.template:
         src: ../templates/pg_hba.conf.j2
         dest: "{{ postgresql_conf_dir }}/pg_hba.conf"
         owner: postgres
         group: postgres
-        mode: '0640'
+        mode: "0640"
         backup: yes
 
-    - name: Configure replica nodes PostgreSQL settings
+    - name: Configure replica PostgreSQL settings
       ansible.builtin.template:
         src: ../templates/postgresql_replica.conf.j2
         dest: "{{ postgresql_conf_dir }}/postgresql.conf"
         owner: postgres
         group: postgres
-        mode: '0640'
+        mode: "0640"
         backup: yes
-      
-      register: replica_conf_result
 
-    - name: restart postgresql replica
-      ansible.builtin.service:
-        name: postgresql
-        state: restarted
-      become: yes
-      when: 
-        - inventory_hostname in ["postgresql2", "postgresql3"]
-        - replica_conf_result is defined
-        - replica_conf_result.changed
-
-    - name: Stop PostgreSQL if replication not configured
-      ansible.builtin.service:
-        name: postgresql
-        state: stopped
-      when: 
-        - inventory_hostname in ["postgresql2", "postgresql3"]
-        - not replica_configured.stat.exists
-
-    - name: Clean replica data directories only if replication not configured
-      ansible.builtin.file:
-        path: "{{ postgresql_data_dir }}"
-        state: absent
-      when: 
-        - inventory_hostname in ["postgresql2", "postgresql3"]
-        - not replica_configured.stat.exists
-      become: yes
-
-    - name: Run pg_basebackup for replicas
-      ansible.builtin.command:
-        cmd: >
-          /usr/bin/pg_basebackup 
-          -h {{ primary_node }} 
-          -U {{ repsvc_user }} 
-          -p 5432 
-          -D {{ postgresql_data_dir }} 
-          -P -R -X stream
-      environment:
-        PGPASSWORD: "{{ repsvc_password }}"
-      when: 
-        - inventory_hostname in ["postgresql2", "postgresql3"]
-        - not replica_configured.stat.exists
-      become: yes
-      become_user: postgres
-
-    - name: Create standby.signal file for replicas
-      ansible.builtin.file:
-        path: "{{ postgresql_data_dir }}/standby.signal"
-        state: touch
-        owner: postgres
-        group: postgres
-        mode: '0640'
-      when: 
-        - inventory_hostname in ["postgresql2", "postgresql3"]
-        - not replica_configured.stat.exists
-
-    # repmgr specific tasks
-
+    # Deploy repmgr configuration and scripts
     - name: Deploy repmgr configuration for standby
-      become: yes
       ansible.builtin.template:
         src: ../templates/repmgr.conf.j2
         dest: "/etc/repmgr/{{ postgresql_version }}/repmgr.conf"
         owner: postgres
         group: postgres
-        mode: '0644'
+        mode: "0644"
       when: repmgr_enabled | default(false)
 
     - name: Deploy fencing and safety scripts for standby
@@ -113,12 +63,17 @@
         dest: "{{ item.dest }}"
         owner: postgres
         group: postgres
-        mode: '0755'
+        mode: "0755"
       loop:
-        - { src: "../templates/simple_fence.sh.j2", dest: "/opt/repmgr/scripts/simple_fence.sh" }
-        - { src: "../templates/startup_check.sh.j2", dest: "/opt/repmgr/scripts/startup_check.sh" }
+        - {
+            src: "../templates/simple_fence.sh.j2",
+            dest: "/opt/repmgr/scripts/simple_fence.sh",
+          }
+        - {
+            src: "../templates/startup_check.sh.j2",
+            dest: "/opt/repmgr/scripts/startup_check.sh",
+          }
       when: repmgr_enabled | default(false)
-      become: yes
 
     - name: Create .pgpass file for standby
       ansible.builtin.template:
@@ -126,35 +81,112 @@
         dest: "/var/lib/postgresql/.pgpass"
         owner: postgres
         group: postgres
-        mode: '0600'
+        mode: "0600"
       when: repmgr_enabled | default(false)
-      become: yes
 
-    - name: Start PostgreSQL service 
+    # Verify primary is ready for cloning
+    - name: Check primary node is accessible
+      ansible.builtin.wait_for:
+        port: 5432
+        host: "{{ primary_node }}"
+        timeout: 60
+      when:
+        - repmgr_enabled | default(false)
+        - not replica_configured.stat.exists
+
+    - name: Test repmgr connection to primary
+      ansible.builtin.command:
+        cmd: sudo -u postgres psql -h {{ primary_node }} -U {{ repmgr_user }} -d {{ repmgr_database }} -c "SELECT 1"
+      register: primary_connection_test
+      when:
+        - repmgr_enabled | default(false)
+        - not replica_configured.stat.exists
+      failed_when: primary_connection_test.rc != 0
+
+    # Stop PostgreSQL and prepare for cloning
+    - name: Stop PostgreSQL service before cloning
+      ansible.builtin.service:
+        name: postgresql
+        state: stopped
+      when:
+        - repmgr_enabled | default(false)
+        - not replica_configured.stat.exists
+
+    - name: Backup existing data directory if it exists
+      ansible.builtin.command:
+        cmd: mv {{ postgresql_data_dir }} {{ postgresql_data_dir }}.backup.{{ ansible_date_time.epoch }}
+      when:
+        - repmgr_enabled | default(false)
+        - not replica_configured.stat.exists
+        - replica_configured.stat.exists # Only if directory exists
+      ignore_errors: yes
+
+    # Clone from primary using repmgr
+    - name: Clone standby from primary using repmgr
+      ansible.builtin.command:
+        cmd: >
+          sudo -u postgres repmgr -h {{ primary_node }} -U {{ repmgr_user }} -d {{ repmgr_database }}
+          -f /etc/repmgr/{{ postgresql_version }}/repmgr.conf standby clone --force
+      when:
+        - repmgr_enabled | default(false)
+        - not replica_configured.stat.exists
+      register: repmgr_clone_result
+      failed_when:
+        - repmgr_clone_result.rc != 0
+        - "'directory appears to contain a PostgreSQL cluster' not in repmgr_clone_result.stderr"
+
+    - name: Display repmgr clone result
+      ansible.builtin.debug:
+        msg: "{{ repmgr_clone_result.stdout_lines | default([]) }}"
+      when:
+        - repmgr_enabled | default(false)
+        - repmgr_clone_result is defined
+
+    # Start PostgreSQL after successful clone
+    - name: Start PostgreSQL service after clone
       ansible.builtin.service:
         name: postgresql
         state: started
         enabled: yes
-      
-    - name: Wait for replicas to be ready
+
+    - name: Wait for PostgreSQL to be ready after clone
       ansible.builtin.wait_for:
         port: 5432
         delay: 10
         timeout: 120
 
-    # register standby node with repmgr
+    # Verify replication is working
+    - name: Verify replication status
+      ansible.builtin.command:
+        cmd: sudo -u postgres psql -c "SELECT pg_is_in_recovery();"
+      register: recovery_status
+      when: repmgr_enabled | default(false)
+
+    - name: Display replication status
+      ansible.builtin.debug:
+        msg: "Replica recovery status: {{ recovery_status.stdout_lines | default([]) }}"
+      when: repmgr_enabled | default(false)
+
+    # Register standby node with repmgr
     - name: Register standby node with repmgr
       ansible.builtin.command:
         cmd: sudo -u postgres repmgr -f /etc/repmgr/{{ postgresql_version }}/repmgr.conf standby register
       when:
         - repmgr_enabled | default(false)
-        - inventory_hostname in groups['postgresql_ro']
-      become: yes
+        - repmgr_node_status.rc != 0 # Only register if not already registered
       register: repmgr_standby_register
       failed_when:
         - repmgr_standby_register.rc != 0
         - "'already registered' not in repmgr_standby_register.stderr"
 
+    - name: Display registration result
+      ansible.builtin.debug:
+        msg: "{{ repmgr_standby_register.stdout_lines | default([]) }}"
+      when:
+        - repmgr_enabled | default(false)
+        - repmgr_standby_register is defined
+
+    # Start repmgrd daemon for automatic failover
     - name: Start and enable repmgrd service
       ansible.builtin.systemd:
         name: "repmgrd@{{ postgresql_version }}"
@@ -162,4 +194,68 @@
         enabled: yes
         daemon_reload: yes
       when: repmgr_enabled | default(false)
-      become: yes
+
+    # Final verification
+    - name: Verify repmgr cluster status
+      ansible.builtin.command:
+        cmd: sudo -u postgres repmgr -f /etc/repmgr/{{ postgresql_version }}/repmgr.conf cluster show
+      register: final_cluster_status
+      when: repmgr_enabled | default(false)
+      changed_when: false
+
+    - name: Display final cluster status
+      ansible.builtin.debug:
+        msg: "{{ final_cluster_status.stdout_lines | default([]) }}"
+      when: repmgr_enabled | default(false)
+
+    # Legacy replication fallback (only if repmgr disabled)
+    - name: Legacy replication setup (fallback when repmgr disabled)
+      block:
+        - name: Stop PostgreSQL if legacy replication not configured
+          ansible.builtin.service:
+            name: postgresql
+            state: stopped
+          when: not replica_configured.stat.exists
+
+        - name: Clean replica data directories for legacy setup
+          ansible.builtin.file:
+            path: "{{ postgresql_data_dir }}"
+            state: absent
+          when: not replica_configured.stat.exists
+
+        - name: Run pg_basebackup for legacy replicas
+          ansible.builtin.command:
+            cmd: >
+              /usr/bin/pg_basebackup
+              -h {{ primary_node }}
+              -U {{ repsvc_user }}
+              -p 5432
+              -D {{ postgresql_data_dir }}
+              -P -R -X stream
+          environment:
+            PGPASSWORD: "{{ repsvc_password }}"
+          when: not replica_configured.stat.exists
+          become_user: postgres
+
+        - name: Create standby.signal file for legacy replicas
+          ansible.builtin.file:
+            path: "{{ postgresql_data_dir }}/standby.signal"
+            state: touch
+            owner: postgres
+            group: postgres
+            mode: "0640"
+          when: not replica_configured.stat.exists
+
+        - name: Start PostgreSQL service for legacy setup
+          ansible.builtin.service:
+            name: postgresql
+            state: started
+            enabled: yes
+
+        - name: Wait for legacy replicas to be ready
+          ansible.builtin.wait_for:
+            port: 5432
+            delay: 10
+            timeout: 120
+
+      when: not (repmgr_enabled | default(false))
