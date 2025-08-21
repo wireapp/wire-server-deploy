@@ -3,6 +3,7 @@
 *.key
 *.bak
 *.cert
+.vscode
 # Sometimes left behind as an artifact during CI runs
 /index.yaml
 secrets.yaml
