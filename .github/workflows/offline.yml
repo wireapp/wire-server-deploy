@@ -1,15 +1,18 @@
 on:
   push:
     branches: [master, develop]
-    tags: [ v* ]
+    tags: [v*]
     paths-ignore:
-      - '*.md'
-      - '**/*.md'
+      - "*.md"
+      - "**/*.md"
   pull_request:
     branches: [master, develop]
     paths-ignore:
-      - '*.md'
-      - '**/*.md'
+      - "*.md"
+      - "**/*.md"
+
+env:
+  SKIP_DEMO_BUILD: true
 jobs:
   offline:
     name: Prepare offline package
@@ -40,12 +43,14 @@ jobs:
 
       # demo profile build
       - name: Process the demo profile build
+        if: ${{ env.SKIP_DEMO_BUILD != 'true' }}
         run: ./offline/demo-build/build.sh
         env:
-          GPG_PRIVATE_KEY: '${{ secrets.GPG_PRIVATE_KEY }}'
-          DOCKER_LOGIN: '${{ secrets.DOCKER_LOGIN }}'
+          GPG_PRIVATE_KEY: "${{ secrets.GPG_PRIVATE_KEY }}"
+          DOCKER_LOGIN: "${{ secrets.DOCKER_LOGIN }}"
 
       - name: Copy demo build assets tarball to S3 and clean up
+        if: ${{ env.SKIP_DEMO_BUILD != 'true' }}
         run: |
           # Upload tarball for each profile by specifying their OUTPUT_TAR path
           aws s3 cp offline/demo-build/output/assets.tgz s3://public.wire.com/artifacts/wire-server-deploy-static-demo-${{ steps.upload_name.outputs.UPLOAD_NAME }}.tgz
@@ -53,16 +58,16 @@ jobs:
           # remove the assets from the build to optimize the space on the server
           rm -rf offline/demo-build/output/*
         env:
-          AWS_ACCESS_KEY_ID: '${{ secrets.AWS_ACCESS_KEY_ID }}'
-          AWS_SECRET_ACCESS_KEY: '${{ secrets.AWS_SECRET_ACCESS_KEY }}'
+          AWS_ACCESS_KEY_ID: "${{ secrets.AWS_ACCESS_KEY_ID }}"
+          AWS_SECRET_ACCESS_KEY: "${{ secrets.AWS_SECRET_ACCESS_KEY }}"
           AWS_REGION: "eu-west-1"
 
       # deafult profile build
       - name: Process the default profile build
         run: ./offline/default-build/build.sh
         env:
-          GPG_PRIVATE_KEY: '${{ secrets.GPG_PRIVATE_KEY }}'
-          DOCKER_LOGIN: '${{ secrets.DOCKER_LOGIN }}'
+          GPG_PRIVATE_KEY: "${{ secrets.GPG_PRIVATE_KEY }}"
+          DOCKER_LOGIN: "${{ secrets.DOCKER_LOGIN }}"
 
       - name: Copy default build assets tarball to S3 and clean up
         run: |
@@ -72,8 +77,8 @@ jobs:
           # removing everything except assets.tgz as it is not required anymore in the further builds
           find offline/default-build/output/ -mindepth 1 -maxdepth 1 ! -name 'assets.tgz' -exec rm -r {} +
         env:
-          AWS_ACCESS_KEY_ID: '${{ secrets.AWS_ACCESS_KEY_ID }}'
-          AWS_SECRET_ACCESS_KEY: '${{ secrets.AWS_SECRET_ACCESS_KEY }}'
+          AWS_ACCESS_KEY_ID: "${{ secrets.AWS_ACCESS_KEY_ID }}"
+          AWS_SECRET_ACCESS_KEY: "${{ secrets.AWS_SECRET_ACCESS_KEY }}"
           AWS_REGION: "eu-west-1"
 
       # min profile build
@@ -82,7 +87,7 @@ jobs:
       #  env:
       #    GPG_PRIVATE_KEY: '${{ secrets.GPG_PRIVATE_KEY }}'
       #    DOCKER_LOGIN: '${{ secrets.DOCKER_LOGIN }}'
-#
+      #
       #- name: Copy min build assets tarball to S3
       #  run: |
       #    # Upload tarball for each profile by specifying their OUTPUT_TAR path
@@ -102,7 +107,7 @@ jobs:
             docker-archive:"$container_image" \
             "docker://quay.io/wire/wire-server-deploy:${{ steps.upload_name.outputs.UPLOAD_NAME }}"
         env:
-          DOCKER_LOGIN: '${{ secrets.DOCKER_LOGIN }}'
+          DOCKER_LOGIN: "${{ secrets.DOCKER_LOGIN }}"
 
       - name: Install terraform
         uses: hashicorp/setup-terraform@v3
@@ -114,7 +119,7 @@ jobs:
         run: |
           ./offline/cd.sh
         env:
-          HCLOUD_TOKEN: '${{ secrets.HCLOUD_TOKEN }}'
+          HCLOUD_TOKEN: "${{ secrets.HCLOUD_TOKEN }}"
 
       #- name: Clean up hetzner environment; just in case
       #  if: always()
