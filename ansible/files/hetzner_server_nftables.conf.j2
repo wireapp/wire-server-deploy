@@ -53,6 +53,9 @@ table ip nat {
   }
   chain POSTROUTING {
     type nat hook postrouting priority 100;
+
+    ip saddr 192.168.122.0/24 ip daddr 192.168.122.0/24 oifname virbr0 counter masquerade comment "hairpin NAT for ingress"
+
     oifname != docker0 ip saddr 172.17.0.0/16 counter masquerade
     oifname $INF_WAN counter masquerade comment "masquerade outgoing traffic"
   }
