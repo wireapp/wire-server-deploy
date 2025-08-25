@@ -1,0 +1,92 @@
+- name: Deploy PostgreSQL Primary node
+  hosts: postgresql_rw
+  become: yes
+  gather_facts: yes
+  vars:
+    primary_node: "{{ hostvars[(groups.get('postgresql_rw', []) | first) | default('postgresql1')]['ansible_default_ipv4']['address'] | default(hostvars[(groups.get('postgresql_rw', []) | first) | default('postgresql1')]['ansible_host'] | default((groups.get('postgresql_rw', []) | first) | default('postgresql1'))) }}"
+    replica_node1: "{{ hostvars[(groups.get('postgresql_ro', []) | first) | default('postgresql2')]['ansible_default_ipv4']['address'] | default(hostvars[(groups.get('postgresql_ro', []) | first) | default('postgresql2')]['ansible_host'] | default((groups.get('postgresql_ro', []) | first) | default('postgresql2'))) }}"
+    replica_node2: "{{ hostvars[(groups.get('postgresql_ro', []) | last) | default('postgresql3')]['ansible_default_ipv4']['address'] | default(hostvars[(groups.get('postgresql_ro', []) | last) | default('postgresql3')]['ansible_host'] | default((groups.get('postgresql_ro', []) | last) | default('postgresql3'))) }}"
+
+  tasks:
+    - name: Check replication user exists
+      community.postgresql.postgresql_query:
+        login_db: postgres
+        query: "SELECT 1 FROM pg_roles WHERE rolname = '{{ repsvc_user }}'"
+      register: repl_user_exists
+      become: yes
+      become_user: postgres
+      ignore_errors: yes
+
+    - name: Check replication slots exist
+      community.postgresql.postgresql_query:
+        login_db: postgres
+        query: "SELECT slot_name FROM pg_replication_slots WHERE slot_name IN ('postgresql2', 'postgresql3')"
+      register: existing_slots
+      become: yes
+      become_user: postgres
+      ignore_errors: yes
+
+    - name: Configure pg_hba.conf
+      ansible.builtin.template:
+        src: ../templates/pg_hba.conf.j2
+        dest: "{{ postgresql_conf_dir }}/pg_hba.conf"
+        owner: postgres
+        group: postgres
+        mode: '0640'
+        backup: yes
+
+    - name: Configure primary node PostgreSQL settings
+      ansible.builtin.template:
+        src: ../templates/postgresql_primary.conf.j2
+        dest: "{{ postgresql_conf_dir }}/postgresql.conf"
+        owner: postgres
+        group: postgres
+        mode: '0640'
+        backup: yes
+      register: primary_conf_result
+
+    - name: restart postgresql primary
+      ansible.builtin.service:
+        name: postgresql
+        state: restarted
+      become: yes
+      when: primary_conf_result.changed
+
+    - name: Ensure PostgreSQL service is running 
+      ansible.builtin.service:
+        name: postgresql
+        state: started
+        enabled: yes
+
+    - name: Wait for PostgreSQL to be ready 
+      ansible.builtin.wait_for:
+        port: 5432
+        host: "{{ primary_node }}"
+        delay: 5
+        timeout: 60
+
+    - name: Create replication user
+      community.postgresql.postgresql_user:
+        name: "{{ repsvc_user }}"
+        password: "{{ repsvc_password }}"
+        role_attr_flags: "REPLICATION,LOGIN"
+        login_db: postgres
+        state: present
+      become: yes
+      become_user: postgres
+      when: 
+        - repl_user_exists.failed or (repl_user_exists.query_result | length == 0)
+
+    - name: Create replication slots for replicas  
+      community.postgresql.postgresql_slot:
+        name: "{{ item }}"
+        slot_type: physical
+        state: present
+        login_db: postgres
+      loop:
+        - "postgresql2"
+        - "postgresql3"
+      become: yes
+      become_user: postgres
+      when: 
+        - existing_slots.failed or (item not in (existing_slots.query_result | default([]) | map(attribute='slot_name') | list))

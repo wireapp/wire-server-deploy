@@ -1,0 +1,27 @@
+# PostgreSQL Client Authentication Configuration File
+# {{ ansible_managed }}
+
+# TYPE  DATABASE        USER            ADDRESS                 METHOD
+
+# "local" is for Unix domain socket connections only
+local   all             all                                     peer
+
+# IPv4 local connections:
+host    all             all             127.0.0.1/32            md5
+
+# IPv6 local connections:
+host    all             all             ::1/128                 md5
+
+{% if inventory_hostname in groups['postgresql_rw'] %}
+{# Allow replication connections from replica nodes #}
+host    replication     {{ repsvc_user }}     {{ replica_node1 }}/32    md5
+host    replication     {{ repsvc_user }}     {{ replica_node2 }}/32    md5
+{% endif %}
+
+{% if inventory_hostname in groups['postgresql_rw'] or inventory_hostname in groups['postgresql_ro'] %}
+{# Allow connections from the primary node network #}
+host    all             all             {{ primary_node }}/24    md5
+{% endif %}
+
+# Allow connections from application servers (adjust as needed)
+# host    all             all             10.0.0.0/8              md5

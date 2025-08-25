@@ -1,0 +1,75 @@
+---
+- name: Verify PostgreSQL HA setup
+  hosts: postgresql_rw
+  become: yes
+  gather_facts: yes
+  tasks:
+    - name: Verify streaming replication status on primary
+      community.postgresql.postgresql_query:
+        login_db: postgres
+        query: |
+          SELECT 
+            client_addr, 
+            application_name, 
+            state, 
+            sync_state,
+            pg_size_pretty(pg_wal_lsn_diff(pg_current_wal_lsn(), replay_lsn)) as lag_size,
+            CASE 
+              WHEN pg_wal_lsn_diff(pg_current_wal_lsn(), replay_lsn) = 0 THEN 'SYNCHRONIZED'
+              WHEN pg_wal_lsn_diff(pg_current_wal_lsn(), replay_lsn) < 1024*1024 THEN 'NEAR_SYNC'
+              ELSE 'LAGGING'
+            END as status
+          FROM pg_stat_replication
+          WHERE application_name IN ('postgresql2', 'postgresql3')
+          ORDER BY application_name;
+      register: replication_status
+      become: yes
+      become_user: postgres
+
+    - name: Display streaming replication status
+      ansible.builtin.debug:
+        var: replication_status.query_result
+
+    - name: Verify replication slots are active
+      community.postgresql.postgresql_query:
+        login_db: postgres
+        query: |
+          SELECT 
+            slot_name, 
+            active, 
+            pg_size_pretty(pg_wal_lsn_diff(pg_current_wal_lsn(), restart_lsn)) as slot_lag,
+            CASE 
+              WHEN active THEN 'ACTIVE'
+              ELSE 'INACTIVE - CHECK REPLICA'
+            END as slot_status
+          FROM pg_replication_slots
+          WHERE slot_name IN ('postgresql2', 'postgresql3')
+          ORDER BY slot_name;
+      register: slot_status
+      become: yes
+      become_user: postgres
+
+    - name: Display replication slots status
+      ansible.builtin.debug:
+        var: slot_status.query_result
+
+    - name: Check WAL disk usage on primary
+      community.postgresql.postgresql_query:
+        login_db: postgres
+        query: |
+          SELECT 
+            pg_size_pretty(sum(size)) as total_wal_size,
+            count(*) as wal_files,
+            CASE 
+              WHEN sum(size) > 2147483648 THEN 'WARNING: >2GB WAL usage'
+              WHEN sum(size) > 1073741824 THEN 'CAUTION: >1GB WAL usage'
+              ELSE 'OK'
+            END as wal_status
+          FROM pg_ls_waldir();
+      register: wal_usage
+      become: yes
+      become_user: postgres
+      
+    - name: Display WAL usage status
+      ansible.builtin.debug:
+        var: wal_usage.query_result

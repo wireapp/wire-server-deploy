@@ -58,6 +58,7 @@ cannon:
       password: verysecurepassword
 galley:
   secrets:
+    pgPassword: verysecurepassword
     awsKeyId: dummykey
     awsSecretKey: dummysecret
 gundeck:
