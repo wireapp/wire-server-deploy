@@ -16,11 +16,6 @@ max_connections = 20
 superuser_reserved_connections = 2
 shared_preload_libraries = 'pg_stat_statements,repmgr'
 
-# Streaming replication configuration
-# https://www.postgresql.org/docs/17/runtime-config-replication.html
-primary_conninfo = 'host={{ primary_node }} port=5432 user={{ repmgr_user }} password={{ repmgr_password }} application_name={{ inventory_hostname }}'
-primary_slot_name = '{{ inventory_hostname }}'
-
 # Memory Settings (optimized for 1GB RAM, 1 core)
 # https://www.postgresql.org/docs/17/runtime-config-resource.html
 shared_buffers = 128MB                    # ~12.5% of total RAM (conservative for limited memory)

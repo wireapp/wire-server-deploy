@@ -4,167 +4,57 @@
   become: yes
   gather_facts: yes
   vars:
-    primary_node: "{{ hostvars[(groups.get('postgresql_rw', []) | first) | default('postgresql1')]['ansible_default_ipv4']['address'] | default(hostvars[(groups.get('postgresql_rw', []) | first) | default('postgresql1')]['ansible_host'] | default((groups.get('postgresql_rw', []) | first) | default('postgresql1'))) }}"
-    replica_node1: "{{ hostvars[(groups.get('postgresql_ro', []) | first) | default('postgresql2')]['ansible_default_ipv4']['address'] | default(hostvars[(groups.get('postgresql_ro', []) | first) | default('postgresql2')]['ansible_host'] | default((groups.get('postgresql_ro', []) | first) | default('postgresql2'))) }}"
-    replica_node2: "{{ hostvars[(groups.get('postgresql_ro', []) | last) | default('postgresql3')]['ansible_default_ipv4']['address'] | default(hostvars[(groups.get('postgresql_ro', []) | last) | default('postgresql3')]['ansible_host'] | default((groups.get('postgresql_ro', []) | last) | default('postgresql3'))) }}"
+    primary_node: "{{ ansible_default_ipv4.address | default(ansible_host) }}"
+    replica_nodes: "{{ groups['postgresql_ro'] | default([]) }}"
 
   tasks:
-    # Base PostgreSQL configuration (required for both legacy and repmgr)
-    - name: Configure pg_hba.conf
+    # ===== PHASE 1: CONFIGURATION =====
+
+    - name: Deploy PostgreSQL configuration files
       ansible.builtin.template:
-        src: ../templates/pg_hba.conf.j2
-        dest: "{{ postgresql_conf_dir }}/pg_hba.conf"
+        src: "{{ item.src }}"
+        dest: "{{ item.dest }}"
         owner: postgres
         group: postgres
-        mode: "0640"
+        mode: "{{ item.mode }}"
         backup: yes
+      loop:
+        - src: ../templates/pg_hba.conf.j2
+          dest: "{{ postgresql_conf_dir }}/pg_hba.conf"
+          mode: "0640"
+        - src: ../templates/postgresql_primary.conf.j2
+          dest: "{{ postgresql_conf_dir }}/postgresql.conf"
+          mode: "0640"
+      register: postgresql_config_result
 
-    - name: Configure primary node PostgreSQL settings
+    - name: Deploy repmgr configuration files
       ansible.builtin.template:
-        src: ../templates/postgresql_primary.conf.j2
-        dest: "{{ postgresql_conf_dir }}/postgresql.conf"
+        src: "{{ item.src }}"
+        dest: "{{ item.dest }}"
         owner: postgres
         group: postgres
-        mode: "0640"
-        backup: yes
-      register: primary_conf_result
+        mode: "{{ item.mode }}"
+      loop:
+        - src: ../templates/pgpass.j2
+          dest: "/var/lib/postgresql/.pgpass"
+          mode: "0600"
+        - src: ../templates/repmgr.conf.j2
+          dest: "/etc/repmgr/{{ postgresql_version }}/repmgr.conf"
+          mode: "0644"
+        - src: ../templates/simple_fence.sh.j2
+          dest: "/opt/repmgr/scripts/simple_fence.sh"
+          mode: "0755"
+        - src: ../templates/startup_check.sh.j2
+          dest: "/opt/repmgr/scripts/startup_check.sh"
+          mode: "0755"
 
-    # Legacy replication setup (only when repmgr is disabled)
-    - name: Legacy replication setup
-      block:
-        - name: Check legacy replication user exists
-          community.postgresql.postgresql_query:
-            login_db: postgres
-            query: "SELECT 1 FROM pg_roles WHERE rolname = '{{ repsvc_user }}'"
-          register: legacy_repl_user_exists
-          become_user: postgres
-          ignore_errors: yes
+    # ===== PHASE 2: SERVICE MANAGEMENT =====
 
-        - name: Check legacy replication slots exist
-          community.postgresql.postgresql_query:
-            login_db: postgres
-            query: "SELECT slot_name FROM pg_replication_slots WHERE slot_name IN ('postgresql2', 'postgresql3')"
-          register: legacy_existing_slots
-          become_user: postgres
-          ignore_errors: yes
-
-        - name: Create legacy replication user
-          community.postgresql.postgresql_user:
-            name: "{{ repsvc_user }}"
-            password: "{{ repsvc_password }}"
-            role_attr_flags: "REPLICATION,LOGIN"
-            login_db: postgres
-            state: present
-          become_user: postgres
-          when:
-            - legacy_repl_user_exists.failed or (legacy_repl_user_exists.query_result | length == 0)
-
-        - name: Create legacy replication slots for replicas
-          community.postgresql.postgresql_slot:
-            name: "{{ item }}"
-            slot_type: physical
-            state: present
-            login_db: postgres
-          loop:
-            - "postgresql2"
-            - "postgresql3"
-          become_user: postgres
-          when:
-            - legacy_existing_slots.failed or (item not in (legacy_existing_slots.query_result | default([]) | map(attribute='slot_name') | list))
-
-      when: not (repmgr_enabled | default(false))
-
-    # repmgr setup (only when repmgr is enabled)
-    - name: repmgr High Availability setup
-      block:
-        - name: Check if repmgr user exists
-          community.postgresql.postgresql_query:
-            login_db: postgres
-            query: "SELECT 1 FROM pg_roles WHERE rolname = '{{ repmgr_user }}'"
-          register: repmgr_user_exists
-          become_user: postgres
-          ignore_errors: yes
-
-        - name: Check if repmgr database exists
-          community.postgresql.postgresql_query:
-            login_db: postgres
-            query: "SELECT 1 FROM pg_database WHERE datname = '{{ repmgr_database }}'"
-          register: repmgr_db_exists
-          become_user: postgres
-          ignore_errors: yes
-
-        - name: Check if repmgr extension exists
-          community.postgresql.postgresql_query:
-            login_db: "{{ repmgr_database }}"
-            login_user: "{{ repmgr_user }}"
-            login_password: "{{ repmgr_password }}"
-            query: "SELECT 1 FROM pg_extension WHERE extname = 'repmgr'"
-          register: repmgr_extension_exists
-          become_user: postgres
-          ignore_errors: yes
-
-        - name: Create repmgr user
-          community.postgresql.postgresql_user:
-            name: "{{ repmgr_user }}"
-            password: "{{ repmgr_password }}"
-            role_attr_flags: SUPERUSER,REPLICATION
-            login_db: postgres
-            state: present
-          become_user: postgres
-          when:
-            - repmgr_user_exists.failed or (repmgr_user_exists.query_result | length == 0)
-
-        - name: Create repmgr database
-          community.postgresql.postgresql_db:
-            name: "{{ repmgr_database }}"
-            owner: "{{ repmgr_user }}"
-            state: present
-          become_user: postgres
-          when:
-            - repmgr_db_exists.failed or (repmgr_db_exists.query_result | length == 0)
-
-        - name: Create .pgpass file for postgres user
-          ansible.builtin.template:
-            src: ../templates/pgpass.j2
-            dest: "/var/lib/postgresql/.pgpass"
-            owner: postgres
-            group: postgres
-            mode: "0600"
-
-        - name: Deploy repmgr configuration
-          ansible.builtin.template:
-            src: ../templates/repmgr.conf.j2
-            dest: "/etc/repmgr/{{ postgresql_version }}/repmgr.conf"
-            owner: postgres
-            group: postgres
-            mode: "0644"
-
-        - name: Deploy fencing and safety scripts
-          ansible.builtin.template:
-            src: "{{ item.src }}"
-            dest: "{{ item.dest }}"
-            owner: postgres
-            group: postgres
-            mode: "0755"
-          loop:
-            - {
-                src: "../templates/simple_fence.sh.j2",
-                dest: "/opt/repmgr/scripts/simple_fence.sh",
-              }
-            - {
-                src: "../templates/startup_check.sh.j2",
-                dest: "/opt/repmgr/scripts/startup_check.sh",
-              }
-
-      when: repmgr_enabled | default(false)
-
-    # Restart PostgreSQL after all configuration changes
-    - name: Restart PostgreSQL primary after configuration
+    - name: Restart PostgreSQL if configuration changed
       ansible.builtin.service:
         name: postgresql
         state: restarted
-      when:
-        - primary_conf_result.changed or repmgr_enabled | default(false)
+      when: postgresql_config_result.changed
 
     - name: Ensure PostgreSQL service is running
       ansible.builtin.service:
@@ -175,75 +65,189 @@
     - name: Wait for PostgreSQL to be ready
       ansible.builtin.wait_for:
         port: 5432
-        host: "{{ primary_node }}"
+        host: "127.0.0.1"
         delay: 5
         timeout: 60
 
-    # Post-startup repmgr setup (requires PostgreSQL to be running)
-    - name: Complete repmgr primary setup
+    # ===== PHASE 3: DATABASE SETUP =====
+
+    - name: Setup database users and structures
       block:
-        - name: Create repmgr extension in database
-          community.postgresql.postgresql_ext:
-            name: repmgr
-            db: "{{ repmgr_database }}"
-            login_user: "{{ repmgr_user }}"
-            login_password: "{{ repmgr_password }}"
-            state: present
-          become_user: postgres
-          when:
-            - repmgr_extension_exists.failed or (repmgr_extension_exists.query_result | length == 0)
+        # Legacy replication setup
+        - name: Setup legacy replication
+          block:
+            - name: Create legacy replication user
+              community.postgresql.postgresql_user:
+                name: "{{ repsvc_user }}"
+                password: "{{ repsvc_password }}"
+                role_attr_flags: REPLICATION,LOGIN
+                login_db: postgres
+                state: present
+              become_user: postgres
 
-        - name: Create replication slots for replica nodes (repmgr)
-          community.postgresql.postgresql_slot:
-            name: "{{ item }}"
-            slot_type: physical
-            state: present
-            login_db: postgres
-            login_user: "{{ repmgr_user }}"
-            login_password: "{{ repmgr_password }}"
-          loop: "{{ groups['postgresql_ro'] }}"
-          become_user: postgres
-          ignore_errors: yes # Slots may be created automatically by repmgr
+            - name: Create legacy replication slots
+              community.postgresql.postgresql_slot:
+                name: "{{ item }}"
+                slot_type: physical
+                state: present
+                login_db: postgres
+              loop: "{{ replica_nodes }}"
+              become_user: postgres
 
-        - name: Check if primary is already registered with repmgr
+          when: not (repmgr_enabled | default(false))
+
+        # repmgr setup
+        - name: Setup repmgr infrastructure
+          block:
+            - name: Create repmgr user
+              community.postgresql.postgresql_user:
+                name: "{{ repmgr_user }}"
+                password: "{{ repmgr_password }}"
+                role_attr_flags: SUPERUSER,REPLICATION
+                login_db: postgres
+                state: present
+              become_user: postgres
+
+            - name: Create repmgr database
+              community.postgresql.postgresql_db:
+                name: "{{ repmgr_database }}"
+                owner: "{{ repmgr_user }}"
+                state: present
+              become_user: postgres
+
+            - name: Create repmgr extension
+              community.postgresql.postgresql_ext:
+                name: repmgr
+                db: "{{ repmgr_database }}"
+                login_host: "127.0.0.1"
+                login_user: "{{ repmgr_user }}"
+                login_password: "{{ repmgr_password }}"
+                state: present
+              become_user: postgres
+
+            - name: Create replication slots for replicas
+              community.postgresql.postgresql_slot:
+                name: "{{ item }}"
+                slot_type: physical
+                state: present
+                login_db: postgres
+                login_user: "{{ repmgr_user }}"
+                login_password: "{{ repmgr_password }}"
+              loop: "{{ replica_nodes }}"
+              become_user: postgres
+              ignore_errors: yes
+
+          when: repmgr_enabled | default(false)
+
+    # ===== PHASE 4: REPMGR REGISTRATION =====
+
+    - name: Register primary with repmgr
+      block:
+        - name: Check current repmgr registration status
           ansible.builtin.command:
             cmd: sudo -u postgres repmgr -f /etc/repmgr/{{ postgresql_version }}/repmgr.conf node status
-          register: repmgr_node_status
+          register: repmgr_status_check
           failed_when: false
           changed_when: false
 
-        - name: Register primary node with repmgr
+        - name: Register primary node
           ansible.builtin.command:
             cmd: sudo -u postgres repmgr -f /etc/repmgr/{{ postgresql_version }}/repmgr.conf primary register
-          when:
-            - repmgr_node_status.rc != 0 # Only register if not already registered
-          register: repmgr_primary_register
+          when: repmgr_status_check.rc != 0
+          register: repmgr_registration
           failed_when:
-            - repmgr_primary_register.rc != 0
-            - "'already registered' not in repmgr_primary_register.stderr"
+            - repmgr_registration.rc != 0
+            - "'already registered' not in repmgr_registration.stderr"
 
-        - name: Display primary registration result
+        - name: Display registration status
           ansible.builtin.debug:
-            msg: "{{ repmgr_primary_register.stdout_lines | default(['Primary already registered']) }}"
+            msg: "{{ 'Primary registered successfully' if repmgr_registration.changed else 'Primary already registered' }}"
 
-        - name: Verify repmgr primary registration
+        - name: Verify cluster configuration
           ansible.builtin.command:
             cmd: sudo -u postgres repmgr -f /etc/repmgr/{{ postgresql_version }}/repmgr.conf cluster show
-          register: cluster_verification
+          register: cluster_status
           changed_when: false
 
-        - name: Display initial cluster status
+        - name: Display cluster status
           ansible.builtin.debug:
-            msg: "{{ cluster_verification.stdout_lines }}"
-
-        - name: Verify primary node connectivity
-          ansible.builtin.command:
-            cmd: sudo -u postgres psql -d {{ repmgr_database }} -c "SELECT node_name, active, node_status FROM repmgr.nodes WHERE type = 'primary'"
-          register: primary_verification
-          changed_when: false
-
-        - name: Display primary node verification
-          ansible.builtin.debug:
-            msg: "Primary node status: {{ primary_verification.stdout_lines }}"
+            msg: "{{ cluster_status.stdout_lines }}"
 
       when: repmgr_enabled | default(false)
+
+    # ===== PHASE 5: DEPLOY SPLIT-BRAIN PREVENTION =====
+
+    - name: Deploy split-brain prevention after cluster setup
+      block:
+        - name: Verify cluster is operational
+          ansible.builtin.command:
+            cmd: sudo -u postgres repmgr -f /etc/repmgr/{{ postgresql_version }}/repmgr.conf node check
+          register: cluster_health_check
+
+        - name: Deploy split-brain prevention configuration
+          ansible.builtin.template:
+            src: ../templates/split-brain-prevention.conf.j2
+            dest: "/etc/systemd/system/postgresql@{{ postgresql_version }}-main.service.d/split-brain-prevention.conf"
+            mode: "0644"
+          register: split_brain_deployed
+
+        - name: Reload systemd configuration
+          ansible.builtin.systemd:
+            daemon_reload: yes
+          when: split_brain_deployed.changed
+
+        - name: Test split-brain prevention
+          ansible.builtin.command:
+            cmd: /opt/repmgr/scripts/startup_check.sh
+          register: split_brain_test
+          ignore_errors: yes
+
+        - name: Display split-brain prevention status
+          ansible.builtin.debug:
+            msg: |
+              Split-brain prevention: {{ 'DEPLOYED' if split_brain_deployed.changed else 'EXISTS' }}
+              Safety check: {{ 'PASSED' if split_brain_test.rc == 0 else 'REQUIRES CLUSTER COMPLETION' }}
+
+      when: repmgr_enabled | default(false)
+
+    # ===== PHASE 6: VERIFICATION =====
+
+    - name: Final verification and summary
+      block:
+        - name: Test database connectivity
+          community.postgresql.postgresql_query:
+            login_db: postgres
+            query: "SELECT current_user, current_database(), version()"
+          register: connectivity_test
+          become_user: postgres
+
+        - name: Check replication status
+          community.postgresql.postgresql_query:
+            login_db: postgres
+            query: "SELECT count(*) as slot_count FROM pg_replication_slots"
+          register: replication_check
+          become_user: postgres
+
+        - name: Display comprehensive setup summary
+          ansible.builtin.debug:
+            msg: |
+              PostgreSQL Primary Setup Complete
+
+              Node Information:
+              - Hostname: {{ ansible_hostname }}
+              - IP Address: {{ primary_node }}
+              - PostgreSQL: {{ connectivity_test.query_result[0].version.split()[1] }}
+
+              Configuration:
+              - Mode: {{ 'High Availability (repmgr)' if repmgr_enabled | default(false) else 'Legacy Replication' }}
+              {% if repmgr_enabled | default(false) %}
+              - repmgr User: {{ repmgr_user }}
+              - repmgr Database: {{ repmgr_database }}
+              - Split-brain Protection: {{ 'ACTIVE' if split_brain_deployed.changed else 'CONFIGURED' }}
+              {% else %}
+              - Replication User: {{ repsvc_user }}
+              {% endif %}
+              - Replication Slots: {{ replication_check.query_result[0].slot_count }}
+              - Target Replicas: {{ replica_nodes | length }}
+
+              Status: Ready for replica deployment

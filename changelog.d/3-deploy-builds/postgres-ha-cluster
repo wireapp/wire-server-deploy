@@ -1,2 +1,1 @@
-feat: Implement PostgreSQL high availability cluster with repmgr
-Adds 3-node PostgreSQL cluster with automated failover using repmgr to ensure Wire service continuity during database failures. Includes comprehensive fencing mechanisms and safety checks.
+Added: PostgreSQL high availability cluster with repmgr

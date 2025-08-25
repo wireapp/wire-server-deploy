@@ -10,14 +10,6 @@
     - postgresql
     - primary
 
-- name: Setup repmgr HA cluster coordination
-  import_playbook: postgresql-playbooks/postgresql-repmgr-setup.yml
-  when: repmgr_enabled | default(false)
-  tags:
-    - postgresql
-    - repmgr
-    - ha
-
 - name: Deploy PostgreSQL replica nodes
   import_playbook: postgresql-playbooks/postgresql-deploy-replica.yml
   tags:

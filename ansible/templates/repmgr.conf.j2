@@ -43,3 +43,5 @@ standby_disconnect_on_failover=true
 # systemd service management
 repmgrd_service_start_command='sudo systemctl start repmgrd@{{ postgresql_version }}'
 repmgrd_service_stop_command='sudo systemctl stop repmgrd@{{ postgresql_version }}'
+
+repmgrd_pid_file='/tmp/repmgrd-{{ postgresql_version }}.pid'
