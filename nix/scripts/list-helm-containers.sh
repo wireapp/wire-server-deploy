@@ -9,6 +9,7 @@ set -eou pipefail
 
 VALUES_DIR=""
 HELM_IMAGE_TREE_FILE=""
+VALUES_TYPE=""
 
 # Parse the arguments
 for arg in "$@"
@@ -20,6 +21,9 @@ do
     HELM_IMAGE_TREE_FILE=*)
       HELM_IMAGE_TREE_FILE="${arg#*=}"
       ;;
+    VALUES_TYPE=*)
+      VALUES_TYPE="${arg#*=}"
+      ;;
     *)
       echo "Unknown argument: $arg" >&2
       exit 1
@@ -27,9 +31,9 @@ do
   esac
 done
 
-if [[ -z "$VALUES_DIR" || -z "$HELM_IMAGE_TREE_FILE" ]]; then
-  echo "Error: Both VALUES_DIR and HELM_IMAGE_TREE_FILE must be provided." >&2
-  echo "Usage: $0 VALUES_DIR=<path> HELM_IMAGE_TREE_FILE=<file>" >&2
+if [[ -z "$VALUES_DIR" || -z "$HELM_IMAGE_TREE_FILE" || -z "$VALUES_TYPE" ]]; then
+  echo "Error: VALUES_DIR, HELM_IMAGE_TREE_FILE and VALUES_TYPE must be provided." >&2
+  echo "Usage: $0 VALUES_DIR=<path> HELM_IMAGE_TREE_FILE=<file> [VALUES_TYPE=<type>]" >&2
   exit 1
 fi
 
@@ -75,8 +79,8 @@ while IFS= read -r chart; do
   current_images=$(helm template --debug "${chart}" \
     --set federate.dtls.tls.key=emptyString \
     --set federate.dtls.tls.crt=emptyString \
-    $( [[ -f "${VALUES_DIR}"/$(basename "${chart}")/prod-values.example.yaml ]] && echo "-f ${VALUES_DIR}/$(basename "${chart}")/prod-values.example.yaml" ) \
-    $( [[ -f "${VALUES_DIR}"/$(basename "${chart}")/prod-secrets.example.yaml ]] && echo "-f ${VALUES_DIR}/$(basename "${chart}")/prod-secrets.example.yaml" ) \
+    $( [[ -f "${VALUES_DIR}"/$(basename "${chart}")/"${VALUES_TYPE}"-values.example.yaml ]] && echo "-f ${VALUES_DIR}/$(basename "${chart}")/${VALUES_TYPE}-values.example.yaml" ) \
+    $( [[ -f "${VALUES_DIR}"/$(basename "${chart}")/"${VALUES_TYPE}"-secrets.example.yaml ]] && echo "-f ${VALUES_DIR}/$(basename "${chart}")/${VALUES_TYPE}-secrets.example.yaml" ) \
     | yq -r '..|.image? | select(.)' | optionally_complain | sort -u)
 
   images+="$current_images\n"

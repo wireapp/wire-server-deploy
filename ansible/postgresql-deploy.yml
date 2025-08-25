@@ -1,0 +1,29 @@
+- name: Install PostgreSQL packages
+  import_playbook: postgresql-playbooks/postgresql-install.yml
+  tags:
+    - postgresql
+    - install
+
+- name: Deploy PostgreSQL primary node
+  import_playbook: postgresql-playbooks/postgresql-deploy-primary.yml
+  tags:
+    - postgresql
+    - primary
+
+- name: Deploy PostgreSQL replica nodes
+  import_playbook: postgresql-playbooks/postgresql-deploy-replica.yml
+  tags:
+    - postgresql
+    - replica
+
+- name: Verify PostgreSQL deployment
+  import_playbook: postgresql-playbooks/postgresql-verify-HA.yml
+  tags:
+    - postgresql
+    - verify
+
+- name: Setup wire-server postgresql database and user
+  import_playbook: postgresql-playbooks/postgresql-wire-setup.yml
+  tags:
+    - postgresql
+    - wire-setup

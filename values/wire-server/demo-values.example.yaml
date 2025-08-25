@@ -165,6 +165,11 @@ galley:
       host: cassandra-ephemeral
     rabbitmq:
       host: rabbitmq # name of the rabbitmq service, either `rabbitmq-external` or `rabbitmq`
+    postgresql:
+      host: postgresql # DNS name without protocol
+      port: "5432"
+      user: wire-server
+      dbname: wire-server
     enableFederation: false # Enable to use federation
     settings:
       # prefix URI used when inviting users to a conversation by link

@@ -62,7 +62,7 @@
 
 - name: Set up offline repositories and remove online ones
   become: yes
-  hosts: k8s-cluster:etcd:cassandra:elasticsearch:minio:rmq-cluster
+  hosts: k8s-cluster:etcd:cassandra:elasticsearch:minio:rmq-cluster:postgresql
   tasks:
   - when: demo_deploy | default(false) == false
     block:

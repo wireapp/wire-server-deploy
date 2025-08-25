@@ -62,7 +62,8 @@ kubeconfig_localhost: true
 is_aws_environment: False
 
 # IP address for the logging (for example QRadar) server
-syslog_target_ip: 12.34.56.78
+# this is not used in offline mode, but is here if required
+# syslog_target_ip: 12.34.56.78
 
 # OVERRIDES
 
