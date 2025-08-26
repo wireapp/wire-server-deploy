@@ -1,3 +1,4 @@
+# This chart is meant to be used in ephemeral deployments, such as demo environments.
 # TODO: look deeper into requirements and make a solid, commented values example file
 postgresql:
   primary:
