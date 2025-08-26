@@ -87,7 +87,6 @@ parse_params() {
 
 parse_params "$@"
 
-ARTIFACT_HASH="${ARTIFACT_HASH}"
 TARGET_SYSTEM="${TARGET_SYSTEM:-wiab-autodeploy.wire.link}"
 FORCE_REDEPLOY="${FORCE_REDEPLOY:-0}"
 # List of subdomains to check for DNS A records are defined here https://docs.wire.com/how-to/install/helm.html#how-to-set-up-dns-records
