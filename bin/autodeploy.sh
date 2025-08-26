@@ -1,5 +1,9 @@
 #!/usr/bin/env bash
 # shellcheck disable=SC2087
+
+# This script can be replaced with a more simpler solution of wiab-demo installtion
+# https://docs.wire.com/latest/how-to/install/demo-wiab.html
+
 set -Eeuo pipefail
 
 msg() {
@@ -28,7 +32,7 @@ Running the script without any arguments requires one interaction - confirming t
 For CI usage, it's recommended to invoke "--force-redeploy".
 
 It is likely desirable to invoke the script with "--artifact-hash" and / or "--target-domain" as well. These are the hardcoded fallback values:
- * artifact-hash = 5c06158547bc57846eadaa2be5c813ec43be9b59
+ * artifact-hash = ARTIFACT_HASH
  * target-domain = wiab-autodeploy.wire.link
 
 Available options:
@@ -36,7 +40,6 @@ Available options:
 -v, --verbose       Print script debug info
 --force-redeploy    Force cleanup of previous Wire-in-a-box installation on target host
 --artifact-hash     String, specifies artifact ID as created here: https://github.com/wireapp/wire-server-deploy/actions/workflows/offline.yml
-                    Defaults to 5c06158547bc57846eadaa2be5c813ec43be9b59
 --target-domain     String, domain name used to access the target host
                     Defaults to wiab-autodeploy.wire.link
 EOF
@@ -55,6 +58,7 @@ die() {
 }
 
 parse_params() {
+  ARTIFACT_HASH=""
   while :; do
     case "${1-}" in
     -h | --help) usage ;;
@@ -73,12 +77,17 @@ parse_params() {
     esac
     shift
   done
+
+  # Check if ARTIFACT_HASH is set
+  if [[ -z "$ARTIFACT_HASH" ]]; then
+    usage
+  fi
   return 0
 }
 
 parse_params "$@"
 
-ARTIFACT_HASH="${ARTIFACT_HASH:-5c06158547bc57846eadaa2be5c813ec43be9b59}"
+ARTIFACT_HASH="${ARTIFACT_HASH}"
 TARGET_SYSTEM="${TARGET_SYSTEM:-wiab-autodeploy.wire.link}"
 FORCE_REDEPLOY="${FORCE_REDEPLOY:-0}"
 # List of subdomains to check for DNS A records are defined here https://docs.wire.com/how-to/install/helm.html#how-to-set-up-dns-records
@@ -341,9 +350,6 @@ ufw allow 25672/tcp;
   INGRESSNODE=$(d kubectl get pods -l app.kubernetes.io/name=ingress-nginx -o=custom-columns=NODE:.spec.nodeName --no-headers)
   d kubectl cordon "$INGRESSNODE"
 
-  wget https://charts.jetstack.io/charts/cert-manager-v1.13.2.tgz
-  tar -C ./charts -xzf cert-manager-v1.13.2.tgz
-
   cp ./values/nginx-ingress-services/prod-values.example.yaml ./values/nginx-ingress-services/values.yaml
   cp ./values/nginx-ingress-services/prod-secrets.example.yaml ./values/nginx-ingress-services/secrets.yaml
   sed -i 's/useCertManager: false/useCertManager: true/g' values/nginx-ingress-services/values.yaml
@@ -351,7 +357,7 @@ ufw allow 25672/tcp;
   sed -i "s/example.com/$TARGET_SYSTEM/" values/nginx-ingress-services/values.yaml
 
   d kubectl create namespace cert-manager-ns
-  d helm upgrade --install -n cert-manager-ns --set 'installCRDs=true' cert-manager charts/cert-manager
+  d helm upgrade --install -n cert-manager-ns --set 'installCRDs=true' cert-manager charts/cert-manager --values values/cert-manager/prod-values.example.yaml
 
   d kubectl uncordon "$INGRESSNODE"
 
