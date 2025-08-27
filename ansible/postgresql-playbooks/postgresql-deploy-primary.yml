@@ -125,18 +125,6 @@
                 state: present
               become_user: postgres
 
-            - name: Create replication slots for replicas
-              community.postgresql.postgresql_slot:
-                name: "{{ item }}"
-                slot_type: physical
-                state: present
-                login_db: postgres
-                login_user: "{{ repmgr_user }}"
-                login_password: "{{ repmgr_password }}"
-              loop: "{{ replica_nodes }}"
-              become_user: postgres
-              ignore_errors: yes
-
           when: repmgr_enabled | default(false)
 
     # ===== PHASE 4: REPMGR REGISTRATION =====
