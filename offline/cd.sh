@@ -30,9 +30,6 @@ ssh -oStrictHostKeyChecking=accept-new -oConnectionAttempts=10 "root@$adminhost"
 
 scp inventory.yml "root@$adminhost":./ansible/inventory/offline/inventory.yml
 
-echo "$ssh_private_key" > ssh_private_key
-chmod 400 ssh_private_key
-
 ssh "root@$adminhost" cat ./ansible/inventory/offline/inventory.yml || true
 
 echo "Running ansible playbook setup_nodes.yml via adminhost ($adminhost)..."
