@@ -784,6 +784,7 @@ cp ./values/nginx-ingress-services/prod-secrets.example.yaml ./values/nginx-ingr
 
 #### Bring your own certificates
 
+The `values/nginx-ingress-services/values.yaml` file should be patched for `.Values.tls.useCertManager=false`.
 if you generated your SSL certificates yourself, there are two ways to give these to wire:
 
 ##### From the command line

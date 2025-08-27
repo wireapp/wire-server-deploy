@@ -17,7 +17,7 @@ wiab:
     wire_ip: ""
 
     # artifact_hash
-    artifact_hash: "83c373394ff86ec4c96e110e327fc46b617c22ff"
+    artifact_hash: "89e4fa122e6ddba9df2f81612de1ee45ec2238b3"
   
     # docker vars
     docker_ce_version: "5:28.1.1-1~ubuntu.24.04~noble"
@@ -47,7 +47,7 @@ wiab:
     # list of helm charts to deploy
     charts_to_deploy:
       - fake-aws
-      - smtp
+      - demo-smtp
       - rabbitmq
       - databases-ephemeral
       - postgresql # it is ephemeral version of postgresql

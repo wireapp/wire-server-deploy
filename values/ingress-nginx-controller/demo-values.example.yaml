@@ -19,6 +19,6 @@ ingress-nginx:
 
     # Enable prometheus operator to scrape metrics from the ingress-nginx controller with servicemonitor.
     metrics:
-      enabled: true
+      enabled: false
       serviceMonitor:
-        enabled: true
+        enabled: false
