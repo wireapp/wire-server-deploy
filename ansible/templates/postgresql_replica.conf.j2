@@ -12,13 +12,9 @@ external_pid_file = '/var/run/postgresql/{{ postgresql_version }}-main.pid'
 # https://www.postgresql.org/docs/17/runtime-config-connection.html
 listen_addresses = '*'
 port = 5432
+max_connections = 20
 superuser_reserved_connections = 2
-shared_preload_libraries = 'pg_stat_statements'
-
-# Streaming replication configuration
-# https://www.postgresql.org/docs/17/runtime-config-replication.html
-primary_conninfo = 'host={{ primary_node }} port=5432 user={{ repsvc_user }} password={{ repsvc_password }} application_name={{ inventory_hostname }}'
-primary_slot_name = '{{ inventory_hostname }}'
+shared_preload_libraries = 'pg_stat_statements,repmgr'
 
 # Memory Settings (optimized for 1GB RAM, 1 core)
 # https://www.postgresql.org/docs/17/runtime-config-resource.html
@@ -41,7 +37,10 @@ commit_siblings = 5                       # ADDED: Commit siblings setting
 # Write-Ahead Logging (WAL) - Replica settings
 # https://www.postgresql.org/docs/17/runtime-config-wal.html
 wal_level = replica                       # Must match primary minimum
-wal_keep_size = 500MB                     # Less than primary
+wal_log_hints = on                        # Enable WAL hints for replication
+max_wal_senders = 5                       # Limited for resource constraints
+max_replication_slots = 4                 # Conservative number of slots
+wal_keep_size = 1GB                     # Less than primary
 max_slot_wal_keep_size = 1GB
 
 # Hot Standby Settings (optimized for resource constraints)
@@ -63,7 +62,7 @@ recovery_target_timeline = 'latest'      # Always follow the latest timeline
 # Checkpoints (optimized for limited disk I/O)
 # https://www.postgresql.org/docs/17/runtime-config-wal.html#RUNTIME-CONFIG-WAL-CHECKPOINTS
 checkpoint_completion_target = 0.9        # Slower completion for limited I/O
-checkpoint_timeout = 15min                # Longer intervals to reduce I/O load  
+checkpoint_timeout = 15min                # Longer intervals to reduce I/O load
 max_wal_size = 512MB                      # 1% of disk space before checkpoint
 min_wal_size = 128MB                      # Reasonable minimum
 checkpoint_flush_after = 64kB            # Smaller flushes for limited I/O
@@ -77,8 +76,8 @@ bgwriter_flush_after = 256kB
 
 # Query Planner
 # https://www.postgresql.org/docs/17/runtime-config-query.html#RUNTIME-CONFIG-QUERY-CONSTANTS
-random_page_cost = 1.5                    
-effective_io_concurrency = 1            
+random_page_cost = 1.5
+effective_io_concurrency = 1
 maintenance_io_concurrency = 1
 
 # Logging (focused on replication and queries)
@@ -133,3 +132,7 @@ lc_monetary = 'en_US.UTF-8'
 lc_numeric = 'en_US.UTF-8'
 lc_time = 'en_US.UTF-8'
 default_text_search_config = 'pg_catalog.english'
+
+# Archive settings
+archive_mode = on
+archive_command = '/bin/true'

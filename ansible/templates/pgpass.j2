@@ -1,0 +1,4 @@
+{% for host in groups['postgresql_rw'] + groups['postgresql_ro'] %}
+{{ hostvars[host]['ansible_default_ipv4']['address'] | default(hostvars[host]['ansible_host']) }}:5432:{{ repmgr_database }}:{{ repmgr_user }}:{{ repmgr_password }}
+{{ hostvars[host]['ansible_default_ipv4']['address'] | default(hostvars[host]['ansible_host']) }}:5432:replication:{{ repmgr_user }}:{{ repmgr_password }}
+{% endfor %}
