@@ -166,6 +166,53 @@
 
     # ===== PHASE 4: SERVICE STARTUP =====
 
+    - name: Ensure instance drop-in directory exists
+      ansible.builtin.file:
+        path: "/etc/systemd/system/{{ pg_service_name }}.d"
+        state: directory
+        owner: root
+        group: root
+        mode: "0755"
+
+    - name: Install guard drop-in (template)
+      ansible.builtin.template:
+        src: ../templates/guard.conf.j2
+        dest: "/etc/systemd/system/{{ pg_service_name }}.d/guard.conf"
+        owner: root
+        group: root
+        mode: "0644"
+      register: guard_dropin
+
+    - name: Reload systemd if drop-in changed
+      ansible.builtin.command: systemctl daemon-reload
+      when: guard_dropin.changed
+
+    - name: Check for standby.signal
+      ansible.builtin.stat:
+        path: "{{ postgresql_data_dir }}/standby.signal"
+      register: standby_sig
+
+    - name: Check for allow-primary-start marker
+      ansible.builtin.stat:
+        path: "{{ postgresql_data_dir }}/allow-primary-start"
+      register: allow_primary_marker
+
+    - name: Ensure standby.signal exists on replica
+      ansible.builtin.file:
+        path: "{{ postgresql_data_dir }}/standby.signal"
+        state: touch
+        owner: postgres
+        group: postgres
+        mode: "0640"
+      when: not standby_sig.stat.exists and not allow_primary_marker.stat.exists
+      register: standby_touch
+
+    - name: Restart PostgreSQL instance if drop-in changed
+      ansible.builtin.service:
+        name: "{{ pg_service_name }}"
+        state: restarted
+      when: guard_dropin.changed or (standby_touch is defined and standby_touch.changed)
+
     - name: Start PostgreSQL service
       ansible.builtin.service:
         name: "{{ pg_service_name }}"
@@ -238,5 +285,7 @@
         - name: Display repmgrd status
           ansible.builtin.debug:
             msg: "repmgrd service: {{ repmgrd_status.status.ActiveState }}"
+
+      # Drop-in already installed during service startup
 
       when: repmgr_enabled | default(false)

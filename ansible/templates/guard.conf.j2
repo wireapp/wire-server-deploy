@@ -1,0 +1,2 @@
+[Service]
+ExecStartPre=/bin/sh -c '[ -f "{{ postgresql_data_dir }}/standby.signal" ] || [ -f "{{ postgresql_data_dir }}/allow-primary-start" ] || { echo "Refusing start: not rejoined yet"; exit 1; }'

@@ -7,7 +7,7 @@
     primary_node: "{{ hostvars[(groups.get('postgresql_rw', []) | first) | default('postgresql1')]['ansible_default_ipv4']['address'] | default(hostvars[(groups.get('postgresql_rw', []) | first) | default('postgresql1')]['ansible_host'] | default((groups.get('postgresql_rw', []) | first) | default('postgresql1'))) }}"
     replica_node1: "{{ hostvars[(groups.get('postgresql_ro', []) | first) | default('postgresql2')]['ansible_default_ipv4']['address'] | default(hostvars[(groups.get('postgresql_ro', []) | first) | default('postgresql2')]['ansible_host'] | default((groups.get('postgresql_ro', []) | first) | default('postgresql2'))) }}"
     replica_node2: "{{ hostvars[(groups.get('postgresql_ro', []) | last) | default('postgresql3')]['ansible_default_ipv4']['address'] | default(hostvars[(groups.get('postgresql_ro', []) | last) | default('postgresql3')]['ansible_host'] | default((groups.get('postgresql_ro', []) | last) | default('postgresql3'))) }}"
-    pg_service_name: "postgresql@{{ postgresql_version }}-main"
+    pg_service_name: "postgresql@{{ postgresql_version }}-main.service"
   tasks:
     - name: Ensure scripts directory exists
       ansible.builtin.file:
@@ -64,12 +64,44 @@
           mode: "0755"
       register: primary_conf_result
 
+    - name: Ensure instance drop-in directory exists
+      ansible.builtin.file:
+        path: "/etc/systemd/system/{{ pg_service_name }}.d"
+        state: directory
+        owner: root
+        group: root
+        mode: "0755"
+
+    - name: Install guard drop-in (ExecStartPre)
+      ansible.builtin.template:
+        src: ../templates/guard.conf.j2
+        dest: "/etc/systemd/system/{{ pg_service_name }}.d/guard.conf"
+        owner: root
+        group: root
+        mode: "0644"
+      register: guard_dropin
+
+    - name: Reload systemd if drop-in changed
+      ansible.builtin.command: systemctl daemon-reload
+      when: guard_dropin.changed
+
+    - name: Ensure allow-primary-start marker exists on primary
+
+      ansible.builtin.copy:
+        dest: "{{ postgresql_data_dir }}/allow-primary-start"
+        content: ""
+        owner: postgres
+        group: postgres
+        mode: "0640"
+        force: no
+      register: allow_primary_file
+
     - name: restart postgresql primary
       ansible.builtin.service:
         name: "{{ pg_service_name }}"
         state: restarted
       become: yes
-      when: primary_conf_result.changed
+      when: primary_conf_result.changed or guard_dropin.changed or (allow_primary_file is defined and allow_primary_file.changed)
 
     - name: Ensure PostgreSQL instance is running and enabled
       ansible.builtin.service:
@@ -183,6 +215,11 @@
             enabled: yes
             daemon_reload: yes
           when: repmgr_connection_test is succeeded
+
+        - name: Verify repmgrd is running
+          ansible.builtin.systemd:
+            name: "repmgrd@{{ postgresql_version }}"
+          register: repmgrd_status
 
         - name: Display repmgrd status
           ansible.builtin.debug:

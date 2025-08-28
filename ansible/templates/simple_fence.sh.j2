@@ -129,6 +129,8 @@ handle_node_rejoin() {
     if [[ "$SUCCESS" == "1" ]]; then
         log_event "Unfencing rejoined node: ${NODE_NAMES[$NODE_ID]}"
         update_node_status "$NODE_ID" "true" "Unfenced due to successful rejoin"
+    # remove allow-primary-start to keep this node as standby
+    rm -f {{ postgresql_data_dir }}/allow-primary-start || true
         log_event "Node rejoin successful - node unfenced"
     else
         log_event "Node rejoin failed - keeping fenced status"
@@ -139,6 +141,8 @@ handle_standby_promote() {
     log_event "=== STANDBY PROMOTION EVENT ==="
     log_event "Promoting standby: Node $NODE_ID (${NODE_NAMES[$NODE_ID]})"
     if [[ "$SUCCESS" == "1" ]]; then
+    # allow primary start on this host
+    touch {{ postgresql_data_dir }}/allow-primary-start || true
         log_event "Standby promotion successful"
         handle_failover_promote
     else
