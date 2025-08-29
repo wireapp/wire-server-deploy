@@ -29,10 +29,10 @@ repmgr_node_config:
     priority: 50
     role: standby
 
-# repmgr settings (from your working config)
+# repmgr settings
 repmgr_monitor_interval: 2
 repmgr_reconnect_attempts: 6
-repmgr_reconnect_interval: 10
+repmgr_reconnect_interval: 5
 
 # Use local packages instead of repository
 postgresql_use_repository: false  # Set to true to use local packages from urls

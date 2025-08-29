@@ -34,7 +34,7 @@
     - postgresql
     - wire-setup
 
-- name: Deploy split-brain detector monitoring
+- name: Deploy cluster monitoring
   import_playbook: postgresql-playbooks/postgresql-monitoring.yml
   tags:
     - postgresql
