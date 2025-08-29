@@ -1,4 +1,4 @@
-# PostgreSQL Configuration for Replica Nodes (Streaming Replication Optimized)
+# PostgreSQL Configuration for Primary Node (Streaming Replication Optimized)
 # {{ ansible_managed }}
 
 # Basic Settings
@@ -12,13 +12,9 @@ external_pid_file = '/var/run/postgresql/{{ postgresql_version }}-main.pid'
 # https://www.postgresql.org/docs/17/runtime-config-connection.html
 listen_addresses = '*'
 port = 5432
+max_connections = 20
 superuser_reserved_connections = 2
-shared_preload_libraries = 'pg_stat_statements'
-
-# Streaming replication configuration
-# https://www.postgresql.org/docs/17/runtime-config-replication.html
-primary_conninfo = 'host={{ primary_node }} port=5432 user={{ repsvc_user }} password={{ repsvc_password }} application_name={{ inventory_hostname }}'
-primary_slot_name = '{{ inventory_hostname }}'
+shared_preload_libraries = 'pg_stat_statements,repmgr'
 
 # Memory Settings (optimized for 1GB RAM, 1 core)
 # https://www.postgresql.org/docs/17/runtime-config-resource.html
@@ -29,41 +25,38 @@ maintenance_work_mem = 32MB               # Conservative for maintenance operati
 wal_buffers = 4MB                         # Smaller WAL buffer
 max_worker_processes = 1                  # Match core count
 max_parallel_workers = 1                  # Match single core
-max_parallel_workers_per_gather = 0        # Disable parallel workers for single core
+max_parallel_workers_per_gather = 0       # Disable parallel workers for single core
+
+# Write-Ahead Logging (WAL) - Optimized for 50GB disk constraint
+# https://www.postgresql.org/docs/17/runtime-config-wal.html
+wal_level = replica
+wal_log_hints = on
+max_wal_senders = 5                       # Limited for resource constraints
+max_replication_slots = 4                 # Conservative number of slots
+wal_keep_size = 2GB                       # 4% of disk space for WAL retention
+wal_sender_timeout = 60s
+max_slot_wal_keep_size = 3GB              # 6% of disk space maximum
 
 # WAL Writing and Flushing (for minimal latency)
-wal_sync_method = fdatasync               # ADDED: Missing WAL sync method
-wal_writer_delay = 200ms                  # ADDED: Less frequent for single core
-wal_writer_flush_after = 1MB              # ADDED: WAL writer flush setting
-commit_delay = 0                          # ADDED: No artificial delay
-commit_siblings = 5                       # ADDED: Commit siblings setting
+wal_sync_method = fdatasync
+wal_writer_delay = 200ms                   # More frequent WAL writes
+wal_writer_flush_after = 1MB
+commit_delay = 0                          # No artificial delay
+commit_siblings = 5
 
-# Write-Ahead Logging (WAL) - Replica settings
-# https://www.postgresql.org/docs/17/runtime-config-wal.html
-wal_level = replica                       # Must match primary minimum
-wal_keep_size = 500MB                     # Less than primary
-max_slot_wal_keep_size = 1GB
-
-# Hot Standby Settings (optimized for resource constraints)
+# Streaming Replication Settings - Synchronous for resource efficiency
 # https://www.postgresql.org/docs/17/runtime-config-replication.html
-hot_standby = on                          # Enable read queries on replica
-max_standby_streaming_delay = 120s         # Longer delay acceptable for resource constraints
-max_standby_archive_delay = 120s           # Longer delay acceptable
-hot_standby_feedback = on                 # Send feedback to prevent conflicts
+synchronous_standby_names = ''            # Async replication to reduce resource usage
+synchronous_commit = on                   # Default to synchronous commit
 wal_receiver_status_interval = 10s         # Less frequent updates to save resources
-wal_receiver_timeout = 60s                # Match primary timeout
-wal_retrieve_retry_interval = 10s         # Less frequent retries to save resources
-
-# Recovery Settings
-# https://www.postgresql.org/docs/17/runtime-config-wal.html#RUNTIME-CONFIG-WAL-ARCHIVE-RECOVERY
-restore_command = ''                      # Not using archive recovery
-recovery_end_command = ''
-recovery_target_timeline = 'latest'      # Always follow the latest timeline
+max_standby_streaming_delay = 120s         # Longer delays acceptable for resource constraints
+max_standby_archive_delay = 120s
+hot_standby_feedback = on                 # Prevent query conflicts on replicas
 
 # Checkpoints (optimized for limited disk I/O)
 # https://www.postgresql.org/docs/17/runtime-config-wal.html#RUNTIME-CONFIG-WAL-CHECKPOINTS
 checkpoint_completion_target = 0.9        # Slower completion for limited I/O
-checkpoint_timeout = 15min                # Longer intervals to reduce I/O load  
+checkpoint_timeout = 15min                # Longer intervals to reduce I/O load
 max_wal_size = 512MB                      # 1% of disk space before checkpoint
 min_wal_size = 128MB                      # Reasonable minimum
 checkpoint_flush_after = 64kB            # Smaller flushes for limited I/O
@@ -77,8 +70,8 @@ bgwriter_flush_after = 256kB
 
 # Query Planner
 # https://www.postgresql.org/docs/17/runtime-config-query.html#RUNTIME-CONFIG-QUERY-CONSTANTS
-random_page_cost = 1.5                    
-effective_io_concurrency = 1            
+random_page_cost = 1.5
+effective_io_concurrency = 1
 maintenance_io_concurrency = 1
 
 # Logging (focused on replication and queries)
@@ -117,14 +110,7 @@ autovacuum_analyze_threshold = 100
 autovacuum_analyze_scale_factor = 0.15
 autovacuum_work_mem = 16MB                # Reduced memory for autovacuum
 
-# Read-only optimizations
-# https://www.postgresql.org/docs/17/runtime-config-client.html
-default_transaction_isolation = 'read committed'
-statement_timeout = 30min                 # Prevent long-running read queries
-lock_timeout = 30s                        # Prevent lock waits
-idle_in_transaction_session_timeout = 10min
-
-# Locale and Formatting (match primary)
+# Locale and Formatting
 # https://www.postgresql.org/docs/17/locale.html
 datestyle = 'iso, mdy'
 timezone = 'UTC'
@@ -133,3 +119,7 @@ lc_monetary = 'en_US.UTF-8'
 lc_numeric = 'en_US.UTF-8'
 lc_time = 'en_US.UTF-8'
 default_text_search_config = 'pg_catalog.english'
+
+# Archive settings (required for repmgr)
+archive_mode = on
+archive_command = '/bin/true'  # Placeholder for air-gapped environments
