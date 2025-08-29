@@ -1,0 +1,78 @@
+---
+- name: Deploy PostgreSQL cluster monitoring after setup
+  hosts: postgresql_rw:postgresql_ro
+  become: yes
+  tags:
+    - postgresql-monitoring
+    - post-deploy
+
+  tasks:
+    - name: Configure sudo access for postgres user to manage PostgreSQL service
+      copy:
+        content: |
+          # Allow postgres user to stop/start/mask PostgreSQL service for split-brain resolution
+          postgres ALL=(root) NOPASSWD: /bin/systemctl stop postgresql@{{ postgresql_version }}-main.service
+          postgres ALL=(root) NOPASSWD: /bin/systemctl mask postgresql@{{ postgresql_version }}-main.service
+          postgres ALL=(root) NOPASSWD: /bin/systemctl unmask postgresql@{{ postgresql_version }}-main.service
+        dest: /etc/sudoers.d/postgres-postgresql-service
+        mode: "0440"
+        owner: root
+        group: root
+        validate: "visudo -cf %s"
+
+    - name: Deploy split-brain detection script
+      template:
+        src: ../templates/postgresql/detect_rouge_primary.sh.j2
+        dest: /usr/local/bin/detect_rouge_primary.sh
+        mode: "0755"
+        owner: postgres
+        group: postgres
+        backup: yes
+      notify: restart monitoring timer
+
+    - name: Create systemd service for split-brain detection
+      template:
+        src: ../templates/postgresql/detect-rouge-primary.service.j2
+        dest: /etc/systemd/system/detect-rouge-primary.service
+        mode: "0644"
+        backup: yes
+      notify:
+        - reload systemd
+        - restart monitoring timer
+
+    - name: Create systemd timer for periodic monitoring
+      template:
+        src: ../templates/postgresql/detect-rouge-primary.timer.j2
+        dest: /etc/systemd/system/detect-rouge-primary.timer
+        mode: "0644"
+        backup: yes
+      notify:
+        - reload systemd
+        - restart monitoring timer
+
+    - name: Enable and start monitoring timer
+      systemd:
+        name: detect-rouge-primary.timer
+        enabled: yes
+        state: started
+        daemon_reload: yes
+
+    - name: Verify monitoring service is configured correctly
+      command: systemctl status detect-rouge-primary.timer
+      register: timer_status
+      changed_when: false
+
+    - name: Display monitoring timer status
+      debug:
+        msg: "{{ timer_status.stdout_lines }}"
+
+  handlers:
+    - name: reload systemd
+      systemd:
+        daemon_reload: yes
+
+    - name: restart monitoring timer
+      systemd:
+        name: detect-rouge-primary.timer
+        state: restarted
+        daemon_reload: yes

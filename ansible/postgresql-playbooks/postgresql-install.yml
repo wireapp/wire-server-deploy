@@ -224,7 +224,7 @@
     - name: Deploy repmgrd systemd service template
       become: yes
       ansible.builtin.template:
-        src: ../templates/repmgrd_service.j2
+        src: ../templates/postgresql/repmgrd_service.j2
         dest: "/etc/systemd/system/repmgrd@.service"
         mode: "0644"
       register: repmgrd_service_deployed

@@ -1,5 +1,5 @@
 ---
-- name: Deploy PostgreSQL replica services with repmgr streaming replication
+- name: Deploy PostgreSQL replica services (Basic Setup)
   hosts: postgresql_ro
   become: yes
   gather_facts: yes
@@ -9,12 +9,12 @@
     current_replica: "{{ ansible_default_ipv4.address | default(ansible_host) }}"
     pg_service_name: "postgresql@{{ postgresql_version }}-main.service"
   tasks:
-    # ===== PHASE 1: INITIAL STATUS CHECK =====
+    # ===== INITIAL STATUS CHECK =====
     - name: Check replica configuration status
       block:
         - name: Check repmgr registration status
           ansible.builtin.command:
-            cmd: sudo -u postgres repmgr -f /etc/repmgr/{{ postgresql_version }}/repmgr.conf node status
+            cmd: sudo -u postgres repmgr -f /etc/repmgr/{{ postgresql_version }}-main/repmgr.conf node status
           register: repmgr_status
           failed_when: false
           changed_when: false
@@ -32,7 +32,14 @@
               - Data configured: {{ replica_configured.stat.exists }}
               - Action needed: {{ not replica_configured.stat.exists }}
 
-    # ===== PHASE 2: CONFIGURATION DEPLOYMENT =====
+    # ===== CONFIGURATION DEPLOYMENT =====
+    - name: Ensure repmgr configuration directory exists
+      ansible.builtin.file:
+        path: "/etc/repmgr/{{ postgresql_version }}-main"
+        state: directory
+        owner: postgres
+        group: postgres
+        mode: "0755"
 
     - name: Deploy replica configuration files
       ansible.builtin.template:
@@ -43,27 +50,39 @@
         mode: "{{ item.mode }}"
         backup: yes
       loop:
-        - src: ../templates/pg_hba.conf.j2
+        - src: ../templates/postgresql/pg_hba.conf.j2
           dest: "{{ postgresql_conf_dir }}/pg_hba.conf"
           mode: "0640"
-        - src: ../templates/postgresql_replica.conf.j2
+        - src: ../templates/postgresql/postgresql_replica.conf.j2
           dest: "{{ postgresql_conf_dir }}/postgresql.conf"
           mode: "0640"
-        - src: ../templates/repmgr.conf.j2
-          dest: "/etc/repmgr/{{ postgresql_version }}/repmgr.conf"
+        - src: ../templates/postgresql/repmgr.conf.j2
+          dest: "/etc/repmgr/{{ postgresql_version }}-main/repmgr.conf"
           mode: "0644"
-        - src: ../templates/pgpass.j2
+        - src: ../templates/postgresql/pgpass.j2
           dest: "/var/lib/postgresql/.pgpass"
           mode: "0600"
-        - src: ../templates/simple_fence.sh.j2
+        - src: ../templates/postgresql/simple_fence.sh.j2
           dest: "/opt/repmgr/scripts/simple_fence.sh"
           mode: "0755"
-        - src: ../templates/failover_validation.sh.j2
+        - src: ../templates/postgresql/failover_validation.sh.j2
           dest: "/opt/repmgr/scripts/failover_validation.sh"
           mode: "0755"
 
-    # ===== PHASE 3: REPLICATION SETUP =====
+    - name: Deploy repmgrd service template
+      ansible.builtin.template:
+        src: ../templates/postgresql/repmgrd_service.j2
+        dest: "/etc/systemd/system/repmgrd@.service"
+        owner: root
+        group: root
+        mode: "0644"
+      register: repmgrd_service_result
 
+    - name: Reload systemd if service template changed
+      ansible.builtin.command: systemctl daemon-reload
+      when: repmgrd_service_result.changed
+
+    # ===== REPLICATION SETUP =====
     - name: Setup repmgr replication
       block:
         - name: Verify primary accessibility
@@ -113,7 +132,7 @@
           ansible.builtin.shell: |
             cd /tmp
             sudo -u postgres repmgr -h {{ primary_node }} -U {{ repmgr_user }} -d {{ repmgr_database }} \
-              -f /etc/repmgr/{{ postgresql_version }}/repmgr.conf standby clone --force
+              -f /etc/repmgr/{{ postgresql_version }}-main/repmgr.conf standby clone --force
           environment:
             PGPASSWORD: "{{ repmgr_password }}"
           register: repmgr_clone_result
@@ -164,55 +183,7 @@
 
       when: not (repmgr_enabled | default(false))
 
-    # ===== PHASE 4: SERVICE STARTUP =====
-
-    - name: Ensure instance drop-in directory exists
-      ansible.builtin.file:
-        path: "/etc/systemd/system/{{ pg_service_name }}.d"
-        state: directory
-        owner: root
-        group: root
-        mode: "0755"
-
-    - name: Install guard drop-in (template)
-      ansible.builtin.template:
-        src: ../templates/guard.conf.j2
-        dest: "/etc/systemd/system/{{ pg_service_name }}.d/guard.conf"
-        owner: root
-        group: root
-        mode: "0644"
-      register: guard_dropin
-
-    - name: Reload systemd if drop-in changed
-      ansible.builtin.command: systemctl daemon-reload
-      when: guard_dropin.changed
-
-    - name: Check for standby.signal
-      ansible.builtin.stat:
-        path: "{{ postgresql_data_dir }}/standby.signal"
-      register: standby_sig
-
-    - name: Check for allow-primary-start marker
-      ansible.builtin.stat:
-        path: "{{ postgresql_data_dir }}/allow-primary-start"
-      register: allow_primary_marker
-
-    - name: Ensure standby.signal exists on replica
-      ansible.builtin.file:
-        path: "{{ postgresql_data_dir }}/standby.signal"
-        state: touch
-        owner: postgres
-        group: postgres
-        mode: "0640"
-      when: not standby_sig.stat.exists and not allow_primary_marker.stat.exists
-      register: standby_touch
-
-    - name: Restart PostgreSQL instance if drop-in changed
-      ansible.builtin.service:
-        name: "{{ pg_service_name }}"
-        state: restarted
-      when: guard_dropin.changed or (standby_touch is defined and standby_touch.changed)
-
+    # ===== SERVICE STARTUP =====
     - name: Start PostgreSQL service
       ansible.builtin.service:
         name: "{{ pg_service_name }}"
@@ -226,8 +197,7 @@
         delay: 10
         timeout: 120
 
-    # ===== PHASE 5: REPLICATION VERIFICATION =====
-
+    # ===== REPLICATION VERIFICATION =====
     - name: Verify replication setup
       block:
         - name: Check recovery status
@@ -256,13 +226,12 @@
             msg: "Replica setup failed - node is not in recovery mode"
           when: not recovery_status.query_result[0].is_replica
 
-    # ===== PHASE 6: REPMGR REGISTRATION =====
-
+    # ===== REPMGR REGISTRATION =====
     - name: Register and start repmgr services
       block:
         - name: Register replica with repmgr
           ansible.builtin.shell: |
-            sudo -u postgres repmgr -f /etc/repmgr/{{ postgresql_version }}/repmgr.conf standby register --force
+            sudo -u postgres repmgr -f /etc/repmgr/{{ postgresql_version }}-main/repmgr.conf standby register --force
           when: repmgr_status.rc != 0
           register: repmgr_registration
 
@@ -272,20 +241,27 @@
 
         - name: Start repmgrd service
           ansible.builtin.systemd:
-            name: "repmgrd@{{ postgresql_version }}"
+            name: "repmgrd@{{ postgresql_version }}-main"
             state: started
             enabled: yes
             daemon_reload: yes
 
         - name: Verify repmgrd is running
           ansible.builtin.systemd:
-            name: "repmgrd@{{ postgresql_version }}"
+            name: "repmgrd@{{ postgresql_version }}-main"
           register: repmgrd_status
 
         - name: Display repmgrd status
           ansible.builtin.debug:
             msg: "repmgrd service: {{ repmgrd_status.status.ActiveState }}"
 
-      # Drop-in already installed during service startup
-
       when: repmgr_enabled | default(false)
+
+    - name: Display setup completion
+      ansible.builtin.debug:
+        msg: |
+          ===== REPLICA SETUP COMPLETE =====
+          PostgreSQL Replica is running on {{ ansible_hostname }}
+          Service: {{ pg_service_name }}
+          Role: {{ recovery_status.query_result[0].node_role }}
+          repmgr: {{ 'Enabled and running' if (repmgr_enabled | default(false)) else 'Disabled (legacy mode)' }}

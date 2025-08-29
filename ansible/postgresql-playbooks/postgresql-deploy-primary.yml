@@ -1,5 +1,5 @@
 ---
-- name: Deploy PostgreSQL Primary node
+- name: Deploy PostgreSQL Primary node (Basic Setup)
   hosts: postgresql_rw
   become: yes
   gather_facts: yes
@@ -9,7 +9,7 @@
     replica_node2: "{{ hostvars[(groups.get('postgresql_ro', []) | last) | default('postgresql3')]['ansible_default_ipv4']['address'] | default(hostvars[(groups.get('postgresql_ro', []) | last) | default('postgresql3')]['ansible_host'] | default((groups.get('postgresql_ro', []) | last) | default('postgresql3'))) }}"
     pg_service_name: "postgresql@{{ postgresql_version }}-main.service"
   tasks:
-    - name: Ensure scripts directory exists
+    - name: Ensure repmgr scripts directory exists
       ansible.builtin.file:
         path: /opt/repmgr/scripts
         state: directory
@@ -17,25 +17,15 @@
         group: postgres
         mode: "0755"
 
-    - name: Check replication user exists
-      community.postgresql.postgresql_query:
-        login_db: postgres
-        query: "SELECT 1 FROM pg_roles WHERE rolname = '{{ repsvc_user }}'"
-      register: repl_user_exists
-      become: yes
-      become_user: postgres
-      ignore_errors: yes
+    - name: Ensure repmgr configuration directory exists
+      ansible.builtin.file:
+        path: "/etc/repmgr/{{ postgresql_version }}-main"
+        state: directory
+        owner: postgres
+        group: postgres
+        mode: "0755"
 
-    - name: Check replication slots exist
-      community.postgresql.postgresql_query:
-        login_db: postgres
-        query: "SELECT slot_name FROM pg_replication_slots WHERE slot_name IN ('postgresql2', 'postgresql3')"
-      register: existing_slots
-      become: yes
-      become_user: postgres
-      ignore_errors: yes
-
-    - name: Deploy primary configuration files
+    - name: Deploy basic primary configuration files
       ansible.builtin.template:
         src: "{{ item.src }}"
         dest: "{{ item.dest }}"
@@ -44,64 +34,44 @@
         mode: "{{ item.mode }}"
         backup: yes
       loop:
-        - src: ../templates/pg_hba.conf.j2
+        - src: ../templates/postgresql/pg_hba.conf.j2
           dest: "{{ postgresql_conf_dir }}/pg_hba.conf"
           mode: "0640"
-        - src: ../templates/postgresql_primary.conf.j2
+        - src: ../templates/postgresql/postgresql_primary.conf.j2
           dest: "{{ postgresql_conf_dir }}/postgresql.conf"
           mode: "0640"
-        - src: ../templates/repmgr.conf.j2
-          dest: "/etc/repmgr/{{ postgresql_version }}/repmgr.conf"
+        - src: ../templates/postgresql/repmgr.conf.j2
+          dest: "/etc/repmgr/{{ postgresql_version }}-main/repmgr.conf"
           mode: "0644"
-        - src: ../templates/pgpass.j2
+        - src: ../templates/postgresql/pgpass.j2
           dest: "/var/lib/postgresql/.pgpass"
           mode: "0600"
-        - src: ../templates/simple_fence.sh.j2
+        - src: ../templates/postgresql/simple_fence.sh.j2
           dest: "/opt/repmgr/scripts/simple_fence.sh"
           mode: "0755"
-        - src: ../templates/failover_validation.sh.j2
+        - src: ../templates/postgresql/failover_validation.sh.j2
           dest: "/opt/repmgr/scripts/failover_validation.sh"
           mode: "0755"
       register: primary_conf_result
 
-    - name: Ensure instance drop-in directory exists
-      ansible.builtin.file:
-        path: "/etc/systemd/system/{{ pg_service_name }}.d"
-        state: directory
-        owner: root
-        group: root
-        mode: "0755"
-
-    - name: Install guard drop-in (ExecStartPre)
+    - name: Deploy repmgrd service template
       ansible.builtin.template:
-        src: ../templates/guard.conf.j2
-        dest: "/etc/systemd/system/{{ pg_service_name }}.d/guard.conf"
+        src: ../templates/postgresql/repmgrd_service.j2
+        dest: "/etc/systemd/system/repmgrd@.service"
         owner: root
         group: root
         mode: "0644"
-      register: guard_dropin
+      register: repmgrd_service_result
 
-    - name: Reload systemd if drop-in changed
+    - name: Reload systemd if service template changed
       ansible.builtin.command: systemctl daemon-reload
-      when: guard_dropin.changed
+      when: repmgrd_service_result.changed
 
-    - name: Ensure allow-primary-start marker exists on primary
-
-      ansible.builtin.copy:
-        dest: "{{ postgresql_data_dir }}/allow-primary-start"
-        content: ""
-        owner: postgres
-        group: postgres
-        mode: "0640"
-        force: no
-      register: allow_primary_file
-
-    - name: restart postgresql primary
+    - name: Restart PostgreSQL if configuration changed
       ansible.builtin.service:
         name: "{{ pg_service_name }}"
         state: restarted
-      become: yes
-      when: primary_conf_result.changed or guard_dropin.changed or (allow_primary_file is defined and allow_primary_file.changed)
+      when: primary_conf_result.changed
 
     - name: Ensure PostgreSQL instance is running and enabled
       ansible.builtin.service:
@@ -116,8 +86,7 @@
         delay: 5
         timeout: 60
 
-    # ===== PHASE 3: DATABASE SETUP =====
-
+    # ===== DATABASE SETUP =====
     - name: Setup database users and structures
       block:
         # Legacy replication setup
@@ -174,20 +143,19 @@
 
           when: repmgr_enabled | default(false)
 
-    # ===== PHASE 4: REPMGR REGISTRATION =====
-
+    # ===== REPMGR REGISTRATION =====
     - name: Register primary with repmgr
       block:
         - name: Check current repmgr registration status
           ansible.builtin.command:
-            cmd: sudo -u postgres repmgr -f /etc/repmgr/{{ postgresql_version }}/repmgr.conf node status
+            cmd: sudo -u postgres repmgr -f /etc/repmgr/{{ postgresql_version }}-main/repmgr.conf node status
           register: repmgr_status_check
           failed_when: false
           changed_when: false
 
         - name: Register primary node
           ansible.builtin.command:
-            cmd: sudo -u postgres repmgr -f /etc/repmgr/{{ postgresql_version }}/repmgr.conf primary register
+            cmd: sudo -u postgres repmgr -f /etc/repmgr/{{ postgresql_version }}-main/repmgr.conf primary register
           when: repmgr_status_check.rc != 0
           register: repmgr_registration
           failed_when:
@@ -198,7 +166,7 @@
           ansible.builtin.debug:
             msg: "{{ 'Primary registered successfully' if repmgr_registration.changed else 'Primary already registered' }}"
 
-        - name: Verify repmgr database connectivity before starting daemon
+        - name: Verify repmgr database connectivity
           community.postgresql.postgresql_query:
             login_host: "127.0.0.1"
             login_user: "{{ repmgr_user }}"
@@ -208,9 +176,9 @@
           become_user: postgres
           register: repmgr_connection_test
 
-        - name: Start repmgrd service only if connection works
+        - name: Start repmgrd service
           ansible.builtin.systemd:
-            name: "repmgrd@{{ postgresql_version }}"
+            name: "repmgrd@{{ postgresql_version }}-main"
             state: started
             enabled: yes
             daemon_reload: yes
@@ -218,7 +186,7 @@
 
         - name: Verify repmgrd is running
           ansible.builtin.systemd:
-            name: "repmgrd@{{ postgresql_version }}"
+            name: "repmgrd@{{ postgresql_version }}-main"
           register: repmgrd_status
 
         - name: Display repmgrd status
@@ -226,3 +194,12 @@
             msg: "repmgrd service: {{ repmgrd_status.status.ActiveState }}"
 
       when: repmgr_enabled | default(false)
+
+    - name: Display setup completion
+      ansible.builtin.debug:
+        msg: |
+          ===== PRIMARY SETUP COMPLETE =====
+          PostgreSQL Primary is running on {{ ansible_hostname }}
+          Service: {{ pg_service_name }}
+          repmgr: {{ 'Enabled and running' if (repmgr_enabled | default(false)) else 'Disabled (legacy mode)' }}
+          Next: Deploy replicas using postgresql-deploy-replica-basic.yml

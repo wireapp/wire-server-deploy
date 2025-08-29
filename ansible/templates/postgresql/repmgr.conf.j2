@@ -25,8 +25,8 @@ primary_visibility_consensus=true
 failover_validation_command='/opt/repmgr/scripts/failure_validation.sh %n %v %t'
 repmgrd_exit_on_inactive_node=true
 
-promote_command='/usr/bin/repmgr standby promote -f /etc/repmgr/{{ postgresql_version }}/repmgr.conf --log-to-file'
-follow_command='/usr/bin/repmgr standby follow -f /etc/repmgr/{{ postgresql_version }}/repmgr.conf --upstream-node-id=%n --log-to-file'
+promote_command='/usr/bin/repmgr standby promote -f /etc/repmgr/{{ postgresql_version }}-main/repmgr.conf --log-to-file'
+follow_command='/usr/bin/repmgr standby follow -f /etc/repmgr/{{ postgresql_version }}-main/repmgr.conf --upstream-node-id=%n --log-to-file'
 
 
 # Service management
@@ -43,7 +43,7 @@ reconnect_interval={{ repmgr_reconnect_interval | default(10) }}
 standby_disconnect_on_failover=true
 
 # systemd service management
-repmgrd_service_start_command='sudo systemctl start repmgrd@{{ postgresql_version }}'
-repmgrd_service_stop_command='sudo systemctl stop repmgrd@{{ postgresql_version }}'
+repmgrd_service_start_command='sudo systemctl start repmgrd@{{ postgresql_version }}-main'
+repmgrd_service_stop_command='sudo systemctl stop repmgrd@{{ postgresql_version }}-main'
 
-repmgrd_pid_file='/tmp/repmgrd-{{ postgresql_version }}.pid'
+repmgrd_pid_file='/tmp/repmgrd-{{ postgresql_version }}-main.pid'

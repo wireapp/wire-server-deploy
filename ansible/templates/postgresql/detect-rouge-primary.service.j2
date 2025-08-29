@@ -1,0 +1,26 @@
+[Unit]
+Description=PostgreSQL Split-Brain Detection Service
+Documentation=man:systemd.service(5)
+After=postgresql@{{ postgresql_version }}-main.service
+Wants=postgresql@{{ postgresql_version }}-main.service
+
+[Service]
+Type=oneshot
+User=postgres
+Group=postgres
+WorkingDirectory=/var/lib/postgresql
+ExecStart=/usr/local/bin/detect_rouge_primary.sh
+StandardOutput=journal
+StandardError=journal
+TimeoutSec=30
+Environment=PGUSER=postgres
+Environment=PGDATABASE=postgres
+
+# Only run if PostgreSQL is running
+ExecCondition=/bin/systemctl is-active postgresql@{{ postgresql_version }}-main.service
+
+# Don't restart on failure - let timer handle next run
+Restart=no
+
+[Install]
+WantedBy=multi-user.target

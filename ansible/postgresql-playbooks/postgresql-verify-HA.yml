@@ -91,7 +91,7 @@
 
     - name: Check repmgr cluster status
       ansible.builtin.command:
-        cmd: sudo -u postgres repmgr -f /etc/repmgr/17/repmgr.conf cluster show
+        cmd: sudo -u postgres repmgr -f /etc/repmgr/{{ postgresql_version }}-main/repmgr.conf cluster show
       register: cluster_status
       changed_when: false
       when: repmgr_enabled | default(false)
@@ -105,7 +105,7 @@
 
     - name: Check repmgr events
       ansible.builtin.command:
-        cmd: sudo -u postgres repmgr -f /etc/repmgr/17/repmgr.conf cluster event --limit=10
+        cmd: sudo -u postgres repmgr -f /etc/repmgr/{{ postgresql_version }}-main/repmgr.conf cluster event --limit=10
       register: cluster_events
       changed_when: false
       ignore_errors: yes
@@ -252,7 +252,7 @@
 
     - name: Check repmgrd service status
       ansible.builtin.systemd:
-        name: "repmgrd@17"
+        name: "repmgrd@{{ postgresql_version }}-main"
       register: repmgrd_status
       when: repmgr_enabled | default(false)
 
