@@ -3,7 +3,7 @@
 
 This guide provides detailed instructions for deploying Wire-in-a-Box (WIAB) using Ansible on an Ubuntu 24.04 system. The deployment process is structured into multiple blocks within the Ansible playbook, offering flexibility in execution. It is designed to configure a remote node, such as example.com (referred to as deploy_node), to install Wire with a custom domain, example.com (referred to as target_domain). These variables must be verified in the file [../ansible/inventory/demo/host.yml](../ansible/inventory/demo/host.yml) before running the pipeline.
 
-Typically, the deployment process runs seamlessly without requiring any external flags. However, if needed, you have the option to skip certain tasks based on their conditional flags. For instance, if you wish to bypass the [Wire Artifact Download tasks](#8-wire-artifact-download) —which can be time-consuming—you can manage the artifacts independently and skip this step in the Ansible workflow by using the flag `-e skip_download=true`.
+Typically, the deployment process runs seamlessly without requiring any external flags. However, if needed, you have the option to skip certain tasks based on their tags. For instance, if you wish to bypass the [Wire Artifact Download tasks](#8-wire-artifact-download) —which can be time-consuming—you can manage the artifacts independently and skip this step in the Ansible workflow by using the tag `--skip-tags download`.
 
 For more detailed instructions on each task, please refer to the [Deployment Flow section](#deployment-flow).
 
@@ -64,7 +64,7 @@ The deployment process follows these steps as defined in the main playbook:
 
 The playbook starts by verifying DNS records to ensure proper name resolution:
 - Imports [verify_dns.yml](../ansible/wiab-demo/verify_dns.yml)
-- Can be skipped by setting `skip_verify_dns=true`
+- Can be skipped using `--skip-tags verify_dns`
 - Checks for basic DNS record requirements as explained in the document [How to set up DNS records](https://docs.wire.com/latest/how-to/install/helm.html#how-to-set-up-dns-records) .
 
 ### 2. Common Setup Tasks
@@ -82,70 +82,72 @@ The playbook starts by verifying DNS records to ensure proper name resolution:
 ### 4. Package Installation
 
 - Imports [install_pkgs.yml](../ansible/wiab-demo/install_pkgs.yml)  to install required dependencies
-- Can be skipped by setting `skip_install_pkgs=true`
+- Can be skipped using `--skip-tags install_pkgs`
 
 ### 5. SSH Key Management
 
 - Imports [setup_ssh.yml](../ansible/wiab-demo/setup_ssh.yml) to manage SSH keys for Minikube nodes and SSH proxying for the deploy_node and minikube nodes
-- Runs if any of the following tasks are enabled:
-  - Minikube setup
-  - Asset host setup
-  - Offline seed setup
+- **Dependency task:** This task has no tag and runs automatically when `minikube`, `asset_host`, or `seed_containers` are selected
+- Cannot be run independently or skipped manually - it's controlled entirely by dependent components
+- **Smart dependency:** SSH setup runs when any component that needs it is selected, and is automatically skipped when none of those components are running
 
 ### 6. Minikube Cluster Configuration
 
 - Imports [minikube_cluster.yml](../ansible/wiab-demo/minikube_cluster.yml) to set up a Kubernetes cluster using Minikube
 - All minikube configurable parameters are available in [host.yml](../ansible/inventory/demo/host.yml)
-- Can be skipped with `skip_minikube=true`
+- Can be skipped using `--skip-tags minikube`
 
 ### 7. IPTables Rules
 
 - Imports [iptables_rules.yml](../ansible/wiab-demo/iptables_rules.yml) to configure network rules on deploy_node
 - It will configure network forwarding and postrouting rules to route traffic to k8s nodes
-- Only runs if Minikube setup isn't skipped, it depends on IP address of k8s nodes from Minikube
+- Runs automatically when using `--tags minikube`
 
 ### 8. Wire Artifact Download
 
 - Imports [download_artifact.yml](../ansible/wiab-demo/download_artifact.yml) to fetch the Wire components
 - It is required to download all the artifacts required for further installation
-- Can be skipped with `skip_download=true`
+- Can be skipped using `--skip-tags download`
 
 ### 9. Minikube Node Inventory Setup
 
 The playbook then configures access to the Kubernetes nodes:
+- **Dependency task:** This setup has no tag and runs automatically when `asset_host` or `seed_containers` are selected
 - Retrieves the host IP (asset_host) on the Minikube network and Ip addresses for minikube k8s nodes
 - Sets up SSH proxy access to cluster nodes by:
   - Creating a temporary directory for SSH keys on the localhost
   - Writing the private key to a file in the temporary directory
   - Adding the above calculated hosts to the Ansible inventory with appropriate SSH settings
+- Cannot be run independently or skipped manually - controlled entirely by `asset_host` and `seed_containers` components
 
 ### 10. Asset Host Setup
 
 - Imports [setup-offline-sources.yml](../ansible/setup-offline-sources.yml) to configure the asset host
 - It will offer wire deployment artifacts as service for further installation
-- Can be skipped with `skip_asset_host=true`
+- Can be skipped using `--skip-tags asset_host`
 
 ### 11. Container Seeding
 
 - Imports [seed-offline-containerd.yml](../ansible/seed-offline-containerd.yml) to seed containers in K8s cluster nodes
 - It will seed the docker images shipped for the wire related helm charts in the minikube k8s nodes
-- Can be skipped with `skip_setup_offline_seed=true`
+- Can be skipped using `--skip-tags seed_containers`
 
 ### 12. Wire Secrets Creation
 
 - Imports [wire_secrets.yml](../ansible/wiab-demo/wire_secrets.yml) to create required secrets for wire helm charts
-- Only runs if both `skip_wire_secrets` and `skip_helm_install` are false
+- Runs automatically when using `--tags helm_install`
 
 ### 13. Helm Chart Installation
 
 - Imports [helm_install.yml](../ansible/wiab-demo/helm_install.yml) to deploy Wire components using Helm
 - These charts can be configured in [host.yml](../ansible/inventory/demo/host.yml)
-- Can be skipped with `skip_helm_install=true`
+- Can be skipped using `--skip-tags helm_install`
 
 ### 14. Temporary Cleanup
 
 - Locates all temporary SSH key directories created during deployment
 - Lists and removes these directories
+- Can be skipped using `--skip-tags cleanup`
 
 ## SSH Proxy Configuration
 
@@ -161,39 +163,122 @@ SSH proxying is configured with:
 ## Notes
 
 - This deployment is only meant for testing, all the datastores are ephemeral
-- You can use ^skip_ variables as environment variables to control the execution flow of the playbook. If these variables are passed, they will skip specific groups of tasks as explained in the [Deployment Flow](#deployment-flow) section. By default, if no variables are passed, all tasks will run in sequence.
+- **Tag-Based Execution with Dependency Protection:** The playbook uses a hybrid approach where main components have tags for user control, while dependency tasks have no tags and are controlled automatically through `when` conditions. This prevents accidental skipping of critical dependencies while maintaining a clean user interface.
+- You can use Ansible tags to control the execution flow of the playbook. You can run specific tasks using `--tags` or skip specific tasks using `--skip-tags` as explained in the [Deployment Flow](#deployment-flow) section. By default, if no tags are specified, all tasks will run in sequence.
 
-  In case of timeouts or any failures, you can skip tasks that have already been completed by passing the appropriate flags. For example, if the Wire artifact download task fails due to a timeout or disk space issue, you can skip the tasks that come before the Wire Artifact Download by using the following command:
+  In case of timeouts or any failures, you can skip tasks that have already been completed by using the appropriate tags. For example, if the Wire artifact download task fails due to a timeout or disk space issue, you can skip the earlier tasks and resume from download:
 ```bash
-ansible-playbook -i ansible/inventory/demo/host.yml ansible/wiab-demo/deploy_wiab.yml -e "skip_verify_dns=true skip_install_pkgs=true skip_minikube=true"
+ansible-playbook -i ansible/inventory/demo/host.yml ansible/wiab-demo/deploy_wiab.yml --skip-tags verify_dns,install_pkgs,minikube
 ```
-  This command will skip the DNS verification, package installation, and Minikube cluster configuration tasks, allowing you to resume the playbook from the Wire artifact download task.
-
-- All the iptables rules are not persisted after reboots, but they can be regenerated by running the entire pipeline. Optionally, we can skip everything else.
+  Or if you just want to run the final deployment steps:
 ```bash
-ansible-playbook -i ansible/inventory/demo/host.yml ansible/wiab-demo/deploy_wiab.yml -e "skip_setup_offline_seed=true skip_wire_secrets=true skip_asset_host=true skip_download=true skip_install_pkgs=true"
+ansible-playbook -i ansible/inventory/demo/host.yml ansible/wiab-demo/deploy_wiab.yml --tags helm_install
 ```
+  This automatically includes wire secrets creation.
 
-- The playbook is designed to be idempotent, with skip flags for each major section
+- All the iptables rules are not persisted after reboots, but they can be regenerated by running just the minikube setup:
+```bash
+ansible-playbook -i ansible/inventory/demo/host.yml ansible/wiab-demo/deploy_wiab.yml --tags minikube
+```
+  This automatically includes SSH setup and IPTables configuration.
+
+- The playbook is designed to be idempotent, with tags for each major section
 - Temporary SSH keys are created and cleaned up automatically
 - The deployment creates a single-node Kubernetes cluster with all Wire services
 
+## Available Tags
+
+The following tags are available for controlling playbook execution:
+
+### Main Component Tags
+
+| Tag | Description | Automatic Dependencies |
+|-----|-------------|----------------------|
+| `verify_dns` | DNS record verification | None |
+| `install_pkgs` | Package installation | None |
+| `minikube` | Minikube cluster setup | SSH setup, IPTables rules |
+| `download` | Wire artifact download | None |
+| `asset_host` | Asset host configuration | SSH setup, Inventory setup |
+| `seed_containers` | Container seeding | SSH setup, Inventory setup |
+| `helm_install` | Helm chart installation | None |
+| `cleanup` | Temporary file cleanup | None |
+
+### Usage Examples
+
+- **Run a complete minikube setup:** `ansible-playbook ... --tags minikube` (automatically includes SSH setup and IPTables)
+- **Run only helm installation:** `ansible-playbook ... --tags helm_install` (automatically includes wire secrets)
+- **Run asset host setup:** `ansible-playbook ... --tags asset_host` (automatically includes SSH and inventory setup)
+- **Skip DNS verification:** `ansible-playbook ... --skip-tags verify_dns`
+- **Run everything except download:** `ansible-playbook ... --skip-tags download`
+- **Skip minikube but run asset/container operations:** `ansible-playbook ... --skip-tags verify_dns,install_pkgs,minikube,download` (SSH setup and inventory setup still run automatically for asset_host and seed_containers)
+
+
 ## Cleaning/Uninstalling Wire-in-a-Box
 
-The deployment includes a cleanup playbook that can be used to remove all the components. For example, the following command includes flags for removing the Minikube cluster (remove_minikube), removing the iptables rules (remove_iptables), removing SSH keys from the deploy_node (remove_ssh), deleting artifacts and Wire files from the deploy_node (remove_artifacts), and removing artifact hosting services from the deploy node (clean_assethost):
+The cleanup playbook uses a **safe-by-default** approach with the special `never` tag - **nothing is destroyed unless you explicitly specify tags**. This prevents accidental destruction of your deployment.
 
+⚠️ **Important:** All cleanup tasks are tagged with `never`, which means they will not run unless explicitly requested. Running the cleanup playbook without any tags will do nothing.
+
+### Basic Usage
+
+**No destruction by default:**
 ```bash
-ansible-playbook -i ansible/inventory/demo/host.yml ansible/wiab-demo/clean_cluster.yml -e "remove_minikube=true remove_iptables=true remove_ssh=true remove_artifacts=true clean_assethost=true"
+# This does NOTHING - safe by design (all tasks have 'never' tag)
+ansible-playbook -i ansible/inventory/demo/host.yml ansible/wiab-demo/clean_cluster.yml
 ```
 
-**Note:** The above command does not uninstall the Debian packages and binaries installed during the setup. This is an intentional design choice to avoid removing packages that may be required by the other users on the deploy_node later. If you wish to proceed with cleaning these packages, you can add the variable -e uninstall_pkgs=true.
+**Explicit destruction required:**
+```bash
+# Remove specific components using tags (overrides 'never' tag)
+ansible-playbook -i ansible/inventory/demo/host.yml ansible/wiab-demo/clean_cluster.yml --tags remove_minikube,remove_artifacts
+```
 
-The cleanup process handles:
-- **Minikube**: Stops and deletes the Kubernetes cluster (optional `remove_minikube=true`)
-- **Packages**: Removes installed dependencies including Docker, kubectl, yq, etc. (optional `uninstall_pkgs=true`). **Note**: Verify the playbook before removing packages, it might remove pre-existing packages.
-- **IPTables**: Restores pre-installation network rules (optional `remove_iptables=true`)
-- **SSH Keys**: Removes generated SSH keys (optional `remove_ssh=true`)
-- **Artifacts**: Deletes downloaded deployment artifacts (optional `remove_artifacts=true`)
-- **Asset Host**: Stops the asset hosting service and cleans up related files (optional `clean_assethost=true`)
+### Available Cleanup Tags
 
-Each cleanup operation can be enabled/disabled independently with the corresponding variables.
+| Tag | Description | What Gets Destroyed |
+|-----|-------------|-------------------|
+| `remove_minikube` | Stops and deletes the Kubernetes cluster | Minikube cluster, all pods, services, data |
+| `remove_packages` | Removes installed packages | Docker, kubectl, yq, ncat, minikube binary |
+| `remove_iptables` | Restores pre-installation network rules | All Wire-related network forwarding rules |
+| `remove_ssh` | Removes generated SSH keys | Wire-specific SSH keys from deploy node |
+| `remove_artifacts` | Deletes downloaded deployment files | Wire artifacts, tarballs, temporary files |
+| `clean_assethost` | Stops asset hosting service | Asset hosting service and related files |
+
+### Common Cleanup Scenarios
+
+**Quick cleanup after testing:**
+```bash
+# Remove cluster and artifacts but keep packages for next deployment
+ansible-playbook -i ansible/inventory/demo/host.yml ansible/wiab-demo/clean_cluster.yml --tags remove_minikube,remove_artifacts
+```
+
+**Complete cleanup:**
+```bash
+# Remove everything (use with caution!)
+ansible-playbook -i ansible/inventory/demo/host.yml ansible/wiab-demo/clean_cluster.yml --tags remove_minikube,remove_packages,remove_iptables,remove_ssh,remove_artifacts,clean_assethost
+```
+
+**Network cleanup only:**
+```bash
+# Just restore network rules (useful after network issues)
+ansible-playbook -i ansible/inventory/demo/host.yml ansible/wiab-demo/clean_cluster.yml --tags remove_iptables
+```
+
+**Development workflow:**
+```bash
+# Reset deployment but keep packages and SSH keys
+ansible-playbook -i ansible/inventory/demo/host.yml ansible/wiab-demo/clean_cluster.yml --tags remove_minikube,remove_artifacts,clean_assethost
+```
+
+**Package cleanup:**
+```bash
+# Remove installed packages (be careful - may affect other applications)
+ansible-playbook -i ansible/inventory/demo/host.yml ansible/wiab-demo/clean_cluster.yml --tags remove_packages
+```
+
+### Safety Features
+
+- **Nothing runs by default:** The playbook requires explicit tags to perform any destruction
+- **Granular control:** You choose exactly what to destroy
+
+⚠️ **Warning:** Package removal (`remove_packages`) may affect other applications on the server. Use with caution in shared environments.
