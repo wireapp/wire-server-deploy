@@ -1,7 +1,3 @@
-- name: Verify the dns records before starting to install
-  import_playbook: ./verify_dns.yml
-  tags: verify_dns
-
 - name: Execute common tasks for the node
   hosts: deploy_node
   become: yes
@@ -28,6 +24,10 @@
 - name: Check Wire IP access
   import_playbook: ./verify_wire_ip.yml
   tags: always
+
+- name: Verify the dns records before starting to install
+  import_playbook: ./verify_dns.yml
+  tags: verify_dns
 
 - name: Install required packages
   import_playbook: ./install_pkgs.yml
