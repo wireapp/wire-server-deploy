@@ -229,6 +229,7 @@ nginz:
 #      tag: some-tag (only override if you want a newer/different version than what is in the chart)
   nginx_conf:
     # using prod means mostly that some internal endpoints are not exposed
+    dns_resolver: kube-dns
     env: prod
     external_env_domain: example.com
     deeplink:

@@ -20,14 +20,25 @@ jobs:
       - name: Check for entry in changelog.d changes in the PR
         run: |
           set -x
-          BASE_SHA=${{ github.event.pull_request.base.sha }}
-          HEAD_SHA=${{ github.event.pull_request.head.sha }}
+          
+          # Set BASE_SHA and HEAD_SHA based on event type
+          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+            BASE_SHA=${{ github.event.pull_request.base.sha }}
+            HEAD_SHA=${{ github.event.pull_request.head.sha }}
+          else
+            # For push events, compare with the previous commit
+            HEAD_SHA=${{ github.sha }}
+            BASE_SHA=$(git rev-parse HEAD~1)
+          fi
+          
+          echo "BASE_SHA: $BASE_SHA"
+          echo "HEAD_SHA: $HEAD_SHA"
           
           # Check if commit is by zebot with wire-build update message
           COMMIT_AUTHOR=$(git log --format="%an" -1 $HEAD_SHA)
           COMMIT_MESSAGE=$(git log --format="%s" -1 $HEAD_SHA)
           
-          if [[ "$COMMIT_AUTHOR" == "zebot" && "$COMMIT_MESSAGE" == "Update wire-build to version"* ]]; then
+          if [[ "$COMMIT_AUTHOR" == "Zebot" && "$COMMIT_MESSAGE" == "Update wire-build to version"* ]]; then
             echo "Skipping changelog check for zebot wire-build update commit"
             echo "Author: $COMMIT_AUTHOR"
             echo "Message: $COMMIT_MESSAGE"
