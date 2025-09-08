@@ -8,8 +8,7 @@ tls:
   #       providing your own certs in secrets.yaml. Cert-manager is not installed automatically,
   #       it needs to be installed beforehand (see ./../../charts/certificate-manager/README.md)
   useCertManager: false
-  issuer:
-    kind: ClusterIssuer
+
 certManager:
   inTestMode: false
   # CHANGEME-PROD: required, if certificate manager is used; set to receive cert expiration
@@ -18,7 +17,6 @@ certManager:
 
 # CHANGEME-PROD: These values are suggested for deployments on bare metal and
 #                should be adjusted on a per installation basis
-
 config:
   dns:
     https: nginz-https.example.com

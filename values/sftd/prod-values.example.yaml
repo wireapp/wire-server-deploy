@@ -4,4 +4,3 @@ replicaCount: 3
 tls:
   issuerRef:
     name: letsencrypt-http01
-    kind: ClusterIssuer

@@ -1,24 +1,22 @@
 teamSettings:
-  enabled: true
+  enabled: false
 accountPages:
-  enabled: true
+  enabled: false
 tls:
   enabled: true
   # NOTE: enable to automate certificate issuing with jetstack/cert-manager instead of
   #       providing your own certs in secrets.yaml. Cert-manager is not installed automatically,
   #       it needs to be installed beforehand (see ./../../charts/certificate-manager/README.md)
   useCertManager: false
-  issuer:
-    kind: ClusterIssuer
 
 certManager:
-  inTestMode: false
+  # NOTE: change to tell cert-manager to issue a valid certificate
+  inTestMode: true
   # CHANGEME-PROD: required, if certificate manager is used; set to receive cert expiration
   #                notice and other Letsencrypt related notification
   certmasterEmail:
 
-# CHANGEME-PROD: These values are suggested for deployments on bare metal and
-#                should be adjusted on a per installation basis
+# NOTE: These values must be adjusted on a per installation basis
 config:
   dns:
     https: nginz-https.example.com
@@ -27,12 +25,3 @@ config:
     fakeS3: assets.example.com
     teamSettings: teams.example.com
     accountPages: account.example.com
-    # uncomment below to activate cert acquisition for federator ingress
-    # federator: federator.example.com 
-
-# Redirection configuration for fake-aws-s3
-service:
-  useFakeS3: true
-  s3:
-    externalPort: 9000
-    serviceName: fake-aws-s3
