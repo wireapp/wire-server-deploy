@@ -66,24 +66,24 @@ jobs:
         env:
           DOCKER_LOGIN: '${{ secrets.DOCKER_LOGIN }}'
 
-      # demo profile build
-      - name: Process the demo profile build
-        run: ./offline/demo-build/build.sh
-        env:
-          GPG_PRIVATE_KEY: '${{ secrets.GPG_PRIVATE_KEY }}'
-          DOCKER_LOGIN: '${{ secrets.DOCKER_LOGIN }}'
+      # # demo profile build
+      # - name: Process the demo profile build
+      #   run: ./offline/demo-build/build.sh
+      #   env:
+      #     GPG_PRIVATE_KEY: '${{ secrets.GPG_PRIVATE_KEY }}'
+      #     DOCKER_LOGIN: '${{ secrets.DOCKER_LOGIN }}'
 
-      - name: Copy demo build assets tarball to S3 and clean up
-        run: |
-          # Upload tarball for each profile by specifying their OUTPUT_TAR path
-          aws s3 cp offline/demo-build/output/assets.tgz s3://public.wire.com/artifacts/wire-server-deploy-static-demo-${{ steps.upload_name.outputs.UPLOAD_NAME }}.tgz
-          echo "Uploaded to: https://s3-$AWS_REGION.amazonaws.com/public.wire.com/artifacts/wire-server-deploy-static-demo-${{ steps.upload_name.outputs.UPLOAD_NAME }}.tgz"
-          # remove the assets from the build to optimize the space on the server
-          rm -rf offline/demo-build/output/*
-        env:
-          AWS_ACCESS_KEY_ID: '${{ secrets.AWS_ACCESS_KEY_ID }}'
-          AWS_SECRET_ACCESS_KEY: '${{ secrets.AWS_SECRET_ACCESS_KEY }}'
-          AWS_REGION: "eu-west-1"
+      # - name: Copy demo build assets tarball to S3 and clean up
+      #   run: |
+      #     # Upload tarball for each profile by specifying their OUTPUT_TAR path
+      #     aws s3 cp offline/demo-build/output/assets.tgz s3://public.wire.com/artifacts/wire-server-deploy-static-demo-${{ steps.upload_name.outputs.UPLOAD_NAME }}.tgz
+      #     echo "Uploaded to: https://s3-$AWS_REGION.amazonaws.com/public.wire.com/artifacts/wire-server-deploy-static-demo-${{ steps.upload_name.outputs.UPLOAD_NAME }}.tgz"
+      #     # remove the assets from the build to optimize the space on the server
+      #     rm -rf offline/demo-build/output/*
+      #   env:
+      #     AWS_ACCESS_KEY_ID: '${{ secrets.AWS_ACCESS_KEY_ID }}'
+      #     AWS_SECRET_ACCESS_KEY: '${{ secrets.AWS_SECRET_ACCESS_KEY }}'
+      #     AWS_REGION: "eu-west-1"
 
       - name: Install terraform
         uses: hashicorp/setup-terraform@v3
