@@ -1,12 +1,12 @@
 on:
   push:
-    branches: [master, develop]
+    branches: [master,develop,min-release*]
     tags: [ v* ]
     paths-ignore:
       - '*.md'
       - '**/*.md'
   pull_request:
-    branches: [master, develop]
+    branches: [master, develop, min-release*]
     paths-ignore:
       - '*.md'
       - '**/*.md'
