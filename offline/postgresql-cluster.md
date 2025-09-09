@@ -299,6 +299,10 @@ sudo -u postgres repmgr -f /etc/repmgr/17-main/repmgr.conf node rejoin \
 sudo systemctl unmask postgresql@17-main.service
 sudo -u postgres repmgr -f /etc/repmgr/17-main/repmgr.conf node rejoin \
     -d repmgr -h <correct-primary-ip> -U repmgr --force-rewind --verbose
+
+# if rejoin fails, a normal start/restart would bring the replica on standby mode
+# as with rejoin command, the standby.signal and auto-recovery file is already created.
+sudo systemctl start postgresql@17-main.service
 ```
 
 **Note:** If service is masked from split-brain protection, unmask it first with `sudo systemctl unmask postgresql@17-main.service`
