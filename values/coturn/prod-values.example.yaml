@@ -1,3 +1,1 @@
-secrets:
-  zrestSecrets:
-    - ""
+# using upstream values for coturn helm

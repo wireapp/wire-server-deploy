@@ -2,8 +2,14 @@ self:
 let helm-mapkubeapis = self.callPackage ./pkgs/helm-mapkubeapis.nix { };
 in
 super: {
-  pythonForAnsible = (self.python3.withPackages (_: self.ansible.requiredPythonModules ++ [
-    super.python3Packages.boto
+  customAnsible = (self.python3.withPackages (_: self.ansible.requiredPythonModules ++ [
+    # due to ansible package from nixpkgs missing some dependancies to run kubespray playbook
+    # we are making our own custom ansible package and python interpreter, current ansible-core is 2.16.5
+    super.python3Packages.ansible-core
+
+    # DEPENDENCIES
+    super.python3Packages.jmespath
+    super.python3Packages.botocore
     super.python3Packages.boto3
     super.python3Packages.cryptography
     super.python3Packages.six
@@ -58,7 +64,6 @@ super: {
         wrapProgram $out/bin/create-container-dump --prefix PATH : '${super.lib.makeBinPath [ self.skopeo ]}'
     '';
 
-
   list-helm-containers = super.runCommandNoCC "list-helm-containers"
     {
       nativeBuildInputs = [ super.makeWrapper ];
@@ -67,4 +72,14 @@ super: {
       install -Dm755 ${./scripts/list-helm-containers.sh} $out/bin/list-helm-containers
       wrapProgram $out/bin/list-helm-containers --prefix PATH : '${super.lib.makeBinPath [ self.kubernetes-helm ]}'
     '';
+
+  create-build-entry = super.runCommandNoCC "create-build-entry"
+    {
+      nativeBuildInputs = [ super.makeWrapper ];
+    }
+    ''
+      install -Dm755 ${./scripts/create-build-entry.sh} $out/bin/create-build-entry
+      wrapProgram $out/bin/create-build-entry --prefix PATH : '${super.lib.makeBinPath (with self; [ bash jq ])}'
+    '';
+
 }

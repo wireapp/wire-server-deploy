@@ -364,7 +364,9 @@ Minio and coturn services have shared secrets with the `wire-server` helm chart.
 ./bin/offline-secrets.sh
 ```
 
-This should generate two files. `./ansible/inventory/group_vars/all/secrets.yaml` and `values/wire-server/secrets.yaml`.
+This should generate two secret files. 
+- `./ansible/inventory/group_vars/all/secrets.yaml` 
+- `values/wire-server/secrets.yaml`
 
 
 ### WORKAROUND: old debian key
@@ -494,21 +496,30 @@ cp values/databases-ephemeral/prod-values.example.yaml values/databases-ephemera
 d helm install databases-ephemeral ./charts/databases-ephemeral/ --values ./values/databases-ephemeral/values.yaml
 ```
 
-Next, three more services that need no additional configuration need to be deployed:
+Next, two more services will be deployed without additional configuration:
 ```
 d helm install fake-aws ./charts/fake-aws --values ./values/fake-aws/prod-values.example.yaml
 
-# ensure that the RELAY_NETWORKS value is set to the podCIDR
-SMTP_VALUES_FILE="./values/demo-smtp/prod-values.example.yaml"
+d helm install reaper ./charts/reaper
+```
+
+#### SMTP
+
+For onboarding users via e-mail, update the configuration for `brig.config.smtp` with your SMTP. We also ship a `smtp` package with our bundle for demo/testing purposes, which is also possible to be used outside that scope, as an actual SMTP relay. For a generic setup, please read [docs.md](smtp.md) for more details.
+
+For a temporary SMTP service:
+
+### ensure that the RELAY_NETWORKS value is set to the podCIDR
+
+```
+SMTP_VALUES_FILE="./values/smtp/prod-values.example.yaml"
 podCIDR=$(d kubectl get configmap -n kube-system kubeadm-config -o yaml | grep -i 'podSubnet' | awk '{print $2}' 2>/dev/null)
 if [[ $? -eq 0 && -n "$podCIDR" ]]; then
   sed -i "s|RELAY_NETWORKS: \".*\"|RELAY_NETWORKS: \":${podCIDR}\"|" $SMTP_VALUES_FILE
 else
     echo "Failed to fetch podSubnet. Attention using the default value: $(grep -i RELAY_NETWORKS $SMTP_VALUES_FILE)"
 fi
-d helm install demo-smtp ./charts/demo-smtp --values $SMTP_VALUES_FILE
-
-d helm install reaper ./charts/reaper
+d helm install smtp ./charts/smtp --values $SMTP_VALUES_FILE
 ```
 
 #### Preparing your values
@@ -773,6 +784,7 @@ cp ./values/nginx-ingress-services/prod-secrets.example.yaml ./values/nginx-ingr
 
 #### Bring your own certificates
 
+The `values/nginx-ingress-services/values.yaml` file should be patched for `.Values.tls.useCertManager=false`.
 if you generated your SSL certificates yourself, there are two ways to give these to wire:
 
 ##### From the command line
@@ -812,23 +824,13 @@ taint the node
 d kubectl cordon kubenode1
 ```
 
-first, download cert manager, and place it in the appropriate location:
-```
-wget https://charts.jetstack.io/charts/cert-manager-v1.13.2.tgz
-tar -C ./charts -xvzf cert-manager-v1.13.2.tgz
-```
+Next step is to install and configure the cert-manager using the cert-manager charts from the offline package.
 
-In case `values.yaml` and `secrets.yaml` doesn't exist yet in `./values/nginx-ingress-services` create them from templates
-```
-cp ./values/nginx-ingress-services/prod-secrets.example.yaml ./values/nginx-ingress-services/secrets.yaml
-cp ./values/nginx-ingress-services/prod-values.example.yaml ./values/nginx-ingress-services/values.yaml
-```
-and customize.
+To enable and configure automatic SSL/TLS certification management for nginx ingress resources, update the `values/nginx-ingress-services/values.yaml` with:
 
-Edit `values.yaml`:
+ * set `useCertManager: true` : to tell the nginx-ingress-service to use cert-manager for obtaining and managing SSL certificates, rather than expecting you to provide your own certificates manually.
+ * set `certmasterEmail: <your email address>` : is used by cert-manager when requesting certificates from certificate authorities like Let's Encrypt. This email address is important for receiving notifications about certificate expiration or issues.
 
- * set `useCertManager: true`
- * set `certmasterEmail: <your email address>`
 
 Set your domain name with sed:
 ```
@@ -964,6 +966,10 @@ d helm upgrade --install fluent-bit ./charts/fluent-bit --values values/fluent-b
 
 Make sure that traffic is allowed from your kubernetes nodes to your destination server (elasticsearch or syslog).
 
+## Configure Prometheus
+
+To scrape metrics from wire systems and export those to your desired Observability tool, preferably grafana, configure prometheus operator.
+Follow the [Instrument monitoring guidelines](./instrument_monitoring.md) to setup monitoring for wire.
 
 ## Appendixes
 

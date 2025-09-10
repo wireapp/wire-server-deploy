@@ -1,59 +1,83 @@
 - name: Copy over binaries, debs and container images to the asset host and host them
   hosts: assethost
+  become: yes
+  vars:
+    src_path: ".."  # Default value for src_path
+    remote_src: no
   tasks:
     - file:
         path: /opt/assets
         state: directory
+
     - name: Copy debs jammy
       unarchive:
-        src: ../debs-jammy.tar
+        src: "{{ src_path }}/debs-jammy.tar"
         dest: /opt/assets
+        remote_src: "{{ remote_src }}"
       tags:
         - debs
+      when: demo_deploy | default(false) == false
+
     - name: Copy binaries
       unarchive:
-        src: ../binaries.tar
+        src: "{{ src_path }}/binaries.tar"
         dest: /opt/assets
+        remote_src: "{{ remote_src }}"
       tags:
         - binaries
+      when: demo_deploy | default(false) == false
+
     - name: Copy system containers
       unarchive:
-        src: ../containers-system.tar
+        src: "{{ src_path }}/containers-system.tar"
         dest: /opt/assets
+        remote_src: "{{ remote_src }}"
       tags:
         - containers-system
         - containers
+      when: demo_deploy | default(false) == false
+
+    # this task needs to run everytime, we assume it a basic requirement in all types of deployment
     - name: Copy helm containers
       unarchive:
-        src: ../containers-helm.tar
+        src: "{{ src_path }}/containers-helm.tar"
         dest: /opt/assets
+        remote_src: "{{ remote_src }}"
       tags:
         - containers-helm
         - containers
-    - copy:
-        src: files/serve-assets.service
-        dest: /etc/systemd/system/serve-assets.service
-    - systemd:
-        name: serve-assets
-        state: restarted
-        enabled: yes
-        daemon-reload: yes
+            
+    - name: setup serve-assets
+      block:
+      - name: Copy serve-assets.service file
+        copy:
+          src: files/serve-assets.service
+          dest: /etc/systemd/system/serve-assets.service
+      - name: Running serve-assets systemd service
+        systemd:
+          name: serve-assets
+          state: restarted
+          enabled: yes
+          daemon-reload: yes
 
 - name: Set up offline repositories and remove online ones
-  hosts: k8s-cluster:etcd:cassandra:elasticsearch:minio:rmq-cluster
+  become: yes
+  hosts: k8s-cluster:etcd:cassandra:elasticsearch:minio:rmq-cluster:postgresql
   tasks:
-    - name: Bail if GPG is not installed or installable.
-      apt:
-        name: gpg
-        state: present
-    - name: Remove /etc/apt/sources.list to remove all online debian package repos
-      file:
-        path: /etc/apt/sources.list
-        state: absent
-    - name: Remove /etc/apt/sources.list.d/ to remove all online debian package repos
-      file:
-        path: /etc/apt/sources.list.d/
-        state: absent
+  - when: demo_deploy | default(false) == false
+    block:
+      - name: Bail if GPG is not installed or installable.
+        apt:
+          name: gpg
+          state: present
+      - name: Remove /etc/apt/sources.list to remove all online debian package repos
+        file:
+          path: /etc/apt/sources.list
+          state: absent
+      - name: Remove /etc/apt/sources.list.d/ to remove all online debian package repos
+        file:
+          path: /etc/apt/sources.list.d/
+          state: absent
 
 #######################################################################
 # If your offline repo's debian key has expired, uncomment this block.
@@ -75,16 +99,15 @@
 #############################
 # Otherwise, trust the repo.
 #############################
-    - name: Register offline repo key
-      apt_key:
-        url: "{{ ubuntu_repo_gpgkey }}"
-        state: present
+      - name: Register offline repo key
+        apt_key:
+          url: "{{ ubuntu_repo_gpgkey }}"
+          state: present
 
-    - name: Register offline repo
-      apt_repository:
-        repo: "deb {{ ubuntu_repo_base_url }} {{ ansible_distribution_release }} main"
-        state: present
-    - name: Apt update
-      apt:
-        update_cache: yes
-
+      - name: Register offline repo
+        apt_repository:
+          repo: "deb {{ ubuntu_repo_base_url }} {{ ansible_distribution_release }} main"
+          state: present
+      - name: Apt update
+        apt:
+          update_cache: yes

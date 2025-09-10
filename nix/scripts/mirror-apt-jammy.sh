@@ -89,6 +89,12 @@ packages=(
   erlang-tools
   erlang-xmerl
   rabbitmq-server
+  ssl-cert
+  libllvm15
+  sysstat
+  libssl-dev
+  libjson-perl
+  libipc-run-perl
 )
 
 # shellcheck disable=SC2001

@@ -31,6 +31,10 @@
 # rabbitmq2 ansible_host=XXXX
 # rabbitmq3 ansible_host=XXXX
 #
+# postgresql1 ansible_host=XXXX
+# postgresql2 ansible_host=XXXX
+# postgresql3 ansible_host=XXXX
+
 # If you are in an offline environment, add an assethost here, from which
 # artifacts are served
 # assethost ansible_host=100.89.14.74 ip=10.114.0.9
@@ -77,6 +81,12 @@
 # cassandra_incremental_backup_enabled = False
 # cassandra_backup_s3_bucket = <bucketname>
 
+[postgresql:vars]
+postgresql_network_interface = enp1s0
+wire_dbname = wire-server
+wire_user = wire-server
+# if not defined, a random password will be generated
+# wire_pass = verysecurepassword
 
 [elasticsearch:vars]
 # elasticsearch_network_interface = enp1s0
@@ -168,3 +178,18 @@ elasticsearch
 # rabbitmq1
 # rabbitmq2
 # rabbitmq3
+
+# Add all postgresql nodes here
+[postgresql]
+postgresql1
+postgresql2
+postgresql3
+
+# Add all postgresql primary nodes here
+[postgresql_rw]
+postgresql1
+
+# Add all postgresql read-only nodes here i.e. replicas
+[postgresql_ro]
+postgresql2
+postgresql3
