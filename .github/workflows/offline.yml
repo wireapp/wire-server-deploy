@@ -1,9 +1,9 @@
 on:
   push:
-    branches: [master, develop]
+    branches: [master, "5.14"]
     tags: [ v* ]
   pull_request:
-    branches: [master, develop]
+    branches: [master, "5.14"]
 jobs:
   offline:
     name: Prepare offline package
