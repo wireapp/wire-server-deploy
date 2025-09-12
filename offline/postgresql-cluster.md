@@ -209,10 +209,23 @@ ansible-playbook -i ansible/inventory/offline/hosts.ini ansible/postgresql-deplo
 sudo -u postgres repmgr -f /etc/repmgr/17-main/repmgr.conf cluster show
 
 # 2. Service status
-systemctl status postgresql@17-main repmgrd@17-main detect-rouge-primary.timer
+sudo systemctl status postgresql@17-main repmgrd@17-main detect-rouge-primary.timer
 
 # 3. Replication status (run on primary)
 sudo -u postgres psql -c "SELECT application_name, client_addr, state FROM pg_stat_replication;"
+
+# 4. check the spilt-brain detector logs
+sudo journalctl -u detect-rouge-primary.service
+
+# 5. Check rempgr status
+sudo systemctl status repmgrd@17-main
+
+# 6. Check fence events
+sudo tail -n 20 -f /var/log/postgresql/fence_events.log
+
+# 5, Manually promote a standby to primary when repmgrd fails to promote (very rare it will happen)
+# Run the promote command on the standby you want ot promote
+sudo -u postgres repmgr -f /etc/repmgr/17-main/repmgr.conf standby promote
 ```
 
 ### 📊 Monitoring System Details
@@ -285,7 +298,6 @@ done
 
 # 2. Start best candidate as new primary
 sudo systemctl unmask postgresql@17-main.service
-sudo systemctl start postgresql@17-main.service
 sudo -u postgres repmgr -f /etc/repmgr/17-main/repmgr.conf primary register --force
 
 # 3. Rejoin other nodes

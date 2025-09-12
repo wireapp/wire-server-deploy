@@ -132,7 +132,8 @@
           ansible.builtin.shell: |
             cd /tmp
             sudo -u postgres repmgr -h {{ primary_node }} -U {{ repmgr_user }} -d {{ repmgr_database }} \
-              -f /etc/repmgr/{{ postgresql_version }}-main/repmgr.conf standby clone --force
+              -f /etc/repmgr/{{ postgresql_version }}-main/repmgr.conf \
+              standby clone --force
           environment:
             PGPASSWORD: "{{ repmgr_password }}"
           register: repmgr_clone_result

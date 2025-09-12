@@ -12,6 +12,7 @@ conninfo='host={{ ansible_default_ipv4.address | default(ansible_host) }} user={
 
 # PostgreSQL paths
 data_directory='{{ postgresql_data_dir }}'
+config_directory='{{ postgresql_conf_dir }}'
 pg_bindir='/usr/lib/postgresql/{{ postgresql_version }}/bin'
 passfile='/var/lib/postgresql/.pgpass'
 
@@ -22,7 +23,7 @@ monitoring_history=true
 # automatic failover
 failover=automatic
 primary_visibility_consensus=true
-failover_validation_command='/opt/repmgr/scripts/failure_validation.sh %n %v %t'
+failover_validation_command='/opt/repmgr/scripts/failover_validation.sh %n %v %t'
 repmgrd_exit_on_inactive_node=true
 
 promote_command='/usr/bin/repmgr standby promote -f /etc/repmgr/{{ postgresql_version }}-main/repmgr.conf --log-to-file'
