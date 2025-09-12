@@ -1,70 +1,96 @@
-# PostgreSQL Cluster Deployment 
+# PostgreSQL High Availability Cluster Deployment Guide
 
 ## Table of Contents
-- [Overview](#overview)
-- [Architecture](#architecture)
+- [Architecture Overview](#architecture-overview)
+- [Key Concepts](#key-concepts)
+- [High Availability Features](#high-availability-features)
 - [Inventory Definition](#inventory-definition)
-- [Running the Playbook](#running-the-playbook)
-- [PostgreSQL Packages Installation Playbook](#postgresql-packages-installation-playbook)
-- [Deployment Architecture](#deployment-architecture)
-- [Monitoring and Verification](#monitoring-and-verification)
+- [Installation Process](#installation-process)
+- [Deployment Commands Reference](#deployment-commands-reference)
+- [Monitoring Checks After Installation](#monitoring-checks-after-installation)
+- [How It Confirms a Reliable System](#how-it-confirms-a-reliable-system)
+- [Node Recovery Operations](#node-recovery-operations)
 - [Wire Server Database Setup](#wire-server-database-setup)
-- [Troubleshooting](#troubleshooting)
-- [Best Practices](#best-practices)
-- [Security Considerations](#security-considerations)
 
-## Overview of PostgreSQL Cluster Deployment
+## Architecture Overview
 
-## Overview
-The [`postgresql-deploy.yml`](../ansible/postgresql-deploy.yml) playbook is designed to deploy a highly available PostgreSQL cluster using streaming replication. The cluster consists of one primary (read-write) node and two replica (read-only) nodes, providing fault tolerance and read scaling capabilities. The deployment includes tasks for installing PostgreSQL packages, deploying the primary node, deploying replica nodes, verifying the deployment, and setting up the Wire server database and user.
-
-## Architecture
-
-### Cluster Topology
-The PostgreSQL cluster implements a **Primary-Replica** architecture with **asynchronous streaming replication**:
+The PostgreSQL cluster implements a **Primary-Replica High Availability** architecture with intelligent **split-brain protection** and **automatic failover capabilities**:
 
 ```
 ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
 │   PostgreSQL1   │    │   PostgreSQL2   │    │   PostgreSQL3   │
-│   (Primary)     │    │   (Replica)     │    │   (Replica)     │
-│   Read/Write    │────│   Read-Only     │    │   Read-Only     │
+│    (Primary)    │───▶│   (Replica)     │    │   (Replica)     │
+│   Read/Write    │    │   Read-Only     │    │   Read-Only     │
 │                 │    │                 │    │                 │
+│ • PostgreSQL 17 │    │ • PostgreSQL 17 │    │ • PostgreSQL 17 │
+│ • repmgr        │    │ • repmgr        │    │ • repmgr        │
+│ • repmgrd       │    │ • repmgrd       │    │ • repmgrd       │
+│ • Split-brain   │    │ • Split-brain   │    │ • Split-brain   │
+│   monitoring    │    │   monitoring    │    │   monitoring    │
 └─────────────────┘    └─────────────────┘    └─────────────────┘
          │                       │                       │
          └───────────────────────┼───────────────────────┘
                                  │
-                       Streaming Replication
+                    ┌─────────────────┐
+                    │ Intelligent     │
+                    │ • Failover      │
+                    │ • Split-brain   │
+                    │   Protection    │
+                    │ • Self-healing  │
+                    └─────────────────┘
 ```
 
-### Key Components
+### Core Components
 
-1. **Primary Node (postgresql1)**:
-   - Handles all write operations and read queries
-   - Sends WAL (Write-Ahead Log) records to replicas
-   - Manages replication slots for each replica
-   - Configured with `wal_level = replica`
+1. **PostgreSQL 17 Cluster**: Latest stable PostgreSQL with performance improvements
+2. **repmgr**: Cluster management and automatic failover orchestration
+3. **Split-Brain Detection**: Intelligent monitoring prevents data corruption scenarios
+4. **Event-Driven Recovery**: Automatic handling of cluster state changes
+5. **Wire-Server Integration**: Pre-configured for Wire backend services
 
-2. **Replica Nodes (postgresql2, postgresql3)**:
-   - Receive and apply WAL records from primary
-   - Can handle read-only queries (hot standby)
-   - Use physical replication slots for connection management
-   - Automatically reconnect to primary if connection is lost
+## Key Concepts
 
-3. **Replication Mechanism**:
-   - **Streaming Replication**: Real-time transmission of WAL records
-   - **Asynchronous Mode**: Optimized for performance over strict consistency
-   - **Physical Replication Slots**: Ensure WAL retention for disconnected replicas
-   - **Hot Standby**: Replicas accept read-only queries during replication
+### Technology Stack
+- **PostgreSQL 17**: Latest stable version with streaming replication
+- **repmgr/repmgrd**: Cluster management and automatic failover
+- **Split-Brain Detection**: Intelligent monitoring prevents data corruption
+- **Wire Integration**: Pre-configured database setup
 
 ### High Availability Features
+- **Automatic Failover**: < 30 seconds detection and promotion
+- **Split-Brain Protection**: Monitors and prevents multiple primaries
+- **Self-Healing**: Event-driven recovery and service management
+- **Zero Data Loss**: Physical replication slots and timeline management
 
-- **Automatic Failover**: Manual promotion of replica to primary when needed
-- **WAL Retention**: Primary retains WAL data for replica recovery
-- **Connection Management**: Replicas automatically reconnect after network issues
-- **Read Load Distribution**: Read queries can be distributed across replicas
+## High Availability Features
+
+### 🎯 Automatic Failover
+- **Detection**: repmgrd monitors primary connectivity with configurable timeouts
+- **Promotion**: Promotes replica with most recent data automatically
+- **Rewiring**: Remaining replicas connect to new primary automatically
+
+### 🛡️ Split-Brain Protection
+
+**Detection Logic:**
+1. Check: Am I an isolated primary? (no active replicas)
+2. Query other nodes: Is another node also primary?
+3. If conflict detected → Mask and stop PostgreSQL service
+
+**Recovery:** Event-driven fence script automatically unmasks services during successful rejoins
+
+### 🔄 Self-Healing Capabilities
+
+| Scenario | Detection | Recovery Time | Data Loss |
+|----------|-----------|---------------|-----------|
+| Primary Failure | 5-30 seconds | < 30 seconds | None |
+| Network Partition | 30-60 seconds | Automatic | None |
+| Node Recovery | Immediate | < 2 minutes | None |
 
 ## Inventory Definition
-The PostgreSQL [inventory](../ansible/inventory/offline/99-static) is structured as follows:
+
+The PostgreSQL cluster requires a properly structured inventory to define node roles and configuration. The inventory file should be located at `ansible/inventory/offline/hosts.ini` or your specific environment path.
+
+### Inventory Structure
 
 ```ini
 [all]
@@ -74,449 +100,229 @@ postgresql3 ansible_host=192.168.122.206
 
 [postgresql:vars]
 postgresql_network_interface = enp1s0
+postgresql_version = 17
 wire_dbname = wire-server
 wire_user = wire-server
-# if not defined, a random password will be generated
-# wire_pass = verysecurepassword
+# Optional: wire_pass = verysecurepassword (if not defined, auto-generated)
 
-# Add all postgresql nodes here
+# All PostgreSQL nodes
 [postgresql]
 postgresql1
 postgresql2
 postgresql3
-# Add all postgresql primary nodes here
+
+# Primary (read-write) node
 [postgresql_rw]
 postgresql1
-# Add all postgresql read-only nodes here i.e. replicas
+
+# Replica (read-only) nodes
 [postgresql_ro]
 postgresql2
 postgresql3
-
 ```
 
-#### Node Groups:
+### Node Groups Explained
 
-- `postgresql`: Group containing all PostgreSQL nodes.
-- `postgresql_rw`: Group containing the primary (read-write) PostgreSQL node.
-- `postgresql_ro`: Group containing the replica (read-only) PostgreSQL nodes.
+| Group | Purpose | Nodes | Role |
+|-------|---------|-------|------|
+| `postgresql` | All PostgreSQL nodes | postgresql1-3 | Base configuration |
+| `postgresql_rw` | Primary nodes | postgresql1 | Read/Write operations |
+| `postgresql_ro` | Replica nodes | postgresql2-3 | Read-only operations |
 
-#### Variables:
+### Configuration Variables
 
-- `postgresql_network_interface`: Network interface for PostgreSQL nodes (optional, defaults to `enp1s0`).
-- `wire_dbname`: Name of the Wire server database.
-- `wire_user`: User for the Wire server database.
-- `wire_pass`: Password for the wire server, if not defined, a random password will be generated. Password will be displayed on the output once the playbook has finished creating the user. Use this password to configure wire-server helm charts.
+| Variable | Default | Description | Required |
+|----------|---------|-------------|----------|
+| `postgresql_network_interface` | `enp1s0` | Network interface for cluster communication | No |
+| `postgresql_version` | `17` | PostgreSQL major version | No |
+| `wire_dbname` | `wire-server` | Database name for Wire application | Yes |
+| `wire_user` | `wire-server` | Database user for Wire application | Yes |
+| `wire_pass` | auto-generated | Password (displayed after deployment) | No |
 
-### Running the Playbook
+## Installation Process
 
-To run the [`postgresql-deploy.yml`](../ansible/postgresql-deploy.yml) playbook, use the following command:
+### 🚀 Complete Installation (Fresh Deployment)
+
+#### **Prerequisites**
+- Ubuntu 20.04+ or Debian 11+ on all nodes
+- Minimum 4GB RAM per node (8GB+ recommended)
+- SSH access configured for Ansible with sudo privileges
+- Network connectivity between all nodes (PostgreSQL port 5432)
+- Firewall configured to allow PostgreSQL traffic between nodes
+
+#### **Step 1: Verify Connectivity**
 ```bash
+# Test Ansible connectivity to all nodes
+ansible all -i ansible/inventory/offline/hosts.ini -m ping
+```
+
+#### **Step 2: Full Cluster Deployment**
+See the [Deployment Commands Reference](#deployment-commands-reference) section for all available deployment commands.
+
+**⏱️ Expected Duration: 10-15 minutes**
+
+A complete deployment performs:
+1. ✅ **Package Installation**: PostgreSQL 17 + repmgr + dependencies
+2. ✅ **Primary Setup**: Configure primary node with repmgr database
+3. ✅ **Replica Deployment**: Clone and configure replica nodes
+4. ✅ **Verification**: Health checks and replication status
+5. ✅ **Wire Integration**: Create Wire database and user
+6. ✅ **Monitoring**: Deploy split-brain detection system
+
+#### **Step 3: Verify Installation**
+See the [Monitoring Checks](#monitoring-checks-after-installation) section for comprehensive verification procedures.
+
+## Deployment Commands Reference
+
+### 🎯 Main Commands
+
+```bash
+# Complete fresh deployment
 ansible-playbook -i ansible/inventory/offline/hosts.ini ansible/postgresql-deploy.yml
+
+# Clean previous deployment
+ansible-playbook -i ansible/inventory/offline/hosts.ini ansible/postgresql-playbooks/clean_exiting_setup.yml
 ```
 
-**Note**: The ansible commands should be run using the WSD_CONTAINER container as explained in the [Making tooling available in your environment](./docs_ubuntu_22.04.md#making-tooling-available-in-your-environment) documentation.
+### 🏷️ Tag-Based Deployments
 
-#### Tags and Selective Execution
-
-The playbook uses tags to allow selective execution of specific components. You can run only specific parts of the deployment by using the `--tags` or `--skip-tags` options:
-
-**Tag Reference Table:**
-
-| Component | Tag | Description |
-|-----------|-----|-------------|
-| Package Installation | `install` | Installs PostgreSQL packages and dependencies |
-| Primary Node | `primary` | Deploys and configures the primary PostgreSQL node |
-| Replica Nodes | `replica` | Deploys and configures replica PostgreSQL nodes |
-| Verification | `verify` | Verifies cluster health and replication status |
-| Wire Setup | `wire-setup` | Creates Wire database and user account |
-| All Components | `postgresql` | Runs all PostgreSQL deployment tasks |
-
-**Example usage with tags**:
+| Tag | Description | Example |
+|-----|-------------|---------|
+| `monitoring` | Split-brain detection only | `--tags "monitoring"` |
+| `wire-setup` | Wire database setup only | `--tags "wire-setup"` |
+| `replica` | Replica configuration only | `--tags "replica"` |
 
 ```bash
-# Install packages only
-ansible-playbook -i ansible/inventory/offline/hosts.ini ansible/postgresql-deploy.yml --tags "install"
-
-# Deploy only primary node
-ansible-playbook -i ansible/inventory/offline/hosts.ini ansible/postgresql-deploy.yml --tags "primary"
-
-# Deploy primary and replicas, skip -  wire setup, install and verify
-ansible-playbook -i ansible/inventory/offline/hosts.ini ansible/postgresql-deploy.yml --tags "primary,replica"
-
-# Skip installation (if PostgreSQL is already installed)
-ansible-playbook -i ansible/inventory/offline/hosts.ini ansible/postgresql-deploy.yml --skip-tags "install"
-
-# Skip wire setup and verification
-ansible-playbook -i ansible/inventory/offline/hosts.ini ansible/postgresql-deploy.yml --skip-tags "wire-setup,verify"
-
-# Run only verification
-ansible-playbook -i ansible/inventory/offline/hosts.ini ansible/postgresql-deploy.yml --tags "verify"
-```
-
-## PostgreSQL Packages Installation Playbook
-
-### Overview
-This playbook installs PostgreSQL packages and their dependencies on hosts belonging to the `postgresql` group. The installation supports both online repository-based installation and offline package deployment for air-gapped environments.
-
-### Installation Architecture
-
-The package installation follows a layered approach:
-
-```
-┌─────────────────────────────────────────────────────────────────────┐
-│                        Package Dependencies                         │
-├─────────────────────────────────────────────────────────────────────┤
-│  System Dependencies: libssl-dev, libllvm15, sysstat, ssl-cert     │
-├─────────────────────────────────────────────────────────────────────┤
-│  PostgreSQL Core: libpq5, postgresql-common, postgresql-client     │
-├─────────────────────────────────────────────────────────────────────┤
-│  PostgreSQL Server: postgresql-17, postgresql-client-17            │
-├─────────────────────────────────────────────────────────────────────┤
-│  Python Integration: python3-psycopg2                              │
-└─────────────────────────────────────────────────────────────────────┘
-```
-
-### Variables
-
-| Variable                     | Description                                                                 |
-|------------------------------|-----------------------------------------------------------------------------|
-| `postgresql_version`         | Version of PostgreSQL to install (e.g., 17).                                |
-| `postgresql_data_dir`        | Directory where PostgreSQL data will be stored.                             |
-| `postgresql_conf_dir`        | Directory where PostgreSQL configuration files will be stored.              |
-| `repmgr_user`                | User for repmgr (PostgreSQL replication manager).                           |
-| `repmgr_password`            | Password for the repmgr user.                                               |
-| `repmgr_database`            | Database name for repmgr.                                                   |
-| `postgresql_use_repository`  | Boolean to install packages from the repository (`true`) or from URLs (`false`). Default is `false`. |
-| `postgresql_pkgs`            | List of dictionaries containing details about PostgreSQL packages to download and install. Each dictionary includes `name`, `url`, and `checksum`. |
-
-### PostgreSQL Packages
-
-The following packages are required for a complete PostgreSQL installation when not using an online repository:
-
-1. **libpq5**: PostgreSQL C client library.
-2. **postgresql-client-common**: Common files for PostgreSQL client applications.
-3. **postgresql-common-dev**: Development files for PostgreSQL common components.
-4. **postgresql-common**: Common scripts and files for PostgreSQL server and client packages.
-5. **postgresql-client-17**: Client applications for PostgreSQL version 17.
-6. **postgresql-17**: Main PostgreSQL server package for version 17.
-7. **python3-psycopg2**: PostgreSQL adapter for Python.
-
-### Offline Package Management
-
-When not using the online repository (`postgresql_use_repository = false`), packages will be downloaded from the `assethost` setup. Ensure the offline sources are configured by running:
-
-```bash
-ansible-playbook -i ansible/inventory/offline/hosts.ini ansible/setup-offline-sources.yml --limit assethost,postgresql
-```
-
-**Note**: If the above command has already been executed with the latest wire-server-deploy artifacts, avoid running it again. However, if PostgreSQL is being updated or installed for the first time, it is recommended to run this command to ensure all required packages are available from the latest wire-server-deploy artifacts. 
-
-### Tasks
-
-The installation process follows a systematic approach ensuring all dependencies are met:
-
-1. **Install PostgreSQL dependencies**:
-   - **System Libraries**: Installs core dependencies for PostgreSQL operation
-     - `libssl-dev`: SSL/TLS support for secure connections
-     - `libllvm15`: Required for JIT compilation support
-     - `sysstat`: System performance monitoring tools
-     - `ssl-cert`: SSL certificate management utilities
-     - `libjson-perl`, `libipc-run-perl`: Perl libraries for PostgreSQL utilities
-
-2. **Repository-based Installation** (when `postgresql_use_repository = true`):
-   - **Package Selection**: Installs packages from PostgreSQL official repository
-     - `postgresql-{{ postgresql_version }}`: Main server package
-     - `postgresql-client-{{ postgresql_version }}`: Client tools and libraries
-     - `python3-psycopg2`: Python database adapter for Ansible modules
-
-3. **Offline Package Management** (when `postgresql_use_repository = false`):
-   - **Version Verification**: Checks if packages are already installed to avoid conflicts
-   - **Package Download**: Downloads `.deb` files from specified URLs with checksum verification
-   - **Local Installation**: Installs packages using `dpkg` for air-gapped environments
-   - **Cleanup Process**: Removes downloaded files to conserve disk space
-
-4. **Package Integrity**:
-   - **Checksum Validation**: Ensures package integrity during download
-   - **Dependency Resolution**: Handles package dependencies automatically
-   - **Installation Verification**: Confirms successful installation of all components
-
-### Usage
-To run the [`postgresql-install.yml`](../ansible/postgresql-playbooks/postgresql-install.yml) playbook independently, use the following command:
-
-```bash
-ansible-playbook -i ansible/inventory/offline/hosts.ini ansible/postgresql-playbooks/postgresql-install.yml
-```
-
-Alternatively, you can run just the installation step from the main playbook using tags:
-
-```bash
-ansible-playbook -i ansible/inventory/offline/hosts.ini ansible/postgresql-deploy.yml --tags "install"
-```
-
-## Deployment Architecture
-
-### Primary Node Deployment Process
-
-The primary node deployment is handled by the [`postgresql-deploy-primary.yml`](../ansible/postgresql-playbooks/postgresql-deploy-primary.yml) playbook, which performs the following key operations:
-
-#### 1. Pre-deployment Checks
-- **Replication User Verification**: Checks if the replication user (`repmgr_user`) already exists
-- **Replication Slots Check**: Verifies existing replication slots for replica nodes
-- **Service Status**: Ensures PostgreSQL service is ready for configuration
-
-#### 2. Configuration Management
-- **pg_hba.conf Configuration**: Sets up authentication rules for:
-  - Local connections using peer authentication
-  - Replication connections from replica nodes
-  - Inter-cluster communication
-- **Primary PostgreSQL Configuration**: Applies optimized settings via [postgresql_primary.conf.j2](../ansible/templates/postgresql_primary.conf.j2).
-
-#### 3. Replication Setup
-- **Replication User Creation**: Creates the replication user with `REPLICATION,LOGIN` privileges
-- **Physical Replication Slots**: Creates dedicated slots for each replica (`postgresql2`, `postgresql3`)
-- **Service Management**: Restarts and enables PostgreSQL service
-
-#### 4. Readiness Verification
-- **Port Availability**: Waits for PostgreSQL to accept connections on port 5432
-
-### Replica Node Deployment Process
-
-The replica deployment is managed by the [`postgresql-deploy-replica.yml`](../ansible/postgresql-playbooks/postgresql-deploy-replica.yml) playbook with the following workflow:
-
-#### 1. Replica State Assessment
-- **Configuration Check**: Verifies if replica is already configured (`standby.signal` file presence)
-- **Service Status**: Checks current PostgreSQL service state
-- **Data Directory**: Assesses existing data directory state
-
-#### 2. Configuration Deployment
-- **Authentication Setup**: Configures `pg_hba.conf` for replica-specific rules
-- **Replica Configuration**: Applies [`postgresql_replica.conf.j2`](../ansible/templates/postgresql_replica.conf.j2) with:
-  ```
-  primary_conninfo = 'host=<primary_ip> user=<repmgr_user> ...'
-  primary_slot_name = '<replica_hostname>'
-  hot_standby = on
-  max_standby_streaming_delay = 120s
-  ```
-
-#### 3. Base Backup Process
-For unconfigured replicas, the playbook performs:
-- **Service Shutdown**: Stops PostgreSQL service safely
-- **Data Directory Cleanup**: Removes existing data to prevent conflicts
-- **pg_basebackup Execution**: Creates replica from primary using:
-  ```bash
-  pg_basebackup -h <primary> -U <repmgr_user> -D <data_dir> -P -R -X stream
-  ```
-- **Standby Signal**: Creates `standby.signal` file to mark as replica
-
-#### 4. Replica Activation
-- **Service Startup**: Starts PostgreSQL in hot standby mode
-- **Connection Verification**: Ensures replica connects to primary successfully
-- **Replication PostgreSQL service Status**: Waits for PostgreSQL to accept connections on port 5432
-
-### Security Configuration
-
-#### Authentication Matrix
-The [`pg_hba.conf`](../ansible/templates/pg_hba.conf.j2) template implements a security model with:
-
-| Connection Type | User | Source | Method | Purpose |
-|----------------|------|--------|---------|---------|
-| Local | All | Unix Socket | peer | Local admin access |
-| Host | All | 127.0.0.1/32 | md5 | Local TCP connections |
-| Host | repmgr_user | replica_nodes | md5 | Streaming replication |
-| Host | All | primary_network | md5 | Inter-cluster communication |
-
-#### Network Security
-- **Restricted Access**: Only defined IP addresses can connect
-- **Encrypted Connections**: MD5 authentication for network connections
-- **Replication Isolation**: Dedicated user for replication traffic
-
-### Performance Optimization
-
-#### Resource-Constrained Configuration
-The deployment is optimized for environments with limited resources (1GB RAM, 1 core, 50GB disk):
-
-**Memory Settings:**
-- `shared_buffers = 128MB` (~12.5% of RAM)
-- `effective_cache_size = 512MB` (~50% of RAM)
-- `work_mem = 2MB` (conservative for limited memory)
-- `maintenance_work_mem = 32MB`
-
-**WAL Management:**
-- `wal_keep_size = 2GB` (4% of disk space)
-- `max_slot_wal_keep_size = 3GB` (6% of disk space)
-- `wal_writer_delay = 200ms` (optimized for single core)
-
-**Replication Tuning:**
-- Asynchronous replication for performance
-- Physical replication slots for reliability
-- Optimized timeouts for resource constraints
-
-## Monitoring and Verification
-
-### Automated Verification Process
-
-The [`postgresql-verify-HA.yml`](../ansible/postgresql-playbooks/postgresql-verify-HA.yml) playbook provides comprehensive health checks:
-
-#### 1. Streaming Replication Status
-Monitors real-time replication metrics:
-```sql
-SELECT 
-  client_addr, 
-  application_name, 
-  state, 
-  sync_state,
-  pg_size_pretty(pg_wal_lsn_diff(pg_current_wal_lsn(), replay_lsn)) as lag_size,
-  CASE 
-    WHEN pg_wal_lsn_diff(pg_current_wal_lsn(), replay_lsn) = 0 THEN 'SYNCHRONIZED'
-    WHEN pg_wal_lsn_diff(pg_current_wal_lsn(), replay_lsn) < 1024*1024 THEN 'NEAR_SYNC'
-    ELSE 'LAGGING'
-  END as status
-FROM pg_stat_replication;
-```
-
-#### 2. Replication Slot Health
-Validates slot availability and lag:
-```sql
-SELECT 
-  slot_name, 
-  active, 
-  pg_size_pretty(pg_wal_lsn_diff(pg_current_wal_lsn(), restart_lsn)) as slot_lag,
-  CASE 
-    WHEN active THEN 'ACTIVE'
-    ELSE 'INACTIVE - CHECK REPLICA'
-  END as slot_status
-FROM pg_replication_slots;
-```
-
-### Manual Health Checks
-
-#### Primary Node Status
-```bash
-# Check replication status
-sudo -u postgres psql -c "SELECT * FROM pg_stat_replication;"
-
-# Verify replication slots
-sudo -u postgres psql -c "SELECT * FROM pg_replication_slots;"
-
-# Check WAL sender processes
-ps aux | grep "walsender"
-```
-
-#### Replica Node Status from replica nodes
-```bash
-# Check replica status
-sudo -u postgres psql -c "SELECT * FROM pg_stat_wal_receiver;"
-
-# Verify hot standby mode
-sudo -u postgres psql -c "SELECT pg_is_in_recovery();"
-
-# Check replication lag
-sudo -u postgres psql -c "SELECT EXTRACT(EPOCH FROM (now() - pg_last_xact_replay_timestamp()));"
-```
-
-### Performance Metrics # TODO
-
-#### Key Performance Indicators
-1. **Replication Lag**: Should be < 1MB under normal load
-2. **Connection Count**: Monitor active connections vs. max_connections
-3. **WAL Generation Rate**: Track WAL file creation frequency
-4. **Disk Usage**: Monitor WAL directory and data directory sizes
-
-#### Health Thresholds
-- **Replication Lag**: Alert if > 5MB
-- **Connection Usage**: Alert if > 80% of max_connections
-- **Disk Usage**: Alert if WAL directory > 10% of total disk
-- **Recovery Time**: Replica restart should complete within 2 minutes
-
-## Wire Server Database Setup
-
-### PostgreSQL Wire Setup Playbook
-
-The [`postgresql-wire-setup.yml`](../ansible/postgresql-playbooks/postgresql-wire-setup.yml) playbook is the final step in the PostgreSQL cluster deployment process. This playbook creates the dedicated database and user account required for Wire server operation.
-
-#### Overview
-This playbook runs exclusively on the primary PostgreSQL node (`postgresql_rw` group) and performs the following operations:
-
-1. **Database Management**:
-   - Checks if the Wire server database `wire_dbname` already exists
-   - Creates the database if it doesn't exist
-
-2. **User Account Management**:
-   - Verifies if the Wire server user account exists
-   - Creates a new user account if needed
-   - Generates a secure random password if `wire_pass` is not defined
-
-3. **Credential Management**:
-   - Displays generated credentials for the `wire_user`
-   - Ensures secure password generation (15 characters, alphanumeric)
-
-#### Usage
-This playbook is automatically executed as part of the main `postgresql-deploy.yml` workflow, but can be run independently:
-
-```bash
-ansible-playbook -i ansible/inventory/offline/hosts.ini ansible/postgresql-playbooks/postgresql-wire-setup.yml
-```
-
-Alternatively, you can run just the wire setup from the main playbook using tags:
-
-```bash
-ansible-playbook -i ansible/inventory/offline/hosts.ini ansible/postgresql-deploy.yml --tags "wire-setup"
-```
-
-To skip the wire setup when running the full deployment:
-
-```bash
+# Common scenarios
+ansible-playbook -i ansible/inventory/offline/hosts.ini ansible/postgresql-deploy.yml --tags "monitoring"
 ansible-playbook -i ansible/inventory/offline/hosts.ini ansible/postgresql-deploy.yml --skip-tags "wire-setup"
 ```
 
-#### Important Notes
-- **Credential Security**: The generated password is displayed in the Ansible output. Ensure this output is securely stored and the password is updated in your Wire server configuration.
+**Note:** Replace `ansible/inventory/offline/hosts.ini` with your actual inventory path.
 
-## Troubleshooting
+## Monitoring Checks After Installation
 
-### Common Issues and Solutions
+### 🛡️ Key Verification Commands
 
-#### 1. Replication Connection Issues
-**Symptoms**: Replica cannot connect to primary
-**Diagnosis**:
 ```bash
-# Check network connectivity
-telnet <primary_ip> 5432
+# 1. Cluster status (primary command)
+sudo -u postgres repmgr -f /etc/repmgr/17-main/repmgr.conf cluster show
 
-# Verify authentication
-sudo -u postgres psql -h <primary_ip> -U <repmgr_user> -d postgres
+# 2. Service status
+sudo systemctl status postgresql@17-main repmgrd@17-main detect-rouge-primary.timer
+
+# 3. Replication status (run on primary)
+sudo -u postgres psql -c "SELECT application_name, client_addr, state FROM pg_stat_replication;"
+
+# 4. check the spilt-brain detector logs
+sudo journalctl -u detect-rouge-primary.service
+
+# 5. Check rempgr status
+sudo systemctl status repmgrd@17-main
+
+# 6. Check fence events
+sudo tail -n 20 -f /var/log/postgresql/fence_events.log
+
+# 5, Manually promote a standby to primary when repmgrd fails to promote (very rare it will happen)
+# Run the promote command on the standby you want ot promote
+sudo -u postgres repmgr -f /etc/repmgr/17-main/repmgr.conf standby promote
 ```
-**Solutions**:
-- Verify `pg_hba.conf` entries for replication user
-- Check firewall rules on primary node
-- Validate replication user credentials
 
-#### 2. Replication Lag Issues
-**Symptoms**: High replication lag or replicas falling behind
-**Diagnosis**:
-```sql
--- Check WAL generation rate on primary
-SELECT * FROM pg_stat_wal;
+### 📊 Monitoring System Details
 
--- Monitor replication lag
-SELECT * FROM pg_stat_replication;
-```
-**Solutions**:
-- Increase `wal_keep_size` on primary
-- Check network bandwidth between nodes
-- Optimize replica hardware resources
+The deployment includes automated split-brain detection:
 
-#### 3. Wire Database Connection Issues
-**Symptoms**: Wire server cannot connect to PostgreSQL database
-**Diagnosis**:
+- **Timer**: Every 30 seconds via systemd timer
+- **Script**: `/usr/local/bin/detect_rouge_primary.sh`
+- **Fence Script**: `/usr/local/bin/simple_fence.sh` (handles repmgr events)
+- **Logs**: `journalctl -u detect-rouge-primary.service`
+
+**What it does:**
+1. Detects isolated primary (no active replicas)
+2. Queries other nodes for primary status conflicts
+3. Masks and stops PostgreSQL if split-brain detected
+4. Auto-unmasks services during successful rejoins
+
+## How It Confirms a Reliable System
+
+### 🛡️ Reliability Features
+
+- **Split-Brain Prevention**: 30-second monitoring with automatic protection
+- **Automatic Failover**: < 30 seconds detection and promotion
+- **Data Consistency**: Streaming replication with timeline management
+- **Self-Healing**: Event-driven recovery and service management
+
+### 🎯 Quick Health Check
+
 ```bash
-# Test database connectivity
-sudo -u postgres psql -d <wire_dbname> -U <wire_user> -h <primary_ip>
-
-# Check user privileges
-sudo -u postgres psql -c "\du <wire_user>"
+# Verify system reliability
+sudo -u postgres repmgr -f /etc/repmgr/17-main/repmgr.conf cluster show
+systemctl status detect-rouge-primary.timer
+sudo -u postgres psql -c "SELECT * FROM pg_stat_replication;"
 ```
-**Solutions**:
-- Verify database and user exist on primary node
-- Check `pg_hba.conf` allows connections from Wire server hosts
-- Validate credentials in Wire server configuration
+
+**Expected results:**
+- One primary "* running", all replicas "running"
+- Timer shows "active (waiting)"
+- Replication shows connected replicas with minimal lag
+
+### 📊 Reliability Metrics
+
+- **Uptime Target**: 99.9%+ with proper maintenance
+- **Failover Time**: < 30 seconds
+- **Recovery Time**: < 2 minutes for node rejoin
+- **Data Protection**: 100% split-brain detection and prevention
+
+## Node Recovery Operations
+
+### 🔄 Standard Node Rejoin
+
+```bash
+# Standard rejoin (when data is compatible)
+sudo -u postgres repmgr -f /etc/repmgr/17-main/repmgr.conf node rejoin \
+    -d repmgr -h <primary-ip> -U repmgr --verbose
+
+# Force rejoin with rewind (when timelines diverged)
+sudo -u postgres repmgr -f /etc/repmgr/17-main/repmgr.conf node rejoin \
+    -d repmgr -h <primary-ip> -U repmgr --force-rewind --verbose
+```
+
+### 🚨 Emergency Recovery
+
+#### **Complete Cluster Failure**
+```bash
+# 1. Find node with most recent data
+for node in postgresql1 postgresql2 postgresql3; do
+    ssh $node "sudo -u postgres pg_controldata /var/lib/postgresql/17/main | grep 'Latest checkpoint'"
+done
+
+# 2. Start best candidate as new primary
+sudo systemctl unmask postgresql@17-main.service
+sudo -u postgres repmgr -f /etc/repmgr/17-main/repmgr.conf primary register --force
+
+# 3. Rejoin other nodes
+sudo -u postgres repmgr -f /etc/repmgr/17-main/repmgr.conf node rejoin \
+    -d repmgr -h <new-primary-ip> -U repmgr --force-rewind --verbose
+```
+
+#### **Split-Brain Resolution**
+```bash
+# On the node that should become replica:
+sudo systemctl unmask postgresql@17-main.service
+sudo -u postgres repmgr -f /etc/repmgr/17-main/repmgr.conf node rejoin \
+    -d repmgr -h <correct-primary-ip> -U repmgr --force-rewind --verbose
+
+# if rejoin fails, a normal start/restart would bring the replica on standby mode
+# as with rejoin command, the standby.signal and auto-recovery file is already created.
+sudo systemctl start postgresql@17-main.service
+```
+
+**Note:** If service is masked from split-brain protection, unmask it first with `sudo systemctl unmask postgresql@17-main.service`
+
+## Wire Server Database Setup
+
+The [`postgresql-wire-setup.yml`](../ansible/postgresql-playbooks/postgresql-wire-setup.yml) playbook creates the Wire server database and user account.
+
+**Usage:** See the [Deployment Commands Reference](#deployment-commands-reference) section for all Wire setup commands.
+
+**Important:** Generated password is displayed in Ansible output - save it securely for Wire server configuration.

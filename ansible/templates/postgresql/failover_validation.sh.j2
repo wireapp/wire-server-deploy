@@ -1,0 +1,41 @@
+#!/usr/bin/env bash
+# failure_validation.sh — repmgr failover gate
+# usage: failure_validation.sh <node_id> <visible_nodes> <total_nodes>
+# exit 0 => allow promotion; non-zero => veto
+
+set -u
+set -o pipefail
+
+NODE_ID="${1:-}"; VISIBLE="${2:-0}"; TOTAL="${3:-0}"
+PSQL=${PSQL:-/usr/bin/psql}
+DBNAME=${DBNAME:-postgres}
+
+# Log to syslog; never fail the script if logging fails
+log(){ logger -t failure_validation -- "$*" || true; }
+
+# 1) Minimal quorum: for 3+ nodes, require ≥2 visible
+if [[ "$TOTAL" -ge 3 && "$VISIBLE" -lt 2 ]]; then
+  log "Reject: insufficient visible nodes (visible=$VISIBLE,total=$TOTAL)"
+  echo "Reject: insufficient visible nodes"
+  exit 1
+fi
+
+# 2) Must still be a standby (only promote from recovery)
+if ! "$PSQL" -X -Atqc "select pg_is_in_recovery();" -d "$DBNAME" | grep -qx 't'; then
+  echo "Reject: not in recovery (already primary?)"
+  exit 1
+fi
+
+# 3) Advisory checks (do NOT veto)
+if ! "$PSQL" -X -Atqc "select 1 from pg_stat_wal_receiver limit 1;" -d "$DBNAME" >/dev/null 2>&1; then
+  log "Warn: WAL receiver not active"
+fi
+
+LAG_CAP=${LAG_CAP:-67108864}  # 64MB default
+DELAY=$("$PSQL" -X -Atqc "select coalesce(pg_wal_lsn_diff(pg_last_wal_receive_lsn(), pg_last_wal_replay_lsn()),0);" -d "$DBNAME" 2>/dev/null || echo 0)
+if [[ "$DELAY" =~ ^[0-9]+$ ]] && (( DELAY > LAG_CAP )); then
+  log "Warn: replay delay ${DELAY} > ${LAG_CAP}"
+fi
+
+echo "OK: promote node ${NODE_ID}"
+exit 0
