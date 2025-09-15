@@ -24,4 +24,21 @@ WSD_CONTAINER=$(check_or_load_image "$SCRIPT_DIR/../containers-adminhost/contain
 
 export ZAUTH_CONTAINER
 
-alias d="sudo docker run -it --network=host -v \${SSH_AUTH_SOCK:-nonexistent}:/ssh-agent -e SSH_AUTH_SOCK=/ssh-agent -v \$HOME/.ssh:/root/.ssh -v \$PWD:/wire-server-deploy $WSD_CONTAINER"
+# detect if d should run interactively
+d() {
+    local docker_flags=""
+    # Check if both stdin and stdout are terminals
+    # If either of them is not a terminal (piped/redirected), run in detached mode
+    if [ -t 0 ] && [ -t 1 ]; then
+        docker_flags="-it"
+    fi
+
+    # Run docker with appropriate flags
+     sudo docker run $docker_flags --network=host \
+        -v ${SSH_AUTH_SOCK:-nonexistent}:/ssh-agent \
+        -e SSH_AUTH_SOCK=/ssh-agent \
+        -v $HOME/.ssh:/root/.ssh \
+        -v $PWD:/wire-server-deploy \
+        $WSD_CONTAINER "$@"
+}
+
