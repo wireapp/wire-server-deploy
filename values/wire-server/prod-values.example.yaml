@@ -127,7 +127,7 @@ cannon:
   # For demo mode only, we don't need to keep websocket connections open on chart upgrades
   drainTimeout: 10
   config:
-    cassandra: 
+    cassandra:
       host: cassandra-external
   metrics:
     serviceMonitor:
@@ -226,7 +226,7 @@ nginz:
 #      tag: some-tag (only override if you want a newer/different version than what is in the chart)
   nginx_conf:
     # using prod means mostly that some internal endpoints are not exposed
-    env: prod
+    dns_resolver: coredns
     external_env_domain: example.com
     deeplink:
       endpoints:

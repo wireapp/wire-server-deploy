@@ -7,11 +7,11 @@ TF_DIR="${CD_DIR}/../terraform/examples/wire-server-deploy-offline-hetzner"
 BIN_DIR="${CD_DIR}/../bin"
 ARTIFACTS_DIR="${CD_DIR}/default-build/output"
 
-# function cleanup {
-#   (cd "$TF_DIR" && terraform destroy -auto-approve)
-#   echo done
-# }
-# trap cleanup EXIT
+function cleanup {
+  (cd "$TF_DIR" && terraform destroy -auto-approve)
+  echo done
+}
+trap cleanup EXIT
 
 cd "$TF_DIR"
 terraform init && terraform apply -auto-approve
