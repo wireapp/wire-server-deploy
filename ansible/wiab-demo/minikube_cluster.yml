@@ -26,6 +26,7 @@
           --subnet={{ minikube_node_subnet }} \
           --profile="{{ minikube_profile }}" \
           --wait-timeout=15m0s \
+          --force \
           --wait=all
       when: "'Running' not in minikube_status.stdout"
 
@@ -35,7 +36,7 @@
 
     - name: Get authorized_keys from minikube nodes
       shell: |
-        minikube cp --profile="{{ minikube_profile }}" {{ item }}:/home/docker/.ssh/authorized_keys "/home/{{ ansible_user }}/{{ item }}_authorized_keys"
+        minikube cp --profile="{{ minikube_profile }}" {{ item }}:/home/docker/.ssh/authorized_keys "{{ ansible_user_dir }}/{{ item }}_authorized_keys"
       args:
         executable: /bin/bash
       with_items: "{{ minikube_nodes_raw.stdout_lines }}"
@@ -44,7 +45,7 @@
 
     - name: Ensure our SSH key is present
       lineinfile:
-        path: "/home/{{ ansible_user }}/{{ item }}_authorized_keys"
+        path: "{{ ansible_user_dir }}/{{ item }}_authorized_keys"
         line: "{{ ssh_public_key }}"
         create: yes
         mode: '0600'
@@ -52,7 +53,7 @@
       register: ssh_key_result
 
     - name: Put back the authorized_keys file back to the minikube nodes
-      shell: minikube cp --profile="{{ minikube_profile }}" "/home/{{ ansible_user }}/{{ item }}_authorized_keys" {{ item }}:/home/docker/.ssh/authorized_keys
+      shell: minikube cp --profile="{{ minikube_profile }}" "{{ ansible_user_dir }}/{{ item }}_authorized_keys" {{ item }}:/home/docker/.ssh/authorized_keys
       args:
         executable: /bin/bash
       with_items: "{{ minikube_nodes_raw.stdout_lines }}"
@@ -61,7 +62,7 @@
       when: ssh_key_result is changed
 
     - name: Clean the copied authorized_keys
-      shell: rm "/home/{{ ansible_user }}/{{ item }}_authorized_keys"
+      shell: rm "{{ ansible_user_dir }}/{{ item }}_authorized_keys"
       args:
         executable: /bin/bash
       with_items: "{{ minikube_nodes_raw.stdout_lines }}"

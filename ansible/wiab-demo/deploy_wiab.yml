@@ -149,7 +149,7 @@
   vars:
     demo_deploy: true
     remote_src: yes
-    src_path: /home/{{ ansible_user }}/wire-server-deploy
+    src_path: "{{ ansible_user_dir }}/wire-server-deploy"
   tags: asset_host
 
 - name: Seed the containers in k8s-cluster nodes

@@ -40,15 +40,45 @@
       apt:
         update_cache: yes
 
-    - name: Install Docker packages
+    - name: Check if Docker is already installed
+      command: docker --version
+      register: docker_check
+      failed_when: false
+      changed_when: false
+
+    - name: Extract current Docker version
+      set_fact:
+        current_docker_version: "{{ docker_check.stdout | regex_search('Docker version ([0-9]+\\.[0-9]+\\.[0-9]+)', '\\1') | first }}"
+      when: docker_check.rc == 0
+
+    - name: Extract desired Docker version from package version
+      set_fact:
+        desired_docker_version: "{{ docker_ce_version | regex_search('([0-9]+\\.[0-9]+\\.[0-9]+)', '\\1') | first }}"
+
+    - name: Install Docker packages (fresh install)
       apt:
         name:
         - docker-ce={{ docker_ce_version }}
         - docker-ce-cli={{ docker_ce_version }}
         - containerd.io={{ containerd_version }}
         state: present
+        allow_downgrade: yes
+      when: docker_check.rc != 0
 
-    - name: Add ubuntu user to the docker group
+    - name: Update Docker packages (version mismatch)
+      apt:
+        name:
+        - docker-ce={{ docker_ce_version }}
+        - docker-ce-cli={{ docker_ce_version }}
+        - containerd.io={{ containerd_version }}
+        state: present
+        allow_downgrade: yes
+        force: yes
+      when: 
+        - docker_check.rc == 0
+        - current_docker_version != desired_docker_version
+
+    - name: Add {{ ansible_user }} to the docker group
       user:
         name: "{{ ansible_user }}"
         groups: docker

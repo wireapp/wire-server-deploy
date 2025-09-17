@@ -9,12 +9,12 @@
     block:
     - name: Check if wire_ip file exists
       stat:
-        path: "/home/{{ ansible_user }}/wire_ip"
+        path: "{{ ansible_user_dir }}/wire_ip"
       register: wire_ip_file
 
     - name: Read Wire IP from file if it exists
       slurp:
-        src: "/home/{{ ansible_user }}/wire_ip"
+        src: "{{ ansible_user_dir }}/wire_ip"
       register: wire_ip_content
       when: wire_ip_file.stat.exists
 
@@ -91,7 +91,7 @@
 
     - name: Store public IP in file
       copy:
-        dest: "/home/{{ ansible_user }}/wire_ip"
+        dest: "{{ ansible_user_dir }}/wire_ip"
         content: "{{ temp_wire_ip }}"
       when: connection_test.rc == 0
 

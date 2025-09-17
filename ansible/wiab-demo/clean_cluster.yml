@@ -81,7 +81,7 @@
     tags: [never, remove_iptables]
     vars:
       iptables_rules_comment: "Wire Iptables Rules"
-      iptables_save_dir: "/home/{{ ansible_user }}/wire-iptables-rules"
+      iptables_save_dir: "{{ ansible_user_dir }}/wire-iptables-rules"
     block:
 
     - name: Check if pre_wire IPv4 ruleset file exists
@@ -139,8 +139,8 @@
     block:
     - name: Remove SSH key if it exist
       shell: |
-        if [ -f "/home/{{ ansible_user }}/.ssh/id_rsa_wire" ]; then
-          rm "/home/{{ ansible_user }}/.ssh/id_rsa_wire"
+        if [ -f "{{ ansible_user_dir }}/.ssh/id_rsa_wire" ]; then
+          rm "{{ ansible_user_dir }}/.ssh/id_rsa_wire"
         fi
 
   - name: remove the downloaded artifacts 
@@ -149,9 +149,9 @@
       path: "{{ item }}"
       state: absent
     loop:
-      - "/home/{{ ansible_user }}/wire-server-deploy"
-      - "/home/{{ ansible_user }}/wire-server-deploy-static-demo-{{ artifact_hash }}.tgz"
-      - "/home/{{ ansible_user }}/wire_ip"
+      - "{{ ansible_user_dir }}/wire-server-deploy"
+      - "{{ ansible_user_dir }}/wire-server-deploy-static-demo-{{ artifact_hash }}.tgz"
+      - "{{ ansible_user_dir }}/wire_ip"
 
   - name: clean asset_host artifacts and remove service
     tags: [never, clean_assethost]

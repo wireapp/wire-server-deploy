@@ -3,7 +3,7 @@
   become: yes
   vars:
     iptables_rules_comment: "Wire Iptables Rules"
-    iptables_save_dir: "/home/{{ ansible_user }}/wire-iptables-rules"
+    iptables_save_dir: "{{ ansible_user_dir }}/wire-iptables-rules"
   tasks:
   - name: Ensure iptables directory exists
     file:
@@ -38,7 +38,7 @@
 
   - name: Get the IP address of the k8s_ingress_controller node
     shell: |
-      kubectl --kubeconfig="/home/{{ ansible_user }}/.kube/config"  get node {{ k8s_ingress_controller_node }} -o json | jq -r '.status.addresses[] | select(.type=="InternalIP").address'
+      kubectl --kubeconfig="{{ ansible_user_dir }}/.kube/config"  get node {{ k8s_ingress_controller_node }} -o json | jq -r '.status.addresses[] | select(.type=="InternalIP").address'
     register: k8s_ingress_controller_ip
     become: yes
     become_user: "{{ ansible_user }}"
@@ -108,7 +108,7 @@
 
   - name: Get the IP address of the coturn node
     shell: |
-      kubectl --kubeconfig="/home/{{ ansible_user }}/.kube/config" get node {{ k8s_coturn_node }} -o json | jq -r '.status.addresses[] | select(.type=="InternalIP").address'
+      kubectl --kubeconfig="{{ ansible_user_dir }}/.kube/config" get node {{ k8s_coturn_node }} -o json | jq -r '.status.addresses[] | select(.type=="InternalIP").address'
     register: k8s_coturn_node_ip
     changed_when: false
 
