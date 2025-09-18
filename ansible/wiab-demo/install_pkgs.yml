@@ -4,12 +4,6 @@
   tasks:
   - name: Install required packages
     block:
-    - name: apt update
-      apt: update_cache=yes force_apt_get=yes
-
-    - name: apt upgrade
-      apt: upgrade=dist force_apt_get=yes
-
     - name: Install dependencies
       apt:
         name:
@@ -18,65 +12,52 @@
         state: present
         update_cache: yes
 
-    - name: Create /etc/apt/keyrings directory
-      file:
-        path: /etc/apt/keyrings
-        state: directory
-        mode: '0755'
-
-    - name: Download Docker GPG key
-      get_url:
-        url: https://download.docker.com/linux/ubuntu/gpg
-        dest: /etc/apt/keyrings/docker.asc
-        mode: '0644'
-
-    - name: Add Docker repository to apt sources
-      shell: |
-        echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu $(. /etc/os-release && echo $VERSION_CODENAME) stable" > /etc/apt/sources.list.d/docker.list
-      args:
-        executable: /bin/bash
-
-    - name: Update apt package index
-      apt:
-        update_cache: yes
-
-    - name: Check if Docker is already installed
-      command: docker --version
-      register: docker_check
-      failed_when: false
+    - name: Check if Docker CE is installed with correct version
+      shell: apt policy docker-ce | grep "Installed:" | awk '{print $2}'
+      register: installed_docker_version
       changed_when: false
 
-    - name: Extract current Docker version
+    - name: Check if containerd.io is installed with correct version
+      shell: apt policy containerd.io | grep "Installed:" | awk '{print $2}'
+      register: installed_containerd_version
+      changed_when: false
+
+    - name: Determine if Docker packages need installation
       set_fact:
-        current_docker_version: "{{ docker_check.stdout | regex_search('Docker version ([0-9]+\\.[0-9]+\\.[0-9]+)', '\\1') | first }}"
-      when: docker_check.rc == 0
+        docker_needs_install: "{{ installed_docker_version.stdout != docker_ce_version or installed_containerd_version.stdout != containerd_version }}"
 
-    - name: Extract desired Docker version from package version
-      set_fact:
-        desired_docker_version: "{{ docker_ce_version | regex_search('([0-9]+\\.[0-9]+\\.[0-9]+)', '\\1') | first }}"
+    - name: Setup Docker if packages not installed or wrong version
+      when: docker_needs_install | bool
+      block:
+      - name: Create /etc/apt/keyrings directory
+        file:
+          path: /etc/apt/keyrings
+          state: directory
+          mode: '0755'
 
-    - name: Install Docker packages (fresh install)
-      apt:
-        name:
-        - docker-ce={{ docker_ce_version }}
-        - docker-ce-cli={{ docker_ce_version }}
-        - containerd.io={{ containerd_version }}
-        state: present
-        allow_downgrade: yes
-      when: docker_check.rc != 0
+      - name: Download Docker GPG key
+        get_url:
+          url: https://download.docker.com/linux/ubuntu/gpg
+          dest: /etc/apt/keyrings/docker.asc
+          mode: '0644'
 
-    - name: Update Docker packages (version mismatch)
-      apt:
-        name:
-        - docker-ce={{ docker_ce_version }}
-        - docker-ce-cli={{ docker_ce_version }}
-        - containerd.io={{ containerd_version }}
-        state: present
-        allow_downgrade: yes
-        force: yes
-      when: 
-        - docker_check.rc == 0
-        - current_docker_version != desired_docker_version
+      - name: Add Docker repository to apt sources
+        shell: |
+          echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu $(. /etc/os-release && echo $VERSION_CODENAME) stable" > /etc/apt/sources.list.d/docker.list
+        args:
+          executable: /bin/bash
+
+      - name: Update apt package index
+        apt:
+          update_cache: yes
+
+      - name: Install Docker packages
+        apt:
+          name:
+          - docker-ce={{ docker_ce_version }}
+          - docker-ce-cli={{ docker_ce_version }}
+          - containerd.io={{ containerd_version }}
+          state: present
 
     - name: Add {{ ansible_user }} to the docker group
       user:
