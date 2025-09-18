@@ -37,7 +37,7 @@
         - src: ../templates/postgresql/pg_hba.conf.j2
           dest: "{{ postgresql_conf_dir }}/pg_hba.conf"
           mode: "0640"
-        - src: ../templates/postgresql/postgresql_primary.conf.j2
+        - src: ../templates/postgresql/postgresql.conf.j2
           dest: "{{ postgresql_conf_dir }}/postgresql.conf"
           mode: "0640"
         - src: ../templates/postgresql/repmgr.conf.j2
@@ -68,16 +68,18 @@
       when: repmgrd_service_result.changed
 
     - name: Restart PostgreSQL if configuration changed
-      ansible.builtin.service:
+      ansible.builtin.systemd:
         name: "{{ pg_service_name }}"
         state: restarted
+        masked: no
       when: primary_conf_result.changed
 
     - name: Ensure PostgreSQL instance is running and enabled
-      ansible.builtin.service:
+      ansible.builtin.systemd:
         name: "{{ pg_service_name }}"
         state: started
         enabled: yes
+        masked: no
 
     - name: Wait for PostgreSQL to be ready
       ansible.builtin.wait_for:
@@ -87,117 +89,116 @@
         timeout: 60
 
     # ===== DATABASE SETUP =====
-    - name: Setup database users and structures
+    - name: Setup repmgr infrastructure
       block:
-        # Legacy replication setup
-        - name: Setup legacy replication
-          block:
-            - name: Create legacy replication user
-              community.postgresql.postgresql_user:
-                name: "{{ repsvc_user }}"
-                password: "{{ repsvc_password }}"
-                role_attr_flags: REPLICATION,LOGIN
-                login_db: postgres
-                state: present
-              become_user: postgres
+        - name: Check if repmgr user exists
+          ansible.builtin.shell: |
+            sudo -u postgres psql -tAc "SELECT COUNT(*) FROM pg_roles WHERE rolname='{{ repmgr_user }}';"
+          register: repmgr_user_check
+          changed_when: false
 
-            - name: Create legacy replication slots
-              community.postgresql.postgresql_slot:
-                name: "{{ item }}"
-                slot_type: physical
-                state: present
-                login_db: postgres
-              loop: "{{ replica_nodes }}"
-              become_user: postgres
+        - name: Create repmgr user with proper roles
+          ansible.builtin.shell: |
+            sudo -u postgres psql -c "CREATE USER {{ repmgr_user }} WITH PASSWORD '{{ repmgr_password }}' SUPERUSER REPLICATION LOGIN;"
+          when: repmgr_user_check.stdout.strip() == "0"
+          register: create_repmgr_user
 
-          when: not (repmgr_enabled | default(false))
+        - name: Display user creation result
+          ansible.builtin.debug:
+            msg: |
+              repmgr user status: {{ 'CREATED' if repmgr_user_check.stdout.strip() == "0" else 'ALREADY EXISTS' }}
+          when: create_repmgr_user is defined
 
-        # repmgr setup
-        - name: Setup repmgr infrastructure
-          block:
-            - name: Create repmgr user
-              community.postgresql.postgresql_user:
-                name: "{{ repmgr_user }}"
-                password: "{{ repmgr_password }}"
-                role_attr_flags: SUPERUSER,REPLICATION
-                login_db: postgres
-                state: present
-              become_user: postgres
+        - name: Check if repmgr database exists
+          ansible.builtin.shell: |
+            sudo -u postgres psql -tAc "SELECT COUNT(*) FROM pg_database WHERE datname='{{ repmgr_database }}';"
+          register: repmgr_db_check
+          changed_when: false
+        - name: Debug repmgr_db_check value
+          ansible.builtin.debug:
+            msg: "Database exists count: {{ repmgr_db_check.stdout.strip() }}"
+        - name: Create repmgr database with proper owner
+          ansible.builtin.shell: |
+            sudo -u postgres createdb -O "{{ repmgr_user }}" "{{ repmgr_database }}"
+          when: repmgr_db_check.stdout.strip() == "0"
+          register: create_repmgr_db
+          timeout: 30
 
-            - name: Create repmgr database with owner
-              ansible.builtin.shell: |
-                sudo -u postgres psql -c "SELECT 1 FROM pg_database WHERE datname='{{ repmgr_database }}'" | grep -q 1 || \
-                sudo -u postgres createdb -O "{{ repmgr_user }}" "{{ repmgr_database }}"
-              register: repmgr_db_result
-              changed_when: "'CREATE DATABASE' in repmgr_db_result.stderr or repmgr_db_result.rc == 0"
+        - name: Display database creation result
+          ansible.builtin.debug:
+            msg: |
+              repmgr database status: {{ 'CREATED' if repmgr_db_check.stdout.strip() == "0" else 'ALREADY EXISTS' }}
+          when: create_repmgr_db is defined
 
-            - name: Create repmgr extension
-              ansible.builtin.shell: |
-                sudo -u postgres psql -d "{{ repmgr_database }}" -c "CREATE EXTENSION IF NOT EXISTS repmgr;"
-              register: repmgr_ext_result
-              changed_when: "'CREATE EXTENSION' in repmgr_ext_result.stdout"
+        - name: Create repmgr extension
+          ansible.builtin.shell: |
+            sudo -u postgres psql -d "{{ repmgr_database }}" -c "CREATE EXTENSION IF NOT EXISTS repmgr;"
+          register: repmgr_ext_result
+          changed_when: "'CREATE EXTENSION' in repmgr_ext_result.stdout"
 
-          when: repmgr_enabled | default(false)
+        - name: Verify user roles and database ownership
+          ansible.builtin.shell: |
+            echo "=== User Roles ==="
+            sudo -u postgres psql -c "\du {{ repmgr_user }}"
+            echo "=== Database Owner ==="
+            sudo -u postgres psql -c "SELECT datname, datdba::regrole FROM pg_database WHERE datname='{{ repmgr_database }}';"
+          register: verify_setup
+          changed_when: false
+
+        - name: Display verification results
+          ansible.builtin.debug:
+            msg: |
+              Setup verification:
+              {{ verify_setup.stdout }}
 
     # ===== REPMGR REGISTRATION =====
-    - name: Register primary with repmgr
+    - name: Register primary in the cluster
       block:
-        - name: Check if primary is already registered in cluster
+        - name: Register as primary
+          ansible.builtin.command: >
+            sudo -u postgres repmgr
+            -f /etc/repmgr/{{ postgresql_version }}-main/repmgr.conf
+            primary register --force
+          register: repmgr_register_primary
+
+        - name: Verify primary registration
           ansible.builtin.shell: |
-            sudo -u postgres psql -d "{{ repmgr_database }}" -t -A -c "SELECT COUNT(*) FROM repmgr.nodes WHERE node_name = '{{ inventory_hostname }}' AND type = 'primary';"
-          register: primary_registration_check
+            sudo -u postgres psql -d "{{ repmgr_database }}" \
+              -tc "SELECT COUNT(*)::int FROM repmgr.nodes WHERE type = 'primary' AND node_name = '{{ inventory_hostname }}';"
+          register: verify_primary
           changed_when: false
 
-        - name: Show current cluster state before cleanup
+        - name: Display registration status
           ansible.builtin.debug:
-            msg: "Current registrations: {{ primary_registration_check.stdout.strip() }} primary nodes found"
+            msg: |
+              Primary registration result:
+              - Command output: {{ repmgr_register_primary.stdout | default('') }}
+              - Primary nodes found: {{ verify_primary.stdout.strip() }}
+              - Status: {{ 'SUCCESS' if (verify_primary.stdout.strip() | int) == 1 else 'NEEDS_ATTENTION' }}
 
-        - name: Clean up any incorrect registrations (always run)
-          ansible.builtin.shell: |
-            sudo -u postgres psql -d "{{ repmgr_database }}" -c "DELETE FROM repmgr.nodes WHERE node_name != '{{ inventory_hostname }}' OR (node_name = '{{ inventory_hostname }}' AND type != 'primary');"
-          register: cleanup_result
+        - name: Fail if primary registration unsuccessful
+          ansible.builtin.fail:
+            msg: |
+              Primary registration verification failed!
+              Expected: 1 primary node named '{{ inventory_hostname }}'
+              Found: {{ verify_primary.stdout.strip() }} primary nodes
 
-        - name: Check if primary registration is needed after cleanup
-          ansible.builtin.shell: |
-            sudo -u postgres psql -d "{{ repmgr_database }}" -t -A -c "SELECT COUNT(*) FROM repmgr.nodes WHERE node_name = '{{ inventory_hostname }}' AND type = 'primary';"
-          register: post_cleanup_check
-          changed_when: false
+              Debug commands:
+              sudo -u postgres repmgr cluster show
+              sudo -u postgres psql -d {{ repmgr_database }} -c "SELECT * FROM repmgr.nodes;"
+          when: (verify_primary.stdout.strip() | int) != 1
 
-        - name: Register primary node
-          ansible.builtin.command:
-            cmd: sudo -u postgres repmgr -f /etc/repmgr/{{ postgresql_version }}-main/repmgr.conf primary register --force
-          when: post_cleanup_check.stdout.strip() == '0'
-          register: repmgr_registration
-
-        - name: Verify primary registration with repmgr
+        - name: Display cluster status
           ansible.builtin.command:
             cmd: sudo -u postgres repmgr -f /etc/repmgr/{{ postgresql_version }}-main/repmgr.conf cluster show
           register: repmgr_verify
           failed_when: false
 
-        - name: Check if primary is properly registered
-          ansible.builtin.shell: |
-            sudo -u postgres psql -d "{{ repmgr_database }}" -t -A -c "SELECT COUNT(*) FROM repmgr.nodes WHERE node_name = '{{ inventory_hostname }}' AND type = 'primary';"
-          register: final_primary_check
-          changed_when: false
-
-        - name: Fail if primary registration unsuccessful
-          ansible.builtin.fail:
-            msg: "Primary registration failed. Expected 1 primary node, found {{ final_primary_check.stdout.strip() }}"
-          when: final_primary_check.stdout.strip() != '1'
-
-        - name: Display cluster status
-          ansible.builtin.debug:
-            msg: "{{ repmgr_verify.stdout_lines }}"
-
         - name: Verify repmgr database connectivity
-          community.postgresql.postgresql_query:
-            login_host: "127.0.0.1"
-            login_user: "{{ repmgr_user }}"
-            login_password: "{{ repmgr_password }}"
-            login_db: "{{ repmgr_database }}"
-            query: "SELECT 'connection_test' as status"
-          become_user: postgres
+          ansible.builtin.shell: |
+            sudo -u postgres psql -d "{{ repmgr_database }}" -c "SELECT version();"
+          environment:
+            PGPASSWORD: "{{ repmgr_password }}"
           register: repmgr_connection_test
 
         - name: Start repmgrd service
@@ -217,13 +218,14 @@
           ansible.builtin.debug:
             msg: "repmgrd service: {{ repmgrd_status.status.ActiveState }}"
 
-      when: repmgr_enabled | default(false)
-
     - name: Display setup completion
       ansible.builtin.debug:
         msg: |
           ===== PRIMARY SETUP COMPLETE =====
           PostgreSQL Primary is running on {{ ansible_hostname }}
           Service: {{ pg_service_name }}
-          repmgr: {{ 'Enabled and running' if (repmgr_enabled | default(false)) else 'Disabled (legacy mode)' }}
+          repmgrd: {{ repmgrd_status.status.ActiveState | default('unknown') }}
+          Cluster Status:
+          {{ repmgr_verify.stdout_lines | default(['Run repmgr cluster show manually']) | join('\n') }}
+
           Next: Deploy replicas using postgresql-deploy-replica.yml

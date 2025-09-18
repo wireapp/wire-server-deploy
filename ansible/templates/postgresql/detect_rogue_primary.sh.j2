@@ -1,0 +1,102 @@
+#!/bin/bash
+# detect_rogue_primary.sh - Split-brain monitoring tool
+set -euo pipefail
+
+HOSTNAME="$(hostname)"
+
+# Cluster nodes from Ansible inventory (excluding myself)
+CLUSTER_NODES=(
+{%- set all_nodes = (groups.postgresql_rw | default([])) + (groups.postgresql_ro | default([])) %}
+{%- for node in all_nodes %}
+{%- if node != inventory_hostname %}
+    "{{ hostvars[node].ansible_default_ipv4.address | default(hostvars[node].ansible_host | default(node)) }}"
+{%- endif %}
+{%- endfor %}
+)
+
+# Database connection settings
+DB_USER="{{ repmgr_user }}"
+DB_PASSWORD="{{ repmgr_password }}"
+DB_NAME="{{ repmgr_database | default('postgres') }}"
+
+# Check if I'm primary with no replicas
+IS_PRIMARY="$(psql -t -A -q -d "$DB_NAME" -c "SELECT NOT pg_is_in_recovery();" | tr -d '[:space:]')"
+REPLICA_COUNT="$(psql -t -A -q -d "$DB_NAME" -c "SELECT COUNT(*) FROM pg_stat_replication;" | tr -d '[:space:]')"
+
+echo "[$HOSTNAME] I am primary: $IS_PRIMARY, Replica count: $REPLICA_COUNT"
+
+# Silent exit if not an isolated primary
+if [[ "$IS_PRIMARY" != "t" || "$REPLICA_COUNT" != "0" ]]; then
+    echo "[$HOSTNAME] Not an isolated primary - no split-brain check needed"
+    exit 0
+fi
+
+echo "[$HOSTNAME] I'm an isolated primary - checking other cluster nodes..."
+SPLIT_BRAIN_DETECTED=false
+
+# Check each cluster node
+for NODE_IP in "${CLUSTER_NODES[@]}"; do
+    [[ -z "$NODE_IP" ]] && continue
+
+    echo "[$HOSTNAME] Checking node $NODE_IP for primary status..."
+
+    # Check if remote node is also primary
+    REMOTE_PRIMARY="$(PGPASSWORD="$DB_PASSWORD" psql -h "$NODE_IP" -U "$DB_USER" -d "$DB_NAME" \
+        -t -A -q -c "SELECT NOT pg_is_in_recovery();" 2>/dev/null | tr -d '[:space:]')" || REMOTE_PRIMARY=""
+
+    if [[ "$REMOTE_PRIMARY" == "t" ]]; then
+        echo "🚨 [$HOSTNAME] SPLIT-BRAIN DETECTED: Node $NODE_IP is also PRIMARY!"
+        SPLIT_BRAIN_DETECTED=true
+        break
+    elif [[ "$REMOTE_PRIMARY" == "f" ]]; then
+        echo "[$HOSTNAME] Node $NODE_IP is replica (good)"
+    else
+        echo "[$HOSTNAME] Node $NODE_IP is unreachable or returned no status"
+    fi
+done
+
+if [[ "$SPLIT_BRAIN_DETECTED" == "true" ]]; then
+    echo "[$HOSTNAME] 🛑 STOPPING POSTGRESQL TO RESOLVE SPLIT-BRAIN"
+    logger "Split-brain detected on $HOSTNAME - stopping PostgreSQL service"
+
+    # Mask to prevent restart attempts
+    echo "[$HOSTNAME] Masking PostgreSQL service to prevent restart..."
+    sudo systemctl mask postgresql@{{ postgresql_version }}-main.service || {
+        echo "[$HOSTNAME] Warning: Failed to mask PostgreSQL service"
+    }
+
+    # Then stop PostgreSQL service
+    echo "[$HOSTNAME] Stopping PostgreSQL service..."
+    sudo systemctl stop postgresql@{{ postgresql_version }}-main.service || {
+        echo "[$HOSTNAME] Warning: Failed to stop PostgreSQL service normally"
+    }
+
+    # Verify the stop actually worked
+    echo "[$HOSTNAME] Verifying PostgreSQL has stopped..."
+    sleep 2
+
+    if systemctl is-active --quiet postgresql@{{ postgresql_version }}-main.service; then
+        echo "[$HOSTNAME] ⚠️ PostgreSQL still active, attempting force stop..."
+        sudo systemctl kill postgresql@{{ postgresql_version }}-main.service || {
+            echo "[$HOSTNAME] Warning: Force kill command failed"
+        }
+        sleep 2
+
+        if systemctl is-active --quiet postgresql@{{ postgresql_version }}-main.service; then
+            echo "[$HOSTNAME] ❌ Failed to stop PostgreSQL - manual intervention required"
+            logger "CRITICAL: Failed to stop PostgreSQL during split-brain resolution on $HOSTNAME"
+        else
+            echo "[$HOSTNAME] ✅ PostgreSQL successfully stopped after force kill"
+        fi
+    else
+        echo "[$HOSTNAME] ✅ PostgreSQL successfully stopped"
+    fi
+
+    echo "[$HOSTNAME] PostgreSQL stopped and masked - manual intervention required"
+    exit 0
+else
+    echo "[$HOSTNAME] ✅ No split-brain detected - I'm the only primary in reachable nodes"
+fi
+
+echo "[$HOSTNAME] Split-brain monitoring check completed"
+exit 0

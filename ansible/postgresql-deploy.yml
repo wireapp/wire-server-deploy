@@ -1,5 +1,5 @@
 - name: Clean previous deployment state
-  import_playbook: postgresql-playbooks/clean_exiting_setup.yml
+  import_playbook: postgresql-playbooks/clean_existing_setup.yml
   tags:
     - postgresql
     - cleanup

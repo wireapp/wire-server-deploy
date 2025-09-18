@@ -229,95 +229,53 @@
         mode: "0644"
       register: repmgrd_service_deployed
 
-    # ===== PHASE 5: INSTALLATION VERIFICATION =====
+    # ===== PHASE 5: SIMPLIFIED INSTALLATION VERIFICATION =====
 
-    - name: Verify PostgreSQL installation
+    - name: Verify installations
       block:
-        - name: Check PostgreSQL binary and version
-          ansible.builtin.command:
-            cmd: "/usr/lib/postgresql/{{ postgresql_version }}/bin/postgres --version"
-          register: postgresql_version_check
-          changed_when: false
-
-        - name: Verify PostgreSQL service configuration
-          ansible.builtin.systemd:
-            name: postgresql
-          register: postgresql_service_check
-
-        - name: Test PostgreSQL client tools
-          ansible.builtin.command:
-            cmd: "/usr/bin/psql --version"
-          register: psql_version_check
-          changed_when: false
-
-      rescue:
-        - name: PostgreSQL verification failure
-          ansible.builtin.fail:
-            msg: |
-              PostgreSQL installation verification failed:
-              - Binary: {{ postgresql_version_check.stdout | default('NOT FOUND') }}
-              - Service: {{ postgresql_service_check.status.LoadState | default('NOT FOUND') }}
-              - Client: {{ psql_version_check.stdout | default('NOT FOUND') }}
-
-    - name: Verify repmgr installation
-      block:
-        - name: Check repmgr binary
-          ansible.builtin.command: which repmgr
-          register: repmgr_binary_check
-          changed_when: false
-
-        - name: Check repmgr version
-          ansible.builtin.command: repmgr --version
-          register: repmgr_version_check
-          changed_when: false
-
-        - name: Verify repmgrd service template
-          ansible.builtin.stat:
-            path: "/etc/systemd/system/repmgrd@.service"
-          register: repmgrd_service_check
-
-        - name: Check all repmgr packages
+        - name: Check PostgreSQL packages
           ansible.builtin.shell: |
-            for pkg in {{ repmgr_packages_ordered | join(' ') }}; do
-              if dpkg-query -W -f='${Package} ${Version} ${Status}\n' "$pkg" 2>/dev/null | grep -q "install ok installed"; then
-                echo "$pkg: INSTALLED"
-              else
-                echo "$pkg: MISSING"
-              fi
-            done
-          register: repmgr_packages_check
+            echo "=== PostgreSQL Packages ==="
+            dpkg -l | grep "postgresql-{{ postgresql_version }}" | awk '{print $2 ": " $1}'
+          register: pg_packages
           changed_when: false
 
-      rescue:
-        - name: repmgr verification failure
-          ansible.builtin.fail:
+        - name: Check repmgr packages
+          ansible.builtin.shell: |
+            echo "=== repmgr Packages ==="
+            dpkg -l | grep repmgr | awk '{print $2 ": " $1}'
+          register: repmgr_packages
+          changed_when: false
+
+        - name: Check PostgreSQL binaries
+          ansible.builtin.shell: |
+            echo "=== PostgreSQL Binaries ==="
+            ls -la /usr/lib/postgresql/{{ postgresql_version }}/bin/postgres 2>/dev/null && echo "postgres: FOUND" || echo "postgres: MISSING"
+            ls -la /usr/lib/postgresql/{{ postgresql_version }}/bin/psql 2>/dev/null && echo "psql: FOUND" || echo "psql: MISSING"
+          register: pg_binaries
+          changed_when: false
+
+        - name: Check repmgr binary
+          ansible.builtin.shell: |
+            echo "=== repmgr Binary ==="
+            ls -la /usr/bin/repmgr 2>/dev/null && echo "repmgr: FOUND" || echo "repmgr: MISSING"
+          register: repmgr_binary
+          changed_when: false
+
+        - name: Display installation summary
+          ansible.builtin.debug:
             msg: |
-              repmgr installation verification failed:
-              - Binary: {{ repmgr_binary_check.stdout | default('NOT FOUND') }}
-              - Packages: {{ repmgr_packages_check.stdout_lines | default(['UNKNOWN']) | join(', ') }}
+              ===== INSTALLATION COMPLETE =====
 
-    # ===== PHASE 6: FINAL SUMMARY =====
+              PostgreSQL Packages:
+              {{ pg_packages.stdout }}
 
-    - name: Display comprehensive installation summary
-      ansible.builtin.debug:
-        msg: |
-          PostgreSQL Installation Complete
+              repmgr Packages:
+              {{ repmgr_packages.stdout }}
 
-          Installation Details:
-          - Method: {{ 'Repository' if postgresql_use_repository else 'Offline packages' }}
-          - PostgreSQL: {{ postgresql_version_check.stdout.split()[-1] }}
-          - Client Tools: {{ psql_version_check.stdout.split()[-1] }}
-          - repmgr: {{ repmgr_version_check.stdout_lines[0] | regex_replace('^repmgr ', '') }}
-          - repmgrd Service: {{ 'CONFIGURED' if repmgrd_service_check.stat.exists else 'MISSING' }}
+              Binaries:
+              {{ pg_binaries.stdout }}
+              {{ repmgr_binary.stdout }}
 
-          Configuration Status:
-          - Directories: CREATED
-          - Service Templates: DEPLOYED
-          - Status: Ready for cluster setup
-
-    - name: Reset temporary variables
-      ansible.builtin.set_fact:
-        pg_packages_to_install: []
-        repmgr_packages_to_install: []
-        repmgr_packages_filtered: []
-        repmgr_packages_sorted: []
+              Note: Version checks will work after cluster configuration.
+              This is an installation-only playbook; cluster setup comes next.

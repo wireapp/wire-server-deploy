@@ -1,3 +1,4 @@
+# detect-rogue-primary.service.j2
 [Unit]
 Description=PostgreSQL Split-Brain Detection Service
 Documentation=man:systemd.service(5)
@@ -9,12 +10,13 @@ Type=oneshot
 User=postgres
 Group=postgres
 WorkingDirectory=/var/lib/postgresql
-ExecStart=/usr/local/bin/detect_rouge_primary.sh
+ExecStart=/usr/local/bin/detect_rogue_primary.sh
 StandardOutput=journal
 StandardError=journal
-TimeoutSec=30
+TimeoutSec=60
 Environment=PGUSER=postgres
-Environment=PGDATABASE=postgres
+Environment=PGDATABASE={{ repmgr_database }}
+Environment=PGCONNECT_TIMEOUT=5
 
 # Only run if PostgreSQL is running
 ExecCondition=/bin/systemctl is-active postgresql@{{ postgresql_version }}-main.service

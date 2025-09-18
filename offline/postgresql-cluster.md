@@ -51,8 +51,8 @@ The PostgreSQL cluster implements a **Primary-Replica High Availability** archit
 ## Key Concepts
 
 ### Technology Stack
-- **PostgreSQL 17**: Latest stable version with streaming replication
-- **repmgr/repmgrd**: Cluster management and automatic failover
+- **PostgreSQL 17**: Latest stable version with streaming replication ([docs](https://www.postgresql.org/docs/17/warm-standby.html))
+- **repmgr/repmgrd**: Cluster management and automatic failover ([docs](https://repmgr.org/))
 - **Split-Brain Detection**: Intelligent monitoring prevents data corruption
 - **Wire Integration**: Pre-configured database setup
 
@@ -65,16 +65,29 @@ The PostgreSQL cluster implements a **Primary-Replica High Availability** archit
 ## High Availability Features
 
 ### 🎯 Automatic Failover
-- **Detection**: repmgrd monitors primary connectivity with configurable timeouts
+- **Detection**: repmgrd monitors primary connectivity with configurable timeouts ([repmgr failover](https://repmgr.org/docs/current/failover.html))
+- **Failover Validation**: Quorum-based promotion with lag checking and connectivity validation
 - **Promotion**: Promotes replica with most recent data automatically
 - **Rewiring**: Remaining replicas connect to new primary automatically
+
+**Failover Validation Features:**
+- **Quorum Requirements**: For 3+ node clusters, requires ≥2 visible nodes for promotion
+- **Lag Validation**: Checks WAL replay lag against configurable threshold (64MB default)
+- **Recovery State**: Ensures candidate is in recovery mode before promotion
+- **Connectivity Checks**: Validates WAL receiver activity
 
 ### 🛡️ Split-Brain Protection
 
 **Detection Logic:**
-1. Check: Am I an isolated primary? (no active replicas)
-2. Query other nodes: Is another node also primary?
-3. If conflict detected → Mask and stop PostgreSQL service
+1. **Self-Check**: Am I an isolated primary? (no active replicas connected)
+2. **Cross-Node Verification**: Query all other cluster nodes to detect conflicting primaries
+3. **Conflict Resolution**: If split-brain detected → mask and stop PostgreSQL service
+
+**Advanced Features:**
+- **Multi-Node Checking**: Verifies primary status across all cluster nodes
+- **Graceful Shutdown**: Masks service to prevent restart attempts, then stops PostgreSQL
+- **Force Termination**: Uses `systemctl kill` if normal stop fails
+- **Event Logging**: Comprehensive logging to syslog and journal
 
 **Recovery:** Event-driven fence script automatically unmasks services during successful rejoins
 
@@ -85,6 +98,20 @@ The PostgreSQL cluster implements a **Primary-Replica High Availability** archit
 | Primary Failure | 5-30 seconds | < 30 seconds | None |
 | Network Partition | 30-60 seconds | Automatic | None |
 | Node Recovery | Immediate | < 2 minutes | None |
+
+### 📊 Monitoring & Event System
+
+**Continuous Monitoring:**
+- **Timer-Based Checks**: Split-brain detection every 30 seconds with 10-second randomization
+- **Service Integration**: Monitors only run when PostgreSQL is active
+- **Event Notifications**: repmgr events trigger automated responses
+- **Metadata Updates**: Automatic cluster state synchronization
+
+**Event Handlers:**
+- **Failover Events**: Update cluster metadata and log promotion events
+- **Rejoin Events**: Automatically unmask PostgreSQL services for recovered nodes
+- **Standby Promotion**: Track promotion success/failure
+- **Fence Events**: Comprehensive logging to `/var/log/postgresql/fence_events.log`
 
 ## Inventory Definition
 
@@ -137,7 +164,7 @@ postgresql3
 | `postgresql_version` | `17` | PostgreSQL major version | No |
 | `wire_dbname` | `wire-server` | Database name for Wire application | Yes |
 | `wire_user` | `wire-server` | Database user for Wire application | Yes |
-| `wire_pass` | auto-generated | Password (displayed after deployment) | No |
+| `wire_pass` | auto-generated | Password (displayed as output of the ansible task) | No |
 
 ## Installation Process
 
@@ -181,16 +208,23 @@ See the [Monitoring Checks](#monitoring-checks-after-installation) section for c
 ansible-playbook -i ansible/inventory/offline/hosts.ini ansible/postgresql-deploy.yml
 
 # Clean previous deployment
-ansible-playbook -i ansible/inventory/offline/hosts.ini ansible/postgresql-playbooks/clean_exiting_setup.yml
+# Only cleans the messy configurations the data remains intact
+ansible-playbook -i ansible/inventory/offline/hosts.ini ansible/postgresql-deploy.yml --tag cleanup
 ```
 
 ### 🏷️ Tag-Based Deployments
 
 | Tag | Description | Example |
 |-----|-------------|---------|
-| `monitoring` | Split-brain detection only | `--tags "monitoring"` |
+| `cleanup` | Clean previous deployment state | `--tags "cleanup"` |
+| `install` | Install PostgreSQL packages only | `--tags "install"` |
+| `primary` | Deploy primary node only | `--tags "primary"` |
+| `replica` | Deploy replica nodes only | `--tags "replica"` |
+| `verify` | Verify HA setup only | `--tags "verify"` |
 | `wire-setup` | Wire database setup only | `--tags "wire-setup"` |
-| `replica` | Replica configuration only | `--tags "replica"` |
+| `monitoring` | Deploy cluster monitoring only | `--tags "monitoring"` |
+| `postgresql-monitoring` | Alternative monitoring tag | `--tags "postgresql-monitoring"` |
+| `post-deploy` | Post-deployment tasks | `--tags "post-deploy"` |
 
 ```bash
 # Common scenarios
@@ -209,18 +243,21 @@ ansible-playbook -i ansible/inventory/offline/hosts.ini ansible/postgresql-deplo
 sudo -u postgres repmgr -f /etc/repmgr/17-main/repmgr.conf cluster show
 
 # 2. Service status
-sudo systemctl status postgresql@17-main repmgrd@17-main detect-rouge-primary.timer
+sudo systemctl status postgresql@17-main repmgrd@17-main detect-rogue-primary.timer
 
 # 3. Replication status (run on primary)
 sudo -u postgres psql -c "SELECT application_name, client_addr, state FROM pg_stat_replication;"
 
-# 4. check the spilt-brain detector logs
-sudo journalctl -u detect-rouge-primary.service
+# 4. Check split-brain detector logs
+sudo journalctl -u detect-rogue-primary.service --since "10m ago"
 
-# 5. Check rempgr status
+# 5. Check repmgrd status
 sudo systemctl status repmgrd@17-main
 
-# 6. Check fence events
+# 6. Check repmgrd logs
+sudo journalctl -u repmgrd@17-main.service --since "20m ago"
+
+# 7. Check fence events
 sudo tail -n 20 -f /var/log/postgresql/fence_events.log
 
 # 5, Manually promote a standby to primary when repmgrd fails to promote (very rare it will happen)
@@ -233,15 +270,16 @@ sudo -u postgres repmgr -f /etc/repmgr/17-main/repmgr.conf standby promote
 The deployment includes automated split-brain detection:
 
 - **Timer**: Every 30 seconds via systemd timer
-- **Script**: `/usr/local/bin/detect_rouge_primary.sh`
+- **Script**: `/usr/local/bin/detect_rogue_primary.sh`
 - **Fence Script**: `/usr/local/bin/simple_fence.sh` (handles repmgr events)
-- **Logs**: `journalctl -u detect-rouge-primary.service`
+- **Logs**: `journalctl -u detect-rogue-primary.service`
 
 **What it does:**
-1. Detects isolated primary (no active replicas)
-2. Queries other nodes for primary status conflicts
-3. Masks and stops PostgreSQL if split-brain detected
-4. Auto-unmasks services during successful rejoins
+1. **Continuous Monitoring**: 30-second timer checks with cross-node verification
+2. **Multi-Node Validation**: Queries all cluster nodes for primary status conflicts
+3. **Intelligent Fencing**: Masks and stops PostgreSQL if split-brain detected
+4. **Event-Driven Recovery**: Automatic service unmasking during successful rejoins
+5. **Comprehensive Logging**: All events logged to journal and dedicated log files
 
 ## How It Confirms a Reliable System
 
@@ -257,7 +295,7 @@ The deployment includes automated split-brain detection:
 ```bash
 # Verify system reliability
 sudo -u postgres repmgr -f /etc/repmgr/17-main/repmgr.conf cluster show
-systemctl status detect-rouge-primary.timer
+sudo systemctl status detect-rogue-primary.timer
 sudo -u postgres psql -c "SELECT * FROM pg_stat_replication;"
 ```
 
@@ -273,6 +311,28 @@ sudo -u postgres psql -c "SELECT * FROM pg_stat_replication;"
 - **Recovery Time**: < 2 minutes for node rejoin
 - **Data Protection**: 100% split-brain detection and prevention
 
+## Configuration Options
+
+### 🔧 repmgr Configuration
+- **Node ID**: `node_id` - Unique identifier for each node in the cluster (must be unique across all nodes)
+- **Node Priority**: `priority` - Determines promotion order during failover (higher values preferred)
+- **Monitoring Interval**: `repmgr_monitor_interval` (default: 2 seconds)
+- **Reconnect Attempts**: `repmgr_reconnect_attempts` (default: 6)
+- **Reconnect Interval**: `repmgr_reconnect_interval` (default: 10 seconds)
+- **Node Priorities**: Configurable via `repmgr_node_config` variable
+
+*See [repmgr configuration reference](https://repmgr.org/docs/current/configuration-file.html) for complete options.*
+
+### 🛡️ Failover Validation
+- **Quorum Requirements**: Minimum 2 visible nodes for 3+ node clusters
+- **Lag Threshold**: `LAG_CAP` environment variable (default: 64MB)
+- **Connectivity Validation**: WAL receiver activity checks
+
+### 📊 Monitoring System
+- **Check Interval**: Every 30 seconds with 10-second randomization
+- **Timeout Protection**: 60-second execution timeout per check
+- **Event Logging**: Comprehensive logging to `/var/log/postgresql/fence_events.log`
+
 ## Node Recovery Operations
 
 ### 🔄 Standard Node Rejoin
@@ -287,6 +347,8 @@ sudo -u postgres repmgr -f /etc/repmgr/17-main/repmgr.conf node rejoin \
     -d repmgr -h <primary-ip> -U repmgr --force-rewind --verbose
 ```
 
+*See [repmgr node rejoin docs](https://repmgr.org/docs/current/repmgr-node-rejoin.html) for detailed options.*
+
 ### 🚨 Emergency Recovery
 
 #### **Complete Cluster Failure**
@@ -299,6 +361,8 @@ done
 # 2. Start best candidate as new primary
 sudo systemctl unmask postgresql@17-main.service
 sudo -u postgres repmgr -f /etc/repmgr/17-main/repmgr.conf primary register --force
+
+*See [repmgr primary register](https://repmgr.org/docs/current/repmgr-primary-register.html) and [standby register](https://repmgr.org/docs/current/repmgr-standby-register.html) docs for details.*
 
 # 3. Rejoin other nodes
 sudo -u postgres repmgr -f /etc/repmgr/17-main/repmgr.conf node rejoin \
@@ -325,4 +389,4 @@ The [`postgresql-wire-setup.yml`](../ansible/postgresql-playbooks/postgresql-wir
 
 **Usage:** See the [Deployment Commands Reference](#deployment-commands-reference) section for all Wire setup commands.
 
-**Important:** Generated password is displayed in Ansible output - save it securely for Wire server configuration.
+**Important:** Generated password is displayed in Ansible output task `Display PostgreSQL setup completion` - save it securely for Wire server configuration.

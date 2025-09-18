@@ -3,13 +3,7 @@ postgresql_version: 17
 postgresql_data_dir: /var/lib/postgresql/{{ postgresql_version }}/main
 postgresql_conf_dir: /etc/postgresql/{{ postgresql_version }}/main
 
-# Replication services configuration
-repsvc_user: repsvc
-repsvc_password: "securepassword"
-repsvc_database: repsvc_db
-
 # repmgr HA configuration
-repmgr_enabled: true
 repmgr_user: repmgr
 repmgr_password: "securepassword"
 repmgr_database: repmgr
@@ -30,9 +24,23 @@ repmgr_node_config:
     role: standby
 
 # repmgr settings
-repmgr_monitor_interval: 2
-repmgr_reconnect_attempts: 6
-repmgr_reconnect_interval: 5
+# repmgrd monitoring and reconnection configuration
+# Reference: https://repmgr.org/docs/current/repmgrd-basic-configuration.html
+#
+# monitor_interval_secs: Interval in seconds between monitoring checks
+#   - Default: 2 seconds
+#   - Controls how frequently repmgr monitors the primary server status
+#
+# reconnect_attempts: Maximum number of reconnection attempts
+#   - Default: 6 attempts
+#   - Number of times repmgr will attempt to reconnect to a failed primary
+#
+# reconnect_interval: Interval in seconds between reconnection attempts
+#   - Default: 10 seconds
+#   - Time to wait between each reconnection attempt
+monitor_interval_secs: 2
+reconnect_attempts: 6
+reconnect_interval: 5
 
 # Use local packages instead of repository
 postgresql_use_repository: false  # Set to true to use local packages from urls

@@ -6,7 +6,10 @@
   tasks:
     - name: Verify streaming replication status on primary
       community.postgresql.postgresql_query:
-        login_db: postgres
+        login_host: "127.0.0.1"
+        login_user: "{{ repmgr_user }}"
+        login_password: "{{ repmgr_password }}"
+        db: "{{ repmgr_database }}"
         query: |
           SELECT
             client_addr,
@@ -23,7 +26,6 @@
           WHERE application_name IN ('postgresql2', 'postgresql3')
           ORDER BY application_name;
       register: replication_status
-      become_user: postgres
 
     - name: Display streaming replication status
       ansible.builtin.debug:
@@ -40,68 +42,60 @@
       when: replication_status.query_result | length == 0
 
     - name: Verify replication slots are active
-      community.postgresql.postgresql_query:
-        login_db: postgres
-        query: |
-          SELECT
-            slot_name,
-            active,
-            pg_size_pretty(pg_wal_lsn_diff(pg_current_wal_lsn(), restart_lsn)) as slot_lag,
-            CASE
-              WHEN active THEN 'ACTIVE'
-              ELSE 'INACTIVE - CHECK REPLICA'
-            END as slot_status
-          FROM pg_replication_slots
-          WHERE slot_name IN ('postgresql2', 'postgresql3')
-          ORDER BY slot_name;
-      register: slot_status
-      become_user: postgres
+      ansible.builtin.shell: |
+        sudo -u postgres psql -d postgres -c "
+        SELECT
+          slot_name,
+          active,
+          pg_size_pretty(pg_wal_lsn_diff(pg_current_wal_lsn(), restart_lsn)) as slot_lag,
+          CASE
+            WHEN active THEN 'ACTIVE'
+            ELSE 'INACTIVE - CHECK REPLICA'
+          END as slot_status
+        FROM pg_replication_slots
+        WHERE slot_name IN ('repmgr_slot_2', 'repmgr_slot_3')
+        ORDER BY slot_name;"
+      register: slot_status_raw
+      changed_when: false
 
     - name: Display replication slots status
       ansible.builtin.debug:
         msg: |
           Replication Slots Status:
-          {% for slot in slot_status.query_result %}
-          - {{ slot.slot_name }}: {{ slot.slot_status }} - Lag: {{ slot.slot_lag }}
-          {% endfor %}
+          {{ slot_status_raw.stdout }}
 
     - name: Check WAL disk usage on primary
-      community.postgresql.postgresql_query:
-        login_db: postgres
-        query: |
-          SELECT
-            pg_size_pretty(sum(size)) as total_wal_size,
-            count(*) as wal_files,
-            CASE
-              WHEN sum(size) > 2147483648 THEN 'WARNING: >2GB WAL usage'
-              WHEN sum(size) > 1073741824 THEN 'CAUTION: >1GB WAL usage'
-              ELSE 'OK'
-            END as wal_status
-          FROM pg_ls_waldir();
-      register: wal_usage
-      become_user: postgres
+      ansible.builtin.shell: |
+        sudo -u postgres psql -d postgres -c "
+        SELECT
+          pg_size_pretty(sum(size)) as total_wal_size,
+          count(*) as wal_files,
+          CASE
+            WHEN sum(size) > 2147483648 THEN 'WARNING: >2GB WAL usage'
+            WHEN sum(size) > 1073741824 THEN 'CAUTION: >1GB WAL usage'
+            ELSE 'OK'
+          END as wal_status
+        FROM pg_ls_waldir();"
+      register: wal_usage_raw
+      changed_when: false
 
     - name: Display WAL usage status
       ansible.builtin.debug:
         msg: |
           WAL Usage Status:
-          - Total WAL Size: {{ wal_usage.query_result[0].total_wal_size }}
-          - WAL Files: {{ wal_usage.query_result[0].wal_files }}
-          - Status: {{ wal_usage.query_result[0].wal_status }}
+          {{ wal_usage_raw.stdout }}
 
     - name: Check repmgr cluster status
       ansible.builtin.command:
         cmd: sudo -u postgres repmgr -f /etc/repmgr/{{ postgresql_version }}-main/repmgr.conf cluster show
       register: cluster_status
       changed_when: false
-      when: repmgr_enabled | default(false)
 
     - name: Display repmgr cluster status
       ansible.builtin.debug:
         msg: |
           repmgr Cluster Status:
           {{ cluster_status.stdout_lines | join('\n') }}
-      when: repmgr_enabled | default(false)
 
     - name: Check repmgr events
       ansible.builtin.command:
@@ -109,20 +103,17 @@
       register: cluster_events
       changed_when: false
       ignore_errors: yes
-      when: repmgr_enabled | default(false)
 
     - name: Display recent cluster events
       ansible.builtin.debug:
         msg: |
           Recent Cluster Events:
           {{ cluster_events.stdout_lines | join('\n') }}
-      when:
-        - repmgr_enabled | default(false)
-        - cluster_events.rc == 0
+      when: cluster_events.rc == 0
 
     - name: Verify all nodes are registered and active
       community.postgresql.postgresql_query:
-        login_db: "{{ repmgr_database }}"
+        db: "{{ repmgr_database }}"
         login_host: "127.0.0.1"
         login_user: "{{ repmgr_user }}"
         login_password: "{{ repmgr_password }}"
@@ -139,8 +130,6 @@
           FROM repmgr.nodes
           ORDER BY node_id;
       register: node_registration
-      become_user: postgres
-      when: repmgr_enabled | default(false)
 
     - name: Display node registration status
       ansible.builtin.debug:
@@ -149,45 +138,42 @@
           {% for node in node_registration.query_result %}
           - Node {{ node.node_id }} ({{ node.node_name }}): {{ node.type | upper }} - {{ node.node_status }}
           {% endfor %}
-      when: repmgr_enabled | default(false)
+      when: node_registration is defined
 
     - name: Check PostgreSQL version
-      community.postgresql.postgresql_query:
-        login_db: postgres
-        query: "SELECT version();"
-      register: pg_version
-      become_user: postgres
+      ansible.builtin.shell: |
+        sudo -u postgres psql -d postgres -c "SELECT version();"
+      register: pg_version_raw
+      changed_when: false
 
     - name: Display PostgreSQL version
       ansible.builtin.debug:
-        msg: "PostgreSQL Version: {{ pg_version.query_result[0].version }}"
+        msg: |
+          PostgreSQL Version:
+          {{ pg_version_raw.stdout }}
 
     - name: Generate health summary
-      community.postgresql.postgresql_query:
-        login_db: postgres
-        query: |
-          SELECT
-            'Primary Health Check' as check_type,
-            COUNT(DISTINCT client_addr) as connected_replicas,
-            COUNT(*) FILTER (WHERE state = 'streaming') as streaming_replicas,
-            COUNT(*) FILTER (WHERE sync_state = 'sync') as sync_replicas,
-            CASE
-              WHEN COUNT(*) = 0 THEN 'NO_REPLICAS'
-              WHEN COUNT(*) FILTER (WHERE state = 'streaming') = COUNT(*) THEN 'ALL_STREAMING'
-              ELSE 'PARTIAL_STREAMING'
-            END as replication_health
-          FROM pg_stat_replication;
-      register: health_summary
-      become_user: postgres
+      ansible.builtin.shell: |
+        sudo -u postgres psql -d postgres -c "
+        SELECT
+          'Primary Health Check' as check_type,
+          COUNT(DISTINCT client_addr) as connected_replicas,
+          COUNT(*) FILTER (WHERE state = 'streaming') as streaming_replicas,
+          COUNT(*) FILTER (WHERE sync_state = 'sync') as sync_replicas,
+          CASE
+            WHEN COUNT(*) = 0 THEN 'NO_REPLICAS'
+            WHEN COUNT(*) FILTER (WHERE state = 'streaming') = COUNT(*) THEN 'ALL_STREAMING'
+            ELSE 'PARTIAL_STREAMING'
+          END as replication_health
+        FROM pg_stat_replication;"
+      register: health_summary_raw
+      changed_when: false
 
     - name: Display health summary
       ansible.builtin.debug:
         msg: |
           PostgreSQL HA Health Summary:
-          - Connected Replicas: {{ health_summary.query_result[0].connected_replicas }}
-          - Streaming Replicas: {{ health_summary.query_result[0].streaming_replicas }}
-          - Synchronous Replicas: {{ health_summary.query_result[0].sync_replicas }}
-          - Replication Health: {{ health_summary.query_result[0].replication_health }}
+          {{ health_summary_raw.stdout }}
 
 # Additional verification on replica nodes
 - name: Verify PostgreSQL replicas
@@ -197,7 +183,10 @@
   tasks:
     - name: Check replica recovery status
       community.postgresql.postgresql_query:
-        login_db: postgres
+        login_host: "127.0.0.1"
+        login_user: "{{ repmgr_user }}"
+        login_password: "{{ repmgr_password }}"
+        db: "{{ repmgr_database }}"
         query: |
           SELECT
             pg_is_in_recovery() as is_replica,
@@ -208,7 +197,6 @@
               ELSE 'PRIMARY/STANDALONE'
             END as node_role
       register: replica_status
-      become_user: postgres
 
     - name: Display replica status
       ansible.builtin.debug:
@@ -221,7 +209,10 @@
 
     - name: Check replica lag
       community.postgresql.postgresql_query:
-        login_db: postgres
+        login_host: "127.0.0.1"
+        login_user: "{{ repmgr_user }}"
+        login_password: "{{ repmgr_password }}"
+        db: "{{ repmgr_database }}"
         query: |
           SELECT
             CASE
@@ -241,7 +232,6 @@
               ELSE 'NOT_REPLICA'
             END as lag_status
       register: replica_lag
-      become_user: postgres
 
     - name: Display replica lag information
       ansible.builtin.debug:
@@ -254,16 +244,18 @@
       ansible.builtin.systemd:
         name: "repmgrd@{{ postgresql_version }}-main"
       register: repmgrd_status
-      when: repmgr_enabled | default(false)
 
     - name: Display repmgrd status
       ansible.builtin.debug:
         msg: "repmgrd service: {{ repmgrd_status.status.ActiveState | default('unknown') }}"
-      when: repmgr_enabled | default(false)
+      when: repmgrd_status is defined
 
     - name: Test replica read-only access
       community.postgresql.postgresql_query:
-        login_db: postgres
+        login_host: "127.0.0.1"
+        login_user: "{{ repmgr_user }}"
+        login_password: "{{ repmgr_password }}"
+        db: "{{ repmgr_database }}"
         query: |
           SELECT
             'Replica accessible' as status,
@@ -271,7 +263,6 @@
             current_user as user,
             inet_server_addr() as server_ip
       register: replica_connectivity
-      become_user: postgres
 
     - name: Display replica connectivity
       ansible.builtin.debug:
