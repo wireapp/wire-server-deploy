@@ -56,10 +56,22 @@
       line: 'COTURN_NODE="{{ k8s_coturn_node }}"'
       backrefs: yes
 
-  - name: Load WSD Docker image
+  - name: Check if WSD Docker image already exists
+    shell: docker images | grep "quay.io/wire/wire-server-deploy" | awk '{print $1":"$2}' | head -1
+    register: existing_wsd_image
+    failed_when: false
+    changed_when: false
+
+  - name: Load WSD Docker image (if not already present)
     shell: |
       docker load -i "{{ ansible_user_dir }}/wire-server-deploy/containers-adminhost/container-wire-server-deploy.tgz" | awk '{print $3}'
-    register: wsd_container
+    register: loaded_wsd_container
+    when: existing_wsd_image.stdout == ""
+
+  - name: Set WSD container image name
+    set_fact:
+      wsd_container: 
+        stdout: "{{ existing_wsd_image.stdout if existing_wsd_image.stdout != '' else loaded_wsd_container.stdout }}"
 
   - name: Process charts for demo environment
     shell: |
