@@ -56,5 +56,3 @@ for DIR in "$VALUES_DIR"/*; do
     find "$DIR" -type f ! -name "${VALUES_TYPE}*" -exec rm -v {} \;
   fi
 done
-done
-
