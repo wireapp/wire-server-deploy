@@ -1,3 +1,4 @@
+
 wiab:
   hosts:
     deploy_node:
@@ -17,7 +18,7 @@ wiab:
     wire_ip: ""
 
     # artifact_hash
-    artifact_hash: "89e4fa122e6ddba9df2f81612de1ee45ec2238b3"
+    artifact_hash: "5cb9091c28a28ae26c8579530db4b1eb33071e9b"
   
     # docker vars
     docker_ce_version: "5:28.1.1-1~ubuntu.24.04~noble"
@@ -47,9 +48,10 @@ wiab:
     # list of helm charts to deploy
     charts_to_deploy:
       - fake-aws
-      - demo-smtp
+      - smtp
       - rabbitmq
       - databases-ephemeral
+      - postgresql
       - reaper
       - wire-server
       - webapp
