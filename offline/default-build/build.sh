@@ -26,7 +26,7 @@ TASKS_DIR="${SCRIPT_DIR}/../tasks"
 # --------------------------
 
 # pulling the charts, charts to be skipped are passed as arguments HELM_CHART_EXCLUDE_LIST
-"${TASKS_DIR}"/proc_pull_charts.sh OUTPUT_DIR="${OUTPUT_DIR}" # HELM_CHART_EXCLUDE_LIST="inbucket,wire-server-enterprise,coturn"
+"${TASKS_DIR}"/proc_pull_charts.sh OUTPUT_DIR="${OUTPUT_DIR}" HELM_CHART_EXCLUDE_LIST="inbucket,wire-server-enterprise,postgresql"
 
 # copy local copy of values from root directory to output directory
 cp -r "${ROOT_DIR}"/values "${OUTPUT_DIR}"/
