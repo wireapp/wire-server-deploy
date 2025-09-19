@@ -2,16 +2,17 @@
 
 ## Table of Contents
 - [Architecture Overview](#architecture-overview)
-- [Kubernetes Integration](#kubernetes-integration)
 - [Key Concepts](#key-concepts)
+- [Minimum System Requirements](#minimum-system-requirements)
 - [High Availability Features](#high-availability-features)
 - [Inventory Definition](#inventory-definition)
 - [Installation Process](#installation-process)
 - [Deployment Commands Reference](#deployment-commands-reference)
 - [Monitoring Checks After Installation](#monitoring-checks-after-installation)
-- [How It Confirms a Reliable System](#how-it-confirms-a-reliable-system)
 - [Configuration Options](#configuration-options)
 - [Node Recovery Operations](#node-recovery-operations)
+- [How It Confirms a Reliable System](#how-it-confirms-a-reliable-system)
+- [Kubernetes Integration](#kubernetes-integration)
 - [Wire Server Database Setup](#wire-server-database-setup)
 
 ## Architecture Overview
@@ -19,9 +20,18 @@
 **Primary-Replica HA Architecture** with intelligent split-brain protection and automatic failover:
 
 ```
-Primary ───► Replica ───► Replica
-   │            │            │
-   └──── Split-Brain Protection ───┘
+┌─────────────┐    ┌─────────────┐    ┌─────────────┐
+│ PostgreSQL1 │    │ PostgreSQL2 │    │ PostgreSQL3 │
+│  (Primary)  │───▶│  (Replica)  │    │  (Replica)  │
+│ Read/Write  │    │ Read-Only   │    │ Read-Only   │
+└─────────────┘    └─────────────┘    └─────────────┘
+       │                   │                   │
+       └───────────────────┼───────────────────┘
+                           │
+              ┌─────────────────────────────┐
+              │    Split-Brain Protection   │
+              │    & Automatic Failover     │
+              └─────────────────────────────┘
 ```
 
 **Core Components:**
@@ -29,17 +39,6 @@ Primary ───► Replica ───► Replica
 - **repmgr**: Cluster management and automatic failover orchestration
 - **Split-Brain Detection**: Prevents data corruption scenarios
 - **Event-Driven Recovery**: Automatic cluster state management
-
-## Kubernetes Integration
-
-This PostgreSQL HA cluster runs **independently outside Kubernetes** (on bare metal or VMs). For Kubernetes environments, the separate **postgres-endpoint-manager** component keeps PostgreSQL endpoints up to date:
-
-- **Purpose**: Monitors PostgreSQL cluster state and updates Kubernetes service endpoints during failover
-- **Repository**: [https://github.com/wireapp/postgres-endpoint-manager](https://github.com/wireapp/postgres-endpoint-manager)
-- **Architecture**: Runs as a separate service that watches pg cluster events and updates Kubernetes services
-- **Benefit**: Provides seamless failover transparency to containerized applications without cluster modification
-
-The PostgreSQL cluster operates independently, while the endpoint manager acts as an external observer that ensures Kubernetes applications always connect to the current primary node.
 
 ## Key Concepts
 
@@ -54,9 +53,43 @@ The PostgreSQL cluster operates independently, while the endpoint manager acts a
 - **repmgr**: 5.5.0 (production-ready cluster management with advanced failover) ([docs](https://repmgr.org/docs/current/))
 - **Ubuntu/Debian**: 20.04+ / 11+ (tested platforms for production deployment)
 
-## High Availability Features
+## Minimum System Requirements
 
-### 🎯 Automatic Failover
+Based on the PostgreSQL configuration template, the deployment is optimized for resource-constrained environments:
+
+**Memory Requirements:**
+- **RAM**: 1GB minimum per node (based on configuration tuning)
+  - `shared_buffers = 256MB` (25% of total RAM)
+  - `effective_cache_size = 512MB` (50% of total RAM estimate)
+  - `maintenance_work_mem = 64MB`
+  - `work_mem = 2MB` per connection (with `max_connections = 20`)
+
+**CPU Requirements:**
+- **Cores**: 1 CPU core minimum
+  - `max_parallel_workers_per_gather = 0` (parallel queries disabled)
+  - `max_parallel_workers = 1`
+  - `max_worker_processes = 2` (minimum for repmgr operations)
+
+**Storage Requirements:**
+- **Disk Space**: 50GB minimum per node
+  - `wal_keep_size = 2GB` (4% of disk)
+  - `max_slot_wal_keep_size = 3GB` (6% of disk)
+  - `max_wal_size = 1GB` (2% of disk)
+  - Additional space for PostgreSQL data directory and logs
+
+**Operating System Requirements:**
+- **Linux Distribution**: Ubuntu/Debian (systemd-based)
+- **Filesystem**: ext4/xfs (configured with `wal_sync_method = fdatasync`)
+- **Package Management**: apt-based package installation
+
+**Network Requirements:**
+- **PostgreSQL Port**: 5432 open between all cluster nodes
+
+**Note**: Configuration supports up to 20 concurrent connections. For production workloads with higher loads, scale up resources accordingly.
+
+**⚠️ Important**: Review and optimize the [PostgreSQL configuration template](../ansible/templates/postgresql/postgresql.conf.j2) based on your specific hardware, workload, and performance requirements before deployment.
+
+## High Availability Features
 - **Detection**: repmgrd monitors primary connectivity with configurable timeouts ([repmgr failover](https://repmgr.org/docs/current/failover.html))
 - **Failover Validation**: Quorum-based promotion with lag checking and connectivity validation
 - **Promotion**: Promotes replica with most recent data automatically
@@ -160,45 +193,10 @@ postgresql3
 | `wire_user` | `wire-server` | Database user for Wire application | Yes |
 | `wire_pass` | auto-generated | Password (displayed as output of the ansible task) | No |
 
+
 ## Installation Process
 
 ### 🚀 Complete Installation (Fresh Deployment)
-
-#### **Minimum System Requirements**
-
-Based on the PostgreSQL configuration template, the deployment is optimized for resource-constrained environments:
-
-**Memory Requirements:**
-- **RAM**: 1GB minimum per node (based on configuration tuning)
-  - `shared_buffers = 256MB` (25% of total RAM)
-  - `effective_cache_size = 512MB` (50% of total RAM estimate)
-  - `maintenance_work_mem = 64MB`
-  - `work_mem = 2MB` per connection (with `max_connections = 20`)
-
-**CPU Requirements:**
-- **Cores**: 1 CPU core minimum
-  - `max_parallel_workers_per_gather = 0` (parallel queries disabled)
-  - `max_parallel_workers = 1`
-  - `max_worker_processes = 2` (minimum for repmgr operations)
-
-**Storage Requirements:**
-- **Disk Space**: 50GB minimum per node
-  - `wal_keep_size = 2GB` (4% of disk)
-  - `max_slot_wal_keep_size = 3GB` (6% of disk)
-  - `max_wal_size = 1GB` (2% of disk)
-  - Additional space for PostgreSQL data directory and logs
-
-**Operating System Requirements:**
-- **Linux Distribution**: Ubuntu/Debian (systemd-based)
-- **Filesystem**: ext4/xfs (configured with `wal_sync_method = fdatasync`)
-- **Package Management**: apt-based package installation
-
-**Network Requirements:**
-- **PostgreSQL Port**: 5432 open between all cluster nodes
-
-**Note**: Configuration supports up to 20 concurrent connections. For production workloads with higher loads, scale up resources accordingly.
-
-**⚠️ Important**: Review and optimize the [PostgreSQL configuration template](../ansible/templates/postgresql/postgresql.conf.j2) based on your specific hardware, workload, and performance requirements before deployment.
 
 #### **Step 1: Verify Connectivity**
 ```bash
@@ -246,16 +244,11 @@ ansible-playbook -i ansible/inventory/offline/hosts.ini ansible/postgresql-deplo
 | `verify` | Verify HA setup only | `--tags "verify"` |
 | `wire-setup` | Wire database setup only | `--tags "wire-setup"` |
 | `monitoring` | Deploy cluster monitoring only | `--tags "monitoring"` |
-| `postgresql-monitoring` | Alternative monitoring tag | `--tags "postgresql-monitoring"` |
-| `post-deploy` | Post-deployment tasks | `--tags "post-deploy"` |
 
 ```bash
-# Common scenarios
-ansible-playbook -i ansible/inventory/offline/hosts.ini ansible/postgresql-deploy.yml --tags "monitoring"
-ansible-playbook -i ansible/inventory/offline/hosts.ini ansible/postgresql-deploy.yml --skip-tags "wire-setup"
+# Deploy without the cleanup process
+ansible-playbook -i ansible/inventory/offline/hosts.ini ansible/postgresql-deploy.yml --skip-tags "cleanup"
 ```
-
-**Note:** Replace `ansible/inventory/offline/hosts.ini` with your actual inventory path.
 
 ## Monitoring Checks After Installation
 
@@ -303,7 +296,31 @@ sudo -u postgres psql -c "SELECT * FROM pg_stat_replication;"
 ### 🔧 repmgr Configuration
 - **Node Priority**: Determines promotion order during failover (higher values preferred)
 - **Monitoring Interval**: `repmgr_monitor_interval` (default: 2 seconds)
-- **Reconnect Settings**: `repmgr_reconnect_attempts` (default: 6), `repmgr_reconnect_interval` (default: 10 seconds)
+- **Reconnect Settings**: `repmgr_reconnect_attempts` (default: 6), `repmgr_reconnect_interval` (5 seconds, defaults 10seconds)
+
+*Configuration file: [`ansible/inventory/offline/group_vars/postgresql/postgresql.yml`](../ansible/inventory/offline/group_vars/postgresql/postgresql.yml)*
+
+**Node Configuration:**
+```yaml
+repmgr_node_config:
+  postgresql1:  # Primary node
+    node_id: 1
+    priority: 150
+    role: primary
+  postgresql2:  # First standby
+    node_id: 2
+    priority: 100
+    role: standby
+  postgresql3:  # Second standby
+    node_id: 3
+    priority: 50
+    role: standby
+```
+
+**Monitoring Settings:**
+- `monitor_interval_secs`: Interval between monitoring checks (default: 2 seconds)
+- `reconnect_attempts`: Maximum reconnection attempts (default: 6)
+- `reconnect_interval`: Interval between reconnection attempts (default: 5 seconds)
 
 *See [repmgr configuration reference](https://repmgr.org/docs/current/configuration-file.html) for complete options.*
 
@@ -343,3 +360,14 @@ The [`postgresql-wire-setup.yml`](../ansible/postgresql-playbooks/postgresql-wir
 **Usage:** See the [Deployment Commands Reference](#deployment-commands-reference) section for all Wire setup commands.
 
 **Important:** Generated password is displayed in Ansible output task `Display PostgreSQL setup completion` - save it securely for Wire server configuration.
+
+## Kubernetes Integration
+
+This PostgreSQL HA cluster runs **independently outside Kubernetes** (on bare metal or VMs). For Kubernetes environments, the separate **postgres-endpoint-manager** component keeps PostgreSQL endpoints up to date:
+
+- **Purpose**: Monitors PostgreSQL cluster state and updates Kubernetes service endpoints during failover
+- **Repository**: [https://github.com/wireapp/postgres-endpoint-manager](https://github.com/wireapp/postgres-endpoint-manager)
+- **Architecture**: Runs as a separate service that watches pg cluster events and updates Kubernetes services
+- **Benefit**: Provides seamless failover transparency to containerized applications without cluster modification
+
+The PostgreSQL cluster operates independently, while the endpoint manager acts as an external observer that ensures Kubernetes applications always connect to the current primary node.
