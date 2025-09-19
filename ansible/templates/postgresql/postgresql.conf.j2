@@ -1,0 +1,186 @@
+# postgresql.conf.j2 - Unified configuration for 3-node PostgreSQL cluster with repmgr
+# {{ ansible_managed }}
+# Hardware: 1GB RAM, 1 Core, 50GB Disk
+# Cluster: 1 Primary + 2 Standby nodes (no witness)
+
+# ====================================================================
+# FILE LOCATIONS
+# Ref: https://www.postgresql.org/docs/17/runtime-config-file-locations.html
+# ====================================================================
+data_directory = '/var/lib/postgresql/{{ postgresql_version }}/main'
+hba_file = '/etc/postgresql/{{ postgresql_version }}/main/pg_hba.conf'
+ident_file = '/etc/postgresql/{{ postgresql_version }}/main/pg_ident.conf'
+external_pid_file = '/var/run/postgresql/{{ postgresql_version }}-main.pid'
+
+# ====================================================================
+# CONNECTIONS AND AUTHENTICATION
+# Ref: https://www.postgresql.org/docs/17/runtime-config-connection.html
+# ====================================================================
+listen_addresses = '*'                  # Accept connections from any IP
+port = 5432
+max_connections = 20                    # Conservative for 1GB RAM
+superuser_reserved_connections = 3      # Reserve for maintenance/repmgr
+
+# REQUIRED by repmgr - must include 'repmgr'
+# Ref: https://www.repmgr.org/docs/current/configuration-prerequisites.html
+shared_preload_libraries = 'pg_stat_statements,repmgr'
+
+# ====================================================================
+# RESOURCE USAGE (1GB RAM, 1 Core)
+# Ref: https://www.postgresql.org/docs/17/runtime-config-resource.html
+# ====================================================================
+shared_buffers = 256MB                  # 25% of RAM (PG recommendation)
+effective_cache_size = 512MB            # 50% of RAM (OS cache estimate)
+work_mem = 2MB                          # RAM/connections/complexity_factor
+maintenance_work_mem = 64MB             # For VACUUM, CREATE INDEX
+wal_buffers = -1                        # Auto-tune: 3% of shared_buffers
+
+# Worker processes - limited by 1 core
+# Ref: https://www.postgresql.org/docs/17/runtime-config-resource.html#GUC-MAX-WORKER-PROCESSES
+max_worker_processes = 2                # Min for repmgr operations
+max_parallel_workers = 1                # Limited by single core
+max_parallel_workers_per_gather = 0     # Disable parallel queries (1 core)
+
+# ====================================================================
+# WRITE-AHEAD LOG
+# Ref: https://www.postgresql.org/docs/17/runtime-config-wal.html
+# ====================================================================
+
+# REQUIRED by repmgr
+# Ref: https://www.repmgr.org/docs/current/configuration-prerequisites.html
+wal_level = replica                     # Required: minimum 'replica' for replication
+wal_log_hints = on                      # Required: enables pg_rewind for failback
+
+# Replication slots and senders
+# Ref: https://www.repmgr.org/docs/current/configuration-prerequisites.html#CONFIGURATION
+max_wal_senders = 10                    # Required: min 2, repmgr recommends 10
+max_replication_slots = 10              # Required: for replication slot usage
+wal_keep_size = 2GB                     # 4% of 50GB disk (PG 13+)
+max_slot_wal_keep_size = 3GB            # Safety limit: 6% of disk
+
+# WAL writing performance
+# Ref: https://www.postgresql.org/docs/17/wal-configuration.html
+wal_sync_method = fdatasync              # Best for Linux ext4/xfs
+wal_writer_delay = 200ms                 # Frequency of WAL flushes
+wal_writer_flush_after = 1MB
+wal_compression = on                     # Save disk space (important for 50GB)
+commit_delay = 0                         # No artificial delay
+commit_siblings = 5
+
+# Archiving - recommended by repmgr for PITR capability
+# Ref: https://www.repmgr.org/docs/current/configuration-prerequisites.html
+archive_mode = on                       # Enable without restart requirement
+archive_command = '/bin/true'           # Placeholder for air-gapped environment
+
+# ====================================================================
+# REPLICATION
+# Ref: https://www.postgresql.org/docs/17/runtime-config-replication.html
+# ====================================================================
+
+# Synchronous replication - critical for 3-node cluster without witness
+# Ref: https://www.postgresql.org/docs/17/warm-standby.html#SYNCHRONOUS-REPLICATION
+synchronous_standby_names = ''
+synchronous_commit = on                 # Wait for standby confirmation
+
+# Primary server
+# Ref: https://www.postgresql.org/docs/17/runtime-config-replication.html#GUC-WAL-SENDER-TIMEOUT
+wal_sender_timeout = 30s                # Detect dead standby connections faster
+
+# Standby servers
+# Ref: https://www.postgresql.org/docs/17/hot-standby.html
+hot_standby = on                        # REQUIRED by repmgr: allow queries on standby
+hot_standby_feedback = on               # Prevent query conflicts
+wal_receiver_status_interval = 10s      # Status update frequency
+wal_receiver_timeout = 30s              # Reconnect if no data received
+max_standby_streaming_delay = 30s       # Max lag before canceling queries
+max_standby_archive_delay = 30s
+
+# ====================================================================
+# CHECKPOINTS
+# Ref: https://www.postgresql.org/docs/17/wal-configuration.html
+# ====================================================================
+checkpoint_completion_target = 0.9      # Spread checkpoint I/O
+checkpoint_timeout = 15min              # Maximum time between checkpoints
+max_wal_size = 1GB                      # 2% of disk - trigger checkpoint
+min_wal_size = 256MB                    # Minimum WAL retained
+checkpoint_flush_after = 256kB          # Force OS writeback
+
+# ====================================================================
+# QUERY PLANNER
+# Ref: https://www.postgresql.org/docs/17/runtime-config-query.html
+# ====================================================================
+random_page_cost = 1.1                  # For SSD (default 4.0 for HDD)
+effective_io_concurrency = 1            # Single disk
+maintenance_io_concurrency = 1
+
+# ====================================================================
+# BACKGROUND WRITER
+# Ref: https://www.postgresql.org/docs/17/runtime-config-resource.html#RUNTIME-CONFIG-RESOURCE-BACKGROUND-WRITER
+# ====================================================================
+bgwriter_delay = 200ms
+bgwriter_lru_maxpages = 100
+bgwriter_lru_multiplier = 2.0
+bgwriter_flush_after = 512kB
+
+# ====================================================================
+# LOGGING
+# Ref: https://www.postgresql.org/docs/17/runtime-config-logging.html
+# ====================================================================
+logging_collector = on
+log_directory = 'log'
+log_filename = 'postgresql-%Y-%m-%d_%H%M%S.log'
+log_rotation_age = 1d
+log_rotation_size = 100MB
+
+# What to log
+log_min_duration_statement = 1000       # Log slow queries (>1s)
+log_line_prefix = '%t [%p]: user=%u,db=%d,app=%a,client=%h '
+log_statement = 'ddl'                   # Log schema changes
+log_replication_commands = on           # Monitor replication
+log_checkpoints = on                    # Monitor checkpoint performance
+log_connections = on                    # Security auditing
+log_disconnections = on
+log_lock_waits = on                     # Performance issues
+log_recovery_conflict_waits = on        # Standby conflicts
+log_temp_files = 0                      # All temp file usage
+log_autovacuum_min_duration = 0         # All autovacuum activity
+
+# ====================================================================
+# STATISTICS
+# Ref: https://www.postgresql.org/docs/17/runtime-config-statistics.html
+# ====================================================================
+track_activities = on
+track_counts = on
+track_io_timing = off                   # Disabled to reduce overhead
+track_functions = none
+
+# ====================================================================
+# AUTOVACUUM
+# Ref: https://www.postgresql.org/docs/17/runtime-config-autovacuum.html
+# ====================================================================
+autovacuum = on
+autovacuum_max_workers = 2              # Balance between maintenance and resources
+autovacuum_naptime = 60s                # Check interval
+autovacuum_vacuum_threshold = 50        # Min changes before vacuum
+autovacuum_vacuum_scale_factor = 0.2    # 20% of table size
+autovacuum_analyze_threshold = 50       # Min changes before analyze
+autovacuum_analyze_scale_factor = 0.1   # 10% of table size
+autovacuum_work_mem = -1                # Use maintenance_work_mem
+
+# ====================================================================
+# CLIENT CONNECTION DEFAULTS
+# Ref: https://www.postgresql.org/docs/17/runtime-config-client.html
+# ====================================================================
+idle_in_transaction_session_timeout = 600s  # Kill idle transactions after 10min
+
+# ====================================================================
+# LOCALE AND FORMATTING
+# Ref: https://www.postgresql.org/docs/17/runtime-config-preset.html
+# ====================================================================
+datestyle = 'iso, mdy'
+timezone = 'UTC'
+lc_messages = 'en_US.UTF-8'
+lc_monetary = 'en_US.UTF-8'
+lc_numeric = 'en_US.UTF-8'
+lc_time = 'en_US.UTF-8'
+default_text_search_config = 'pg_catalog.english'

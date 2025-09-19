@@ -1,79 +1,101 @@
 ---
 - name: Create PostgreSQL database and user for wire-server
   hosts: postgresql_rw
+  become: yes
+  gather_facts: yes
   tasks:
     - name: Check if PostgreSQL database exists
-      community.postgresql.postgresql_query:
-        query: "SELECT 1 FROM pg_database WHERE datname = '{{ wire_dbname }}'"
-      become: yes
-      become_user: postgres
+      ansible.builtin.shell: |
+        sudo -u postgres psql -c "SELECT 1 FROM pg_database WHERE datname = '{{ wire_dbname }}'" | grep -q '1 row'
       register: db_check_result
-      ignore_errors: yes
+      failed_when: false
+      changed_when: false
 
     - name: Create PostgreSQL database
-      community.postgresql.postgresql_db:
-        name: "{{ wire_dbname }}"
-        state: present
-      become: yes
-      become_user: postgres
-      when: db_check_result.rowcount == 0
+      ansible.builtin.shell: |
+        sudo -u postgres createdb "{{ wire_dbname }}"
+      register: create_db_result
+      failed_when: create_db_result.rc != 0 and 'already exists' not in create_db_result.stderr
+      when: db_check_result.rc != 0
 
     - name: Display message if database already exists
-      debug:
+      ansible.builtin.debug:
         msg: "PostgreSQL database '{{ wire_dbname }}' already exists."
-      when: db_check_result.rowcount > 0
+      when: db_check_result.rc == 0
 
     - name: Check if PostgreSQL user exists
-      community.postgresql.postgresql_query:
-        query: "SELECT 1 FROM pg_roles WHERE rolname = '{{ wire_user }}'"
-      become: yes
-      become_user: postgres
+      ansible.builtin.shell: |
+        sudo -u postgres psql -c "SELECT 1 FROM pg_roles WHERE rolname = '{{ wire_user }}'" | grep -q '1 row'
       register: user_check_result
-      ignore_errors: yes
+      failed_when: false
+      changed_when: false
 
     - name: Display message if user already exists
-      debug:
+      ansible.builtin.debug:
         msg: "PostgreSQL user '{{ wire_user }}' already exists."
-      when: user_check_result.rowcount > 0
+      when: user_check_result.rc == 0
 
     - name: Generate random password if wire_pass is not defined
-      set_fact:
+      ansible.builtin.set_fact:
         wire_pass: "{{ lookup('password', '/dev/null length=15 chars=ascii_letters,digits') }}"
-      when:
-        - wire_pass is not defined or wire_pass == ""
-        - user_check_result.rowcount == 0
+        password_generated: true
+      when: wire_pass is not defined or wire_pass == ""
 
-    - name: Create PostgreSQL user
-      community.postgresql.postgresql_user:
-        name: "{{ wire_user }}"
-        password: "{{ wire_pass }}"
-        db: "{{ wire_dbname }}"
-        state: present
-      become: yes
-      become_user: postgres
+    - name: Create PostgreSQL user (if not exists)
+      ansible.builtin.shell: |
+        sudo -u postgres psql -c "CREATE USER \"{{ wire_user }}\" WITH PASSWORD '{{ wire_pass }}';"
       register: user_creation_result
-      ignore_errors: yes
-      when: user_check_result.rowcount == 0
+      failed_when: user_creation_result.rc != 0 and 'already exists' not in user_creation_result.stderr
+      when: user_check_result.rc != 0
 
-    - name: Grant privileges to the user
-      community.postgresql.postgresql_privs:
-        database: "{{ wire_dbname }}"
-        roles: "{{ wire_user }}"
-        privs: ALL
-        type: database
-      become: yes
-      become_user: postgres
-      when: user_creation_result.changed
+    - name: Reset password for existing user
+      ansible.builtin.shell: |
+        sudo -u postgres psql -c "ALTER USER \"{{ wire_user }}\" WITH PASSWORD '{{ wire_pass }}';"
+      when: user_check_result.rc == 0
+
+    - name: Grant database privileges to the user
+      ansible.builtin.shell: |
+        sudo -u postgres psql -c "GRANT ALL PRIVILEGES ON DATABASE \"{{ wire_dbname }}\" TO \"{{ wire_user }}\";"
 
     - name: Grant CREATE on public schema to the user
-      community.postgresql.postgresql_query:
-        db: "{{ wire_dbname }}"
-        query: "GRANT CREATE ON SCHEMA public TO \"{{ wire_user }}\";"
-      become: yes
-      become_user: postgres
-      when: user_creation_result.changed
+      ansible.builtin.shell: |
+        sudo -u postgres psql -d "{{ wire_dbname }}" -c "GRANT CREATE ON SCHEMA public TO \"{{ wire_user }}\";"
 
-    - name: Display PostgreSQL user credentials if creation was successful
-      debug:
-        msg: "PostgreSQL user '{{ wire_user }}' created successfully. Password: {{ wire_pass }}"
-      when: user_creation_result is defined and user_creation_result.changed
+    - name: Grant USAGE on public schema to the user
+      ansible.builtin.shell: |
+        sudo -u postgres psql -d "{{ wire_dbname }}" -c "GRANT USAGE ON SCHEMA public TO \"{{ wire_user }}\";"
+
+    - name: Set default privileges for future tables
+      ansible.builtin.shell: |
+        sudo -u postgres psql -d "{{ wire_dbname }}" -c "ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO \"{{ wire_user }}\";"
+
+    - name: Set default privileges for future sequences
+      ansible.builtin.shell: |
+        sudo -u postgres psql -d "{{ wire_dbname }}" -c "ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON SEQUENCES TO \"{{ wire_user }}\";"
+
+    - name: Display PostgreSQL setup completion
+      ansible.builtin.debug:
+        msg: |
+          PostgreSQL setup completed:
+          - Database: {{ wire_dbname }}
+          - User: {{ wire_user }}
+          - Password: {{ wire_pass }}{% if password_generated is defined %} (randomly generated){% endif %}
+          - Status: {% if user_check_result.rc != 0 %}User created{% else %}Password reset for existing user{% endif %}{% if password_generated is defined %}
+
+          ⚠️  IMPORTANT: Save this randomly generated password! It won't be displayed again.{% endif %}
+
+    - name: Verify database and user setup
+      ansible.builtin.shell: |
+        PGPASSWORD='{{ wire_pass }}' psql -h {{ ansible_default_ipv4.address }} -U "{{ wire_user }}" -d "{{ wire_dbname }}" -c "SELECT 1"
+      register: verification_result
+      failed_when: false
+
+    - name: Display verification status
+      ansible.builtin.debug:
+        msg: "✅ Database connection verified successfully"
+      when: verification_result.rc == 0
+
+    - name: Display verification failure
+      ansible.builtin.debug:
+        msg: "❌ Database connection failed: {{ verification_result.stderr }}"
+      when: verification_result.rc != 0
