@@ -32,3 +32,5 @@ terraform.tfstate
 terraform.tfstate.backup
 kubeconfig.new
 .vscode/*
+
+.terraform.lock.hcl
