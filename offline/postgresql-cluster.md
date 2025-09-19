@@ -56,11 +56,10 @@ The PostgreSQL cluster implements a **Primary-Replica High Availability** archit
 - **Split-Brain Detection**: Intelligent monitoring prevents data corruption
 - **Wire Integration**: Pre-configured database setup
 
-### High Availability Features
-- **Automatic Failover**: < 30 seconds detection and promotion
-- **Split-Brain Protection**: Monitors and prevents multiple primaries
-- **Self-Healing**: Event-driven recovery and service management
-- **Zero Data Loss**: Physical replication slots and timeline management
+### Software Versions
+- **PostgreSQL**: 17.5 (latest stable with enhanced replication features)
+- **repmgr**: 5.5.0 (production-ready cluster management with advanced failover)
+- **Ubuntu/Debian**: 20.04+ / 11+ (tested platforms for production deployment)
 
 ## High Availability Features
 
@@ -260,7 +259,7 @@ sudo journalctl -u repmgrd@17-main.service --since "20m ago"
 # 7. Check fence events
 sudo tail -n 20 -f /var/log/postgresql/fence_events.log
 
-# 5, Manually promote a standby to primary when repmgrd fails to promote (very rare it will happen)
+# 8. Manually promote a standby to primary when repmgrd fails to promote (very rare it will happen)
 # Run the promote command on the standby you want ot promote
 sudo -u postgres repmgr -f /etc/repmgr/17-main/repmgr.conf standby promote
 ```
@@ -327,11 +326,6 @@ sudo -u postgres psql -c "SELECT * FROM pg_stat_replication;"
 - **Quorum Requirements**: Minimum 2 visible nodes for 3+ node clusters
 - **Lag Threshold**: `LAG_CAP` environment variable (default: 64MB)
 - **Connectivity Validation**: WAL receiver activity checks
-
-### 📊 Monitoring System
-- **Check Interval**: Every 30 seconds with 10-second randomization
-- **Timeout Protection**: 60-second execution timeout per check
-- **Event Logging**: Comprehensive logging to `/var/log/postgresql/fence_events.log`
 
 ## Node Recovery Operations
 
