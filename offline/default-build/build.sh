@@ -50,7 +50,7 @@ cp -r "${ROOT_DIR}"/dashboards "${OUTPUT_DIR}"/
 "${TASKS_DIR}"/process_charts.sh OUTPUT_DIR="${OUTPUT_DIR}" VALUES_TYPE="prod" #IMAGE_EXCLUDE_LIST=""
 
 # all basic chart pre-processing tasks
-"${TASKS_DIR}"/post_chart_process_0.sh "${OUTPUT_DIR}"
+"${TASKS_DIR}"/post_chart_process_0.sh OUTPUT_DIR="${OUTPUT_DIR}"
 
 # all extra post chart processing tasks for this profile should come here
 # post_chart_process_1.sh

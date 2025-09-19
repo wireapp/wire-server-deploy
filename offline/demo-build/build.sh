@@ -43,7 +43,7 @@ cp -r "${ROOT_DIR}"/dashboards "${OUTPUT_DIR}"/
 "${TASKS_DIR}"/process_charts.sh OUTPUT_DIR="${OUTPUT_DIR}" IMAGE_EXCLUDE_LIST="quay.io/wire/federator" VALUES_TYPE="demo"
 
 # all basic chart pre-processing tasks
-"${TASKS_DIR}"/post_chart_process_0.sh "${OUTPUT_DIR}" VALUES_TYPE="demo"
+"${TASKS_DIR}"/post_chart_process_0.sh OUTPUT_DIR="${OUTPUT_DIR}" VALUES_TYPE="demo"
 
 # --------------------------
 # building admin host containers, has dependenct on the helm charts
