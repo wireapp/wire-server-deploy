@@ -40,7 +40,7 @@ cp -r "${ROOT_DIR}"/values "${OUTPUT_DIR}"/
 "${TASKS_DIR}"/pre_clean_values_0.sh VALUES_DIR="${OUTPUT_DIR}/values" HELM_CHART_EXCLUDE_LIST="${HELM_CHART_EXCLUDE_LIST}"
 
 # all basic chart pre-processing tasks
-"${TASKS_DIR}"/pre_chart_process_0.sh "${OUTPUT_DIR}"
+"${TASKS_DIR}"/pre_chart_process_0.sh OUTPUT_DIR="${OUTPUT_DIR}"
 
 # all extra pre chart processing tasks for this profile should come here
 # pre_chart_process_1.sh

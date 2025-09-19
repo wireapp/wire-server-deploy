@@ -38,7 +38,7 @@ cp -r "${ROOT_DIR}"/values "${OUTPUT_DIR}"/
 cp -r "${ROOT_DIR}"/dashboards "${OUTPUT_DIR}"/
 
 # all basic chart pre-processing tasks
-"${TASKS_DIR}"/pre_chart_process_0.sh "${OUTPUT_DIR}"
+"${TASKS_DIR}"/pre_chart_process_0.sh OUTPUT_DIR="${OUTPUT_DIR}"
 
 # all extra pre chart processing tasks for this profile should come here
 # pre_chart_process_1.sh 

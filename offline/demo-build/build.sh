@@ -32,10 +32,10 @@ cp -r "${ROOT_DIR}"/values "${OUTPUT_DIR}"/
 cp -r "${ROOT_DIR}"/dashboards "${OUTPUT_DIR}"/
 
 # removing the values/$chart directories in values directory if not required
-"${TASKS_DIR}"/pre_clean_values_0.sh VALUES_DIR="${OUTPUT_DIR}/values" HELM_CHART_EXCLUDE_LIST="${HELM_CHART_EXCLUDE_LIST}"
+"${TASKS_DIR}"/pre_clean_values_0.sh VALUES_DIR="${OUTPUT_DIR}/values" HELM_CHART_EXCLUDE_LIST="${HELM_CHART_EXCLUDE_LIST}" VALUES_TYPE="demo"
 
 # all basic chart pre-processing tasks
-"${TASKS_DIR}"/pre_chart_process_0.sh "${OUTPUT_DIR}"
+"${TASKS_DIR}"/pre_chart_process_0.sh OUTPUT_DIR="${OUTPUT_DIR}" VALUES_TYPE="demo"
 
 # processing the charts
 # here we also filter the images post processing the helm charts
@@ -43,7 +43,7 @@ cp -r "${ROOT_DIR}"/dashboards "${OUTPUT_DIR}"/
 "${TASKS_DIR}"/process_charts.sh OUTPUT_DIR="${OUTPUT_DIR}" IMAGE_EXCLUDE_LIST="quay.io/wire/federator" VALUES_TYPE="demo"
 
 # all basic chart pre-processing tasks
-"${TASKS_DIR}"/post_chart_process_0.sh "${OUTPUT_DIR}"
+"${TASKS_DIR}"/post_chart_process_0.sh "${OUTPUT_DIR}" VALUES_TYPE="demo"
 
 # --------------------------
 # building admin host containers, has dependenct on the helm charts
