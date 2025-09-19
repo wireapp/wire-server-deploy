@@ -31,3 +31,5 @@ secrets_cache/
 terraform.tfstate
 terraform.tfstate.backup
 kubeconfig.new
+
+.terraform.lock.hcl

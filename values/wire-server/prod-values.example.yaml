@@ -227,6 +227,7 @@ nginz:
   nginx_conf:
     # using prod means mostly that some internal endpoints are not exposed
     dns_resolver: coredns
+    env: prod
     external_env_domain: example.com
     deeplink:
       endpoints:
