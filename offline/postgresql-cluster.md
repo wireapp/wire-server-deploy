@@ -10,44 +10,25 @@
 - [Deployment Commands Reference](#deployment-commands-reference)
 - [Monitoring Checks After Installation](#monitoring-checks-after-installation)
 - [How It Confirms a Reliable System](#how-it-confirms-a-reliable-system)
+- [Configuration Options](#configuration-options)
 - [Node Recovery Operations](#node-recovery-operations)
 - [Wire Server Database Setup](#wire-server-database-setup)
 
 ## Architecture Overview
 
-The PostgreSQL cluster implements a **Primary-Replica High Availability** architecture with intelligent **split-brain protection** and **automatic failover capabilities**:
+**Primary-Replica HA Architecture** with intelligent split-brain protection and automatic failover:
 
 ```
-┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│   PostgreSQL1   │    │   PostgreSQL2   │    │   PostgreSQL3   │
-│    (Primary)    │───▶│   (Replica)     │    │   (Replica)     │
-│   Read/Write    │    │   Read-Only     │    │   Read-Only     │
-│                 │    │                 │    │                 │
-│ • PostgreSQL 17 │    │ • PostgreSQL 17 │    │ • PostgreSQL 17 │
-│ • repmgr        │    │ • repmgr        │    │ • repmgr        │
-│ • repmgrd       │    │ • repmgrd       │    │ • repmgrd       │
-│ • Split-brain   │    │ • Split-brain   │    │ • Split-brain   │
-│   monitoring    │    │   monitoring    │    │   monitoring    │
-└─────────────────┘    └─────────────────┘    └─────────────────┘
-         │                       │                       │
-         └───────────────────────┼───────────────────────┘
-                                 │
-                    ┌─────────────────┐
-                    │ Intelligent     │
-                    │ • Failover      │
-                    │ • Split-brain   │
-                    │   Protection    │
-                    │ • Self-healing  │
-                    └─────────────────┘
+Primary ───► Replica ───► Replica
+   │            │            │
+   └──── Split-Brain Protection ───┘
 ```
 
-### Core Components
-
-1. **PostgreSQL 17 Cluster**: Latest stable PostgreSQL with performance improvements
-2. **repmgr**: Cluster management and automatic failover orchestration
-3. **Split-Brain Detection**: Intelligent monitoring prevents data corruption scenarios
-4. **Event-Driven Recovery**: Automatic handling of cluster state changes
-5. **Wire-Server Integration**: Pre-configured for Wire backend services
+**Core Components:**
+- **PostgreSQL 17**: Streaming replication with performance improvements
+- **repmgr**: Cluster management and automatic failover orchestration
+- **Split-Brain Detection**: Prevents data corruption scenarios
+- **Event-Driven Recovery**: Automatic cluster state management
 
 ## Kubernetes Integration
 
@@ -70,7 +51,7 @@ The PostgreSQL cluster operates independently, while the endpoint manager acts a
 
 ### Software Versions
 - **PostgreSQL**: 17.5 (latest stable with enhanced replication features)
-- **repmgr**: 5.5.0 (production-ready cluster management with advanced failover)
+- **repmgr**: 5.5.0 (production-ready cluster management with advanced failover) ([docs](https://repmgr.org/docs/current/))
 - **Ubuntu/Debian**: 20.04+ / 11+ (tested platforms for production deployment)
 
 ## High Availability Features
@@ -110,19 +91,21 @@ The PostgreSQL cluster operates independently, while the endpoint manager acts a
 | Network Partition | 30-60 seconds | Automatic | None |
 | Node Recovery | Immediate | < 2 minutes | None |
 
+**Primary Failure**: repmgrd monitors connectivity (2s intervals), confirms failure after 6 attempts (12s), validates quorum (≥2 nodes for 3+ clusters), selects best replica by priority/lag, promotes automatically with zero data loss.
+
+**Network Partition**: 30s timer triggers cross-node verification, isolates conflicting primaries by masking/stopping services, auto-recovers when network restores with timeline synchronization if needed.
+
+**Node Recovery**: Auto-starts in standby mode, connects to current primary, uses pg_rewind for timeline divergence, registers with repmgr, catches up via WAL streaming within 2 minutes.
+
 ### 📊 Monitoring & Event System
 
-**Continuous Monitoring:**
-- **Timer-Based Checks**: Split-brain detection every 30 seconds with 10-second randomization
-- **Service Integration**: Monitors only run when PostgreSQL is active
-- **Event Notifications**: repmgr events trigger automated responses
-- **Metadata Updates**: Automatic cluster state synchronization
+**Automated split-brain detection** runs every 30 seconds via systemd timer, with cross-node verification to prevent data corruption. Event-driven fence scripts handle service masking/unmasking during cluster state changes.
 
-**Event Handlers:**
-- **Failover Events**: Update cluster metadata and log promotion events
-- **Rejoin Events**: Automatically unmask PostgreSQL services for recovered nodes
-- **Standby Promotion**: Track promotion success/failure
-- **Fence Events**: Comprehensive logging to `/var/log/postgresql/fence_events.log`
+**Key monitoring commands:**
+- Cluster status: `sudo -u postgres repmgr cluster show`
+- Service status: `sudo systemctl status postgresql@17-main repmgrd@17-main detect-rogue-primary.timer`
+- Replication status: `sudo -u postgres psql -c "SELECT application_name, client_addr, state FROM pg_stat_replication;"`
+- Logs: `sudo journalctl -u detect-rogue-primary.service --since "10m ago"`
 
 ## Inventory Definition
 
@@ -181,12 +164,41 @@ postgresql3
 
 ### 🚀 Complete Installation (Fresh Deployment)
 
-#### **Prerequisites**
-- Ubuntu 20.04+ or Debian 11+ on all nodes
-- Minimum 4GB RAM per node (8GB+ recommended)
-- SSH access configured for Ansible with sudo privileges
-- Network connectivity between all nodes (PostgreSQL port 5432)
-- Firewall configured to allow PostgreSQL traffic between nodes
+#### **Minimum System Requirements**
+
+Based on the PostgreSQL configuration template, the deployment is optimized for resource-constrained environments:
+
+**Memory Requirements:**
+- **RAM**: 1GB minimum per node (based on configuration tuning)
+  - `shared_buffers = 256MB` (25% of total RAM)
+  - `effective_cache_size = 512MB` (50% of total RAM estimate)
+  - `maintenance_work_mem = 64MB`
+  - `work_mem = 2MB` per connection (with `max_connections = 20`)
+
+**CPU Requirements:**
+- **Cores**: 1 CPU core minimum
+  - `max_parallel_workers_per_gather = 0` (parallel queries disabled)
+  - `max_parallel_workers = 1`
+  - `max_worker_processes = 2` (minimum for repmgr operations)
+
+**Storage Requirements:**
+- **Disk Space**: 50GB minimum per node
+  - `wal_keep_size = 2GB` (4% of disk)
+  - `max_slot_wal_keep_size = 3GB` (6% of disk)
+  - `max_wal_size = 1GB` (2% of disk)
+  - Additional space for PostgreSQL data directory and logs
+
+**Operating System Requirements:**
+- **Linux Distribution**: Ubuntu/Debian (systemd-based)
+- **Filesystem**: ext4/xfs (configured with `wal_sync_method = fdatasync`)
+- **Package Management**: apt-based package installation
+
+**Network Requirements:**
+- **PostgreSQL Port**: 5432 open between all cluster nodes
+
+**Note**: Configuration supports up to 20 concurrent connections. For production workloads with higher loads, scale up resources accordingly.
+
+**⚠️ Important**: Review and optimize the [PostgreSQL configuration template](../ansible/templates/postgresql/postgresql.conf.j2) based on your specific hardware, workload, and performance requirements before deployment.
 
 #### **Step 1: Verify Connectivity**
 ```bash
@@ -251,7 +263,7 @@ ansible-playbook -i ansible/inventory/offline/hosts.ini ansible/postgresql-deplo
 
 ```bash
 # 1. Cluster status (primary command)
-sudo -u postgres repmgr -f /etc/repmgr/17-main/repmgr.conf cluster show
+sudo -u postgres repmgr cluster show
 
 # 2. Service status
 sudo systemctl status postgresql@17-main repmgrd@17-main detect-rogue-primary.timer
@@ -262,132 +274,67 @@ sudo -u postgres psql -c "SELECT application_name, client_addr, state FROM pg_st
 # 4. Check split-brain detector logs
 sudo journalctl -u detect-rogue-primary.service --since "10m ago"
 
-# 5. Check repmgrd status
-sudo systemctl status repmgrd@17-main
-
-# 6. Check repmgrd logs
-sudo journalctl -u repmgrd@17-main.service --since "20m ago"
-
-# 7. Check fence events
+# 5. Check fence events
 sudo tail -n 20 -f /var/log/postgresql/fence_events.log
 
-# 8. Manually promote a standby to primary when repmgrd fails to promote (very rare it will happen)
-# Run the promote command on the standby you want ot promote
-sudo -u postgres repmgr -f /etc/repmgr/17-main/repmgr.conf standby promote
+# 6. Manual promotion (rare emergency case)
+sudo -u postgres repmgr standby promote
 ```
-
-### 📊 Monitoring System Details
-
-The deployment includes automated split-brain detection:
-
-- **Timer**: Every 30 seconds via systemd timer
-- **Script**: `/usr/local/bin/detect_rogue_primary.sh`
-- **Fence Script**: `/usr/local/bin/simple_fence.sh` (handles repmgr events)
-- **Logs**: `journalctl -u detect-rogue-primary.service`
-
-**What it does:**
-1. **Continuous Monitoring**: 30-second timer checks with cross-node verification
-2. **Multi-Node Validation**: Queries all cluster nodes for primary status conflicts
-3. **Intelligent Fencing**: Masks and stops PostgreSQL if split-brain detected
-4. **Event-Driven Recovery**: Automatic service unmasking during successful rejoins
-5. **Comprehensive Logging**: All events logged to journal and dedicated log files
 
 ## How It Confirms a Reliable System
 
 ### 🛡️ Reliability Features
-
 - **Split-Brain Prevention**: 30-second monitoring with automatic protection
 - **Automatic Failover**: < 30 seconds detection and promotion
 - **Data Consistency**: Streaming replication with timeline management
 - **Self-Healing**: Event-driven recovery and service management
 
 ### 🎯 Quick Health Check
-
 ```bash
-# Verify system reliability
-sudo -u postgres repmgr -f /etc/repmgr/17-main/repmgr.conf cluster show
+sudo -u postgres repmgr cluster show
 sudo systemctl status detect-rogue-primary.timer
 sudo -u postgres psql -c "SELECT * FROM pg_stat_replication;"
 ```
 
-**Expected results:**
-- One primary "* running", all replicas "running"
-- Timer shows "active (waiting)"
-- Replication shows connected replicas with minimal lag
-
-### 📊 Reliability Metrics
-
-- **Uptime Target**: 99.9%+ with proper maintenance
-- **Failover Time**: < 30 seconds
-- **Recovery Time**: < 2 minutes for node rejoin
-- **Data Protection**: 100% split-brain detection and prevention
+**Expected**: One primary "* running", all replicas "running", timer "active (waiting)"
 
 ## Configuration Options
 
 ### 🔧 repmgr Configuration
-- **Node ID**: `node_id` - Unique identifier for each node in the cluster (must be unique across all nodes)
-- **Node Priority**: `priority` - Determines promotion order during failover (higher values preferred)
+- **Node Priority**: Determines promotion order during failover (higher values preferred)
 - **Monitoring Interval**: `repmgr_monitor_interval` (default: 2 seconds)
-- **Reconnect Attempts**: `repmgr_reconnect_attempts` (default: 6)
-- **Reconnect Interval**: `repmgr_reconnect_interval` (default: 10 seconds)
-- **Node Priorities**: Configurable via `repmgr_node_config` variable
+- **Reconnect Settings**: `repmgr_reconnect_attempts` (default: 6), `repmgr_reconnect_interval` (default: 10 seconds)
 
 *See [repmgr configuration reference](https://repmgr.org/docs/current/configuration-file.html) for complete options.*
 
 ### 🛡️ Failover Validation
-- **Quorum Requirements**: Minimum 2 visible nodes for 3+ node clusters
+- **Quorum**: Minimum 2 visible nodes for 3+ node clusters
 - **Lag Threshold**: `LAG_CAP` environment variable (default: 64MB)
-- **Connectivity Validation**: WAL receiver activity checks
+- **Connectivity**: WAL receiver activity validation
 
 ## Node Recovery Operations
 
 ### 🔄 Standard Node Rejoin
 
 ```bash
-# Standard rejoin (when data is compatible)
-sudo -u postgres repmgr -f /etc/repmgr/17-main/repmgr.conf node rejoin \
-    -d repmgr -h <primary-ip> -U repmgr --verbose
+# Compatible data rejoin
+sudo -u postgres repmgr node rejoin -d repmgr -h <primary-ip> -U repmgr --verbose
 
-# Force rejoin with rewind (when timelines diverged)
-sudo -u postgres repmgr -f /etc/repmgr/17-main/repmgr.conf node rejoin \
-    -d repmgr -h <primary-ip> -U repmgr --force-rewind --verbose
+# Timeline divergence rejoin
+sudo -u postgres repmgr node rejoin -d repmgr -h <primary-ip> -U repmgr --force-rewind --verbose
 ```
-
-*See [repmgr node rejoin docs](https://repmgr.org/docs/current/repmgr-node-rejoin.html) for detailed options.*
 
 ### 🚨 Emergency Recovery
 
-#### **Complete Cluster Failure**
-```bash
-# 1. Find node with most recent data
-for node in postgresql1 postgresql2 postgresql3; do
-    ssh $node "sudo -u postgres pg_controldata /var/lib/postgresql/17/main | grep 'Latest checkpoint'"
-done
+**Complete Cluster Failure:**
+1. Find node with most recent data: `pg_controldata /var/lib/postgresql/17/main`
+2. Register as primary: `repmgr primary register --force`
+3. Rejoin other nodes with `--force-rewind`
 
-# 2. Start best candidate as new primary
-sudo systemctl unmask postgresql@17-main.service
-sudo -u postgres repmgr -f /etc/repmgr/17-main/repmgr.conf primary register --force
-
-*See [repmgr primary register](https://repmgr.org/docs/current/repmgr-primary-register.html) and [standby register](https://repmgr.org/docs/current/repmgr-standby-register.html) docs for details.*
-
-# 3. Rejoin other nodes
-sudo -u postgres repmgr -f /etc/repmgr/17-main/repmgr.conf node rejoin \
-    -d repmgr -h <new-primary-ip> -U repmgr --force-rewind --verbose
-```
-
-#### **Split-Brain Resolution**
-```bash
-# On the node that should become replica:
-sudo systemctl unmask postgresql@17-main.service
-sudo -u postgres repmgr -f /etc/repmgr/17-main/repmgr.conf node rejoin \
-    -d repmgr -h <correct-primary-ip> -U repmgr --force-rewind --verbose
-
-# if rejoin fails, a normal start/restart would bring the replica on standby mode
-# as with rejoin command, the standby.signal and auto-recovery file is already created.
-sudo systemctl start postgresql@17-main.service
-```
-
-**Note:** If service is masked from split-brain protection, unmask it first with `sudo systemctl unmask postgresql@17-main.service`
+**Split-Brain Resolution:**
+- Unmask service: `sudo systemctl unmask postgresql@17-main.service`
+- Rejoin to correct primary with `--force-rewind`
+- Service auto-starts in standby mode if rejoin fails
 
 ## Wire Server Database Setup
 
