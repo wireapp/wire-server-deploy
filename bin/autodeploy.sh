@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # shellcheck disable=SC2087
 
-# This script can be replaced with a more simpler solution of wiab-demo installtion
+# This script can be replaced with a simpler solution of wiab-demo installtion
 # https://docs.wire.com/latest/how-to/install/demo-wiab.html
 
 set -Eeuo pipefail
