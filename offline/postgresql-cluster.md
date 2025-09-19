@@ -2,6 +2,7 @@
 
 ## Table of Contents
 - [Architecture Overview](#architecture-overview)
+- [Kubernetes Integration](#kubernetes-integration)
 - [Key Concepts](#key-concepts)
 - [High Availability Features](#high-availability-features)
 - [Inventory Definition](#inventory-definition)
@@ -47,6 +48,17 @@ The PostgreSQL cluster implements a **Primary-Replica High Availability** archit
 3. **Split-Brain Detection**: Intelligent monitoring prevents data corruption scenarios
 4. **Event-Driven Recovery**: Automatic handling of cluster state changes
 5. **Wire-Server Integration**: Pre-configured for Wire backend services
+
+## Kubernetes Integration
+
+This PostgreSQL HA cluster runs **independently outside Kubernetes** (on bare metal or VMs). For Kubernetes environments, the separate **postgres-endpoint-manager** component keeps PostgreSQL endpoints up to date:
+
+- **Purpose**: Monitors PostgreSQL cluster state and updates Kubernetes service endpoints during failover
+- **Repository**: [https://github.com/wireapp/postgres-endpoint-manager](https://github.com/wireapp/postgres-endpoint-manager)
+- **Architecture**: Runs as a separate service that watches pg cluster events and updates Kubernetes services
+- **Benefit**: Provides seamless failover transparency to containerized applications without cluster modification
+
+The PostgreSQL cluster operates independently, while the endpoint manager acts as an external observer that ensures Kubernetes applications always connect to the current primary node.
 
 ## Key Concepts
 
