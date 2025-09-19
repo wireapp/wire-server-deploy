@@ -8,7 +8,8 @@ check_or_load_image() {
     local image_pattern="$2"
 
     # Check if any image matching pattern exists in docker
-    local existing_image=$(sudo docker images --format "{{.Repository}}:{{.Tag}}" | grep "$image_pattern" | head -1)
+    local existing_image
+    existing_image=$(sudo docker images --format "{{.Repository}}:{{.Tag}}" | grep "$image_pattern" | head -1)
     if [ -n "$existing_image" ]; then
         echo "$existing_image"
         return 0

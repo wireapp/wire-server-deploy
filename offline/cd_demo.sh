@@ -4,7 +4,9 @@ set -euo pipefail
 
 CD_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 TF_DIR="${CD_DIR}/../terraform/examples/wiab-demo-hetzner"
+# shellcheck disable=SC2034  # May be used in future versions
 BIN_DIR="${CD_DIR}/../bin"
+# shellcheck disable=SC2034  # May be used in future versions
 ARTIFACTS_DIR="${CD_DIR}/demo-build/output"
 ANSIBLE_DIR="${CD_DIR}/../ansible"
 INVENTORY_DIR="${ANSIBLE_DIR}/inventory/demo"

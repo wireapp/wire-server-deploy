@@ -1,7 +1,7 @@
+#!/usr/bin/env bash
 # This playbook is deprecated in favor of new wire in a box demo solution 
 # https://docs.wire.com/latest/how-to/install/demo-wiab.html
 
-#!/usr/bin/env bash
 # shellcheck disable=SC2087
 
 # This script can be replaced with a more simpler solution of wiab-demo installtion
