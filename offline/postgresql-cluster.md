@@ -135,7 +135,7 @@ Based on the PostgreSQL configuration template, the deployment is optimized for 
 **Automated split-brain detection** runs every 30 seconds via systemd timer, with cross-node verification to prevent data corruption. Event-driven fence scripts handle service masking/unmasking during cluster state changes.
 
 **Key monitoring commands:**
-- Cluster status: `sudo -u postgres repmgr cluster show`
+- Cluster status: `sudo -u postgres repmgr -f /etc/repmgr/17-main/repmgr.conf cluster show`
 - Service status: `sudo systemctl status postgresql@17-main repmgrd@17-main detect-rogue-primary.timer`
 - Replication status: `sudo -u postgres psql -c "SELECT application_name, client_addr, state FROM pg_stat_replication;"`
 - Logs: `sudo journalctl -u detect-rogue-primary.service --since "10m ago"`
@@ -231,6 +231,9 @@ ansible-playbook -i ansible/inventory/offline/hosts.ini ansible/postgresql-deplo
 # Clean previous deployment
 # Only cleans the messy configurations the data remains intact
 ansible-playbook -i ansible/inventory/offline/hosts.ini ansible/postgresql-deploy.yml --tag cleanup
+
+# Deploy without the cleanup process
+ansible-playbook -i ansible/inventory/offline/hosts.ini ansible/postgresql-deploy.yml --skip-tags "cleanup"
 ```
 
 ### 🏷️ Tag-Based Deployments
@@ -245,18 +248,13 @@ ansible-playbook -i ansible/inventory/offline/hosts.ini ansible/postgresql-deplo
 | `wire-setup` | Wire database setup only | `--tags "wire-setup"` |
 | `monitoring` | Deploy cluster monitoring only | `--tags "monitoring"` |
 
-```bash
-# Deploy without the cleanup process
-ansible-playbook -i ansible/inventory/offline/hosts.ini ansible/postgresql-deploy.yml --skip-tags "cleanup"
-```
-
 ## Monitoring Checks After Installation
 
 ### 🛡️ Key Verification Commands
 
 ```bash
 # 1. Cluster status (primary command)
-sudo -u postgres repmgr cluster show
+sudo -u postgres repmgr -f /etc/repmgr/17-main/repmgr.conf cluster show
 
 # 2. Service status
 sudo systemctl status postgresql@17-main repmgrd@17-main detect-rogue-primary.timer
@@ -271,7 +269,7 @@ sudo journalctl -u detect-rogue-primary.service --since "10m ago"
 sudo tail -n 20 -f /var/log/postgresql/fence_events.log
 
 # 6. Manual promotion (rare emergency case)
-sudo -u postgres repmgr standby promote
+sudo -u postgres repmgr -f /etc/repmgr/17-main/repmgr.conf standby promote
 ```
 
 ## How It Confirms a Reliable System
@@ -284,7 +282,7 @@ sudo -u postgres repmgr standby promote
 
 ### 🎯 Quick Health Check
 ```bash
-sudo -u postgres repmgr cluster show
+sudo -u postgres repmgr -f /etc/repmgr/17-main/repmgr.conf cluster show
 sudo systemctl status detect-rogue-primary.timer
 sudo -u postgres psql -c "SELECT * FROM pg_stat_replication;"
 ```
@@ -294,9 +292,9 @@ sudo -u postgres psql -c "SELECT * FROM pg_stat_replication;"
 ## Configuration Options
 
 ### 🔧 repmgr Configuration
-- **Node Priority**: Determines promotion order during failover (higher values preferred)
+- **Node Priority**: `priority` Determines promotion order during failover (higher values preferred)
 - **Monitoring Interval**: `repmgr_monitor_interval` (default: 2 seconds)
-- **Reconnect Settings**: `repmgr_reconnect_attempts` (default: 6), `repmgr_reconnect_interval` (5 seconds, defaults 10seconds)
+- **Reconnect Settings**: `repmgr_reconnect_attempts` (default: 6), `repmgr_reconnect_interval` (default: 5 seconds)
 
 *Configuration file: [`ansible/inventory/offline/group_vars/postgresql/postgresql.yml`](../ansible/inventory/offline/group_vars/postgresql/postgresql.yml)*
 
@@ -317,11 +315,6 @@ repmgr_node_config:
     role: standby
 ```
 
-**Monitoring Settings:**
-- `monitor_interval_secs`: Interval between monitoring checks (default: 2 seconds)
-- `reconnect_attempts`: Maximum reconnection attempts (default: 6)
-- `reconnect_interval`: Interval between reconnection attempts (default: 5 seconds)
-
 *See [repmgr configuration reference](https://repmgr.org/docs/current/configuration-file.html) for complete options.*
 
 ### 🛡️ Failover Validation
@@ -335,23 +328,26 @@ repmgr_node_config:
 
 ```bash
 # Compatible data rejoin
-sudo -u postgres repmgr node rejoin -d repmgr -h <primary-ip> -U repmgr --verbose
+sudo -u postgres repmgr -f /etc/repmgr/17-main/repmgr.conf node rejoin -d repmgr -h <primary-ip> -U repmgr --verbose
 
 # Timeline divergence rejoin
-sudo -u postgres repmgr node rejoin -d repmgr -h <primary-ip> -U repmgr --force-rewind --verbose
+sudo -u postgres repmgr -f /etc/repmgr/17-main/repmgr.conf node rejoin -d repmgr -h <primary-ip> -U repmgr --force-rewind --verbose
 ```
 
 ### 🚨 Emergency Recovery
 
 **Complete Cluster Failure:**
-1. Find node with most recent data: `pg_controldata /var/lib/postgresql/17/main`
-2. Register as primary: `repmgr primary register --force`
+1. Find node with most recent data: `sudo -u postgres /usr/lib/postgresql/17/bin/pg_controldata /var/lib/postgresql/17/main | grep -E "Latest checkpoint location|TimeLineID|Time of latest checkpoint"`
+2. Register as primary: `sudo -u postgres repmgr -f /etc/repmgr/17-main/repmgr.conf primary register --force`
 3. Rejoin other nodes with `--force-rewind`
 
 **Split-Brain Resolution:**
 - Unmask service: `sudo systemctl unmask postgresql@17-main.service`
-- Rejoin to correct primary with `--force-rewind`
-- Service auto-starts in standby mode if rejoin fails
+- Rejoin to correct primary with `sudo -u postgres repmgr -f /etc/repmgr/17-main/repmgr.conf node rejoin -d repmgr -h <primary-ip> -U repmgr --force-rewind --verbose` (run the command just after the unmasking, the repmgr can mask it again if the rejoin command is not running in quick succession of the unmask command)
+- Service auto-starts in standby mode and will start following the new primary when the rejoin succeeds and if it fails the node might join the cluster as standalone standby.
+- Check the cluster status `sudo -u postgres repmgr -f /etc/repmgr/17-main/repmgr.conf cluster show` to make sure the node joins the cluster properly.
+- The newly joined node is not following the new primary, then:
+- unmask/stop postgresql and re-run the rejoin command from above.
 
 ## Wire Server Database Setup
 
