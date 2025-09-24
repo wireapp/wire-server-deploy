@@ -24,6 +24,9 @@
       # The second minio instance on this server.
       server2:
         server_addr: ":9092"
+    # Cargohold IAM setup
+    cargohold_policy_name: "cargohold-assets-policy"
+    cargohold_user_name: "cargohold-user"
   roles:
     - role: ansible-minio
       minio_layout: server1
@@ -60,12 +63,80 @@
       run_once: true
       tags: mc-config
 
+    # Cargohold IAM Setup
+    - name: "Create cargohold policy file"
+      copy:
+        content: |
+          {
+            "Version": "2012-10-17",
+            "Statement": [
+              {
+                "Effect": "Allow",
+                "Action": [
+                  "s3:GetObject",
+                  "s3:PutObject",
+                  "s3:DeleteObject",
+                  "s3:ListBucket"
+                ],
+                "Resource": [
+                  "arn:aws:s3:::assets",
+                  "arn:aws:s3:::assets/*"
+                ]
+              }
+            ]
+          }
+        dest: "/tmp/{{ cargohold_policy_name }}.json"
+      run_once: true
+      tags: cargohold-iam
+
+    - name: "Add cargohold policy to MinIO"
+      shell: "mc admin policy create local {{ cargohold_policy_name }} /tmp/{{ cargohold_policy_name }}.json"
+      run_once: true
+      ignore_errors: yes # Policy might already be attached, which is fine
+      tags: cargohold-iam
+
+    - name: "Generate random password for cargohold user"
+      set_fact:
+        cargohold_temp_password: "{{ 999999999999999999999 | random | to_uuid }}"
+      run_once: true
+      tags: cargohold-iam
+
+    - name: "Create cargohold IAM user"
+      shell: "mc admin user add local {{ cargohold_user_name }} {{ cargohold_temp_password }}"
+      run_once: true
+      ignore_errors: yes # Will fail if user already exists, which is fine
+      tags: cargohold-iam
+
+    - name: "Attach policy to cargohold user"
+      shell: "mc admin policy attach local {{ cargohold_policy_name }} --user {{ cargohold_user_name }}"
+      run_once: true
+      ignore_errors: yes # Policy might already be attached
+      tags: cargohold-iam
+
+    - name: "Create service account for cargohold with specific access key"
+      shell: "mc admin user svcacct add --access-key {{ minio_cargohold_access_key }} --secret-key {{ minio_cargohold_secret_key }} local {{ cargohold_user_name }}"
+      run_once: true
+      register: cargohold_svcacct_result
+      ignore_errors: yes # Will fail if key already exists, which is fine
+      tags: cargohold-iam
+
+    - name: "Verify cargohold service account"
+      shell: "mc admin user svcacct ls local {{ cargohold_user_name }}"
+      run_once: true
+      register: cargohold_svcacct_list
+      tags: cargohold-iam
+
+    - name: "List cargohold service accounts"
+      debug:
+        var: cargohold_svcacct_list.stdout
+      tags: cargohold-iam
     - name: "remove unneeded config aliases added by default"
       shell: "mc config host rm {{ item }}"
       with_items:
         - gcs
         - s3
         - play
+      ignore_errors: yes
       tags: mc-config
 
   # This play has to run after minio is installed and buckets are configured
