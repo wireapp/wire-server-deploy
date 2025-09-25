@@ -47,9 +47,8 @@ promote_command='/usr/bin/repmgr standby promote -f /etc/repmgr/{{ postgresql_ve
 follow_command='/usr/bin/repmgr standby follow -f /etc/repmgr/{{ postgresql_version }}-main/repmgr.conf --upstream-node-id=%n --log-to-file'
 
 # ====================================================================
-# SERVICE MANAGEMENT COMMANDS - CORRECTED
+# SERVICE MANAGEMENT COMMANDS
 # Ref: https://www.repmgr.org/docs/current/configuration-file-service-commands.html
-# "For Debian/Ubuntu users: use sudo pg_ctlcluster"
 # ====================================================================
 
 service_start_command='sudo systemctl start postgresql@{{ postgresql_version }}-main'

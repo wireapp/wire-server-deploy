@@ -2,6 +2,12 @@
 
 ## Table of Contents
 - [Architecture Overview](#architecture-overview)
+- **Multi-Node Checking**: Verifies primary status across all cluster nodes
+- **Graceful Shutdown**: Masks service to prevent restart attempts, then stops PostgreSQL (handled by split-brain detection system)
+- **Force Termination**: Uses `systemctl kill` if normal stop fails
+- **Event Logging**: Comprehensive logging to syslog and journal
+
+**Recovery:** Event-driven fence script updates node status in the repmgr database and automatically unmasks services during successful rejoins-overview
 - [Key Concepts](#key-concepts)
 - [Minimum System Requirements](#minimum-system-requirements)
 - [High Availability Features](#high-availability-features)
@@ -47,6 +53,7 @@
 - **repmgr/repmgrd**: Cluster management and automatic failover ([docs](https://repmgr.org/))
 - **Split-Brain Detection**: Intelligent monitoring prevents data corruption
 - **Wire Integration**: Pre-configured database setup
+- **Offline Deployment**: For offline deployments, packages are installed from local URLs defined in [`ansible/inventory/offline/group_vars/postgresql/postgresql.yml`](ansible/inventory/offline/group_vars/postgresql/postgresql.yml), bypassing repositories.
 
 ### Software Versions
 - **PostgreSQL**: 17.5 (latest stable with enhanced replication features)
@@ -114,7 +121,7 @@ Based on the PostgreSQL configuration template, the deployment is optimized for 
 - **Force Termination**: Uses `systemctl kill` if normal stop fails
 - **Event Logging**: Comprehensive logging to syslog and journal
 
-**Recovery:** Event-driven fence script automatically unmasks services during successful rejoins
+**Recovery:** Event-driven fence script updates node status in the repmgr database and automatically unmasks services during successful rejoins (manual unmasking required for split-brain resolution)
 
 ### 🔄 Self-Healing Capabilities
 
@@ -124,7 +131,7 @@ Based on the PostgreSQL configuration template, the deployment is optimized for 
 | Network Partition | 30-120 seconds | Automatic | None |
 | Node Recovery | Immediate | < 2 minutes | None |
 
-**Primary Failure**: repmgrd monitors connectivity (2s intervals), confirms failure after 6 attempts (12s), validates quorum (≥2 nodes for 3+ clusters), selects best replica by priority/lag, promotes automatically with zero data loss.
+**Primary Failure**: repmgrd monitors connectivity (2s intervals), confirms failure after 5 attempts (~10s), validates quorum (≥2 nodes for 3+ clusters), selects best replica by priority/lag, promotes automatically with zero data loss.
 
 **Network Partition**: 30s timer triggers cross-node verification, isolates conflicting primaries by masking/stopping services, auto-recovers when network restores with timeline synchronization if needed.
 
@@ -294,7 +301,7 @@ sudo -u postgres psql -c "SELECT * FROM pg_stat_replication;"
 ### 🔧 repmgr Configuration
 - **Node Priority**: `priority` Determines promotion order during failover (higher values preferred)
 - **Monitoring Interval**: `monitor_interval_secs` (default: 2 seconds)
-- **Reconnect Settings**: `reconnect_attempts` (default: 5), `repmgr_reconnect_interval` (default: 5 seconds)
+- **Reconnect Settings**: `reconnect_attempts` (default: 5), `reconnect_interval` (default: 5 seconds)
 
 *Configuration file: [`ansible/inventory/offline/group_vars/postgresql/postgresql.yml`](../ansible/inventory/offline/group_vars/postgresql/postgresql.yml)*
 
