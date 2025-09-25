@@ -120,8 +120,8 @@ Based on the PostgreSQL configuration template, the deployment is optimized for 
 
 | Scenario | Detection | Recovery Time | Data Loss |
 |----------|-----------|---------------|-----------|
-| Primary Failure | 5-30 seconds | < 30 seconds | None |
-| Network Partition | 30-60 seconds | Automatic | None |
+| Primary Failure | 25-60 seconds | < 30 seconds | None |
+| Network Partition | 30-120 seconds | Automatic | None |
 | Node Recovery | Immediate | < 2 minutes | None |
 
 **Primary Failure**: repmgrd monitors connectivity (2s intervals), confirms failure after 6 attempts (12s), validates quorum (≥2 nodes for 3+ clusters), selects best replica by priority/lag, promotes automatically with zero data loss.
@@ -293,8 +293,8 @@ sudo -u postgres psql -c "SELECT * FROM pg_stat_replication;"
 
 ### 🔧 repmgr Configuration
 - **Node Priority**: `priority` Determines promotion order during failover (higher values preferred)
-- **Monitoring Interval**: `repmgr_monitor_interval` (default: 2 seconds)
-- **Reconnect Settings**: `repmgr_reconnect_attempts` (default: 6), `repmgr_reconnect_interval` (default: 5 seconds)
+- **Monitoring Interval**: `monitor_interval_secs` (default: 2 seconds)
+- **Reconnect Settings**: `reconnect_attempts` (default: 5), `repmgr_reconnect_interval` (default: 5 seconds)
 
 *Configuration file: [`ansible/inventory/offline/group_vars/postgresql/postgresql.yml`](../ansible/inventory/offline/group_vars/postgresql/postgresql.yml)*
 
@@ -336,18 +336,22 @@ sudo -u postgres repmgr -f /etc/repmgr/17-main/repmgr.conf node rejoin -d repmgr
 
 ### 🚨 Emergency Recovery
 
+Usually the recovery time is very fast on postgres cluster level (30 seconds to a minute) but for the application it might take from 1 minute to 2 minutes. The reason is postgres-endpoint-manager cronjob runs every 2 minutes to check and update the postgresql endpoints if necessary.
+
 **Complete Cluster Failure:**
 1. Find node with most recent data: `sudo -u postgres /usr/lib/postgresql/17/bin/pg_controldata /var/lib/postgresql/17/main | grep -E "Latest checkpoint location|TimeLineID|Time of latest checkpoint"`
 2. Register as primary: `sudo -u postgres repmgr -f /etc/repmgr/17-main/repmgr.conf primary register --force`
 3. Rejoin other nodes with `--force-rewind`
 
-**Split-Brain Resolution:**
-- Unmask service: `sudo systemctl unmask postgresql@17-main.service`
-- Rejoin to correct primary with `sudo -u postgres repmgr -f /etc/repmgr/17-main/repmgr.conf node rejoin -d repmgr -h <primary-ip> -U repmgr --force-rewind --verbose` (run the command just after the unmasking, the repmgr can mask it again if the rejoin command is not running in quick succession of the unmask command)
+**Bring back the old primary as standby (Split-Brain Resolution):**
+- Get the current primary node ip with `sudo -u postgres repmgr -f /etc/repmgr/17-main/repmgr.conf cluster show` on a active node.
+- `ssh` into the old primary
+- Unmask service and rejoin the cluster as standby with is command: `sudo systemctl unmask postgresql@17-main.service && sudo -u postgres repmgr -f /etc/repmgr/17-main/repmgr.conf node rejoin -d repmgr -h <primary-ip> -U repmgr --force-rewind --verbose`
 - Service auto-starts in standby mode and will start following the new primary when the rejoin succeeds and if it fails the node might join the cluster as standalone standby.
-- Check the cluster status `sudo -u postgres repmgr -f /etc/repmgr/17-main/repmgr.conf cluster show` to make sure the node joins the cluster properly.
-- The newly joined node is not following the new primary, then:
-- unmask/stop postgresql and re-run the rejoin command from above.
+- Check the cluster status `sudo -u postgres repmgr -f /etc/repmgr/17-main/repmgr.conf cluster show` to make sure the node joins the cluster properly and the upstream is the new primary.
+- If the upstream of the re-joined node is empty that means the re-join failed partially, please rerun the above procedure by
+- masking and stopping postgresql first: `sudo systemctl mask postgresql@17-main && sudo systemctl stop postgresql@17-main`
+- Run the unmask and rejoin command. That should be it.
 
 ## Wire Server Database Setup
 

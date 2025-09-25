@@ -39,7 +39,7 @@ repmgr_node_config:
 #   - Default: 10 seconds
 #   - Time to wait between each reconnection attempt
 monitor_interval_secs: 2
-reconnect_attempts: 6
+reconnect_attempts: 5
 reconnect_interval: 5
 
 # Use local packages instead of repository

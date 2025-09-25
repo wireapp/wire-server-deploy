@@ -66,9 +66,9 @@ event_notification_command='/opt/repmgr/scripts/simple_fence.sh %n %e %s'
 # MONITORING
 # Ref: https://www.repmgr.org/docs/current/repmgrd-monitoring.html
 # ====================================================================
-monitor_interval_secs={{ repmgr_monitor_interval | default(2) }}
-reconnect_attempts={{ repmgr_reconnect_attempts | default(6) }}
-reconnect_interval={{ repmgr_reconnect_interval | default(10) }}
+monitor_interval_secs={{ monitor_interval_secs | default(2) }}
+reconnect_attempts={{ reconnect_attempts | default(6) }}
+reconnect_interval={{ reconnect_interval | default(5) }}
 standby_disconnect_on_failover=true
 
 # ====================================================================
