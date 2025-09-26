@@ -10,10 +10,10 @@ locals {
   # Location preferences with fallbacks (EU only)
   preferred_locations = ["nbg1", "fsn1", "hel1"]
 
-  # Server type preferences with fallbacks
+  # Server type preferences with fallbacks (optimized for availability)
   preferred_server_types = {
-    small  = ["cx22", "cpx21", "cx21", "cpx11"] # For cassandra, elasticsearch, minio, postgresql
-    medium = ["cpx41", "cx41", "cpx31", "cx31"] # For adminhost, assethost, kubenode
+    small  = ["cpx21", "cx22", "cx21", "cpx11"] # For cassandra, elasticsearch, minio, postgresql
+    medium = ["cpx31", "cpx41", "cx31", "cx41"] # For adminhost, assethost, kubenode
   }
 }
 
