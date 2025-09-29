@@ -93,7 +93,8 @@ for attempt in $(seq 1 $MAX_RETRIES); do
         export CLEANUP_ON_EXIT="true"
         break
     else
-        echo "Infrastructure deployment failed on attempt $attempt"
+        TERRAFORM_EXIT_CODE=$?
+        echo "Infrastructure deployment failed on attempt $attempt (exit code: $TERRAFORM_EXIT_CODE)"
 
         if [[ $attempt -lt $MAX_RETRIES ]]; then
             echo "Will retry with different configuration..."
@@ -150,6 +151,12 @@ for attempt in $(seq 1 $MAX_RETRIES); do
     fi
 done
 
+# Check if we exited the loop successfully (CLEANUP_ON_EXIT set means terraform apply succeeded)
+if [[ "${CLEANUP_ON_EXIT:-}" != "true" ]]; then
+    echo "ERROR: All terraform attempts failed, but script continued unexpectedly"
+    exit 1
+fi
+
 # Restore original config after successful deployment
 if [[ -f main.tf.bak ]]; then
     mv main.tf.bak main.tf
@@ -160,9 +167,20 @@ echo ""
 echo "Infrastructure ready! Proceeding with application deployment..."
 
 
-adminhost=$(terraform output adminhost)
+echo "Getting terraform outputs..."
+adminhost=$(terraform output adminhost) || {
+    echo "ERROR: Failed to get adminhost output from terraform"
+    terraform output || echo "No terraform outputs available"
+    exit 1
+}
 adminhost="${adminhost//\"/}" # remove extra quotes around the returned string
-ssh_private_key=$(terraform output ssh_private_key)
+echo "Adminhost IP: $adminhost"
+
+ssh_private_key=$(terraform output ssh_private_key) || {
+    echo "ERROR: Failed to get ssh_private_key output from terraform"
+    exit 1
+}
+echo "SSH private key retrieved (length: ${#ssh_private_key} chars)"
 
 # Fast SSH setup
 eval "$(ssh-agent)" || {
