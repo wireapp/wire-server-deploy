@@ -229,9 +229,35 @@ scp -o StrictHostKeyChecking=accept-new inventory.yml "root@$adminhost":./ansibl
 wait $SETUP_PID
 
 echo "Downloading assets directly from S3 to adminhost (much faster than local transfer)..."
+echo "S3 URL: $DEFAULT_ASSETS_URL"
 
-# Download assets directly from S3 to adminhost (MUCH faster)
-ssh "$SSH_OPTS" "root@$adminhost" "curl -fsSL '$DEFAULT_ASSETS_URL' | tar xzv"
+# Test S3 URL accessibility first
+echo "Testing S3 URL accessibility..."
+if curl -I -s "$DEFAULT_ASSETS_URL" | head -1 | grep -q "200 OK"; then
+    echo "✅ S3 asset is accessible"
+else
+    echo "❌ S3 asset is not accessible"
+    echo "Response:"
+    curl -I -s "$DEFAULT_ASSETS_URL" | head -5
+    exit 1
+fi
+
+# Download assets to local temp and transfer (fallback to working pattern)
+echo "Downloading assets locally first, then transferring..."
+TEMP_ASSETS="/tmp/assets.tgz"
+curl -fsSL "$DEFAULT_ASSETS_URL" -o "$TEMP_ASSETS" || {
+    echo "ERROR: Failed to download assets from S3"
+    exit 1
+}
+
+echo "Transferring assets to adminhost..."
+ssh "$SSH_OPTS" "root@$adminhost" tar xzv < "$TEMP_ASSETS" || {
+    echo "ERROR: Failed to transfer/extract assets to adminhost"
+    exit 1
+}
+
+echo "Cleaning up local temp assets..."
+rm -f "$TEMP_ASSETS"
 
 echo "Verifying deployment setup..."
 ssh "$SSH_OPTS" "root@$adminhost" cat ./ansible/inventory/offline/inventory.yml || true
