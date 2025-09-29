@@ -6,7 +6,7 @@ on:
       upload_name:
         description: 'Upload name (git SHA or tag)'
         required: false
-        default: ''
+        default: 'a71cbf843a79907a9eaca72f46f9f64e8a0524d8'
   pull_request:
     types: [opened, synchronize, reopened]
     paths:
@@ -32,9 +32,9 @@ jobs:
         id: upload_name
         run: |
           if [ -n "${{ github.event.inputs.upload_name }}" ]; then
-            echo ::set-output name=UPLOAD_NAME::${{ github.event.inputs.upload_name }}
+             echo "UPLOAD_NAME=${{ github.event.inputs.upload_name }}" >> $GITHUB_OUTPUT
           else
-            echo ::set-output name=UPLOAD_NAME::$GITHUB_SHA
+            echo "UPLOAD_NAME=$GITHUB_SHA" >> $GITHUB_OUTPUT
           fi
 
       - name: Install terraform
