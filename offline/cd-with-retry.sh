@@ -7,11 +7,16 @@ set -euo pipefail
 
 CD_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 TF_DIR="${CD_DIR}/../terraform/examples/wire-server-deploy-offline-hetzner"
-ARTIFACTS_DIR="${CD_DIR}/default-build/output"
 
 # Retry configuration
 MAX_RETRIES=3
 RETRY_DELAY=30
+
+# S3 configuration for fast asset download
+S3_REGION="eu-west-1"
+
+# Get build ID from environment or use git commit
+UPLOAD_NAME="${GITHUB_SHA:-$(git rev-parse HEAD)}"
 
 echo "Wire Offline Deployment with Retry Logic"
 echo "========================================"
@@ -25,14 +30,20 @@ trap cleanup EXIT
 cd "$TF_DIR"
 terraform init
 
-# Retry loop for terraform apply
+# Pre-calculate S3 URLs for faster deployment
+DEFAULT_ASSETS_URL="https://s3-${S3_REGION}.amazonaws.com/public.wire.com/artifacts/wire-server-deploy-static-${UPLOAD_NAME}.tgz"
+
+echo "Asset URL: $DEFAULT_ASSETS_URL"
+
+# Retry loop for terraform apply with performance optimizations
 echo "Starting deployment with automatic retry on resource unavailability..."
 for attempt in $(seq 1 $MAX_RETRIES); do
     echo ""
     echo "Deployment attempt $attempt of $MAX_RETRIES"
     date
 
-    if terraform apply -auto-approve; then
+    # Parallel terraform apply (infrastructure creation is the bottleneck)
+    if terraform apply -auto-approve -parallelism=15; then
         echo "Infrastructure deployment successful on attempt $attempt!"
         break
     else
@@ -41,9 +52,9 @@ for attempt in $(seq 1 $MAX_RETRIES); do
         if [[ $attempt -lt $MAX_RETRIES ]]; then
             echo "Will retry with different configuration..."
 
-            # Clean up partial deployment
+            # Fast parallel cleanup
             echo "Cleaning up partial deployment..."
-            terraform destroy -auto-approve || true
+            terraform destroy -auto-approve -parallelism=15 || true
 
             # Wait for resources to potentially become available
             echo "Waiting ${RETRY_DELAY}s for resources to become available..."
@@ -72,7 +83,7 @@ for attempt in $(seq 1 $MAX_RETRIES); do
             echo ""
             echo "This usually means:"
             echo "   1. High demand for Hetzner Cloud resources in EU regions"
-            echo "   2. Your account may have resource limits"
+            echo "   2. Hetzner account may have resource limits"
             echo "   3. Try again later when resources become available"
             echo ""
             echo "Manual solutions:"
@@ -100,29 +111,70 @@ fi
 echo ""
 echo "Infrastructure ready! Proceeding with application deployment..."
 
-# Continue with the rest of the original cd.sh logic
+
 adminhost=$(terraform output adminhost)
 adminhost="${adminhost//\"/}" # remove extra quotes around the returned string
 ssh_private_key=$(terraform output ssh_private_key)
 
+# Fast SSH setup
 eval "$(ssh-agent)"
 ssh-add - <<< "$ssh_private_key"
 
-terraform output -json static-inventory > inventory.json
+# Generate inventory in parallel with other setup
+terraform output -json static-inventory > inventory.json &
+INVENTORY_PID=$!
+
+# Pre-configure SSH for faster connections
+SSH_OPTS="-oStrictHostKeyChecking=accept-new -oConnectionAttempts=3 -oConnectTimeout=10 -oServerAliveInterval=30"
+
+# Wait for inventory and convert to YAML
+wait $INVENTORY_PID
 yq -y '.' inventory.json > inventory.yml
 
-ssh -oStrictHostKeyChecking=accept-new -oConnectionAttempts=10 "root@$adminhost" tar xzv < "$ARTIFACTS_DIR/assets.tgz"
+echo "Setting up adminhost for fast deployment..."
 
-scp inventory.yml "root@$adminhost":./ansible/inventory/offline/inventory.yml
+# Install required tools on adminhost in parallel
+ssh "$SSH_OPTS" "root@$adminhost" 'bash -s' << 'EOF' &
+# Install AWS CLI and ansible dependencies for faster deployment
+apt-get update -qq
+apt-get install -y awscli curl python3-pip
+pip3 install ansible
+# Pre-create directories
+mkdir -p ./ansible/inventory/offline/
+EOF
 
-ssh "root@$adminhost" cat ./ansible/inventory/offline/inventory.yml || true
+SETUP_PID=$!
+
+# Copy inventory while setup is running
+scp -o StrictHostKeyChecking=accept-new inventory.yml "root@$adminhost":./ansible/inventory/offline/inventory.yml
+
+# Wait for setup to complete
+wait $SETUP_PID
+
+echo "Downloading assets directly from S3 to adminhost (much faster than local transfer)..."
+
+# Download assets directly from S3 to adminhost (MUCH faster)
+ssh "$SSH_OPTS" "root@$adminhost" "curl -fsSL '$DEFAULT_ASSETS_URL' | tar xzv"
+
+echo "Verifying deployment setup..."
+ssh "$SSH_OPTS" "root@$adminhost" cat ./ansible/inventory/offline/inventory.yml || true
+
+echo "Running optimized ansible deployment..."
 
 echo "Running ansible playbook setup_nodes.yml via adminhost ($adminhost)..."
-ansible-playbook -i inventory.yml setup_nodes.yml --private-key "ssh_private_key" \
-  -e "ansible_ssh_common_args='-o ProxyCommand=\"ssh -W %h:%p -q root@$adminhost -i ssh_private_key\" -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null'"
+# Run ansible from adminhost for faster network connectivity
+ssh "$SSH_OPTS" "root@$adminhost" "cd ./ansible && ansible-playbook -i inventory/offline/inventory.yml setup_nodes.yml --forks=10 -e ansible_ssh_common_args='-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ControlMaster=auto -o ControlPersist=300s'"
 
-# NOTE: Agent is forwarded; so that the adminhost can provision the other boxes
-ssh -A "root@$adminhost" ./bin/offline-deploy.sh
+echo "Running final Wire deployment..."
+# Use SSH connection multiplexing for faster multiple connections
+ssh -A -o ControlMaster=auto -o ControlPersist=300s "root@$adminhost" ./bin/offline-deploy.sh
 
 echo ""
-echo "Wire offline deployment completed successfully!"
+echo "Fast Wire offline deployment completed successfully!"
+echo "Performance optimizations used:"
+echo "  - S3 direct download instead of local transfer"
+echo "  - Parallel terraform operations (15 parallel resources)"
+echo "  - Faster SSH connection multiplexing"
+echo "  - Parallel ansible execution (10 forks)"
+echo "  - Pre-installed tools on adminhost"
+echo "  - Ansible runs directly on adminhost (no proxy jumps)"

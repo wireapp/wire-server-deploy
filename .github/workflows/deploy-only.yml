@@ -1,0 +1,50 @@
+name: Fast Deploy Only
+
+on:
+  workflow_dispatch:
+    inputs:
+      upload_name:
+        description: 'Upload name (git SHA or tag)'
+        required: false
+        default: ''
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths:
+      - 'terraform/**'
+      - 'offline/cd-with-retry.sh'
+      - '.github/workflows/deploy-only.yml'
+  push:
+    branches: [master, develop]
+    paths:
+      - 'terraform/**'
+      - 'offline/cd-with-retry.sh'
+      - '.github/workflows/deploy-only.yml'
+
+jobs:
+  deploy-only:
+    name: Deploy existing build
+    runs-on:
+      group: wire-server-deploy
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Get upload name
+        id: upload_name
+        run: |
+          if [ -n "${{ github.event.inputs.upload_name }}" ]; then
+            echo ::set-output name=UPLOAD_NAME::${{ github.event.inputs.upload_name }}
+          else
+            echo ::set-output name=UPLOAD_NAME::$GITHUB_SHA
+          fi
+
+      - name: Install terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "^1.3.7"
+          terraform_wrapper: false
+
+      - name: Fast deploy to Hetzner
+        run: ./offline/cd-with-retry.sh
+        env:
+          HCLOUD_TOKEN: '${{ secrets.HCLOUD_TOKEN }}'
+          GITHUB_SHA: ${{ steps.upload_name.outputs.UPLOAD_NAME }}

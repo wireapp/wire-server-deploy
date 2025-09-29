@@ -56,7 +56,7 @@ resource "null_resource" "location_validation" {
       echo "DEPLOYMENT FAILED: No suitable location available"
       echo "Requested locations: ${join(", ", local.preferred_locations)}"
       echo "Available locations: ${join(", ", local.available_location_names)}"
-      echo "Please check your Hetzner Cloud region availability"
+      echo "Please check Hetzner Cloud region availability"
       exit 1
     EOT
   }
@@ -70,7 +70,7 @@ resource "null_resource" "small_server_type_validation" {
       echo "DEPLOYMENT FAILED: No suitable database server types available"
       echo "Requested types: ${join(", ", local.preferred_server_types.small)}"
       echo "Available types: ${join(", ", local.available_server_type_names)}"
-      echo "Please check server type availability in your selected region"
+      echo "Please check server type availability in the selected region"
       exit 1
     EOT
   }
@@ -84,7 +84,7 @@ resource "null_resource" "medium_server_type_validation" {
       echo "DEPLOYMENT FAILED: No suitable Kubernetes server types available"
       echo "Requested types: ${join(", ", local.preferred_server_types.medium)}"
       echo "Available types: ${join(", ", local.available_server_type_names)}"
-      echo "Please check server type availability in your selected region"
+      echo "Please check server type availability in the selected region"
       exit 1
     EOT
   }

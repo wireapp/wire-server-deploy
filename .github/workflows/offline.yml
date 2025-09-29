@@ -1,19 +1,20 @@
 on:
   push:
     branches: [master, develop]
-    tags: [ v* ]
+    tags: [v*]
     paths-ignore:
-      - '*.md'
-      - '**/*.md'
+      - "*.md"
+      - "**/*.md"
   pull_request:
     branches: [master, develop]
     paths-ignore:
-      - '*.md'
-      - '**/*.md'
+      - "*.md"
+      - "**/*.md"
+
 jobs:
-  offline:
-    name: Prepare offline package
-    # Useful to skip expensive CI when writing docs
+  # Fast-track deployment job - runs in parallel with builds
+  deploy:
+    name: Build and Deploy default build
     if: "!contains(github.event.head_commit.message, 'skip ci')"
     runs-on:
       group: wire-server-deploy
@@ -32,76 +33,22 @@ jobs:
 
       - name: Get upload name
         id: upload_name
-        run: |
-          # FIXME: Tag with a nice release name using the github tag...
-          # SOURCE_TAG=${GITHUB_REF#refs/tags/}
-          echo ::set-output name=UPLOAD_NAME::$GITHUB_SHA
-          # echo ::set-output name=UPLOAD_NAME::${SOURCE_TAG:-$GITHUB_SHA}
+        run: echo ::set-output name=UPLOAD_NAME::$GITHUB_SHA
 
-      # deafult profile build
-      - name: Process the default profile build
+      # Only build default profile for deployment
+      - name: Process default build for deployment
         run: ./offline/default-build/build.sh
         env:
-          GPG_PRIVATE_KEY: '${{ secrets.GPG_PRIVATE_KEY }}'
-          DOCKER_LOGIN: '${{ secrets.DOCKER_LOGIN }}'
+          GPG_PRIVATE_KEY: "${{ secrets.GPG_PRIVATE_KEY }}"
+          DOCKER_LOGIN: "${{ secrets.DOCKER_LOGIN }}"
 
-      - name: Copy default build assets tarball to S3 and clean up
+      - name: Upload default build to S3
         run: |
-          # Upload tarball for each profile by specifying their OUTPUT_TAR path
           aws s3 cp offline/default-build/output/assets.tgz s3://public.wire.com/artifacts/wire-server-deploy-static-${{ steps.upload_name.outputs.UPLOAD_NAME }}.tgz
           echo "Uploaded to: https://s3-$AWS_REGION.amazonaws.com/public.wire.com/artifacts/wire-server-deploy-static-${{ steps.upload_name.outputs.UPLOAD_NAME }}.tgz"
-          # removing everything except assets.tgz as it is not required anymore in the further builds
-          find offline/default-build/output/ -mindepth 1 -maxdepth 1 ! -name 'assets.tgz' -exec rm -r {} +
         env:
-          AWS_ACCESS_KEY_ID: '${{ secrets.AWS_ACCESS_KEY_ID }}'
-          AWS_SECRET_ACCESS_KEY: '${{ secrets.AWS_SECRET_ACCESS_KEY }}'
-          AWS_REGION: "eu-west-1"
-
-      - name: Build and upload wire-server-deploy container
-        run: |
-          container_image=$(nix-build --no-out-link -A container)
-          skopeo copy --retry-times 10 --dest-creds "$DOCKER_LOGIN" \
-            docker-archive:"$container_image" \
-            "docker://quay.io/wire/wire-server-deploy:${{ steps.upload_name.outputs.UPLOAD_NAME }}"
-        env:
-          DOCKER_LOGIN: '${{ secrets.DOCKER_LOGIN }}'
-
-      # demo profile build
-      - name: Process the demo profile build
-        run: ./offline/demo-build/build.sh
-        env:
-          GPG_PRIVATE_KEY: '${{ secrets.GPG_PRIVATE_KEY }}'
-          DOCKER_LOGIN: '${{ secrets.DOCKER_LOGIN }}'
-
-      - name: Copy demo build assets tarball to S3 and clean up
-        run: |
-          # Upload tarball for each profile by specifying their OUTPUT_TAR path
-          aws s3 cp offline/demo-build/output/assets.tgz s3://public.wire.com/artifacts/wire-server-deploy-static-demo-${{ steps.upload_name.outputs.UPLOAD_NAME }}.tgz
-          echo "Uploaded to: https://s3-$AWS_REGION.amazonaws.com/public.wire.com/artifacts/wire-server-deploy-static-demo-${{ steps.upload_name.outputs.UPLOAD_NAME }}.tgz"
-          # remove the assets from the build to optimize the space on the server
-          rm -rf offline/demo-build/output/*
-        env:
-          AWS_ACCESS_KEY_ID: '${{ secrets.AWS_ACCESS_KEY_ID }}'
-          AWS_SECRET_ACCESS_KEY: '${{ secrets.AWS_SECRET_ACCESS_KEY }}'
-          AWS_REGION: "eu-west-1"
-
-      # min profile build
-      - name: Process the min profile build
-        run: ./offline/min-build/build.sh
-        env:
-          GPG_PRIVATE_KEY: '${{ secrets.GPG_PRIVATE_KEY }}'
-          DOCKER_LOGIN: '${{ secrets.DOCKER_LOGIN }}'
-
-      - name: Copy min build assets tarball to S3
-        run: |
-          # Upload tarball for each profile by specifying their OUTPUT_TAR path
-          aws s3 cp offline/min-build/output/assets.tgz s3://public.wire.com/artifacts/wire-server-deploy-static-min-${{ steps.upload_name.outputs.UPLOAD_NAME }}.tgz
-          echo "Uploaded to: https://s3-$AWS_REGION.amazonaws.com/public.wire.com/artifacts/wire-server-deploy-static-min-${{ steps.upload_name.outputs.UPLOAD_NAME }}.tgz"
-          # remove the archives from the build to optimize the space on the server
-          rm -rf offline/min-build/output/*
-        env:
-          AWS_ACCESS_KEY_ID: '${{ secrets.AWS_ACCESS_KEY_ID }}'
-          AWS_SECRET_ACCESS_KEY: '${{ secrets.AWS_SECRET_ACCESS_KEY }}'
+          AWS_ACCESS_KEY_ID: "${{ secrets.AWS_ACCESS_KEY_ID }}"
+          AWS_SECRET_ACCESS_KEY: "${{ secrets.AWS_SECRET_ACCESS_KEY }}"
           AWS_REGION: "eu-west-1"
 
       - name: Install terraform
@@ -110,14 +57,110 @@ jobs:
           terraform_version: "^1.3.7"
           terraform_wrapper: false
 
-      - name: Deploy offline environment to hetzner with retry logic
-        run: |
-          ./offline/cd-with-retry.sh
+      - name: Deploy to Hetzner with fast S3 deployment
+        run: ./offline/cd-with-retry.sh
         env:
-          HCLOUD_TOKEN: '${{ secrets.HCLOUD_TOKEN }}'
+          HCLOUD_TOKEN: "${{ secrets.HCLOUD_TOKEN }}"
 
-      #- name: Clean up hetzner environment; just in case
-      #  if: always()
-      #  run: (cd terraform/examples/wire-server-deploy-offline-hetzner ; terraform init && terraform destroy -auto-approve)
-      #  env:
-      #    HCLOUD_TOKEN: '${{ secrets.HCLOUD_TOKEN }}'
+  # Parallel builds for other profiles
+  build-container:
+    name: Build container
+    if: "!contains(github.event.head_commit.message, 'skip ci')"
+    runs-on:
+      group: wire-server-deploy
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          submodules: true
+      - uses: cachix/install-nix-action@v27
+      - uses: cachix/cachix-action@v15
+        with:
+          name: wire-server
+          signingKey: "${{ secrets.CACHIX_SIGNING_KEY }}"
+
+      - name: Get upload name
+        id: upload_name
+        run: echo ::set-output name=UPLOAD_NAME::$GITHUB_SHA
+
+      - name: Build and upload wire-server-deploy container
+        run: |
+          container_image=$(nix-build --no-out-link -A container)
+          skopeo copy --retry-times 10 --dest-creds "$DOCKER_LOGIN" \
+            docker-archive:"$container_image" \
+            "docker://quay.io/wire/wire-server-deploy:${{ steps.upload_name.outputs.UPLOAD_NAME }}"
+        env:
+          DOCKER_LOGIN: "${{ secrets.DOCKER_LOGIN }}"
+
+  build-demo:
+    name: Build demo profile
+    if: "!contains(github.event.head_commit.message, 'skip ci')"
+    runs-on:
+      group: wire-server-deploy
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          submodules: true
+      - uses: cachix/install-nix-action@v27
+      - uses: cachix/cachix-action@v15
+        with:
+          name: wire-server
+          signingKey: "${{ secrets.CACHIX_SIGNING_KEY }}"
+
+      - name: Install nix environment
+        run: nix-env -f default.nix -iA env
+
+      - name: Get upload name
+        id: upload_name
+        run: echo ::set-output name=UPLOAD_NAME::$GITHUB_SHA
+
+      - name: Process demo profile build
+        run: ./offline/demo-build/build.sh
+        env:
+          GPG_PRIVATE_KEY: "${{ secrets.GPG_PRIVATE_KEY }}"
+          DOCKER_LOGIN: "${{ secrets.DOCKER_LOGIN }}"
+
+      - name: Upload demo build to S3
+        run: |
+          aws s3 cp offline/demo-build/output/assets.tgz s3://public.wire.com/artifacts/wire-server-deploy-static-demo-${{ steps.upload_name.outputs.UPLOAD_NAME }}.tgz
+          echo "Uploaded to: https://s3-$AWS_REGION.amazonaws.com/public.wire.com/artifacts/wire-server-deploy-static-demo-${{ steps.upload_name.outputs.UPLOAD_NAME }}.tgz"
+        env:
+          AWS_ACCESS_KEY_ID: "${{ secrets.AWS_ACCESS_KEY_ID }}"
+          AWS_SECRET_ACCESS_KEY: "${{ secrets.AWS_SECRET_ACCESS_KEY }}"
+          AWS_REGION: "eu-west-1"
+
+  build-min:
+    name: Build min profile
+    if: "!contains(github.event.head_commit.message, 'skip ci')"
+    runs-on:
+      group: wire-server-deploy
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          submodules: true
+      - uses: cachix/install-nix-action@v27
+      - uses: cachix/cachix-action@v15
+        with:
+          name: wire-server
+          signingKey: "${{ secrets.CACHIX_SIGNING_KEY }}"
+
+      - name: Install nix environment
+        run: nix-env -f default.nix -iA env
+
+      - name: Get upload name
+        id: upload_name
+        run: echo ::set-output name=UPLOAD_NAME::$GITHUB_SHA
+
+      - name: Process min profile build
+        run: ./offline/min-build/build.sh
+        env:
+          GPG_PRIVATE_KEY: "${{ secrets.GPG_PRIVATE_KEY }}"
+          DOCKER_LOGIN: "${{ secrets.DOCKER_LOGIN }}"
+
+      - name: Upload min build to S3
+        run: |
+          aws s3 cp offline/min-build/output/assets.tgz s3://public.wire.com/artifacts/wire-server-deploy-static-min-${{ steps.upload_name.outputs.UPLOAD_NAME }}.tgz
+          echo "Uploaded to: https://s3-$AWS_REGION.amazonaws.com/public.wire.com/artifacts/wire-server-deploy-static-min-${{ steps.upload_name.outputs.UPLOAD_NAME }}.tgz"
+        env:
+          AWS_ACCESS_KEY_ID: "${{ secrets.AWS_ACCESS_KEY_ID }}"
+          AWS_SECRET_ACCESS_KEY: "${{ secrets.AWS_SECRET_ACCESS_KEY }}"
+          AWS_REGION: "eu-west-1"
