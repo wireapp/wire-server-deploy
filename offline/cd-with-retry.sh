@@ -31,6 +31,13 @@ function cleanup {
 trap cleanup EXIT
 
 cd "$TF_DIR"
+
+# Clean up any existing state to ensure fresh deployment
+if [[ -f terraform.tfstate ]]; then
+    echo "Cleaning up existing terraform state..."
+    rm -f terraform.tfstate terraform.tfstate.backup
+fi
+
 terraform init
 
 # Pre-calculate S3 URLs for faster deployment
@@ -136,7 +143,23 @@ SSH_OPTS="-oStrictHostKeyChecking=accept-new -oConnectionAttempts=3 -oConnectTim
 
 # Wait for inventory and convert to YAML
 wait $INVENTORY_PID
-yq -p json -o yaml '.' inventory.json > inventory.yml
+
+# Ensure yq is available (fallback to python if yq not found)
+if command -v yq >/dev/null 2>&1; then
+    yq -p json -o yaml '.' inventory.json > inventory.yml
+else
+    echo "yq not found, using python for JSON to YAML conversion..."
+    python3 -c "
+import json, yaml
+with open('inventory.json', 'r') as f:
+    data = json.load(f)
+with open('inventory.yml', 'w') as f:
+    yaml.dump(data, f, default_flow_style=False)
+" || {
+        echo "Neither yq nor python yaml available, using jq fallback..."
+        jq -r . inventory.json > inventory.yml
+    }
+fi
 
 echo "Setting up adminhost for fast deployment..."
 
@@ -144,7 +167,7 @@ echo "Setting up adminhost for fast deployment..."
 ssh "$SSH_OPTS" "root@$adminhost" 'bash -s' << 'EOF' &
 # Install AWS CLI and ansible dependencies for faster deployment
 apt-get update -qq
-apt-get install -y awscli curl python3-pip
+apt-get install -y awscli curl python3-pip yq
 pip3 install ansible
 # Pre-create directories
 mkdir -p ./ansible/inventory/offline/
