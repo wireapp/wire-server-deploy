@@ -18,6 +18,9 @@ S3_REGION="eu-west-1"
 # Get build ID from environment or use git commit
 UPLOAD_NAME="${GITHUB_SHA:-$(git rev-parse HEAD)}"
 
+echo "Using UPLOAD_NAME: $UPLOAD_NAME"
+echo "GITHUB_SHA: ${GITHUB_SHA:-not set}"
+
 echo "Wire Offline Deployment with Retry Logic"
 echo "========================================"
 
@@ -144,21 +147,13 @@ SSH_OPTS="-oStrictHostKeyChecking=accept-new -oConnectionAttempts=3 -oConnectTim
 # Wait for inventory and convert to YAML
 wait $INVENTORY_PID
 
-# Ensure yq is available (fallback to python if yq not found)
+# Convert inventory to YAML (ansible can read both JSON and YAML)
 if command -v yq >/dev/null 2>&1; then
+    echo "Converting inventory to YAML format..."
     yq -p json -o yaml '.' inventory.json > inventory.yml
 else
-    echo "yq not found, using python for JSON to YAML conversion..."
-    python3 -c "
-import json, yaml
-with open('inventory.json', 'r') as f:
-    data = json.load(f)
-with open('inventory.yml', 'w') as f:
-    yaml.dump(data, f, default_flow_style=False)
-" || {
-        echo "Neither yq nor python yaml available, using jq fallback..."
-        jq -r . inventory.json > inventory.yml
-    }
+    echo "yq not available, using JSON inventory directly (ansible supports both formats)..."
+    cp inventory.json inventory.yml
 fi
 
 echo "Setting up adminhost for fast deployment..."
