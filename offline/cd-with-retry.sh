@@ -2,8 +2,8 @@
 
 set -euo pipefail
 
-# Enable verbose debugging
-set -x
+# Enable verbose debugging (disable for cleaner output)
+# set -x
 
 # This is the production version of cd.sh with built-in retry logic
 # Use this instead of cd.sh when you want automatic resource availability handling
@@ -85,9 +85,9 @@ for attempt in $(seq 1 $MAX_RETRIES); do
     echo "Deployment attempt $attempt of $MAX_RETRIES"
     date
 
-    # Parallel terraform apply (infrastructure creation is the bottleneck)
-    echo "Running terraform apply with parallelism=15..."
-    if terraform apply -auto-approve -parallelism=15; then
+    # Terraform apply (temporarily removing parallelism for debugging)
+    echo "Running terraform apply..."
+    if terraform apply -auto-approve; then
         echo "Infrastructure deployment successful on attempt $attempt!"
         # Enable cleanup since infrastructure exists
         export CLEANUP_ON_EXIT="true"
@@ -98,9 +98,9 @@ for attempt in $(seq 1 $MAX_RETRIES); do
         if [[ $attempt -lt $MAX_RETRIES ]]; then
             echo "Will retry with different configuration..."
 
-            # Fast parallel cleanup
+            # Cleanup partial deployment
             echo "Cleaning up partial deployment..."
-            terraform destroy -auto-approve -parallelism=15 || true
+            terraform destroy -auto-approve || true
 
             # Wait for resources to potentially become available
             echo "Waiting ${RETRY_DELAY}s for resources to become available..."
@@ -165,7 +165,10 @@ adminhost="${adminhost//\"/}" # remove extra quotes around the returned string
 ssh_private_key=$(terraform output ssh_private_key)
 
 # Fast SSH setup
-eval "$(ssh-agent)"
+eval "$(ssh-agent)" || {
+    echo "ERROR: Failed to start ssh-agent"
+    exit 1
+}
 ssh-add - <<< "$ssh_private_key"
 
 # Generate inventory in parallel with other setup
