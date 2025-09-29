@@ -22,8 +22,11 @@ echo "Wire Offline Deployment with Retry Logic"
 echo "========================================"
 
 function cleanup {
-  (cd "$TF_DIR" && terraform destroy -auto-approve)
-  echo "Cleanup completed"
+  if [[ "${CLEANUP_ON_EXIT:-}" == "true" ]]; then
+    echo "Running cleanup..."
+    (cd "$TF_DIR" && terraform destroy -auto-approve)
+    echo "Cleanup completed"
+  fi
 }
 trap cleanup EXIT
 
@@ -45,6 +48,8 @@ for attempt in $(seq 1 $MAX_RETRIES); do
     # Parallel terraform apply (infrastructure creation is the bottleneck)
     if terraform apply -auto-approve -parallelism=15; then
         echo "Infrastructure deployment successful on attempt $attempt!"
+        # Enable cleanup since infrastructure exists
+        export CLEANUP_ON_EXIT="true"
         break
     else
         echo "Infrastructure deployment failed on attempt $attempt"
@@ -97,6 +102,8 @@ for attempt in $(seq 1 $MAX_RETRIES); do
                 terraform init -reconfigure
             fi
 
+            # Enable cleanup for final failure case
+            export CLEANUP_ON_EXIT="true"
             exit 1
         fi
     fi
@@ -129,7 +136,7 @@ SSH_OPTS="-oStrictHostKeyChecking=accept-new -oConnectionAttempts=3 -oConnectTim
 
 # Wait for inventory and convert to YAML
 wait $INVENTORY_PID
-yq -y '.' inventory.json > inventory.yml
+yq -p json -o yaml '.' inventory.json > inventory.yml
 
 echo "Setting up adminhost for fast deployment..."
 
@@ -178,3 +185,6 @@ echo "  - Faster SSH connection multiplexing"
 echo "  - Parallel ansible execution (10 forks)"
 echo "  - Pre-installed tools on adminhost"
 echo "  - Ansible runs directly on adminhost (no proxy jumps)"
+
+# Enable cleanup only after successful deployment
+export CLEANUP_ON_EXIT="true"

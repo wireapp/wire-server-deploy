@@ -4,21 +4,21 @@ on:
   workflow_dispatch:
     inputs:
       upload_name:
-        description: 'Upload name (git SHA or tag)'
+        description: "Upload name (git SHA or tag)"
         required: false
-        default: 'a71cbf843a79907a9eaca72f46f9f64e8a0524d8'
+        default: "a71cbf843a79907a9eaca72f46f9f64e8a0524d8"
   pull_request:
     types: [opened, synchronize, reopened]
     paths:
-      - 'terraform/**'
-      - 'offline/cd-with-retry.sh'
-      - '.github/workflows/deploy-only.yml'
+      - "terraform/**"
+      - "offline/cd-with-retry.sh"
+      - ".github/workflows/deploy-only.yml"
   push:
     branches: [master, develop]
     paths:
-      - 'terraform/**'
-      - 'offline/cd-with-retry.sh'
-      - '.github/workflows/deploy-only.yml'
+      - "terraform/**"
+      - "offline/cd-with-retry.sh"
+      - ".github/workflows/deploy-only.yml"
 
 jobs:
   deploy-only:
@@ -46,5 +46,5 @@ jobs:
       - name: Fast deploy to Hetzner
         run: ./offline/cd-with-retry.sh
         env:
-          HCLOUD_TOKEN: '${{ secrets.HCLOUD_TOKEN }}'
+          HCLOUD_TOKEN: "${{ secrets.HCLOUD_TOKEN }}"
           GITHUB_SHA: ${{ steps.upload_name.outputs.UPLOAD_NAME }}
