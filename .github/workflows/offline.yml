@@ -13,7 +13,7 @@ on:
 jobs:
   # Build default profile and create local assets
   build-default:
-    name: Prepare offline package
+    name: Build default profile
     if: "!contains(github.event.head_commit.message, 'skip ci')"
     runs-on:
       group: wire-server-deploy

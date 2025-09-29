@@ -81,7 +81,7 @@ while IFS= read -r chart; do
     --set federate.dtls.tls.crt=emptyString \
     $( [[ -f "${VALUES_DIR}"/$(basename "${chart}")/"${VALUES_TYPE}"-values.example.yaml ]] && echo "-f ${VALUES_DIR}/$(basename "${chart}")/${VALUES_TYPE}-values.example.yaml" ) \
     $( [[ -f "${VALUES_DIR}"/$(basename "${chart}")/"${VALUES_TYPE}"-secrets.example.yaml ]] && echo "-f ${VALUES_DIR}/$(basename "${chart}")/${VALUES_TYPE}-secrets.example.yaml" ) \
-    | yq -r '..|.image? | select(.)' | optionally_complain | sort -u)
+    | yq -r '..|.image? | select(.)' | sed 's|^bitnami/|bitnamilegacy/|g' | optionally_complain | sort -u)
 
   images+="$current_images\n"
   if [[ -n "$current_images" ]]; then
