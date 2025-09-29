@@ -2,11 +2,19 @@
 
 set -euo pipefail
 
+# Enable verbose debugging
+set -x
+
 # This is the production version of cd.sh with built-in retry logic
 # Use this instead of cd.sh when you want automatic resource availability handling
 
 CD_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 TF_DIR="${CD_DIR}/../terraform/examples/wire-server-deploy-offline-hetzner"
+
+echo "Script directory (CD_DIR): $CD_DIR"
+echo "Terraform directory (TF_DIR): $TF_DIR"
+echo "Checking if TF_DIR exists:"
+ls -la "$TF_DIR" || echo "TF_DIR does not exist"
 
 # Retry configuration
 MAX_RETRIES=3
@@ -33,7 +41,16 @@ function cleanup {
 }
 trap cleanup EXIT
 
-cd "$TF_DIR"
+echo "Changing to terraform directory: $TF_DIR"
+cd "$TF_DIR" || {
+    echo "ERROR: Failed to change to terraform directory: $TF_DIR"
+    ls -la "$TF_DIR" || echo "Directory does not exist"
+    exit 1
+}
+
+echo "Current directory: $(pwd)"
+echo "Directory contents:"
+ls -la
 
 # Clean up any existing state to ensure fresh deployment
 if [[ -f terraform.tfstate ]]; then
@@ -41,7 +58,20 @@ if [[ -f terraform.tfstate ]]; then
     rm -f terraform.tfstate terraform.tfstate.backup
 fi
 
-terraform init
+echo "Checking terraform availability..."
+terraform version || {
+    echo "ERROR: terraform not found in PATH"
+    echo "PATH: $PATH"
+    which terraform || echo "terraform not in which"
+    exit 1
+}
+
+echo "Running terraform init..."
+terraform init || {
+    echo "ERROR: terraform init failed"
+    echo "Exit code: $?"
+    exit 1
+}
 
 # Pre-calculate S3 URLs for faster deployment
 DEFAULT_ASSETS_URL="https://s3-${S3_REGION}.amazonaws.com/public.wire.com/artifacts/wire-server-deploy-static-${UPLOAD_NAME}.tgz"
@@ -56,6 +86,7 @@ for attempt in $(seq 1 $MAX_RETRIES); do
     date
 
     # Parallel terraform apply (infrastructure creation is the bottleneck)
+    echo "Running terraform apply with parallelism=15..."
     if terraform apply -auto-approve -parallelism=15; then
         echo "Infrastructure deployment successful on attempt $attempt!"
         # Enable cleanup since infrastructure exists
