@@ -13,7 +13,7 @@ on:
 jobs:
   # Build default profile and create local assets
   build-default:
-    name: Build default profile
+    name: Prepare offline package
     if: "!contains(github.event.head_commit.message, 'skip ci')"
     runs-on:
       group: wire-server-deploy
@@ -45,7 +45,7 @@ jobs:
 
       # Upload the assets to be shared with other jobs
       - name: Upload build artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: default-build-assets
           path: offline/default-build/output/assets.tgz
@@ -54,6 +54,7 @@ jobs:
   # Upload to S3 in parallel with deployment
   upload-s3:
     name: Upload default build to S3
+    if: "!contains(github.event.head_commit.message, 'skip ci')"
     needs: build-default
     runs-on:
       group: wire-server-deploy
@@ -63,7 +64,7 @@ jobs:
           submodules: true
 
       - name: Download build artifacts
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: default-build-assets
           path: offline/default-build/output/
@@ -80,6 +81,7 @@ jobs:
   # Deploy to Hetzner in parallel with S3 upload
   deploy-hetzner:
     name: Deploy to Hetzner
+    if: "!contains(github.event.head_commit.message, 'skip ci')"
     needs: build-default
     runs-on:
       group: wire-server-deploy
@@ -97,7 +99,7 @@ jobs:
         run: nix-env -f default.nix -iA env
 
       - name: Download build artifacts
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: default-build-assets
           path: offline/default-build/output/
@@ -116,6 +118,7 @@ jobs:
   # Build container in parallel
   build-container:
     name: Build container
+    if: "!contains(github.event.head_commit.message, 'skip ci')"
     needs: build-default
     runs-on:
       group: wire-server-deploy
@@ -141,6 +144,7 @@ jobs:
   # Build demo profile
   build-demo:
     name: Build demo profile
+    if: "!contains(github.event.head_commit.message, 'skip ci')"
     needs: build-default
     runs-on:
       group: wire-server-deploy
@@ -175,6 +179,7 @@ jobs:
   # Build min profile
   build-min:
     name: Build min profile
+    if: "!contains(github.event.head_commit.message, 'skip ci')"
     needs: build-default
     runs-on:
       group: wire-server-deploy
