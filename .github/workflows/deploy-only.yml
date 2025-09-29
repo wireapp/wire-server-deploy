@@ -6,28 +6,24 @@ on:
       upload_name:
         description: "Upload name (git SHA or tag)"
         required: false
-        default: "a71cbf843a79907a9eaca72f46f9f64e8a0524d8"
-  pull_request:
-    types: [opened, synchronize, reopened]
-    paths:
-      - "terraform/**"
-      - "offline/cd-with-retry.sh"
-      - ".github/workflows/deploy-only.yml"
-  push:
-    branches: [master, develop]
-    paths:
-      - "terraform/**"
-      - "offline/cd-with-retry.sh"
-      - ".github/workflows/deploy-only.yml"
+        default: ""
+  issue_comment:
+    types: [created]
 
 jobs:
   deploy-only:
     name: Deploy existing build
+    if: |
+      github.event_name == 'workflow_dispatch' ||
+      (github.event_name == 'issue_comment' &&
+       github.event.issue.pull_request &&
+       contains(github.event.comment.body, 'deploy-'))
     runs-on:
       group: wire-server-deploy
     steps:
       - uses: actions/checkout@v2
         with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
           submodules: true
       - uses: cachix/install-nix-action@v27
       - uses: cachix/cachix-action@v15
@@ -43,6 +39,17 @@ jobs:
         run: |
           if [ -n "${{ github.event.inputs.upload_name }}" ]; then
              echo "UPLOAD_NAME=${{ github.event.inputs.upload_name }}" >> $GITHUB_OUTPUT
+          elif [ "${{ github.event_name }}" = "issue_comment" ]; then
+            # Extract upload_name from comment like "deploy-a71cbf843a79907a9eaca72f46f9f64e8a0524d8"
+            COMMENT_BODY="${{ github.event.comment.body }}"
+            UPLOAD_NAME=$(echo "$COMMENT_BODY" | grep -o 'deploy-[a-zA-Z0-9_-]*' | head -1 | sed 's/deploy-//')
+            if [ -n "$UPLOAD_NAME" ]; then
+              echo "UPLOAD_NAME=$UPLOAD_NAME" >> $GITHUB_OUTPUT
+              echo "Extracted upload name from comment: $UPLOAD_NAME"
+            else
+              echo "UPLOAD_NAME=${{ github.event.pull_request.head.sha }}" >> $GITHUB_OUTPUT
+              echo "No upload name found in comment, using PR head SHA"
+            fi
           else
             echo "UPLOAD_NAME=$GITHUB_SHA" >> $GITHUB_OUTPUT
           fi

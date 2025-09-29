@@ -2,104 +2,73 @@
 
 set -euo pipefail
 
-# Enable verbose debugging (disable for cleaner output)
-# set -x
-
 # This is the production version of cd.sh with built-in retry logic
 # Use this instead of cd.sh when you want automatic resource availability handling
 
 CD_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 TF_DIR="${CD_DIR}/../terraform/examples/wire-server-deploy-offline-hetzner"
+ARTIFACTS_DIR="${CD_DIR}/default-build/output"
 
-echo "Script directory (CD_DIR): $CD_DIR"
-echo "Terraform directory (TF_DIR): $TF_DIR"
-echo "Checking if TF_DIR exists:"
-ls -la "$TF_DIR" || echo "TF_DIR does not exist"
+# S3 configuration for asset download fallback
+S3_REGION="eu-west-1"
+UPLOAD_NAME="${GITHUB_SHA:-$(git rev-parse HEAD 2>/dev/null || echo 'unknown')}"
+
+# Ensure assets are available (download from S3 if local assets don't exist)
+if [[ ! -f "$ARTIFACTS_DIR/assets.tgz" && -n "${GITHUB_SHA:-}" ]]; then
+    echo "Local assets not found. Downloading from S3..."
+    echo "Using UPLOAD_NAME: $UPLOAD_NAME"
+
+    mkdir -p "$ARTIFACTS_DIR"
+    S3_URL="https://s3-${S3_REGION}.amazonaws.com/public.wire.com/artifacts/wire-server-deploy-static-${UPLOAD_NAME}.tgz"
+
+    if curl -fsSL "$S3_URL" -o "$ARTIFACTS_DIR/assets.tgz"; then
+        echo "Successfully downloaded assets from S3"
+    else
+        echo "ERROR: Failed to download assets from S3: $S3_URL"
+        echo "Please ensure the build artifacts exist or run the full build first"
+        exit 1
+    fi
+elif [[ -f "$ARTIFACTS_DIR/assets.tgz" ]]; then
+    echo "Using existing local assets: $ARTIFACTS_DIR/assets.tgz"
+else
+    echo "ERROR: No assets available and no GITHUB_SHA set for S3 download"
+    echo "Please run the build first or set GITHUB_SHA environment variable"
+    exit 1
+fi
 
 # Retry configuration
 MAX_RETRIES=3
 RETRY_DELAY=30
 
-# S3 configuration for fast asset download
-S3_REGION="eu-west-1"
-
-# Get build ID from environment or use git commit
-UPLOAD_NAME="${GITHUB_SHA:-$(git rev-parse HEAD)}"
-
-echo "Using UPLOAD_NAME: $UPLOAD_NAME"
-echo "GITHUB_SHA: ${GITHUB_SHA:-not set}"
-
 echo "Wire Offline Deployment with Retry Logic"
 echo "========================================"
 
 function cleanup {
-  if [[ "${CLEANUP_ON_EXIT:-}" == "true" ]]; then
-    echo "Running cleanup..."
-    (cd "$TF_DIR" && terraform destroy -auto-approve)
-    echo "Cleanup completed"
-  fi
+  (cd "$TF_DIR" && terraform destroy -auto-approve)
+  echo "Cleanup completed"
 }
 trap cleanup EXIT
 
-echo "Changing to terraform directory: $TF_DIR"
-cd "$TF_DIR" || {
-    echo "ERROR: Failed to change to terraform directory: $TF_DIR"
-    ls -la "$TF_DIR" || echo "Directory does not exist"
-    exit 1
-}
+cd "$TF_DIR"
+terraform init
 
-echo "Current directory: $(pwd)"
-echo "Directory contents:"
-ls -la
-
-# Clean up any existing state to ensure fresh deployment
-if [[ -f terraform.tfstate ]]; then
-    echo "Cleaning up existing terraform state..."
-    rm -f terraform.tfstate terraform.tfstate.backup
-fi
-
-echo "Checking terraform availability..."
-terraform version || {
-    echo "ERROR: terraform not found in PATH"
-    echo "PATH: $PATH"
-    which terraform || echo "terraform not in which"
-    exit 1
-}
-
-echo "Running terraform init..."
-terraform init || {
-    echo "ERROR: terraform init failed"
-    echo "Exit code: $?"
-    exit 1
-}
-
-# Pre-calculate S3 URLs for faster deployment
-DEFAULT_ASSETS_URL="https://s3-${S3_REGION}.amazonaws.com/public.wire.com/artifacts/wire-server-deploy-static-${UPLOAD_NAME}.tgz"
-
-echo "Asset URL: $DEFAULT_ASSETS_URL"
-
-# Retry loop for terraform apply with performance optimizations
+# Retry loop for terraform apply
 echo "Starting deployment with automatic retry on resource unavailability..."
 for attempt in $(seq 1 $MAX_RETRIES); do
     echo ""
     echo "Deployment attempt $attempt of $MAX_RETRIES"
     date
 
-    # Terraform apply (temporarily removing parallelism for debugging)
-    echo "Running terraform apply..."
     if terraform apply -auto-approve; then
         echo "Infrastructure deployment successful on attempt $attempt!"
-        # Enable cleanup since infrastructure exists
-        export CLEANUP_ON_EXIT="true"
         break
     else
-        TERRAFORM_EXIT_CODE=$?
-        echo "Infrastructure deployment failed on attempt $attempt (exit code: $TERRAFORM_EXIT_CODE)"
+        echo "Infrastructure deployment failed on attempt $attempt"
 
         if [[ $attempt -lt $MAX_RETRIES ]]; then
             echo "Will retry with different configuration..."
 
-            # Cleanup partial deployment
+            # Clean up partial deployment
             echo "Cleaning up partial deployment..."
             terraform destroy -auto-approve || true
 
@@ -130,7 +99,7 @@ for attempt in $(seq 1 $MAX_RETRIES); do
             echo ""
             echo "This usually means:"
             echo "   1. High demand for Hetzner Cloud resources in EU regions"
-            echo "   2. Hetzner account may have resource limits"
+            echo "   2. Your account may have resource limits"
             echo "   3. Try again later when resources become available"
             echo ""
             echo "Manual solutions:"
@@ -144,18 +113,10 @@ for attempt in $(seq 1 $MAX_RETRIES); do
                 terraform init -reconfigure
             fi
 
-            # Enable cleanup for final failure case
-            export CLEANUP_ON_EXIT="true"
             exit 1
         fi
     fi
 done
-
-# Check if we exited the loop successfully (CLEANUP_ON_EXIT set means terraform apply succeeded)
-if [[ "${CLEANUP_ON_EXIT:-}" != "true" ]]; then
-    echo "ERROR: All terraform attempts failed, but script continued unexpectedly"
-    exit 1
-fi
 
 # Restore original config after successful deployment
 if [[ -f main.tf.bak ]]; then
@@ -166,121 +127,29 @@ fi
 echo ""
 echo "Infrastructure ready! Proceeding with application deployment..."
 
-
-echo "Getting terraform outputs..."
-adminhost=$(terraform output adminhost) || {
-    echo "ERROR: Failed to get adminhost output from terraform"
-    terraform output || echo "No terraform outputs available"
-    exit 1
-}
+# Continue with the rest of the original cd.sh logic
+adminhost=$(terraform output adminhost)
 adminhost="${adminhost//\"/}" # remove extra quotes around the returned string
-echo "Adminhost IP: $adminhost"
+ssh_private_key=$(terraform output ssh_private_key)
 
-ssh_private_key=$(terraform output ssh_private_key) || {
-    echo "ERROR: Failed to get ssh_private_key output from terraform"
-    exit 1
-}
-echo "SSH private key retrieved (length: ${#ssh_private_key} chars)"
-
-# Fast SSH setup
-eval "$(ssh-agent)" || {
-    echo "ERROR: Failed to start ssh-agent"
-    exit 1
-}
+eval "$(ssh-agent)"
 ssh-add - <<< "$ssh_private_key"
 
-# Generate inventory in parallel with other setup
-terraform output -json static-inventory > inventory.json &
-INVENTORY_PID=$!
+terraform output -json static-inventory > inventory.json
+yq eval -P '.' inventory.json > inventory.yml
 
-# Pre-configure SSH for faster connections
-SSH_OPTS="-oStrictHostKeyChecking=accept-new -oConnectionAttempts=3 -oConnectTimeout=10 -oServerAliveInterval=30"
+ssh -oStrictHostKeyChecking=accept-new -oConnectionAttempts=10 "root@$adminhost" tar xzv < "$ARTIFACTS_DIR/assets.tgz"
 
-# Wait for inventory and convert to YAML
-wait $INVENTORY_PID
+scp inventory.yml "root@$adminhost":./ansible/inventory/offline/inventory.yml
 
-# Convert inventory to YAML (ansible can read both JSON and YAML)
-if command -v yq >/dev/null 2>&1; then
-    echo "Converting inventory to YAML format..."
-    yq -p json -o yaml '.' inventory.json > inventory.yml
-else
-    echo "yq not available, using JSON inventory directly (ansible supports both formats)..."
-    cp inventory.json inventory.yml
-fi
-
-echo "Setting up adminhost for fast deployment..."
-
-# Install required tools on adminhost in parallel
-ssh "$SSH_OPTS" "root@$adminhost" 'bash -s' << 'EOF' &
-# Install AWS CLI and ansible dependencies for faster deployment
-apt-get update -qq
-apt-get install -y awscli curl python3-pip yq
-pip3 install ansible
-# Pre-create directories
-mkdir -p ./ansible/inventory/offline/
-EOF
-
-SETUP_PID=$!
-
-# Copy inventory while setup is running
-scp -o StrictHostKeyChecking=accept-new inventory.yml "root@$adminhost":./ansible/inventory/offline/inventory.yml
-
-# Wait for setup to complete
-wait $SETUP_PID
-
-echo "Downloading assets directly from S3 to adminhost (much faster than local transfer)..."
-echo "S3 URL: $DEFAULT_ASSETS_URL"
-
-# Test S3 URL accessibility first
-echo "Testing S3 URL accessibility..."
-if curl -I -s "$DEFAULT_ASSETS_URL" | head -1 | grep -q "200 OK"; then
-    echo "✅ S3 asset is accessible"
-else
-    echo "❌ S3 asset is not accessible"
-    echo "Response:"
-    curl -I -s "$DEFAULT_ASSETS_URL" | head -5
-    exit 1
-fi
-
-# Download assets to local temp and transfer (fallback to working pattern)
-echo "Downloading assets locally first, then transferring..."
-TEMP_ASSETS="/tmp/assets.tgz"
-curl -fsSL "$DEFAULT_ASSETS_URL" -o "$TEMP_ASSETS" || {
-    echo "ERROR: Failed to download assets from S3"
-    exit 1
-}
-
-echo "Transferring assets to adminhost..."
-ssh "$SSH_OPTS" "root@$adminhost" tar xzv < "$TEMP_ASSETS" || {
-    echo "ERROR: Failed to transfer/extract assets to adminhost"
-    exit 1
-}
-
-echo "Cleaning up local temp assets..."
-rm -f "$TEMP_ASSETS"
-
-echo "Verifying deployment setup..."
-ssh "$SSH_OPTS" "root@$adminhost" cat ./ansible/inventory/offline/inventory.yml || true
-
-echo "Running optimized ansible deployment..."
+ssh "root@$adminhost" cat ./ansible/inventory/offline/inventory.yml || true
 
 echo "Running ansible playbook setup_nodes.yml via adminhost ($adminhost)..."
-# Run ansible from adminhost for faster network connectivity
-ssh "$SSH_OPTS" "root@$adminhost" "cd ./ansible && ansible-playbook -i inventory/offline/inventory.yml setup_nodes.yml --forks=10 -e ansible_ssh_common_args='-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ControlMaster=auto -o ControlPersist=300s'"
+ansible-playbook -i inventory.yml setup_nodes.yml --private-key "ssh_private_key" \
+  -e "ansible_ssh_common_args='-o ProxyCommand=\"ssh -W %h:%p -q root@$adminhost -i ssh_private_key\" -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null'"
 
-echo "Running final Wire deployment..."
-# Use SSH connection multiplexing for faster multiple connections
-ssh -A -o ControlMaster=auto -o ControlPersist=300s "root@$adminhost" ./bin/offline-deploy.sh
+# NOTE: Agent is forwarded; so that the adminhost can provision the other boxes
+ssh -A "root@$adminhost" ./bin/offline-deploy.sh
 
 echo ""
-echo "Fast Wire offline deployment completed successfully!"
-echo "Performance optimizations used:"
-echo "  - S3 direct download instead of local transfer"
-echo "  - Parallel terraform operations (15 parallel resources)"
-echo "  - Faster SSH connection multiplexing"
-echo "  - Parallel ansible execution (10 forks)"
-echo "  - Pre-installed tools on adminhost"
-echo "  - Ansible runs directly on adminhost (no proxy jumps)"
-
-# Enable cleanup only after successful deployment
-export CLEANUP_ON_EXIT="true"
+echo "Wire offline deployment completed successfully!"
