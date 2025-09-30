@@ -91,7 +91,7 @@ while IFS= read -r chart; do
   fi
 
   # Apply sed replacement and other processing
-  current_images=$(echo "$raw_images" | sed -e 's|^bitnami/|bitnamilegacy/|g' -e 's|^docker\.io/bitnami/|docker.io/bitnamilegacy/|g' | optionally_complain | sort -u)
+  current_images=$(echo "$raw_images" | sed -e 's|^bitnami/|bitnamilegacy/|g' -e 's|^docker\.io/bitnami/|docker.io/bitnamilegacy/|g' | grep -v "^$" | optionally_complain | sort -u)
 
   images+="$current_images\n"
   if [[ -n "$current_images" ]]; then
