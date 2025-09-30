@@ -78,11 +78,28 @@ while IFS= read -r chart; do
   echo "Running helm template on chart ${chart}…" >&2
   # Extract raw images before replacement with error handling
   set +e  # Temporarily disable exit on error
+  # Determine values file to use (prod first, then demo as fallback)
+  values_file=""
+  if [[ -f "${VALUES_DIR}"/$(basename "${chart}")/"${VALUES_TYPE}"-values.example.yaml ]]; then
+    values_file="${VALUES_DIR}/$(basename "${chart}")/${VALUES_TYPE}-values.example.yaml"
+  elif [[ -f "${VALUES_DIR}"/$(basename "${chart}")/demo-values.example.yaml ]]; then
+    values_file="${VALUES_DIR}/$(basename "${chart}")/demo-values.example.yaml"
+    echo "DEBUG: Using demo values for $(basename $chart) (no ${VALUES_TYPE} values found)" >&2
+  fi
+
+  # Determine secrets file to use
+  secrets_file=""
+  if [[ -f "${VALUES_DIR}"/$(basename "${chart}")/"${VALUES_TYPE}"-secrets.example.yaml ]]; then
+    secrets_file="${VALUES_DIR}/$(basename "${chart}")/${VALUES_TYPE}-secrets.example.yaml"
+  elif [[ -f "${VALUES_DIR}"/$(basename "${chart}")/demo-secrets.example.yaml ]]; then
+    secrets_file="${VALUES_DIR}/$(basename "${chart}")/demo-secrets.example.yaml"
+  fi
+
   raw_images=$(helm template --debug "${chart}" \
     --set federate.dtls.tls.key=emptyString \
     --set federate.dtls.tls.crt=emptyString \
-    $( [[ -f "${VALUES_DIR}"/$(basename "${chart}")/"${VALUES_TYPE}"-values.example.yaml ]] && echo "-f ${VALUES_DIR}/$(basename "${chart}")/${VALUES_TYPE}-values.example.yaml" ) \
-    $( [[ -f "${VALUES_DIR}"/$(basename "${chart}")/"${VALUES_TYPE}"-secrets.example.yaml ]] && echo "-f ${VALUES_DIR}/$(basename "${chart}")/${VALUES_TYPE}-secrets.example.yaml" ) \
+    $( [[ -n "$values_file" ]] && echo "-f $values_file" ) \
+    $( [[ -n "$secrets_file" ]] && echo "-f $secrets_file" ) \
     2>/dev/null | yq -r '..|.image?' | grep -v "^null$" | grep -v "^---$" | grep -v "^$" 2>/dev/null || true)
 
   helm_exit_code=$?
