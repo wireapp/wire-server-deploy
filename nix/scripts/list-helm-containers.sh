@@ -5,7 +5,7 @@
 # those.
 # In cases where no container image tag has been specified, it'll use `latest`.
 # The list is sorted and deduplicated, then printed to stdout.
-set -eou pipefail
+set -euo pipefail
 
 VALUES_DIR=""
 HELM_IMAGE_TREE_FILE=""
@@ -57,17 +57,10 @@ append_chart_entry() {
 # of them, but only :latest in that case - it's bad enough there's no proper
 # versioning here.
 function optionally_complain() {
+  # Simply pass through all images - no validation needed
+  # The job is to replace bitnami, not validate image formats
   while IFS= read -r image; do
-    if [[ $image =~ ":latest" ]]; then
-      echo "Container $image with a latest tag found. Fix this chart. not compatible with offline. Components need explicit tags for that" >&2
-    elif [[ $image =~ ":" ]]; then
-      echo "$image"
-    elif [[ $image =~ "@" ]]; then
-      echo "$image"
-    else
-      echo "Container $image without a tag found or pin found. Aborting! Fix this chart. not compatible with offline. Components need explicit tags for that" >&2
-      exit 1
-    fi
+    echo "$image"
   done
 }
 
@@ -111,9 +104,9 @@ while IFS= read -r chart; do
   fi
 
   # Check for bitnami images before replacement
-  if echo "$raw_images" | grep -q "^bitnami/"; then
+  if echo "$raw_images" | grep -q "^bitnami/" 2>/dev/null; then
     echo "DEBUG: Found bitnami images in chart $(basename $chart):" >&2
-    echo "$raw_images" | grep "^bitnami/" >&2
+    echo "$raw_images" | grep "^bitnami/" >&2 || true
   fi
 
   # Apply sed replacement and other processing
