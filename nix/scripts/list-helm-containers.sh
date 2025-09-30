@@ -76,12 +76,22 @@ images=""
 # render the charts, and assemble the list of images this would fetch.
 while IFS= read -r chart; do
   echo "Running helm template on chart ${chart}…" >&2
-  current_images=$(helm template --debug "${chart}" \
+  # Extract raw images before replacement
+  raw_images=$(helm template --debug "${chart}" \
     --set federate.dtls.tls.key=emptyString \
     --set federate.dtls.tls.crt=emptyString \
     $( [[ -f "${VALUES_DIR}"/$(basename "${chart}")/"${VALUES_TYPE}"-values.example.yaml ]] && echo "-f ${VALUES_DIR}/$(basename "${chart}")/${VALUES_TYPE}-values.example.yaml" ) \
     $( [[ -f "${VALUES_DIR}"/$(basename "${chart}")/"${VALUES_TYPE}"-secrets.example.yaml ]] && echo "-f ${VALUES_DIR}/$(basename "${chart}")/${VALUES_TYPE}-secrets.example.yaml" ) \
-    | yq -r '..|.image? | select(.)' | sed 's|^bitnami/|bitnamilegacy/|g' | optionally_complain | sort -u)
+    | yq -r '..|.image? | select(.)')
+
+  # Check for bitnami images before replacement
+  if echo "$raw_images" | grep -q "^bitnami/"; then
+    echo "DEBUG: Found bitnami images in chart $(basename $chart):" >&2
+    echo "$raw_images" | grep "^bitnami/" >&2
+  fi
+
+  # Apply sed replacement and other processing
+  current_images=$(echo "$raw_images" | sed -e 's|^bitnami/|bitnamilegacy/|g' -e 's|^docker\.io/bitnami/|docker.io/bitnamilegacy/|g' | optionally_complain | sort -u)
 
   images+="$current_images\n"
   if [[ -n "$current_images" ]]; then
