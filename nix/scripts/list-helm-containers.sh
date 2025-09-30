@@ -82,7 +82,7 @@ while IFS= read -r chart; do
     --set federate.dtls.tls.crt=emptyString \
     $( [[ -f "${VALUES_DIR}"/$(basename "${chart}")/"${VALUES_TYPE}"-values.example.yaml ]] && echo "-f ${VALUES_DIR}/$(basename "${chart}")/${VALUES_TYPE}-values.example.yaml" ) \
     $( [[ -f "${VALUES_DIR}"/$(basename "${chart}")/"${VALUES_TYPE}"-secrets.example.yaml ]] && echo "-f ${VALUES_DIR}/$(basename "${chart}")/${VALUES_TYPE}-secrets.example.yaml" ) \
-    | yq -r '..|.image? | select(.)')
+    | yq -r '..|.image?' | grep -v "^null$" | grep -v "^---$" | grep -v "^$")
 
   # Check for bitnami images before replacement
   if echo "$raw_images" | grep -q "^bitnami/"; then
