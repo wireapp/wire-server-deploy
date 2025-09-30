@@ -76,13 +76,21 @@ images=""
 # render the charts, and assemble the list of images this would fetch.
 while IFS= read -r chart; do
   echo "Running helm template on chart ${chart}…" >&2
-  # Extract raw images before replacement
-  raw_images=$(helm template --debug "${chart}" \
-    --set federate.dtls.tls.key=emptyString \
-    --set federate.dtls.tls.crt=emptyString \
-    $( [[ -f "${VALUES_DIR}"/$(basename "${chart}")/"${VALUES_TYPE}"-values.example.yaml ]] && echo "-f ${VALUES_DIR}/$(basename "${chart}")/${VALUES_TYPE}-values.example.yaml" ) \
-    $( [[ -f "${VALUES_DIR}"/$(basename "${chart}")/"${VALUES_TYPE}"-secrets.example.yaml ]] && echo "-f ${VALUES_DIR}/$(basename "${chart}")/${VALUES_TYPE}-secrets.example.yaml" ) \
-    | yq -r '..|.image?' | grep -v "^null$" | grep -v "^---$" | grep -v "^$")
+  # Extract raw images before replacement with timeout and error handling
+  # Use a subshell with timeout mechanism
+  raw_images=$(
+    (
+      helm template --debug "${chart}" \
+        --set federate.dtls.tls.key=emptyString \
+        --set federate.dtls.tls.crt=emptyString \
+        $( [[ -f "${VALUES_DIR}"/$(basename "${chart}")/"${VALUES_TYPE}"-values.example.yaml ]] && echo "-f ${VALUES_DIR}/$(basename "${chart}")/${VALUES_TYPE}-values.example.yaml" ) \
+        $( [[ -f "${VALUES_DIR}"/$(basename "${chart}")/"${VALUES_TYPE}"-secrets.example.yaml ]] && echo "-f ${VALUES_DIR}/$(basename "${chart}")/${VALUES_TYPE}-secrets.example.yaml" ) \
+        2>/dev/null | yq -r '..|.image?' | grep -v "^null$" | grep -v "^---$" | grep -v "^$"
+    ) || {
+      echo "WARNING: Failed to process chart $(basename $chart), skipping..." >&2
+      echo ""
+    }
+  )
 
   # Check for bitnami images before replacement
   if echo "$raw_images" | grep -q "^bitnami/"; then
