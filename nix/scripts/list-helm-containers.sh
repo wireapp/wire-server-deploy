@@ -67,8 +67,10 @@ function optionally_complain() {
 images=""
 # For each helm chart passed in from stdin, use the example values to
 # render the charts, and assemble the list of images this would fetch.
+chart_count=0
 while IFS= read -r chart; do
-  echo "Running helm template on chart ${chart}…" >&2
+  chart_count=$((chart_count + 1))
+  echo "[$chart_count] Running helm template on chart ${chart}…" >&2
   # Extract raw images before replacement with error handling
   set +e  # Temporarily disable exit on error
   # Determine values file to use (prod first, then demo as fallback)
@@ -77,7 +79,7 @@ while IFS= read -r chart; do
     values_file="${VALUES_DIR}/$(basename "${chart}")/${VALUES_TYPE}-values.example.yaml"
   elif [[ -f "${VALUES_DIR}"/$(basename "${chart}")/demo-values.example.yaml ]]; then
     values_file="${VALUES_DIR}/$(basename "${chart}")/demo-values.example.yaml"
-    echo "DEBUG: Using demo values for $(basename $chart) (no ${VALUES_TYPE} values found)" >&2
+    echo "Using demo values for $(basename $chart) (no ${VALUES_TYPE} values found)" >&2
   fi
 
   # Determine secrets file to use
@@ -110,7 +112,11 @@ while IFS= read -r chart; do
   fi
 
   # Apply sed replacement and other processing
-  current_images=$(echo "$raw_images" | sed -e 's|^bitnami/|bitnamilegacy/|g' -e 's|^docker\.io/bitnami/|docker.io/bitnamilegacy/|g' | grep -v "^$" | optionally_complain | sort -u)
+  if [[ -n "$raw_images" ]]; then
+    current_images=$(echo "$raw_images" | sed -e 's|^bitnami/|bitnamilegacy/|g' -e 's|^docker\.io/bitnami/|docker.io/bitnamilegacy/|g' | grep -v "^$" | optionally_complain | sort -u)
+  else
+    current_images=""
+  fi
 
   images+="$current_images\n"
   if [[ -n "$current_images" ]]; then
