@@ -109,4 +109,4 @@ while IFS= read -r chart; do
     append_chart_entry "$(basename $chart)" "$image_array" "${HELM_IMAGE_TREE_FILE}"
   fi
 done
-echo -e "$images" | grep . | sort -u 
+echo -e "$images" | grep . | sort -u || true 
