@@ -81,6 +81,16 @@ pull_charts() {
     (cd "${OUTPUT_DIR}"/charts; helm pull --version "$version" --untar "$repo_short_name/$name")
   done
   echo "Pulling charts done."
+
+  # Patch bitnami repository references in pulled charts
+  echo "Patching bitnami repository references..."
+  SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+  PATCH_SCRIPT="${SCRIPT_DIR}/patch-chart-images.sh"
+  if [[ -f "$PATCH_SCRIPT" ]]; then
+    "$PATCH_SCRIPT" "${OUTPUT_DIR}/charts"
+  else
+    echo "Warning: patch-chart-images.sh not found at $PATCH_SCRIPT, skipping chart patching"
+  fi
 }
 
 wire_build="https://raw.githubusercontent.com/wireapp/wire-builds/91dc716636442af4131c37719d825ac08d36232a/build.json"
