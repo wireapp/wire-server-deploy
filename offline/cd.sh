@@ -24,7 +24,7 @@ eval `ssh-agent`
 ssh-add - <<< "$ssh_private_key"
 
 terraform output -json static-inventory > inventory.json
-yq eval '.' inventory.json > inventory.yml
+yq -y '.' inventory.json > inventory.yml
 
 ssh -oStrictHostKeyChecking=accept-new -oConnectionAttempts=10 "root@$adminhost" tar xzv < "$ARTIFACTS_DIR/assets.tgz"
 
