@@ -57,10 +57,17 @@ append_chart_entry() {
 # of them, but only :latest in that case - it's bad enough there's no proper
 # versioning here.
 function optionally_complain() {
-  # Simply pass through all images - no validation needed
-  # The job is to replace bitnami, not validate image formats
   while IFS= read -r image; do
-    echo "$image"
+    if [[ $image =~ ":latest" ]]; then
+      echo "Container $image with a latest tag found. Fix this chart. not compatible with offline. Components need explicit tags for that" >&2
+    elif [[ $image =~ ":" ]]; then
+      echo "$image"
+    elif [[ $image =~ "@" ]]; then
+      echo "$image"
+    else
+      echo "Container $image without a tag found or pin found. Aborting! Fix this chart. not compatible with offline. Components need explicit tags for that" >&2
+      exit 1
+    fi
   done
 }
 
@@ -71,7 +78,6 @@ chart_count=0
 while IFS= read -r chart; do
   chart_count=$((chart_count + 1))
   echo "[$chart_count] Running helm template on chart ${chart}…" >&2
-  # Extract raw images before replacement with error handling
   set +e  # Temporarily disable exit on error
   # Determine values file to use (prod first, then demo as fallback)
   values_file=""
@@ -90,30 +96,26 @@ while IFS= read -r chart; do
     secrets_file="${VALUES_DIR}/$(basename "${chart}")/demo-secrets.example.yaml"
   fi
 
-  raw_images=$(helm template --debug "${chart}" \
-    --set federate.dtls.tls.key=emptyString \
-    --set federate.dtls.tls.crt=emptyString \
+  raw_images=$(helm template "${chart}" \
     $( [[ -n "$values_file" ]] && echo "-f $values_file" ) \
     $( [[ -n "$secrets_file" ]] && echo "-f $secrets_file" ) \
-    2>/dev/null | yq -r '..|.image?' | grep -v "^null$" | grep -v "^---$" | grep -v "^$" 2>/dev/null || true)
+    2>&1 | yq -r '..|.image?' | grep -v "^null$" | grep -v "^---$" | grep -v "^$" || true)
 
   helm_exit_code=$?
   set -e  # Re-enable exit on error
 
   if [[ $helm_exit_code -ne 0 ]]; then
-    echo "WARNING: Failed to process chart $(basename $chart), skipping..." >&2
+    echo "ERROR: Failed to process chart $(basename $chart)" >&2
+    echo "Chart path: $chart" >&2
+    echo "Values file: ${values_file:-none}" >&2
+    echo "Secrets file: ${secrets_file:-none}" >&2
+    echo "Try running: helm template $chart $([ -n "$values_file" ] && echo "-f $values_file") $([ -n "$secrets_file" ] && echo "-f $secrets_file")" >&2
     raw_images=""
   fi
 
-  # Check for bitnami images before replacement
-  if echo "$raw_images" | grep -q "^bitnami/" 2>/dev/null; then
-    echo "DEBUG: Found bitnami images in chart $(basename $chart):" >&2
-    echo "$raw_images" | grep "^bitnami/" >&2 || true
-  fi
-
-  # Apply sed replacement and other processing
+  # Process extracted images
   if [[ -n "$raw_images" ]]; then
-    current_images=$(echo "$raw_images" | sed -e 's|^bitnami/|bitnamilegacy/|g' -e 's|^docker\.io/bitnami/|docker.io/bitnamilegacy/|g' | grep -v "^$" | optionally_complain | sort -u)
+    current_images=$(echo "$raw_images" | grep -v "^$" | optionally_complain | sort -u)
   else
     current_images=""
   fi
@@ -125,4 +127,4 @@ while IFS= read -r chart; do
     append_chart_entry "$(basename $chart)" "$image_array" "${HELM_IMAGE_TREE_FILE}"
   fi
 done
-echo -e "$images" | grep . | sort -u || true 
+echo -e "$images" | grep . | sort -u || true

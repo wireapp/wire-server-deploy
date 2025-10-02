@@ -80,7 +80,7 @@ jobs:
 
   # Deploy to Hetzner in parallel with S3 upload
   deploy-hetzner:
-    name: Deploy to Hetzner
+    name: Deploy default build to Hetzner
     if: "!contains(github.event.head_commit.message, 'skip ci')"
     needs: build-default
     runs-on:
@@ -145,7 +145,6 @@ jobs:
   build-demo:
     name: Build demo profile
     if: "!contains(github.event.head_commit.message, 'skip ci')"
-    needs: build-default
     runs-on:
       group: wire-server-deploy
     steps:
@@ -160,6 +159,10 @@ jobs:
 
       - name: Install nix environment
         run: nix-env -f default.nix -iA env
+
+      - name: Get upload name
+        id: upload_name
+        run: echo "UPLOAD_NAME=$GITHUB_SHA" >> $GITHUB_OUTPUT
 
       - name: Process the demo profile build
         run: ./offline/demo-build/build.sh
@@ -169,8 +172,8 @@ jobs:
 
       - name: Copy demo build assets tarball to S3
         run: |
-          aws s3 cp offline/demo-build/output/assets.tgz s3://public.wire.com/artifacts/wire-server-deploy-static-demo-${{ needs.build-default.outputs.upload_name }}.tgz
-          echo "Uploaded to: https://s3-$AWS_REGION.amazonaws.com/public.wire.com/artifacts/wire-server-deploy-static-demo-${{ needs.build-default.outputs.upload_name }}.tgz"
+          aws s3 cp offline/demo-build/output/assets.tgz s3://public.wire.com/artifacts/wire-server-deploy-static-demo-${{ steps.upload_name.outputs.UPLOAD_NAME }}.tgz
+          echo "Uploaded to: https://s3-$AWS_REGION.amazonaws.com/public.wire.com/artifacts/wire-server-deploy-static-demo-${{ steps.upload_name.outputs.UPLOAD_NAME }}.tgz"
         env:
           AWS_ACCESS_KEY_ID: '${{ secrets.AWS_ACCESS_KEY_ID }}'
           AWS_SECRET_ACCESS_KEY: '${{ secrets.AWS_SECRET_ACCESS_KEY }}'
@@ -180,7 +183,6 @@ jobs:
   build-min:
     name: Build min profile
     if: "!contains(github.event.head_commit.message, 'skip ci')"
-    needs: build-default
     runs-on:
       group: wire-server-deploy
     steps:
@@ -196,6 +198,10 @@ jobs:
       - name: Install nix environment
         run: nix-env -f default.nix -iA env
 
+      - name: Get upload name
+        id: upload_name
+        run: echo "UPLOAD_NAME=$GITHUB_SHA" >> $GITHUB_OUTPUT
+
       - name: Process the min profile build
         run: ./offline/min-build/build.sh
         env:
@@ -204,8 +210,8 @@ jobs:
 
       - name: Copy min build assets tarball to S3
         run: |
-          aws s3 cp offline/min-build/output/assets.tgz s3://public.wire.com/artifacts/wire-server-deploy-static-min-${{ needs.build-default.outputs.upload_name }}.tgz
-          echo "Uploaded to: https://s3-$AWS_REGION.amazonaws.com/public.wire.com/artifacts/wire-server-deploy-static-min-${{ needs.build-default.outputs.upload_name }}.tgz"
+          aws s3 cp offline/min-build/output/assets.tgz s3://public.wire.com/artifacts/wire-server-deploy-static-min-${{ steps.upload_name.outputs.UPLOAD_NAME }}.tgz
+          echo "Uploaded to: https://s3-$AWS_REGION.amazonaws.com/public.wire.com/artifacts/wire-server-deploy-static-min-${{ steps.upload_name.outputs.UPLOAD_NAME }}.tgz"
         env:
           AWS_ACCESS_KEY_ID: '${{ secrets.AWS_ACCESS_KEY_ID }}'
           AWS_SECRET_ACCESS_KEY: '${{ secrets.AWS_SECRET_ACCESS_KEY }}'

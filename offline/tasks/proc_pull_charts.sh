@@ -83,6 +83,7 @@ pull_charts() {
   echo "Pulling charts done."
 
   # Patch bitnami repository references in pulled charts
+  # Remove the extraction and replacement when there will be no more bitnami charts
   echo "Patching bitnami repository references..."
   SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
   PATCH_SCRIPT="${SCRIPT_DIR}/patch-chart-images.sh"
