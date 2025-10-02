@@ -5,7 +5,7 @@
 # those.
 # In cases where no container image tag has been specified, it'll use `latest`.
 # The list is sorted and deduplicated, then printed to stdout.
-set -eou pipefail
+set -euo pipefail
 
 VALUES_DIR=""
 HELM_IMAGE_TREE_FILE=""
@@ -74,14 +74,51 @@ function optionally_complain() {
 images=""
 # For each helm chart passed in from stdin, use the example values to
 # render the charts, and assemble the list of images this would fetch.
+chart_count=0
 while IFS= read -r chart; do
-  echo "Running helm template on chart ${chart}…" >&2
-  current_images=$(helm template --debug "${chart}" \
-    --set federate.dtls.tls.key=emptyString \
-    --set federate.dtls.tls.crt=emptyString \
-    $( [[ -f "${VALUES_DIR}"/$(basename "${chart}")/"${VALUES_TYPE}"-values.example.yaml ]] && echo "-f ${VALUES_DIR}/$(basename "${chart}")/${VALUES_TYPE}-values.example.yaml" ) \
-    $( [[ -f "${VALUES_DIR}"/$(basename "${chart}")/"${VALUES_TYPE}"-secrets.example.yaml ]] && echo "-f ${VALUES_DIR}/$(basename "${chart}")/${VALUES_TYPE}-secrets.example.yaml" ) \
-    | yq -r '..|.image? | select(.)' | optionally_complain | sort -u)
+  chart_count=$((chart_count + 1))
+  echo "[$chart_count] Running helm template on chart ${chart}…" >&2
+  set +e  # Temporarily disable exit on error
+  # Determine values file to use (prod first, then demo as fallback)
+  values_file=""
+  if [[ -f "${VALUES_DIR}"/$(basename "${chart}")/"${VALUES_TYPE}"-values.example.yaml ]]; then
+    values_file="${VALUES_DIR}/$(basename "${chart}")/${VALUES_TYPE}-values.example.yaml"
+  elif [[ -f "${VALUES_DIR}"/$(basename "${chart}")/demo-values.example.yaml ]]; then
+    values_file="${VALUES_DIR}/$(basename "${chart}")/demo-values.example.yaml"
+    echo "Using demo values for $(basename $chart) (no ${VALUES_TYPE} values found)" >&2
+  fi
+
+  # Determine secrets file to use
+  secrets_file=""
+  if [[ -f "${VALUES_DIR}"/$(basename "${chart}")/"${VALUES_TYPE}"-secrets.example.yaml ]]; then
+    secrets_file="${VALUES_DIR}/$(basename "${chart}")/${VALUES_TYPE}-secrets.example.yaml"
+  elif [[ -f "${VALUES_DIR}"/$(basename "${chart}")/demo-secrets.example.yaml ]]; then
+    secrets_file="${VALUES_DIR}/$(basename "${chart}")/demo-secrets.example.yaml"
+  fi
+
+  raw_images=$(helm template "${chart}" \
+    $( [[ -n "$values_file" ]] && echo "-f $values_file" ) \
+    $( [[ -n "$secrets_file" ]] && echo "-f $secrets_file" ) \
+    2>&1 | yq -r '..|.image?' | grep -v "^null$" | grep -v "^---$" | grep -v "^$" || true)
+
+  helm_exit_code=$?
+  set -e  # Re-enable exit on error
+
+  if [[ $helm_exit_code -ne 0 ]]; then
+    echo "ERROR: Failed to process chart $(basename $chart)" >&2
+    echo "Chart path: $chart" >&2
+    echo "Values file: ${values_file:-none}" >&2
+    echo "Secrets file: ${secrets_file:-none}" >&2
+    echo "Try running: helm template $chart $([ -n "$values_file" ] && echo "-f $values_file") $([ -n "$secrets_file" ] && echo "-f $secrets_file")" >&2
+    raw_images=""
+  fi
+
+  # Process extracted images
+  if [[ -n "$raw_images" ]]; then
+    current_images=$(echo "$raw_images" | grep -v "^$" | optionally_complain | sort -u)
+  else
+    current_images=""
+  fi
 
   images+="$current_images\n"
   if [[ -n "$current_images" ]]; then
@@ -90,4 +127,4 @@ while IFS= read -r chart; do
     append_chart_entry "$(basename $chart)" "$image_array" "${HELM_IMAGE_TREE_FILE}"
   fi
 done
-echo -e "$images" | grep . | sort -u 
+echo -e "$images" | grep . | sort -u || true

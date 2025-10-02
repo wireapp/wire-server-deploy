@@ -1,6 +1,6 @@
 output "ssh_private_key" {
   sensitive = true
-  value = tls_private_key.admin.private_key_pem
+  value     = tls_private_key.admin.private_key_pem
 }
 
 output "selected_server_types" {
@@ -11,9 +11,31 @@ output "selected_server_types" {
   }
 }
 
+output "selected_location" {
+  description = "Location selected after checking availability"
+  value       = local.selected_location
+}
+
+output "resource_fallback_info" {
+  description = "Information about resource fallback selections"
+  value = {
+    requested_locations = local.preferred_locations
+    available_locations = local.available_location_names
+    selected_location   = local.selected_location
+
+    requested_small_types = local.preferred_server_types.small
+    available_small_types = local.available_small_server_types
+    selected_small_type   = local.small_server_type
+
+    requested_medium_types = local.preferred_server_types.medium
+    available_medium_types = local.available_medium_server_types
+    selected_medium_type   = local.medium_server_type
+  }
+}
+
 output "adminhost" {
   sensitive = true
-  value = hcloud_server.adminhost.ipv4_address
+  value     = hcloud_server.adminhost.ipv4_address
 }
 # output format that a static inventory file expects
 output "static-inventory" {
@@ -21,9 +43,9 @@ output "static-inventory" {
   value = {
     all = {
       vars = {
-        ansible_user = "root"
-        private_interface = "enp7s0"
-        adminhost_ip = tolist(hcloud_server.adminhost.network)[0].ip
+        ansible_user            = "root"
+        private_interface       = "enp7s0"
+        adminhost_ip            = tolist(hcloud_server.adminhost.network)[0].ip
         ansible_ssh_common_args = "-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ControlMaster=auto -o ControlPersist=60s"
       }
     }
@@ -40,7 +62,7 @@ output "static-inventory" {
           ansible_host = tolist(hcloud_server.adminhost.network)[0].ip
         }
       }
-    }    
+    }
     assethost = {
       hosts = {
         "assethost" = {
@@ -75,7 +97,7 @@ output "static-inventory" {
         calico_veth_mtu = 1430
         # NOTE: relax handling a list with more than 3 items; required on Hetzner
         docker_dns_servers_strict = false
-        upstream_dns_servers = [tolist(hcloud_server.adminhost.network)[0].ip]
+        upstream_dns_servers      = [tolist(hcloud_server.adminhost.network)[0].ip]
       }
     }
     cassandra = {
@@ -116,14 +138,14 @@ output "static-inventory" {
     }
     postgresql = {
       hosts = {
-        for index, server in hcloud_server.postgresql :  "postgresql${index + 1}" => {
+        for index, server in hcloud_server.postgresql : "postgresql${index + 1}" => {
           ansible_host = tolist(hcloud_server.postgresql[index].network)[0].ip
         }
       }
       vars = {
-        wire_dbname = "wire-server"
-        wire_user = "wire-server"
-        wire_pass = "verysecurepassword"
+        wire_dbname                  = "wire-server"
+        wire_user                    = "wire-server"
+        wire_pass                    = "verysecurepassword"
         postgresql_network_interface = "enp7s0"
       }
     }
@@ -132,7 +154,7 @@ output "static-inventory" {
     }
     postgresql_ro = {
       hosts = { "postgresql2" = {},
-                "postgresql3" = {} }
+      "postgresql3" = {} }
     }
   }
 }
