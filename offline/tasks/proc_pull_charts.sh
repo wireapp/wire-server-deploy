@@ -94,5 +94,5 @@ pull_charts() {
   fi
 }
 
-wire_build="https://raw.githubusercontent.com/wireapp/wire-builds/43abf405a4a583d8abefd770160255b23d3a415f/build.json"
+wire_build="https://raw.githubusercontent.com/wireapp/wire-builds/b706e068fbae071a16aeae4cb722df21695e69da/build.json"
 wire_build_chart_release "$wire_build" | pull_charts
