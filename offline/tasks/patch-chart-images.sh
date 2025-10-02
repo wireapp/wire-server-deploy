@@ -19,8 +19,10 @@ file_count=0
 # Function to patch a single file
 patch_file() {
     local file="$1"
-    local temp_file=$(mktemp)
+    local temp_file
     local chart_name=""
+
+    temp_file=$(mktemp)
 
     # Extract chart name from file path for logging
     if [[ "$file" =~ /charts/([^/]+)/ ]]; then
@@ -45,12 +47,14 @@ patch_file() {
         echo "     File: $(basename "$file")"
 
         # Extract and log the specific bitnami references that were changed
-        local changes=$(diff "$file" "$temp_file" 2>/dev/null | grep "^<\|^>" | grep -E "(bitnami|bitnamilegacy)" || true)
+        local changes
+        changes=$(diff "$file" "$temp_file" 2>/dev/null | grep "^<\|^>" | grep -E "(bitnami|bitnamilegacy)" || true)
         if [[ -n "$changes" ]]; then
             echo "     Changes:"
             echo "$changes" | while read -r line; do
                 if [[ "$line" =~ ^\<.*bitnami/ ]]; then
-                    local old_ref=$(echo "$line" | sed 's/^< *//' | grep -o 'bitnami/[^[:space:]]*' || echo "bitnami reference")
+                    local old_ref
+                    old_ref=$(echo "$line" | sed 's/^< *//' | grep -o 'bitnami/[^[:space:]]*' || echo "bitnami reference")
                     echo "       - $old_ref → bitnamilegacy/${old_ref#bitnami/}"
                 fi
             done
