@@ -2,12 +2,6 @@
 
 ## Table of Contents
 - [Architecture Overview](#architecture-overview)
-- **Multi-Node Checking**: Verifies primary status across all cluster nodes
-- **Graceful Shutdown**: Masks service to prevent restart attempts, then stops PostgreSQL (handled by split-brain detection system)
-- **Force Termination**: Uses `systemctl kill` if normal stop fails
-- **Event Logging**: Comprehensive logging to syslog and journal
-
-**Recovery:** Event-driven fence script updates node status in the repmgr database and automatically unmasks services during successful rejoins-overview
 - [Key Concepts](#key-concepts)
 - [Minimum System Requirements](#minimum-system-requirements)
 - [High Availability Features](#high-availability-features)
@@ -345,10 +339,64 @@ sudo -u postgres repmgr -f /etc/repmgr/17-main/repmgr.conf node rejoin -d repmgr
 
 Usually the recovery time is very fast on postgres cluster level (30 seconds to a minute) but for the application it might take from 1 minute to 2 minutes. The reason is postgres-endpoint-manager cronjob runs every 2 minutes to check and update the postgresql endpoints if necessary.
 
-**Complete Cluster Failure:**
-1. Find node with most recent data: `sudo -u postgres /usr/lib/postgresql/17/bin/pg_controldata /var/lib/postgresql/17/main | grep -E "Latest checkpoint location|TimeLineID|Time of latest checkpoint"`
-2. Register as primary: `sudo -u postgres repmgr -f /etc/repmgr/17-main/repmgr.conf primary register --force`
-3. Rejoin other nodes with `--force-rewind`
+**Complete Cluster Failure (All Nodes Down):**
+
+When all PostgreSQL nodes fail simultaneously (power outage, network failure, etc.), follow this recovery procedure:
+
+**Step 1: Identify the Most Recent Primary**
+On each node, check the data consistency and timeline:
+```bash
+# Check control data on each node
+sudo -u postgres /usr/lib/postgresql/17/bin/pg_controldata /var/lib/postgresql/17/main | grep -E "Latest checkpoint location|TimeLineID|Time of latest checkpoint|Database system identifier"
+
+# Compare LSN (Log Sequence Number) - highest LSN has most recent data
+```
+
+**Step 2: Start the Most Recent Primary**
+Choose the node with the highest LSN/most recent checkpoint:
+```bash
+# Start PostgreSQL service on the chosen node
+sudo systemctl start postgresql@17-main
+
+# Register as new primary (removes old cluster metadata)
+sudo -u postgres repmgr -f /etc/repmgr/17-main/repmgr.conf primary register --force
+
+# Start repmgrd daemon
+sudo systemctl start repmgrd@17-main
+```
+
+**Step 3: Rejoin Other Nodes as Standby**
+For each remaining node:
+```bash
+# Start PostgreSQL service
+sudo systemctl start postgresql@17-main
+
+# Force rejoin as standby (handles timeline divergence)
+sudo -u postgres repmgr -f /etc/repmgr/17-main/repmgr.conf node rejoin -d repmgr -h <new-primary-ip> -U repmgr --force-rewind --verbose
+
+# Start repmgrd daemon after successful rejoin
+sudo systemctl start repmgrd@17-main
+```
+
+**Step 4: Verify Cluster Recovery**
+```bash
+# Check cluster status
+sudo -u postgres repmgr -f /etc/repmgr/17-main/repmgr.conf cluster show
+
+# Verify replication
+sudo -u postgres psql -c "SELECT application_name, client_addr, state FROM pg_stat_replication;"
+
+# Check all services are running
+sudo systemctl status postgresql@17-main repmgrd@17-main detect-rogue-primary.timer
+```
+
+**⚠️ Important Notes:**
+- **Data Loss Risk**: If nodes have divergent data, some transactions may be lost
+- **Timeline Handling**: `--force-rewind` automatically handles timeline divergence
+- **Service Order**: Always start PostgreSQL before attempting repmgr operations
+- **Backup Recovery**: If all nodes are corrupted, restore from backup before following this procedure
+
+**Expected Recovery Time**: 5-15 minutes depending on data size and number of nodes
 
 **Bring back the old primary as standby (Split-Brain Resolution):**
 - Get the current primary node ip with `sudo -u postgres repmgr -f /etc/repmgr/17-main/repmgr.conf cluster show` on a active node.
@@ -359,6 +407,81 @@ Usually the recovery time is very fast on postgres cluster level (30 seconds to 
 - If the upstream of the re-joined node is empty that means the re-join failed partially, please rerun the above procedure by
 - masking and stopping postgresql first: `sudo systemctl mask postgresql@17-main && sudo systemctl stop postgresql@17-main`
 - Run the unmask and rejoin command. That should be it.
+
+### 🔧 OS Upgrades and Maintenance Operations
+
+**Behavior During OS Upgrades**: PostgreSQL HA cluster handles OS-level maintenance (firmware updates, kernel upgrades, reboots) gracefully with automatic failover and recovery.
+
+#### **Planned Maintenance (Single Node)**
+1. **Pre-Reboot**:
+   - **For major OS updates**: Disable repmgrd to prevent conflicts: `sudo systemctl stop repmgrd@17-main && sudo systemctl disable repmgrd@17-main`
+   - **For routine reboots**: No manual intervention required, repmgr automatically detects node unavailability
+2. **During Reboot**:
+   - If **replica node**: Cluster continues normally with remaining nodes
+   - If **primary node**: Automatic failover occurs (~10-30s), promotes best replica
+3. **Post-Reboot**:
+   - **After major OS updates**: Manually rejoin cluster in standby mode:
+     ```bash
+     # Start PostgreSQL service
+     sudo systemctl start postgresql@17-main
+     # Manually rejoin as standby
+     sudo -u postgres repmgr -f /etc/repmgr/17-main/repmgr.conf node rejoin -d repmgr -h <primary-ip> -U repmgr --verbose
+     # Re-enable repmgrd after successful rejoin
+     sudo systemctl enable repmgrd@17-main && sudo systemctl start repmgrd@17-main
+     ```
+   - **After routine reboots**: Node automatically rejoins as standby, catches up via WAL streaming
+4. **Service Status**: PostgreSQL and repmgrd services auto-start via systemd (enabled by default for routine maintenance)
+
+#### **Rolling Upgrades (Multiple Nodes)**
+**Recommended Sequence for Major OS Updates**:
+1. **Disable repmgrd on all nodes**: `sudo systemctl stop repmgrd@17-main && sudo systemctl disable repmgrd@17-main`
+2. Upgrade replica nodes first (postgresql2, postgresql3)
+3. Manually rejoin each replica as standby after upgrade
+4. Upgrade primary node last (postgresql1) - automatic failover will occur
+5. Manually rejoin former primary as standby
+6. **Re-enable repmgrd on all nodes**: `sudo systemctl enable repmgrd@17-main && sudo systemctl start repmgrd@17-main`
+7. Monitor cluster status between each step: `sudo -u postgres repmgr -f /etc/repmgr/17-main/repmgr.conf cluster show`
+
+#### **Manual Verification Steps**
+After each node reboot, verify:
+```bash
+# Check cluster status
+sudo -u postgres repmgr -f /etc/repmgr/17-main/repmgr.conf cluster show
+
+# Verify services are running
+sudo systemctl status postgresql@17-main repmgrd@17-main
+
+# Check replication status (on current primary)
+sudo -u postgres psql -c "SELECT application_name, client_addr, state FROM pg_stat_replication;"
+```
+
+#### **Troubleshooting Failed Auto-Recovery**
+If a node doesn't rejoin automatically after reboot:
+
+**For Major OS Updates (repmgrd was disabled):**
+1. **Start PostgreSQL service**: `sudo systemctl start postgresql@17-main`
+2. **Manual rejoin as standby**:
+   ```bash
+   sudo -u postgres repmgr -f /etc/repmgr/17-main/repmgr.conf node rejoin -d repmgr -h <primary-ip> -U repmgr --verbose
+   ```
+3. **Re-enable repmgrd**: `sudo systemctl enable repmgrd@17-main && sudo systemctl start repmgrd@17-main`
+4. **Check logs**: `sudo journalctl -u postgresql@17-main -u repmgrd@17-main --since "10m ago"`
+
+**For Routine Reboots (automatic recovery expected):**
+1. **Check service status**: `sudo systemctl status postgresql@17-main repmgrd@17-main`
+2. **Manual start if needed**: `sudo systemctl start postgresql@17-main repmgrd@17-main`
+3. **Force rejoin if timeline diverged**:
+   ```bash
+   sudo -u postgres repmgr -f /etc/repmgr/17-main/repmgr.conf node rejoin -d repmgr -h <primary-ip> -U repmgr --force-rewind --verbose
+   ```
+4. **Check logs**: `sudo journalctl -u postgresql@17-main -u repmgrd@17-main --since "10m ago"`
+
+#### **Client Application Impact**
+- **During failover**: Brief connection interruption (10-30s), applications should implement retry logic
+- **Kubernetes environments**: postgres-endpoint-manager updates service endpoints within 2 minutes
+- **Multiple primaries**: If multiple primaries are detected by the postgres-endpoint-manager, it will skip the endpoint update unless it gets resolved in the postgres cluster and will keep the last know good state. Check the cronjob pods log for details.
+
+**Best Practice**: Schedule maintenance during low-traffic periods and monitor cluster health throughout the process.
 
 ## Wire Server Database Setup
 
