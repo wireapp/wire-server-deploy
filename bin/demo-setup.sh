@@ -96,6 +96,29 @@ for chart in "${phase_1_charts_pre[@]}"; do
     fi
 done
 
+# Retrieve PostgreSQL password from databases-ephemeral for later use
+echo "######################################################"
+echo "Retrieving PostgreSQL password..."
+echo "######################################################"
+if command -v kubectl &> /dev/null; then
+    if kubectl get secret wire-server-postgresql -n "${NAMESPACE}" &>/dev/null; then
+        PG_PASSWORD_B64=$(kubectl get secret wire-server-postgresql -n "${NAMESPACE}" -o jsonpath='{.data.password}')
+        if [ -n "$PG_PASSWORD_B64" ]; then
+            echo "✓ PostgreSQL password retrieved successfully"
+            # Export for use after wire-server deployment
+            export PG_PASSWORD_B64
+        else
+            echo "⚠️ Warning: PostgreSQL secret exists but password is empty"
+        fi
+    else
+        echo "⚠️ Warning: PostgreSQL secret 'wire-server-postgresql' not found in namespace '${NAMESPACE}'"
+        echo "    PostgreSQL password sync will be skipped"
+    fi
+else
+    echo "⚠️ Warning: kubectl not found, PostgreSQL password sync will be skipped"
+fi
+echo ""
+
 echo "Installing wire-server, this may take a long time, and take a long time before reporting errors. (timeout of $timeout seconds.) You may check for potential problems with 'kubectl -n $NAMESPACE get pods -w' or 'kubectl -n $NAMESPACE get all' and look for errors/pending."
 for chart in "${phase_2_charts_main[@]}"; do
     valuesfile="${DIR}/values/${chart}/${valuesfilename}"
@@ -111,6 +134,38 @@ for chart in "${phase_2_charts_main[@]}"; do
             --wait --timeout 900
     fi
 done
+
+# Sync PostgreSQL password to wire-server service secrets
+if [ -n "${PG_PASSWORD_B64:-}" ]; then
+    echo ""
+    echo "######################################################"
+    echo "Syncing PostgreSQL password to wire-server secrets..."
+    echo "######################################################"
+
+    # List of services that need PostgreSQL password
+    SERVICES=("brig" "galley")
+
+    for service in "${SERVICES[@]}"; do
+        if kubectl get secret "$service" -n "${NAMESPACE}" &>/dev/null; then
+            echo "Patching secret: $service"
+            if kubectl patch secret "$service" -n "${NAMESPACE}" \
+                --type='json' \
+                -p="[{\"op\":\"replace\",\"path\":\"/data/pgPassword\",\"value\":\"$PG_PASSWORD_B64\"}]"; then
+                echo "✓ Successfully synced PostgreSQL password to $service secret"
+            else
+                echo "⚠️  Warning: Failed to patch $service secret (may not have pgPassword key yet)"
+            fi
+        else
+            echo "⚠️  Warning: Secret '$service' not found, skipping"
+        fi
+    done
+
+    echo "✓ PostgreSQL password sync completed"
+    echo ""
+else
+    echo "⚠️  Skipping PostgreSQL password sync (password not retrieved)"
+    echo ""
+fi
 
 # This expects ${DIR}/values/$NAMESPACE/${chart}/${secretsfile} to point to a file with plain text values for
 # the tls wildcard certifcate and key. If you plan to use sops and encrypt the secrets, please ensure to use helm-wrapper
