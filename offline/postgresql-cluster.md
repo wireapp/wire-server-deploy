@@ -361,8 +361,9 @@ sudo systemctl start postgresql@17-main
 # Register as new primary (removes old cluster metadata)
 sudo -u postgres repmgr -f /etc/repmgr/17-main/repmgr.conf primary register --force
 
-# Start repmgrd daemon
+# Start repmgrd daemon and split-brain detection
 sudo systemctl start repmgrd@17-main
+sudo systemctl start detect-rogue-primary.timer
 ```
 
 **Step 3: Rejoin Other Nodes as Standby**
@@ -374,8 +375,9 @@ sudo systemctl start postgresql@17-main
 # Force rejoin as standby (handles timeline divergence)
 sudo -u postgres repmgr -f /etc/repmgr/17-main/repmgr.conf node rejoin -d repmgr -h <new-primary-ip> -U repmgr --force-rewind --verbose
 
-# Start repmgrd daemon after successful rejoin
+# Start repmgrd daemon and split-brain detection after successful rejoin
 sudo systemctl start repmgrd@17-main
+sudo systemctl start detect-rogue-primary.timer
 ```
 
 **Step 4: Verify Cluster Recovery**
@@ -401,7 +403,7 @@ sudo systemctl status postgresql@17-main repmgrd@17-main detect-rogue-primary.ti
 **Bring back the old primary as standby (Split-Brain Resolution):**
 - Get the current primary node ip with `sudo -u postgres repmgr -f /etc/repmgr/17-main/repmgr.conf cluster show` on a active node.
 - `ssh` into the old primary
-- Unmask service and rejoin the cluster as standby with is command: `sudo systemctl unmask postgresql@17-main.service && sudo -u postgres repmgr -f /etc/repmgr/17-main/repmgr.conf node rejoin -d repmgr -h <primary-ip> -U repmgr --force-rewind --verbose`
+- Unmask service and rejoin the cluster as standby with this command: `sudo systemctl unmask postgresql@17-main.service && sudo -u postgres repmgr -f /etc/repmgr/17-main/repmgr.conf node rejoin -d repmgr -h <primary-ip> -U repmgr --force-rewind --verbose`
 - Service auto-starts in standby mode and will start following the new primary when the rejoin succeeds and if it fails the node might join the cluster as standalone standby.
 - Check the cluster status `sudo -u postgres repmgr -f /etc/repmgr/17-main/repmgr.conf cluster show` to make sure the node joins the cluster properly and the upstream is the new primary.
 - If the upstream of the re-joined node is empty that means the re-join failed partially, please rerun the above procedure by
@@ -414,7 +416,11 @@ sudo systemctl status postgresql@17-main repmgrd@17-main detect-rogue-primary.ti
 
 #### **Planned Maintenance (Single Node)**
 1. **Pre-Reboot**:
-   - **For major OS updates**: Disable repmgrd to prevent conflicts: `sudo systemctl stop repmgrd@17-main && sudo systemctl disable repmgrd@17-main`
+   - **For major OS updates**: Disable repmgrd and split-brain detection to prevent conflicts:
+     ```bash
+     sudo systemctl stop repmgrd@17-main && sudo systemctl disable repmgrd@17-main
+     sudo systemctl stop detect-rogue-primary.timer && sudo systemctl disable detect-rogue-primary.timer
+     ```
    - **For routine reboots**: No manual intervention required, repmgr automatically detects node unavailability
 2. **During Reboot**:
    - If **replica node**: Cluster continues normally with remaining nodes
@@ -426,20 +432,29 @@ sudo systemctl status postgresql@17-main repmgrd@17-main detect-rogue-primary.ti
      sudo systemctl start postgresql@17-main
      # Manually rejoin as standby
      sudo -u postgres repmgr -f /etc/repmgr/17-main/repmgr.conf node rejoin -d repmgr -h <primary-ip> -U repmgr --verbose
-     # Re-enable repmgrd after successful rejoin
+     # Re-enable services after successful rejoin
      sudo systemctl enable repmgrd@17-main && sudo systemctl start repmgrd@17-main
+     sudo systemctl enable detect-rogue-primary.timer && sudo systemctl start detect-rogue-primary.timer
      ```
    - **After routine reboots**: Node automatically rejoins as standby, catches up via WAL streaming
 4. **Service Status**: PostgreSQL and repmgrd services auto-start via systemd (enabled by default for routine maintenance)
 
 #### **Rolling Upgrades (Multiple Nodes)**
 **Recommended Sequence for Major OS Updates**:
-1. **Disable repmgrd on all nodes**: `sudo systemctl stop repmgrd@17-main && sudo systemctl disable repmgrd@17-main`
+1. **Disable repmgrd and split-brain detection on all nodes**:
+   ```bash
+   sudo systemctl stop repmgrd@17-main && sudo systemctl disable repmgrd@17-main
+   sudo systemctl stop detect-rogue-primary.timer && sudo systemctl disable detect-rogue-primary.timer
+   ```
 2. Upgrade replica nodes first (postgresql2, postgresql3)
 3. Manually rejoin each replica as standby after upgrade
 4. Upgrade primary node last (postgresql1) - automatic failover will occur
 5. Manually rejoin former primary as standby
-6. **Re-enable repmgrd on all nodes**: `sudo systemctl enable repmgrd@17-main && sudo systemctl start repmgrd@17-main`
+6. **Re-enable all services on all nodes**:
+   ```bash
+   sudo systemctl enable repmgrd@17-main && sudo systemctl start repmgrd@17-main
+   sudo systemctl enable detect-rogue-primary.timer && sudo systemctl start detect-rogue-primary.timer
+   ```
 7. Monitor cluster status between each step: `sudo -u postgres repmgr -f /etc/repmgr/17-main/repmgr.conf cluster show`
 
 #### **Manual Verification Steps**
@@ -449,7 +464,7 @@ After each node reboot, verify:
 sudo -u postgres repmgr -f /etc/repmgr/17-main/repmgr.conf cluster show
 
 # Verify services are running
-sudo systemctl status postgresql@17-main repmgrd@17-main
+sudo systemctl status postgresql@17-main repmgrd@17-main detect-rogue-primary.timer
 
 # Check replication status (on current primary)
 sudo -u postgres psql -c "SELECT application_name, client_addr, state FROM pg_stat_replication;"
@@ -458,18 +473,22 @@ sudo -u postgres psql -c "SELECT application_name, client_addr, state FROM pg_st
 #### **Troubleshooting Failed Auto-Recovery**
 If a node doesn't rejoin automatically after reboot:
 
-**For Major OS Updates (repmgrd was disabled):**
+**For Major OS Updates (repmgrd and split-brain detection were disabled):**
 1. **Start PostgreSQL service**: `sudo systemctl start postgresql@17-main`
 2. **Manual rejoin as standby**:
    ```bash
-   sudo -u postgres repmgr -f /etc/repmgr/17-main/repmgr.conf node rejoin -d repmgr -h <primary-ip> -U repmgr --verbose
+   sudo systemctl unmask postgresql@17-main.service && sudo -u postgres repmgr -f /etc/repmgr/17-main/repmgr.conf node rejoin -d repmgr -h <primary-ip> -U repmgr --verbose
    ```
-3. **Re-enable repmgrd**: `sudo systemctl enable repmgrd@17-main && sudo systemctl start repmgrd@17-main`
+3. **Re-enable all services**:
+   ```bash
+   sudo systemctl enable repmgrd@17-main && sudo systemctl start repmgrd@17-main
+   sudo systemctl enable detect-rogue-primary.timer && sudo systemctl start detect-rogue-primary.timer
+   ```
 4. **Check logs**: `sudo journalctl -u postgresql@17-main -u repmgrd@17-main --since "10m ago"`
 
 **For Routine Reboots (automatic recovery expected):**
-1. **Check service status**: `sudo systemctl status postgresql@17-main repmgrd@17-main`
-2. **Manual start if needed**: `sudo systemctl start postgresql@17-main repmgrd@17-main`
+1. **Check service status**: `sudo systemctl status postgresql@17-main repmgrd@17-main detect-rogue-primary.timer`
+2. **Manual start if needed**: `sudo systemctl start postgresql@17-main repmgrd@17-main detect-rogue-primary.timer`
 3. **Force rejoin if timeline diverged**:
    ```bash
    sudo -u postgres repmgr -f /etc/repmgr/17-main/repmgr.conf node rejoin -d repmgr -h <primary-ip> -U repmgr --force-rewind --verbose
@@ -482,6 +501,8 @@ If a node doesn't rejoin automatically after reboot:
 - **Multiple primaries**: If multiple primaries are detected by the postgres-endpoint-manager, it will skip the endpoint update unless it gets resolved in the postgres cluster and will keep the last know good state. Check the cronjob pods log for details.
 
 **Best Practice**: Schedule maintenance during low-traffic periods and monitor cluster health throughout the process.
+
+**⚠️ Critical Note**: The split-brain detection timer (`detect-rogue-primary.timer`) runs independently of `repmgrd` and will continue to mask PostgreSQL services if it detects split-brain scenarios. Always disable it during major OS updates to prevent conflicts with manual cluster management.
 
 ## Wire Server Database Setup
 
