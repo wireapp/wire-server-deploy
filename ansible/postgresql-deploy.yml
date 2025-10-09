@@ -1,3 +1,9 @@
+- name: Clean previous deployment state
+  import_playbook: postgresql-playbooks/clean_existing_setup.yml
+  tags:
+    - postgresql
+    - cleanup
+
 - name: Install PostgreSQL packages
   import_playbook: postgresql-playbooks/postgresql-install.yml
   tags:
@@ -27,3 +33,9 @@
   tags:
     - postgresql
     - wire-setup
+
+- name: Deploy cluster monitoring
+  import_playbook: postgresql-playbooks/postgresql-monitoring.yml
+  tags:
+    - postgresql
+    - monitoring

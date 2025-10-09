@@ -1,0 +1,15 @@
+[Unit]
+Description=Repmgr failover daemon (instance %i)
+After=network.target postgresql@%i.service
+Wants=postgresql@%i.service
+
+[Service]
+Type=forking
+User=postgres
+ExecStart=/usr/bin/repmgrd -f /etc/repmgr/%i/repmgr.conf --daemonize
+PIDFile=/tmp/repmgrd-%i.pid
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

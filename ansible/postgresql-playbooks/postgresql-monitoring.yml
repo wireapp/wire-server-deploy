@@ -1,0 +1,98 @@
+---
+- name: Deploy PostgreSQL cluster monitoring after setup
+  hosts: postgresql_rw:postgresql_ro
+  become: yes
+  tags:
+    - postgresql-monitoring
+    - post-deploy
+
+  tasks:
+    - name: Remove existing sudoers file to force refresh
+      file:
+        path: /etc/sudoers.d/postgres-postgresql-service
+        state: absent
+
+    - name: Configure sudo access for postgres user to manage PostgreSQL service
+      copy:
+        content: |
+          # Allow postgres to control PostgreSQL/repmgrd non-interactively
+          postgres ALL=(root) NOPASSWD: /bin/systemctl start postgresql@{{ postgresql_version }}-main
+          postgres ALL=(root) NOPASSWD: /bin/systemctl stop postgresql@{{ postgresql_version }}-main
+          postgres ALL=(root) NOPASSWD: /bin/systemctl restart postgresql@{{ postgresql_version }}-main
+          postgres ALL=(root) NOPASSWD: /bin/systemctl reload postgresql@{{ postgresql_version }}-main
+          postgres ALL=(root) NOPASSWD: /bin/systemctl kill postgresql@{{ postgresql_version }}-main
+          postgres ALL=(root) NOPASSWD: /bin/systemctl mask postgresql@{{ postgresql_version }}-main
+          postgres ALL=(root) NOPASSWD: /bin/systemctl unmask postgresql@{{ postgresql_version }}-main
+          postgres ALL=(root) NOPASSWD: /bin/systemctl start repmgrd@{{ postgresql_version }}-main
+          postgres ALL=(root) NOPASSWD: /bin/systemctl stop repmgrd@{{ postgresql_version }}-main
+          # With suffix (used by detect_rogue_primary)
+          postgres ALL=(root) NOPASSWD: /bin/systemctl start postgresql@{{ postgresql_version }}-main.service
+          postgres ALL=(root) NOPASSWD: /bin/systemctl stop postgresql@{{ postgresql_version }}-main.service
+          postgres ALL=(root) NOPASSWD: /bin/systemctl restart postgresql@{{ postgresql_version }}-main.service
+          postgres ALL=(root) NOPASSWD: /bin/systemctl reload postgresql@{{ postgresql_version }}-main.service
+          postgres ALL=(root) NOPASSWD: /bin/systemctl kill postgresql@{{ postgresql_version }}-main.service
+          postgres ALL=(root) NOPASSWD: /bin/systemctl mask postgresql@{{ postgresql_version }}-main.service
+          postgres ALL=(root) NOPASSWD: /bin/systemctl unmask postgresql@{{ postgresql_version }}-main.service
+        dest: /etc/sudoers.d/postgres-postgresql-service
+        mode: "0440"
+        owner: root
+        group: root
+        validate: "visudo -cf %s"
+        force: yes # This forces overwrite even if content appears identical
+
+    - name: Deploy split-brain detection script
+      template:
+        src: ../templates/postgresql/detect_rogue_primary.sh.j2
+        dest: /usr/local/bin/detect_rogue_primary.sh
+        mode: "0755"
+        owner: postgres
+        group: postgres
+        backup: yes
+      notify: restart monitoring timer
+
+    - name: Create systemd service for split-brain detection
+      template:
+        src: ../templates/postgresql/detect-rogue-primary.service.j2
+        dest: /etc/systemd/system/detect-rogue-primary.service
+        mode: "0644"
+        backup: yes
+      notify:
+        - reload systemd
+        - restart monitoring timer
+
+    - name: Create systemd timer for periodic monitoring
+      template:
+        src: ../templates/postgresql/detect-rogue-primary.timer.j2
+        dest: /etc/systemd/system/detect-rogue-primary.timer
+        mode: "0644"
+        backup: yes
+      notify:
+        - reload systemd
+        - restart monitoring timer
+
+    - name: Enable and start monitoring timer
+      systemd:
+        name: detect-rogue-primary.timer
+        enabled: yes
+        state: started
+        daemon_reload: yes
+
+    - name: Verify monitoring service is configured correctly
+      command: systemctl status detect-rogue-primary.timer
+      register: timer_status
+      changed_when: false
+
+    - name: Display monitoring timer status
+      debug:
+        msg: "{{ timer_status.stdout_lines }}"
+
+  handlers:
+    - name: reload systemd
+      systemd:
+        daemon_reload: yes
+
+    - name: restart monitoring timer
+      systemd:
+        name: detect-rogue-primary.timer
+        state: restarted
+        daemon_reload: yes
