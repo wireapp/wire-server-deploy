@@ -1,0 +1,1 @@
+Changed: Remove hardcoded PostgreSQL passwords from demo-secrets.example.yaml and automatically inject passwords from databases-ephemeral chart during demo-setup.sh deployment
