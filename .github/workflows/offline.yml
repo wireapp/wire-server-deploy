@@ -75,12 +75,6 @@ jobs:
   upload-s3:
     name: Upload default build to S3
     needs: build-default
-    if: |
-      !contains(github.event.head_commit.message, 'skip ci') &&
-      (github.event_name == 'push' ||
-       contains(github.event.pull_request.labels.*.name, 'build-all') ||
-       (!contains(github.event.pull_request.labels.*.name, 'demo-only') &&
-        !contains(github.event.pull_request.labels.*.name, 'min-only')))
     runs-on:
       group: wire-server-deploy
     steps:
@@ -107,12 +101,6 @@ jobs:
   deploy-hetzner:
     name: Deploy default build to Hetzner
     needs: build-default
-    if: |
-      !contains(github.event.head_commit.message, 'skip ci') &&
-      (github.event_name == 'push' ||
-       contains(github.event.pull_request.labels.*.name, 'build-all') ||
-       (!contains(github.event.pull_request.labels.*.name, 'demo-only') &&
-        !contains(github.event.pull_request.labels.*.name, 'min-only')))
     runs-on:
       group: wire-server-deploy
     steps:
@@ -149,12 +137,6 @@ jobs:
   build-container:
     name: Build container
     needs: build-default
-    if: |
-      !contains(github.event.head_commit.message, 'skip ci') &&
-      (github.event_name == 'push' ||
-       contains(github.event.pull_request.labels.*.name, 'build-all') ||
-       (!contains(github.event.pull_request.labels.*.name, 'demo-only') &&
-        !contains(github.event.pull_request.labels.*.name, 'min-only')))
     runs-on:
       group: wire-server-deploy
     steps:
