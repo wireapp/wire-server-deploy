@@ -17,15 +17,17 @@ COTURN_NODE="K8S_COTURN_NODE"
 # keeping it empty to be replaced
 HOST_IP="WIRE_IP"
 
-# it creates the values.yaml from prod-values.example.yaml and secrets.yaml from prod-secrets.example.yaml, it works on the directory $BASE_DIR"/values/ in the bundle
-process_charts() {  
-  
+# Creates values.yaml from demo-values.example.yaml and secrets.yaml from demo-secrets.example.yaml
+# This script is for WIAB/demo deployments only
+# Works on all chart directories in $BASE_DIR/values/
+process_charts() {
+
   ENV=$1
 
-  if [ "$ENV" != "prod" ] && [ "$ENV" != "demo" ]; then
-    echo "ENV is neither prod nor demo"
+  if [ "$ENV" != "demo" ]; then
+    echo "Error: This script only supports demo deployments. ENV must be 'demo', got: '$ENV'"
     exit 1
-  fi 
+  fi
 
   for chart_dir in "$BASE_DIR"/values/*/; do
 
@@ -83,7 +85,7 @@ process_values() {
       "$BASE_DIR/values/ingress-nginx-controller/values.yaml" > "$TEMP_DIR/ingress-nginx-controller-values.yaml"
   if ! grep -q "kubernetes.io/hostname: $NGINX_K8S_NODE" "$TEMP_DIR/ingress-nginx-controller-values.yaml"; then
     echo -e "    nodeSelector:\n      kubernetes.io/hostname: $NGINX_K8S_NODE" >> "$TEMP_DIR/ingress-nginx-controller-values.yaml"
-  fi 
+  fi
 
   # Fixing SFTD hosts and setting the cert-manager to http01
   sed -e "s/webapp.example.com/webapp.$TARGET_SYSTEM/" \
@@ -161,6 +163,24 @@ deploy_charts() {
       helm_command+=" --values $secrets_file"
     fi
 
+    # handle wire-server to inject PostgreSQL password from databases-ephemeral
+    if [[ "$chart" == "wire-server" ]]; then
+      echo "Retrieving PostgreSQL password from databases-ephemeral for wire-server deployment..."
+      if kubectl get secret wire-server-postgresql &>/dev/null; then
+        PG_PASSWORD=$(kubectl get secret wire-server-postgresql -o jsonpath='{.data.password}' | base64 -d)
+        if [[ -n "$PG_PASSWORD" ]]; then
+          helm_command+=" --set brig.secrets.pgPassword=${PG_PASSWORD}"
+          helm_command+=" --set galley.secrets.pgPassword=${PG_PASSWORD}"
+          echo "✓ PostgreSQL password will be injected into brig and galley secrets"
+        else
+          echo "⚠️  Warning: PostgreSQL password is empty, skipping password injection"
+        fi
+      else
+        echo "⚠️  Warning: PostgreSQL secret 'wire-server-postgresql' not found, skipping password injection"
+        echo "    Make sure databases-ephemeral chart is deployed before wire-server"
+      fi
+    fi
+
     echo "Deploying $chart as $helm_command"
     eval "$helm_command"
   done
@@ -192,7 +212,7 @@ deploy_calling_services() {
 
 # if required, this function can be run manually
 run_manually() {
-# process_charts can process demo or prod values
+# process_charts processes demo values for WIAB deployment
 process_charts "demo"
 process_values
 # deploying cert manager to issue certs, by default letsencrypt-http01 issuer is configured
