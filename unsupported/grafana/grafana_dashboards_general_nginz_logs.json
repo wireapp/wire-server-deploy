@@ -1,0 +1,880 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "type": "grafana",
+          "uid": "-- Grafana --"
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "target": {
+          "limit": 100,
+          "matchAny": false,
+          "tags": [],
+          "type": "dashboard"
+        },
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "links": [],
+  "liveNow": false,
+  "panels": [
+    {
+      "datasource": {
+        "type": "loki",
+        "uid": "${datasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "inspect": false
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "status"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 84
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "method"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 98
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "path"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 566
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "bytes_sent"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 49
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "timestamp"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 226
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 11,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "id": 2,
+      "options": {
+        "cellHeight": "sm",
+        "footer": {
+          "countRows": false,
+          "fields": "",
+          "reducer": [
+            "sum"
+          ],
+          "show": false
+        },
+        "showHeader": true,
+        "sortBy": []
+      },
+      "pluginVersion": "10.1.5",
+      "targets": [
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "${datasource}"
+          },
+          "expr": "{namespace=~\"$namespace\", app=\"nginz\", container=\"nginz\"} | pattern `<remote_addr> <_> \"<timestamp>\" \"<method> <path> <_> <status> <bytes_sent> \"<_>\" \"<user_agent>\" <_> <_> <request_time> <_> - <user> <conn> <request_id> <_> \"<_>\"` | status =~ \"5..\"",
+          "refId": "A"
+        }
+      ],
+      "title": "Nginz logs 5xx",
+      "transformations": [
+        {
+          "id": "extractFields",
+          "options": {
+            "replace": true,
+            "source": "labels"
+          }
+        },
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "app": true,
+              "cluster": true,
+              "conn": true,
+              "container": true,
+              "filename": true,
+              "job": true,
+              "namespace": true,
+              "stream": true
+            },
+            "indexByName": {
+              "app": 5,
+              "bytes_sent": 6,
+              "cluster": 7,
+              "conn": 8,
+              "container": 9,
+              "filename": 10,
+              "job": 11,
+              "method": 1,
+              "namespace": 12,
+              "path": 2,
+              "pod": 13,
+              "remote_addr": 14,
+              "request_id": 15,
+              "request_time": 4,
+              "status": 0,
+              "stream": 16,
+              "timestamp": 3,
+              "user": 17,
+              "user_agent": 18
+            },
+            "renameByName": {}
+          }
+        },
+        {
+          "id": "sortBy",
+          "options": {
+            "fields": {},
+            "sort": [
+              {
+                "desc": true,
+                "field": "timestamp"
+              }
+            ]
+          }
+        }
+      ],
+      "type": "table"
+    },
+    {
+      "datasource": {
+        "type": "loki",
+        "uid": "${datasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "5xx",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 12,
+        "x": 0,
+        "y": 11
+      },
+      "id": 5,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": false
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "9.0.1",
+      "targets": [
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "${datasource}"
+          },
+          "expr": "sum(rate({namespace=~\"$namespace\", app=\"nginz\", container=\"nginz\"} | pattern `<remote_addr> <_> \"<_>\" \"<method> <path> <_> <status> <bytes_sent> \"<_>\" \"<user_agent>\" <_> <_> <request_time> <_> - <user> <conn> <request_id> <_> \"<_>\"` | status =~ \"5..\"[$__interval]))",
+          "refId": "A"
+        }
+      ],
+      "title": "Nginz logs 5xx rate",
+      "transformations": [
+        {
+          "id": "extractFields",
+          "options": {
+            "replace": true,
+            "source": "labels"
+          }
+        },
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "app": true,
+              "cluster": true,
+              "conn": true,
+              "container": true,
+              "filename": true,
+              "job": true,
+              "namespace": true,
+              "stream": true
+            },
+            "indexByName": {
+              "app": 4,
+              "bytes_sent": 5,
+              "cluster": 6,
+              "conn": 7,
+              "container": 8,
+              "filename": 9,
+              "job": 10,
+              "method": 1,
+              "namespace": 11,
+              "path": 2,
+              "pod": 12,
+              "remote_addr": 13,
+              "request_id": 14,
+              "request_time": 3,
+              "status": 0,
+              "stream": 15,
+              "user": 16,
+              "user_agent": 17
+            },
+            "renameByName": {}
+          }
+        }
+      ],
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "loki",
+        "uid": "${datasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "all requests",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "smooth",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 12,
+        "x": 12,
+        "y": 11
+      },
+      "id": 6,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": false
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "9.0.1",
+      "targets": [
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "${datasource}"
+          },
+          "expr": "sum(rate({namespace=~\"$namespace\", app=\"nginz\", container=\"nginz\"}[$__interval]))",
+          "refId": "A"
+        }
+      ],
+      "title": "Nginz logs ALL requests rate",
+      "transformations": [
+        {
+          "id": "extractFields",
+          "options": {
+            "replace": true,
+            "source": "labels"
+          }
+        },
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "app": true,
+              "cluster": true,
+              "conn": true,
+              "container": true,
+              "filename": true,
+              "job": true,
+              "namespace": true,
+              "stream": true
+            },
+            "indexByName": {
+              "app": 4,
+              "bytes_sent": 5,
+              "cluster": 6,
+              "conn": 7,
+              "container": 8,
+              "filename": 9,
+              "job": 10,
+              "method": 1,
+              "namespace": 11,
+              "path": 2,
+              "pod": 12,
+              "remote_addr": 13,
+              "request_id": 14,
+              "request_time": 3,
+              "status": 0,
+              "stream": 15,
+              "user": 16,
+              "user_agent": 17
+            },
+            "renameByName": {}
+          }
+        }
+      ],
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "loki",
+        "uid": "${datasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "inspect": false
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "status"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 84
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "method"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 98
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "path"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 566
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "bytes_sent"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 49
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 11,
+        "w": 24,
+        "x": 0,
+        "y": 17
+      },
+      "id": 4,
+      "options": {
+        "cellHeight": "sm",
+        "footer": {
+          "countRows": false,
+          "fields": "",
+          "reducer": [
+            "sum"
+          ],
+          "show": false
+        },
+        "showHeader": true,
+        "sortBy": []
+      },
+      "pluginVersion": "10.1.5",
+      "targets": [
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "{namespace=~\"$namespace\", app=\"nginz\", container=\"nginz\"} | pattern `<remote_addr> <_> \"<_>\" \"<method> <path> <_> <status> <bytes_sent> \"<_>\" \"<user_agent>\" <_> <_> <request_time> <_> - <user> <conn> <request_id> <_> \"<_>\"` | request_time > 0.5 | path !~ \"/await.*\"",
+          "queryType": "range",
+          "refId": "A"
+        }
+      ],
+      "title": "Nginz logs: slow queries > 0.5 seconds",
+      "transformations": [
+        {
+          "id": "extractFields",
+          "options": {
+            "replace": true,
+            "source": "labels"
+          }
+        },
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "app": true,
+              "cluster": true,
+              "conn": true,
+              "container": true,
+              "filename": true,
+              "job": true,
+              "namespace": true,
+              "stream": true
+            },
+            "indexByName": {
+              "app": 4,
+              "bytes_sent": 5,
+              "cluster": 6,
+              "conn": 7,
+              "container": 8,
+              "filename": 9,
+              "job": 10,
+              "method": 1,
+              "namespace": 11,
+              "path": 2,
+              "pod": 12,
+              "remote_addr": 13,
+              "request_id": 14,
+              "request_time": 3,
+              "status": 0,
+              "stream": 15,
+              "user": 16,
+              "user_agent": 17
+            },
+            "renameByName": {}
+          }
+        }
+      ],
+      "type": "table"
+    },
+    {
+      "datasource": {
+        "type": "loki",
+        "uid": "${datasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "inspect": false
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "status"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 84
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "method"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 98
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "path"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 566
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "bytes_sent"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 49
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "timestamp"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 229
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 11,
+        "w": 24,
+        "x": 0,
+        "y": 28
+      },
+      "id": 3,
+      "options": {
+        "cellHeight": "sm",
+        "footer": {
+          "countRows": false,
+          "fields": "",
+          "reducer": [
+            "sum"
+          ],
+          "show": false
+        },
+        "showHeader": true,
+        "sortBy": []
+      },
+      "pluginVersion": "10.1.5",
+      "targets": [
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "${datasource}"
+          },
+          "expr": "{namespace=~\"$namespace\", app=\"nginz\", container=\"nginz\"} | pattern `<remote_addr> <_> \"<timestamp>\" \"<method> <path> <_> <status> <bytes_sent> \"<_>\" \"<user_agent>\" <_> <_> <request_time> <_> - <user> <conn> <request_id> <_> \"<_>\"`",
+          "refId": "A"
+        }
+      ],
+      "title": "Nginz ALL logs",
+      "transformations": [
+        {
+          "id": "extractFields",
+          "options": {
+            "replace": true,
+            "source": "labels"
+          }
+        },
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "app": true,
+              "cluster": true,
+              "conn": true,
+              "container": true,
+              "filename": true,
+              "job": true,
+              "namespace": true,
+              "request_time": false,
+              "stream": true
+            },
+            "indexByName": {
+              "app": 4,
+              "bytes_sent": 5,
+              "cluster": 6,
+              "conn": 7,
+              "container": 8,
+              "filename": 9,
+              "job": 10,
+              "method": 1,
+              "namespace": 11,
+              "path": 2,
+              "pod": 12,
+              "remote_addr": 13,
+              "request_id": 14,
+              "request_time": 3,
+              "status": 0,
+              "stream": 15,
+              "user": 16,
+              "user_agent": 17
+            },
+            "renameByName": {}
+          }
+        }
+      ],
+      "type": "table"
+    }
+  ],
+  "refresh": "10s",
+  "schemaVersion": 38,
+  "style": "dark",
+  "tags": [],
+  "templating": {
+    "list": [
+      {
+        "current": {
+          "selected": true,
+          "text": "bund-next-logs",
+          "value": "bund-next-logs"
+        },
+        "hide": 0,
+        "includeAll": false,
+        "multi": false,
+        "name": "datasource",
+        "options": [],
+        "query": "loki",
+        "queryValue": "",
+        "refresh": 1,
+        "regex": "",
+        "skipUrlSync": false,
+        "type": "datasource"
+      },
+      {
+        "current": {
+          "selected": true,
+          "text": "column-1",
+          "value": "column-1"
+        },
+        "datasource": {
+          "type": "prometheus",
+          "uid": "${datasource}"
+        },
+        "definition": "",
+        "hide": 0,
+        "includeAll": false,
+        "multi": false,
+        "name": "namespace",
+        "options": [],
+        "query": {
+          "label": "namespace",
+          "refId": "LokiVariableQueryEditor-VariableQuery",
+          "stream": "",
+          "type": 1
+        },
+        "refresh": 1,
+        "regex": "",
+        "skipUrlSync": false,
+        "sort": 0,
+        "type": "query"
+      }
+    ]
+  },
+  "time": {
+    "from": "now-24h",
+    "to": "now"
+  },
+  "timepicker": {},
+  "timezone": "",
+  "title": "Nginz logs",
+  "uid": "8800a7ab-55f9-4bf6-9751-64c4211ad203",
+  "version": 3,
+  "weekStart": ""
+}
