@@ -1,0 +1,264 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "type": "grafana",
+          "uid": "-- Grafana --"
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "target": {
+          "limit": 100,
+          "matchAny": false,
+          "tags": [],
+          "type": "dashboard"
+        },
+        "type": "dashboard"
+      }
+    ]
+  },
+  "description": "",
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "id": 592,
+  "links": [],
+  "liveNow": false,
+  "panels": [
+    {
+      "datasource": {
+        "type": "datasource",
+        "uid": "grafana"
+      },
+      "gridPos": {
+        "h": 2,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "id": 14,
+      "options": {
+        "code": {
+          "language": "plaintext",
+          "showLineNumbers": false,
+          "showMiniMap": false
+        },
+        "content": "### To view the log formatted as multi-line text, hover over it and press the eye icon.",
+        "mode": "markdown"
+      },
+      "pluginVersion": "10.1.5",
+      "type": "text"
+    },
+    {
+      "datasource": {
+        "type": "postgres",
+        "uid": "null"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "inspect": true
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 2
+      },
+      "id": 8,
+      "options": {
+        "cellHeight": "sm",
+        "footer": {
+          "countRows": false,
+          "fields": "",
+          "reducer": [
+            "sum"
+          ],
+          "show": false
+        },
+        "showHeader": false
+      },
+      "pluginVersion": "10.1.5",
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "null"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "select failure_log from test_case_failures where test_case_run_id=(select id from test_case_runs where name='$test_case_name'  and test_suite_run_id=(select id from test_suite_runs where run_id='$test_suite_run' and suite='$test_suite'));",
+          "refId": "A",
+          "sql": {
+            "columns": [
+              {
+                "parameters": [],
+                "type": "function"
+              }
+            ],
+            "groupBy": [
+              {
+                "property": {
+                  "type": "string"
+                },
+                "type": "groupBy"
+              }
+            ],
+            "limit": 50
+          }
+        }
+      ],
+      "title": "Failure Logs",
+      "type": "table"
+    }
+  ],
+  "refresh": "",
+  "revision": 1,
+  "schemaVersion": 38,
+  "style": "dark",
+  "tags": [
+    "flake-news",
+    "flake-news-failures"
+  ],
+  "templating": {
+    "list": [
+      {
+        "current": {
+          "selected": false,
+          "text": "4.39.6",
+          "value": "4.39.6"
+        },
+        "datasource": {
+          "type": "postgres",
+          "uid": "null"
+        },
+        "definition": "select distinct version from test_suite_runs;",
+        "hide": 0,
+        "includeAll": false,
+        "label": "Wire Server Version",
+        "multi": false,
+        "name": "wire_server_version",
+        "options": [],
+        "query": "select distinct version from test_suite_runs;",
+        "refresh": 1,
+        "regex": "",
+        "skipUrlSync": false,
+        "sort": 0,
+        "type": "query"
+      },
+      {
+        "current": {
+          "selected": false,
+          "text": "20231025131819380327511",
+          "value": "20231025131819380327511"
+        },
+        "datasource": {
+          "type": "postgres",
+          "uid": "null"
+        },
+        "definition": "select run_id from test_suite_runs where version='$wire_server_version';",
+        "hide": 0,
+        "includeAll": false,
+        "label": "Test Suite Run",
+        "multi": false,
+        "name": "test_suite_run",
+        "options": [],
+        "query": "select run_id from test_suite_runs where version='$wire_server_version';",
+        "refresh": 1,
+        "regex": "",
+        "skipUrlSync": false,
+        "sort": 0,
+        "type": "query"
+      },
+      {
+        "current": {
+          "selected": false,
+          "text": "brig-integration",
+          "value": "brig-integration"
+        },
+        "datasource": {
+          "type": "postgres",
+          "uid": "null"
+        },
+        "definition": "select suite from test_suite_runs where run_id='$test_suite_run';",
+        "hide": 0,
+        "includeAll": false,
+        "label": "Test Suite",
+        "multi": false,
+        "name": "test_suite",
+        "options": [],
+        "query": "select suite from test_suite_runs where run_id='$test_suite_run';",
+        "refresh": 1,
+        "regex": "",
+        "skipUrlSync": false,
+        "sort": 0,
+        "type": "query"
+      },
+      {
+        "current": {
+          "selected": false,
+          "text": "Brig API Integration.MLS.GET /mls/key-packages/claim/local/:user",
+          "value": "Brig API Integration.MLS.GET /mls/key-packages/claim/local/:user"
+        },
+        "datasource": {
+          "type": "postgres",
+          "uid": "null"
+        },
+        "definition": "select name from test_case_runs where test_suite_run_id=(select id from test_suite_runs where run_id='$test_suite_run' and suite='$test_suite') and failure_count > 0;",
+        "hide": 0,
+        "includeAll": false,
+        "label": "Test Case",
+        "multi": false,
+        "name": "test_case_name",
+        "options": [],
+        "query": "select name from test_case_runs where test_suite_run_id=(select id from test_suite_runs where run_id='$test_suite_run' and suite='$test_suite') and failure_count > 0;",
+        "refresh": 1,
+        "regex": "",
+        "skipUrlSync": false,
+        "sort": 0,
+        "type": "query"
+      }
+    ]
+  },
+  "time": {
+    "from": "now-6h",
+    "to": "now"
+  },
+  "timepicker": {
+    "refresh_intervals": []
+  },
+  "timezone": "",
+  "title": "Flake News Failures",
+  "uid": "null",
+  "version": 9,
+  "weekStart": ""
+}
