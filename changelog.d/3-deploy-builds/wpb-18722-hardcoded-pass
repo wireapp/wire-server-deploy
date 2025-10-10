@@ -1,1 +1,1 @@
-Changed: Remove hardcoded PostgreSQL passwords from demo-secrets.example.yaml and automatically inject passwords from databases-ephemeral chart during demo-setup.sh deployment
+Changed: Remove hardcoded PostgreSQL passwords from demo-secrets.example.yaml and automatically inject passwords from databases-ephemeral chart during demo-setup.sh deployment. Add PR label-based build optimization to offline.yml workflow (use 'demo-only' or 'min-only' labels to skip unnecessary builds)
