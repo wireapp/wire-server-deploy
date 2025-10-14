@@ -101,8 +101,8 @@ echo "######################################################"
 echo "Retrieving PostgreSQL password..."
 echo "######################################################"
 if command -v kubectl &> /dev/null; then
-    if kubectl get secret wire-server-postgresql -n "${NAMESPACE}" &>/dev/null; then
-        PG_PASSWORD_B64=$(kubectl get secret wire-server-postgresql -n "${NAMESPACE}" -o jsonpath='{.data.password}')
+    if kubectl get secret wire-postgresql-secret -n "${NAMESPACE}" &>/dev/null; then
+        PG_PASSWORD_B64=$(kubectl get secret wire-postgresql-secret -n "${NAMESPACE}" -o jsonpath='{.data.password}')
         if [ -n "$PG_PASSWORD_B64" ]; then
             echo "✓ PostgreSQL password retrieved successfully"
             # Decode password for use in helm --set
@@ -113,7 +113,7 @@ if command -v kubectl &> /dev/null; then
             echo "⚠️ Warning: PostgreSQL secret exists but password is empty"
         fi
     else
-        echo "⚠️ Warning: PostgreSQL secret 'wire-server-postgresql' not found in namespace '${NAMESPACE}'"
+        echo "⚠️ Warning: PostgreSQL secret 'wire-postgresql-secret' not found in namespace '${NAMESPACE}'"
         echo "    PostgreSQL password will need to be synced manually"
     fi
 else
