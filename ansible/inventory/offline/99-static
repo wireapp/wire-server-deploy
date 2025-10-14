@@ -85,8 +85,7 @@
 postgresql_network_interface = enp1s0
 wire_dbname = wire-server
 wire_user = wire-server
-# if not defined, a random password will be generated
-# wire_pass = verysecurepassword
+wire_namespace = default  # Kubernetes namespace for secret storage
 
 [elasticsearch:vars]
 # elasticsearch_network_interface = enp1s0

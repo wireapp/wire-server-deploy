@@ -506,11 +506,120 @@ If a node doesn't rejoin automatically after reboot:
 
 ## Wire Server Database Setup
 
-The [`postgresql-wire-setup.yml`](../ansible/postgresql-playbooks/postgresql-wire-setup.yml) playbook creates the Wire server database and user account.
+The [`postgresql-wire-setup.yml`](../ansible/postgresql-playbooks/postgresql-wire-setup.yml) playbook creates the Wire server database and user account with **automatic Kubernetes secret management** - eliminating manual password handling.
 
-**Usage:** See the [Deployment Commands Reference](#deployment-commands-reference) section for all Wire setup commands.
+### 🔐 Kubernetes Secret-Based Password Management
 
-**Important:** Generated password is displayed in Ansible output task `Display PostgreSQL setup completion` - save it securely for Wire server configuration.
+**How It Works:**
+1. ✅ **Checks for existing K8s secret** `wire-postgresql-external-secret` in the cluster
+2. ✅ **If exists**: Retrieves password from secret and uses it
+3. ✅ **If not exists**: Generates strong 32-character random password and creates secret
+4. ✅ **Creates/updates PostgreSQL user** with the password
+5. ✅ **Stores credentials** in Kubernetes for wire-server to use
+
+
+### 📋 Running the Setup Playbook
+
+```bash
+# Run the wire-server database setup
+ansible-playbook ansible/postgresql-playbooks/postgresql-wire-setup.yml \
+  -i ansible/inventory/offline/99-static
+```
+
+### 🔑 Retrieving the Password
+
+**Option 1: Quick Retrieval (Password Only)**
+```bash
+# Get just the password
+kubectl get secret wire-postgresql-external-secret \
+  -n default \
+  -o jsonpath='{.data.password}' | base64 --decode
+
+echo  # Add newline
+```
+
+**Option 2: View All Credentials**
+```bash
+# Get all secret data
+kubectl get secret wire-postgresql-external-secret -n default -o json | \
+  jq -r '.data | to_entries[] | "\(.key): \(.value | @base64d)"'
+```
+
+**Output:**
+```
+database: wire-server
+username: wire-server
+password: <encrypted password>
+```
+
+### 🔧 Using Password in Wire-Server Configuration
+
+The Ansible playbook automatically creates the Kubernetes secret `wire-postgresql-external-secret` with the database password. Wire-server components require the password to be configured in Helm values.
+
+#### **Option 1: Manual Password Insertion into Helm Values**
+
+**Step 1: Retrieve the password from Kubernetes**
+```bash
+# Export password to environment variable
+PG_PASSWORD=$(kubectl get secret wire-postgresql-external-secret \
+  -n default \
+  -o jsonpath='{.data.password}' | base64 --decode)
+
+# Display the password (verify it's retrieved correctly)
+echo "Password: ${PG_PASSWORD}"
+```
+
+**Step 2: Edit secrets.yaml manually**
+
+Open `values/wire-server/secrets.yaml` in your editor and insert the password:
+
+```yaml
+brig:
+  secrets:
+    pgPassword: "paste-your-actual-password-here"
+    # ... other secrets ...
+
+galley:
+  secrets:
+    pgPassword: "paste-your-actual-password-here"
+    # ... other secrets ...
+```
+
+**⚠️ Warning:** Do NOT use `cat >` to overwrite `secrets.yaml` - this will delete all other secrets in the file. Always edit manually or use tools like `yq` to update specific fields.
+
+**Step 3: Apply SOPS encryption (if used)**
+```bash
+# Encrypt the secrets file after editing
+sops -e -i values/wire-server/secrets.yaml
+```
+
+#### **Option 2: Use Helm --set Flag**
+
+For quick deployments or testing, override passwords during helm installation:
+
+```bash
+# Retrieve password
+PG_PASSWORD=$(kubectl get secret wire-postgresql-external-secret \
+  -n default \
+  -o jsonpath='{.data.password}' | base64 --decode)
+
+# Install/upgrade with password override
+helm upgrade --install wire-server ./charts/wire-server \
+  --namespace default \
+  -f values/wire-server/values.yaml \
+  -f values/wire-server/secrets.yaml \
+  --set brig.secrets.pgPassword="${PG_PASSWORD}" \
+  --set galley.secrets.pgPassword="${PG_PASSWORD}"
+```
+
+**Note:** This method exposes passwords in shell history. Use with caution.
+
+---
+
+**🔐 Important Notes:**
+- Do NOT manually set `wire_pass` in Ansible inventory - the playbook automatically manages passwords via Kubernetes secrets
+- The Kubernetes secret is the **source of truth** for the database password
+- After Ansible playbook completion, always retrieve passwords from K8s rather than regenerating them
 
 ## Kubernetes Integration
 
