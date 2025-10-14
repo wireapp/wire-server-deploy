@@ -526,37 +526,14 @@ ansible-playbook ansible/postgresql-playbooks/postgresql-wire-setup.yml \
   -i ansible/inventory/offline/99-static
 ```
 
-### 🔑 Retrieving the Password
-
-**Option 1: Quick Retrieval (Password Only)**
-```bash
-# Get just the password
-kubectl get secret wire-postgresql-external-secret \
-  -n default \
-  -o jsonpath='{.data.password}' | base64 --decode
-
-echo  # Add newline
-```
-
-**Option 2: View All Credentials**
-```bash
-# Get all secret data
-kubectl get secret wire-postgresql-external-secret -n default -o json | \
-  jq -r '.data | to_entries[] | "\(.key): \(.value | @base64d)"'
-```
-
-**Output:**
-```
-database: wire-server
-username: wire-server
-password: <encrypted password>
-```
-
 ### 🔧 Using Password in Wire-Server Configuration
 
-The Ansible playbook automatically creates the Kubernetes secret `wire-postgresql-external-secret` with the database password. Wire-server components require the password to be configured in Helm values.
+The Ansible playbook automatically creates the Kubernetes secret `wire-postgresql-external-secret` with the database password. Wire-server components can reference this password in two ways:
 
-#### **Option 1: Manual Password Insertion into Helm Values**
+
+#### **Option 1: Password Insertion into Helm Values**
+
+For deployments that require passwords in `secrets.yaml`:
 
 **Step 1: Retrieve the password from Kubernetes**
 ```bash
@@ -585,13 +562,6 @@ galley:
     # ... other secrets ...
 ```
 
-**⚠️ Warning:** Do NOT use `cat >` to overwrite `secrets.yaml` - this will delete all other secrets in the file. Always edit manually or use tools like `yq` to update specific fields.
-
-**Step 3: Apply SOPS encryption (if used)**
-```bash
-# Encrypt the secrets file after editing
-sops -e -i values/wire-server/secrets.yaml
-```
 
 #### **Option 2: Use Helm --set Flag**
 
