@@ -3,10 +3,44 @@ postgresql_version: 17
 postgresql_data_dir: /var/lib/postgresql/{{ postgresql_version }}/main
 postgresql_conf_dir: /etc/postgresql/{{ postgresql_version }}/main
 
-# Replication services configuration
-repsvc_user: repsvc
-repsvc_password: "securepassword"
-repsvc_database: repsvc_db
+# repmgr HA configuration
+repmgr_user: repmgr
+repmgr_password: "securepassword"
+repmgr_database: repmgr
+
+# Node configuration for repmgr
+repmgr_node_config:
+  postgresql1:  # Maps to postgresql_rw group
+    node_id: 1
+    priority: 150
+    role: primary
+  postgresql2:  # Maps to first postgresql_ro
+    node_id: 2
+    priority: 100
+    role: standby
+  postgresql3:  # Maps to second postgresql_ro
+    node_id: 3
+    priority: 50
+    role: standby
+
+# repmgr settings
+# repmgrd monitoring and reconnection configuration
+# Reference: https://repmgr.org/docs/current/repmgrd-basic-configuration.html
+#
+# monitor_interval_secs: Interval in seconds between monitoring checks
+#   - Default: 2 seconds
+#   - Controls how frequently repmgr monitors the primary server status
+#
+# reconnect_attempts: Maximum number of reconnection attempts
+#   - Default: 6 attempts
+#   - Number of times repmgr will attempt to reconnect to a failed primary
+#
+# reconnect_interval: Interval in seconds between reconnection attempts
+#   - Default: 10 seconds
+#   - Time to wait between each reconnection attempt
+monitor_interval_secs: 2
+reconnect_attempts: 6
+reconnect_interval: 5
 
 # Use local packages instead of repository
 postgresql_use_repository: false  # Set to true to use local packages from urls
@@ -35,3 +69,12 @@ postgresql_pkgs:
   - name: python3-psycopg2
     url: "{{ binaries_url }}/python3-psycopg2_2.9.10-1.pgdg22.04+1_amd64.deb"
     checksum: "sha256:cc2f749e3af292a67e012edeb4aa5d284f57f2d66a9a09fe5b81e5ffda73cab4"
+  - name: repmgr-common
+    url: "{{ binaries_url }}/repmgr-common_5.5.0+debpgdg-1.pgdg22.04+1_all.deb"
+    checksum: "sha256:34c660c66a9710fd4f20a66cc932741d3399dbba7e7ae4b67468b3e18f65f61c"
+  - name: repmgr
+    url: "{{ binaries_url }}/repmgr_5.5.0+debpgdg-1.pgdg22.04+1_all.deb"
+    checksum: "sha256:20c280811e758106335df1eb9954b61aa552823d3129f1e38c488fbd5efe0567"
+  - name: postgresql-17-repmgr
+    url: "{{ binaries_url }}/postgresql-17-repmgr_5.5.0+debpgdg-1.pgdg22.04+1_amd64.deb"
+    checksum: "sha256:520d6ed4d540a2bb9174ac8276f8cb686c0268c13cccb89b28a9cdbd12049df8"
