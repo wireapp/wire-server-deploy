@@ -9,7 +9,15 @@
 - [Installation Process](#installation-process)
 - [Deployment Commands Reference](#deployment-commands-reference)
 - [Monitoring Checks After Installation](#monitoring-checks-after-installation)
-- [Configuration Options](#configuration-options)
+- [Configuration Options](#confi# Sync PostgreSQL password from K8s secret to secrets.yaml
+./bin/sync-k8s-secret-to-wire-secrets.sh \
+  wire-postgresql-external-secret \
+  password \
+  values/wire-server/secrets.yaml \
+  .brig.secrets.pgPassword \
+  .galley.secrets.pgPassword \
+  .spar.secrets.pgPassword \
+  .gundeck.secrets.pgPasswordon-options)
 - [Node Recovery Operations](#node-recovery-operations)
 - [How It Confirms a Reliable System](#how-it-confirms-a-reliable-system)
 - [Kubernetes Integration](#kubernetes-integration)
@@ -535,11 +543,11 @@ The deployment pipeline automatically manages PostgreSQL password synchronizatio
 The CI/CD pipeline ([bin/offline-deploy.sh](../bin/offline-deploy.sh)) automatically handles password synchronization:
 
 1. **PostgreSQL Setup**: `postgresql-wire-setup.yml` creates/retrieves the K8s secret `wire-postgresql-external-secret`
-2. **Password Sync**: `sync-k8s-secret-to-yaml.sh` updates `values/wire-server/secrets.yaml` with the actual password
+2. **Password Sync**: `sync-k8s-secret-to-wire-secrets.sh` updates `values/wire-server/secrets.yaml` with the actual password
 3. **Helm Deployment**: `offline-helm.sh` deploys wire-server using the updated `secrets.yaml` file
 
 **Key Script:**
-- [`bin/sync-k8s-secret-to-yaml.sh`](../bin/sync-k8s-secret-to-yaml.sh) - Generic script to synchronize any K8s secret to YAML files
+- [`bin/sync-k8s-secret-to-wire-secrets.sh`](../bin/sync-k8s-secret-to-wire-secrets.sh) - Generic script to synchronize any K8s secret to YAML files
 
 **Benefits:**
 - ✅ No manual password management required
@@ -550,11 +558,14 @@ The CI/CD pipeline ([bin/offline-deploy.sh](../bin/offline-deploy.sh)) automatic
 
 #### **Manual Password Synchronization**
 
+For manual deployments or troubleshooting, use the generic sync script within the docker container of the adminhost:
+
+```bash
 For manual deployments or troubleshooting, use the generic sync script:
 
 ```bash
 # Sync PostgreSQL password from K8s secret to secrets.yaml
-./bin/sync-k8s-secret-to-yaml.sh \
+./bin/sync-k8s-secret-to-wire-secrets.sh \
   wire-postgresql-external-secret \
   password \
   values/wire-server/secrets.yaml \
@@ -588,7 +599,7 @@ helm upgrade --install wire-server ./charts/wire-server \
   --set galley.secrets.pgPassword="${PG_PASSWORD}"
 ```
 
-**Note:** For CI/CD deployments, the `sync-k8s-secret-to-yaml.sh` script handles password synchronization automatically.
+**Note:** For CI/CD deployments, the `sync-k8s-secret-to-wire-secrets.sh` script handles password synchronization automatically.
 
 #### **Password Verification**
 
@@ -596,7 +607,7 @@ Verify password synchronization across all components:
 
 ```bash
 # Run the validation script
-./bin/validate-postgresql-password-sync.sh
+./bin/sync-k8s-secret-to-wire-server-values.sh
 ```
 
 This checks:
@@ -610,7 +621,7 @@ This checks:
 - **Do NOT** manually set `wire_pass` in Ansible inventory - automatically managed via Kubernetes secrets
 - **Source of Truth**: The Kubernetes secret `wire-postgresql-external-secret` is authoritative
 - **Auto-Generated**: Passwords are randomly generated 32-character strings (high entropy)
-- **Idempotent**: Running `sync-k8s-secret-to-yaml.sh` multiple times is safe
+- **Idempotent**: Running `sync-k8s-secret-to-wire-secrets.sh` multiple times is safe
 - **CI/CD**: Password sync is automatic in offline deployment pipelines
 
 ## Kubernetes Integration

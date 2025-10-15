@@ -2,11 +2,11 @@
 
 set -euo pipefail
 
-# Generic script to sync Kubernetes secret values to YAML files
-# Usage: sync-k8s-secret-to-yaml.sh <secret-name> <secret-key> <yaml-file> <yaml-path1> [yaml-path2] ...
+# Script to sync Kubernetes secret values to Wire server secrets YAML file
+# Usage: sync-k8s-secret-to-wire-secrets.sh <secret-name> <secret-key> <yaml-file> <yaml-path1> [yaml-path2] ...
 #
 # Example:
-#   sync-k8s-secret-to-yaml.sh wire-postgresql-external-secret password values/wire-server/secrets.yaml \
+#   sync-k8s-secret-to-wire-secrets.sh wire-postgresql-external-secret password values/wire-server/secrets.yaml \
 #     .brig.secrets.pgPassword .galley.secrets.pgPassword
 
 usage() {
@@ -26,15 +26,20 @@ Options:
   -h, --help        Show this help message
 
 Examples:
-  # PostgreSQL password sync
+  # PostgreSQL password sync (most common)
   $(basename "$0") wire-postgresql-external-secret password \\
     values/wire-server/secrets.yaml \\
-    .brig.secrets.pgPassword .galley.secrets.pgPassword
+    .brig.secrets.pgPassword .galley.secrets.pgPassword .spar.secrets.pgPassword .gundeck.secrets.pgPassword
 
   # RabbitMQ password sync
   $(basename "$0") rabbitmq-secret password \\
     values/wire-server/secrets.yaml \\
     .brig.secrets.rabbitmq.password .galley.secrets.rabbitmq.password
+
+  # Redis password sync
+  $(basename "$0") redis-secret password \\
+    values/wire-server/secrets.yaml \\
+    .brig.secrets.redis.password
 EOF
     exit 1
 }
@@ -70,7 +75,7 @@ shift 3
 YAML_PATHS=("$@")
 
 echo "=================================================="
-echo "Kubernetes Secret to YAML Synchronization"
+echo "Wire Secrets Synchronization"
 echo "=================================================="
 echo ""
 echo "Secret: $SECRET_NAME/$SECRET_KEY (namespace: $NAMESPACE)"
@@ -131,15 +136,25 @@ echo ""
 echo "Verification:"
 SUCCESS=true
 for yaml_path in "${YAML_PATHS[@]}"; do
-    # Extract the value (simple grep-based verification)
-    FIELD_NAME=$(echo "$yaml_path" | awk -F. '{print $NF}')
-    EXTRACTED_VALUE=$(grep "$FIELD_NAME:" "$YAML_FILE" | head -1 | awk '{print $2}' | tr -d '"' | tr -d "'" || echo "")
-
-    if [ "$EXTRACTED_VALUE" = "$SECRET_VALUE" ]; then
-        echo "  ✓ $yaml_path: synced"
+    # Use yq to extract the actual value at the specific path
+    if command -v yq &> /dev/null; then
+        EXTRACTED_VALUE=$(yq -r "$yaml_path" "$YAML_FILE" 2>/dev/null || echo "")
+        if [ "$EXTRACTED_VALUE" = "$SECRET_VALUE" ]; then
+            echo "  ✓ $yaml_path: synced"
+        else
+            echo "  ⚠ $yaml_path: verification failed (expected ${#SECRET_VALUE} chars, got ${#EXTRACTED_VALUE} chars)"
+            SUCCESS=false
+        fi
     else
-        echo "  ⚠ $yaml_path: verification inconclusive"
-        SUCCESS=false
+        # Fallback verification (less reliable)
+        FIELD_NAME=$(echo "$yaml_path" | awk -F. '{print $NF}')
+        EXTRACTED_VALUE=$(grep "$FIELD_NAME:" "$YAML_FILE" | head -1 | awk '{print $2}' | tr -d '"' | tr -d "'" || echo "")
+        if [ "$EXTRACTED_VALUE" = "$SECRET_VALUE" ]; then
+            echo "  ✓ $yaml_path: synced"
+        else
+            echo "  ⚠ $yaml_path: verification inconclusive (fallback method)"
+            SUCCESS=false
+        fi
     fi
 done
 

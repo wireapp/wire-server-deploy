@@ -2,7 +2,6 @@
 
 set -euo pipefail
 
-
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
 # HACK: hack to stop ssh from idling the connection. Which it will do if there is no output. And ansible is not verbose enough
@@ -30,18 +29,21 @@ else
     WSD_CONTAINER=$(sudo docker images --format "{{.Repository}}:{{.Tag}}" | grep "wire-server-deploy" | head -1)
 fi
 
+#  Create wire secrets
 ./bin/offline-secrets.sh
 
 sudo docker run --network=host -v $SSH_AUTH_SOCK:/ssh-agent -e SSH_AUTH_SOCK=/ssh-agent -v $PWD:/wire-server-deploy $WSD_CONTAINER ./bin/offline-cluster.sh
 
 # Sync PostgreSQL password from K8s secret to secrets.yaml
 echo "Syncing PostgreSQL password from Kubernetes secret..."
-sudo docker run --network=host -v $PWD:/wire-server-deploy $WSD_CONTAINER ./bin/sync-k8s-secret-to-yaml.sh \
+sudo docker run --network=host -v $PWD:/wire-server-deploy $WSD_CONTAINER ./bin/sync-k8s-secret-to-wire-secrets.sh \
   wire-postgresql-external-secret \
   password \
   values/wire-server/secrets.yaml \
   .brig.secrets.pgPassword \
-  .galley.secrets.pgPassword
+  .galley.secrets.pgPassword \
+  .spar.secrets.pgPassword \
+  .gundeck.secrets.pgPassword
 
 
 sudo docker run --network=host -v $PWD:/wire-server-deploy $WSD_CONTAINER ./bin/offline-helm.sh
