@@ -81,7 +81,7 @@
     tags: [never, remove_iptables]
     vars:
       iptables_rules_comment: "Wire Iptables Rules"
-      iptables_save_dir: "{{ ansible_user_dir }}/wire-iptables-rules"
+      iptables_save_dir: "/home/{{ ansible_user }}/wire-iptables-rules"
     block:
 
     - name: Check if pre_wire IPv4 ruleset file exists
@@ -136,6 +136,7 @@
 
   - name: Remove ssh keys
     tags: [never, remove_ssh]
+    become_user: "{{ ansible_user }}"
     block:
     - name: Remove SSH key if it exist
       shell: |
@@ -145,6 +146,7 @@
 
   - name: remove the downloaded artifacts 
     tags: [never, remove_artifacts]
+    become_user: "{{ ansible_user }}"
     file:
       path: "{{ item }}"
       state: absent

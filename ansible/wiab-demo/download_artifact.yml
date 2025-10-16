@@ -56,4 +56,5 @@
       group: "{{ ansible_user }}"
       mode: '0775'
       recurse: yes
+      follow: no
     become: yes

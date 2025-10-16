@@ -1,9 +1,9 @@
 - name: Execute common tasks for the node
   hosts: deploy_node
-  become: yes
   tasks:
   # this is an exception to install_pkgs, as it expects netcat before other tasks take place
   - name: Install Netcat
+    become: yes
     apt:
       name:
         - ncat
@@ -149,7 +149,7 @@
   vars:
     demo_deploy: true
     remote_src: yes
-    src_path: "{{ ansible_user_dir }}/wire-server-deploy"
+    src_path: "/home/{{ ansible_user }}/wire-server-deploy"
   tags: asset_host
 
 - name: Seed the containers in k8s-cluster nodes
