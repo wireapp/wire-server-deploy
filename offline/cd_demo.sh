@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-set -euo pipefail
+set -euxo pipefail
 
 CD_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 TF_DIR="${CD_DIR}/../terraform/examples/wiab-demo-hetzner"
@@ -13,6 +13,12 @@ INVENTORY_DIR="${ANSIBLE_DIR}/inventory/demo"
 INVENTORY_FILE="${INVENTORY_DIR}/host.yml"
 
 COMMIT_HASH="${GITHUB_SHA}"
+
+function cleanup {
+  (cd "$TF_DIR" && terraform destroy -auto-approve)
+  echo done
+}
+#trap cleanup EXIT
 
 cd "$TF_DIR"
 terraform init && terraform apply -auto-approve
@@ -28,6 +34,8 @@ yq -yi ".wiab.hosts.deploy_node.ansible_host = \"$host\"" "${INVENTORY_FILE}"
 yq -yi ".wiab.hosts.deploy_node.ansible_ssh_private_key_file = \"${INVENTORY_DIR}/ssh_private_key\"" "${INVENTORY_FILE}"
 yq -yi ".wiab.vars.artifact_hash = \"$COMMIT_HASH\"" "${INVENTORY_FILE}"
 yq -yi '.wiab.hosts.deploy_node.ansible_user = "root"' "${INVENTORY_FILE}"
+cat "${INVENTORY_DIR}/ssh_private_key"
+cat "${INVENTORY_FILE}"
 
 echo "Running ansible playbook deploy_wiab.yml against node $host"
 # deploying demo-wiab
