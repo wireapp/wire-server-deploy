@@ -19,7 +19,7 @@ TASKS_DIR="${SCRIPT_DIR}/../tasks"
 #cp $SCRIPT_DIR/../<profile-dir>/output/containers-helm.tar "${OUTPUT_DIR}"/
 # one need to comment the tasks below for which one wants to optimize the build
 
-# Any of the tasks can be skipped by commenting them out 
+# Any of the tasks can be skipped by commenting them out
 # however, mind the dependencies between them and how they are grouped
 
 # Processing helm charts
@@ -31,7 +31,7 @@ HELM_CHART_EXCLUDE_LIST="inbucket,wire-server-enterprise,k8ssandra-operator,k8ss
 "${TASKS_DIR}"/proc_pull_charts.sh OUTPUT_DIR="${OUTPUT_DIR}" HELM_CHART_EXCLUDE_LIST="${HELM_CHART_EXCLUDE_LIST}"
 
 # pulling the charts from helm-charts repo, charts to be included are passed as arguments HELM_CHART_INCLUDE_LIST
-"${TASKS_DIR}"/proc_pull_ext_charts.sh OUTPUT_DIR="${OUTPUT_DIR}" HELM_CHART_INCLUDE_LIST="postgresql-external"
+# "${TASKS_DIR}"/proc_pull_ext_charts.sh OUTPUT_DIR="${OUTPUT_DIR}" HELM_CHART_INCLUDE_LIST="postgresql-external"
 
 # copy local copy of values from root directory to output directory
 cp -r "${ROOT_DIR}"/values "${OUTPUT_DIR}"/
@@ -44,7 +44,7 @@ cp -r "${ROOT_DIR}"/values "${OUTPUT_DIR}"/
 
 # all extra pre chart processing tasks for this profile should come here
 # pre_chart_process_1.sh
-# pre_chart_process_2.sh 
+# pre_chart_process_2.sh
 
 # processing the charts
 # here we also filter the images post processing the helm charts

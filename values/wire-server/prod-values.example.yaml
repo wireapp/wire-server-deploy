@@ -127,7 +127,7 @@ cannon:
   # For demo mode only, we don't need to keep websocket connections open on chart upgrades
   drainTimeout: 10
   config:
-    cassandra: 
+    cassandra:
       host: cassandra-external
   metrics:
     serviceMonitor:

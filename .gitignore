@@ -18,7 +18,7 @@ values-init-done
 
 # Envrc local overrides
 .envrc.local
-
+.vscode
 # Nix-created result symlinks
 result
 result-*
@@ -31,5 +31,6 @@ secrets_cache/
 terraform.tfstate
 terraform.tfstate.backup
 kubeconfig.new
+.vscode/*
 
 .terraform.lock.hcl
