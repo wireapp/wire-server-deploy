@@ -104,7 +104,7 @@ brig:
       # - "turn:<IP of coturn2>:3478?transport=tcp"
   metrics:
     serviceMonitor:
-      enabled: false
+      enabled: true
 
 proxy:
   replicaCount: 1
@@ -119,7 +119,7 @@ proxy:
 #        - "10.23.0.0/16"
   metrics:
     serviceMonitor:
-      enabled: false
+      enabled: true
 cannon:
   replicaCount: 1
 #  image:
@@ -131,7 +131,7 @@ cannon:
       host: cassandra-ephemeral
   metrics:
     serviceMonitor:
-      enabled: false
+      enabled: true
 
 cargohold:
   replicaCount: 1
@@ -154,7 +154,7 @@ cargohold:
 #        - "10.23.0.0/16"
   metrics:
     serviceMonitor:
-      enabled: false
+      enabled: true
 
 galley:
   replicaCount: 1
@@ -192,7 +192,7 @@ galley:
 #        - "10.23.0.0/16"
   metrics:
     serviceMonitor:
-      enabled: false
+      enabled: true
 
 gundeck:
   replicaCount: 1
@@ -217,7 +217,7 @@ gundeck:
 #        - "10.23.0.0/16"
   metrics:
     serviceMonitor:
-      enabled: false
+      enabled: true
 
 nginz:
   replicaCount: 1
@@ -251,7 +251,7 @@ nginz:
   terminationGracePeriodSeconds: 30
   metrics:
     serviceMonitor:
-      enabled: false
+      enabled: true
 spar:
   replicaCount: 1
 #  image:
@@ -278,7 +278,7 @@ spar:
 #        - "10.23.0.0/16"
   metrics:
     serviceMonitor:
-      enabled: false
+      enabled: true
 
 # Only needed when legalhold is enabled
 #legalhold:
@@ -298,4 +298,4 @@ background-worker:
     enableFederation: false
   metrics:
     serviceMonitor:
-      enabled: false
+      enabled: true

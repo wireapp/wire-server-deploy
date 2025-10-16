@@ -1,0 +1,15 @@
+kube-prometheus-stack:
+  prometheus:
+    ingress:
+      enabled: false
+      hosts:
+        - prometheus.example.com
+      tls:
+        - secretName: prometheus-tls
+          hosts:
+            - prometheus.example.com
+    prometheusSpec:
+      affinity: {}
+      storageSpec: {}
+      retention: 15d
+      retentionSize: 45GiB
