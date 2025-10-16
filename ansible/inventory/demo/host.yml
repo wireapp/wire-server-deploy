@@ -53,10 +53,11 @@ wiab:
       - databases-ephemeral
       - postgresql
       - reaper
+      - smallstep-accomp
+      - kube-prometheus-stack
       - wire-server
       - webapp
       - account-pages
       - team-settings
-      - smallstep-accomp
       - ingress-nginx-controller
       - nginx-ingress-services
