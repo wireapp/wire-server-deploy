@@ -43,32 +43,6 @@ jobs:
           GPG_PRIVATE_KEY: '${{ secrets.GPG_PRIVATE_KEY }}'
           DOCKER_LOGIN: '${{ secrets.DOCKER_LOGIN }}'
 
-      # Upload the assets to be shared with other jobs
-      - name: Upload build artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: default-build-assets
-          path: offline/default-build/output/assets.tgz
-          retention-days: 1
-
-  # Upload to S3 in parallel with deployment
-  upload-s3:
-    name: Upload default build to S3
-    if: "!contains(github.event.head_commit.message, 'skip ci')"
-    needs: build-default
-    runs-on:
-      group: wire-server-deploy
-    steps:
-      - uses: actions/checkout@v2
-        with:
-          submodules: true
-
-      - name: Download build artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: default-build-assets
-          path: offline/default-build/output/
-
       - name: Copy default build assets tarball to S3
         run: |
           aws s3 cp offline/default-build/output/assets.tgz s3://public.wire.com/artifacts/wire-server-deploy-static-${{ needs.build-default.outputs.upload_name }}.tgz
@@ -78,32 +52,6 @@ jobs:
           AWS_SECRET_ACCESS_KEY: '${{ secrets.AWS_SECRET_ACCESS_KEY }}'
           AWS_REGION: "eu-west-1"
 
-  # Deploy to Hetzner in parallel with S3 upload
-  deploy-hetzner:
-    name: Deploy default build to Hetzner
-    if: "!contains(github.event.head_commit.message, 'skip ci')"
-    needs: build-default
-    runs-on:
-      group: wire-server-deploy
-    steps:
-      - uses: actions/checkout@v2
-        with:
-          submodules: true
-      - uses: cachix/install-nix-action@v27
-      - uses: cachix/cachix-action@v15
-        with:
-          name: wire-server
-          signingKey: "${{ secrets.CACHIX_SIGNING_KEY }}"
-
-      - name: Install nix environment
-        run: nix-env -f default.nix -iA env
-
-      - name: Download build artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: default-build-assets
-          path: offline/default-build/output/
-
       - name: Install terraform
         uses: hashicorp/setup-terraform@v3
         with:
@@ -111,7 +59,13 @@ jobs:
           terraform_wrapper: false
 
       - name: Deploy offline environment to hetzner
-        run: ./offline/cd-with-retry.sh
+        run: ./offline/cd.sh
+        env:
+          HCLOUD_TOKEN: '${{ secrets.HCLOUD_TOKEN }}'
+
+      - name: Clean up hetzner environment; just in case
+        if: always()
+        run: (cd terraform/examples/wire-server-deploy-offline-hetzner ; terraform init && terraform destroy -auto-approve)
         env:
           HCLOUD_TOKEN: '${{ secrets.HCLOUD_TOKEN }}'
 
@@ -157,8 +111,8 @@ jobs:
           name: wire-server
           signingKey: "${{ secrets.CACHIX_SIGNING_KEY }}"
 
-#       - name: Install nix environment
-#         run: nix-env -f default.nix -iA env
+      - name: Install nix environment
+        run: nix-env -f default.nix -iA env
 
       - name: Get upload name
         id: upload_name
@@ -181,6 +135,23 @@ jobs:
 
       - name: Cleanup demo build assets
         run: rm -rf offline/demo-build/output/
+
+      - name: Install terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "^1.3.7"
+          terraform_wrapper: false
+
+      - name: Deploy offline demo-wiab environment to hetzner
+        run: ./offline/cd_demo.sh
+        env:
+          HCLOUD_TOKEN: '${{ secrets.HCLOUD_TOKEN }}'
+
+      - name: Clean up hetzner wiab environment; just in case
+        if: always()
+        run: (cd terraform/examples/wiab-demo-hetzner ; terraform init && terraform destroy -auto-approve)
+        env:
+          HCLOUD_TOKEN: '${{ secrets.HCLOUD_TOKEN }}'
 
   # Build min profile
   build-min:
