@@ -1,7 +1,7 @@
 locals {
   # Server type preferences with fallbacks
   preferred_server_types = {
-    size = ["cpx51", "cpx52"]  }
+    size = ["cx53", "cpx62"]  }
 }
 
 # Get available server types in the specified location

@@ -132,18 +132,23 @@ The playbook then configures access to the Kubernetes nodes:
 - It will seed the docker images shipped for the wire related helm charts in the minikube k8s nodes
 - Can be skipped using `--skip-tags seed_containers`
 
-### 12. Wire Secrets Creation
+### 12. Wire helm charts values preparation
+
+- Imports [wire_values.yml](../ansible/wiab-demo/wire_values.yml) to prepare the Helm chart values
+- Runs automatically when using `--tags wire_values`
+
+### 13. Wire Secrets Creation
 
 - Imports [wire_secrets.yml](../ansible/wiab-demo/wire_secrets.yml) to create required secrets for wire helm charts
 - Runs automatically when using `--tags helm_install`
 
-### 13. Helm Chart Installation
+### 14. Helm Chart Installation
 
 - Imports [helm_install.yml](../ansible/wiab-demo/helm_install.yml) to deploy Wire components using Helm
 - These charts can be configured in [host.yml](../ansible/inventory/demo/host.yml)
 - Can be skipped using `--skip-tags helm_install`
 
-### 14. Temporary Cleanup
+### 15. Temporary Cleanup
 
 - Locates all temporary SSH key directories created during deployment
 - Lists and removes these directories

@@ -10,7 +10,7 @@ TF_DIR="${CD_DIR}/../terraform/examples/wire-server-deploy-offline-hetzner"
 ARTIFACTS_DIR="${CD_DIR}/default-build/output"
 
 # Retry configuration
-MAX_RETRIES=0
+MAX_RETRIES=3
 RETRY_DELAY=30
 
 echo "Wire Offline Deployment with Retry Logic"
