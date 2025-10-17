@@ -16,9 +16,9 @@ COMMIT_HASH="${GITHUB_SHA}"
 
 function cleanup {
   (cd "$TF_DIR" && terraform destroy -auto-approve)
-  echo done
+  echo "done"
 }
-#trap cleanup EXIT
+trap cleanup EXIT
 
 cd "$TF_DIR"
 terraform init && terraform apply -auto-approve

@@ -20,7 +20,7 @@ function cleanup {
   (cd "$TF_DIR" && terraform destroy -auto-approve)
   echo "Cleanup completed"
 }
-#trap cleanup EXIT
+trap cleanup EXIT
 
 cd "$TF_DIR"
 terraform init
