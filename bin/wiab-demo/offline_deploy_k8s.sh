@@ -165,18 +165,16 @@ deploy_charts() {
 
     # handle wire-server to inject PostgreSQL password from databases-ephemeral
     if [[ "$chart" == "wire-server" ]]; then
+
       echo "Retrieving PostgreSQL password from databases-ephemeral for wire-server deployment..."
       if kubectl get secret wire-postgresql-secret &>/dev/null; then
-        PG_PASSWORD=$(kubectl get secret wire-postgresql-secret -o jsonpath='{.data.password}' | base64 -d)
-        if [[ -n "$PG_PASSWORD" ]]; then
-          helm_command+=" --set brig.secrets.pgPassword=${PG_PASSWORD}"
-          helm_command+=" --set galley.secrets.pgPassword=${PG_PASSWORD}"
-          echo "✓ PostgreSQL password will be injected into brig and galley secrets"
-        else
-          echo "⚠️  Warning: PostgreSQL password is empty, skipping password injection"
-        fi
+      # Usage: sync-k8s-secret-to-wire-secrets.sh <secret-name> <secret-key> <yaml-file> <yaml-path's>
+         "$BASE_DIR/bin/sync-k8s-secret-to-wire-secrets.sh" \
+          wire-postgresql-secret password \
+          "$BASE_DIR/values/wire-server/secrets.yaml" \
+          .brig.secrets.pgPassword .galley.secrets.pgPassword
       else
-        echo "⚠️  Warning: PostgreSQL secret 'wire-postgresql-secret' not found, skipping password injection"
+        echo "⚠️  Warning: PostgreSQL secret 'wire-postgresql-secret' not found, skipping secret sync"
         echo "    Make sure databases-ephemeral chart is deployed before wire-server"
       fi
     fi
