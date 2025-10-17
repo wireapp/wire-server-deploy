@@ -159,6 +159,10 @@
     skip_seed_system_containers: true
   tags: seed_containers
 
+- name: Prepare helm chart values
+  import_playbook: ./wire_values.yml
+  tags: wire_values
+
 - name: Create wire secrets
   import_playbook: ./wire_secrets.yml
   tags: helm_install
