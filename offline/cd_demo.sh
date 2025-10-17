@@ -11,7 +11,7 @@ ARTIFACTS_DIR="${CD_DIR}/demo-build/output"
 ANSIBLE_DIR="${CD_DIR}/../ansible"
 INVENTORY_DIR="${ANSIBLE_DIR}/inventory/demo"
 INVENTORY_FILE="${INVENTORY_DIR}/host.yml"
-
+TEST_USER="demo"
 COMMIT_HASH="${GITHUB_SHA}"
 
 function cleanup {
@@ -30,10 +30,24 @@ rm -f "${INVENTORY_DIR}/ssh_private_key" || true
 echo "$ssh_private_key" > "${INVENTORY_DIR}/ssh_private_key"
 chmod 400 "${INVENTORY_DIR}/ssh_private_key"
 
+# clean old host verification keys to avoid SSH issues
+ssh-keygen -R "$host" || true
+
+# create demo user on the remote host
+ssh -v -oStrictHostKeyChecking=accept-new -oConnectionAttempts=10 -i "${INVENTORY_DIR}/ssh_private_key" "root@$host" \
+"useradd -m -s /bin/bash ${TEST_USER} && \
+usermod -aG sudo ${TEST_USER} && \
+mkdir -p /home/${TEST_USER}/.ssh && \
+cp /root/.ssh/authorized_keys /home/${TEST_USER}/.ssh/ && \
+chown -R ${TEST_USER}:${TEST_USER} /home/${TEST_USER}/.ssh && \
+chmod 700 /home/${TEST_USER}/.ssh && \
+chmod 600 /home/${TEST_USER}/.ssh/authorized_keys && \
+echo '${TEST_USER} ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers.d/${TEST_USER}"
+
 yq -yi ".wiab.hosts.deploy_node.ansible_host = \"$host\"" "${INVENTORY_FILE}"
 yq -yi ".wiab.hosts.deploy_node.ansible_ssh_private_key_file = \"${INVENTORY_DIR}/ssh_private_key\"" "${INVENTORY_FILE}"
 yq -yi ".wiab.vars.artifact_hash = \"$COMMIT_HASH\"" "${INVENTORY_FILE}"
-yq -yi '.wiab.hosts.deploy_node.ansible_user = "root"' "${INVENTORY_FILE}"
+yq -yi ".wiab.hosts.deploy_node.ansible_user = \"$TEST_USER\"" "${INVENTORY_FILE}"
 cat "${INVENTORY_DIR}/ssh_private_key"
 cat "${INVENTORY_FILE}"
 
