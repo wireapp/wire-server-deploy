@@ -18,36 +18,40 @@ COTURN_NODE="K8S_COTURN_NODE"
 HOST_IP="WIRE_IP"
 
 # it creates the values.yaml from prod-values.example.yaml and secrets.yaml from prod-secrets.example.yaml, it works on the directory $BASE_DIR"/values/ in the bundle
-process_charts() {  
-  
+process_charts() {
+
   ENV=$1
 
   if [ "$ENV" != "prod" ] && [ "$ENV" != "demo" ]; then
     echo "ENV is neither prod nor demo"
     exit 1
-  fi 
+  fi
 
   for chart_dir in "$BASE_DIR"/values/*/; do
 
     if [[ -d "$chart_dir" ]]; then
       if [[ -f "$chart_dir/${ENV}-values.example.yaml" ]]; then
-        # assuming if the values.yaml exist, it won't replace it again to make it idempotent
         if [[ ! -f "$chart_dir/values.yaml" ]]; then
           cp "$chart_dir/${ENV}-values.example.yaml" "$chart_dir/values.yaml"
           echo "Used template ${ENV}-values.example.yaml to create $chart_dir/values.yaml"
+        else
+          echo "$chart_dir/values.yaml already exists, archiving it and creating a new one."
+          mv "$chart_dir/values.yaml" "$chart_dir/values.yaml.bak"
+          cp "$chart_dir/${ENV}-values.example.yaml" "$chart_dir/values.yaml"
         fi
       fi
 
       if [[ -f "$chart_dir/${ENV}-secrets.example.yaml" ]]; then
-      # assuming if the secrets.yaml exist, it won't replace it again to make it idempotent
         if [[ ! -f "$chart_dir/secrets.yaml" ]]; then
           cp "$chart_dir/${ENV}-secrets.example.yaml" "$chart_dir/secrets.yaml"
           echo "Used template ${ENV}-secrets.example.yaml to create $chart_dir/secrets.yaml"
+        else
+          echo "$chart_dir/secrets.yaml already exists, archiving it and creating a new one."
+          mv "$chart_dir/secrets.yaml" "$chart_dir/secrets.yaml.bak"
+          cp "$chart_dir/${ENV}-secrets.example.yaml" "$chart_dir/secrets.yaml"
         fi
       fi
-
     fi
-
   done
 }
 
@@ -83,7 +87,7 @@ process_values() {
       "$BASE_DIR/values/ingress-nginx-controller/values.yaml" > "$TEMP_DIR/ingress-nginx-controller-values.yaml"
   if ! grep -q "kubernetes.io/hostname: $NGINX_K8S_NODE" "$TEMP_DIR/ingress-nginx-controller-values.yaml"; then
     echo -e "    nodeSelector:\n      kubernetes.io/hostname: $NGINX_K8S_NODE" >> "$TEMP_DIR/ingress-nginx-controller-values.yaml"
-  fi 
+  fi
 
   # Fixing SFTD hosts and setting the cert-manager to http01
   sed -e "s/webapp.example.com/webapp.$TARGET_SYSTEM/" \
@@ -182,12 +186,11 @@ deploy_calling_services() {
 
   echo "Deploying sftd and coturn"
   # select the node to deploy sftd
-  kubectl label node $SFT_NODE wire.com/role=sftd --overwrite
-  helm upgrade --install sftd $BASE_DIR/charts/sftd --set 'nodeSelector.wire\.com/role=sftd' --set 'node_annotations="{'wire\.com/external-ip': '"$HOST_IP"'}"' --values  $BASE_DIR/values/sftd/values.yaml
+  kubectl annotate node $SFT_NODE wire.com/external-ip="$HOST_IP" --overwrite
+  helm upgrade --install sftd $BASE_DIR/charts/sftd --set "nodeSelector.kubernetes\\.io/hostname=$SFT_NODE" --values  $BASE_DIR/values/sftd/values.yaml
 
-  kubectl label node $COTURN_NODE wire.com/role=coturn --overwrite
   kubectl annotate node $COTURN_NODE wire.com/external-ip="$HOST_IP" --overwrite
-  helm upgrade --install coturn ./charts/coturn --values  $BASE_DIR/values/coturn/values.yaml --values  $BASE_DIR/values/coturn/secrets.yaml
+  helm upgrade --install coturn ./charts/coturn --set "nodeSelector.kubernetes\\.io/hostname=$COTURN_NODE" --values  $BASE_DIR/values/coturn/values.yaml --values  $BASE_DIR/values/coturn/secrets.yaml
 }
 
 # if required, this function can be run manually

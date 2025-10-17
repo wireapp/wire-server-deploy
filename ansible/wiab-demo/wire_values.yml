@@ -1,0 +1,56 @@
+- name: Install Helm charts
+  hosts: deploy_node
+  become: yes
+  become_user: "{{ ansible_user }}"
+  tasks:
+  - name: Replace TARGET_SYSTEM example.com with target_domain in offline_deploy_k8s
+    lineinfile:
+      path: "{{ ansible_user_dir }}/wire-server-deploy/bin/wiab-demo/offline_deploy_k8s.sh"
+      regexp: '^TARGET_SYSTEM="example\.com"'
+      line: 'TARGET_SYSTEM="{{ target_domain }}"'
+      backrefs: yes
+
+  - name: Replace CERT_MASTER_EMAIL example.com with target_domain in offline_deploy_k8s
+    lineinfile:
+      path: "{{ ansible_user_dir }}/wire-server-deploy/bin/wiab-demo/offline_deploy_k8s.sh"
+      regexp: '^CERT_MASTER_EMAIL="certmaster@example\.com"'
+      line: 'CERT_MASTER_EMAIL="certmaster@{{ target_domain }}"'
+      backrefs: yes
+
+  - name: Add HOST_IP with wire_ip in offline_deploy_k8s
+    lineinfile:
+      path: "{{ ansible_user_dir }}/wire-server-deploy/bin/wiab-demo/offline_deploy_k8s.sh"
+      regexp: '^HOST_IP="WIRE_IP"'
+      line: 'HOST_IP="{{ wire_ip }}"'
+      backrefs: yes
+
+  - name: Update SFT_NODE in the offline_deploy_k8s
+    lineinfile:
+      path: "{{ ansible_user_dir }}/wire-server-deploy/bin/wiab-demo/offline_deploy_k8s.sh"
+      regexp: '^SFT_NODE="K8S_SFT_NODE"'
+      line: 'SFT_NODE="{{ k8s_sft_node }}"'
+      backrefs: yes
+
+  - name: Update NGINX_K8S_NODE in the offline_deploy_k8s
+    lineinfile:
+      path: "{{ ansible_user_dir }}/wire-server-deploy/bin/wiab-demo/offline_deploy_k8s.sh"
+      regexp: '^NGINX_K8S_NODE="NGINX_K8S_NODE"'
+      line: 'NGINX_K8S_NODE="{{ k8s_ingress_controller_node }}"'
+      backrefs: yes
+
+  - name: Update COTURN_NODE in the offline_deploy_k8s
+    lineinfile:
+      path: "{{ ansible_user_dir }}/wire-server-deploy/bin/wiab-demo/offline_deploy_k8s.sh"
+      regexp: '^COTURN_NODE="K8S_COTURN_NODE"'
+      line: 'COTURN_NODE="{{ k8s_coturn_node }}"'
+      backrefs: yes
+
+  - name: Prepare values.yaml files for the demo environment
+    shell: source {{ ansible_user_dir }}/wire-server-deploy/bin/wiab-demo/offline_deploy_k8s.sh && process_charts demo
+    args:
+      executable: /bin/bash
+    
+  - name: Process vars for Helm chart values
+    shell: source {{ ansible_user_dir }}/wire-server-deploy/bin/wiab-demo/offline_deploy_k8s.sh && process_values
+    args:
+      executable: /bin/bash
