@@ -1,41 +1,63 @@
+# ===================================================================
+# PostgreSQL Deployment Pipeline
+# ===================================================================
+# This playbook orchestrates PostgreSQL cluster deployment.
+# Playbooks run in strict order due to dependencies.
+#
+# Dependency Chain:
+#   secrets → primary → replica → verify → wire-setup → monitoring
+#   (cleanup/install are independent but should run first)
+#
+# Tag Strategy:
+#   - Use --skip-tags to exclude specific steps
+#   - Do NOT use --tags to run individual steps (will break dependencies)
+#   - Recommended: Run full playbook or use skip-tags
+#
+# Usage Examples:
+#   Full deployment:    ansible-playbook postgresql-deploy.yml
+#   Skip cleanup:       ansible-playbook postgresql-deploy.yml --skip-tags cleanup
+#   Skip monitoring:    ansible-playbook postgresql-deploy.yml --skip-tags monitoring
+#   Skip wire-setup:    ansible-playbook postgresql-deploy.yml --skip-tags wire-setup
+#
+# Why no --tags for individual steps?
+#   Running --tags primary will skip secrets playbook, causing:
+#   ERROR: undefined variable 'repmgr_password'
+#
+# To run from a specific point, comment out earlier playbooks.
+# ===================================================================
+
 - name: Clean previous deployment state
   import_playbook: postgresql-playbooks/clean_existing_setup.yml
-  tags:
-    - postgresql
-    - cleanup
+  tags: [postgresql, cleanup]
 
 - name: Install PostgreSQL packages
   import_playbook: postgresql-playbooks/postgresql-install.yml
-  tags:
-    - postgresql
-    - install
+  tags: [postgresql, install]
+
+- name: Setup PostgreSQL passwords from Kubernetes Secrets
+  import_playbook: postgresql-playbooks/postgresql-secrets.yml
+  tags: [postgresql, secrets]
+  # Sets facts: repmgr_password, wire_pass (required by all following playbooks)
 
 - name: Deploy PostgreSQL primary node
   import_playbook: postgresql-playbooks/postgresql-deploy-primary.yml
-  tags:
-    - postgresql
-    - primary
+  tags: [postgresql, primary]
+  # Requires: repmgr_password
 
 - name: Deploy PostgreSQL replica nodes
   import_playbook: postgresql-playbooks/postgresql-deploy-replica.yml
-  tags:
-    - postgresql
-    - replica
+  tags: [postgresql, replica]
+  # Requires: repmgr_password
 
 - name: Verify PostgreSQL deployment
   import_playbook: postgresql-playbooks/postgresql-verify-HA.yml
-  tags:
-    - postgresql
-    - verify
+  tags: [postgresql, verify]
 
 - name: Setup wire-server postgresql database and user
   import_playbook: postgresql-playbooks/postgresql-wire-setup.yml
-  tags:
-    - postgresql
-    - wire-setup
+  tags: [postgresql, wire-setup]
+  # Requires: wire_pass
 
 - name: Deploy cluster monitoring
   import_playbook: postgresql-playbooks/postgresql-monitoring.yml
-  tags:
-    - postgresql
-    - monitoring
+  tags: [postgresql, monitoring]

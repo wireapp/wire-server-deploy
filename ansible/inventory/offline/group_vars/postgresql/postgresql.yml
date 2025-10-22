@@ -5,8 +5,19 @@ postgresql_conf_dir: /etc/postgresql/{{ postgresql_version }}/main
 
 # repmgr HA configuration
 repmgr_user: repmgr
-repmgr_password: "securepassword"
+# repmgr_password is managed via Kubernetes Secret (see postgresql-repmgr-secret.yml)
+# The password is fetched from K8s secret or auto-generated during deployment
+# To manually set: kubectl create secret generic repmgr-postgresql-secret -n <namespace> --from-literal=password=<your-password>
+repmgr_password: ""
 repmgr_database: repmgr
+
+# Kubernetes Secret configuration for repmgr
+repmgr_secret_name: "repmgr-postgresql-secret"
+repmgr_namespace: "{{ wire_namespace | default('default') }}"
+
+# Kubernetes Secret configuration for wire-server PostgreSQL user
+# This is managed alongside repmgr credentials in postgresql-secrets.yml
+wire_pg_secret_name: "wire-postgresql-external-secret"
 
 # Node configuration for repmgr
 repmgr_node_config:

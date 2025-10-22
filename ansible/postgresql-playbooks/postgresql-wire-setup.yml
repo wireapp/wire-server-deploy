@@ -4,31 +4,10 @@
   become: yes
   gather_facts: yes
   vars:
-    pg_secret_name: wire-postgresql-external-secret
+    pg_secret_name: "{{ wire_pg_secret_name }}"
   tasks:
-    - name: Validate kubectl is accessible
-      ansible.builtin.shell: kubectl cluster-info
-      register: kubectl_check
-      delegate_to: localhost
-      run_once: true
-      failed_when: false
-      changed_when: false
-
-    - name: Fail if kubectl is not accessible
-      ansible.builtin.fail:
-        msg: |
-          ERROR: Cannot access Kubernetes cluster!
-
-          Please ensure:
-          1. kubectl is installed and accessible
-          2. KUBECONFIG is set: export KUBECONFIG=/path/to/kubeconfig
-          3. kubectl can connect: kubectl cluster-info
-
-          Current KUBECONFIG: {{ lookup('env', 'KUBECONFIG') | default('not set') }}
-          Error: {{ kubectl_check.stderr | default('unknown') }}
-      when: kubectl_check.rc != 0
-      delegate_to: localhost
-      run_once: true
+    # NOTE: wire_pass is already set by postgresql-secrets.yml playbook
+    # No need to fetch/generate password here - it's managed centrally
 
     - name: Check if PostgreSQL database exists
       ansible.builtin.shell: |
@@ -60,52 +39,6 @@
       ansible.builtin.debug:
         msg: "PostgreSQL user '{{ wire_user }}' already exists."
       when: user_check_result.rc == 0
-
-    - name: Check if Kubernetes Secret exists
-      ansible.builtin.shell: |
-        kubectl get secret {{ pg_secret_name }} -n {{ wire_namespace | default('default') }} -o jsonpath='{.data.password}' 2>/dev/null | base64 -d
-      register: k8s_secret_check
-      delegate_to: localhost
-      run_once: true
-      failed_when: false
-      changed_when: false
-
-    - name: Retrieve password from existing Kubernetes Secret
-      ansible.builtin.set_fact:
-        wire_pass: "{{ k8s_secret_check.stdout }}"
-        password_source: "kubernetes-secret"
-      when:
-        - k8s_secret_check.rc == 0
-        - k8s_secret_check.stdout != ""
-      run_once: true
-
-    - name: Generate random strong password if secret doesn't exist
-      ansible.builtin.set_fact:
-        wire_pass: "{{ lookup('password', '/dev/null length=32 chars=ascii_letters,digits') }}"
-        password_generated: true
-      when:
-        - k8s_secret_check.rc != 0 or k8s_secret_check.stdout == ""
-      run_once: true
-
-    - name: Create Kubernetes Secret with generated password
-      ansible.builtin.shell: |
-        kubectl create secret generic {{ pg_secret_name }} \
-          --namespace={{ wire_namespace | default('default') }} \
-          --from-literal=password='{{ wire_pass }}' \
-          --from-literal=username='{{ wire_user }}' \
-          --from-literal=database='{{ wire_dbname }}' \
-          --dry-run=client -o yaml | \
-        kubectl label --local -f - \
-          app=wire-server \
-          component=postgresql \
-          managed-by=ansible \
-          --dry-run=client -o yaml | \
-        kubectl apply -f -
-      delegate_to: localhost
-      run_once: true
-      when:
-        - password_generated is defined
-        - password_generated
 
     - name: Create PostgreSQL user (if not exists)
       ansible.builtin.shell: |
@@ -141,25 +74,16 @@
 
     - name: Display PostgreSQL setup completion
       ansible.builtin.debug:
-        msg: "{{ setup_completion_msg.split('\n') }}"
-      vars:
-        setup_completion_msg: |
-          PostgreSQL setup completed:
-            Database: {{ wire_dbname }}
-            User: {{ wire_user }}
-            Status: {% if user_check_result.rc != 0 %}User created{% else %}Password updated for existing user{% endif %}
+        msg: |
+          ===== WIRE-SERVER POSTGRESQL SETUP COMPLETE =====
+          Database: {{ wire_dbname }}
+          User: {{ wire_user }}
+          Status: {% if user_check_result.rc != 0 %}User created{% else %}Password updated for existing user{% endif %}
 
           Kubernetes Secret: {{ pg_secret_name }}
-            Namespace: {{ wire_namespace | default('default') }}
-            Contains: password, username, database, host, port
-          {% if password_generated is defined %}
-            Password: Randomly generated 32-character strong password
-            Stored securely in Kubernetes Secret (no hardcoded passwords)
-            Access it via: kubectl get secret {{ pg_secret_name }} -n {{ wire_namespace | default('default') }} -o jsonpath='{.data.password}' | base64 --decode
-          {% elif password_source is defined %}
-            Password: Retrieved from existing Kubernetes Secret
-            Access it via: kubectl get secret {{ pg_secret_name }} -n {{ wire_namespace | default('default') }} -o jsonpath='{.data.password}' | base64 --decode
-          {% endif %}
+          Namespace: {{ wire_namespace | default('default') }}
+          Password: Managed by postgresql-secrets.yml playbook
+          Access: kubectl get secret {{ pg_secret_name }} -n {{ wire_namespace | default('default') }} -o jsonpath='{.data.password}' | base64 --decode
 
     - name: Verify database and user setup
       ansible.builtin.shell: |
