@@ -234,28 +234,66 @@ See the [Monitoring Checks](#monitoring-checks-after-installation) section for c
 ### 🎯 Main Commands
 
 ```bash
-# Complete fresh deployment
+# Complete fresh deployment (recommended)
 ansible-playbook -i ansible/inventory/offline/hosts.ini ansible/postgresql-deploy.yml
 
-# Clean previous deployment
-# Only cleans the messy configurations the data remains intact
-ansible-playbook -i ansible/inventory/offline/hosts.ini ansible/postgresql-deploy.yml --tag cleanup
+# Deploy PostgreSQL cluster (secrets + primary + replica + wire-setup + monitoring)
+ansible-playbook -i ansible/inventory/offline/hosts.ini ansible/postgresql-deploy.yml --tags postgresql
 
-# Deploy without the cleanup process
-ansible-playbook -i ansible/inventory/offline/hosts.ini ansible/postgresql-deploy.yml --skip-tags "cleanup"
+# Deploy without cleanup (preserves existing data and configuration)
+ansible-playbook -i ansible/inventory/offline/hosts.ini ansible/postgresql-deploy.yml --skip-tags cleanup
+
+# Verify existing cluster health
+ansible-playbook -i ansible/inventory/offline/hosts.ini ansible/postgresql-deploy.yml --tags verify
 ```
 
-### 🏷️ Tag-Based Deployments
+### 🏷️ Tag Reference
 
-| Tag | Description | Example |
-|-----|-------------|---------|
-| `cleanup` | Clean previous deployment state | `--tags "cleanup"` |
-| `install` | Install PostgreSQL packages only | `--tags "install"` |
-| `primary` | Deploy primary node only | `--tags "primary"` |
-| `replica` | Deploy replica nodes only | `--tags "replica"` |
-| `verify` | Verify HA setup only | `--tags "verify"` |
-| `wire-setup` | Wire database setup only | `--tags "wire-setup"` |
-| `monitoring` | Deploy cluster monitoring only | `--tags "monitoring"` |
+| Tag | What Runs | Use Case |
+|-----|-----------|----------|
+| _(none)_ | Full deployment | **Recommended for fresh deployment** |
+| `postgresql` | Secrets + Primary + Replica + Wire-setup + Monitoring | Deploy/redeploy complete PostgreSQL cluster |
+| `verify` | Verification checks only | Check cluster health without making changes |
+| `cleanup` | Cleanup only | For selective cleanup (use with `--skip-tags` to preserve data) |
+
+### 📋 Deployment Pipeline
+
+The deployment follows this strict order:
+
+```
+1. cleanup          → Clean previous state
+2. install          → Install PostgreSQL packages
+3. secrets          → Fetch/create passwords in K8s
+4. primary          → Deploy primary (read-write) node
+5. replica          → Deploy replica (read-only) nodes
+6. verify           → Verify HA cluster health
+7. wire-setup       → Create wire-server database and user
+8. monitoring       → Deploy cluster monitoring
+```
+
+**Important**: Steps 3-8 have dependencies and must run in order. The `postgresql` tag ensures all required steps run together.
+
+### 🔐 Password Management
+
+PostgreSQL passwords are automatically managed via Kubernetes Secrets:
+
+- **repmgr password**: `repmgr-postgresql-secret` (for HA cluster management)
+- **wire-server password**: `wire-postgresql-external-secret` (for application database)
+
+**Behavior**:
+- First deployment: Passwords are auto-generated (32-character random strings)
+- Subsequent deployments: Existing passwords are retrieved from K8s secrets
+
+**Manual password access**:
+```bash
+# View repmgr password
+kubectl get secret repmgr-postgresql-secret -n default -o jsonpath='{.data.password}' | base64 --decode
+
+# View wire-server password
+kubectl get secret wire-postgresql-external-secret -n default -o jsonpath='{.data.password}' | base64 --decode
+```
+
+**Note**: No hardcoded passwords exist in inventory files. All credentials are securely managed in Kubernetes.
 
 ## Monitoring Checks After Installation
 

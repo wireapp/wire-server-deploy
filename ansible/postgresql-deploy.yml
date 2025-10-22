@@ -19,9 +19,6 @@
 #   Skip monitoring:    ansible-playbook postgresql-deploy.yml --skip-tags monitoring
 #   Skip wire-setup:    ansible-playbook postgresql-deploy.yml --skip-tags wire-setup
 #
-# Why no --tags for individual steps?
-#   Running --tags primary will skip secrets playbook, causing:
-#   ERROR: undefined variable 'repmgr_password'
 #
 # To run from a specific point, comment out earlier playbooks.
 # ===================================================================

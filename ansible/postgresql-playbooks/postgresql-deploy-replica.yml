@@ -9,6 +9,33 @@
     current_replica: "{{ ansible_default_ipv4.address | default(ansible_host) }}"
     pg_service_name: "postgresql@{{ postgresql_version }}-main.service"
   tasks:
+    # ===== PREREQUISITE VALIDATION =====
+    - name: Validate required secrets are available
+      ansible.builtin.assert:
+        that:
+          - repmgr_password is defined
+          - repmgr_password | length > 0
+        fail_msg: |
+          ❌ PREREQUISITE FAILED: repmgr_password is not available!
+
+          This playbook requires the repmgr password to be set as an Ansible fact.
+
+          Solution:
+            Run the complete deployment pipeline:
+              ansible-playbook postgresql-deploy.yml
+
+            OR run with the postgresql tag to include secrets:
+              ansible-playbook postgresql-deploy.yml --tags postgresql
+
+            OR run secrets playbook first:
+              ansible-playbook postgresql-playbooks/postgresql-secrets.yml
+              ansible-playbook postgresql-playbooks/postgresql-deploy-replica.yml
+
+          The postgresql-secrets.yml playbook fetches/creates passwords from Kubernetes
+          and sets them as Ansible facts for use by deployment playbooks.
+        success_msg: "✅ Prerequisites validated: repmgr_password is available"
+      run_once: true
+
     # ===== INITIAL STATUS CHECK =====
     - name: Check replica configuration status
       block:

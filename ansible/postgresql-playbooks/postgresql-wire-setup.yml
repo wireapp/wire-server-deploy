@@ -6,8 +6,32 @@
   vars:
     pg_secret_name: "{{ wire_pg_secret_name }}"
   tasks:
-    # NOTE: wire_pass is already set by postgresql-secrets.yml playbook
-    # No need to fetch/generate password here - it's managed centrally
+    # ===== PREREQUISITE VALIDATION =====
+    - name: Validate required secrets are available
+      ansible.builtin.assert:
+        that:
+          - wire_pass is defined
+          - wire_pass | length > 0
+        fail_msg: |
+          ❌ PREREQUISITE FAILED: wire_pass is not available!
+
+          This playbook requires the wire-server database password to be set as an Ansible fact.
+
+          Solution:
+            Run the complete deployment pipeline:
+              ansible-playbook postgresql-deploy.yml
+
+            OR ensure secrets playbook runs first:
+              ansible-playbook postgresql-deploy.yml --tags postgresql,wire-setup
+
+            OR run secrets playbook manually:
+              ansible-playbook postgresql-playbooks/postgresql-secrets.yml
+              ansible-playbook postgresql-playbooks/postgresql-wire-setup.yml
+
+          The postgresql-secrets.yml playbook fetches/creates passwords from Kubernetes
+          and sets them as Ansible facts (wire_pass) for use by this playbook.
+        success_msg: "✅ Prerequisites validated: wire_pass is available"
+      run_once: true
 
     - name: Check if PostgreSQL database exists
       ansible.builtin.shell: |
