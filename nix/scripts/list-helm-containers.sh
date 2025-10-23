@@ -11,6 +11,12 @@ VALUES_DIR=""
 HELM_IMAGE_TREE_FILE=""
 VALUES_TYPE=""
 
+# Extract images using yq-go (v4+) syntax
+# Note: This requires yq-go to be in PATH (see default.nix)
+extract_images() {
+  yq eval '.. | select(has("image")) | .image' "$1" 2>/dev/null || true
+}
+
 # Parse the arguments
 for arg in "$@"
 do
@@ -96,12 +102,24 @@ while IFS= read -r chart; do
     secrets_file="${VALUES_DIR}/$(basename "${chart}")/demo-secrets.example.yaml"
   fi
 
-  raw_images=$(helm template "${chart}" \
+  # Separate helm stderr from stdout to avoid yq parsing errors
+  # Save helm output to temp file to capture exit code
+  temp_helm_output=$(mktemp)
+  helm template "${chart}" \
     $( [[ -n "$values_file" ]] && echo "-f $values_file" ) \
     $( [[ -n "$secrets_file" ]] && echo "-f $secrets_file" ) \
-    2>&1 | yq -r '..|.image?' | grep -v "^null$" | grep -v "^---$" | grep -v "^$" || true)
+    > "$temp_helm_output" 2>&1
 
   helm_exit_code=$?
+
+  # Extract images using version-appropriate yq syntax
+  if [[ $helm_exit_code -eq 0 ]]; then
+    raw_images=$(extract_images "$temp_helm_output" | grep -v "^null$" | grep -v "^---$" | grep -v "^$" || true)
+  else
+    raw_images=""
+  fi
+
+  rm -f "$temp_helm_output"
   set -e  # Re-enable exit on error
 
   if [[ $helm_exit_code -ne 0 ]]; then
