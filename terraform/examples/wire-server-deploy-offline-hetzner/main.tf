@@ -8,12 +8,12 @@ locals {
   ssh_keys            = [hcloud_ssh_key.adminhost.name]
 
   # Location preferences with fallbacks (EU only)
-  preferred_locations = ["nbg1", "fsn1", "hel1"]
+  preferred_locations = ["fsn1", "hel1", "nbg1"]
 
   # Server type preferences with fallbacks (optimized for availability)
   preferred_server_types = {
-    small  = ["cpx21", "cx22", "cx21", "cpx11"] # For cassandra, elasticsearch, minio, postgresql
-    medium = ["cpx31", "cpx41", "cx31", "cx41"] # For adminhost, assethost, kubenode
+    small  = ["cx23", "cx33", "cpx22"] # For cassandra, elasticsearch, minio, postgresql
+    medium = ["cx33", "cx43", "cpx32"] # For adminhost, assethost, kubenode
   }
 }
 

@@ -33,7 +33,7 @@ resource "hcloud_ssh_key" "host" {
 }
 
 resource "hcloud_server" "host" {
-  location    = "nbg1"
+  location    = "fsn1"
   name        = "host-${random_pet.host.id}"
   image       = "ubuntu-24.04"
   ssh_keys    = [hcloud_ssh_key.host.name]
