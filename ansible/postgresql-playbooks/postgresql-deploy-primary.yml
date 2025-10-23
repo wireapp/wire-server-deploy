@@ -130,11 +130,18 @@
           when: repmgr_user_check.stdout.strip() == "0"
           register: create_repmgr_user
 
+        - name: Update repmgr user password (if user already exists)
+          ansible.builtin.shell: |
+            sudo -u postgres psql -c "ALTER USER {{ repmgr_user }} WITH PASSWORD '{{ repmgr_password }}';"
+          when: repmgr_user_check.stdout.strip() != "0"
+          register: update_repmgr_password
+          no_log: true
+
         - name: Display user creation result
           ansible.builtin.debug:
             msg: |
-              repmgr user status: {{ 'CREATED' if repmgr_user_check.stdout.strip() == "0" else 'ALREADY EXISTS' }}
-          when: create_repmgr_user is defined
+              repmgr user status: {{ 'CREATED' if repmgr_user_check.stdout.strip() == "0" else 'ALREADY EXISTS (password updated)' }}
+          when: create_repmgr_user is defined or update_repmgr_password is defined
 
         - name: Check if repmgr database exists
           ansible.builtin.shell: |

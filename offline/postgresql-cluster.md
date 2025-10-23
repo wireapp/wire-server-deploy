@@ -127,17 +127,37 @@ Based on the PostgreSQL configuration template, the deployment is optimized for 
 
 ### 🔄 Self-Healing Capabilities
 
-| Scenario | Detection | Recovery Time | Data Loss |
-|----------|-----------|---------------|-----------|
-| Primary Failure | 25-60 seconds | < 30 seconds | None |
-| Network Partition | 30-120 seconds | Automatic | None |
-| Node Recovery | Immediate | < 2 minutes | None |
+| Scenario | Detection Time | Promotion/Recovery Time | Total Time | Data Loss |
+|----------|----------------|------------------------|------------|-----------|
+| Primary Failure | 30-40 seconds | 10-20 seconds | **40-60 seconds** | None |
+| Network Partition | 30-120 seconds | Automatic | Varies | None |
+| Node Rejoin | Immediate | 15-30 seconds (rejoin) + WAL catch-up | **< 2 minutes*** | None |
 
-**Primary Failure**: repmgrd monitors connectivity (2s intervals), confirms failure after 5 attempts (~10s), validates quorum (≥2 nodes for 3+ clusters), selects best replica by priority/lag, promotes automatically with zero data loss.
+\* WAL catch-up time depends on how long the node was down. For short outages (< 5 min), typically < 2 minutes. For longer outages, may require full basebackup if WAL segments were recycled (see `wal_keep_size = 2GB` configuration).
 
-**Network Partition**: 30s timer triggers cross-node verification, isolates conflicting primaries by masking/stopping services, auto-recovers when network restores with timeline synchronization if needed.
+**Primary Failure Details**:
+- **Detection**: repmgrd monitors connectivity every 2s
+- **Failure confirmation**: 6 reconnection attempts × 5s = 30s
+- **Total detection time**: ~32-40s (2s monitoring + 30s reconnection attempts)
+- **Promotion process**: Validates quorum (≥2 nodes visible), checks WAL lag, selects best replica by priority
+- **Promotion time**: ~10-20 seconds
+- **Total failover time**: ~40-60 seconds from primary failure to new primary accepting writes
 
-**Node Recovery**: Auto-starts in standby mode, connects to current primary, uses pg_rewind for timeline divergence, registers with repmgr, catches up via WAL streaming within 2 minutes.
+**Network Partition Details**:
+- **Detection**: 30s systemd timer triggers split-brain detection
+- **Protection**: Cross-node verification identifies conflicting primaries
+- **Isolation**: Masks and stops PostgreSQL service on isolated primary
+- **Auto-recovery**: When network restores, fence scripts unmask services during successful rejoin
+- **Timeline sync**: Uses pg_rewind if timelines diverged during partition
+
+**Node Recovery Details**:
+- **Rejoin process**: 15-30 seconds to execute `repmgr node rejoin` command
+- **WAL streaming**: Begins immediately after rejoin
+- **Catch-up time**:
+  - Short outage (< 5 min): Typically < 2 minutes via WAL streaming
+  - Medium outage (5-30 min): 2-10 minutes depending on write load
+  - Long outage (> 30 min): If WAL segments recycled, requires full clone (see Manual Standby Clone section)
+- **Auto-start**: PostgreSQL starts in standby mode automatically via systemd
 
 ### 📊 Monitoring & Event System
 
@@ -371,15 +391,116 @@ repmgr_node_config:
 
 ## Node Recovery Operations
 
-### 🔄 Standard Node Rejoin
+### 🔄 Standard Node Rejoin (Existing Node Recovery)
+
+When a node that was previously part of the cluster needs to rejoin:
 
 ```bash
-# Compatible data rejoin
+# Compatible data rejoin (when timelines match)
 sudo -u postgres repmgr -f /etc/repmgr/17-main/repmgr.conf node rejoin -d repmgr -h <primary-ip> -U repmgr --verbose
 
-# Timeline divergence rejoin
+# Timeline divergence rejoin (when node data diverged from primary)
 sudo -u postgres repmgr -f /etc/repmgr/17-main/repmgr.conf node rejoin -d repmgr -h <primary-ip> -U repmgr --force-rewind --verbose
 ```
+
+**When to use each**:
+- **Without `--force-rewind`**: Node was shut down cleanly, no timeline divergence
+- **With `--force-rewind`**: Node was promoted/isolated, or data diverged from current primary
+
+### 🆕 Manual Standby Clone and Registration (New Node Setup)
+
+When you need to manually clone and register a standby from scratch (corrupted data, new node, or complete rebuild):
+
+**Step 1: Prepare the Node**
+```bash
+# Stop services if running
+sudo systemctl stop repmgrd@17-main
+sudo systemctl stop detect-rogue-primary.timer
+
+# Unmask and stop PostgreSQL (in case it was masked by split-brain detection)
+sudo systemctl unmask postgresql@17-main
+sudo systemctl stop postgresql@17-main
+
+# Remove existing data directory
+sudo rm -rf /var/lib/postgresql/17/main/*
+
+# Ensure clean directory with correct permissions
+sudo mkdir -p /var/lib/postgresql/17/main
+sudo chown -R postgres:postgres /var/lib/postgresql/17/main
+sudo chmod 700 /var/lib/postgresql/17/main
+```
+
+**Step 2: Clone from Primary**
+```bash
+# Clone replica data from primary
+sudo -u postgres repmgr -h <primary-ip> -U repmgr -d repmgr \
+  -f /etc/repmgr/17-main/repmgr.conf \
+  standby clone --force
+
+# Expected output:
+# INFO: connecting to source node
+# NOTICE: standby clone (using pg_basebackup) complete
+# NOTICE: you can now start your PostgreSQL server
+```
+
+**Step 3: Start PostgreSQL**
+```bash
+# Start PostgreSQL service
+sudo systemctl start postgresql@17-main
+
+# Verify it's running in standby mode
+sudo -u postgres psql -c "SELECT pg_is_in_recovery();"
+# Should return: t (true)
+```
+
+**Step 4: Register Standby with Cluster**
+```bash
+# Register the standby with repmgr
+sudo -u postgres repmgr -f /etc/repmgr/17-main/repmgr.conf \
+  standby register --force
+
+# Expected output:
+# INFO: connecting to local node "postgresql2" (ID: 2)
+# INFO: connecting to primary database
+# INFO: standby registration complete
+# NOTICE: standby node "postgresql2" (ID: 2) successfully registered
+```
+
+**Step 5: Start repmgrd and Monitoring**
+```bash
+# Start repmgr daemon
+sudo systemctl start repmgrd@17-main
+
+# Start split-brain detection
+sudo systemctl start detect-rogue-primary.timer
+
+# Verify services are running
+sudo systemctl status postgresql@17-main repmgrd@17-main detect-rogue-primary.timer
+```
+
+**Step 6: Verify Cluster Status**
+```bash
+# Check cluster status
+sudo -u postgres repmgr -f /etc/repmgr/17-main/repmgr.conf cluster show
+
+# Expected output:
+#  ID | Name         | Role    | Status    | Upstream     | Priority
+# ----+--------------+---------+-----------+--------------+----------
+#  1  | postgresql1  | primary | * running |              | 150
+#  2  | postgresql2  | standby |   running | postgresql1  | 100
+#  3  | postgresql3  | standby |   running | postgresql1  | 50
+
+# Verify replication on primary
+sudo -u postgres psql -c "SELECT application_name, client_addr, state FROM pg_stat_replication;"
+```
+
+**Common Issues**:
+- **Authentication fails**: Check repmgr password matches K8s secret
+- **Clone hangs**: Verify network connectivity and pg_hba.conf allows replication
+- **Registration fails**: Ensure primary is accessible and repmgr database exists
+- **Service won't start**: Check PostgreSQL logs: `sudo journalctl -u postgresql@17-main -n 50`
+
+**⏱️ Expected Time**: 5-15 minutes (depends on database size)
 
 ### 🚨 Emergency Recovery
 
@@ -401,7 +522,8 @@ sudo -u postgres /usr/lib/postgresql/17/bin/pg_controldata /var/lib/postgresql/1
 **Step 2: Start the Most Recent Primary**
 Choose the node with the highest LSN/most recent checkpoint:
 ```bash
-# Start PostgreSQL service on the chosen node
+# Unmask and start PostgreSQL service on the chosen node
+sudo systemctl unmask postgresql@17-main
 sudo systemctl start postgresql@17-main
 
 # Register as new primary (removes old cluster metadata)
@@ -415,7 +537,8 @@ sudo systemctl start detect-rogue-primary.timer
 **Step 3: Rejoin Other Nodes as Standby**
 For each remaining node:
 ```bash
-# Start PostgreSQL service
+# Unmask and start PostgreSQL service
+sudo systemctl unmask postgresql@17-main
 sudo systemctl start postgresql@17-main
 
 # Force rejoin as standby (handles timeline divergence)
@@ -460,30 +583,91 @@ sudo systemctl status postgresql@17-main repmgrd@17-main detect-rogue-primary.ti
 
 **Behavior During OS Upgrades**: PostgreSQL HA cluster handles OS-level maintenance (firmware updates, kernel upgrades, reboots) gracefully with automatic failover and recovery.
 
+#### **Understanding Maintenance Types**
+
+**Major OS Updates** (dist-upgrade, kernel upgrades, major version changes):
+- **Characteristics**: Requires significant downtime, may need manual intervention
+- **Why disable repmgrd**: Prevents automatic failover during planned maintenance, avoiding race conditions between manual operations and automatic promotion
+- **Why disable split-brain detection**: Prevents false positives during extended maintenance windows where services are intentionally down
+- **Manual control**: Ensures you control the upgrade sequence (replicas first, primary last)
+
+**Routine Reboots** (security patches, minor updates, hardware maintenance):
+- **Characteristics**: Quick restart (< 5 minutes), services auto-start
+- **Automatic handling**: repmgrd and split-brain detection continue running normally
+- **Failover behavior**: If primary reboots, automatic failover occurs; node rejoins as standby after restart
+
 #### **Planned Maintenance (Single Node)**
+
+**For Major OS Updates** (dist-upgrade, kernel change):
+
+1. **Pre-Maintenance**:
+   ```bash
+   # Disable automatic failover and split-brain detection
+   sudo systemctl stop repmgrd@17-main && sudo systemctl disable repmgrd@17-main
+   sudo systemctl stop detect-rogue-primary.timer && sudo systemctl disable detect-rogue-primary.timer
+
+   # Stop PostgreSQL service
+   sudo systemctl mask postgresql@17-main && sudo systemctl stop postgresql@17-main
+   ```
+
+   **Why these steps**:
+   - Disabling repmgrd prevents automatic failover during your planned maintenance
+   - Disabling split-brain detection prevents false split-brain alerts during extended downtime
+   - Masking PostgreSQL prevents accidental auto-start during package upgrades
+
+**For Routine Reboots** (security patches, quick restarts):
+
 1. **Pre-Reboot**:
-   - **For major OS updates**: Disable repmgrd and split-brain detection to prevent conflicts:
-     ```bash
-     sudo systemctl stop repmgrd@17-main && sudo systemctl disable repmgrd@17-main
-     sudo systemctl stop detect-rogue-primary.timer && sudo systemctl disable detect-rogue-primary.timer
-     ```
-   - **For routine reboots**: No manual intervention required, repmgr automatically detects node unavailability
+   - **No manual intervention required**
+   - repmgr automatically detects node unavailability
+   - If replica: Cluster continues with remaining nodes
+   - If primary: Automatic failover promotes best replica (~40-60s)
+2. **During Maintenance**:
+   - Perform OS upgrade (dist-upgrade, kernel update, etc.)
+   - If replica: Cluster operates normally with remaining nodes
+   - If primary: You may manually promote a replica before upgrading primary
+
+3. **Post-Maintenance**:
+   ```bash
+   # Start PostgreSQL service
+   sudo systemctl unmask postgresql@17-main
+   sudo systemctl start postgresql@17-main
+
+   # Wait for PostgreSQL to start
+   sleep 5
+
+   # Manually rejoin as standby
+   sudo -u postgres repmgr -f /etc/repmgr/17-main/repmgr.conf \
+     node rejoin -d repmgr -h <primary-ip> -U repmgr --verbose
+
+   # Re-enable automatic failover and monitoring after successful rejoin
+   sudo systemctl enable repmgrd@17-main && sudo systemctl start repmgrd@17-main
+   sudo systemctl enable detect-rogue-primary.timer && sudo systemctl start detect-rogue-primary.timer
+   ```
+
+4. **Verify Recovery**:
+   ```bash
+   # Check cluster status
+   sudo -u postgres repmgr -f /etc/repmgr/17-main/repmgr.conf cluster show
+
+   # Verify services
+   sudo systemctl status postgresql@17-main repmgrd@17-main detect-rogue-primary.timer
+   ```
+
+**For Routine Reboots** (continuation):
+
 2. **During Reboot**:
-   - If **replica node**: Cluster continues normally with remaining nodes
-   - If **primary node**: Automatic failover occurs (~10-30s), promotes best replica
+   - Node unavailable for ~2-5 minutes
+   - Cluster continues with remaining nodes
+   - Services auto-start on boot (enabled by default)
+
 3. **Post-Reboot**:
-   - **After major OS updates**: Manually rejoin cluster in standby mode:
-     ```bash
-     # Start PostgreSQL service
-     sudo systemctl start postgresql@17-main
-     # Manually rejoin as standby
-     sudo -u postgres repmgr -f /etc/repmgr/17-main/repmgr.conf node rejoin -d repmgr -h <primary-ip> -U repmgr --verbose
-     # Re-enable services after successful rejoin
-     sudo systemctl enable repmgrd@17-main && sudo systemctl start repmgrd@17-main
-     sudo systemctl enable detect-rogue-primary.timer && sudo systemctl start detect-rogue-primary.timer
-     ```
-   - **After routine reboots**: Node automatically rejoins as standby, catches up via WAL streaming
-4. **Service Status**: PostgreSQL and repmgrd services auto-start via systemd (enabled by default for routine maintenance)
+   - Node automatically rejoins as standby
+   - WAL streaming begins immediately
+   - Catches up with primary (typically < 2 minutes)
+   - No manual intervention required
+
+4. **Automatic Recovery**: PostgreSQL and repmgrd services auto-start via systemd
 
 #### **Rolling Upgrades (Multiple Nodes)**
 **Recommended Sequence for Major OS Updates**:
@@ -491,6 +675,7 @@ sudo systemctl status postgresql@17-main repmgrd@17-main detect-rogue-primary.ti
    ```bash
    sudo systemctl stop repmgrd@17-main && sudo systemctl disable repmgrd@17-main
    sudo systemctl stop detect-rogue-primary.timer && sudo systemctl disable detect-rogue-primary.timer
+   sudo systemctl mask postgresql@17-main && sudo systemctl stop postgresql@17-main
    ```
 2. Upgrade replica nodes first (postgresql2, postgresql3)
 3. Manually rejoin each replica as standby after upgrade
