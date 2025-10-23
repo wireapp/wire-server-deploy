@@ -119,7 +119,6 @@ while IFS= read -r chart; do
     raw_images=""
   fi
 
-  rm -f "$temp_helm_output"
   set -e  # Re-enable exit on error
 
   if [[ $helm_exit_code -ne 0 ]]; then
@@ -127,9 +126,13 @@ while IFS= read -r chart; do
     echo "Chart path: $chart" >&2
     echo "Values file: ${values_file:-none}" >&2
     echo "Secrets file: ${secrets_file:-none}" >&2
+    echo "Helm error output:" >&2
+    cat "$temp_helm_output" >&2
     echo "Try running: helm template $chart $([ -n "$values_file" ] && echo "-f $values_file") $([ -n "$secrets_file" ] && echo "-f $secrets_file")" >&2
     raw_images=""
   fi
+
+  rm -f "$temp_helm_output"
 
   # Process extracted images
   if [[ -n "$raw_images" ]]; then

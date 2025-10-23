@@ -29,7 +29,6 @@ PATCH_EXCLUDE_LIST=(
   "fake-aws-s3"
   "fake-aws-sqs"
   "demo-smtp"
-  "inbucket"
 )
 
 echo "Patching bitnami repository references in: $CHARTS_DIR"
@@ -113,7 +112,8 @@ echo "Scanning and patching files..."
 # Process values.yaml files
 while IFS= read -r -d '' file; do
     file_count=$((file_count + 1))
-    patch_file "$file" && rc=$? || rc=$?
+    patch_file "$file"
+    rc=$?
     if [[ $rc -eq 0 ]]; then
         patched_count=$((patched_count + 1))
     elif [[ $rc -eq 2 ]]; then
@@ -124,7 +124,8 @@ done < <(find "$CHARTS_DIR" -name "values.yaml" -print0)
 # Process Chart.yaml files
 while IFS= read -r -d '' file; do
     file_count=$((file_count + 1))
-    patch_file "$file" && rc=$? || rc=$?
+    patch_file "$file"
+    rc=$?
     if [[ $rc -eq 0 ]]; then
         patched_count=$((patched_count + 1))
     elif [[ $rc -eq 2 ]]; then
@@ -135,7 +136,8 @@ done < <(find "$CHARTS_DIR" -name "Chart.yaml" -print0)
 # Process template files (for direct image references)
 while IFS= read -r -d '' file; do
     file_count=$((file_count + 1))
-    patch_file "$file" && rc=$? || rc=$?
+    patch_file "$file"
+    rc=$?
     if [[ $rc -eq 0 ]]; then
         patched_count=$((patched_count + 1))
     elif [[ $rc -eq 2 ]]; then

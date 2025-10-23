@@ -1,2 +1,8 @@
 secrets:
   zrestSecret: ""
+
+# Minimal config to allow helm template to work
+federate:
+  enabled: false
+  dtls:
+    enabled: false
