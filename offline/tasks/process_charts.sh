@@ -52,7 +52,7 @@ done | list-helm-containers VALUES_DIR="${OUTPUT_DIR}"/values HELM_IMAGE_TREE_FI
 # Omit integration test
 # containers (e.g. `quay.io_wire_galley-integration_4.22.0`.)
 sed -i '/-integration/d' "${HELM_IMAGE_TREE_FILE}"
-#cat "${OUTPUT_DIR}"/images | grep -i "bitnami" 
+cat "${OUTPUT_DIR}"/images | grep -i "bitnami" 
 
 grep -vE "$EXCLUDE_PATTERN"  "${OUTPUT_DIR}"/images | create-container-dump  "${OUTPUT_DIR}"/containers-helm
 

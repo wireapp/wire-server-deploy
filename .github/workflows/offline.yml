@@ -63,11 +63,12 @@ jobs:
         env:
           HCLOUD_TOKEN: '${{ secrets.HCLOUD_TOKEN }}'
 
-      - name: Clean up hetzner environment; just in case
-        if: always()
-        run: (cd terraform/examples/wire-server-deploy-offline-hetzner ; terraform init && terraform destroy -auto-approve)
-        env:
-          HCLOUD_TOKEN: '${{ secrets.HCLOUD_TOKEN }}'
+      # remove me after testing
+      #- name: Clean up hetzner environment; just in case
+      #  if: always()
+      #  run: (cd terraform/examples/wire-server-deploy-offline-hetzner ; terraform init && terraform destroy -auto-approve)
+      #  env:
+      #    HCLOUD_TOKEN: '${{ secrets.HCLOUD_TOKEN }}'
 
   # Build container in parallel
   build-container:
@@ -147,11 +148,12 @@ jobs:
         env:
           HCLOUD_TOKEN: '${{ secrets.HCLOUD_TOKEN }}'
 
-      - name: Clean up hetzner wiab environment; just in case
-        if: always()
-        run: (cd terraform/examples/wiab-demo-hetzner ; terraform init && terraform destroy -auto-approve)
-        env:
-          HCLOUD_TOKEN: '${{ secrets.HCLOUD_TOKEN }}'
+      # remove me after testing
+      #- name: Clean up hetzner wiab environment; just in case
+      #  if: always()
+      #  run: (cd terraform/examples/wiab-demo-hetzner ; terraform init && terraform destroy -auto-approve)
+      #  env:
+      #    HCLOUD_TOKEN: '${{ secrets.HCLOUD_TOKEN }}'
 
   # Build min profile
   build-min:
