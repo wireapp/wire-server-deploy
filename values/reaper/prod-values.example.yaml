@@ -1,0 +1,4 @@
+image:
+  registry: docker.io
+  repository: bitnamilegacy/kubectl
+  tag: 1.32.2

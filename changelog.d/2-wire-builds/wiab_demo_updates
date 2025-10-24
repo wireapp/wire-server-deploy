@@ -1,0 +1,2 @@
+Added: add cd_demo.sh to verify the wiab_demo bundle verfication
+Fixed: fix wiab_demo ansible playbooks for tags and user paths
