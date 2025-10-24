@@ -64,7 +64,7 @@ rec {
       skopeo
       sops
       opentofu
-      yq
+      yq-go  # Use yq-go (v4+) explicitly instead of python-yq for consistent YAML processing
       create-container-dump
       list-helm-containers
       mirror-apt-jammy

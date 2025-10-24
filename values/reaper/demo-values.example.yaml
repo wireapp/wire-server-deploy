@@ -1,0 +1,6 @@
+image:
+  registry: docker.io
+  # Override kubectl image to use available version in bitnamilegacy
+  # Using the last available version in 1.32.x series
+  repository: bitnamilegacy/kubectl
+  tag: 1.32.4
