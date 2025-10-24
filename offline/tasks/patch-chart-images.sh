@@ -109,7 +109,7 @@ patch_file() {
 
 echo "Scanning and patching files..."
 
-# Process values.yaml files
+# Process all target files (values.yaml, Chart.yaml, templates/*.yaml)
 while IFS= read -r -d '' file; do
     file_count=$((file_count + 1))
     patch_file "$file" && rc=$? || rc=$?
@@ -118,29 +118,7 @@ while IFS= read -r -d '' file; do
     elif [[ $rc -eq 2 ]]; then
         skipped_count=$((skipped_count + 1))
     fi
-done < <(find "$CHARTS_DIR" -name "values.yaml" -print0)
-
-# Process Chart.yaml files
-while IFS= read -r -d '' file; do
-    file_count=$((file_count + 1))
-    patch_file "$file" && rc=$? || rc=$?
-    if [[ $rc -eq 0 ]]; then
-        patched_count=$((patched_count + 1))
-    elif [[ $rc -eq 2 ]]; then
-        skipped_count=$((skipped_count + 1))
-    fi
-done < <(find "$CHARTS_DIR" -name "Chart.yaml" -print0)
-
-# Process template files (for direct image references)
-while IFS= read -r -d '' file; do
-    file_count=$((file_count + 1))
-    patch_file "$file" && rc=$? || rc=$?
-    if [[ $rc -eq 0 ]]; then
-        patched_count=$((patched_count + 1))
-    elif [[ $rc -eq 2 ]]; then
-        skipped_count=$((skipped_count + 1))
-    fi
-done < <(find "$CHARTS_DIR" -path "*/templates/*.yaml" -print0)
+done < <(find "$CHARTS_DIR" \( -name "values.yaml" -o -name "Chart.yaml" -o -path "*/templates/*.yaml" \) -print0)
 
 echo
 echo "=== Patching Summary ==="
