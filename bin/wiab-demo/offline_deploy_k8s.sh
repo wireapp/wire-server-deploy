@@ -2,7 +2,7 @@
 # shellcheck disable=SC2087
 set -Eeuo pipefail
 
-BASE_DIR="/wire-server-deploy"
+BASE_DIR="${BASE_DIR:-/wire-server-deploy}"
 TARGET_SYSTEM="example.com"
 CERT_MASTER_EMAIL="certmaster@example.com"
 
