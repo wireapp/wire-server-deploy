@@ -122,11 +122,11 @@ if command -v yq &> /dev/null; then
     echo "✓ Using yq for YAML manipulation"
     for yaml_path in "${YAML_PATHS[@]}"; do
         echo "  Updating: $yaml_path"
-        yq -y "$yaml_path = \"$SECRET_VALUE\"" "$YAML_FILE" > "$YAML_FILE.tmp" && mv "$YAML_FILE.tmp" "$YAML_FILE"
+        yq eval "$yaml_path = \"$SECRET_VALUE\"" "$YAML_FILE" > "$YAML_FILE.tmp" && mv "$YAML_FILE.tmp" "$YAML_FILE"
     done
 else
     echo "❌ ERROR: yq is required for this script"
-    echo "   Install yq: https://github.com/kislyuk/yq"
+    echo "   Install yq-go: https://github.com/mikefarah/yq"
     rm "$YAML_FILE.bak"
     exit 1
 fi
@@ -138,7 +138,7 @@ SUCCESS=true
 for yaml_path in "${YAML_PATHS[@]}"; do
     # Use yq to extract the actual value at the specific path
     if command -v yq &> /dev/null; then
-        EXTRACTED_VALUE=$(yq -r "$yaml_path" "$YAML_FILE" 2>/dev/null || echo "")
+        EXTRACTED_VALUE=$(yq eval "$yaml_path" "$YAML_FILE" 2>/dev/null || echo "")
         if [ "$EXTRACTED_VALUE" = "$SECRET_VALUE" ]; then
             echo "  ✓ $yaml_path: synced"
         else
