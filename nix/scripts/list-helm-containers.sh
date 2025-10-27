@@ -102,8 +102,8 @@ while IFS= read -r chart; do
     secrets_file="${VALUES_DIR}/$(basename "${chart}")/demo-secrets.example.yaml"
   fi
 
-  # Separate helm stderr from stdout to avoid yq parsing errors
-  # Save helm output to temp file to capture exit code
+  # Save helm output to temp file to check exit code before parsing
+  # This prevents yq from attempting to parse helm error messages
   temp_helm_output=$(mktemp)
   helm template "${chart}" \
     $( [[ -n "$values_file" ]] && echo "-f $values_file" ) \
