@@ -36,7 +36,7 @@ echo "Excluding following charts from the release: $HELM_CHART_EXCLUDE_LIST"
 wire_build_chart_release () {
 
   wire_build="$1"
-  curl "$wire_build" | jq -r --argjson HELM_CHART_EXCLUDE_LIST "$HELM_CHART_EXCLUDE_LIST" '
+  cat "$wire_build" | jq -r --argjson HELM_CHART_EXCLUDE_LIST "$HELM_CHART_EXCLUDE_LIST" '
   .helmCharts
   | with_entries(select(.key as $k | $HELM_CHART_EXCLUDE_LIST | index($k) | not))
   | to_entries
