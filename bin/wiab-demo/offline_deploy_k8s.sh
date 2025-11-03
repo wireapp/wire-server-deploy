@@ -17,17 +17,17 @@ COTURN_NODE="K8S_COTURN_NODE"
 # keeping it empty to be replaced
 HOST_IP="WIRE_IP"
 
-CHART_URL="https://charts.jetstack.io/charts/cert-manager-v1.13.2.tgz"
+# Creates values.yaml from demo-values.example.yaml and secrets.yaml from demo-secrets.example.yaml
+# This script is for WIAB/demo deployments only
+# Works on all chart directories in $BASE_DIR/values/
+process_charts() {
 
-# it creates the values.yaml from prod-values.example.yaml and secrets.yaml from prod-secrets.example.yaml, it works on the directory $BASE_DIR"/values/ in the bundle
-process_charts() {  
-  
   ENV=$1
 
-  if [ "$ENV" != "prod" ] && [ "$ENV" != "demo" ]; then
-    echo "ENV is neither prod nor demo"
+  if [ "$ENV" != "demo" ]; then
+    echo "Error: This script only supports demo deployments. ENV must be 'demo', got: '$ENV'"
     exit 1
-  fi 
+  fi
 
   for chart_dir in "$BASE_DIR"/values/*/; do
 
@@ -67,7 +67,7 @@ process_values() {
       "$BASE_DIR/values/wire-server/values.yaml" > "$TEMP_DIR/wire-server-values.yaml"
 
   # fixing the turnStatic values
-  yq -i -Y ".brig.turnStatic.v2 = [\"turn:$HOST_IP:3478\", \"turn:$HOST_IP:3478?transport=tcp\"]" "$TEMP_DIR/wire-server-values.yaml"
+  yq eval -i ".brig.turnStatic.v2 = [\"turn:$HOST_IP:3478\", \"turn:$HOST_IP:3478?transport=tcp\"]" "$TEMP_DIR/wire-server-values.yaml"
 
   # Fixing the hosts in webapp team-settings and account-pages charts
   for chart in webapp team-settings account-pages; do
@@ -85,7 +85,7 @@ process_values() {
       "$BASE_DIR/values/ingress-nginx-controller/values.yaml" > "$TEMP_DIR/ingress-nginx-controller-values.yaml"
   if ! grep -q "kubernetes.io/hostname: $NGINX_K8S_NODE" "$TEMP_DIR/ingress-nginx-controller-values.yaml"; then
     echo -e "    nodeSelector:\n      kubernetes.io/hostname: $NGINX_K8S_NODE" >> "$TEMP_DIR/ingress-nginx-controller-values.yaml"
-  fi 
+  fi
 
   # Fixing SFTD hosts and setting the cert-manager to http01
   sed -e "s/webapp.example.com/webapp.$TARGET_SYSTEM/" \
@@ -94,7 +94,7 @@ process_values() {
       "$BASE_DIR/values/sftd/values.yaml" > "$TEMP_DIR/sftd-values.yaml"
 
   # Creating coturn values and secrets
-  ZREST_SECRET=$(yq '.brig.secrets.turn.secret' "$BASE_DIR/values/wire-server/secrets.yaml" | tr -d '"')
+  ZREST_SECRET=$(yq eval '.brig.secrets.turn.secret' "$BASE_DIR/values/wire-server/secrets.yaml" | tr -d '"')
   cat >"$TEMP_DIR/coturn-secrets.yaml"<<EOF
 secrets:
   zrestSecrets:
@@ -163,23 +163,35 @@ deploy_charts() {
       helm_command+=" --values $secrets_file"
     fi
 
+    # handle wire-server to inject PostgreSQL password from databases-ephemeral
+    if [[ "$chart" == "wire-server" ]]; then
+
+      echo "Retrieving PostgreSQL password from databases-ephemeral for wire-server deployment..."
+      if kubectl get secret wire-postgresql-secret &>/dev/null; then
+      # Usage: sync-k8s-secret-to-wire-secrets.sh <secret-name> <secret-key> <yaml-file> <yaml-path's>
+         "$BASE_DIR/bin/sync-k8s-secret-to-wire-secrets.sh" \
+          wire-postgresql-secret password \
+          "$BASE_DIR/values/wire-server/secrets.yaml" \
+          .brig.secrets.pgPassword .galley.secrets.pgPassword
+      else
+        echo "⚠️  Warning: PostgreSQL secret 'wire-postgresql-secret' not found, skipping secret sync"
+        echo "    Make sure databases-ephemeral chart is deployed before wire-server"
+      fi
+    fi
+
     echo "Deploying $chart as $helm_command"
     eval "$helm_command"
   done
 
-  # display running pods post deploying all helm charts
-  kubectl get pods --sort-by=.metadata.creationTimestamp -n cert-manager-ns
+  # display running pods post deploying all helm charts in default namespace
+  kubectl get pods --sort-by=.metadata.creationTimestamp
 }
 
 deploy_cert_manager() {
-  # downloading the chart if not present
-  if [[ ! -d "$BASE_DIR/charts/cert-manager" ]]; then
-    wget -qO- "$CHART_URL" | tar -xz -C "$BASE_DIR/charts"
-  fi
 
   kubectl get namespace cert-manager-ns || kubectl create namespace cert-manager-ns
-  helm upgrade --install -n cert-manager-ns --set 'installCRDs=true' cert-manager  $BASE_DIR/charts/cert-manager
-  
+  helm upgrade --install -n cert-manager-ns cert-manager  $BASE_DIR/charts/cert-manager --values "$BASE_DIR/values/cert-manager/values.yaml"
+
   # display running pods
   kubectl get pods --sort-by=.metadata.creationTimestamp -n cert-manager-ns
 }
@@ -198,17 +210,17 @@ deploy_calling_services() {
 
 # if required, this function can be run manually
 run_manually() {
-# process_charts can process demo or prod values
+# process_charts processes demo values for WIAB deployment
 process_charts "demo"
 process_values
 # deploying cert manager to issue certs, by default letsencrypt-http01 issuer is configured
 deploy_cert_manager
 
 # deploying with external datastores, useful for prod setup
-#deploy_charts cassandra-external elasticsearch-external minio-external fake-aws demo-smtp rabbitmq databases-ephemeral reaper wire-server webapp account-pages team-settings smallstep-accomp ingress-nginx-controller nginx-ingress-services
+#deploy_charts cassandra-external elasticsearch-external minio-external fake-aws smtp rabbitmq databases-ephemeral reaper wire-server webapp account-pages team-settings smallstep-accomp ingress-nginx-controller nginx-ingress-services
 
 # deploying with ephemeral datastores, useful for all k8s setup withou external datastore requirement
-deploy_charts fake-aws demo-smtp rabbitmq databases-ephemeral reaper wire-server webapp account-pages team-settings smallstep-accomp ingress-nginx-controller nginx-ingress-services
+deploy_charts fake-aws smtp rabbitmq databases-ephemeral reaper wire-server webapp account-pages team-settings smallstep-accomp ingress-nginx-controller nginx-ingress-services
 
 # deploying sft and coturn services
 deploy_calling_services

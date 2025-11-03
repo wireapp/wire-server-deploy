@@ -19,16 +19,19 @@ TASKS_DIR="${SCRIPT_DIR}/../tasks"
 #cp $SCRIPT_DIR/../<profile-dir>/output/containers-helm.tar "${OUTPUT_DIR}"/
 # one need to comment the tasks below for which one wants to optimize the build
 
-# Any of the tasks can be skipped by commenting them out 
+# Any of the tasks can be skipped by commenting them out
 # however, mind the dependencies between them and how they are grouped
 
 # Processing helm charts
 # --------------------------
 
 # pulling the charts, charts to be skipped are passed as arguments HELM_CHART_EXCLUDE_LIST
-HELM_CHART_EXCLUDE_LIST="inbucket,wire-server-enterprise,k8ssandra-operator,k8ssandra-test-cluster,elasticsearch-ephemeral,elasticsearch-curator,rabbitmq,demo-smtp,fake-aws,fake-aws-s3,postgresql,keycloakx,openebs,nginx-ingress-controller,kibana,restund,fluent-bit,aws-ingress,databases-ephemeral,redis-cluster,calling-test,cert-manager"
+HELM_CHART_EXCLUDE_LIST="inbucket,wire-server-enterprise,k8ssandra-operator,k8ssandra-test-cluster,elasticsearch-ephemeral,elasticsearch-curator,rabbitmq,smtp,fake-aws,fake-aws-s3,postgresql,keycloakx,openebs,nginx-ingress-controller,kibana,restund,fluent-bit,aws-ingress,databases-ephemeral,redis-cluster,calling-test,cert-manager,kube-prometheus-stack,demo-smtp"
 
 "${TASKS_DIR}"/proc_pull_charts.sh OUTPUT_DIR="${OUTPUT_DIR}" HELM_CHART_EXCLUDE_LIST="${HELM_CHART_EXCLUDE_LIST}"
+
+# pulling the charts from helm-charts repo, charts to be included are passed as arguments HELM_CHART_INCLUDE_LIST
+# "${TASKS_DIR}"/proc_pull_ext_charts.sh OUTPUT_DIR="${OUTPUT_DIR}" HELM_CHART_INCLUDE_LIST="postgresql-external"
 
 # copy local copy of values from root directory to output directory
 cp -r "${ROOT_DIR}"/values "${OUTPUT_DIR}"/
@@ -41,12 +44,12 @@ cp -r "${ROOT_DIR}"/values "${OUTPUT_DIR}"/
 
 # all extra pre chart processing tasks for this profile should come here
 # pre_chart_process_1.sh
-# pre_chart_process_2.sh 
+# pre_chart_process_2.sh
 
 # processing the charts
 # here we also filter the images post processing the helm charts
 # pass the image names to be filtered as arguments as regex #IMAGE_EXCLUDE_LIST='brig|galley'
-"${TASKS_DIR}"/process_charts.sh OUTPUT_DIR="${OUTPUT_DIR}" #IMAGE_EXCLUDE_LIST=""
+"${TASKS_DIR}"/process_charts.sh OUTPUT_DIR="${OUTPUT_DIR}" VALUES_TYPE="demo" #IMAGE_EXCLUDE_LIST=""
 
 # all basic chart pre-processing tasks
 "${TASKS_DIR}"/post_chart_process_0.sh "${OUTPUT_DIR}"

@@ -1,9 +1,0 @@
-# TODO: look deeper into requirements and make a solid, commented values example file
-postgresql:
-  primary:
-    persistence:
-      enabled: false
-  volumePermissions:
-    image:
-      repository: bitnami/os-shell
-      tag: 12-debian-12-r46

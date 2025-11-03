@@ -1,0 +1,281 @@
+---
+- name: Install PostgreSQL packages
+  hosts: postgresql
+  gather_facts: yes
+  vars:
+    postgresql_use_repository: false
+
+    # Structured package definitions
+    system_dependencies:
+      - libssl-dev
+      - libllvm15
+      - sysstat
+      - ssl-cert
+      - libjson-perl
+      - libipc-run-perl
+
+    repository_packages:
+      - postgresql-{{ postgresql_version }}
+      - postgresql-client-{{ postgresql_version }}
+      - python3-psycopg2
+
+    # Package categorization for offline installation
+    postgresql_core_packages: "{{ postgresql_pkgs | rejectattr('name', 'match', '^repmgr') | rejectattr('name', 'contains', '-repmgr') | list }}"
+
+    # Ordered repmgr packages (dependency order matters)
+    repmgr_packages_ordered:
+      - repmgr-common
+      - "postgresql-{{ postgresql_version }}-repmgr"
+      - repmgr
+
+    # Directory structure definitions
+    repmgr_directories:
+      - path: "/etc/repmgr/{{ postgresql_version }}"
+        owner: postgres
+        group: postgres
+        mode: "0755"
+      - path: "/opt/repmgr/scripts"
+        owner: postgres
+        group: postgres
+        mode: "0755"
+      - path: "/var/log/postgresql"
+        owner: postgres
+        group: postgres
+        mode: "0755"
+      - path: "/etc/systemd/system/postgresql@{{ postgresql_version }}-main.service.d"
+        owner: root
+        group: root
+        mode: "0755"
+
+  tasks:
+    # ===== PHASE 1: SYSTEM DEPENDENCIES =====
+
+    - name: Install system dependencies
+      become: yes
+      ansible.builtin.apt:
+        name: "{{ system_dependencies }}"
+        state: present
+        update_cache: yes
+        cache_valid_time: 3600
+
+    # ===== PHASE 2: POSTGRESQL INSTALLATION =====
+
+    - name: Install PostgreSQL from repository
+      become: yes
+      ansible.builtin.apt:
+        name: "{{ repository_packages }}"
+        state: present
+        update_cache: yes
+      when: postgresql_use_repository
+
+    # PostgreSQL offline installation block
+    - name: Install PostgreSQL from offline packages
+      block:
+        - name: Check PostgreSQL package installation status
+          ansible.builtin.shell: |
+            if dpkg-query -W -f='${Package}\t${Status}\n' {{ item.name }} 2>/dev/null | grep -q "install ok installed"; then
+              echo "installed"
+            else
+              echo "not_installed"
+            fi
+          register: pg_package_status
+          loop: "{{ postgresql_core_packages }}"
+          changed_when: false
+          failed_when: false
+
+        - name: Identify PostgreSQL packages to install
+          ansible.builtin.set_fact:
+            pg_packages_to_install: "{{ pg_packages_to_install | default([]) + [item.item] }}"
+          loop: "{{ pg_package_status.results }}"
+          when: item.stdout == "not_installed"
+
+        - name: Display PostgreSQL installation plan
+          ansible.builtin.debug:
+            msg: |
+              PostgreSQL Installation Plan:
+              - Total packages: {{ postgresql_core_packages | length }}
+              - Already installed: {{ (pg_package_status.results | selectattr('stdout', 'equalto', 'installed') | list | length) }}
+              - To install: {{ pg_packages_to_install | default([]) | length }}
+
+        - name: Download PostgreSQL packages
+          ansible.builtin.get_url:
+            url: "{{ item.url }}"
+            dest: "/tmp/{{ item.name }}.deb"
+            checksum: "{{ item.checksum }}"
+            validate_certs: no
+            timeout: 30
+          loop: "{{ pg_packages_to_install | default([]) }}"
+
+        - name: Install PostgreSQL packages
+          become: yes
+          ansible.builtin.apt:
+            deb: "/tmp/{{ item.name }}.deb"
+            state: present
+          loop: "{{ pg_packages_to_install | default([]) }}"
+          register: pg_installation_result
+
+        - name: Clean up PostgreSQL package files
+          ansible.builtin.file:
+            path: "/tmp/{{ item.name }}.deb"
+            state: absent
+          loop: "{{ pg_packages_to_install | default([]) }}"
+
+      when: not postgresql_use_repository
+
+    # ===== PHASE 3: REPMGR INSTALLATION =====
+
+    - name: Install repmgr from repository
+      become: yes
+      ansible.builtin.apt:
+        name:
+          - repmgr-common
+          - "postgresql-{{ postgresql_version }}-repmgr"
+          - repmgr
+        state: present
+      when: postgresql_use_repository
+
+    # repmgr offline installation block
+    - name: Install repmgr from offline packages
+      block:
+        - name: Get repmgr packages in correct order
+          ansible.builtin.set_fact:
+            repmgr_packages_filtered: "{{ repmgr_packages_filtered | default([]) + [item] }}"
+          loop: "{{ postgresql_pkgs }}"
+          when: item.name in repmgr_packages_ordered
+
+        - name: Sort repmgr packages by dependency order
+          ansible.builtin.set_fact:
+            repmgr_packages_sorted: |
+              {%- set sorted_packages = [] -%}
+              {%- for pkg_name in repmgr_packages_ordered -%}
+                {%- for pkg in repmgr_packages_filtered -%}
+                  {%- if pkg.name == pkg_name -%}
+                    {%- set _ = sorted_packages.append(pkg) -%}
+                  {%- endif -%}
+                {%- endfor -%}
+              {%- endfor -%}
+              {{ sorted_packages }}
+
+        - name: Check repmgr package installation status
+          ansible.builtin.shell: |
+            if dpkg-query -W -f='${Package}\t${Status}\n' {{ item.name }} 2>/dev/null | grep -q "install ok installed"; then
+              echo "installed"
+            else
+              echo "not_installed"
+            fi
+          register: repmgr_package_status
+          loop: "{{ repmgr_packages_sorted }}"
+          changed_when: false
+          failed_when: false
+
+        - name: Identify repmgr packages to install
+          ansible.builtin.set_fact:
+            repmgr_packages_to_install: "{{ repmgr_packages_to_install | default([]) + [item.item] }}"
+          loop: "{{ repmgr_package_status.results }}"
+          when: item.stdout == "not_installed"
+
+        - name: Display repmgr installation plan
+          ansible.builtin.debug:
+            msg: |
+              repmgr Installation Plan:
+              - Installation order: {{ repmgr_packages_ordered | join(' → ') }}
+              - To install: {{ repmgr_packages_to_install | default([]) | map(attribute='name') | join(', ') }}
+
+        - name: Download repmgr packages
+          ansible.builtin.get_url:
+            url: "{{ item.url }}"
+            dest: "/tmp/{{ item.name }}.deb"
+            checksum: "{{ item.checksum }}"
+            validate_certs: no
+            timeout: 30
+          loop: "{{ repmgr_packages_to_install | default([]) }}"
+
+        - name: Install repmgr packages in dependency order
+          become: yes
+          ansible.builtin.apt:
+            deb: "/tmp/{{ item.name }}.deb"
+            state: present
+          loop: "{{ repmgr_packages_to_install | default([]) }}"
+          register: repmgr_installation_result
+          failed_when:
+            - repmgr_installation_result.failed
+            - "'already installed' not in (repmgr_installation_result.msg | default(''))"
+
+        - name: Clean up repmgr package files
+          ansible.builtin.file:
+            path: "/tmp/{{ item.name }}.deb"
+            state: absent
+          loop: "{{ repmgr_packages_to_install | default([]) }}"
+
+      when: not postgresql_use_repository
+
+    # ===== PHASE 4: DIRECTORY STRUCTURE AND CLEANUP =====
+
+    - name: Create repmgr directory structure
+      become: yes
+      ansible.builtin.file:
+        path: "{{ item.path }}"
+        state: directory
+        owner: "{{ item.owner }}"
+        group: "{{ item.group }}"
+        mode: "{{ item.mode }}"
+      loop: "{{ repmgr_directories }}"
+
+    - name: Deploy repmgrd systemd service template
+      become: yes
+      ansible.builtin.template:
+        src: ../templates/postgresql/repmgrd_service.j2
+        dest: "/etc/systemd/system/repmgrd@.service"
+        mode: "0644"
+      register: repmgrd_service_deployed
+
+    # ===== PHASE 5: SIMPLIFIED INSTALLATION VERIFICATION =====
+
+    - name: Verify installations
+      block:
+        - name: Check PostgreSQL packages
+          ansible.builtin.shell: |
+            echo "=== PostgreSQL Packages ==="
+            dpkg -l | grep "postgresql-{{ postgresql_version }}" | awk '{print $2 ": " $1}'
+          register: pg_packages
+          changed_when: false
+
+        - name: Check repmgr packages
+          ansible.builtin.shell: |
+            echo "=== repmgr Packages ==="
+            dpkg -l | grep repmgr | awk '{print $2 ": " $1}'
+          register: repmgr_packages
+          changed_when: false
+
+        - name: Check PostgreSQL binaries
+          ansible.builtin.shell: |
+            echo "=== PostgreSQL Binaries ==="
+            ls -la /usr/lib/postgresql/{{ postgresql_version }}/bin/postgres 2>/dev/null && echo "postgres: FOUND" || echo "postgres: MISSING"
+            ls -la /usr/lib/postgresql/{{ postgresql_version }}/bin/psql 2>/dev/null && echo "psql: FOUND" || echo "psql: MISSING"
+          register: pg_binaries
+          changed_when: false
+
+        - name: Check repmgr binary
+          ansible.builtin.shell: |
+            echo "=== repmgr Binary ==="
+            ls -la /usr/bin/repmgr 2>/dev/null && echo "repmgr: FOUND" || echo "repmgr: MISSING"
+          register: repmgr_binary
+          changed_when: false
+
+        - name: Display installation summary
+          ansible.builtin.debug:
+            msg: |
+              ===== INSTALLATION COMPLETE =====
+
+              PostgreSQL Packages:
+              {{ pg_packages.stdout }}
+
+              repmgr Packages:
+              {{ repmgr_packages.stdout }}
+
+              Binaries:
+              {{ pg_binaries.stdout }}
+              {{ repmgr_binary.stdout }}
+
+              Note: Version checks will work after cluster configuration.
+              This is an installation-only playbook; cluster setup comes next.

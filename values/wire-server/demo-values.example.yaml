@@ -27,6 +27,11 @@ brig:
       host: elasticsearch-ephemeral
     rabbitmq:
       host: rabbitmq # name of the rabbitmq service, either `rabbitmq-external` or `rabbitmq`
+    postgresql:
+      host: postgresql # DNS name without protocol
+      port: "5432"
+      user: wire-server
+      dbname: wire-server
     useSES: false
     # Set to false if you want to hand out DynamoDB to store prekeys
     randomPrekeys: true    
@@ -81,7 +86,7 @@ brig:
         deletionUrl: https://account.example.com/d/?key=${key}&code=${code}
         invitationUrl: https://account.example.com/i/${code}
     smtp:
-      host: demo-smtp # change this if you want to use your own SMTP server
+      host: smtp # change this if you want to use your own SMTP server
       port: 25        # change this
       connType: plain # change this. Possible values: plain|ssl|tls
 #    proxy:
@@ -97,7 +102,9 @@ brig:
       # - "turn:<IP of coturn2>:3478"
       # - "turn:<IP of coturn1>:3478?transport=tcp"
       # - "turn:<IP of coturn2>:3478?transport=tcp"
-
+  metrics:
+    serviceMonitor:
+      enabled: false
 
 proxy:
   replicaCount: 1
@@ -110,7 +117,9 @@ proxy:
 #      noProxyList:
 #        - "local.example.com"
 #        - "10.23.0.0/16"
-
+  metrics:
+    serviceMonitor:
+      enabled: false
 cannon:
   replicaCount: 1
 #  image:
@@ -120,6 +129,9 @@ cannon:
   config:
     cassandra: 
       host: cassandra-ephemeral
+  metrics:
+    serviceMonitor:
+      enabled: false
 
 cargohold:
   replicaCount: 1
@@ -140,7 +152,9 @@ cargohold:
 #      noProxyList:
 #        - "local.example.com"
 #        - "10.23.0.0/16"
-
+  metrics:
+    serviceMonitor:
+      enabled: false
 
 galley:
   replicaCount: 1
@@ -151,6 +165,11 @@ galley:
       host: cassandra-ephemeral
     rabbitmq:
       host: rabbitmq # name of the rabbitmq service, either `rabbitmq-external` or `rabbitmq`
+    postgresql:
+      host: postgresql # DNS name without protocol
+      port: "5432"
+      user: wire-server
+      dbname: wire-server
     enableFederation: false # Enable to use federation
     settings:
       # prefix URI used when inviting users to a conversation by link
@@ -171,6 +190,9 @@ galley:
 #      noProxyList:
 #        - "local.example.com"
 #        - "10.23.0.0/16"
+  metrics:
+    serviceMonitor:
+      enabled: false
 
 gundeck:
   replicaCount: 1
@@ -193,6 +215,9 @@ gundeck:
 #      noProxyList:
 #        - "local.example.com"
 #        - "10.23.0.0/16"
+  metrics:
+    serviceMonitor:
+      enabled: false
 
 nginz:
   replicaCount: 1
@@ -204,6 +229,7 @@ nginz:
 #      tag: some-tag (only override if you want a newer/different version than what is in the chart)
   nginx_conf:
     # using prod means mostly that some internal endpoints are not exposed
+    dns_resolver: kube-dns
     env: prod
     external_env_domain: example.com
     deeplink:
@@ -223,7 +249,9 @@ nginz:
   # For demo mode only, we don't need to keep websocket connections open on upgrade:
   drainTimeout: 10
   terminationGracePeriodSeconds: 30
-
+  metrics:
+    serviceMonitor:
+      enabled: false
 spar:
   replicaCount: 1
 #  image:
@@ -248,7 +276,9 @@ spar:
 #      noProxyList:
 #        - "local.example.com"
 #        - "10.23.0.0/16"
-
+  metrics:
+    serviceMonitor:
+      enabled: false
 
 # Only needed when legalhold is enabled
 #legalhold:
@@ -266,3 +296,6 @@ background-worker:
       host: cassandra-ephemeral
     # Enable for federation
     enableFederation: false
+  metrics:
+    serviceMonitor:
+      enabled: false

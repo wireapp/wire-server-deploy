@@ -1,0 +1,43 @@
+# CHANGEME-PROD: This is often a good default when using calico's default CIDR
+#                https://github.com/kubernetes-sigs/kubespray/blob/master/docs/calico.md#optional--define-the-default-pool-cidr
+#                or flannel's https://github.com/kubernetes-sigs/kubespray/blob/master/docs/flannel.md#flannel
+#                If you override those values, etc., then verify that this CIDR still makes sense
+#                For all variables the "egos-tech/smtp" image supports see: https://gitlab.com/egos-tech/smtp and https://github.com/ntppool/charts/tree/main/charts/smtp
+
+service:
+  type: ClusterIP # for outside of cluster access, change to NodePort and add nodePort to service.yaml
+  port: 25
+
+# for DKIM support
+# extraVolumes:
+#   - name: dkim-key
+#     secret:
+#       secretName: dkim-private-key
+
+# extraVolumeMounts:
+#   - name: dkim-key
+#     mountPath: /secrets/dkim.key
+#     subPath: wire-mail.private
+#     readOnly: true
+
+config:
+  RELAY_NETWORKS: ":10.233.0.0/16"
+# for DKIM support
+#   MAILNAME: mail.example.com
+#   DKIM_KEY_PATH: /secrets/dkim.key
+#   DKIM_DOMAIN: "example.com"
+#   DKIM_PRIVATE_KEY: "/etc/exim4/dkim.key"
+
+#   PORT: "25"
+#   NET_DEV: eth0
+#   OTHER_HOSTNAMES: other.example.com
+#   DISABLE_IPV6: 1
+#   BIND_IP: 0.0.0.0
+#   BIND_IP6: ::0
+#   KEY_PATH: /path/to/key.crt
+#   CERTIFICATE_PATH: /path/to/certificate.crt
+#   SMARTHOST_ADDRESS: mail.example.com
+#   SMARTHOST_PORT: "587"
+#   SMARTHOST_USER: exampleuser
+#   SMARTHOST_PASSWORD: secret
+#   SMARTHOST_ALIASES: "*.example.com"

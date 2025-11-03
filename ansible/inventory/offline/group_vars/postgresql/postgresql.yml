@@ -1,0 +1,80 @@
+# PostgreSQL configuration for all PostgreSQL nodes
+postgresql_version: 17
+postgresql_data_dir: /var/lib/postgresql/{{ postgresql_version }}/main
+postgresql_conf_dir: /etc/postgresql/{{ postgresql_version }}/main
+
+# repmgr HA configuration
+repmgr_user: repmgr
+repmgr_password: "securepassword"
+repmgr_database: repmgr
+
+# Node configuration for repmgr
+repmgr_node_config:
+  postgresql1:  # Maps to postgresql_rw group
+    node_id: 1
+    priority: 150
+    role: primary
+  postgresql2:  # Maps to first postgresql_ro
+    node_id: 2
+    priority: 100
+    role: standby
+  postgresql3:  # Maps to second postgresql_ro
+    node_id: 3
+    priority: 50
+    role: standby
+
+# repmgr settings
+# repmgrd monitoring and reconnection configuration
+# Reference: https://repmgr.org/docs/current/repmgrd-basic-configuration.html
+#
+# monitor_interval_secs: Interval in seconds between monitoring checks
+#   - Default: 2 seconds
+#   - Controls how frequently repmgr monitors the primary server status
+#
+# reconnect_attempts: Maximum number of reconnection attempts
+#   - Default: 6 attempts
+#   - Number of times repmgr will attempt to reconnect to a failed primary
+#
+# reconnect_interval: Interval in seconds between reconnection attempts
+#   - Default: 10 seconds
+#   - Time to wait between each reconnection attempt
+monitor_interval_secs: 2
+reconnect_attempts: 6
+reconnect_interval: 5
+
+# Use local packages instead of repository
+postgresql_use_repository: false  # Set to true to use local packages from urls
+
+# PostgreSQL package definitions
+# When updating the packages, update the checksums too in wire-server-deploy/nix/pkgs/wire-binaries.nix
+postgresql_pkgs:
+  - name: libpq5
+    url: "{{ binaries_url }}/libpq5_17.5-1.pgdg22.04+1_amd64.deb"
+    checksum: "sha256:97cec98aa147de384066a027693e5a0864009e2209d170f891cb0d7583735936"
+  - name: postgresql-client-common
+    url: "{{ binaries_url }}/postgresql-client-common_281.pgdg22.04+1_all.deb"
+    checksum: "sha256:c5ee58fea51a19753ac0496d06538c6a194705b11aef27683047e9c4ebff2c5e"
+  - name: postgresql-common-dev
+    url: "{{ binaries_url }}/postgresql-common-dev_281.pgdg22.04+1_all.deb"
+    checksum: "sha256:aa116b0861d149dcba5cbf0cb6af611d9d59bd83178ee9c66c60363ce6cf77d0"
+  - name: postgresql-common
+    url: "{{ binaries_url }}/postgresql-common_281.pgdg22.04+1_all.deb"
+    checksum: "sha256:317308f1eaeb8c3f93fdc3eaa5430290e5bce62b4bba3f78045ff339d6a8e7a1"
+  - name: postgresql-client-17
+    url: "{{ binaries_url }}/postgresql-client-17_17.5-1.pgdg22.04+1_amd64.deb"
+    checksum: "sha256:1b3e96f9f488f234734266a7a212c7c3ac189ba763939a313906e3f2fe5492bb"
+  - name: postgresql-17
+    url: "{{ binaries_url }}/postgresql-17_17.5-1.pgdg22.04+1_amd64.deb"
+    checksum: "sha256:0ba8064cee5800f290485c3974081b399736feca050ad6ae06dd26d2c26cf167"
+  - name: python3-psycopg2
+    url: "{{ binaries_url }}/python3-psycopg2_2.9.10-1.pgdg22.04+1_amd64.deb"
+    checksum: "sha256:cc2f749e3af292a67e012edeb4aa5d284f57f2d66a9a09fe5b81e5ffda73cab4"
+  - name: repmgr-common
+    url: "{{ binaries_url }}/repmgr-common_5.5.0+debpgdg-1.pgdg22.04+1_all.deb"
+    checksum: "sha256:34c660c66a9710fd4f20a66cc932741d3399dbba7e7ae4b67468b3e18f65f61c"
+  - name: repmgr
+    url: "{{ binaries_url }}/repmgr_5.5.0+debpgdg-1.pgdg22.04+1_all.deb"
+    checksum: "sha256:20c280811e758106335df1eb9954b61aa552823d3129f1e38c488fbd5efe0567"
+  - name: postgresql-17-repmgr
+    url: "{{ binaries_url }}/postgresql-17-repmgr_5.5.0+debpgdg-1.pgdg22.04+1_amd64.deb"
+    checksum: "sha256:520d6ed4d540a2bb9174ac8276f8cb686c0268c13cccb89b28a9cdbd12049df8"

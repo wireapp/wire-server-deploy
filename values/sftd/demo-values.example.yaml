@@ -6,3 +6,4 @@ joinCall:
 tls:
   issuerRef:
     name: letsencrypt-http01
+    kind: ClusterIssuer

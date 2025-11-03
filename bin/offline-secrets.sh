@@ -12,11 +12,15 @@ zrest="$(tr -dc A-Za-z0-9 </dev/urandom | head -c 64)"
 minio_access_key="$(tr -dc A-Za-z0-9 </dev/urandom | head -c 20)"
 minio_secret_key="$(tr -dc A-Za-z0-9 </dev/urandom | head -c 42)"
 
+minio_cargohold_access_key="$(tr -dc A-Za-z0-9 </dev/urandom | head -c 20)"
+minio_cargohold_secret_key="$(tr -dc A-Za-z0-9 </dev/urandom | head -c 30)"
+
 zauth="$(sudo docker run $ZAUTH_CONTAINER -m gen-keypair)"
 
 zauth_public=$(echo "$zauth" | awk 'NR==1{ print $2}')
 zauth_private=$(echo "$zauth" | awk 'NR==2{ print $2}')
 
+prometheus_pass="$(tr -dc A-Za-z0-9 </dev/urandom | head -c 16)"
 
 if [[ ! -f $VALUES_DIR/wire-server/secrets.yaml ]]; then
   echo "Writing $VALUES_DIR/wire-server/secrets.yaml"
@@ -45,8 +49,8 @@ brig:
       secret: "dummy"
 cargohold:
   secrets:
-    awsKeyId: "$minio_access_key"
-    awsSecretKey: "$minio_secret_key"
+    awsKeyId: "$minio_cargohold_access_key"
+    awsSecretKey: "$minio_cargohold_secret_key"
     rabbitmq:
       username: wire-server
       password: verysecurepassword
@@ -57,6 +61,7 @@ cannon:
       password: verysecurepassword
 galley:
   secrets:
+    pgPassword: verysecurepassword
     awsKeyId: dummykey
     awsSecretKey: dummysecret
 gundeck:
@@ -92,5 +97,18 @@ if [[ ! -f $ANSIBLE_DIR/inventory/offline/group_vars/all/secrets.yaml ]]; then
   cat << EOT > $ANSIBLE_DIR/inventory/offline/group_vars/all/secrets.yaml
 minio_access_key: "$minio_access_key"
 minio_secret_key: "$minio_secret_key"
+minio_cargohold_access_key: "$minio_cargohold_access_key"
+minio_cargohold_secret_key: "$minio_cargohold_secret_key"
 EOT
+fi
+
+PROM_AUTH_FILE="$VALUES_DIR/kube-prometheus-stack/secrets.yaml"
+if [[ ! -f $PROM_AUTH_FILE ]]; then
+  echo "Writing $PROM_AUTH_FILE"
+  cat <<EOF > $PROM_AUTH_FILE
+prometheus:
+  auth:
+    username: admin
+    password: "${prometheus_pass}"
+EOF
 fi
