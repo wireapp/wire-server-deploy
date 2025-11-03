@@ -1,4 +1,4 @@
-- name: Install Helm charts
+- name: Prepare helm chart values
   hosts: deploy_node
   become: yes
   become_user: "{{ ansible_user }}"
@@ -46,15 +46,11 @@
       backrefs: yes
 
   - name: Prepare values.yaml files for the demo environment
-    shell: source {{ ansible_user_dir }}/wire-server-deploy/bin/wiab-demo/offline_deploy_k8s.sh && process_charts demo
+    shell: source {{ ansible_user_dir }}/wire-server-deploy/bin/wiab-demo/offline_deploy_k8s.sh && BASE_DIR={{ ansible_user_dir }}/wire-server-deploy process_charts demo
     args:
       executable: /bin/bash
-    environment:
-      BASE_DIR: "{{ ansible_user_dir }}/wire-server-deploy"
 
   - name: Process vars for Helm chart values
-    shell: source {{ ansible_user_dir }}/wire-server-deploy/bin/wiab-demo/offline_deploy_k8s.sh && process_values
+    shell: source {{ ansible_user_dir }}/wire-server-deploy/bin/wiab-demo/offline_deploy_k8s.sh && BASE_DIR={{ ansible_user_dir }}/wire-server-deploy process_values
     args:
       executable: /bin/bash
-    environment:
-      BASE_DIR: "{{ ansible_user_dir }}/wire-server-deploy"

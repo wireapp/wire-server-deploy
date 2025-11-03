@@ -176,7 +176,7 @@ deploy_charts() {
 deploy_cert_manager() {
 
   kubectl get namespace cert-manager-ns || kubectl create namespace cert-manager-ns
-  helm upgrade --install -n cert-manager-ns cert-manager  $BASE_DIR/charts/cert-manager --values "$BASE_DIR/values/cert-manager/values.yaml"
+  helm upgrade --install -n cert-manager-ns cert-manager  "$BASE_DIR/charts/cert-manager" --values "$BASE_DIR/values/cert-manager/values.yaml"
 
   # display running pods
   kubectl get pods --sort-by=.metadata.creationTimestamp -n cert-manager-ns
@@ -186,11 +186,11 @@ deploy_calling_services() {
 
   echo "Deploying sftd and coturn"
   # select the node to deploy sftd
-  kubectl annotate node $SFT_NODE wire.com/external-ip="$HOST_IP" --overwrite
-  helm upgrade --install sftd $BASE_DIR/charts/sftd --set "nodeSelector.kubernetes\\.io/hostname=$SFT_NODE" --values  $BASE_DIR/values/sftd/values.yaml
+  kubectl annotate node "$SFT_NODE" wire.com/external-ip="$HOST_IP" --overwrite
+  helm upgrade --install sftd "$BASE_DIR/charts/sftd" --set "nodeSelector.kubernetes\\.io/hostname=$SFT_NODE" --values  "$BASE_DIR/values/sftd/values.yaml"
 
-  kubectl annotate node $COTURN_NODE wire.com/external-ip="$HOST_IP" --overwrite
-  helm upgrade --install coturn ./charts/coturn --set "nodeSelector.kubernetes\\.io/hostname=$COTURN_NODE" --values  $BASE_DIR/values/coturn/values.yaml --values  $BASE_DIR/values/coturn/secrets.yaml
+  kubectl annotate node "$COTURN_NODE" wire.com/external-ip="$HOST_IP" --overwrite
+  helm upgrade --install coturn "$BASE_DIR/charts/coturn" --set "nodeSelector.kubernetes\\.io/hostname=$COTURN_NODE" --values "$BASE_DIR/values/coturn/values.yaml" --values "$BASE_DIR/values/coturn/secrets.yaml"
 }
 
 # if required, this function can be run manually

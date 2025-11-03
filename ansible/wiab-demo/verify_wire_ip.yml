@@ -69,7 +69,12 @@
 
     - name: Display connection test result
       ansible.builtin.debug:
-        msg: "{{ 'Public IP {{ temp_wire_ip }} assigned to the node is reachable' if connection_test.rc == 0 else 'Connection test failed, trying setting wire_ip to avoid testing access' }}"
+        msg: >-
+          {% if connection_test.rc == 0 %}
+          Public IP {{ temp_wire_ip }} assigned to the node is reachable
+          {% else %}
+          Connection test failed, trying setting wire_ip to avoid testing access
+          {% endif %}
 
     - name: Stop TCP service
       ansible.builtin.shell: |
