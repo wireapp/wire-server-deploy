@@ -65,7 +65,7 @@ process_values() {
       "$BASE_DIR/values/wire-server/values.yaml" > "$TEMP_DIR/wire-server-values.yaml"
 
   # fixing the turnStatic values
-  yq -i -Y ".brig.turnStatic.v2 = [\"turn:$HOST_IP:3478\", \"turn:$HOST_IP:3478?transport=tcp\"]" "$TEMP_DIR/wire-server-values.yaml"
+  yq eval -i ".brig.turnStatic.v2 = [\"turn:$HOST_IP:3478\", \"turn:$HOST_IP:3478?transport=tcp\"]" "$TEMP_DIR/wire-server-values.yaml"
 
   # Fixing the hosts in webapp team-settings and account-pages charts
   for chart in webapp team-settings account-pages; do
@@ -92,7 +92,7 @@ process_values() {
       "$BASE_DIR/values/sftd/values.yaml" > "$TEMP_DIR/sftd-values.yaml"
 
   # Creating coturn values and secrets
-  ZREST_SECRET=$(yq '.brig.secrets.turn.secret' "$BASE_DIR/values/wire-server/secrets.yaml" | tr -d '"')
+  ZREST_SECRET=$(yq eval '.brig.secrets.turn.secret' "$BASE_DIR/values/wire-server/secrets.yaml" | tr -d '"')
   cat >"$TEMP_DIR/coturn-secrets.yaml"<<EOF
 secrets:
   zrestSecrets:

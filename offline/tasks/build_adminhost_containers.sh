@@ -40,7 +40,7 @@ INDEX_FILE="${OUTPUT_DIR}/containers-adminhost/index.txt"
 
 if [ "$ZAUTH" = true ]; then
   echo "Building zauth container image in ${OUTPUT_DIR} ..."
-  wire_version=$(helm show chart "${OUTPUT_DIR}"/charts/wire-server | yq -r .version)
+  wire_version=$(helm show chart "${OUTPUT_DIR}"/charts/wire-server | yq eval '.version' -)
   echo "quay.io/wire/zauth:$wire_version" | create-container-dump "${OUTPUT_DIR}"/containers-adminhost
   mv "${OUTPUT_DIR}/containers-adminhost/images.json" "${OUTPUT_DIR}"/versions/containers_adminhost_images.json
 fi
