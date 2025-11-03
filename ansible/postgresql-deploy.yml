@@ -14,10 +14,10 @@
 #   - Recommended: Run full playbook or use skip-tags
 #
 # Usage Examples:
-#   Full deployment:    ansible-playbook postgresql-deploy.yml
-#   Skip cleanup:       ansible-playbook postgresql-deploy.yml --skip-tags cleanup
-#   Skip monitoring:    ansible-playbook postgresql-deploy.yml --skip-tags monitoring
-#   Skip wire-setup:    ansible-playbook postgresql-deploy.yml --skip-tags wire-setup
+#   Full deployment(Cleans up the previous state if any, sets up HA pg cluster, deploy the guard against split-brain issues and sets up wire-server DB):    ansible-playbook -i <inventory_file> postgresql-deploy.yml
+#   Skip cleanup(cleans up the previous repmgr state and re-initializes the database as new state):       ansible-playbook -i <inventory_file> postgresql-deploy.yml --skip-tags cleanup
+#   Skip monitoring(In general this step should not be skipped as it sets up the guard against split-brain issues):    ansible-playbook -i <inventory_file> postgresql-deploy.yml --skip-tags monitoring
+#   Skip wire-setup (sets up the wire-server database and user):    ansible-playbook -i <inventory_file> postgresql-deploy.yml --skip-tags wire-setup
 #
 #
 # To run from a specific point, comment out earlier playbooks.
