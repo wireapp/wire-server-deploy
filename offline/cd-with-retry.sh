@@ -9,6 +9,33 @@ CD_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 TF_DIR="${CD_DIR}/../terraform/examples/wire-server-deploy-offline-hetzner"
 ARTIFACTS_DIR="${CD_DIR}/default-build/output"
 
+# S3 configuration for asset download fallback
+S3_REGION="eu-west-1"
+UPLOAD_NAME="${GITHUB_SHA:-$(git rev-parse HEAD 2>/dev/null || echo 'unknown')}"
+
+# Ensure assets are available (download from S3 if local assets don't exist)
+if [[ ! -f "$ARTIFACTS_DIR/assets.tgz" && -n "${GITHUB_SHA:-}" ]]; then
+    echo "Local assets not found. Downloading from S3..."
+    echo "Using UPLOAD_NAME: $UPLOAD_NAME"
+
+    mkdir -p "$ARTIFACTS_DIR"
+    S3_URL="https://s3-${S3_REGION}.amazonaws.com/public.wire.com/artifacts/wire-server-deploy-static-${UPLOAD_NAME}.tgz"
+
+    if curl -fsSL "$S3_URL" -o "$ARTIFACTS_DIR/assets.tgz"; then
+        echo "Successfully downloaded assets from S3"
+    else
+        echo "ERROR: Failed to download assets from S3: $S3_URL"
+        echo "Please ensure the build artifacts exist or run the full build first"
+        exit 1
+    fi
+elif [[ -f "$ARTIFACTS_DIR/assets.tgz" ]]; then
+    echo "Using existing local assets: $ARTIFACTS_DIR/assets.tgz"
+else
+    echo "ERROR: No assets available and no GITHUB_SHA set for S3 download"
+    echo "Please run the build first or set GITHUB_SHA environment variable"
+    exit 1
+fi
+
 # Retry configuration
 MAX_RETRIES=3
 RETRY_DELAY=30
@@ -20,8 +47,7 @@ function cleanup {
   (cd "$TF_DIR" && terraform destroy -auto-approve)
   echo "Cleanup completed"
 }
-# remove me after testing
-#trap cleanup EXIT
+trap cleanup EXIT
 
 cd "$TF_DIR"
 terraform init
@@ -112,20 +138,18 @@ ssh-add - <<< "$ssh_private_key"
 terraform output -json static-inventory > inventory.json
 yq eval -o=yaml '.' inventory.json > inventory.yml
 
+ssh -oStrictHostKeyChecking=accept-new -oConnectionAttempts=10 "root@$adminhost" tar xzv < "$ARTIFACTS_DIR/assets.tgz"
+
+scp inventory.yml "root@$adminhost":./ansible/inventory/offline/inventory.yml
+
+ssh "root@$adminhost" cat ./ansible/inventory/offline/inventory.yml || true
+
 echo "Running ansible playbook setup_nodes.yml via adminhost ($adminhost)..."
 ansible-playbook -i inventory.yml setup_nodes.yml --private-key "ssh_private_key" \
   -e "ansible_ssh_common_args='-o ProxyCommand=\"ssh -W %h:%p -q root@$adminhost -i ssh_private_key\" -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null'"
 
-# updating the user to demo in inventory for all the hosts
-yq -yi '.all.vars.ansible_user = "demo"' inventory.yml
-
-ssh -oStrictHostKeyChecking=accept-new -oConnectionAttempts=10 "demo@$adminhost" tar xzv < "$ARTIFACTS_DIR/assets.tgz"
-
-scp inventory.yml "demo@$adminhost":./ansible/inventory/offline/inventory.yml
-ssh "demo@$adminhost" cat ./ansible/inventory/offline/inventory.yml || true
-
 # NOTE: Agent is forwarded; so that the adminhost can provision the other boxes
-ssh -A "demo@$adminhost" ./bin/offline-deploy.sh
+ssh -A "root@$adminhost" ./bin/offline-deploy.sh
 
 echo ""
 echo "Wire offline deployment completed successfully!"
