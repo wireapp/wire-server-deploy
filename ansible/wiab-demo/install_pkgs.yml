@@ -7,10 +7,15 @@
     - name: Install dependencies
       apt:
         name:
-          - yq
           - jq
         state: present
         update_cache: yes
+
+    - name: Install yq-go
+      get_url:
+        url: "https://github.com/mikefarah/yq/releases/download/v4.48.1/yq_linux_amd64"
+        dest: /usr/local/bin/yq
+        mode: '0755'
 
     - name: Check if Docker CE is installed with correct version
       shell: apt policy docker-ce | grep "Installed:" | awk '{print $2}'

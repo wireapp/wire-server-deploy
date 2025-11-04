@@ -48,3 +48,9 @@
       {{ docker_cmd_base }} bash -c "source /wire-server-deploy/bin/wiab-demo/offline_deploy_k8s.sh && deploy_calling_services"
     args:
       executable: /bin/bash
+
+  - name: Deploy wire-utility
+    shell: |
+      {{ docker_cmd_base }} bash -c "helm upgrade --install --wait wire-utility /wire-server-deploy/charts/wire-utility -f /wire-server-deploy/values/wire-server/values.yaml -f /wire-server-deploy/values/wire-server/secrets.yaml"
+    args:
+      executable: /bin/bash
