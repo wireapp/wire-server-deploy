@@ -9,7 +9,8 @@ kube-prometheus-stack:
           hosts:
             - prometheus.example.com
     prometheusSpec:
-      affinity: {}
-      storageSpec: {}
+      affinity:
+        nodeAffinity: null
+      storageSpec: null
       retention: 15d
       retentionSize: 45GiB
