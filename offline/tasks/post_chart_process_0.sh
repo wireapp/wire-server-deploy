@@ -35,3 +35,6 @@ echo "Running post-chart process script 0 in dir $OUTPUT_DIR with values type $V
 # Undo changes on wire-server values.yaml
 sed -i -Ee 's/useSharedFederatorSecret: true/useSharedFederatorSecret: false/' "${OUTPUT_DIR}/charts/wire-server/charts/federator/values.yaml"
 sed -i -Ee 's/federation: true/federation: false/' "${OUTPUT_DIR}/values/wire-server/${VALUES_TYPE}-values.example.yaml"
+
+# cleanup wire-utility chart values
+rm -rf "${OUTPUT_DIR}/values/wire-utility/"

@@ -28,7 +28,7 @@ process_charts() {
     echo "Error: This script only supports demo deployments. ENV must be 'demo', got: '$ENV'"
     exit 1
   fi
-
+  timestp=$(date +"%Y%m%d_%H%M%S")
   for chart_dir in "$BASE_DIR"/values/*/; do
 
     if [[ -d "$chart_dir" ]]; then
@@ -38,7 +38,7 @@ process_charts() {
           echo "Used template ${ENV}-values.example.yaml to create $chart_dir/values.yaml"
         else
           echo "$chart_dir/values.yaml already exists, archiving it and creating a new one."
-          mv "$chart_dir/values.yaml" "$chart_dir/values.yaml.bak"
+          mv "$chart_dir/values.yaml" "$chart_dir/values.yaml.bak.$timestp"
           cp "$chart_dir/${ENV}-values.example.yaml" "$chart_dir/values.yaml"
         fi
       fi
@@ -49,7 +49,7 @@ process_charts() {
           echo "Used template ${ENV}-secrets.example.yaml to create $chart_dir/secrets.yaml"
         else
           echo "$chart_dir/secrets.yaml already exists, archiving it and creating a new one."
-          mv "$chart_dir/secrets.yaml" "$chart_dir/secrets.yaml.bak"
+          mv "$chart_dir/secrets.yaml" "$chart_dir/secrets.yaml.bak.$timestp"
           cp "$chart_dir/${ENV}-secrets.example.yaml" "$chart_dir/secrets.yaml"
         fi
       fi
@@ -106,9 +106,6 @@ secrets:
 EOF
 
   cat >"$TEMP_DIR/coturn-values.yaml"<<EOF
-nodeSelector:
-  wire.com/role: coturn
-
 coturnTurnListenIP: "$COTURN_NODE_IP"
 coturnTurnRelayIP: "$COTURN_NODE_IP"
 coturnTurnExternalIP: '$HOST_IP'
@@ -165,22 +162,6 @@ deploy_charts() {
 
     if [[ -n "$secrets_file" ]]; then
       helm_command+=" --values $secrets_file"
-    fi
-
-    # handle wire-server to inject PostgreSQL password from databases-ephemeral
-    if [[ "$chart" == "wire-server" ]]; then
-
-      echo "Retrieving PostgreSQL password from databases-ephemeral for wire-server deployment..."
-      if kubectl get secret wire-postgresql-secret &>/dev/null; then
-      # Usage: sync-k8s-secret-to-wire-secrets.sh <secret-name> <secret-key> <yaml-file> <yaml-path's>
-         "$BASE_DIR/bin/sync-k8s-secret-to-wire-secrets.sh" \
-          wire-postgresql-secret password \
-          "$BASE_DIR/values/wire-server/secrets.yaml" \
-          .brig.secrets.pgPassword .galley.secrets.pgPassword
-      else
-        echo "⚠️  Warning: PostgreSQL secret 'wire-postgresql-secret' not found, skipping secret sync"
-        echo "    Make sure databases-ephemeral chart is deployed before wire-server"
-      fi
     fi
 
     echo "Deploying $chart as $helm_command"
