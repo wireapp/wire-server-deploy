@@ -51,6 +51,6 @@
 
   - name: Deploy wire-utility
     shell: |
-      {{ docker_cmd_base }} bash -c "helm upgrade --install --wait wire-utility /wire-server-deploy/charts/wire-utility -f /wire-server-deploy/values/wire-server/values.yaml -f /wire-server-deploy/values/wire-server/secrets.yaml"
+      {{ docker_cmd_base }} bash -c "helm upgrade --install --wait wire-utility /wire-server-deploy/charts/wire-utility --values /wire-server-deploy/values/wire-server/values.yaml --values /wire-server-deploy/values/wire-server/secrets.yaml --values /wire-server-deploy/values/wire-utility/values.yaml"
     args:
       executable: /bin/bash

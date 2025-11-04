@@ -197,3 +197,15 @@
       loop: "{{ temp_dirs.files }}"
       loop_control:
         label: "{{ item.path }}"
+
+- name: Stop and disable serve-assets systemd service post deployment
+  hosts: deploy_node
+  tags: cleanup
+  become: yes
+  tasks:
+  - name: Stop and disable serve-assets service
+    systemd:
+      name: serve-assets
+      state: stopped
+      enabled: no
+    ignore_errors: yes
