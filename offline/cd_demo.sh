@@ -46,10 +46,10 @@ chmod 600 /home/${TEST_USER}/.ssh/authorized_keys && \
 echo '${TEST_USER} ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers.d/${TEST_USER}"
 
 # update inventory file with host details
-yq -yi ".wiab.hosts.deploy_node.ansible_host = \"$host\"" "${INVENTORY_FILE}"
-yq -yi ".wiab.hosts.deploy_node.ansible_ssh_private_key_file = \"${INVENTORY_DIR}/ssh_private_key\"" "${INVENTORY_FILE}"
-yq -yi ".wiab.vars.artifact_hash = \"$COMMIT_HASH\"" "${INVENTORY_FILE}"
-yq -yi ".wiab.hosts.deploy_node.ansible_user = \"$TEST_USER\"" "${INVENTORY_FILE}"
+yq eval -i ".wiab.hosts.deploy_node.ansible_host = \"$host\"" "${INVENTORY_FILE}"
+yq eval -i ".wiab.hosts.deploy_node.ansible_ssh_private_key_file = \"${INVENTORY_DIR}/ssh_private_key\"" "${INVENTORY_FILE}"
+yq eval -i ".wiab.vars.artifact_hash = \"$COMMIT_HASH\"" "${INVENTORY_FILE}"
+yq eval -i ".wiab.hosts.deploy_node.ansible_user = \"$TEST_USER\"" "${INVENTORY_FILE}"
 cat "${INVENTORY_DIR}/ssh_private_key"
 cat "${INVENTORY_FILE}"
 
