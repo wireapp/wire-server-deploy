@@ -20,8 +20,7 @@ function cleanup {
   (cd "$TF_DIR" && terraform destroy -auto-approve)
   echo "Cleanup completed"
 }
-# remove me after testing
-#trap cleanup EXIT
+trap cleanup EXIT
 
 cd "$TF_DIR"
 terraform init
@@ -112,20 +111,18 @@ ssh-add - <<< "$ssh_private_key"
 terraform output -json static-inventory > inventory.json
 yq eval -o=yaml '.' inventory.json > inventory.yml
 
+ssh -oStrictHostKeyChecking=accept-new -oConnectionAttempts=10 "root@$adminhost" tar xzv < "$ARTIFACTS_DIR/assets.tgz"
+
+scp inventory.yml "root@$adminhost":./ansible/inventory/offline/inventory.yml
+
+ssh "root@$adminhost" cat ./ansible/inventory/offline/inventory.yml || true
+
 echo "Running ansible playbook setup_nodes.yml via adminhost ($adminhost)..."
 ansible-playbook -i inventory.yml setup_nodes.yml --private-key "ssh_private_key" \
   -e "ansible_ssh_common_args='-o ProxyCommand=\"ssh -W %h:%p -q root@$adminhost -i ssh_private_key\" -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null'"
 
-# updating the user to demo in inventory for all the hosts
-yq -yi '.all.vars.ansible_user = "demo"' inventory.yml
-
-ssh -oStrictHostKeyChecking=accept-new -oConnectionAttempts=10 "demo@$adminhost" tar xzv < "$ARTIFACTS_DIR/assets.tgz"
-
-scp inventory.yml "demo@$adminhost":./ansible/inventory/offline/inventory.yml
-ssh "demo@$adminhost" cat ./ansible/inventory/offline/inventory.yml || true
-
 # NOTE: Agent is forwarded; so that the adminhost can provision the other boxes
-ssh -A "demo@$adminhost" ./bin/offline-deploy.sh
+ssh -A "root@$adminhost" ./bin/offline-deploy.sh
 
 echo ""
 echo "Wire offline deployment completed successfully!"

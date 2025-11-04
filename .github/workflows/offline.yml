@@ -79,7 +79,7 @@ jobs:
           terraform_wrapper: false
 
       - name: Deploy offline environment to hetzner
-        run: ./offline/cd.sh
+        run: ./offline/cd-with-retry.sh
         env:
           HCLOUD_TOKEN: '${{ secrets.HCLOUD_TOKEN }}'
 
