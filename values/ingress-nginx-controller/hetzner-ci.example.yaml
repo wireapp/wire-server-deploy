@@ -1,6 +1,7 @@
 # Image digests are not supported by our `wire-server-deploy` machinery.
 # They cannot be correctly dumped to tar files and then be loaded by
 # `containerd`.
+# depcreating to test it in cd.sh
 ingress-nginx:
   controller:
     # There's no loadbalancer support in the Hetzner CI environment
