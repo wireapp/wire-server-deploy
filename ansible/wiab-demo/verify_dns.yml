@@ -11,14 +11,14 @@
       - account.{{ target_domain }}
     test_port: 3478
   tasks:
-  - name: Check DNS A records
+  - name: Query DNS A records
     command: "dig +short {{ item }}"
     register: dns_result
     failed_when: false
     changed_when: false
     with_items: "{{ dns_records }}"
 
-  - name: Check if DNS records exist
+  - name: Verify if records do not exist
     fail:
       msg: "DNS record {{ item.item }} does not exist."
     when: item.stdout | trim == ''

@@ -3,7 +3,7 @@ set -x -euo pipefail
 
 # Default exclude list
 VALUES_DIR=""
-HELM_CHART_EXCLUDE_LIST="inbucket,wire-server-enterprise"
+HELM_VALUES_EXCLUDE_LIST=""
 # Default values type will expect to use prod values
 VALUES_TYPE="prod"
 
@@ -14,8 +14,8 @@ do
     VALUES_DIR=*)
       VALUES_DIR="${arg#*=}"
       ;;
-    HELM_CHART_EXCLUDE_LIST=*)
-      HELM_CHART_EXCLUDE_LIST="${arg#*=}"
+    HELM_VALUES_EXCLUDE_LIST=*)
+      HELM_VALUES_EXCLUDE_LIST="${arg#*=}"
       ;;
     VALUES_TYPE=*)
       VALUES_TYPE="${arg#*=}"
@@ -29,14 +29,14 @@ done
 
 # Check if OUTPUT_DIR is set
 if [[ -z "$VALUES_DIR" ]]; then
-  echo "usage: $0 VALUES_DIR=\"values-dir\" [HELM_CHART_EXCLUDE_LIST=\"chart1,chart2,...\"] [VALUES_TYPE=\"prod|demo\"]" >&2
+  echo "usage: $0 VALUES_DIR=\"values-dir\" [HELM_VALUES_EXCLUDE_LIST=\"chart1,chart2,...\"] [VALUES_TYPE=\"prod|demo\"]" >&2
   exit 1
 fi
 
 echo "Running pre-clean values process script 1 in dir $VALUES_DIR ..."
 
-# Split the HELM_CHART_EXCLUDE_LIST into an array
-IFS=',' read -r -a EXCLUDE_ARRAY <<< "$HELM_CHART_EXCLUDE_LIST"
+# Split the HELM_VALUES_EXCLUDE_LIST into an array
+IFS=',' read -r -a EXCLUDE_ARRAY <<< "$HELM_VALUES_EXCLUDE_LIST"
 
 # Iterate over each chart in the exclude list
 for CHART in "${EXCLUDE_ARRAY[@]}"; do

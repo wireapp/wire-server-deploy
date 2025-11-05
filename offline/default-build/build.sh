@@ -37,6 +37,9 @@ cp -r "${ROOT_DIR}"/values "${OUTPUT_DIR}"/
 # copy local copy of dashboards from root directory to output directory
 cp -r "${ROOT_DIR}"/dashboards "${OUTPUT_DIR}"/
 
+# removing the values/$chart directories in values directory if not required
+"${TASKS_DIR}"/pre_clean_values_0.sh VALUES_DIR="${OUTPUT_DIR}/values" HELM_VALUES_EXCLUDE_LIST="postgresql" VALUES_TYPE="prod"
+
 # all basic chart pre-processing tasks
 "${TASKS_DIR}"/pre_chart_process_0.sh OUTPUT_DIR="${OUTPUT_DIR}"
 
