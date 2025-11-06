@@ -3,6 +3,11 @@ postgresql_version: 17
 postgresql_data_dir: /var/lib/postgresql/{{ postgresql_version }}/main
 postgresql_conf_dir: /etc/postgresql/{{ postgresql_version }}/main
 
+# wire-server database configuration
+wire_dbname: wire-server
+wire_user: wire-server
+wire_namespace: default  # Kubernetes namespace for secret storage
+
 # repmgr HA configuration
 repmgr_user: repmgr
 repmgr_database: repmgr

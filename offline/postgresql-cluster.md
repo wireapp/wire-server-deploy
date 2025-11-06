@@ -183,10 +183,7 @@ postgresql3 ansible_host=192.168.122.206
 
 [postgresql:vars]
 postgresql_network_interface = enp1s0
-postgresql_version = 17
-wire_dbname = wire-server
-wire_user = wire-server
-# Optional: wire_pass = verysecurepassword (if not defined, auto-generated)
+
 
 # All PostgreSQL nodes
 [postgresql]
@@ -204,6 +201,37 @@ postgresql2
 postgresql3
 ```
 
+### Group Variables Configuration
+
+PostgreSQL configuration variables are defined in `ansible/inventory/offline/group_vars/postgresql/postgresql.yml`:
+
+```yaml
+# PostgreSQL configuration for all PostgreSQL nodes
+postgresql_version: 17
+postgresql_data_dir: /var/lib/postgresql/{{ postgresql_version }}/main
+postgresql_conf_dir: /etc/postgresql/{{ postgresql_version }}/main
+
+# wire-server database configuration
+wire_dbname: wire-server
+wire_user: wire-server
+wire_namespace: default  # Kubernetes namespace for secret storage
+
+# repmgr HA configuration
+repmgr_user: repmgr
+repmgr_database: repmgr
+repmgr_secret_name: "repmgr-postgresql-secret"
+repmgr_namespace: "{{ wire_namespace | default('default') }}"
+
+# Kubernetes Secret configuration for wire-server PostgreSQL user
+wire_pg_secret_name: "wire-postgresql-external-secret"
+
+# Note: repmgr_password and wire_pass are NOT defined here
+# They are dynamically set by postgresql-secrets.yml playbook
+# Passwords are fetched from K8s secrets or auto-generated during deployment
+```
+
+**Network-specific variables** (like `postgresql_network_interface`) should be set in your inventory file's `[postgresql:vars]` section if they differ from defaults.
+
 ### Node Groups Explained
 
 | Group | Purpose | Nodes | Role |
@@ -214,13 +242,19 @@ postgresql3
 
 ### Configuration Variables
 
-| Variable | Default | Description | Required |
-|----------|---------|-------------|----------|
-| `postgresql_network_interface` | `enp1s0` | Network interface for cluster communication | No |
-| `postgresql_version` | `17` | PostgreSQL major version | No |
-| `wire_dbname` | `wire-server` | Database name for Wire application | Yes |
-| `wire_user` | `wire-server` | Database user for Wire application | Yes |
-| `wire_pass` | auto-generated | Password (displayed as output of the ansible task) | No |
+All configuration variables are defined in `group_vars/postgresql/postgresql.yml`:
+
+| Variable | Default | Description | Location | Required |
+|----------|---------|-------------|----------|----------|
+| `postgresql_version` | `17` | PostgreSQL major version | group_vars | No |
+| `postgresql_network_interface` | `enp1s0` | Network interface for cluster communication | inventory vars | No |
+| `wire_dbname` | `wire-server` | Database name for Wire application | group_vars | Yes |
+| `wire_user` | `wire-server` | Database user for Wire application | group_vars | Yes |
+| `wire_namespace` | `default` | Kubernetes namespace for secrets | group_vars | Yes |
+| `wire_pass` | auto-generated | Password from K8s secret or auto-generated | dynamic | No |
+| `repmgr_user` | `repmgr` | Repmgr HA user | group_vars | Yes |
+| `repmgr_database` | `repmgr` | Repmgr database name | group_vars | Yes |
+| `repmgr_password` | auto-generated | Password from K8s secret or auto-generated | dynamic | No |
 
 
 ## Installation Process
@@ -288,7 +322,7 @@ The deployment follows this strict order:
 5. replica          → Deploy replica (read-only) nodes
 6. verify           → Verify HA cluster health
 7. wire-setup       → Create wire-server database and user
-8. monitoring       → Deploy cluster monitoring
+8. monitoring       → Deploys a split-brain detection system that automatically fences isolated primary nodes to prevent data corruption.
 ```
 
 **Important**: Steps 3-8 have dependencies and must run in order. The `postgresql` tag ensures all required steps run together.

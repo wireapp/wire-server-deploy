@@ -77,15 +77,13 @@
 # cassandra_network_interface = enp1s0
 # setting either cassandra backup directive to 'True' below requires a valid s3 bucket name as well
 # also, enabling backups will install `awscli` via pip, which requires an internet connection
-# cassandra_backup_enabled = False 
+# cassandra_backup_enabled = False
 # cassandra_incremental_backup_enabled = False
 # cassandra_backup_s3_bucket = <bucketname>
 
 [postgresql:vars]
 postgresql_network_interface = enp1s0
-wire_dbname = wire-server
-wire_user = wire-server
-wire_namespace = default  # Kubernetes namespace for secret storage
+
 
 [elasticsearch:vars]
 # elasticsearch_network_interface = enp1s0
