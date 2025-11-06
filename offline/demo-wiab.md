@@ -19,13 +19,15 @@ For more detailed instructions on each task, please refer to the [Deployment Flo
 - **Permissions**: Sudo access required for installation on remote_node
 - **Deployment requirements**:
   - Clone of [wire-server-repository](https://github.com/wireapp/wire-server-deploy)
-  - The inventory file [../ansible/inventory/demo/host.yml](../ansible/inventory/demo/host.yml) (post cloning the previous repo) to update and verify the following default variables:
-    - ansible_host: aka **deploy_node** i.e. IP address or hostname of VM where Wire will be deployed (Mandatory)
-    - ansible_user: username to access the deploy_node (Mandatory)
-    - ansible_ssh_private_key_file: SSH key file path for username@deploy_node (Mandatory)
-    - target_domain: The domain you want to use for wire installation eg. example.com (Mandatory)
-    - wire_ip: Gateway IP address for Wire, could be same as deploy_node's IP (Optional). If not specified, can be calculated automatically, given below network ACLs are in place. If the deploy_node is a part of a private network (and not reachable of public network), then it has to be explicitly defined.
-    - artifact_hash: Check with wire support about this value.
+  - The inventory file [../ansible/inventory/demo/host.yml](../ansible/inventory/demo/host.yml) (post cloning the previous repo) to update and verify the following default variables (required unless noted optional):
+    - ansible_host: aka **deploy_node** i.e. IP address or hostname of VM where Wire will be deployed (Required)
+    - ansible_user: username to access the deploy_node (Required)
+    - ansible_ssh_private_key_file: SSH key file path for ansible_user@deploy_node (Required)
+    - target_domain: The domain you want to use for wire installation eg. example.com (Required)
+    - wire_ip: Gateway IP address for Wire, could be same as deploy_node's IP (Optional). If not specified, the playbook will attempt to detect it (network ACLs permitting). If your deploy_node is only reachable on a private network, set this explicitly.
+    - artifact_hash: Check with wire support about this value (used by the download step)
+
+Note: the playbook installs a set of system tools during the `install_pkgs` tasks (for example `docker`/`containerd`, `kubectl`, `minikube` when provisioning a cluster, `yq`, `jq`, `ncat`). If you already have these tools on the deploy node you may skip the `install_pkgs` tag when running the playbook.
 - **Network Access Requirements**:
 
 
@@ -136,11 +138,15 @@ The playbook then configures access to the Kubernetes nodes:
 
 - Imports [wire_values.yml](../ansible/wiab-demo/wire_values.yml) to prepare the Helm chart values
 - Runs automatically when using `--tags wire_values`
+ 
+ Note: an admin can choose to skip this step if they already have their own values files and wish to avoid overwriting generated values. Provide your values in the expected `values/` paths and run the next playbook with appropriate tags.
 
 ### 13. Wire Secrets Creation
 
 - Imports [wire_secrets.yml](../ansible/wiab-demo/wire_secrets.yml) to create required secrets for wire helm charts
 - Runs automatically when using `--tags helm_install`
+
+ Note: `wire_secrets` cannot be skipped when performing a fresh `helm_install` because unique credentials are generated for the deployment. The `helm_install` flow expects secrets to exist (the playbook will include the secrets creation when you run the `helm_install` tag).
 
 ### 14. Helm Chart Installation
 
@@ -190,6 +196,41 @@ ansible-playbook -i ansible/inventory/demo/host.yml ansible/wiab-demo/deploy_wia
 - The playbook is designed to be idempotent, with tags for each major section
 - Temporary SSH keys are created and cleaned up automatically
 - The deployment creates a single-node Kubernetes cluster with all Wire services
+
+## Offline bundle and alternative chart-only deployment
+
+The deployment playbook downloads an offline bundle that contains:
+
+- Helm chart tarballs (the charts used by the deployment)
+- Docker/container image archives (used to seed Minikube/node container runtime)
+- Helper scripts such as `bin/wiab-demo/offline_deploy_k8s.sh` which are sourced during the playbook
+
+If you already have a working **Kubernetes cluster** and prefer to use it instead of creating local Minikube nodes, you can skip the Minikube and seeding tasks and run only the Helm chart installation (tags `wire_secrets` and `helm_install`). However, the offline bundle is still required to obtain the charts and the image archive(s) so you can either:
+
+1. Extract charts from the bundle and point Helm to the extracted chart directories, and
+2. Load container images into your cluster from the image archive.
+
+Typical steps to load images manually (examples — adapt for your runtime):
+
+```bash
+# extract the image archive (example filename, check inside the bundle you downloaded)
+tar -xf containers-helm.tar -C /tmp/wiab-images
+
+# For Docker (on the machine that will load images into the cluster):
+for img in /tmp/wiab-images/*.tar*; do docker load -i "$img"; done
+
+# For containerd (ctr) on a node that uses containerd:
+for img in /tmp/wiab-images/*.tar; do sudo ctr -n=k8s.io images import "$img"; done
+```
+
+Note: the playbooks `10. Asset Host Setup` and `11. Container Seeding` can perform these image-extraction and loading steps for you: `setup-offline-sources.yml` will unarchive and host the images via a simple HTTP asset host, and `seed-offline-containerd.yml` will pull/load those images into Minikube nodes. Those playbooks are tuned for Minikube but can be adapted to work with your own cluster by creating an appropriate inventory and adjusting paths.
+
+## kubeconfig path used by Helm in this deployment
+
+Helm commands in the playbook are executed inside a helper Docker container and expect the kubeconfig to be mounted at `{{ ansible_user_dir }}/.kube/config` on the deploy node (the playbook mounts this into the container as `/root/.kube/config`). If you are using your own Kubernetes cluster instead of Minikube, ensure that the kubeconfig for your cluster is available at that path on the deploy node before running the `helm_install` step.
+
+Small note on values and secrets
+- The playbook generates Helm values and secrets files under `{{ ansible_user_dir }}/wire-server-deploy/values/` (for example `values/wire-server/values.yaml` and `values/wire-server/secrets.yaml`). These files can be edited before running the `helm_install` step if you need to change chart values or secrets.
 
 ## Available Tags
 
