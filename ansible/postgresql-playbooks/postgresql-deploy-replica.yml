@@ -84,6 +84,7 @@
         group: postgres
         mode: "{{ item.mode }}"
         backup: yes
+      register: replica_conf_result
       loop:
         - src: ../templates/postgresql/pg_hba.conf.j2
           dest: "{{ postgresql_conf_dir }}/pg_hba.conf"
@@ -303,12 +304,28 @@
               sudo -u postgres repmgr node status
           when: (verify_replica_reg.query_result[0].cnt | int) != 1
 
-        - name: Start repmgrd service
+        - name: Determine if repmgrd needs restart
+          ansible.builtin.set_fact:
+            repmgrd_needs_restart: >-
+              {{
+                replica_conf_result.changed
+              }}
+
+        - name: Restart repmgrd if config changed
+          ansible.builtin.systemd:
+            name: "repmgrd@{{ postgresql_version }}-main"
+            state: restarted
+            enabled: yes
+            daemon_reload: yes
+          when: repmgrd_needs_restart
+
+        - name: Start repmgrd service (if not restarted)
           ansible.builtin.systemd:
             name: "repmgrd@{{ postgresql_version }}-main"
             state: started
             enabled: yes
             daemon_reload: yes
+          when: not repmgrd_needs_restart
 
         - name: Verify repmgrd is running
           ansible.builtin.systemd:

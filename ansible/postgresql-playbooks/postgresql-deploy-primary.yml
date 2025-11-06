@@ -235,13 +235,33 @@
             PGPASSWORD: "{{ repmgr_password }}"
           register: repmgr_connection_test
 
-        - name: Start repmgrd service
+        - name: Determine if repmgrd needs restart
+          ansible.builtin.set_fact:
+            repmgrd_needs_restart: >-
+              {{
+                (update_repmgr_password is defined and update_repmgr_password.changed) or
+                primary_conf_result.changed
+              }}
+
+        - name: Restart repmgrd if password or config changed
+          ansible.builtin.systemd:
+            name: "repmgrd@{{ postgresql_version }}-main"
+            state: restarted
+            enabled: yes
+            daemon_reload: yes
+          when:
+            - repmgr_connection_test is succeeded
+            - repmgrd_needs_restart
+
+        - name: Start repmgrd service (if not restarted)
           ansible.builtin.systemd:
             name: "repmgrd@{{ postgresql_version }}-main"
             state: started
             enabled: yes
             daemon_reload: yes
-          when: repmgr_connection_test is succeeded
+          when:
+            - repmgr_connection_test is succeeded
+            - not repmgrd_needs_restart
 
         - name: Verify repmgrd is running
           ansible.builtin.systemd:
