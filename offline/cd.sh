@@ -8,6 +8,7 @@ set -euo pipefail
 CD_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 TF_DIR="${CD_DIR}/../terraform/examples/wire-server-deploy-offline-hetzner"
 ARTIFACTS_DIR="${CD_DIR}/default-build/output"
+VALUES_DIR="${CD_DIR}/../values"
 
 # Retry configuration
 MAX_RETRIES=3
@@ -112,6 +113,9 @@ terraform output -json static-inventory > inventory.json
 yq eval -o=yaml '.' inventory.json > inventory.yml
 
 ssh -oStrictHostKeyChecking=accept-new -oConnectionAttempts=10 "root@$adminhost" tar xzv < "$ARTIFACTS_DIR/assets.tgz"
+
+# override for ingress-nginx-controller values for hetzner environment
+scp -A "$VALUES_DIR/ingress-nginx-controller/hetzner-ci.example.yaml" "root@$adminhost:./values/ingress-nginx-controller/prod-values.example.yaml"
 
 scp inventory.yml "root@$adminhost":./ansible/inventory/offline/inventory.yml
 

@@ -65,8 +65,8 @@ jobs:
 
       - name: Copy default build assets tarball to S3
         run: |
-          aws s3 cp offline/default-build/output/assets.tgz s3://public.wire.com/artifacts/wire-server-deploy-static-${{ needs.build-default.outputs.upload_name }}.tgz
-          echo "Uploaded to: https://s3-$AWS_REGION.amazonaws.com/public.wire.com/artifacts/wire-server-deploy-static-${{ needs.build-default.outputs.upload_name }}.tgz"
+          aws s3 cp offline/default-build/output/assets.tgz s3://public.wire.com/artifacts/wire-server-deploy-static-${{ steps.upload_name.outputs.UPLOAD_NAME }}.tgz
+          echo "Uploaded to: https://s3-$AWS_REGION.amazonaws.com/public.wire.com/artifacts/wire-server-deploy-static-${{ steps.upload_name.outputs.UPLOAD_NAME }}.tgz"
         env:
           AWS_ACCESS_KEY_ID: '${{ secrets.AWS_ACCESS_KEY_ID }}'
           AWS_SECRET_ACCESS_KEY: '${{ secrets.AWS_SECRET_ACCESS_KEY }}'
@@ -83,7 +83,6 @@ jobs:
         env:
           HCLOUD_TOKEN: '${{ secrets.HCLOUD_TOKEN }}'
 
-      # remove me after testing
       - name: Clean up hetzner environment; just in case
         if: always()
         run: (cd terraform/examples/wire-server-deploy-offline-hetzner ; terraform init && terraform destroy -auto-approve)
@@ -111,7 +110,7 @@ jobs:
           container_image=$(nix-build --no-out-link -A container)
           skopeo copy --retry-times 10 --dest-creds "$DOCKER_LOGIN" \
             docker-archive:"$container_image" \
-            "docker://quay.io/wire/wire-server-deploy:${{ needs.build-default.outputs.upload_name }}"
+            "docker://quay.io/wire/wire-server-deploy:${{ steps.upload_name.outputs.UPLOAD_NAME }}"
         env:
           DOCKER_LOGIN: '${{ secrets.DOCKER_LOGIN }}'
 
@@ -172,7 +171,6 @@ jobs:
         env:
           HCLOUD_TOKEN: '${{ secrets.HCLOUD_TOKEN }}'
 
-      # remove me after testing
       - name: Clean up hetzner wiab environment; just in case
         if: always()
         run: (cd terraform/examples/wiab-demo-hetzner ; terraform init && terraform destroy -auto-approve)
