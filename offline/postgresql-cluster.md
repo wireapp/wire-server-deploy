@@ -443,6 +443,8 @@ sudo -u postgres repmgr -f /etc/repmgr/17-main/repmgr.conf node rejoin -d repmgr
 
 ### 🆕 Manual Standby Clone and Registration (New Node Setup)
 
+Note: You can always run the ansible playbook for a clean HA postgresql cluster setup. It won't remove the existing Postgresql Wire database. It will reset the repmgr to make sure a HA postgresql cluster is available.
+
 When you need to manually clone and register a standby from scratch (corrupted data, new node, or complete rebuild):
 
 **Step 1: Prepare the Node**
@@ -821,6 +823,7 @@ For manual deployments or troubleshooting, use the generic sync script within th
 For manual deployments or troubleshooting, use the generic sync script:
 
 ```bash
+d bash
 # Sync PostgreSQL password from K8s secret to secrets.yaml
 ./bin/sync-k8s-secret-to-wire-secrets.sh \
   wire-postgresql-external-secret \

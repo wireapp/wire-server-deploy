@@ -146,7 +146,7 @@ The following artifacts are provided:
 
 ## Editing the inventory
 
-Copy `ansible/inventory/offline/99-static`  to `ansible/inventory/offline/hosts.ini`, and remove the original. 
+Copy `ansible/inventory/offline/99-static`  to `ansible/inventory/offline/hosts.ini`, and remove the original.
 
 ```
 cp ansible/inventory/offline/99-static ansible/inventory/offline/hosts.ini
@@ -248,7 +248,7 @@ Do this for all of the instances.
 ### Setting up Database network interfaces.
 * Make sure that `assethost` is present in the inventory file with the correct `ansible_host` (and `ip` values if required)
 * Make sure that `cassandra_network_interface` is set to the name of the network interface on which the kubenodes should talk to cassandra and on which the cassandra nodes
-  should communicate among each other. Run `ip addr` on one of the cassandra nodes to determine the network interface names, and which networks they correspond to. In Ubuntu 22.04 for example, interface names are predictable and individualized, eg. `enp41s0`. 
+  should communicate among each other. Run `ip addr` on one of the cassandra nodes to determine the network interface names, and which networks they correspond to. In Ubuntu 22.04 for example, interface names are predictable and individualized, eg. `enp41s0`.
 * Similarly `elasticsearch_network_interface` and `minio_network_interface` should be set to the network interface names you want elasticsearch and minio to communicate with kubernetes with, as well.
 
 
@@ -295,7 +295,7 @@ ansible_user = demo
 cassandra_network_interface = enp1s0
 cassandra_backup_enabled = False
 cassandra_incremental_backup_enabled = False
-# cassandra_backup_s3_bucket = 
+# cassandra_backup_s3_bucket =
 
 [elasticsearch:vars]
 elasticsearch_network_interface = enp1s0
@@ -364,8 +364,8 @@ Minio and coturn services have shared secrets with the `wire-server` helm chart.
 ./bin/offline-secrets.sh
 ```
 
-This should generate two secret files. 
-- `./ansible/inventory/group_vars/all/secrets.yaml` 
+This should generate two secret files.
+- `./ansible/inventory/group_vars/all/secrets.yaml`
 - `values/wire-server/secrets.yaml`
 
 
@@ -554,7 +554,7 @@ sed -i 's/example.com/<your-domain>/g' ./values/wire-server/values.yaml
 ```
 
 #### [Optional] Using Kubernetes managed Cassandra (K8ssandra)
-You can deploy K8ssandra by following these docs - 
+You can deploy K8ssandra by following these docs -
 [offline/k8ssandra_setup.md](./k8ssandra_setup.md)
 
 Once K8ssandra is deployed, change the host address in `values/wire-server/values.yaml` to the K8ssandra service address, i.e.
@@ -562,6 +562,25 @@ Once K8ssandra is deployed, change the host address in `values/wire-server/value
 sed -i 's/cassandra-external/k8ssandra-cluster-datacenter-1-service.database/g' ./values/wire-server/values.yaml
 ```
 
+#### Update postgresql secret
+
+If postgresql is part of the deployment, you need to update the postgresql credential in the `values/wire-server/secrets.yaml` file like following as the secrets are stored in the k8s environment.
+
+```bash
+For manual deployments or troubleshooting, use the generic sync script:
+
+```bash
+d bash
+# Sync PostgreSQL password from K8s secret to secrets.yaml
+./bin/sync-k8s-secret-to-wire-secrets.sh \
+  wire-postgresql-external-secret \
+  password \
+  values/wire-server/secrets.yaml \
+  .brig.secrets.pgPassword \
+  .galley.secrets.pgPassword
+```
+
+Check the details in the [Postgresql Cluster setup documentation](postgresql-cluster.md#manual-password-synchronization)
 
 #### Deploying Wire-Server
 
@@ -851,7 +870,7 @@ d kubectl uncordon kubenode1
 Then run:
 
 ```
-d helm upgrade --install nginx-ingress-services charts/nginx-ingress-services -f values/nginx-ingress-services/values.yaml 
+d helm upgrade --install nginx-ingress-services charts/nginx-ingress-services -f values/nginx-ingress-services/values.yaml
 ```
 
 In order to acquire SSL certificates from letsencrypt, outgoing traffic needs from VMs needs to be enabled temporarily.
@@ -895,7 +914,7 @@ For full docs with details and explanations please see https://github.com/wireap
 First, make sure you have a certificate for `sftd.<yourdomain>`, or you are using letsencrypt certificate.
 for bring-your-own-certificate, this could be the same wildcard or SAN certificate you used at previous steps.
 
-Next, copy `values/sftd/prod-values.example.yaml` to `values/sftd/values.yaml`, and change the contents accordingly. 
+Next, copy `values/sftd/prod-values.example.yaml` to `values/sftd/values.yaml`, and change the contents accordingly.
 
  * If your turn servers can be reached on their public IP by the SFT service, Wire recommends you enable cooperation between turn and SFT. add a line reading `turnDiscoveryEnabled: true` to `values/sftd/values.yaml`.
 
