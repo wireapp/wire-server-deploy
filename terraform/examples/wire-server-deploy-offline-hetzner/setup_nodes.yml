@@ -163,3 +163,43 @@
         content: "nameserver {{ adminhost_ip }}\n"
         dest: /etc/resolv.conf
         mode: '0644'
+
+- name: Add demo user on all nodes
+  hosts: all
+  tasks:
+    - name: Create demo user
+      ansible.builtin.user:
+        name: demo
+        shell: /bin/bash
+        create_home: yes
+        state: present
+
+    - name: Add demo user to sudo group
+      ansible.builtin.user:
+        name: demo
+        groups: sudo
+        append: yes
+
+    - name: Ensure .ssh directory exists for demo user
+      ansible.builtin.file:
+        path: /home/demo/.ssh
+        state: directory
+        owner: demo
+        group: demo
+        mode: '0700'
+
+    - name: Copy root's authorized_keys to demo user
+      ansible.builtin.copy:
+        remote_src: yes
+        src: /root/.ssh/authorized_keys
+        dest: /home/demo/.ssh/authorized_keys
+        owner: demo
+        group: demo
+        mode: '0600'
+
+    - name: Allow demo user to run sudo without password
+      ansible.builtin.lineinfile:
+        path: /etc/sudoers.d/demo
+        line: 'demo ALL=(ALL) NOPASSWD:ALL'
+        create: yes
+        validate: 'visudo -cf %s'
