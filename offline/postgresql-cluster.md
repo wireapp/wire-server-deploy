@@ -9,15 +9,7 @@
 - [Installation Process](#installation-process)
 - [Deployment Commands Reference](#deployment-commands-reference)
 - [Monitoring Checks After Installation](#monitoring-checks-after-installation)
-- [Configuration Options](#confi# Sync PostgreSQL password from K8s secret to secrets.yaml
-./bin/sync-k8s-secret-to-wire-secrets.sh \
-  wire-postgresql-external-secret \
-  password \
-  values/wire-server/secrets.yaml \
-  .brig.secrets.pgPassword \
-  .galley.secrets.pgPassword \
-  .spar.secrets.pgPassword \
-  .gundeck.secrets.pgPasswordon-options)
+- [Configuration Options](#configuration-options)
 - [Node Recovery Operations](#node-recovery-operations)
 - [How It Confirms a Reliable System](#how-it-confirms-a-reliable-system)
 - [Kubernetes Integration](#kubernetes-integration)
@@ -784,65 +776,36 @@ The [`postgresql-wire-setup.yml`](../ansible/postgresql-playbooks/postgresql-wir
 4. ✅ **Creates/updates PostgreSQL user** with the password
 5. ✅ **Stores credentials** in Kubernetes for wire-server to use
 
+If the `wire-postgresql-external-secret` is deleted, re-run the Ansible playbook `(ansible-playbook -i ansible/inventory/offline/hosts.ini ansible/postgresql-deploy.yml)` to recreate it and update the PostgreSQL user password. Then re-sync the password into `values/wire-server/secrets.yaml` as described in [Using Password in Wire-Server Configuration](#using-password-in-wire-server-configuration).
 
-### 📋 Running the Setup Playbook
-
-```bash
-# Run the wire-server database setup
-ansible-playbook ansible/postgresql-playbooks/postgresql-wire-setup.yml \
-  -i ansible/inventory/offline/99-static
-```
 
 ### 🔧 Using Password in Wire-Server Configuration
 
-The deployment pipeline automatically manages PostgreSQL password synchronization between the Kubernetes secret and wire-server configuration.
+Keep the Wire server password in sync with the Kubernetes secret. Choose one of the following:
 
-#### **Automated Password Synchronization (CI/CD Pipeline)**
+#### Automatic (preferred)
+- Orchestrated by the pipeline ([bin/offline-deploy.sh](../bin/offline-deploy.sh)):
+  1. `postgresql-wire-setup.yml` ensures the K8s secret `wire-postgresql-external-secret` exists.
+  2. [`bin/sync-k8s-secret-to-wire-secrets.sh`](../bin/sync-k8s-secret-to-wire-secrets.sh) writes the password into `values/wire-server/secrets.yaml`.
+  3. `offline-helm.sh` deploys using the updated values file.
 
-The CI/CD pipeline ([bin/offline-deploy.sh](../bin/offline-deploy.sh)) automatically handles password synchronization:
-
-1. **PostgreSQL Setup**: `postgresql-wire-setup.yml` creates/retrieves the K8s secret `wire-postgresql-external-secret`
-2. **Password Sync**: `sync-k8s-secret-to-wire-secrets.sh` updates `values/wire-server/secrets.yaml` with the actual password
-3. **Helm Deployment**: `offline-helm.sh` deploys wire-server using the updated `secrets.yaml` file
-
-**Key Script:**
-- [`bin/sync-k8s-secret-to-wire-secrets.sh`](../bin/sync-k8s-secret-to-wire-secrets.sh) - Generic script to synchronize any K8s secret to YAML files
-
-**Benefits:**
-- ✅ No manual password management required
-- ✅ Passwords are automatically generated (32-char random string)
-- ✅ Source of truth is the Kubernetes secret
-- ✅ Automatic backup before password updates
-- ✅ Generic design supports any secret/YAML combination
-
-#### **Manual Password Synchronization**
-
-For manual deployments or troubleshooting, use the generic sync script within the docker container of the adminhost:
+#### Manual sync
+Use the generic sync script to copy the password from the K8s secret into your values file:
 
 ```bash
-For manual deployments or troubleshooting, use the generic sync script:
-
-```bash
-d bash
 # Sync PostgreSQL password from K8s secret to secrets.yaml
 ./bin/sync-k8s-secret-to-wire-secrets.sh \
   wire-postgresql-external-secret \
   password \
   values/wire-server/secrets.yaml \
   .brig.secrets.pgPassword \
-  .galley.secrets.pgPassword
+  .galley.secrets.pgPassword \
+  .spar.secrets.pgPassword \
+  .gundeck.secrets.pgPassword
 ```
 
-This script:
-- Retrieves password from `wire-postgresql-external-secret`
-- Updates multiple YAML paths in one command
-- Creates a backup at `secrets.yaml.bak`
-- Verifies all updates succeeded
-- Works with any Kubernetes secret and YAML file
-
-#### **Alternative: Manual Password Override**
-
-For quick deployments or testing, override passwords during helm installation:
+#### Helm override (optional)
+Skip editing files and pass the password at install/upgrade time:
 
 ```bash
 # Retrieve password from Kubernetes secret
@@ -859,21 +822,12 @@ helm upgrade --install wire-server ./charts/wire-server \
   --set galley.secrets.pgPassword="${PG_PASSWORD}"
 ```
 
-**Note:** For CI/CD deployments, the `sync-k8s-secret-to-wire-secrets.sh` script handles password synchronization automatically.
-
-#### **Password Verification**
-
-Verify password synchronization across all components:
+#### Verify
+Confirm the secret and values are consistent and components can connect:
 
 ```bash
-# Run the validation script
 ./bin/sync-k8s-secret-to-wire-server-values.sh
 ```
-
-This checks:
-- K8s secret `wire-postgresql-external-secret` exists and contains valid password
-- Brig and Galley secrets in Kubernetes match the PostgreSQL password
-- All components can connect to PostgreSQL
 
 ---
 
