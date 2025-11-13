@@ -9,6 +9,33 @@
     current_replica: "{{ ansible_default_ipv4.address | default(ansible_host) }}"
     pg_service_name: "postgresql@{{ postgresql_version }}-main.service"
   tasks:
+    # ===== PREREQUISITE VALIDATION =====
+    - name: Validate required secrets are available
+      ansible.builtin.assert:
+        that:
+          - repmgr_password is defined
+          - repmgr_password | length > 0
+        fail_msg: |
+          ❌ PREREQUISITE FAILED: repmgr_password is not available!
+
+          This playbook requires the repmgr password to be set as an Ansible fact.
+
+          Solution:
+            Run the complete deployment pipeline:
+              ansible-playbook postgresql-deploy.yml
+
+            OR run with the postgresql tag to include secrets:
+              ansible-playbook postgresql-deploy.yml --tags postgresql
+
+            OR run secrets playbook first:
+              ansible-playbook postgresql-playbooks/postgresql-secrets.yml
+              ansible-playbook postgresql-playbooks/postgresql-deploy-replica.yml
+
+          The postgresql-secrets.yml playbook fetches/creates passwords from Kubernetes
+          and sets them as Ansible facts for use by deployment playbooks.
+        success_msg: "✅ Prerequisites validated: repmgr_password is available"
+      run_once: true
+
     # ===== INITIAL STATUS CHECK =====
     - name: Check replica configuration status
       block:
@@ -57,6 +84,7 @@
         group: postgres
         mode: "{{ item.mode }}"
         backup: yes
+      register: replica_conf_result
       loop:
         - src: ../templates/postgresql/pg_hba.conf.j2
           dest: "{{ postgresql_conf_dir }}/pg_hba.conf"
@@ -276,12 +304,28 @@
               sudo -u postgres repmgr node status
           when: (verify_replica_reg.query_result[0].cnt | int) != 1
 
-        - name: Start repmgrd service
+        - name: Determine if repmgrd needs restart
+          ansible.builtin.set_fact:
+            repmgrd_needs_restart: >-
+              {{
+                replica_conf_result.changed
+              }}
+
+        - name: Restart repmgrd if config changed
+          ansible.builtin.systemd:
+            name: "repmgrd@{{ postgresql_version }}-main"
+            state: restarted
+            enabled: yes
+            daemon_reload: yes
+          when: repmgrd_needs_restart
+
+        - name: Start repmgrd service (if not restarted)
           ansible.builtin.systemd:
             name: "repmgrd@{{ postgresql_version }}-main"
             state: started
             enabled: yes
             daemon_reload: yes
+          when: not repmgrd_needs_restart
 
         - name: Verify repmgrd is running
           ansible.builtin.systemd:
