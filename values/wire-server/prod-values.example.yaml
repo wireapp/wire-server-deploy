@@ -163,7 +163,7 @@ galley:
     cassandra:
       host: cassandra-external
     rabbitmq:
-      host: rabbitmq # name of the rabbitmq service, either `rabbitmq-external` or `rabbitmq`
+      host: rabbitmq-external # name of the rabbitmq service, either `rabbitmq-external` or `rabbitmq`
     postgresql:
       host: postgresql-external-rw # DNS name without protocol
       port: "5432"
@@ -197,6 +197,8 @@ gundeck:
 #  image:
 #    tag: some-tag (only override if you want a newer/different version than what is in the chart)
   config:
+    rabbitmq:
+      host: rabbitmq-external
     cassandra:
       host: cassandra-external
     aws:
