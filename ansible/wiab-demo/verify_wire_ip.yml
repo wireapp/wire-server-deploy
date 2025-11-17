@@ -104,3 +104,18 @@
       set_fact:
         wire_ip: "{{ temp_wire_ip }}"
       when: connection_test.rc == 0
+
+  - name: Get the default interface for the default route
+    shell: ip route | awk '/default/ {print $5}' | head -n 1
+    register: default_interface
+    changed_when: false
+
+  - name: Get the IP address of the default interface
+    shell: ip -4 addr show dev {{ default_interface.stdout }} | awk '/inet / {print $2}' | cut -d/ -f1
+    register: default_interface_ip
+    changed_when: false
+
+  - name: set facts for default address and interface
+    set_fact:
+      default_interface: "{{ default_interface.stdout }}"
+      default_interface_ip: "{{ default_interface_ip.stdout }}"

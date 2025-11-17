@@ -1,10 +1,6 @@
 - name: Configure Iptable rules
   hosts: deploy_node
   become: yes
-  vars:
-    iptables_rules_comment: "Wire Iptables Rules"
-    iptables_save_dir: "/home/{{ ansible_user }}/wire-iptables-rules"
-    kube_config_path: "/home/{{ ansible_user }}/.kube/config"
   tasks:
   - name: Ensure iptables directory exists
     file:
@@ -13,6 +9,14 @@
       owner: root
       group: root
       mode: '0755'
+
+  - name: Enable bridge netfilter for iptables
+    sysctl:
+      name: net.bridge.bridge-nf-call-iptables
+      value: "1"
+      state: present
+      sysctl_set: true
+      reload: true
 
   # incase, this pipeline is running again, we try to preserve initial state
   - name: Check if pre_wire IPv4 ruleset file exists
@@ -27,70 +31,29 @@
   - name: Save iptables rules
     shell: iptables-save -f "{{ iptables_save_dir }}"/rules_pre_wire.v4
 
-  - name: Get the default interface for the default route
-    shell: ip route | awk '/default/ {print $5}' | head -n 1
-    register: default_interface
-    changed_when: false
-
-  - name: Get the IP address of the default interface
-    shell: ip -4 addr show dev {{ default_interface.stdout }} | awk '/inet / {print $2}' | cut -d/ -f1
-    register: default_interface_ip
-    changed_when: false
-
-  - name: Get the IP address of the k8s_ingress_controller node
-    shell: |
-      kubectl --kubeconfig="{{ kube_config_path }}"  get node {{ k8s_ingress_controller_node }} -o json | jq -r '.status.addresses[] | select(.type=="InternalIP").address'
-    register: k8s_ingress_controller_ip
-    become: yes
-    become_user: "{{ ansible_user }}"
-    changed_when: false
-
   - name: Configure DNAT rules to send http/https traffic to the k8s ingress controller
     iptables:
       table: nat
       chain: PREROUTING
       protocol: "{{ item.protocol }}"
       jump: DNAT
-      in_interface: "{{ default_interface.stdout }}"
-      destination: "{{ default_interface_ip.stdout }}"
+      in_interface: "{{ default_interface }}"
+      destination: "{{ default_interface_ip }}"
       destination_port: "{{ item.port }}"
-      to_destination: "{{ k8s_ingress_controller_ip.stdout }}:{{ item.to_port }}"
+      to_destination: "{{ k8s_ingress_controller_ip }}:{{ item.to_port }}"
       state: present
       action: insert
       comment: "{{ iptables_rules_comment }}"
     loop: "{{ http_dnat_rules }}"
     loop_control:
-      label: "Setting DNAT rule for port {{ item.port }} -> {{ k8s_ingress_controller_ip.stdout | default('undefined') }}:{{ item.to_port }}"
-
-  - name: Get the {{ minikube_network_name }} Docker network ID
-    shell: |
-      docker network inspect {{ minikube_network_name }} | jq -r '.[0].Id'
-    register: docker_network_id
-    changed_when: false
-
-  - name: Get all interfaces with bridge interfaces
-    shell: ip -o addr show | awk '{print $2}' | grep -i 'br-'
-    register: bridge_interfaces
-    changed_when: false
-
-  - name: Find the matching bridge interface for {{ minikube_network_name }} Docker network
-    shell: |
-      for iface in {{ bridge_interfaces.stdout_lines | join(' ') }}; do
-        iface_id=$(echo "$iface" | cut -d '-' -f2)
-        if echo "{{ docker_network_id.stdout }}" | grep -q "$iface_id"; then
-          echo "$iface"
-          break
-        fi
-      done
-    register: matching_bridge_interface
-    changed_when: false
+      label: "Setting DNAT rule for port {{ item.port }} -> {{ k8s_ingress_controller_ip | default('undefined') }}:{{ item.to_port }}"
     
   - name: Ensure FORWARD rule for traffic from main interface to ingress controller
     iptables:
       table: filter
       chain: FORWARD
-      in_interface: "{{ default_interface.stdout }}"
-      out_interface: "{{ matching_bridge_interface.stdout }}"
+      in_interface: "{{ default_interface }}"
+      out_interface: "{{ matching_bridge_interface }}"
       jump: ACCEPT
       state: present
       action: insert
@@ -100,8 +63,8 @@
     iptables:
       table: filter
       chain: FORWARD
-      in_interface: "{{ matching_bridge_interface.stdout }}"
-      out_interface: "{{ default_interface.stdout }}"
+      in_interface: "{{ matching_bridge_interface }}"
+      out_interface: "{{ default_interface }}"
       jump: ACCEPT
       state: present
       action: insert
@@ -117,15 +80,15 @@
     debug:
       msg: "coturn node: {{ k8s_coturn_node }}, ip: {{ k8s_coturn_node_ip }}"
 
-  - name: Configure DNAT rule to send UDP traffic for coturn to coturn server on k8s node
+  - name: Configure DNAT rule to send UDP calling traffic for coturn/sftd pods on the k8s node
     iptables:
       table: nat
       chain: PREROUTING
       protocol: udp
       jump: DNAT
-      destination: "{{ default_interface_ip.stdout }}"
-      destination_ports: "49152:65535"
-      in_interface: "{{ default_interface.stdout }}"
+      destination: "{{ default_interface_ip }}"
+      destination_ports: "32768:65535"
+      in_interface: "{{ default_interface }}"
       to_destination: "{{ k8s_coturn_node_ip.stdout }}"
       state: present
       action: insert
@@ -137,8 +100,8 @@
       chain: PREROUTING
       protocol: "{{ item.protocol }}"
       jump: DNAT
-      in_interface: "{{ default_interface.stdout }}"
-      destination: "{{ default_interface_ip.stdout }}"
+      in_interface: "{{ default_interface }}"
+      destination: "{{ default_interface_ip }}"
       destination_port: "{{ item.port }}"
       to_destination: "{{ k8s_coturn_node_ip.stdout }}:{{ item.to_port }}"
       state: present

@@ -17,6 +17,9 @@
       k8s_ingress_controller_node: "{{ minikube_profile }}"
       k8s_coturn_node: "{{ minikube_profile }}"
       k8s_sft_node: "{{ minikube_profile }}"
+      kube_config_path: "/home/{{ ansible_user }}/.kube/config"
+      iptables_rules_comment: "Wire Iptables Rules"
+      iptables_save_dir: "/home/{{ ansible_user }}/wire-iptables-rules"
 
 # shouldn't be skipped, it is neccessary to identify the network ingress
 # potentially we can write the information on the node to avoid running it everytime
@@ -43,6 +46,45 @@
 - name: Configure minikube cluster
   import_playbook: ./minikube_cluster.yml
   tags: minikube
+
+- name: Set k8s related ansible inventory
+  hosts: deploy_node
+  become: yes
+  become_user: "{{ ansible_user }}"
+  tasks:
+  - name: Get the IP address of the k8s_ingress_controller node
+    shell: |
+      kubectl --kubeconfig="{{ kube_config_path }}"  get node {{ k8s_ingress_controller_node }} -o json | jq -r '.status.addresses[] | select(.type=="InternalIP").address'
+    register: k8s_ingress_controller_ip
+    changed_when: false
+
+  - name: Get the {{ minikube_network_name }} Docker network ID
+    shell: |
+      docker network inspect {{ minikube_network_name }} | jq -r '.[0].Id'
+    register: docker_network_id
+    changed_when: false
+
+  - name: Get all interfaces with bridge interfaces
+    shell: ip -o addr show | awk '{print $2}' | grep -i 'br-'
+    register: bridge_interfaces
+    changed_when: false
+
+  - name: Find the matching bridge interface for {{ minikube_network_name }} Docker network
+    shell: |
+      for iface in {{ bridge_interfaces.stdout_lines | join(' ') }}; do
+        iface_id=$(echo "$iface" | cut -d '-' -f2)
+        if echo "{{ docker_network_id.stdout }}" | grep -q "$iface_id"; then
+          echo "$iface"
+          break
+        fi
+      done
+    register: matching_bridge_interface
+    changed_when: false
+
+  - name: set facts for k8s ingress controller ip
+    set_fact:
+      k8s_ingress_controller_ip: "{{ k8s_ingress_controller_ip.stdout }}"
+      matching_bridge_interface: "{{ matching_bridge_interface.stdout }}"
 
 - name: Configure Iptables rules
   import_playbook: ./iptables_rules.yml
@@ -170,6 +212,10 @@
 - name: Install Helm charts
   import_playbook: ./helm_install.yml
   tags: helm_install
+
+- name: Enable Cert Manager hairpin Networking
+  import_playbook: ./hairpin_networking.yml
+  tags: cert_manager_networking
 
 # since, the temp_dir are created in a different set of tasks, these directories need to be searched 
 - name: Clean up temporary directories
