@@ -8,33 +8,7 @@ set -euo pipefail
 CD_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 TF_DIR="${CD_DIR}/../terraform/examples/wire-server-deploy-offline-hetzner"
 ARTIFACTS_DIR="${CD_DIR}/default-build/output"
-
-# S3 configuration for asset download fallback
-S3_REGION="eu-west-1"
-UPLOAD_NAME="${GITHUB_SHA:-$(git rev-parse HEAD 2>/dev/null || echo 'unknown')}"
-
-# Ensure assets are available (download from S3 if local assets don't exist)
-if [[ ! -f "$ARTIFACTS_DIR/assets.tgz" && -n "${GITHUB_SHA:-}" ]]; then
-    echo "Local assets not found. Downloading from S3..."
-    echo "Using UPLOAD_NAME: $UPLOAD_NAME"
-
-    mkdir -p "$ARTIFACTS_DIR"
-    S3_URL="https://s3-${S3_REGION}.amazonaws.com/public.wire.com/artifacts/wire-server-deploy-static-${UPLOAD_NAME}.tgz"
-
-    if curl -fsSL "$S3_URL" -o "$ARTIFACTS_DIR/assets.tgz"; then
-        echo "Successfully downloaded assets from S3"
-    else
-        echo "ERROR: Failed to download assets from S3: $S3_URL"
-        echo "Please ensure the build artifacts exist or run the full build first"
-        exit 1
-    fi
-elif [[ -f "$ARTIFACTS_DIR/assets.tgz" ]]; then
-    echo "Using existing local assets: $ARTIFACTS_DIR/assets.tgz"
-else
-    echo "ERROR: No assets available and no GITHUB_SHA set for S3 download"
-    echo "Please run the build first or set GITHUB_SHA environment variable"
-    exit 1
-fi
+VALUES_DIR="${CD_DIR}/../values"
 
 # Retry configuration
 MAX_RETRIES=3
@@ -135,10 +109,14 @@ ssh_private_key=$(terraform output ssh_private_key)
 eval "$(ssh-agent)"
 ssh-add - <<< "$ssh_private_key"
 
+# TO-DO: make changes to test the deployment with demo user in 
 terraform output -json static-inventory > inventory.json
 yq eval -o=yaml '.' inventory.json > inventory.yml
 
 ssh -oStrictHostKeyChecking=accept-new -oConnectionAttempts=10 "root@$adminhost" tar xzv < "$ARTIFACTS_DIR/assets.tgz"
+
+# override for ingress-nginx-controller values for hetzner environment $TF_DIR/setup_nodes.yml
+scp -A "$VALUES_DIR/ingress-nginx-controller/hetzner-ci.example.yaml" "root@$adminhost:./values/ingress-nginx-controller/prod-values.example.yaml"
 
 scp inventory.yml "root@$adminhost":./ansible/inventory/offline/inventory.yml
 
@@ -153,3 +131,4 @@ ssh -A "root@$adminhost" ./bin/offline-deploy.sh
 
 echo ""
 echo "Wire offline deployment completed successfully!"
+cleanup
