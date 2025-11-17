@@ -18,8 +18,8 @@ function cleanup {
   (cd "$TF_DIR" && terraform destroy -auto-approve)
   echo "done"
 }
-# remove me after testing
-#trap cleanup EXIT
+
+trap cleanup EXIT
 
 cd "$TF_DIR"
 terraform init && terraform apply -auto-approve
@@ -55,6 +55,8 @@ cat "${INVENTORY_FILE}"
 
 echo "Running ansible playbook deploy_wiab.yml against node $host"
 # deploying demo-wiab
-ansible-playbook -i "${INVENTORY_FILE}" "${ANSIBLE_DIR}/wiab-demo/deploy_wiab.yml" --skip-tags verify_dns
+ansible-playbook -i "${INVENTORY_FILE}" "${ANSIBLE_DIR}/wiab-demo/deploy_wiab.yml" --skip-tags verify_dns,cert_manager_networking
 # cleaning demo-wiab
 ansible-playbook -i "${INVENTORY_FILE}" "${ANSIBLE_DIR}/wiab-demo/clean_cluster.yml" --tags remove_minikube,remove_artifacts,remove_packages,remove_iptables,remove_ssh
+
+cleanup

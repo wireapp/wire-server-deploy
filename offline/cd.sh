@@ -130,3 +130,4 @@ ssh -A "root@$adminhost" ./bin/offline-deploy.sh
 
 echo ""
 echo "Wire offline deployment completed successfully!"
+cleanup

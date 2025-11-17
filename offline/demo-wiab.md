@@ -42,7 +42,7 @@ Note: the playbook installs a set of system tools during the `install_pkgs` task
 | tcp      | ingress   | 80         | 80       | IPv4       | 0.0.0.0/0  | Allow HTTP traffic                          |
 | tcp      | ingress   | 3478       | 3478     | IPv4       | 0.0.0.0/0  | Allow alternative STUN/TURN traffic over TCP|
 | udp      | ingress   | 3478       | 3478     | IPv4       | Any        | Allow STUN/TURN traffic for Coturn          |
-| udp      | ingress   | 49152      | 65535    | IPv4       | 0.0.0.0/0  | Allow calling traffic for Coturn over UDP   |
+| udp      | ingress   | 32768      | 65535    | IPv4       | 0.0.0.0/0  | Allow calling traffic for Coturn and SFTD over UDP   |
 
 - Note: If outbound traffic is restricted, [Note on port ranges](https://docs.wire.com/latest/understand/notes/port-ranges.html) should be followed.
 
@@ -69,7 +69,7 @@ The deployment process follows these steps as defined in the main playbook:
 The playbook starts by verifying DNS records to ensure proper name resolution:
 - Imports [verify_dns.yml](../ansible/wiab-demo/verify_dns.yml)
 - Can be skipped using `--skip-tags verify_dns`
-- Checks for basic DNS record requirements as explained in the document [How to set up DNS records](https://docs.wire.com/latest/how-to/install/helm.html#how-to-set-up-dns-records) .
+- Checks for basic DNS record requirements as explained in the document [How to set up DNS records](https://docs.wire.com/latest/how-to/install/helm-prod.html#dns-records) .
 
 ### 2. Common Setup Tasks
 
