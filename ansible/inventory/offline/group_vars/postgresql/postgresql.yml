@@ -3,10 +3,25 @@ postgresql_version: 17
 postgresql_data_dir: /var/lib/postgresql/{{ postgresql_version }}/main
 postgresql_conf_dir: /etc/postgresql/{{ postgresql_version }}/main
 
+# wire-server database configuration
+wire_dbname: wire-server
+wire_user: wire-server
+wire_namespace: default  # Kubernetes namespace for secret storage
+
 # repmgr HA configuration
 repmgr_user: repmgr
-repmgr_password: "securepassword"
 repmgr_database: repmgr
+# Note: repmgr_password is NOT defined here - it's dynamically set by postgresql-secrets.yml
+#       The password is fetched from K8s secret or auto-generated during deployment.
+#       To manually pre-create: kubectl create secret generic repmgr-postgresql-secret -n <namespace> --from-literal=password=<your-password>
+
+# Kubernetes Secret configuration for repmgr
+repmgr_secret_name: "repmgr-postgresql-secret"
+repmgr_namespace: "{{ wire_namespace | default('default') }}"
+
+# Kubernetes Secret configuration for wire-server PostgreSQL user
+# This is managed alongside repmgr credentials in postgresql-secrets.yml
+wire_pg_secret_name: "wire-postgresql-external-secret"
 
 # Node configuration for repmgr
 repmgr_node_config:

@@ -9,6 +9,33 @@
     replica_node2: "{{ hostvars[(groups.get('postgresql_ro', []) | last) | default('postgresql3')]['ansible_default_ipv4']['address'] | default(hostvars[(groups.get('postgresql_ro', []) | last) | default('postgresql3')]['ansible_host'] | default((groups.get('postgresql_ro', []) | last) | default('postgresql3'))) }}"
     pg_service_name: "postgresql@{{ postgresql_version }}-main.service"
   tasks:
+    # ===== PREREQUISITE VALIDATION =====
+    - name: Validate required secrets are available
+      ansible.builtin.assert:
+        that:
+          - repmgr_password is defined
+          - repmgr_password | length > 0
+        fail_msg: |
+          ❌ PREREQUISITE FAILED: repmgr_password is not available!
+
+          This playbook requires the repmgr password to be set as an Ansible fact.
+
+          Solution:
+            Run the complete deployment pipeline:
+              ansible-playbook postgresql-deploy.yml
+
+            OR run with the postgresql tag to include secrets:
+              ansible-playbook postgresql-deploy.yml --tags postgresql
+
+            OR run secrets playbook first:
+              ansible-playbook postgresql-playbooks/postgresql-secrets.yml
+              ansible-playbook postgresql-playbooks/postgresql-deploy-primary.yml
+
+          The postgresql-secrets.yml playbook fetches/creates passwords from Kubernetes
+          and sets them as Ansible facts for use by deployment playbooks.
+        success_msg: "✅ Prerequisites validated: repmgr_password is available"
+      run_once: true
+
     - name: Ensure repmgr scripts directory exists
       ansible.builtin.file:
         path: /opt/repmgr/scripts
@@ -103,11 +130,18 @@
           when: repmgr_user_check.stdout.strip() == "0"
           register: create_repmgr_user
 
+        - name: Update repmgr user password (if user already exists)
+          ansible.builtin.shell: |
+            sudo -u postgres psql -c "ALTER USER {{ repmgr_user }} WITH PASSWORD '{{ repmgr_password }}';"
+          when: repmgr_user_check.stdout.strip() != "0"
+          register: update_repmgr_password
+          no_log: true
+
         - name: Display user creation result
           ansible.builtin.debug:
             msg: |
-              repmgr user status: {{ 'CREATED' if repmgr_user_check.stdout.strip() == "0" else 'ALREADY EXISTS' }}
-          when: create_repmgr_user is defined
+              repmgr user status: {{ 'CREATED' if repmgr_user_check.stdout.strip() == "0" else 'ALREADY EXISTS (password updated)' }}
+          when: create_repmgr_user is defined or update_repmgr_password is defined
 
         - name: Check if repmgr database exists
           ansible.builtin.shell: |
@@ -201,13 +235,33 @@
             PGPASSWORD: "{{ repmgr_password }}"
           register: repmgr_connection_test
 
-        - name: Start repmgrd service
+        - name: Determine if repmgrd needs restart
+          ansible.builtin.set_fact:
+            repmgrd_needs_restart: >-
+              {{
+                (update_repmgr_password is defined and update_repmgr_password.changed) or
+                primary_conf_result.changed
+              }}
+
+        - name: Restart repmgrd if password or config changed
+          ansible.builtin.systemd:
+            name: "repmgrd@{{ postgresql_version }}-main"
+            state: restarted
+            enabled: yes
+            daemon_reload: yes
+          when:
+            - repmgr_connection_test is succeeded
+            - repmgrd_needs_restart
+
+        - name: Start repmgrd service (if not restarted)
           ansible.builtin.systemd:
             name: "repmgrd@{{ postgresql_version }}-main"
             state: started
             enabled: yes
             daemon_reload: yes
-          when: repmgr_connection_test is succeeded
+          when:
+            - repmgr_connection_test is succeeded
+            - not repmgrd_needs_restart
 
         - name: Verify repmgrd is running
           ansible.builtin.systemd:
