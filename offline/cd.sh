@@ -55,14 +55,14 @@ for attempt in $(seq 1 $MAX_RETRIES); do
             case $attempt in
                 1)
                     # Attempt 2: Prioritize cx22 and cx41
-                    sed -i.bak 's/"cpx21", "cx22", "cx21", "cpx11"/"cx22", "cpx11", "cpx21", "cx21"/' main.tf
-                    sed -i.bak 's/"cpx31", "cpx41", "cx31", "cx41"/"cx41", "cpx31", "cx31", "cx41"/' main.tf
-                    echo "   -> Prioritizing cx22 and cx41 server types"
+                    sed -i.bak 's/"cx23", "cx33", "cpx22"/"cx33", "cpx22", "cx23"/' main.tf
+                    sed -i.bak 's/"cx33", "cx43", "cpx32"/"cx43", "cpx32", "cx33"/' main.tf
+                    echo "   -> Prioritizing cx33 and cx43 server types"
                     ;;
                 2)
                     # Attempt 3: Use smallest available types
-                    sed -i.bak 's/"cx22", "cpx11", "cpx21", "cx21"/"cpx11", "cx21", "cx22", "cpx21"/' main.tf
-                    sed -i.bak 's/"cx41", "cpx31", "cx31", "cx41"/"cpx31", "cpx31", "cpx11", "cx21"/' main.tf
+                    sed -i.bak 's/"cx33", "cpx22", "cx23"/"cpx22", "cx23", "cx33"/' main.tf
+                    sed -i.bak 's/"cx43", "cpx32", "cx33"/"cpx32", "cx33", "cx43"/' main.tf
                     echo "   -> Using smallest available server types"
                     ;;
             esac
