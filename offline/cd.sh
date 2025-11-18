@@ -2,9 +2,6 @@
 
 set -euo pipefail
 
-# This is the production version of cd.sh with built-in retry logic
-# Use this instead of cd.sh when you want automatic resource availability handling
-
 CD_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 TF_DIR="${CD_DIR}/../terraform/examples/wire-server-deploy-offline-hetzner"
 ARTIFACTS_DIR="${CD_DIR}/default-build/output"
