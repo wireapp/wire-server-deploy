@@ -856,6 +856,12 @@ Set your domain name with sed:
 sed -i "s/example.com/YOURDOMAINHERE/" values/nginx-ingress-services/values.yaml
 ```
 
+TODO: newer cert-manager release no longer installs CRDs with `installCRDs=true`, `crds.enabled=true` is the new standard, but that one is also failing during install. Install CRDs manually with:
+
+```
+d kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.16.3/cert-manager.crds.yaml
+```
+
 Install `cert-manager` into a new namespace `cert-manager-ns`.
 ```
 d kubectl create namespace cert-manager-ns
