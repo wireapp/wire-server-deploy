@@ -50,8 +50,6 @@ yq eval -i ".wiab.hosts.deploy_node.ansible_host = \"$host\"" "${INVENTORY_FILE}
 yq eval -i ".wiab.hosts.deploy_node.ansible_ssh_private_key_file = \"${INVENTORY_DIR}/ssh_private_key\"" "${INVENTORY_FILE}"
 yq eval -i ".wiab.vars.artifact_hash = \"$COMMIT_HASH\"" "${INVENTORY_FILE}"
 yq eval -i ".wiab.hosts.deploy_node.ansible_user = \"$TEST_USER\"" "${INVENTORY_FILE}"
-cat "${INVENTORY_DIR}/ssh_private_key"
-cat "${INVENTORY_FILE}"
 
 echo "Running ansible playbook deploy_wiab.yml against node $host"
 # deploying demo-wiab
