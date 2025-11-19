@@ -32,7 +32,7 @@ cp -r "${ROOT_DIR}"/values "${OUTPUT_DIR}"/
 cp -r "${ROOT_DIR}"/dashboards "${OUTPUT_DIR}"/
 
 # removing the values/$chart directories in values directory if not required
-"${TASKS_DIR}"/pre_clean_values_0.sh VALUES_DIR="${OUTPUT_DIR}/values" HELM_VALUES_EXCLUDE_LIST="k8ssandra-operator,k8ssandra-test-cluster,keycloakx,restund,fluent-bit,aws-ingress,cassandra-external,elasticsearch-external,minio-external,postgresql-external,rabbitmq-external,external-dns,metallb,outlook-addin,wire-server-metrics" VALUES_TYPE="demo"
+"${TASKS_DIR}"/pre_clean_values_0.sh VALUES_DIR="${OUTPUT_DIR}/values" HELM_VALUES_EXCLUDE_LIST="${HELM_CHART_EXCLUDE_LIST}" VALUES_TYPE="demo"
 
 # all basic chart pre-processing tasks
 "${TASKS_DIR}"/pre_chart_process_0.sh OUTPUT_DIR="${OUTPUT_DIR}" VALUES_TYPE="demo"
