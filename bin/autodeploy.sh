@@ -1,4 +1,7 @@
 #!/usr/bin/env bash
+# This script is not-up-to-date, requires to be updated to match with current developments
+# A new WIAB (wire in a box) dev solution has been created https://docs.wire.com/latest/how-to/install/demo-wiab.html and can be used until this (wiab-staging) gets updated
+
 # shellcheck disable=SC2087
 
 # This script can be replaced with a simpler solution of wiab-demo installtion

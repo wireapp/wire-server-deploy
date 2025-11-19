@@ -1,3 +1,5 @@
+# This playbook is not-up-to-date, requires to be updated to match with current developments
+# A new WIAB (wire in a box) dev solution has been created https://docs.wire.com/latest/how-to/install/demo-wiab.html and can be used until this (wiab-staging) gets updated
 - hosts: all
   become: true
   vars:
