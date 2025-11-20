@@ -1,0 +1,68 @@
+---
+# Kubernetes cluster configuration for offline deployment
+#
+# This file contains configuration overrides for the Kubernetes cluster
+# deployed via Kubespray. These settings override the defaults in
+# ansible/roles-external/kubespray/roles/kubespray-defaults/defaults/main/
+
+# ==============================================================================
+# kube-vip Configuration for High Availability Control Plane
+# ==============================================================================
+#
+# kube-vip provides a Virtual IP (VIP) for the Kubernetes API server,
+# enabling automatic failover between control plane nodes without requiring
+# external load balancers. Perfect for bare-metal and air-gapped deployments.
+#
+# Documentation: docs/kube-vip-ha-setup.md
+# Reference: https://kube-vip.io/
+
+# Enable kube-vip
+kube_vip_enabled: true
+
+# Enable control plane VIP (required for HA)
+kube_vip_controlplane_enabled: true
+
+# Virtual IP address for the Kubernetes API server
+# IMPORTANT: This must be:
+#   - In the same subnet as your control plane nodes
+#   - Unused and not in DHCP range
+#   - Accessible from all nodes and external clients
+# Example: If control plane nodes are 192.168.122.21-23, use 192.168.122.100
+kube_vip_address: "192.168.122.100"
+
+# Network interface to bind the VIP to
+# Find this by running: ssh kubenode1 "ip -br addr show"
+# Example values: eth0, enp1s0
+kube_vip_interface: "enp1s0"
+
+# Use ARP for Layer 2 VIP management (recommended for most deployments)
+# Set to false only if using BGP for Layer 3 routing
+kube_vip_arp_enabled: true
+
+# Enable kube-vip for LoadBalancer services (optional)
+# Set to true if you want kube-vip to also handle LoadBalancer service IPs
+# For control plane HA only, keep this false
+kube_vip_services_enabled: false
+
+# API server advertise address (use VIP for consistency)
+# This is the address the API server advertises to clients
+apiserver_loadbalancer_domain_name: "192.168.122.100"
+
+# Required for kube-vip with ARP mode
+# Prevents kube-proxy from responding to ARP requests for the VIP
+kube_proxy_strict_arp: true
+
+# Configure API server endpoint to use VIP
+# This tells all Kubernetes components to connect via the VIP
+loadbalancer_apiserver:
+  address: "192.168.122.100"
+  port: 6443
+
+# Disable localhost load balancer since we have VIP
+# When using kube-vip, we don't need the nginx localhost proxy
+loadbalancer_apiserver_localhost: false
+
+# Add VIP to API server SSL certificates
+# This ensures the API server certificate is valid for the VIP address
+supplementary_addresses_in_ssl_keys:
+  - "192.168.122.100"

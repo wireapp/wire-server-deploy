@@ -9,9 +9,9 @@
 #
 # <hostname> ansible_host=<internal_ip>
 [all]
-# kubenode1 ansible_host=100.89.110.8  ip=10.114.0.10
-# kubenode2 ansible_host=100.154.219.107 ip=10.114.0.8
-# kubenode3 ansible_host=100.227.143.169 ip=10.114.0.2
+kubenode1 ansible_host=192.168.122.21 ip=192.168.122.21
+kubenode2 ansible_host=192.168.122.22 ip=192.168.122.22
+kubenode3 ansible_host=192.168.122.23 ip=192.168.122.23
 # You could add more if capacity is needed
 # kubenode4 ....
 
@@ -143,6 +143,10 @@ postgresql_network_interface = enp1s0
 [k8s-cluster:children]
 kube-master
 kube-node
+
+# Kubernetes cluster configuration (kube-vip, network plugins, etc.)
+# is defined in group_vars/k8s-cluster/k8s-cluster.yml
+# See offline/kube-vip-ha-setup.md for HA setup documentation
 
 # Add all cassandra nodes here
 [cassandra]
