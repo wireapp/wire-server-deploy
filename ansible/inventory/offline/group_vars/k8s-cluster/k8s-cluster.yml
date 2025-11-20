@@ -13,7 +13,6 @@
 # enabling automatic failover between control plane nodes without requiring
 # external load balancers. Perfect for bare-metal and air-gapped deployments.
 #
-# Documentation: docs/kube-vip-ha-setup.md
 # Reference: https://kube-vip.io/
 
 # Enable kube-vip

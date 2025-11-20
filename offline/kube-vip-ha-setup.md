@@ -491,7 +491,7 @@ Before starting, ensure:
    ```
 
 2. ✅ **Inventory configured** with control plane nodes
-   - Edit `ansible/inventory/offline/99-static`
+   - Check `ansible/inventory/offline/hosts.ini`
    - Uncomment and configure `[kube-master]`, `[kube-node]`, `[etcd]` sections
 
 3. ✅ **SSH access** to all nodes
@@ -863,7 +863,7 @@ fatal: [kubenode1]: FAILED! => {
 echo "kube_proxy_strict_arp: true" >> ansible/inventory/offline/group_vars/k8s-cluster/k8s-cluster.yml
 
 # Re-run playbook
-ansible-playbook -i ansible/inventory/offline/99-static ansible/kubernetes.yml --tags=node,kube-vip
+ansible-playbook -i ansible/inventory/offline/hosts.ini ansible/kubernetes.yml --tags=node,kube-vip
 ```
 
 #### Issue 3: VIP Not Reachable from External Network
@@ -961,12 +961,12 @@ supplementary_addresses_in_ssl_keys:
   - "192.168.122.100"
 
 # Regenerate certificates
-ansible-playbook -i ansible/inventory/offline/99-static \
+ansible-playbook -i ansible/inventory/offline/hosts.ini \
   ansible/kubernetes.yml \
   --tags=master
 
 # Or use Kubespray's certificate renewal playbook
-ansible-playbook -i ansible/inventory/offline/99-static \
+ansible-playbook -i ansible/inventory/offline/hosts.ini \
   ansible/roles-external/kubespray/extra_playbooks/upgrade-only.yml \
   --tags=upgrade-certs
 ```
