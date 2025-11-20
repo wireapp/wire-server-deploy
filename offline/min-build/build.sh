@@ -26,7 +26,7 @@ TASKS_DIR="${SCRIPT_DIR}/../tasks"
 # --------------------------
 
 # pulling the charts, charts to be skipped are passed as arguments HELM_CHART_EXCLUDE_LIST
-HELM_CHART_EXCLUDE_LIST="inbucket,wire-server-enterprise,k8ssandra-operator,k8ssandra-test-cluster,elasticsearch-ephemeral,elasticsearch-curator,rabbitmq,smtp,fake-aws,fake-aws-s3,postgresql,keycloakx,openebs,nginx-ingress-controller,kibana,restund,fluent-bit,aws-ingress,databases-ephemeral,redis-cluster,calling-test,cert-manager,kube-prometheus-stack,demo-smtp"
+HELM_CHART_EXCLUDE_LIST="inbucket,wire-server-enterprise,k8ssandra-operator,k8ssandra-test-cluster,elasticsearch-ephemeral,elasticsearch-curator,rabbitmq,smtp,fake-aws,fake-aws-s3,postgresql,keycloakx,openebs,nginx-ingress-controller,kibana,restund,fluent-bit,aws-ingress,databases-ephemeral,redis-cluster,calling-test,cert-manager,kube-prometheus-stack,demo-smtp,wire-utility"
 
 "${TASKS_DIR}"/proc_pull_charts.sh OUTPUT_DIR="${OUTPUT_DIR}" HELM_CHART_EXCLUDE_LIST="${HELM_CHART_EXCLUDE_LIST}"
 
@@ -37,10 +37,10 @@ HELM_CHART_EXCLUDE_LIST="inbucket,wire-server-enterprise,k8ssandra-operator,k8ss
 cp -r "${ROOT_DIR}"/values "${OUTPUT_DIR}"/
 
 # removing the values/$chart directories in values directory if not required
-"${TASKS_DIR}"/pre_clean_values_0.sh VALUES_DIR="${OUTPUT_DIR}/values" HELM_CHART_EXCLUDE_LIST="${HELM_CHART_EXCLUDE_LIST}"
+"${TASKS_DIR}"/pre_clean_values_0.sh VALUES_DIR="${OUTPUT_DIR}/values" HELM_VALUES_EXCLUDE_LIST="${HELM_CHART_EXCLUDE_LIST}" VALUES_TYPE="prod"
 
 # all basic chart pre-processing tasks
-"${TASKS_DIR}"/pre_chart_process_0.sh "${OUTPUT_DIR}"
+"${TASKS_DIR}"/pre_chart_process_0.sh OUTPUT_DIR="${OUTPUT_DIR}"
 
 # all extra pre chart processing tasks for this profile should come here
 # pre_chart_process_1.sh
@@ -49,10 +49,10 @@ cp -r "${ROOT_DIR}"/values "${OUTPUT_DIR}"/
 # processing the charts
 # here we also filter the images post processing the helm charts
 # pass the image names to be filtered as arguments as regex #IMAGE_EXCLUDE_LIST='brig|galley'
-"${TASKS_DIR}"/process_charts.sh OUTPUT_DIR="${OUTPUT_DIR}" VALUES_TYPE="demo" #IMAGE_EXCLUDE_LIST=""
+"${TASKS_DIR}"/process_charts.sh OUTPUT_DIR="${OUTPUT_DIR}" VALUES_TYPE="prod" #IMAGE_EXCLUDE_LIST=""
 
 # all basic chart pre-processing tasks
-"${TASKS_DIR}"/post_chart_process_0.sh "${OUTPUT_DIR}"
+"${TASKS_DIR}"/post_chart_process_0.sh OUTPUT_DIR="${OUTPUT_DIR}"
 
 # all extra post chart processing tasks for this profile should come here
 # post_chart_process_1.sh
