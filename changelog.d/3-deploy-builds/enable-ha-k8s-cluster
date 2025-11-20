@@ -1,0 +1,2 @@
+Added: comprehensive kube-vip HA setup documentation and configuration for high-availability Kubernetes control plane in offline deployments
+Fixed: HA k8s cluster for wire-server with kube-vip
