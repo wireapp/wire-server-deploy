@@ -93,11 +93,32 @@ output "static-inventory" {
       # NOTE: Necessary for the Hetzner Cloud until Calico v3.17 arrives in Kubespray
       # Hetzner private networks have an MTU of 1450 instead of 1500
       vars = {
-        calico_mtu      = 1450
-        calico_veth_mtu = 1430
+        calico_mtu                = 1450
+        calico_veth_mtu           = 1430
         # NOTE: relax handling a list with more than 3 items; required on Hetzner
         docker_dns_servers_strict = false
         upstream_dns_servers      = [tolist(hcloud_server.adminhost.network)[0].ip]
+
+        # kube-vip configuration for control plane HA
+        # See: offline/kube-vip-ha-setup.md
+        kube_vip_enabled               = true
+        kube_vip_controlplane_enabled  = true
+        kube_vip_arp_enabled           = true
+        kube_vip_services_enabled      = false
+        kube_vip_interface             = "enp7s0"
+        # VIP within the Hetzner private network subnet
+        kube_vip_address               = cidrhost(hcloud_network_subnet.main.ip_range, -2)
+        # Configure API server to use VIP
+        apiserver_loadbalancer_domain_name = cidrhost(hcloud_network_subnet.main.ip_range, -2)
+        loadbalancer_apiserver = {
+          address = cidrhost(hcloud_network_subnet.main.ip_range, -2)
+          port    = 6443
+        }
+        loadbalancer_apiserver_localhost = false
+        kube_proxy_strict_arp            = true
+        supplementary_addresses_in_ssl_keys = [
+          cidrhost(hcloud_network_subnet.main.ip_range, -2)
+        ]
       }
     }
     cassandra = {
