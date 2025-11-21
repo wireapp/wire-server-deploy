@@ -578,21 +578,39 @@ kube-node
 
 #### Step 3: Deploy Kubernetes with kube-vip
 
-For a **new cluster**:
+For a **new cluster**, the recommended approach is to use the automated deployment script which handles the bootstrap timing correctly:
 
 ```bash
-# Deploy full Kubernetes cluster with kube-vip
-ansible-playbook -i ansible/inventory/offline/hosts.ini ansible/kubernetes.yml
+# Automated deployment (recommended)
+./bin/offline-deploy.sh
 ```
 
-For an **existing cluster** (adding kube-vip):
+The script automatically:
+1. Deploys Kubernetes without kube-vip first
+2. Once API server is up, deploys kube-vip for HA
+3. This avoids the chicken-and-egg problem during bootstrap
+
+For **manual deployment** or **existing cluster** (adding kube-vip):
 
 ```bash
-# Deploy only kube-vip and update control plane
+# For existing cluster: Deploy only kube-vip
 ansible-playbook -i ansible/inventory/offline/hosts.ini \
   ansible/kubernetes.yml \
-  --tags=node,kube-vip,master
+  --tags=kube-vip
+
+# For new cluster manual deployment:
+# 1. Deploy cluster without kube-vip
+ansible-playbook -i ansible/inventory/offline/hosts.ini \
+  ansible/kubernetes.yml \
+  --skip-tags=kube-vip
+
+# 2. Then deploy kube-vip after cluster is up
+ansible-playbook -i ansible/inventory/offline/hosts.ini \
+  ansible/kubernetes.yml \
+  --tags=kube-vip
 ```
+
+**Why this order?** kube-vip needs the API server running to perform leader election. If deployed simultaneously during `kubeadm init`, it creates a chicken-and-egg problem: kube-vip can't start without the API server, and kubeadm times out waiting for the API server to respond on the VIP.
 
 Expected output:
 ```

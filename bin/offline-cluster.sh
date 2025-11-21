@@ -44,7 +44,12 @@ ansible-playbook -i $INVENTORY_FILE $ANSIBLE_DIR/seed-offline-containerd.yml
 ansible-playbook -i $INVENTORY_FILE $ANSIBLE_DIR/sync_time.yml -v
 
 # Run the rest of kubespray. This should bootstrap a kubernetes cluster successfully:
-ansible-playbook -i $INVENTORY_FILE $ANSIBLE_DIR/kubernetes.yml --skip-tags bootstrap-os,preinstall,container-engine,multus
+# Skip kube-vip during initial bootstrap to avoid chicken-and-egg problem with leader election
+ansible-playbook -i $INVENTORY_FILE $ANSIBLE_DIR/kubernetes.yml --skip-tags bootstrap-os,preinstall,container-engine,multus,kube-vip
+
+# Now that the API server is up, deploy kube-vip for HA
+# kube-vip can now successfully perform leader election since the API server is accessible
+ansible-playbook -i $INVENTORY_FILE $ANSIBLE_DIR/kubernetes.yml --tags kube-vip
 
 # Deploy all other services which don't run in kubernetes.
 ansible-playbook -i $INVENTORY_FILE $ANSIBLE_DIR/cassandra.yml
