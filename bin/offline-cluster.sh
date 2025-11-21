@@ -45,10 +45,10 @@ ansible-playbook -i $INVENTORY_FILE $ANSIBLE_DIR/sync_time.yml -v
 
 # Run the rest of kubespray. This should bootstrap a kubernetes cluster successfully:
 # Skip kube-vip during initial bootstrap to avoid chicken-and-egg problem with leader election
-# Override apiserver_loadbalancer_domain_name to empty so kubeadm uses node IP during bootstrap
+# Undefine loadbalancer_apiserver so kubeadm uses node IP during bootstrap
 ansible-playbook -i $INVENTORY_FILE $ANSIBLE_DIR/kubernetes.yml \
   --skip-tags bootstrap-os,preinstall,container-engine,multus,kube-vip \
-  -e "apiserver_loadbalancer_domain_name="
+  -e "loadbalancer_apiserver={}"
 
 # Now that the API server is up, deploy kube-vip for HA
 # kube-vip can now successfully perform leader election since the API server is accessible
