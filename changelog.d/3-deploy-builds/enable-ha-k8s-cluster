@@ -1,1 +1,1 @@
-Added: kube-vip v0.8.0 for high-availability Kubernetes control plane with automatic failover, including comprehensive documentation, offline build configuration, and Terraform integration for CI deployments
+Added: kube-vip v0.8.0 for high-availability Kubernetes control plane with automatic failover in production deployments, including comprehensive documentation and offline build configuration (disabled by default for ephemeral CI clusters)

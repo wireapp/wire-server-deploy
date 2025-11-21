@@ -100,25 +100,10 @@ output "static-inventory" {
         upstream_dns_servers      = [tolist(hcloud_server.adminhost.network)[0].ip]
 
         # kube-vip configuration for control plane HA
-        # See: offline/kube-vip-ha-setup.md
-        kube_vip_enabled               = true
-        kube_vip_controlplane_enabled  = true
-        kube_vip_arp_enabled           = true
-        kube_vip_services_enabled      = false
-        kube_vip_interface             = "enp7s0"
-        # VIP within the Hetzner private network subnet
-        kube_vip_address               = cidrhost(hcloud_network_subnet.main.ip_range, -2)
-        # Configure API server to use VIP
-        apiserver_loadbalancer_domain_name = cidrhost(hcloud_network_subnet.main.ip_range, -2)
-        loadbalancer_apiserver = {
-          address = cidrhost(hcloud_network_subnet.main.ip_range, -2)
-          port    = 6443
-        }
-        loadbalancer_apiserver_localhost = false
-        kube_proxy_strict_arp            = true
-        supplementary_addresses_in_ssl_keys = [
-          cidrhost(hcloud_network_subnet.main.ip_range, -2)
-        ]
+        # Disabled for CI as ephemeral test clusters don't need HA
+        # For production deployments, configure kube-vip in your inventory's group_vars
+        # See: offline/kube-vip-ha-setup.md and ansible/inventory/offline/group_vars/k8s-cluster/k8s-cluster.yml
+        kube_vip_enabled = false
       }
     }
     cassandra = {

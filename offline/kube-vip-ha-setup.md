@@ -17,7 +17,9 @@
 
 ## Overview
 
-kube-vip provides Kubernetes clusters with a **Virtual IP (VIP)** for the control plane API server, enabling **High Availability (HA)** without requiring external load balancers. This is especially valuable for bare-metal, on-premises, and air-gapped deployments where cloud load balancers are unavailable.
+kube-vip provides Kubernetes clusters with a **Virtual IP (VIP)** for the control plane API server, enabling **High Availability (HA)** without requiring external load balancers. This is especially valuable for bare-metal, on-premises, and air-gapped **production deployments** where cloud load balancers are unavailable.
+
+**Note**: kube-vip is designed for production environments that require HA. For development, testing, or ephemeral clusters (like CI), HA is not necessary and kube-vip can be disabled to simplify deployment.
 
 ### The Problem
 
