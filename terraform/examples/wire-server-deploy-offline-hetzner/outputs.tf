@@ -102,6 +102,8 @@ output "static-inventory" {
         # kube-vip configuration for control plane HA
         # Enabled for CI to test the production deployment path
         # See: offline/kube-vip-ha-setup.md and ansible/inventory/offline/group_vars/k8s-cluster/k8s-cluster.yml
+        # Following kubespray's test approach: kube-vip vars only, NO loadbalancer_apiserver
+        # This avoids bootstrap chicken-and-egg problem. kubeadm uses node IP, kube-vip provides VIP.
         kube_vip_enabled               = true
         kube_vip_controlplane_enabled  = true
         kube_vip_arp_enabled           = true
@@ -109,17 +111,7 @@ output "static-inventory" {
         kube_vip_interface             = "enp7s0"
         # VIP within the Hetzner private network subnet (second-to-last IP)
         kube_vip_address               = cidrhost(hcloud_network_subnet.main.ip_range, -2)
-        # Configure API server to use VIP
-        apiserver_loadbalancer_domain_name = cidrhost(hcloud_network_subnet.main.ip_range, -2)
-        loadbalancer_apiserver = {
-          address = cidrhost(hcloud_network_subnet.main.ip_range, -2)
-          port    = 6443
-        }
-        loadbalancer_apiserver_localhost = false
-        kube_proxy_strict_arp            = true
-        supplementary_addresses_in_ssl_keys = [
-          cidrhost(hcloud_network_subnet.main.ip_range, -2)
-        ]
+        kube_proxy_strict_arp          = true
       }
     }
     cassandra = {

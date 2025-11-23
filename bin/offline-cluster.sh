@@ -44,16 +44,27 @@ ansible-playbook -i $INVENTORY_FILE $ANSIBLE_DIR/seed-offline-containerd.yml
 ansible-playbook -i $INVENTORY_FILE $ANSIBLE_DIR/sync_time.yml -v
 
 # Run the rest of kubespray. This should bootstrap a kubernetes cluster successfully:
-# Skip kube-vip during initial bootstrap to avoid chicken-and-egg problem with leader election
-# Undefine loadbalancer_apiserver so kubeadm uses node IP during bootstrap
+# Phase 1: Bootstrap WITHOUT loadbalancer_apiserver so kubeadm uses node IP
+# We skip kube-vip to avoid race condition with VIP
 ansible-playbook -i $INVENTORY_FILE $ANSIBLE_DIR/kubernetes.yml \
-  --skip-tags bootstrap-os,preinstall,container-engine,multus,kube-vip \
-  -e "loadbalancer_apiserver={}"
+  --skip-tags bootstrap-os,preinstall,container-engine,multus,kube-vip
 
-# Now that the API server is up, deploy kube-vip for HA
-# kube-vip can now successfully perform leader election since the API server is accessible
-# This run will also reconfigure kubeconfig files and certificates to use the VIP
-ansible-playbook -i $INVENTORY_FILE $ANSIBLE_DIR/kubernetes.yml --tags kube-vip
+# Phase 2: Deploy kube-vip AND configure loadbalancer_apiserver
+# Now we define loadbalancer_apiserver via -e so kubeconfig gets updated to use VIP
+# Extract VIP from inventory if defined, otherwise use a calculated value
+VIP_ADDRESS=$(yq eval '.all.children.k8s-cluster.vars.kube_vip_address // ""' "$INVENTORY_FILE" 2>/dev/null || echo "")
+
+if [ -n "$VIP_ADDRESS" ] && [ "$VIP_ADDRESS" != "null" ]; then
+  echo "Deploying kube-vip with VIP: $VIP_ADDRESS"
+  ansible-playbook -i $INVENTORY_FILE $ANSIBLE_DIR/kubernetes.yml \
+    --tags kube-vip,client \
+    -e "{\"loadbalancer_apiserver\": {\"address\": \"$VIP_ADDRESS\", \"port\": 6443}}" \
+    -e "apiserver_loadbalancer_domain_name=$VIP_ADDRESS" \
+    -e "loadbalancer_apiserver_localhost=false" \
+    -e "{\"supplementary_addresses_in_ssl_keys\": [\"$VIP_ADDRESS\"]}"
+else
+  echo "No VIP configured, skipping kube-vip deployment"
+fi
 
 # Deploy all other services which don't run in kubernetes.
 ansible-playbook -i $INVENTORY_FILE $ANSIBLE_DIR/cassandra.yml
