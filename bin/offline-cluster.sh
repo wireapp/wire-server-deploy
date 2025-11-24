@@ -52,7 +52,21 @@ ansible-playbook -i $INVENTORY_FILE $ANSIBLE_DIR/kubernetes.yml \
 # Phase 2: Deploy kube-vip AND configure loadbalancer_apiserver
 # Now we define loadbalancer_apiserver via -e so kubeconfig gets updated to use VIP
 # Extract VIP from inventory if defined, otherwise use a calculated value
-VIP_ADDRESS=$(yq eval '.all.children.k8s-cluster.vars.kube_vip_address // ""' "$INVENTORY_FILE" 2>/dev/null || echo "")
+# Handle different inventory formats by trying both paths:
+#   1. YAML inventory with embedded vars: ."k8s-cluster".vars.kube_vip_address
+#   2. INI inventory with group_vars: group_vars/k8s-cluster/k8s-cluster.yml
+INVENTORY_DIR="$(dirname "$INVENTORY_FILE")"
+
+# Try to extract VIP from YAML inventory first (Terraform-generated format)
+VIP_ADDRESS=$(yq eval '."k8s-cluster".vars.kube_vip_address // ""' "$INVENTORY_FILE" 2>/dev/null || echo "")
+
+# If not found, try group_vars file (static INI format)
+if [ -z "$VIP_ADDRESS" ] || [ "$VIP_ADDRESS" = "null" ]; then
+  GROUP_VARS_FILE="$INVENTORY_DIR/group_vars/k8s-cluster/k8s-cluster.yml"
+  if [ -f "$GROUP_VARS_FILE" ]; then
+    VIP_ADDRESS=$(yq eval '.kube_vip_address // ""' "$GROUP_VARS_FILE" 2>/dev/null || echo "")
+  fi
+fi
 
 if [ -n "$VIP_ADDRESS" ] && [ "$VIP_ADDRESS" != "null" ]; then
   echo "Deploying kube-vip with VIP: $VIP_ADDRESS"
