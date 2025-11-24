@@ -100,17 +100,15 @@ output "static-inventory" {
         upstream_dns_servers      = [tolist(hcloud_server.adminhost.network)[0].ip]
 
         # kube-vip configuration for control plane HA
-        # Enabled for CI to test the production deployment path
-        # See: offline/kube-vip-ha-setup.md and ansible/inventory/offline/group_vars/k8s-cluster/k8s-cluster.yml
-        # Following kubespray's test approach: kube-vip vars only, NO loadbalancer_apiserver
-        # This avoids bootstrap chicken-and-egg problem. kubeadm uses node IP, kube-vip provides VIP.
+        # Network: 10.1.1.0/24 (Hetzner Cloud private network)
+        # VIP: 10.1.1.254 (second-to-last IP in subnet)
+        #
+        # Note: No interface specified - kube-vip will auto-detect the interface
+        # with an IP in the VIP's subnet (10.1.1.0/24)
         kube_vip_enabled               = true
         kube_vip_controlplane_enabled  = true
         kube_vip_arp_enabled           = true
         kube_vip_services_enabled      = false
-        # Note: kube_vip_interface is intentionally NOT set to allow auto-detection
-        # kube-vip will automatically detect the interface containing the VIP subnet
-        # Hardcoding interface names (like "enp7s0") causes failures on Hetzner Cloud
         # VIP within the Hetzner private network subnet (second-to-last IP)
         kube_vip_address               = cidrhost(hcloud_network_subnet.main.ip_range, -2)
         kube_proxy_strict_arp          = true
