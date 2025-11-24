@@ -108,7 +108,9 @@ output "static-inventory" {
         kube_vip_controlplane_enabled  = true
         kube_vip_arp_enabled           = true
         kube_vip_services_enabled      = false
-        kube_vip_interface             = "enp7s0"
+        # Note: kube_vip_interface is intentionally NOT set to allow auto-detection
+        # kube-vip will automatically detect the interface containing the VIP subnet
+        # Hardcoding interface names (like "enp7s0") causes failures on Hetzner Cloud
         # VIP within the Hetzner private network subnet (second-to-last IP)
         kube_vip_address               = cidrhost(hcloud_network_subnet.main.ip_range, -2)
         kube_proxy_strict_arp          = true
