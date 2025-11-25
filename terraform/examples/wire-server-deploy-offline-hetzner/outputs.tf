@@ -101,7 +101,11 @@ output "static-inventory" {
 
         # kube-vip configuration for control plane HA
         # Network: 10.1.1.0/24 (Hetzner Cloud private network)
-        # VIP: 10.1.1.254 (second-to-last IP in subnet)
+        # VIP: 10.1.1.100 (pre-registered as alias IP)
+        #
+        # Solution: VIP is pre-registered via alias_ips in main.tf on all kubenodes
+        # This informs Hetzner's backend about the VIP, preventing DHCP conflicts
+        # and ensuring the gateway routes traffic correctly to the VIP.
         #
         # Note: No interface specified - kube-vip will auto-detect the interface
         # with an IP in the VIP's subnet (10.1.1.0/24)
@@ -109,8 +113,8 @@ output "static-inventory" {
         kube_vip_controlplane_enabled  = true
         kube_vip_arp_enabled           = true
         kube_vip_services_enabled      = false
-        # VIP within the Hetzner private network subnet (second-to-last IP)
-        kube_vip_address               = cidrhost(hcloud_network_subnet.main.ip_range, -2)
+        # VIP within the Hetzner private network subnet (10.1.1.100)
+        kube_vip_address               = cidrhost(hcloud_network_subnet.main.ip_range, 100)
         kube_proxy_strict_arp          = true
       }
     }

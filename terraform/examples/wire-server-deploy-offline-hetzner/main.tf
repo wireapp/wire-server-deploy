@@ -201,6 +201,9 @@ resource "hcloud_server" "kubenode" {
   network {
     network_id = hcloud_network.main.id
     ip         = ""
+    # Pre-register VIP (10.1.1.100) as alias IP with Hetzner's backend
+    # This prevents DHCP conflicts and tells the gateway how to route VIP traffic
+    alias_ips  = [cidrhost(hcloud_network_subnet.main.ip_range, 100)]
   }
 }
 
