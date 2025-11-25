@@ -151,7 +151,8 @@ resource "hcloud_server" "adminhost" {
   server_type = local.medium_server_type
   network {
     network_id = hcloud_network.main.id
-    ip         = ""
+    # Reserve .10 for adminhost so VIP (.100) stays free for kube-vip
+    ip = cidrhost(hcloud_network_subnet.main.ip_range, 10)
   }
 }
 
@@ -175,7 +176,8 @@ resource "hcloud_server" "assethost" {
   }
   network {
     network_id = hcloud_network.main.id
-    ip         = ""
+    # Reserve .11 for assethost to avoid consuming the kube-vip range
+    ip = cidrhost(hcloud_network_subnet.main.ip_range, 11)
   }
 }
 
@@ -200,9 +202,10 @@ resource "hcloud_server" "kubenode" {
   }
   network {
     network_id = hcloud_network.main.id
-    ip         = ""
-    # No alias_ips needed - VIP is accessed within same subnet via Layer 2
-    # kube-vip will use ARP to claim the VIP, and adminhost can reach it directly
+    # Control-plane nodes get deterministic addresses starting at .20
+    ip = cidrhost(hcloud_network_subnet.main.ip_range, 20 + count.index)
+    # Pre-register the kube-vip (10.1.1.100) so Hetzner routes it to the cluster
+    alias_ips = [cidrhost(hcloud_network_subnet.main.ip_range, 100)]
   }
 }
 
@@ -227,7 +230,8 @@ resource "hcloud_server" "cassandra" {
   }
   network {
     network_id = hcloud_network.main.id
-    ip         = ""
+    # Cassandra nodes occupy .40-.42
+    ip = cidrhost(hcloud_network_subnet.main.ip_range, 40 + count.index)
   }
 }
 
@@ -252,7 +256,8 @@ resource "hcloud_server" "elasticsearch" {
   }
   network {
     network_id = hcloud_network.main.id
-    ip         = ""
+    # Elasticsearch nodes occupy .50-.51
+    ip = cidrhost(hcloud_network_subnet.main.ip_range, 50 + count.index)
   }
 }
 
@@ -277,7 +282,8 @@ resource "hcloud_server" "minio" {
   }
   network {
     network_id = hcloud_network.main.id
-    ip         = ""
+    # Minio nodes occupy .60-.61
+    ip = cidrhost(hcloud_network_subnet.main.ip_range, 60 + count.index)
   }
 }
 
@@ -302,6 +308,7 @@ resource "hcloud_server" "postgresql" {
   }
   network {
     network_id = hcloud_network.main.id
-    ip         = ""
+    # PostgreSQL nodes occupy .70-.72
+    ip = cidrhost(hcloud_network_subnet.main.ip_range, 70 + count.index)
   }
 }
