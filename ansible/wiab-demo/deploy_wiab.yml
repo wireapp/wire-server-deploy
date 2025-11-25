@@ -207,7 +207,7 @@
 
 - name: Create wire secrets
   import_playbook: ./wire_secrets.yml
-  tags: helm_install
+  tags: wire_secrets
 
 - name: Install Helm charts
   import_playbook: ./helm_install.yml
