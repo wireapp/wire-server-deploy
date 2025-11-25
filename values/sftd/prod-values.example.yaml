@@ -13,3 +13,5 @@ tls:
 #   discoveryRequired: false
 #   turnServerURI: "turn:coturn.public.ip.address:3478?transport=udp"
 #   secret: "coturn_zrest_secret"
+# Turn on secondary IP listener (for internal IP) when using federation
+# internalIpListener: false
