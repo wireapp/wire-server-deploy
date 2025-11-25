@@ -43,8 +43,8 @@ brig:
     awsKeyId: dummykey
     awsSecretKey: dummysecret
     rabbitmq:
-      username: wire-server
-      password: verysecurepassword
+      username: guest
+      password: guest
     # These are only necessary if you wish to support sign up via SMS/calls
     # And require accounts at twilio.com / nexmo.com
     setTwilio: |-
@@ -58,18 +58,18 @@ cargohold:
     awsKeyId: "$minio_cargohold_access_key"
     awsSecretKey: "$minio_cargohold_secret_key"
     rabbitmq:
-      username: wire-server
-      password: verysecurepassword
+      username: guest
+      password: guest
 cannon:
   secrets:
     rabbitmq:
-      username: wire-server
-      password: verysecurepassword
+      username: guest
+      password: guest
 galley:
   secrets:
     rabbitmq:
-      username: wire-server
-      password: verysecurepassword
+      username: guest
+      password: guest
     pgPassword: verysecurepassword
     awsKeyId: dummykey
     awsSecretKey: dummysecret
@@ -88,8 +88,8 @@ gundeck:
     awsKeyId: dummykey
     awsSecretKey: dummysecret
     rabbitmq:
-      username: wire-server
-      password: verysecurepassword
+      username: guest
+      password: guest
 nginz:
   secrets:
     zAuth:
@@ -105,8 +105,8 @@ team-settings:
 background-worker:
   secrets:
     rabbitmq:
-      username: wire-server
-      password: verysecurepassword
+      username: guest
+      password: guest
 EOF
 
 fi
