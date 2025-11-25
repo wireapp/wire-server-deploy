@@ -201,9 +201,8 @@ resource "hcloud_server" "kubenode" {
   network {
     network_id = hcloud_network.main.id
     ip         = ""
-    # Pre-register VIP (10.1.1.100) as alias IP with Hetzner's backend
-    # This prevents DHCP conflicts and tells the gateway how to route VIP traffic
-    alias_ips  = [cidrhost(hcloud_network_subnet.main.ip_range, 100)]
+    # No alias_ips needed - VIP is accessed within same subnet via Layer 2
+    # kube-vip will use ARP to claim the VIP, and adminhost can reach it directly
   }
 }
 
