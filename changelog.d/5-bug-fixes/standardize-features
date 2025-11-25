@@ -1,3 +1,3 @@
-Add missing webapp feature flags to webapp example values
-Standardize MLS deployment
-Standardize Federation deployment
+Added: missing webapp feature flags to webapp example values
+Added: config for MLS deployment into example files
+Added: config for Federation deployment into example files
