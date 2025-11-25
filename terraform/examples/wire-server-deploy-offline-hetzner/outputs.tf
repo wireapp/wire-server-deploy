@@ -101,19 +101,16 @@ output "static-inventory" {
 
         # kube-vip configuration for control plane HA
         # Network: 10.1.1.0/24 (Hetzner Cloud private network)
-        # VIP: 10.1.1.100 (pre-registered as alias IP)
+        # VIP: 10.1.1.100
         #
-        # Solution: VIP is pre-registered via alias_ips in main.tf on all kubenodes
-        # This informs Hetzner's backend about the VIP, preventing DHCP conflicts
-        # and ensuring the gateway routes traffic correctly to the VIP.
-        #
-        # Note: No interface specified - kube-vip will auto-detect the interface
-        # with an IP in the VIP's subnet (10.1.1.0/24)
+        # IMPORTANT: kube_vip_interface MUST be specified for Hetzner Cloud
+        # Without it, kube-vip defaults to eth0, but Hetzner uses enp7s0 for private network
+        # This caused VIP to never attach, resulting in kubectl timeouts
         kube_vip_enabled               = true
         kube_vip_controlplane_enabled  = true
         kube_vip_arp_enabled           = true
         kube_vip_services_enabled      = false
-        # VIP within the Hetzner private network subnet (10.1.1.100)
+        kube_vip_interface             = "enp7s0"  # Hetzner Cloud private network interface
         kube_vip_address               = cidrhost(hcloud_network_subnet.main.ip_range, 100)
         kube_proxy_strict_arp          = true
       }
