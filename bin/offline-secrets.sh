@@ -23,10 +23,10 @@ zauth_private=$(echo "$zauth" | awk 'NR==2{ print $2}')
 prometheus_pass="$(tr -dc A-Za-z0-9 </dev/urandom | head -c 16)"
 
 # Generate MLS private keys using openssl
-mls_ed25519_key="$(openssl genpkey -algorithm ed25519 2>/dev/null | awk '{printf "      %s\n", $0}')"
-mls_ecdsa_p256_key="$(openssl genpkey -algorithm ec -pkeyopt ec_paramgen_curve:P-256 2>/dev/null | awk '{printf "      %s\n", $0}')"
-mls_ecdsa_p384_key="$(openssl genpkey -algorithm ec -pkeyopt ec_paramgen_curve:P-384 2>/dev/null | awk '{printf "      %s\n", $0}')"
-mls_ecdsa_p521_key="$(openssl genpkey -algorithm ec -pkeyopt ec_paramgen_curve:P-521 2>/dev/null | awk '{printf "      %s\n", $0}')"
+mls_ed25519_key="$(openssl genpkey -algorithm ed25519 2>/dev/null | awk '{printf "          %s\n", $0}')"
+mls_ecdsa_p256_key="$(openssl genpkey -algorithm ec -pkeyopt ec_paramgen_curve:P-256 2>/dev/null | awk '{printf "          %s\n", $0}')"
+mls_ecdsa_p384_key="$(openssl genpkey -algorithm ec -pkeyopt ec_paramgen_curve:P-384 2>/dev/null | awk '{printf "          %s\n", $0}')"
+mls_ecdsa_p521_key="$(openssl genpkey -algorithm ec -pkeyopt ec_paramgen_curve:P-521 2>/dev/null | awk '{printf "          %s\n", $0}')"
 
 if [[ ! -f $VALUES_DIR/wire-server/secrets.yaml ]]; then
   echo "Writing $VALUES_DIR/wire-server/secrets.yaml"
