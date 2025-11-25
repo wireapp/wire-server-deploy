@@ -51,13 +51,13 @@ for attempt in $(seq 1 $MAX_RETRIES); do
             echo "Adjusting server type preferences for attempt $((attempt + 1))..."
             case $attempt in
                 1)
-                    # Attempt 2: Prioritize cx22 and cx41
+                    # Second attempt: Prioritize cx33 and cx43
                     sed -i.bak 's/"cx23", "cx33", "cpx22"/"cx33", "cpx22", "cx23"/' main.tf
                     sed -i.bak 's/"cx33", "cx43", "cpx32"/"cx43", "cpx32", "cx33"/' main.tf
                     echo "   -> Prioritizing cx33 and cx43 server types"
                     ;;
                 2)
-                    # Attempt 3: Use smallest available types
+                    # Third attempt: Prioritize cpx variants (smallest available types)
                     sed -i.bak 's/"cx33", "cpx22", "cx23"/"cpx22", "cx23", "cx33"/' main.tf
                     sed -i.bak 's/"cx43", "cpx32", "cx33"/"cpx32", "cx33", "cx43"/' main.tf
                     echo "   -> Using smallest available server types"
@@ -106,7 +106,6 @@ ssh_private_key=$(terraform output ssh_private_key)
 eval "$(ssh-agent)"
 ssh-add - <<< "$ssh_private_key"
 
-# TO-DO: make changes to test the deployment with demo user in 
 terraform output -json static-inventory > inventory.json
 yq eval -o=yaml '.' inventory.json > inventory.yml
 
@@ -128,4 +127,4 @@ ssh -A "root@$adminhost" ./bin/offline-deploy.sh
 
 echo ""
 echo "Wire offline deployment completed successfully!"
-cleanup
+# Note: cleanup is handled by trap EXIT
