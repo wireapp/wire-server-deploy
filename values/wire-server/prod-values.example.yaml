@@ -21,6 +21,8 @@ brig:
 #  image:
 #    tag: some-tag (only override if you want a newer/different version than what is in the chart)
   config:
+    multiSFT:
+      enabled: false # enable to turn on SFT to SFT communication for federated calls
     cassandra:
       host: cassandra-external
     elasticsearch:
@@ -51,10 +53,12 @@ brig:
       teamMemberWelcome: https://wire.example.com/download # change this
     enableFederation: false # Enable to use federation
     optSettings:
+      setEnableMLS: false # Enable for MLS protocol use
       setFederationDomain: example.com # change this
       # Sync the domain with the 'host' variable in the sftd chart
       # Comment the next line (by adding '#' before it) if conference calling is not used
       setSftStaticUrl: "https://sftd.example.com:443"
+      # setSftListAllServers: "enabled" # Uncomment for Federation!
       # If set to true, creating new personal users or new teams on your instance from
       # outside your backend installation is disabled
       setRestrictUserCreation: false
@@ -127,6 +131,8 @@ cannon:
   # For demo mode only, we don't need to keep websocket connections open on chart upgrades
   drainTimeout: 10
   config:
+    rabbitmq:
+      host: rabbitmq-external
     cassandra:
       host: cassandra-external
   metrics:
@@ -176,7 +182,33 @@ galley:
       federationDomain: example.com # change this
       # see #RefConfigOptions in `/docs/reference` (https://github.com/wireapp/wire-server/)
       featureFlags:
-        sso: disabled-by-default
+        mls:
+          defaults:
+            status: enabled
+            config:
+              protocolToggleUsers: []
+              defaultProtocol: mls
+              allowedCipherSuites: [2]
+              defaultCipherSuite: 2
+              supportedProtocols: [proteus, mls]
+            lockStatus: unlocked
+        mlsMigration:
+          defaults:
+            status: enabled
+            config:
+              startTime: null
+              finalizeRegardlessAfter: null
+              usersThreshold: 100
+              clientsThreshold: 100
+            lockStatus: unlocked
+        sso: enabled-by-default
+        # channels: # Uncomment to enable channels by default for all newly created teams
+        #   defaults:
+        #     status: enabled
+        #     config:
+        #       allowed_to_create_channels: team-members
+        #       allowed_to_open_channels: team-members
+        #     lockStatus: unlocked
         # NOTE: Change this to "disabled-by-default" for legalhold support
         # legalhold: disabled-by-default
         legalhold: disabled-permanently
@@ -288,13 +320,22 @@ legalhold:
       enabled: false
 # Only needed when federation is enabled
 federator:
+  # config:
+  #   optSettings:
+  #     federationStrategy:
+  #       allowedDomains:
+  #         - example.com
   tls:
     useSharedFederatorSecret: true
+  # remoteCAContents: | # Uncomment and place the federating backends root CA certificates in chain (if there are multiple)
   metrics:
     serviceMonitor:
       enabled: false
 background-worker:
   config:
+    # logLevel: Debug
+    rabbitmq:
+      host: rabbitmq-external
     cassandra:
       host: cassandra-external
     # Enable for federation
