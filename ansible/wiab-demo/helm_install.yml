@@ -54,3 +54,9 @@
       {{ docker_cmd_base }} bash -c "helm upgrade --install --wait wire-utility /wire-server-deploy/charts/wire-utility --values /wire-server-deploy/values/wire-server/values.yaml --values /wire-server-deploy/values/wire-server/secrets.yaml --values /wire-server-deploy/values/wire-utility/values.yaml"
     args:
       executable: /bin/bash
+    failed_when: false
+    register: wire_utility_deploy
+    
+  - name: Note wire-utility deployment attempt
+    debug:
+      msg: "Wire-utility deployment was attempted as a best-case scenario. If it failed, Wire-in-a-Box will still function without it. Return code: {{ wire_utility_deploy.rc }}"
