@@ -7,6 +7,6 @@ Fixed: dependecy on yq-go  and making docker installation idempotent
 Changed: refactor iptables_rules, add additional checks for system and fix port ranges for calling
 Added: added a check for SPF TXT record in verify_dns
 Changed: docker load logic for zuath image, containers_adminhost and fixed expected kube_config path
-Added: a sperate playbook and tag to allow bringing old values in a demo_wiab deloyment
+Added: a separate playbook and tag to allow bringing old values in a demo_wiab deloyment
 Fixed: calling components deployment and archiving old values when processing them
 Changed: enable deployment of smtp, postgresql and kube-prometheus-stack, update artifact hash
