@@ -1,6 +1,6 @@
 Fixed: ansible playbooks for demo-wiab for the tags
 Fixed: ansible playbooks for demo-wiab for the directory usage
-Changed: refractor deploy_wiab to have common inventory together and stop asset service post deploy
+Changed: refactor deploy_wiab to have common inventory together and stop asset service post deploy
 Added: hairpin_networking check and rules placement for demo_wiab deployments 
 Changed: refactor helm_install to have separate values processing and enable wire-utility deployment
 Fixed: dependecy on yq-go  and making docker installation idempotent
