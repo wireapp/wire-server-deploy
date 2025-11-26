@@ -1,6 +1,8 @@
 - name: Package installation and configuration
   hosts: deploy_node
   become: yes
+  vars:
+    yq_version: "4.48.1"
   tasks:
   - name: Install required packages
     block:
@@ -13,7 +15,7 @@
 
     - name: Install yq-go
       get_url:
-        url: "https://github.com/mikefarah/yq/releases/download/v4.48.1/yq_linux_amd64"
+        url: "https://github.com/mikefarah/yq/releases/download/v{{ yq_version }}/yq_linux_amd64"
         dest: /usr/local/bin/yq
         mode: '0755'
 
