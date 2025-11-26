@@ -26,13 +26,19 @@ kube_vip_controlplane_enabled: true
 #   - In the same subnet as your control plane nodes
 #   - Unused and not in DHCP range
 #   - Accessible from all nodes and external clients
+#
+# For Hetzner Cloud deployments: This is set via terraform-generated inventory.yml
+# For other deployments: Uncomment and set the appropriate VIP address
 # Example: If control plane nodes are 192.168.122.21-23, use 192.168.122.100
-kube_vip_address: "192.168.122.100"
+# kube_vip_address: "192.168.122.100"
 
 # Network interface to bind the VIP to
 # Find this by running: ssh kubenode1 "ip -br addr show"
-# Example values: eth0, enp1s0
-kube_vip_interface: "enp1s0"
+#
+# For Hetzner Cloud: Use "enp7s0" (private network interface)
+# For other environments: Check with "ip -br addr show" and uncomment below
+# Common values: eth0, enp1s0, enp7s0
+# kube_vip_interface: "enp1s0"
 
 # Use ARP for Layer 2 VIP management (recommended for most deployments)
 # Set to false only if using BGP for Layer 3 routing
@@ -46,6 +52,15 @@ kube_vip_services_enabled: false
 # Required for kube-vip with ARP mode
 # Prevents kube-proxy from responding to ARP requests for the VIP
 kube_proxy_strict_arp: true
+
+# Leader election timing (fix for kube-vip GitHub issue #453)
+# Increased timeouts prevent "context deadline exceeded" errors during lease acquisition
+# Default values are too aggressive for cloud environments with slower etcd/API responses
+# These settings are particularly important for Hetzner Cloud and similar providers
+kube_vip_leader_election_enabled: true
+kube_vip_leaseduration: 30  # seconds (default: 15)
+kube_vip_renewdeadline: 20  # seconds (default: 10)
+kube_vip_retryperiod: 4     # seconds (default: 2)
 
 # ==============================================================================
 # Bootstrap Strategy for kube-vip HA

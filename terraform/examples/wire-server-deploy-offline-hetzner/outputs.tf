@@ -105,7 +105,6 @@ output "static-inventory" {
         #
         # IMPORTANT: kube_vip_interface MUST be specified for Hetzner Cloud
         # Without it, kube-vip defaults to eth0, but Hetzner uses enp7s0 for private network
-        # This caused VIP to never attach, resulting in kubectl timeouts
         kube_vip_enabled               = true
         kube_vip_controlplane_enabled  = true
         kube_vip_arp_enabled           = true
@@ -113,6 +112,14 @@ output "static-inventory" {
         kube_vip_interface             = "enp7s0"  # Hetzner Cloud private network interface
         kube_vip_address               = cidrhost(hcloud_network_subnet.main.ip_range, 100)
         kube_proxy_strict_arp          = true
+
+        # Leader election timing (fix for GitHub issue #453)
+        # Increased timeouts prevent "context deadline exceeded" during lease acquisition
+        # Default values are too aggressive for slower etcd/API responses
+        kube_vip_leader_election_enabled = true
+        kube_vip_leaseduration           = 30  # seconds (default: 15)
+        kube_vip_renewdeadline           = 20  # seconds (default: 10)
+        kube_vip_retryperiod             = 4   # seconds (default: 2)
       }
     }
     cassandra = {

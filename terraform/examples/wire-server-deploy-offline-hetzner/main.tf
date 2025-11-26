@@ -204,8 +204,6 @@ resource "hcloud_server" "kubenode" {
     network_id = hcloud_network.main.id
     # Control-plane nodes get deterministic addresses starting at .20
     ip = cidrhost(hcloud_network_subnet.main.ip_range, 20 + count.index)
-    # Pre-register the kube-vip (10.1.1.100) so Hetzner routes it to the cluster
-    alias_ips = [cidrhost(hcloud_network_subnet.main.ip_range, 100)]
   }
 }
 
