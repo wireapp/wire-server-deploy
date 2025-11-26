@@ -77,39 +77,6 @@ if [ -n "$VIP_ADDRESS" ] && [ "$VIP_ADDRESS" != "null" ]; then
     -e "loadbalancer_apiserver_localhost=false" \
     -e "{\"supplementary_addresses_in_ssl_keys\": [\"$VIP_ADDRESS\"]}"
 
-  # Wait for VIP to become reachable before continuing
-  echo "Waiting for VIP $VIP_ADDRESS:6443 to become reachable..."
-  MAX_WAIT=180  # 3 minutes
-  ELAPSED=0
-  while ! timeout 2 bash -c "cat < /dev/null > /dev/tcp/$VIP_ADDRESS/6443" 2>/dev/null; do
-    if [ $ELAPSED -ge $MAX_WAIT ]; then
-      echo "ERROR: VIP $VIP_ADDRESS:6443 did not become reachable after ${MAX_WAIT}s"
-      echo "This may indicate:"
-      echo "  1. kube-vip pod failed to start - check: kubectl -n kube-system logs kube-vip-<node>"
-      echo "  2. Network does not support ARP-based VIPs (e.g., Hetzner Cloud Layer 3 networks)"
-      echo "  3. VIP interface detection failed - check kube-vip pod logs"
-      exit 1
-    fi
-    sleep 2
-    ELAPSED=$((ELAPSED + 2))
-    echo "  Still waiting... (${ELAPSED}s/${MAX_WAIT}s)"
-  done
-  echo "✓ VIP $VIP_ADDRESS:6443 is reachable!"
-
-  # Export KUBECONFIG and verify kubectl access
-  export KUBECONFIG="$ANSIBLE_DIR/inventory/offline/artifacts/admin.conf"
-  echo "Exported KUBECONFIG=$KUBECONFIG"
-
-  # Verify kubectl can connect
-  echo "Verifying kubectl access to cluster..."
-  if kubectl cluster-info 2>/dev/null | head -1; then
-    echo "✓ kubectl successfully connected to cluster via VIP"
-    kubectl get nodes -o wide || true
-  else
-    echo "WARNING: kubectl cannot connect to cluster"
-    echo "KUBECONFIG content:"
-    grep "server:" "$KUBECONFIG" || true
-  fi
 else
   echo "No VIP configured, skipping kube-vip deployment"
 
