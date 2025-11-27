@@ -51,7 +51,7 @@ wiab:
       - smtp
       - rabbitmq
       - databases-ephemeral
-      - postgresql
+      - postgresql # postgresql chart should be deployed before deploying wire-server
       - reaper
       - smallstep-accomp
       - kube-prometheus-stack
