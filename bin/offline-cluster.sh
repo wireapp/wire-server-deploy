@@ -77,6 +77,51 @@ if [ -n "$VIP_ADDRESS" ] && [ "$VIP_ADDRESS" != "null" ]; then
     -e "loadbalancer_apiserver_localhost=false" \
     -e "{\"supplementary_addresses_in_ssl_keys\": [\"$VIP_ADDRESS\"]}"
 
+  # ===== Configure VIP routing (if needed) =====
+  # In some cloud environments, the adminhost cannot reach the VIP via ARP due to gateway routing.
+  # Add a static route to make VIP reachable from adminhost for kubectl commands.
+  echo "Checking if VIP routing configuration is needed..."
+
+  # Test if VIP is reachable
+  if ! timeout 2 bash -c "cat < /dev/null > /dev/tcp/$VIP_ADDRESS/6443" 2>/dev/null; then
+    echo "VIP $VIP_ADDRESS is not reachable from adminhost, configuring static route..."
+
+    # Get VIP interface and first kubenode IP from inventory
+    VIP_INTERFACE=$(yq eval '.[\"k8s-cluster\"].vars.kube_vip_interface // ""' "$INVENTORY_FILE" 2>/dev/null)
+    FIRST_KUBENODE=$(yq eval '.["kube-node"].hosts | keys | .[0]' "$INVENTORY_FILE" 2>/dev/null)
+    FIRST_KUBENODE_IP=$(yq eval ".all.hosts.\"$FIRST_KUBENODE\".ip" "$INVENTORY_FILE" 2>/dev/null)
+
+    # Auto-detect interface if not specified in inventory
+    if [ -z "$VIP_INTERFACE" ] || [ "$VIP_INTERFACE" = "null" ]; then
+      echo "⚠ VIP interface not found in inventory, attempting auto-detection..."
+      # Find interface with route to first kubenode
+      VIP_INTERFACE=$(ip route get "$FIRST_KUBENODE_IP" 2>/dev/null | grep -oP 'dev \K\S+' | head -1)
+    fi
+
+    if [ -n "$FIRST_KUBENODE_IP" ] && [ "$FIRST_KUBENODE_IP" != "null" ] && [ -n "$VIP_INTERFACE" ]; then
+      echo "Adding route: $VIP_ADDRESS via $FIRST_KUBENODE_IP dev $VIP_INTERFACE"
+      ip route add "$VIP_ADDRESS/32" via "$FIRST_KUBENODE_IP" dev "$VIP_INTERFACE" 2>/dev/null || true
+
+      # Verify route was added
+      if ip route show | grep -q "$VIP_ADDRESS"; then
+        echo "✓ Static route configured successfully"
+
+        # Test connectivity again
+        if timeout 2 bash -c "cat < /dev/null > /dev/tcp/$VIP_ADDRESS/6443" 2>/dev/null; then
+          echo "✓ VIP $VIP_ADDRESS:6443 is now reachable!"
+        else
+          echo "⚠ WARNING: VIP still not reachable after adding route"
+        fi
+      else
+        echo "⚠ WARNING: Failed to add static route"
+      fi
+    else
+      echo "⚠ WARNING: Could not determine first kubenode IP from inventory"
+    fi
+  else
+    echo "✓ VIP $VIP_ADDRESS:6443 is already reachable, no routing changes needed"
+  fi
+
 else
   echo "No VIP configured, skipping kube-vip deployment"
 
