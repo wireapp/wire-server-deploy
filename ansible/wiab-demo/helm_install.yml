@@ -11,6 +11,9 @@
       -v "{{ ansible_user_dir }}/.kube/config":/root/.kube/config
       -v "{{ ansible_user_dir }}/.minikube":{{ ansible_user_dir }}/.minikube
       -e KUBECONFIG=/root/.kube/config
+      -e HOST_IP="{{ wire_ip }}"
+      -e SFT_NODE="{{ k8s_sft_node }}"
+      -e COTURN_NODE="{{ k8s_coturn_node }}"
       "{{ wsd_container.stdout }}"
   tasks:
   - name: Check if WSD Docker image already exists
@@ -35,7 +38,23 @@
       {{ docker_cmd_base }} bash -c "source /wire-server-deploy/bin/wiab-demo/offline_deploy_k8s.sh && deploy_cert_manager"
     args:
       executable: /bin/bash
-    
+    tags:
+      - helm_install
+      - cert_manager_networking
+    when: 
+      - "'helm_install' in ansible_run_tags"
+      - "'cert_manager_networking' in ansible_run_tags"
+
+  - name: Skip message for cert manager
+    debug:
+      msg: "'Deploy cert manager' task. This task requires BOTH --tags helm_install AND --tags cert_manager_networking to run."
+    when: 
+      - "not ('helm_install' in ansible_run_tags and 'cert_manager_networking' in ansible_run_tags)"
+      - "ansible_run_tags | length > 0"
+    tags:
+      - helm_install
+      - cert_manager_networking
+
   - name: Deploy chart
     shell: |
       {{ docker_cmd_base }} bash -c "source /wire-server-deploy/bin/wiab-demo/offline_deploy_k8s.sh && deploy_charts {{ item }}"
@@ -59,4 +78,5 @@
     
   - name: Note wire-utility deployment attempt
     debug:
-      msg: "Wire-utility deployment was attempted as a best-case scenario. If it failed, Wire-in-a-Box will still function without it. Return code: {{ wire_utility_deploy.rc }}"
+      msg: "Wire-utility deployment failed. Wire-services will still function without it. Read  more about it here: https://docs.wire.com/latest/how-to/administrate/wire-utility-tool.html"
+    when: wire_utility_deploy.rc != 0
