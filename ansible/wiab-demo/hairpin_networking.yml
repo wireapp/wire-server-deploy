@@ -3,22 +3,16 @@
   hosts: deploy_node
   become: true
   tasks:
-  - name: Test HTTP connectivity from minikube node to its own public IP
-    command: >
-      docker exec {{ minikube_profile }}
-      sh -c "curl -sS -o /dev/null -w '%{http_code}' --connect-timeout 2 http://{{ wire_ip }}"
-    register: curl_test
+  - name: Test port connectivity from minikube node to its own public IP
+    shell: |
+      docker exec {{ minikube_profile }} sh -c "nc -zv {{ wire_ip }} 80"
+    register: nc_test
     failed_when: false
     changed_when: false
 
-  - name: Determine if hairpin NAT is required (treat any 1xx–5xx as success)
+  - name: Determine if hairpin NAT is required (netcat connects successfully if hairpin is working)
     set_fact:
-      hairpin_required: >-
-        {{
-          not (
-            curl_test.stdout is match("^[1-5][0-9][0-9]$")
-          )
-        }}
+      hairpin_required: "{{ nc_test.rc != 0 }}"
 
   - name: Configure hairpin NAT rules for ingress
     when: hairpin_required | bool
