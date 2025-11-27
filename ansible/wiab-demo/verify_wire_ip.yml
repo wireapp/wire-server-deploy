@@ -4,6 +4,15 @@
     test_port: 3478
   tasks:
 
+  # this is an exception to install_pkgs, as it expects netcat before other tasks take place
+  - name: Install Netcat
+    become: yes
+    apt:
+      name:
+        - ncat
+      state: present
+      update_cache: yes
+
   - name: Continue finding wire_ip on the node
     when: wire_ip is not defined or wire_ip == ''
     block:

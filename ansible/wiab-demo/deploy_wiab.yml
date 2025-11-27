@@ -1,15 +1,7 @@
 - name: Execute common tasks for the node
   hosts: deploy_node
+  tags: always
   tasks:
-  # this is an exception to install_pkgs, as it expects netcat before other tasks take place
-  - name: Install Netcat
-    become: yes
-    apt:
-      name:
-        - ncat
-      state: present
-      update_cache: yes
-
   # if number of nodes increase, the logic can be adapted to change nodes for different services
   # currently it is pointing to the first node
   - name: Set facts for various Kubernetes nodes (for a single node), it will be name of profile
@@ -52,39 +44,47 @@
   become: yes
   become_user: "{{ ansible_user }}"
   tasks:
-  - name: Get the IP address of the k8s_ingress_controller node
-    shell: |
-      kubectl --kubeconfig="{{ kube_config_path }}"  get node {{ k8s_ingress_controller_node }} -o json | jq -r '.status.addresses[] | select(.type=="InternalIP").address'
-    register: k8s_ingress_controller_ip
-    changed_when: false
+  - name: Setting up inventory
+    block:
+    - name: Get the IP address of the k8s_ingress_controller node
+      shell: |
+        kubectl --kubeconfig="{{ kube_config_path }}"  get node {{ k8s_ingress_controller_node }} -o json | jq -r '.status.addresses[] | select(.type=="InternalIP").address'
+      register: k8s_ingress_controller_ip
+      changed_when: false
 
-  - name: Get the {{ minikube_network_name }} Docker network ID
-    shell: |
-      docker network inspect {{ minikube_network_name }} | jq -r '.[0].Id'
-    register: docker_network_id
-    changed_when: false
+    - name: Get the {{ minikube_network_name }} Docker network ID
+      shell: |
+        docker network inspect {{ minikube_network_name }} | jq -r '.[0].Id'
+      register: docker_network_id
+      changed_when: false
 
-  - name: Get all interfaces with bridge interfaces
-    shell: ip -o addr show | awk '{print $2}' | grep -i 'br-'
-    register: bridge_interfaces
-    changed_when: false
+    - name: Get all interfaces with bridge interfaces
+      shell: ip -o addr show | awk '{print $2}' | grep -i 'br-'
+      register: bridge_interfaces
+      changed_when: false
 
-  - name: Find the matching bridge interface for {{ minikube_network_name }} Docker network
-    shell: |
-      for iface in {{ bridge_interfaces.stdout_lines | join(' ') }}; do
-        iface_id=$(echo "$iface" | cut -d '-' -f2)
-        if echo "{{ docker_network_id.stdout }}" | grep -q "$iface_id"; then
-          echo "$iface"
-          break
-        fi
-      done
-    register: matching_bridge_interface
-    changed_when: false
+    - name: Find the matching bridge interface for {{ minikube_network_name }} Docker network
+      shell: |
+        for iface in {{ bridge_interfaces.stdout_lines | join(' ') }}; do
+          iface_id=$(echo "$iface" | cut -d '-' -f2)
+          if echo "{{ docker_network_id.stdout }}" | grep -q "$iface_id"; then
+            echo "$iface"
+            break
+          fi
+        done
+      register: matching_bridge_interface
+      changed_when: false
 
-  - name: set facts for k8s ingress controller ip
-    set_fact:
-      k8s_ingress_controller_ip: "{{ k8s_ingress_controller_ip.stdout }}"
-      matching_bridge_interface: "{{ matching_bridge_interface.stdout }}"
+    - name: set facts for k8s ingress controller ip
+      set_fact:
+        k8s_ingress_controller_ip: "{{ k8s_ingress_controller_ip.stdout }}"
+        matching_bridge_interface: "{{ matching_bridge_interface.stdout }}"
+
+    when: >
+      'minikube' not in ansible_skip_tags or
+      'asset_host' not in ansible_skip_tags or 
+      'seed_containers' not in ansible_skip_tags or 
+      'cert_manager_networking' not in ansible_skip_tags
 
 - name: Configure Iptables rules
   import_playbook: ./iptables_rules.yml
