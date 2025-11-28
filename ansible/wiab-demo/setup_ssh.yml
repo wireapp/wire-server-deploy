@@ -7,7 +7,7 @@
     block:
     - name: Ensure the .ssh directory exists
       file:
-        path: "/home/{{ ansible_user }}/.ssh"
+        path: "{{ ansible_user_dir }}/.ssh"
         state: directory
         mode: '0700'
         owner: "{{ ansible_user }}"
@@ -15,20 +15,20 @@
 
     - name: Generate SSH key if it does not exist
       shell: |
-        if [ ! -f "/home/{{ ansible_user }}/.ssh/id_rsa_wire" ]; then
-          ssh-keygen -t rsa -b 4096 -f "/home/{{ ansible_user }}/.ssh/id_rsa_wire" -N "" -C "ansible_generated_key_wire";
+        if [ ! -f "{{ ansible_user_dir }}/.ssh/id_rsa_wire" ]; then
+          ssh-keygen -t rsa -b 4096 -f "{{ ansible_user_dir }}/.ssh/id_rsa_wire" -N "" -C "ansible_generated_key_wire";
         fi
       args:
-        creates: "/home/{{ ansible_user }}/.ssh/id_rsa_wire"
+        creates: "{{ ansible_user_dir }}/.ssh/id_rsa_wire"
 
     - name: Read the private key
       slurp:
-        src: "/home/{{ ansible_user }}/.ssh/id_rsa_wire"
+        src: "{{ ansible_user_dir }}/.ssh/id_rsa_wire"
       register: ssh_key_private
 
     - name: Read the public key content
       slurp:
-        src: "/home/{{ ansible_user }}/.ssh/id_rsa_wire.pub"
+        src: "{{ ansible_user_dir }}/.ssh/id_rsa_wire.pub"
       register: ssh_key_content
 
     - name: Set the public key as a fact
