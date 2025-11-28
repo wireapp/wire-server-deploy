@@ -10,7 +10,7 @@ check_or_load_image() {
     # Check if any image matching pattern exists in docker
     local existing_image
     existing_image=$(sudo docker images --format "{{.Repository}}:{{.Tag}}" | grep "$image_pattern" | head -1)
-    if [ -n "$existing_image" ]; then
+    if [[ -n "$existing_image" ]]; then
         echo "$existing_image"
         return 0
     fi
@@ -30,7 +30,7 @@ d() {
     local docker_flags=""
     # Check if both stdin and stdout are terminals
     # If either of them is not a terminal (piped/redirected), run in detached mode
-    if [ -t 0 ] && [ -t 1 ]; then
+    if [[ -t 0 ]] && [[ -t 1 ]]; then
         docker_flags="-it"
     fi
 
@@ -44,4 +44,6 @@ d() {
     -v "$HOME/.minikube:$HOME/.minikube" \
     -e KUBECONFIG=/root/.kube/config \
     "$WSD_CONTAINER" "$@"
+
+    return 0
 }

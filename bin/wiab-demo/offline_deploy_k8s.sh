@@ -42,7 +42,7 @@ process_charts() {
   ENV=$1
   TYPE=$2
 
-  if [ "$ENV" != "demo" ] || [[ -z "$TYPE" ]] ; then
+  if [[ "$ENV" != "demo" ]] || [[ -z "$TYPE" ]] ; then
     echo "Error: This function only supports demo deployments with TYPE as values or secrets. ENV must be 'demo', got: '$ENV' and '$TYPE'"
     exit 1
   fi
