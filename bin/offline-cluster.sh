@@ -49,85 +49,52 @@ ansible-playbook -i $INVENTORY_FILE $ANSIBLE_DIR/sync_time.yml -v
 ansible-playbook -i $INVENTORY_FILE $ANSIBLE_DIR/kubernetes.yml \
   --skip-tags bootstrap-os,preinstall,container-engine,multus,kube-vip
 
-# Phase 2: Deploy kube-vip AND configure loadbalancer_apiserver
-# Now we define loadbalancer_apiserver via -e so kubeconfig gets updated to use VIP
-# Extract VIP from inventory if defined, otherwise use a calculated value
-# Handle different inventory formats by trying both paths:
-#   1. YAML inventory with embedded vars: ."k8s-cluster".vars.kube_vip_address
-#   2. INI inventory with group_vars: group_vars/k8s-cluster/k8s-cluster.yml
+# Phase 2: Configure API endpoint (kube-vip or direct node IP)
+# Check if kube-vip is enabled in the inventory
 INVENTORY_DIR="$(dirname "$INVENTORY_FILE")"
 
-# Try to extract VIP from YAML inventory first (Terraform-generated format)
-VIP_ADDRESS=$(yq eval '."k8s-cluster".vars.kube_vip_address // ""' "$INVENTORY_FILE" 2>/dev/null || echo "")
-
-# If not found, try group_vars file (static INI format)
-if [ -z "$VIP_ADDRESS" ] || [ "$VIP_ADDRESS" = "null" ]; then
+# Check kube_vip_enabled flag from inventory
+KUBE_VIP_ENABLED=$(yq eval '.k8s-cluster.vars.kube_vip_enabled // ""' "$INVENTORY_FILE" 2>/dev/null || echo "")
+if [ -z "$KUBE_VIP_ENABLED" ] || [ "$KUBE_VIP_ENABLED" = "null" ]; then
   GROUP_VARS_FILE="$INVENTORY_DIR/group_vars/k8s-cluster/k8s-cluster.yml"
   if [ -f "$GROUP_VARS_FILE" ]; then
-    VIP_ADDRESS=$(yq eval '.kube_vip_address // ""' "$GROUP_VARS_FILE" 2>/dev/null || echo "")
+    KUBE_VIP_ENABLED=$(yq eval '.kube_vip_enabled // ""' "$GROUP_VARS_FILE" 2>/dev/null || echo "")
   fi
 fi
 
-if [ -n "$VIP_ADDRESS" ] && [ "$VIP_ADDRESS" != "null" ]; then
-  echo "Deploying kube-vip with VIP: $VIP_ADDRESS"
-  ansible-playbook -i $INVENTORY_FILE $ANSIBLE_DIR/kubernetes.yml \
-    --tags kube-vip,client \
-    -e "{\"loadbalancer_apiserver\": {\"address\": \"$VIP_ADDRESS\", \"port\": 6443}}" \
-    -e "apiserver_loadbalancer_domain_name=$VIP_ADDRESS" \
-    -e "loadbalancer_apiserver_localhost=false" \
-    -e "{\"supplementary_addresses_in_ssl_keys\": [\"$VIP_ADDRESS\"]}"
-
-  # ===== Configure VIP routing (if needed) =====
-  # In some cloud environments, the adminhost cannot reach the VIP via ARP due to gateway routing.
-  # Add a static route to make VIP reachable from adminhost for kubectl commands.
-  echo "Checking if VIP routing configuration is needed..."
-
-  # Test if VIP is reachable
-  if ! timeout 2 bash -c "cat < /dev/null > /dev/tcp/$VIP_ADDRESS/6443" 2>/dev/null; then
-    echo "VIP $VIP_ADDRESS is not reachable from adminhost, configuring static route..."
-
-    # Get VIP interface and first kubenode IP from inventory
-    VIP_INTERFACE=$(yq eval '.[\"k8s-cluster\"].vars.kube_vip_interface // ""' "$INVENTORY_FILE" 2>/dev/null)
-    FIRST_KUBENODE=$(yq eval '.["kube-node"].hosts | keys | .[0]' "$INVENTORY_FILE" 2>/dev/null)
-    FIRST_KUBENODE_IP=$(yq eval ".all.hosts.\"$FIRST_KUBENODE\".ip" "$INVENTORY_FILE" 2>/dev/null)
-
-    # Auto-detect interface if not specified in inventory
-    if [ -z "$VIP_INTERFACE" ] || [ "$VIP_INTERFACE" = "null" ]; then
-      echo "⚠ VIP interface not found in inventory, attempting auto-detection..."
-      # Find interface with route to first kubenode
-      VIP_INTERFACE=$(ip route get "$FIRST_KUBENODE_IP" 2>/dev/null | grep -oP 'dev \K\S+' | head -1)
+if [ "$KUBE_VIP_ENABLED" = "true" ]; then
+  # ===== kube-vip HA Mode =====
+  # Extract VIP address from inventory
+  VIP_ADDRESS=$(yq eval '.k8s-cluster.vars.kube_vip_address // ""' "$INVENTORY_FILE" 2>/dev/null || echo "")
+  if [ -z "$VIP_ADDRESS" ] || [ "$VIP_ADDRESS" = "null" ]; then
+    GROUP_VARS_FILE="$INVENTORY_DIR/group_vars/k8s-cluster/k8s-cluster.yml"
+    if [ -f "$GROUP_VARS_FILE" ]; then
+      VIP_ADDRESS=$(yq eval '.kube_vip_address // ""' "$GROUP_VARS_FILE" 2>/dev/null || echo "")
     fi
-
-    if [ -n "$FIRST_KUBENODE_IP" ] && [ "$FIRST_KUBENODE_IP" != "null" ] && [ -n "$VIP_INTERFACE" ]; then
-      echo "Adding route: $VIP_ADDRESS via $FIRST_KUBENODE_IP dev $VIP_INTERFACE"
-      ip route add "$VIP_ADDRESS/32" via "$FIRST_KUBENODE_IP" dev "$VIP_INTERFACE" 2>/dev/null || true
-
-      # Verify route was added
-      if ip route show | grep -q "$VIP_ADDRESS"; then
-        echo "✓ Static route configured successfully"
-
-        # Test connectivity again
-        if timeout 2 bash -c "cat < /dev/null > /dev/tcp/$VIP_ADDRESS/6443" 2>/dev/null; then
-          echo "✓ VIP $VIP_ADDRESS:6443 is now reachable!"
-        else
-          echo "⚠ WARNING: VIP still not reachable after adding route"
-        fi
-      else
-        echo "⚠ WARNING: Failed to add static route"
-      fi
-    else
-      echo "⚠ WARNING: Could not determine first kubenode IP from inventory"
-    fi
-  else
-    echo "✓ VIP $VIP_ADDRESS:6443 is already reachable, no routing changes needed"
   fi
 
-else
-  echo "No VIP configured, skipping kube-vip deployment"
+  if [ -n "$VIP_ADDRESS" ] && [ "$VIP_ADDRESS" != "null" ]; then
+    echo "Deploying kube-vip with VIP: $VIP_ADDRESS"
+    ansible-playbook -i $INVENTORY_FILE $ANSIBLE_DIR/kubernetes.yml \
+      --tags kube-vip,client \
+      -e "{\"loadbalancer_apiserver\": {\"address\": \"$VIP_ADDRESS\", \"port\": 6443}}" \
+      -e "apiserver_loadbalancer_domain_name=$VIP_ADDRESS" \
+      -e "loadbalancer_apiserver_localhost=false" \
+      -e "{\"supplementary_addresses_in_ssl_keys\": [\"$VIP_ADDRESS\"]}"
 
-  # Still export KUBECONFIG for nginx localhost load balancer
+    export KUBECONFIG="$ANSIBLE_DIR/inventory/offline/artifacts/admin.conf"
+    echo "✓ kube-vip deployed with VIP: $VIP_ADDRESS"
+  else
+    echo "ERROR: kube_vip_enabled=true but no VIP address found in inventory!"
+    exit 1
+  fi
+else
+  # ===== Direct Node IP Mode (No kube-vip) =====
+  # Phase 1 already configured kubeconfig with first node IP during cluster bootstrap
+  # No additional configuration needed
+  echo "kube-vip disabled, using direct node IP from cluster bootstrap"
   export KUBECONFIG="$ANSIBLE_DIR/inventory/offline/artifacts/admin.conf"
-  echo "Exported KUBECONFIG=$KUBECONFIG (using nginx localhost load balancer)"
+  echo "✓ Kubernetes API endpoint configured during Phase 1 bootstrap"
 fi
 
 # Deploy all other services which don't run in kubernetes.

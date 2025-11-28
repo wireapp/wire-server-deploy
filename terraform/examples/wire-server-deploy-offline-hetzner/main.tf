@@ -151,7 +151,7 @@ resource "hcloud_server" "adminhost" {
   server_type = local.medium_server_type
   network {
     network_id = hcloud_network.main.id
-    # Reserve .10 for adminhost so VIP (.100) stays free for kube-vip
+    # Reserve .10 for adminhost (deterministic IP allocation)
     ip = cidrhost(hcloud_network_subnet.main.ip_range, 10)
   }
 }
@@ -176,7 +176,7 @@ resource "hcloud_server" "assethost" {
   }
   network {
     network_id = hcloud_network.main.id
-    # Reserve .11 for assethost to avoid consuming the kube-vip range
+    # Reserve .11 for assethost
     ip = cidrhost(hcloud_network_subnet.main.ip_range, 11)
   }
 }

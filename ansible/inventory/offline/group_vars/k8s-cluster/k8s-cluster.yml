@@ -15,8 +15,8 @@
 #
 # Reference: https://kube-vip.io/
 
-# Enable kube-vip
-kube_vip_enabled: true
+# Enable kube-vip (optional - set to true if you need HA control plane)
+kube_vip_enabled: false
 
 # Enable control plane VIP (required for HA)
 kube_vip_controlplane_enabled: true
@@ -27,18 +27,17 @@ kube_vip_controlplane_enabled: true
 #   - Unused and not in DHCP range
 #   - Accessible from all nodes and external clients
 #
-# For Hetzner Cloud deployments: This is set via terraform-generated inventory.yml
-# For other deployments: Uncomment and set the appropriate VIP address
+# Set the appropriate VIP address for your environment
 # Example: If control plane nodes are 192.168.122.21-23, use 192.168.122.100
-# kube_vip_address: "192.168.122.100"
+kube_vip_address: "192.168.122.100"
 
 # Network interface to bind the VIP to
 # Find this by running: ssh kubenode1 "ip -br addr show"
 #
 # For Hetzner Cloud: Use "enp7s0" (private network interface)
-# For other environments: Check with "ip -br addr show" and uncomment below
+# For other environments: Check with "ip -br addr show"
 # Common values: eth0, enp1s0, enp7s0
-# kube_vip_interface: "enp1s0"
+kube_vip_interface: "enp1s0"
 
 # Use ARP for Layer 2 VIP management (recommended for most deployments)
 # Set to false only if using BGP for Layer 3 routing
