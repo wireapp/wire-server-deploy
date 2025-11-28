@@ -144,6 +144,10 @@ postgresql_network_interface = enp1s0
 kube-master
 kube-node
 
+# Kubernetes cluster configuration (kube-vip, vip_address, vip_interface)
+# is defined in group_vars/k8s-cluster/k8s-cluster.yml
+# See offline/kube-vip-ha-setup.md for HA setup documentation
+
 # Add all cassandra nodes here
 [cassandra]
 # cassandra1

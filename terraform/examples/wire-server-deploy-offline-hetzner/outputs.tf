@@ -37,6 +37,7 @@ output "adminhost" {
   sensitive = true
   value     = hcloud_server.adminhost.ipv4_address
 }
+
 # output format that a static inventory file expects
 output "static-inventory" {
   sensitive = true
@@ -93,11 +94,16 @@ output "static-inventory" {
       # NOTE: Necessary for the Hetzner Cloud until Calico v3.17 arrives in Kubespray
       # Hetzner private networks have an MTU of 1450 instead of 1500
       vars = {
-        calico_mtu      = 1450
-        calico_veth_mtu = 1430
+        calico_mtu                = 1450
+        calico_veth_mtu           = 1430
         # NOTE: relax handling a list with more than 3 items; required on Hetzner
         docker_dns_servers_strict = false
         upstream_dns_servers      = [tolist(hcloud_server.adminhost.network)[0].ip]
+
+        # kube-vip DISABLED for Hetzner Cloud CI testing
+        # Reason: Hetzner Cloud's /32 + gateway networking is incompatible with ARP-based VIP
+        # Using direct first kubenode IP as API endpoint instead
+        kube_vip_enabled = false
       }
     }
     cassandra = {
