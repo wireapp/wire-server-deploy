@@ -20,13 +20,13 @@ else
 fi
 helm upgrade --install --wait smtp ./charts/smtp --values $SMTP_VALUES_FILE
 
-# remove postgresql chart as postgresql is now external
-# helm upgrade --install --wait postgresql ./charts/postgresql --values ./values/postgresql/prod-values.example.yaml --values ./values/postgresql/prod-secrets.example.yaml
+# HACK: remove after implementing rabbitmq-external deployment
+sed -i 's/rabbitmq-external/rabbitmq/g' ./values/wire-server/prod-values.example.yaml
 helm upgrade --install --wait rabbitmq ./charts/rabbitmq --values ./values/rabbitmq/prod-values.example.yaml --values ./values/rabbitmq/prod-secrets.example.yaml
 # it will only deploy the redis cluster
 helm upgrade --install --wait databases-ephemeral ./charts/databases-ephemeral --values ./values/databases-ephemeral/prod-values.example.yaml
 helm upgrade --install --wait reaper ./charts/reaper --values ./values/reaper/prod-values.example.yaml
-helm upgrade --install --wait --timeout=30m0s wire-server ./charts/wire-server --values ./values/wire-server/prod-values.example.yaml --values ./values/wire-server/secrets.yaml || true
+helm upgrade --install --wait --timeout=30m0s wire-server ./charts/wire-server --values ./values/wire-server/prod-values.example.yaml --values ./values/wire-server/secrets.yaml
 
 # if charts/webapp directory exists
 if [ -d "./charts/webapp" ]; then
