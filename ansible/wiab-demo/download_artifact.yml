@@ -57,4 +57,4 @@
       mode: '0775'
       recurse: yes
       follow: no
-    become: yes
+    ignore_errors: yes
