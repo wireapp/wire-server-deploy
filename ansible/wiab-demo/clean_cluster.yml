@@ -1,10 +1,8 @@
 - name: Clean the installation
   hosts: deploy_node
-  become: yes
   tasks:
   # stopping the cluster defined in minikube_cluster playbook
   - name: clean minikube
-    become_user: "{{ ansible_user }}"
     tags: [never, remove_minikube]
     block:
     - name: Check if Minikube is running
@@ -27,6 +25,7 @@
   # these packages can only be removed post stopping the minikube cluster
   - name: remove packages
     tags: [never, remove_packages]
+    become: yes
     block:
     - name: Remove Minikube
       file:
@@ -79,6 +78,7 @@
   # it makes sense to remove them when removing the k8s cluster or individually to clean them
   - name: remove iptables rules
     tags: [never, remove_iptables]
+    become: yes
     vars:
       iptables_rules_comment: "Wire Iptables Rules"
       iptables_save_dir: "/home/{{ ansible_user }}/wire-iptables-rules"
@@ -146,7 +146,6 @@
 
   - name: remove the downloaded artifacts 
     tags: [never, remove_artifacts]
-    become_user: "{{ ansible_user }}"
     file:
       path: "{{ item }}"
       state: absent
@@ -154,9 +153,11 @@
       - "{{ ansible_user_dir }}/wire-server-deploy"
       - "{{ ansible_user_dir }}/wire-server-deploy-static-demo-{{ artifact_hash }}.tgz"
       - "{{ ansible_user_dir }}/wire_ip"
+      - "{{ ansible_user_dir }}/wire_secrets"
 
   - name: clean asset_host artifacts and remove service
     tags: [never, clean_assethost]
+    become: yes
     block:
     - name: Stop and disable serve-assets systemd service
       systemd:
