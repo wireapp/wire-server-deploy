@@ -151,13 +151,18 @@ The playbook then configures ssh access (via ssh proxy) for further operations:
 - It will seed the docker images shipped for the wire related helm charts in the minikube k8s node
 - Can be skipped using `--skip-tags seed_containers`
 
-### 12. Wire helm charts values preparation
+### 12. Wire Helm Chart Values Preparation
 
 - Imports [wire_values.yml](../ansible/wiab-demo/wire_values.yml) to prepare the Helm chart values
-- Runs automatically when using `--tags wire_values`
-- The playbook backs up existing values files before replacing them.
+- Runs in two scenarios:
+  - When running the **full playbook** (no tags specified)
+  - When **both** `wire_values` **and** `helm_install` tags are explicitly passed: `--tags wire_values,helm_install`
+- Will be **skipped** if only `--tags wire_values` or only `--tags helm_install` is passed
+- The playbook backs up existing values files before replacing them
 
- Note: an admin can choose to skip this step if they already have their own values files (from previous similar deployments) and wish to avoid overwriting values. Provide your values in the expected `values/` paths and run the next playbook with appropriate tags.
+**Note:** An admin can skip this step by:
+- Running only `--tags helm_install` (if values already exist from previous deployments)
+- Providing pre-created values files in the expected `values/` paths and using `--skip-tags wire_values`
 
 ### 13. Wire Secrets Creation
 
@@ -276,8 +281,8 @@ The following tags are available for controlling playbook execution:
 | `minikube` | Minikube cluster setup | SSH keys setup, IPTables rules |
 | `download` | Wire artifact download | None |
 | `asset_host` | Asset host configuration | SSH Proxy and Inventory Setup |
-| `seed_containers` | Container seeding | SSH Proxy and Inventory Setup|
-| `wire_values` | Setup Wire Helm values | None |
+| `seed_containers` | Container seeding | SSH Proxy and Inventory Setup |
+| `wire_values` | Setup Wire Helm values | Requires `helm_install` tag |
 | `wire_secrets` | Create Wire secrets | None |
 | `helm_install` | Helm chart installation | None |
 | `cert_manager_networking` | Enable Cert Manager hairpin Networking | None |

@@ -30,10 +30,15 @@
 
 - name: Manage SSH keys (dependency for minikube, asset_host, seed_containers)
   import_playbook: ./setup_ssh.yml
+  tags: always
   when: >
-    'minikube' not in ansible_skip_tags or
+    ('minikube' not in ansible_skip_tags or
     'asset_host' not in ansible_skip_tags or  
-    'seed_containers' not in ansible_skip_tags
+    'seed_containers' not in ansible_skip_tags)
+    or
+    ('minikube' in ansible_run_tags or
+    'asset_host' in ansible_run_tags or
+    'seed_containers' in ansible_run_tags)
 
 - name: Configure minikube cluster
   import_playbook: ./minikube_cluster.yml
@@ -80,11 +85,18 @@
         k8s_ingress_controller_ip: "{{ k8s_ingress_controller_ip.stdout }}"
         matching_bridge_interface: "{{ matching_bridge_interface.stdout }}"
 
+    tags:
+      - always
     when: >
-      'minikube' not in ansible_skip_tags or
-      'asset_host' not in ansible_skip_tags or 
-      'seed_containers' not in ansible_skip_tags or 
-      'cert_manager_networking' not in ansible_skip_tags
+      ('minikube' not in ansible_skip_tags or
+      'asset_host' not in ansible_skip_tags or
+      'seed_containers' not in ansible_skip_tags or
+      'cert_manager_networking' not in ansible_skip_tags)
+      or
+      ('minikube' in ansible_run_tags or
+      'asset_host' in ansible_run_tags or
+      'seed_containers' in ansible_run_tags or
+      'cert_manager_networking' in ansible_run_tags)
 
 - name: Configure Iptables rules
   import_playbook: ./iptables_rules.yml
@@ -115,9 +127,13 @@
           docker network inspect "{{ minikube_network_name }}" | jq -r '.[0].IPAM.Config[0].Gateway'
         register: host_ip
     
+    tags: always
     when: >
-      'asset_host' not in ansible_skip_tags or
-      'seed_containers' not in ansible_skip_tags
+      ('asset_host' not in ansible_skip_tags or
+      'seed_containers' not in ansible_skip_tags)
+      or
+      ('asset_host' in ansible_run_tags or
+      'seed_containers' in ansible_run_tags)
 
   - name: Setup ssh proxy access to k8s-cluster nodes
     become: no
@@ -203,7 +219,13 @@
 
 - name: Prepare helm chart values
   import_playbook: ./wire_values.yml
-  tags: wire_values
+  tags: 
+    - wire_values
+    - helm_install
+  when: >
+    ('wire_values' in ansible_run_tags and 'helm_install' in ansible_run_tags)
+    or
+    (ansible_run_tags | length == 0)
 
 - name: Create wire secrets
   import_playbook: ./wire_secrets.yml
