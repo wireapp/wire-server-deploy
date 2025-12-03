@@ -19,6 +19,9 @@ local   replication   {{ repmgr_user }}                                   md5
 host    replication   {{ repmgr_user }}        127.0.0.1/32               md5
 host    replication   {{ repmgr_user }}        {{ network_subnet | default('10.0.0.0/8') }}  md5
 
+# postgres_exporter access
+host    postgres      {{ repmgr_user }}        127.0.0.1/32               scram-sha-256
+host    postgres      {{ repmgr_user }}        ::1/128                    scram-sha-256
 
 # Application access for the network
 host    all           all           {{ network_subnet | default('10.0.0.0/8') }}  md5

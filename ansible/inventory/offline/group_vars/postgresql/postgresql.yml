@@ -64,8 +64,8 @@ postgresql_use_repository: false  # Set to true to use local packages from urls
 # When updating the packages, update the checksums too in wire-server-deploy/nix/pkgs/wire-binaries.nix
 postgresql_pkgs:
   - name: libpq5
-    url: "{{ binaries_url }}/libpq5_17.5-1.pgdg22.04+1_amd64.deb"
-    checksum: "sha256:97cec98aa147de384066a027693e5a0864009e2209d170f891cb0d7583735936"
+    url: "{{ binaries_url }}/libpq5_18.1-1.pgdg22.04+2_amd64.deb"
+    checksum: "sha256:4ae11bafcf5cb972e53457c01de30bd4119e8ed280bced0c383aceecb06b4be8"
   - name: postgresql-client-common
     url: "{{ binaries_url }}/postgresql-client-common_281.pgdg22.04+1_all.deb"
     checksum: "sha256:c5ee58fea51a19753ac0496d06538c6a194705b11aef27683047e9c4ebff2c5e"

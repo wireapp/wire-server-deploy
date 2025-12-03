@@ -19,6 +19,7 @@ let
   minio_version = "RELEASE.2023-07-07T07-13-57Z";
   mc_version = "RELEASE.2023-10-24T05-18-28Z";
   repmgr_version = "5.5.0";
+  postgres_exporter_version = "0.18.1";
 
 
   # Note: If you change a version, replace the checksum with zeros, run « nix-build --no-out-link -A pkgs.wire-binaries », it will complain and give you the right checksum, use that checksum in this file, run it again and it should build without complaining.
@@ -119,8 +120,8 @@ let
     };
     libpq5 = fetchurl rec {
       passthru.url = url;
-      url = "https://apt.postgresql.org/pub/repos/apt/pool/main/p/postgresql-17/libpq5_17.5-1.pgdg22.04+1_amd64.deb";
-      sha256 = "sha256:97cec98aa147de384066a027693e5a0864009e2209d170f891cb0d7583735936";
+      url = "https://apt.postgresql.org/pub/repos/apt/pool/main/p/postgresql-18/libpq5_18.1-1.pgdg22.04+2_amd64.deb";
+      sha256 = "sha256:4ae11bafcf5cb972e53457c01de30bd4119e8ed280bced0c383aceecb06b4be8";
     };
     postgresql-client-common = fetchurl rec {
       passthru.url = url;
@@ -156,6 +157,11 @@ let
       passthru.url = url;
       url = "http://apt.postgresql.org/pub/repos/apt/pool/main/r/repmgr/postgresql-17-repmgr_${repmgr_version}+debpgdg-1.pgdg22.04+1_amd64.deb";
       sha256 = "sha256:520d6ed4d540a2bb9174ac8276f8cb686c0268c13cccb89b28a9cdbd12049df8";
+    };
+    postgres_exporter = fetchurl rec {
+      passthru.url = url;
+      url = "https://github.com/prometheus-community/postgres_exporter/releases/download/v${postgres_exporter_version}/postgres_exporter-${postgres_exporter_version}.linux-${image_arch}.tar.gz";
+      sha256 = "1630965540d49a4907ad181cef5696306d7a481f87f43978538997e85d357272";
     };
   };
 in

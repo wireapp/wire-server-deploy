@@ -18,7 +18,7 @@ external_pid_file = '/var/run/postgresql/{{ postgresql_version }}-main.pid'
 # ====================================================================
 listen_addresses = '*'                  # Accept connections from any IP
 port = 5432
-max_connections = 20                    # Conservative for 1GB RAM
+max_connections = 100                    # Conservative for 1GB RAM
 superuser_reserved_connections = 3      # Reserve for maintenance/repmgr
 
 # REQUIRED by repmgr - must include 'repmgr'
@@ -29,17 +29,17 @@ shared_preload_libraries = 'pg_stat_statements,repmgr'
 # RESOURCE USAGE (1GB RAM, 1 Core)
 # Ref: https://www.postgresql.org/docs/17/runtime-config-resource.html
 # ====================================================================
-shared_buffers = 256MB                  # 25% of RAM (PG recommendation)
+shared_buffers = 512MB                  # 25% of RAM (PG recommendation)
 effective_cache_size = 512MB            # 50% of RAM (OS cache estimate)
-work_mem = 2MB                          # RAM/connections/complexity_factor
+work_mem = 512kB                          # RAM/connections/complexity_factor
 maintenance_work_mem = 64MB             # For VACUUM, CREATE INDEX
 wal_buffers = -1                        # Auto-tune: 3% of shared_buffers
 
 # Worker processes - limited by 1 core
 # Ref: https://www.postgresql.org/docs/17/runtime-config-resource.html#GUC-MAX-WORKER-PROCESSES
-max_worker_processes = 2                # Min for repmgr operations
-max_parallel_workers = 1                # Limited by single core
-max_parallel_workers_per_gather = 0     # Disable parallel queries (1 core)
+max_worker_processes = 8                # Min for repmgr operations
+max_parallel_workers = 4                # Limited by single core
+max_parallel_workers_per_gather = 2     # Disable parallel queries (1 core)
 
 # ====================================================================
 # WRITE-AHEAD LOG

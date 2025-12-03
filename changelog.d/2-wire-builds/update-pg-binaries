@@ -1,0 +1,1 @@
+Changed: update libpq5 to 18.1-1 (from PostgreSQL 18, backwards compatible with PostgreSQL 17) and add postgres_exporter v0.18.1
