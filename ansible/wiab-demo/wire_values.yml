@@ -1,0 +1,24 @@
+- name: Prepare helm chart values
+  hosts: deploy_node
+  become: yes
+  become_user: "{{ ansible_user }}"
+  tasks:
+  - name: Prepare values.yaml files for the demo environment
+    shell: source {{ ansible_user_dir }}/wire-server-deploy/bin/wiab-demo/offline_deploy_k8s.sh && process_charts demo values
+    args:
+      executable: /bin/bash
+    environment:
+      BASE_DIR: "{{ ansible_user_dir }}/wire-server-deploy"
+
+  - name: Process vars for Helm chart values
+    shell: source {{ ansible_user_dir }}/wire-server-deploy/bin/wiab-demo/offline_deploy_k8s.sh && process_values
+    args:
+      executable: /bin/bash
+    environment:
+      BASE_DIR: "{{ ansible_user_dir }}/wire-server-deploy"
+      TARGET_SYSTEM: "{{ target_domain }}"
+      CERT_MASTER_EMAIL: "certmaster@{{ target_domain }}"
+      HOST_IP: "{{ wire_ip }}"
+      SFT_NODE: "{{ k8s_sft_node }}"
+      NGINX_K8S_NODE: "{{ k8s_ingress_controller_node }}"
+      COTURN_NODE: "{{ k8s_coturn_node }}"

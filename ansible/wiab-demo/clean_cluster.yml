@@ -1,10 +1,9 @@
 - name: Clean the installation
   hosts: deploy_node
-  become: yes
   tasks:
   # stopping the cluster defined in minikube_cluster playbook
   - name: clean minikube
-    become_user: "{{ ansible_user }}"
+    tags: [never, remove_minikube]
     block:
     - name: Check if Minikube is running
       shell: minikube status --profile="{{ minikube_profile }}"
@@ -22,11 +21,11 @@
         minikube delete --profile="{{ minikube_profile }}"
       when: "'Running' in minikube_status.stdout"
 
-    when: "remove_minikube is defined and remove_minikube | bool"
-
   # following packages were installed in install_pkgs playbook
   # these packages can only be removed post stopping the minikube cluster
   - name: remove packages
+    tags: [never, remove_packages]
+    become: yes
     block:
     - name: Remove Minikube
       file:
@@ -75,11 +74,11 @@
       apt:
         update_cache: yes
 
-    when: (uninstall_pkgs | default(false) | bool) and (remove_minikube | default(false) | bool)
-
   # remove the iptables rules defined by iptables_rules playbook
   # it makes sense to remove them when removing the k8s cluster or individually to clean them
   - name: remove iptables rules
+    tags: [never, remove_iptables]
+    become: yes
     vars:
       iptables_rules_comment: "Wire Iptables Rules"
       iptables_save_dir: "/home/{{ ansible_user }}/wire-iptables-rules"
@@ -135,28 +134,30 @@
         - "{{ iptables_save_dir }}/rules_post_wire.v4"
         - "{{ iptables_save_dir }}"
 
-    when: (remove_iptables | default(false) | bool) or (remove_minikube | default(false) | bool)
-
   - name: Remove ssh keys
+    tags: [never, remove_ssh]
+    become_user: "{{ ansible_user }}"
     block:
     - name: Remove SSH key if it exist
       shell: |
-        if [ -f "/home/{{ ansible_user }}/.ssh/id_rsa_wire" ]; then
-          rm "/home/{{ ansible_user }}/.ssh/id_rsa_wire"
+        if [ -f "{{ ansible_user_dir }}/.ssh/id_rsa_wire" ]; then
+          rm "{{ ansible_user_dir }}/.ssh/id_rsa_wire"
         fi
-    when: "remove_ssh is defined and remove_ssh | bool"
-  
+
   - name: remove the downloaded artifacts 
+    tags: [never, remove_artifacts]
     file:
       path: "{{ item }}"
       state: absent
     loop:
-      - "/home/{{ ansible_user }}/wire-server-deploy"
-      - "/home/{{ ansible_user }}/wire-server-deploy-static-demo-{{ artifact_hash }}.tgz"
-      - "/home/{{ ansible_user }}/wire_ip"
-    when: "remove_artifacts is defined and remove_artifacts | bool"
+      - "{{ ansible_user_dir }}/wire-server-deploy"
+      - "{{ ansible_user_dir }}/wire-server-deploy-static-demo-{{ artifact_hash }}.tgz"
+      - "{{ ansible_user_dir }}/wire_ip"
+      - "{{ ansible_user_dir }}/wire_secrets"
 
   - name: clean asset_host artifacts and remove service
+    tags: [never, clean_assethost]
+    become: yes
     block:
     - name: Stop and disable serve-assets systemd service
       systemd:
@@ -178,5 +179,3 @@
       file:
         path: /opt/assets/containers-helm
         state: absent
-
-    when: "clean_assethost is defined and clean_assethost | bool"
