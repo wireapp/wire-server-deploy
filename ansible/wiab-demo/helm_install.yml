@@ -41,19 +41,18 @@
     tags:
       - helm_install
       - cert_manager_networking
-    when: 
-      - "'helm_install' in ansible_run_tags"
-      - "'cert_manager_networking' in ansible_run_tags"
+    when: >
+      ('cert_manager_networking' in ansible_run_tags)
+      or
+      (ansible_run_tags == ['all'])
 
   - name: Skip message for cert manager
     debug:
       msg: "'Deploy cert manager' task. This task requires BOTH --tags helm_install AND --tags cert_manager_networking to run."
-    when: 
-      - "not ('helm_install' in ansible_run_tags and 'cert_manager_networking' in ansible_run_tags)"
-      - "ansible_run_tags | length > 0"
-    tags:
-      - helm_install
-      - cert_manager_networking
+    when: >
+      (ansible_run_tags != ['all'])
+      or
+      ('cert_manager_networking' in ansible_skip_tags)
 
   - name: Deploy chart
     shell: |

@@ -225,7 +225,7 @@
   when: >
     ('wire_values' in ansible_run_tags and 'helm_install' in ansible_run_tags)
     or
-    (ansible_run_tags | length == 0)
+    (ansible_run_tags == ['all'])
 
 - name: Create wire secrets
   import_playbook: ./wire_secrets.yml
