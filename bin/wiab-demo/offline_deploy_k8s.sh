@@ -8,14 +8,14 @@ TARGET_SYSTEM="${TARGET_SYSTEM:-example.com}"
 CERT_MASTER_EMAIL="${CERT_MASTER_EMAIL:-certmaster@example.com}"
 
 # this IP should match the DNS A record value for TARGET_SYSTEM
-HOST_IP="${HOST_IP}"
+HOST_IP="${HOST_IP:-}"
 
 # make sure these align with the iptables rules
-SFT_NODE="${SFT_NODE}"
+SFT_NODE="${SFT_NODE:-}"
 # picking a node for nginx
-NGINX_K8S_NODE="${NGINX_K8S_NODE}"
+NGINX_K8S_NODE="${NGINX_K8S_NODE:-}"
 # picking a node for coturn
-COTURN_NODE="${COTURN_NODE}"
+COTURN_NODE="${COTURN_NODE:-}"
 
 # Validate that required environment variables are set
 # Usage: validate_required_vars VAR_NAME1 VAR_NAME2 ...
@@ -73,7 +73,7 @@ process_values() {
   trap 'rm -rf $TEMP_DIR' EXIT
 
   # to find IP address of coturn NODE
-  COTURN_NODE_IP=$(kubectl get node $COTURN_NODE -o jsonpath='{.status.addresses[?(@.type=="InternalIP")].address}')
+  COTURN_NODE_IP=$(kubectl get node "$COTURN_NODE" -o jsonpath='{.status.addresses[?(@.type=="InternalIP")].address}')
 
   # Fixing the hosts with TARGET_SYSTEM and setting the turn server
   sed -e "s/example.com/$TARGET_SYSTEM/g" \
