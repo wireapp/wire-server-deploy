@@ -53,7 +53,7 @@ yq eval -i ".wiab.hosts.deploy_node.ansible_user = \"$TEST_USER\"" "${INVENTORY_
 
 echo "Running ansible playbook deploy_wiab.yml against node $host"
 # deploying demo-wiab
-ansible-playbook -i "${INVENTORY_FILE}" "${ANSIBLE_DIR}/wiab-demo/deploy_wiab.yml" --skip-tags verify_dns,cert_manager_networking
+ansible-playbook -i "${INVENTORY_FILE}" "${ANSIBLE_DIR}/wiab-demo/deploy_wiab.yml" --skip-tags verify_dns
 # cleaning demo-wiab
 ansible-playbook -i "${INVENTORY_FILE}" "${ANSIBLE_DIR}/wiab-demo/clean_cluster.yml" --tags remove_minikube,remove_artifacts,remove_packages,remove_iptables,remove_ssh
 
