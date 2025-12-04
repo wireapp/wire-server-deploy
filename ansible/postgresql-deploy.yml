@@ -58,3 +58,7 @@
 - name: Deploy cluster monitoring
   import_playbook: postgresql-playbooks/postgresql-monitoring.yml
   tags: [postgresql, monitoring]
+
+- name: Deploy PostgreSQL metrics exporter
+  import_playbook: postgresql-playbooks/postgresql-exporter.yml
+  tags: [postgresql, metrics, exporter]

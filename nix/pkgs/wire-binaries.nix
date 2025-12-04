@@ -19,6 +19,7 @@ let
   minio_version = "RELEASE.2023-07-07T07-13-57Z";
   mc_version = "RELEASE.2023-10-24T05-18-28Z";
   repmgr_version = "5.5.0";
+  postgres_exporter_version = "0.18.1";
 
 
   # Note: If you change a version, replace the checksum with zeros, run « nix-build --no-out-link -A pkgs.wire-binaries », it will complain and give you the right checksum, use that checksum in this file, run it again and it should build without complaining.
@@ -109,33 +110,28 @@ let
     # when updating the packages, update the checksums too in wire-server-deploy/ansible/inventory/offline/group_vars/all/offline.yml
     postgresql = fetchurl rec {
       passthru.url = url;
-      url = "https://apt.postgresql.org/pub/repos/apt/pool/main/p/postgresql-17/postgresql-17_17.5-1.pgdg22.04+1_amd64.deb";
-      sha256 = "sha256:0ba8064cee5800f290485c3974081b399736feca050ad6ae06dd26d2c26cf167";
+      url = "https://apt.postgresql.org/pub/repos/apt/pool/main/p/postgresql-17/postgresql-17_17.7-3.pgdg22.04+1_amd64.deb";
+      sha256 = "sha256:8218af27440df4e1cd29eeb0fffdcf0702fb50840ccbefd19864355237a0cddf";
     };
     postgresql-client = fetchurl rec {
       passthru.url = url;
-      url = "https://apt.postgresql.org/pub/repos/apt/pool/main/p/postgresql-17/postgresql-client-17_17.5-1.pgdg22.04+1_amd64.deb";
-      sha256 = "sha256:1b3e96f9f488f234734266a7a212c7c3ac189ba763939a313906e3f2fe5492bb";
+      url = "https://apt.postgresql.org/pub/repos/apt/pool/main/p/postgresql-17/postgresql-client-17_17.7-3.pgdg22.04+1_amd64.deb";
+      sha256 = "sha256:c6443fefb733632ee835a53b43a174244a009c62ac46bf01f032738b7ff18a8e";
     };
     libpq5 = fetchurl rec {
       passthru.url = url;
-      url = "https://apt.postgresql.org/pub/repos/apt/pool/main/p/postgresql-17/libpq5_17.5-1.pgdg22.04+1_amd64.deb";
-      sha256 = "sha256:97cec98aa147de384066a027693e5a0864009e2209d170f891cb0d7583735936";
+      url = "https://apt.postgresql.org/pub/repos/apt/pool/main/p/postgresql-18/libpq5_18.1-1.pgdg22.04+2_amd64.deb";
+      sha256 = "sha256:4ae11bafcf5cb972e53457c01de30bd4119e8ed280bced0c383aceecb06b4be8";
     };
     postgresql-client-common = fetchurl rec {
       passthru.url = url;
-      url = "https://apt.postgresql.org/pub/repos/apt/pool/main/p/postgresql-common/postgresql-client-common_281.pgdg22.04+1_all.deb";
-      sha256 = "sha256:c5ee58fea51a19753ac0496d06538c6a194705b11aef27683047e9c4ebff2c5e";
+      url = "https://apt.postgresql.org/pub/repos/apt/pool/main/p/postgresql-common/postgresql-client-common_287.pgdg22.04+1_all.deb";
+      sha256 = "sha256:7e96dbd09f546e819806d6897a6e8a08b0ffe544990d52a82f3e84cad1fac775";
     };
     postgresql-common = fetchurl rec {
       passthru.url = url;
-      url = "https://apt.postgresql.org/pub/repos/apt/pool/main/p/postgresql-common/postgresql-common_281.pgdg22.04+1_all.deb";
-      sha256 = "sha256:317308f1eaeb8c3f93fdc3eaa5430290e5bce62b4bba3f78045ff339d6a8e7a1";
-    };
-    postgresql-common-dev = fetchurl rec {
-      passthru.url = url;
-      url = "https://apt.postgresql.org/pub/repos/apt/pool/main/p/postgresql-common/postgresql-common-dev_281.pgdg22.04+1_all.deb";
-      sha256 = "sha256:aa116b0861d149dcba5cbf0cb6af611d9d59bd83178ee9c66c60363ce6cf77d0";
+      url = "https://apt.postgresql.org/pub/repos/apt/pool/main/p/postgresql-common/postgresql-common_287.pgdg22.04+1_all.deb";
+      sha256 = "sha256:f8909773a26c0d189db0331b4efa3909d31f1b6bcc9c663904f73efbcb48c642";
     };
     python3-psycopg2 = fetchurl rec {
       passthru.url = url;
@@ -144,18 +140,23 @@ let
     };
     repmgr = fetchurl rec {
       passthru.url = url;
-      url = "http://apt.postgresql.org/pub/repos/apt/pool/main/r/repmgr/repmgr_${repmgr_version}+debpgdg-1.pgdg22.04+1_all.deb";
-      sha256 = "sha256:20c280811e758106335df1eb9954b61aa552823d3129f1e38c488fbd5efe0567";
+      url = "http://apt.postgresql.org/pub/repos/apt/pool/main/r/repmgr/repmgr_${repmgr_version}+debpgdg-3.pgdg22.04+1_all.deb";
+      sha256 = "sha256:f4efae9acf2fbfb5f5af43b8b812e2925d611fca1c48925276abc64116766128";
     };
     repmgr-common = fetchurl rec {
       passthru.url = url;
-      url = "http://apt.postgresql.org/pub/repos/apt/pool/main/r/repmgr/repmgr-common_${repmgr_version}+debpgdg-1.pgdg22.04+1_all.deb";
-      sha256 = "sha256:34c660c66a9710fd4f20a66cc932741d3399dbba7e7ae4b67468b3e18f65f61c";
+      url = "http://apt.postgresql.org/pub/repos/apt/pool/main/r/repmgr/repmgr-common_${repmgr_version}+debpgdg-3.pgdg22.04+1_all.deb";
+      sha256 = "sha256:f559920df00e4d66cb41d73a6f918bbd2cc99c238db97c675a060305f9e05531";
     };
     postgresql-17-repmgr = fetchurl rec {
       passthru.url = url;
-      url = "http://apt.postgresql.org/pub/repos/apt/pool/main/r/repmgr/postgresql-17-repmgr_${repmgr_version}+debpgdg-1.pgdg22.04+1_amd64.deb";
-      sha256 = "sha256:520d6ed4d540a2bb9174ac8276f8cb686c0268c13cccb89b28a9cdbd12049df8";
+      url = "http://apt.postgresql.org/pub/repos/apt/pool/main/r/repmgr/postgresql-17-repmgr_${repmgr_version}+debpgdg-3.pgdg22.04+1_amd64.deb";
+      sha256 = "sha256:d8c2d333d7444b88a28f9f1cc8cf351a1120b8856a26940b21e256f80deefd84";
+    };
+    postgres_exporter = fetchurl rec {
+      passthru.url = url;
+      url = "https://github.com/prometheus-community/postgres_exporter/releases/download/v${postgres_exporter_version}/postgres_exporter-${postgres_exporter_version}.linux-${image_arch}.tar.gz";
+      sha256 = "1630965540d49a4907ad181cef5696306d7a481f87f43978538997e85d357272";
     };
   };
 in

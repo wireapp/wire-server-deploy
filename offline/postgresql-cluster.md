@@ -50,7 +50,8 @@
 - **Offline Deployment**: For offline deployments, packages are installed from local URLs defined in [`ansible/inventory/offline/group_vars/postgresql/postgresql.yml`](ansible/inventory/offline/group_vars/postgresql/postgresql.yml), bypassing repositories.
 
 ### Software Versions
-- **PostgreSQL**: 17.5 (latest stable with enhanced replication features)
+- **PostgreSQL**: 17.7-3 (latest stable with enhanced replication features)
+- **postgres_exporter**: 0.18.1 (Prometheus metrics exporter for PostgreSQL monitoring)
 - **repmgr**: 5.5.0 (production-ready cluster management with advanced failover) ([docs](https://repmgr.org/docs/current/))
 - **Ubuntu/Debian**: 20.04+ / 11+ (tested platforms for production deployment)
 
@@ -59,17 +60,17 @@
 Based on the PostgreSQL configuration template, the deployment is optimized for resource-constrained environments:
 
 **Memory Requirements:**
-- **RAM**: 1GB minimum per node (based on configuration tuning)
-  - `shared_buffers = 256MB` (25% of total RAM)
-  - `effective_cache_size = 512MB` (50% of total RAM estimate)
+- **RAM**: 2GB minimum per node (based on configuration tuning)
+  - `shared_buffers = 512MB` (25% of total RAM)
+  - `effective_cache_size = 1GB` (50% of total RAM estimate)
   - `maintenance_work_mem = 64MB`
-  - `work_mem = 2MB` per connection (with `max_connections = 20`)
+  - `work_mem = 512kB` per connection (with `max_connections = 100`)
 
 **CPU Requirements:**
-- **Cores**: 1 CPU core minimum
+- **Cores**: 2 CPU cores minimum
   - `max_parallel_workers_per_gather = 0` (parallel queries disabled)
-  - `max_parallel_workers = 1`
-  - `max_worker_processes = 2` (minimum for repmgr operations)
+  - `max_parallel_workers = 4`
+  - `max_worker_processes = 8` (for repmgr operations and parallel workers)
 
 **Storage Requirements:**
 - **Disk Space**: 50GB minimum per node
@@ -86,7 +87,7 @@ Based on the PostgreSQL configuration template, the deployment is optimized for 
 **Network Requirements:**
 - **PostgreSQL Port**: 5432 open between all cluster nodes
 
-**Note**: Configuration supports up to 20 concurrent connections. For production workloads with higher loads, scale up resources accordingly.
+**Note**: Configuration supports up to 100 concurrent connections. For production workloads with higher loads, scale up resources accordingly.
 
 **⚠️ Important**: Review and optimize the [PostgreSQL configuration template](../ansible/templates/postgresql/postgresql.conf.j2) based on your specific hardware, workload, and performance requirements before deployment.
 
@@ -265,12 +266,13 @@ See the [Deployment Commands Reference](#deployment-commands-reference) section 
 **⏱️ Expected Duration: 10-15 minutes**
 
 A complete deployment performs:
-1. ✅ **Package Installation**: PostgreSQL 17 + repmgr + dependencies
+1. ✅ **Package Installation**: PostgreSQL 17 + repmgr + postgres_exporter + dependencies
 2. ✅ **Primary Setup**: Configure primary node with repmgr database
 3. ✅ **Replica Deployment**: Clone and configure replica nodes
 4. ✅ **Verification**: Health checks and replication status
 5. ✅ **Wire Integration**: Create Wire database and user
 6. ✅ **Monitoring**: Deploy split-brain detection system
+7. ✅ **Metrics Exporter**: Deploy postgres_exporter for Prometheus monitoring
 
 #### **Step 3: Verify Installation**
 See the [Monitoring Checks](#monitoring-checks-after-installation) section for comprehensive verification procedures.
@@ -298,9 +300,10 @@ ansible-playbook -i ansible/inventory/offline/hosts.ini ansible/postgresql-deplo
 | Tag | What Runs | Use Case |
 |-----|-----------|----------|
 | _(none)_ | Full deployment | **Recommended for fresh deployment** |
-| `postgresql` | Secrets + Primary + Replica + Wire-setup + Monitoring | Deploy/redeploy complete PostgreSQL cluster |
+| `postgresql` | Secrets + Primary + Replica + Wire-setup + Monitoring + Metrics | Deploy/redeploy complete PostgreSQL cluster |
 | `verify` | Verification checks only | Check cluster health without making changes |
 | `cleanup` | Cleanup only | For selective cleanup (use with `--skip-tags` to preserve data) |
+| `metrics` | Metrics exporter only | Deploy/redeploy postgres_exporter for monitoring |
 
 ### 📋 Deployment Pipeline
 
@@ -314,10 +317,11 @@ The deployment follows this strict order:
 5. replica          → Deploy replica (read-only) nodes
 6. verify           → Verify HA cluster health
 7. wire-setup       → Create wire-server database and user
-8. monitoring       → Deploys a split-brain detection system that automatically fences isolated primary nodes to prevent data corruption.
+8. monitoring       → Deploys a split-brain detection system that automatically fences isolated primary nodes to prevent data corruption
+9. metrics          → Deploy postgres_exporter for Prometheus monitoring (PostgreSQL 17 metrics including checkpoint stats)
 ```
 
-**Important**: Steps 3-8 have dependencies and must run in order. The `postgresql` tag ensures all required steps run together.
+**Important**: Steps 3-9 have dependencies and must run in order. The `postgresql` tag ensures all required steps run together.
 
 ### 🔐 Password Management
 
