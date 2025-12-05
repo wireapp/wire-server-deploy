@@ -1,21 +1,38 @@
 #!/usr/bin/env bash
 # shellcheck disable=SC2087
-set -Eeuo pipefail
+set -Eeo pipefail
 
-BASE_DIR="/wire-server-deploy"
-TARGET_SYSTEM="example.com"
-CERT_MASTER_EMAIL="certmaster@example.com"
+# Read values from environment variables with defaults
+BASE_DIR="${BASE_DIR:-/wire-server-deploy}"
+TARGET_SYSTEM="${TARGET_SYSTEM:-example.com}"
+CERT_MASTER_EMAIL="${CERT_MASTER_EMAIL:-certmaster@example.com}"
 
-# make sure these align with the iptables rules, has to be manually updated
-SFT_NODE="K8S_SFT_NODE"
+# this IP should match the DNS A record value for TARGET_SYSTEM
+HOST_IP="${HOST_IP:-}"
+
+# make sure these align with the iptables rules
+SFT_NODE="${SFT_NODE:-}"
 # picking a node for nginx
-NGINX_K8S_NODE="NGINX_K8S_NODE"
+NGINX_K8S_NODE="${NGINX_K8S_NODE:-}"
 # picking a node for coturn
-COTURN_NODE="K8S_COTURN_NODE"
+COTURN_NODE="${COTURN_NODE:-}"
 
-# this IP should match the DNS A record for TARGET_SYSTEM
-# keeping it empty to be replaced
-HOST_IP="WIRE_IP"
+# Validate that required environment variables are set
+# Usage: validate_required_vars VAR_NAME1 VAR_NAME2 ...
+validate_required_vars() {
+  local error=0
+
+  for var_name in "$@"; do
+    if [[ -z "${!var_name:-}" ]]; then
+      echo "$var_name environment variable is not set."
+      error=1
+    fi
+  done
+
+  if [[ $error -eq 1 ]]; then
+    exit 1
+  fi
+}
 
 # Creates values.yaml from demo-values.example.yaml and secrets.yaml from demo-secrets.example.yaml
 # This script is for WIAB/demo deployments only
@@ -23,44 +40,40 @@ HOST_IP="WIRE_IP"
 process_charts() {
 
   ENV=$1
+  TYPE=$2
 
-  if [ "$ENV" != "demo" ]; then
-    echo "Error: This script only supports demo deployments. ENV must be 'demo', got: '$ENV'"
+  if [[ "$ENV" != "demo" ]] || [[ -z "$TYPE" ]] ; then
+    echo "Error: This function only supports demo deployments with TYPE as values or secrets. ENV must be 'demo', got: '$ENV' and '$TYPE'"
     exit 1
   fi
-
+  timestp=$(date +"%Y%m%d_%H%M%S")
   for chart_dir in "$BASE_DIR"/values/*/; do
 
     if [[ -d "$chart_dir" ]]; then
-      if [[ -f "$chart_dir/${ENV}-values.example.yaml" ]]; then
-        # assuming if the values.yaml exist, it won't replace it again to make it idempotent
-        if [[ ! -f "$chart_dir/values.yaml" ]]; then
-          cp "$chart_dir/${ENV}-values.example.yaml" "$chart_dir/values.yaml"
-          echo "Used template ${ENV}-values.example.yaml to create $chart_dir/values.yaml"
+      if [[ -f "$chart_dir/${ENV}-${TYPE}.example.yaml" ]]; then
+        if [[ ! -f "$chart_dir/${TYPE}.yaml" ]]; then
+          cp "$chart_dir/${ENV}-${TYPE}.example.yaml" "$chart_dir/${TYPE}.yaml"
+          echo "Used template ${ENV}-${TYPE}.example.yaml to create $chart_dir/${TYPE}.yaml"
+        else
+          echo "$chart_dir/${TYPE}.yaml already exists, archiving it and creating a new one."
+          mv "$chart_dir/${TYPE}.yaml" "$chart_dir/${TYPE}.yaml.bak.$timestp"
+          cp "$chart_dir/${ENV}-${TYPE}.example.yaml" "$chart_dir/${TYPE}.yaml"
         fi
       fi
-
-      if [[ -f "$chart_dir/${ENV}-secrets.example.yaml" ]]; then
-      # assuming if the secrets.yaml exist, it won't replace it again to make it idempotent
-        if [[ ! -f "$chart_dir/secrets.yaml" ]]; then
-          cp "$chart_dir/${ENV}-secrets.example.yaml" "$chart_dir/secrets.yaml"
-          echo "Used template ${ENV}-secrets.example.yaml to create $chart_dir/secrets.yaml"
-        fi
-      fi
-
     fi
-
   done
 }
 
 # selectively setting values of following charts which requires additional values
 # wire-server, webapp, team-settings, account-pages, nginx-ingress-services, ingress-nginx-controller, sftd and coturn
 process_values() {
+  validate_required_vars HOST_IP SFT_NODE NGINX_K8S_NODE COTURN_NODE
+
   TEMP_DIR=$(mktemp -d)
   trap 'rm -rf $TEMP_DIR' EXIT
 
   # to find IP address of coturn NODE
-  COTURN_NODE_IP=$(kubectl get node $COTURN_NODE -o jsonpath='{.status.addresses[?(@.type=="InternalIP")].address}')
+  COTURN_NODE_IP=$(kubectl get node "$COTURN_NODE" -o jsonpath='{.status.addresses[?(@.type=="InternalIP")].address}')
 
   # Fixing the hosts with TARGET_SYSTEM and setting the turn server
   sed -e "s/example.com/$TARGET_SYSTEM/g" \
@@ -93,22 +106,10 @@ process_values() {
       -e 's/name: letsencrypt-prod/name: letsencrypt-http01/' \
       "$BASE_DIR/values/sftd/values.yaml" > "$TEMP_DIR/sftd-values.yaml"
 
-  # Creating coturn values and secrets
-  ZREST_SECRET=$(yq eval '.brig.secrets.turn.secret' "$BASE_DIR/values/wire-server/secrets.yaml" | tr -d '"')
-  cat >"$TEMP_DIR/coturn-secrets.yaml"<<EOF
-secrets:
-  zrestSecrets:
-    - "$ZREST_SECRET"
-EOF
-
-  cat >"$TEMP_DIR/coturn-values.yaml"<<EOF
-nodeSelector:
-  wire.com/role: coturn
-
-coturnTurnListenIP: "$COTURN_NODE_IP"
-coturnTurnRelayIP: "$COTURN_NODE_IP"
-coturnTurnExternalIP: '$HOST_IP'
-EOF
+  # Setting coturn node IP values
+  yq eval -i ".coturnTurnListenIP = \"$COTURN_NODE_IP\"" "$BASE_DIR/values/coturn/values.yaml"
+  yq eval -i ".coturnTurnRelayIP = \"$COTURN_NODE_IP\"" "$BASE_DIR/values/coturn/values.yaml"
+  yq eval -i ".coturnTurnExternalIP = \"$HOST_IP\"" "$BASE_DIR/values/coturn/values.yaml"
 
   # Compare and copy files if different
   for file in wire-server-values.yaml webapp-values.yaml team-settings-values.yaml account-pages-values.yaml \
@@ -119,18 +120,10 @@ EOF
     fi
   done
 
-  if ! cmp -s "$TEMP_DIR/coturn-secrets.yaml" "$BASE_DIR/values/coturn/secrets.yaml"; then
-    cp "$TEMP_DIR/coturn-secrets.yaml" "$BASE_DIR/values/coturn/secrets.yaml"
-    echo "Updating $BASE_DIR/values/coturn/secrets.yaml"
-  fi
-
-  if ! cmp -s "$TEMP_DIR/coturn-values.yaml" "$BASE_DIR/values/coturn/values.yaml"; then
-    cp "$TEMP_DIR/coturn-values.yaml" "$BASE_DIR/values/coturn/values.yaml"
-    echo "Updating $BASE_DIR/values/coturn/values.yaml"
-  fi
 }
 
 deploy_charts() {
+
   local charts=("$@")
   echo "Following charts will be deployed: ${charts[*]}"
 
@@ -190,22 +183,22 @@ deploy_charts() {
 deploy_cert_manager() {
 
   kubectl get namespace cert-manager-ns || kubectl create namespace cert-manager-ns
-  helm upgrade --install -n cert-manager-ns cert-manager  $BASE_DIR/charts/cert-manager --values "$BASE_DIR/values/cert-manager/values.yaml"
+  helm upgrade --install -n cert-manager-ns cert-manager  "$BASE_DIR/charts/cert-manager" --values "$BASE_DIR/values/cert-manager/values.yaml"
 
   # display running pods
   kubectl get pods --sort-by=.metadata.creationTimestamp -n cert-manager-ns
 }
 
 deploy_calling_services() {
+  validate_required_vars SFT_NODE HOST_IP COTURN_NODE
 
   echo "Deploying sftd and coturn"
   # select the node to deploy sftd
-  kubectl label node $SFT_NODE wire.com/role=sftd --overwrite
-  helm upgrade --install sftd $BASE_DIR/charts/sftd --set 'nodeSelector.wire\.com/role=sftd' --set 'node_annotations="{'wire\.com/external-ip': '"$HOST_IP"'}"' --values  $BASE_DIR/values/sftd/values.yaml
+  kubectl annotate node "$SFT_NODE" wire.com/external-ip="$HOST_IP" --overwrite
+  helm upgrade --install sftd "$BASE_DIR/charts/sftd" --set "nodeSelector.kubernetes\\.io/hostname=$SFT_NODE" --values  "$BASE_DIR/values/sftd/values.yaml"
 
-  kubectl label node $COTURN_NODE wire.com/role=coturn --overwrite
-  kubectl annotate node $COTURN_NODE wire.com/external-ip="$HOST_IP" --overwrite
-  helm upgrade --install coturn ./charts/coturn --values  $BASE_DIR/values/coturn/values.yaml --values  $BASE_DIR/values/coturn/secrets.yaml
+  kubectl annotate node "$COTURN_NODE" wire.com/external-ip="$HOST_IP" --overwrite
+  helm upgrade --install coturn "$BASE_DIR/charts/coturn" --set "nodeSelector.kubernetes\\.io/hostname=$COTURN_NODE" --values "$BASE_DIR/values/coturn/values.yaml" --values "$BASE_DIR/values/coturn/secrets.yaml"
 }
 
 # if required, this function can be run manually

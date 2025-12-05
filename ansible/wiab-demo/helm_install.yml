@@ -6,79 +6,54 @@
     # admin container definition for WSD (wire-server-deploy) 
     docker_cmd_base: >-
       docker run --network=host
-      -v "/home/{{ ansible_user }}/.ssh":/root/.ssh
-      -v "/home/{{ ansible_user }}/wire-server-deploy/":/wire-server-deploy
-      -v "/home/{{ ansible_user }}/.kube/config":/root/.kube/config
-      -v "/home/{{ ansible_user }}/.minikube":/home/ubuntu/.minikube
+      -v "{{ ansible_user_dir }}/.ssh":/root/.ssh
+      -v "{{ ansible_user_dir }}/wire-server-deploy/":/wire-server-deploy
+      -v "{{ ansible_user_dir }}/.kube/config":/root/.kube/config
+      -v "{{ ansible_user_dir }}/.minikube":{{ ansible_user_dir }}/.minikube
       -e KUBECONFIG=/root/.kube/config
+      -e HOST_IP="{{ wire_ip }}"
+      -e SFT_NODE="{{ k8s_sft_node }}"
+      -e COTURN_NODE="{{ k8s_coturn_node }}"
       "{{ wsd_container.stdout }}"
   tasks:
+  - name: Check if WSD Docker image already exists
+    shell: docker images | grep "quay.io/wire/wire-server-deploy" | awk '{print $1":"$2}' | head -1
+    register: existing_wsd_image
+    failed_when: false
+    changed_when: false
 
-  - name: Replace TARGET_SYSTEM example.com with target_domain in offline_deploy_k8s
-    lineinfile:
-      path: /home/{{ ansible_user }}/wire-server-deploy/bin/wiab-demo/offline_deploy_k8s.sh
-      regexp: '^TARGET_SYSTEM="example\.com"'
-      line: 'TARGET_SYSTEM="{{ target_domain }}"'
-      backrefs: yes
-
-  - name: Replace CERT_MASTER_EMAIL example.com with target_domain in offline_deploy_k8s
-    lineinfile:
-      path: /home/{{ ansible_user }}/wire-server-deploy/bin/wiab-demo/offline_deploy_k8s.sh
-      regexp: '^CERT_MASTER_EMAIL="certmaster@example\.com"'
-      line: 'CERT_MASTER_EMAIL="certmaster@{{ target_domain }}"'
-      backrefs: yes
-
-  - name: Add HOST_IP with wire_ip in offline_deploy_k8s
-    lineinfile:
-      path: /home/{{ ansible_user }}/wire-server-deploy/bin/wiab-demo/offline_deploy_k8s.sh
-      regexp: '^HOST_IP="WIRE_IP"'
-      line: 'HOST_IP="{{ wire_ip }}"'
-      backrefs: yes
-
-  - name: Update SFT_NODE in the offline_deploy_k8s
-    lineinfile:
-      path: /home/{{ ansible_user }}/wire-server-deploy/bin/wiab-demo/offline_deploy_k8s.sh
-      regexp: '^SFT_NODE="K8S_SFT_NODE"'
-      line: 'SFT_NODE="{{ k8s_sft_node }}"'
-      backrefs: yes
-
-  - name: Update NGINX_K8S_NODE in the offline_deploy_k8s
-    lineinfile:
-      path: /home/{{ ansible_user }}/wire-server-deploy/bin/wiab-demo/offline_deploy_k8s.sh
-      regexp: '^NGINX_K8S_NODE="NGINX_K8S_NODE"'
-      line: 'NGINX_K8S_NODE="{{ k8s_ingress_controller_node }}"'
-      backrefs: yes
-
-  - name: Update COTURN_NODE in the offline_deploy_k8s
-    lineinfile:
-      path: /home/{{ ansible_user }}/wire-server-deploy/bin/wiab-demo/offline_deploy_k8s.sh
-      regexp: '^COTURN_NODE="K8S_COTURN_NODE"'
-      line: 'COTURN_NODE="{{ k8s_coturn_node }}"'
-      backrefs: yes
-
-  - name: Load WSD Docker image
+  - name: Load WSD Docker image (if not already present)
     shell: |
-      docker load -i "/home/{{ ansible_user }}/wire-server-deploy/containers-adminhost/container-wire-server-deploy.tgz" | awk '{print $3}'
-    register: wsd_container
+      docker load -i "{{ ansible_user_dir }}/wire-server-deploy/containers-adminhost/container-wire-server-deploy.tgz" | awk '{print $3}'
+    register: loaded_wsd_container
+    when: existing_wsd_image.stdout == ""
 
-  - name: Process charts for demo environment
-    shell: |
-      {{ docker_cmd_base }} bash -c "source /wire-server-deploy/bin/wiab-demo/offline_deploy_k8s.sh && process_charts demo"
-    args:
-      executable: /bin/bash
-    
-  - name: Process values
-    shell: |
-      {{ docker_cmd_base }} bash -c "source /wire-server-deploy/bin/wiab-demo/offline_deploy_k8s.sh && process_values"
-    args:
-      executable: /bin/bash
+  - name: Set WSD container image name
+    set_fact:
+      wsd_container: 
+        stdout: "{{ existing_wsd_image.stdout if existing_wsd_image.stdout != '' else loaded_wsd_container.stdout }}"
     
   - name: Deploy cert manager # disable if running in a private env
     shell: |
       {{ docker_cmd_base }} bash -c "source /wire-server-deploy/bin/wiab-demo/offline_deploy_k8s.sh && deploy_cert_manager"
     args:
       executable: /bin/bash
-    
+    tags:
+      - helm_install
+      - cert_manager_networking
+    when: >
+      ('cert_manager_networking' in ansible_run_tags)
+      or
+      (ansible_run_tags == ['all'])
+
+  - name: Skip message for cert manager
+    debug:
+      msg: "'Deploy cert manager' task. This task requires BOTH --tags helm_install AND --tags cert_manager_networking to run."
+    when: >
+      (ansible_run_tags != ['all'])
+      or
+      ('cert_manager_networking' in ansible_skip_tags)
+
   - name: Deploy chart
     shell: |
       {{ docker_cmd_base }} bash -c "source /wire-server-deploy/bin/wiab-demo/offline_deploy_k8s.sh && deploy_charts {{ item }}"
@@ -91,3 +66,16 @@
       {{ docker_cmd_base }} bash -c "source /wire-server-deploy/bin/wiab-demo/offline_deploy_k8s.sh && deploy_calling_services"
     args:
       executable: /bin/bash
+
+  - name: Deploy wire-utility
+    shell: |
+      {{ docker_cmd_base }} bash -c "helm upgrade --install --wait wire-utility /wire-server-deploy/charts/wire-utility --values /wire-server-deploy/values/wire-server/values.yaml --values /wire-server-deploy/values/wire-server/secrets.yaml --values /wire-server-deploy/values/wire-utility/values.yaml"
+    args:
+      executable: /bin/bash
+    failed_when: false
+    register: wire_utility_deploy
+    
+  - name: Note wire-utility deployment attempt
+    debug:
+      msg: "Wire-utility deployment failed. Wire-services will still function without it. Read  more about it here: https://docs.wire.com/latest/how-to/administrate/wire-utility-tool.html"
+    when: wire_utility_deploy.rc != 0

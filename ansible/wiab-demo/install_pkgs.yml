@@ -1,54 +1,72 @@
 - name: Package installation and configuration
   hosts: deploy_node
   become: yes
+  vars:
+    yq_version: "4.48.1"
   tasks:
   - name: Install required packages
     block:
-    - name: apt update
-      apt: update_cache=yes force_apt_get=yes
-
-    - name: apt upgrade
-      apt: upgrade=dist force_apt_get=yes
-
     - name: Install dependencies
       apt:
         name:
-          - yq
           - jq
         state: present
         update_cache: yes
 
-    - name: Create /etc/apt/keyrings directory
-      file:
-        path: /etc/apt/keyrings
-        state: directory
+    - name: Install yq-go
+      get_url:
+        url: "https://github.com/mikefarah/yq/releases/download/v{{ yq_version }}/yq_linux_amd64"
+        dest: /usr/local/bin/yq
         mode: '0755'
 
-    - name: Download Docker GPG key
-      get_url:
-        url: https://download.docker.com/linux/ubuntu/gpg
-        dest: /etc/apt/keyrings/docker.asc
-        mode: '0644'
+    - name: Check if Docker CE is installed with correct version
+      shell: apt policy docker-ce | grep "Installed:" | awk '{print $2}'
+      register: installed_docker_version
+      changed_when: false
 
-    - name: Add Docker repository to apt sources
-      shell: |
-        echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu $(. /etc/os-release && echo $VERSION_CODENAME) stable" > /etc/apt/sources.list.d/docker.list
-      args:
-        executable: /bin/bash
+    - name: Check if containerd.io is installed with correct version
+      shell: apt policy containerd.io | grep "Installed:" | awk '{print $2}'
+      register: installed_containerd_version
+      changed_when: false
 
-    - name: Update apt package index
-      apt:
-        update_cache: yes
+    - name: Determine if Docker packages need installation
+      set_fact:
+        docker_needs_install: "{{ installed_docker_version.stdout != docker_ce_version or installed_containerd_version.stdout != containerd_version }}"
 
-    - name: Install Docker packages
-      apt:
-        name:
-        - docker-ce={{ docker_ce_version }}
-        - docker-ce-cli={{ docker_ce_version }}
-        - containerd.io={{ containerd_version }}
-        state: present
+    - name: Setup Docker if packages not installed or wrong version
+      when: docker_needs_install | bool
+      block:
+      - name: Create /etc/apt/keyrings directory
+        file:
+          path: /etc/apt/keyrings
+          state: directory
+          mode: '0755'
 
-    - name: Add ubuntu user to the docker group
+      - name: Download Docker GPG key
+        get_url:
+          url: https://download.docker.com/linux/ubuntu/gpg
+          dest: /etc/apt/keyrings/docker.asc
+          mode: '0644'
+
+      - name: Add Docker repository to apt sources
+        shell: |
+          echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu $(. /etc/os-release && echo $VERSION_CODENAME) stable" > /etc/apt/sources.list.d/docker.list
+        args:
+          executable: /bin/bash
+
+      - name: Update apt package index
+        apt:
+          update_cache: yes
+
+      - name: Install Docker packages
+        apt:
+          name:
+          - docker-ce={{ docker_ce_version }}
+          - docker-ce-cli={{ docker_ce_version }}
+          - containerd.io={{ containerd_version }}
+          state: present
+
+    - name: Add {{ ansible_user }} to the docker group
       user:
         name: "{{ ansible_user }}"
         groups: docker
