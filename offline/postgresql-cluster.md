@@ -7,6 +7,7 @@
 - [High Availability Features](#high-availability-features)
 - [Inventory Definition](#inventory-definition)
 - [Installation Process](#installation-process)
+- [Package Upgrades and Binary Updates](#package-upgrades-and-binary-updates)
 - [Deployment Commands Reference](#deployment-commands-reference)
 - [Monitoring Checks After Installation](#monitoring-checks-after-installation)
 - [Configuration Options](#configuration-options)
@@ -276,6 +277,85 @@ A complete deployment performs:
 
 #### **Step 3: Verify Installation**
 See the [Monitoring Checks](#monitoring-checks-after-installation) section for comprehensive verification procedures.
+
+## Package Upgrades and Binary Updates
+
+### 🔄 Upgrading PostgreSQL Packages
+
+The installation playbook automatically detects version mismatches and performs upgrades when newer packages are available in the configuration.
+
+**Version-Aware Detection:**
+- Compares installed package versions with configured versions in `group_vars/postgresql/postgresql.yml`
+- Triggers upgrades automatically when versions don't match (e.g., 17.5-1 → 17.7-3)
+- Handles interdependent packages atomically to prevent dependency conflicts
+
+**Upgrade Process:**
+```bash
+# Full redeployment with version upgrades
+ansible-playbook -i ansible/inventory/offline/hosts.ini ansible/postgresql-deploy.yml
+```
+
+The playbook will:
+1. ✅ Detect version differences in installed packages
+2. ✅ Download and install updated packages atomically
+3. ✅ Preserve existing data and replication configuration
+4. ✅ Verify successful installation
+
+**Verification:**
+```bash
+# Check installed PostgreSQL version
+dpkg -l | grep postgresql-17
+
+# Expected output shows new version (e.g., 17.7-3.pgdg22.04+1)
+```
+
+### 🛡️ Automatic Backup Before Cleanup
+
+When redeploying or cleaning existing PostgreSQL installations, automatic backups protect your data.
+
+**Backup Features:**
+- **Parallel backups** from all nodes (primary + replicas) for faster completion
+- **Automatic detection** of node roles (primary/replica)
+- **Centralized storage** on assethost with timestamp-based directories
+- **Graceful skip** if assethost is not defined in inventory
+
+**Backup Location:**
+```bash
+# Backups stored on assethost at:
+/var/backups/postgresql/<timestamp>/
+
+# Example:
+/var/backups/postgresql/20251208T152506/
+  - postgresql1_primary_full.sql.gz
+  - postgresql2_replica_full.sql.gz
+  - postgresql3_replica_full.sql.gz
+```
+
+**Assethost Configuration:**
+Define assethost in your inventory to enable automatic backups:
+```ini
+[all]
+assethost ansible_host=192.168.122.10
+```
+
+**Backup Process:**
+1. Detects existing PostgreSQL installation
+2. Creates backups on all nodes in parallel
+3. Transfers backups to assethost via Ansible file transfer
+4. Displays backup summary with restore instructions
+5. Provides 10-second safety pause before proceeding with cleanup
+
+**Restore Example:**
+```bash
+# List available backups
+ssh assethost "ls -lh /var/backups/postgresql/20251208T152506/"
+
+# Restore from primary backup
+scp assethost:/var/backups/postgresql/20251208T152506/postgresql1_primary_full.sql.gz /tmp/
+gunzip -c /tmp/postgresql1_primary_full.sql.gz | sudo -u postgres psql postgres
+```
+
+**Note:** Backups are only created when cleaning existing deployments. Fresh installations skip backup automatically.
 
 ## Deployment Commands Reference
 

@@ -1,0 +1,1 @@
+Added: automatic backup of all PostgreSQL nodes (primary and replicas) to assethost before running clean_existing_setup.yml playbook; improved fresh installation detection to only skip backup when PostgreSQL or data directory is missing, not when repmgr config is missing

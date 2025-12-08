@@ -1,0 +1,1 @@
+Fixed: postgresql package installation now detects version mismatches and performs upgrades instead of skipping already-installed packages

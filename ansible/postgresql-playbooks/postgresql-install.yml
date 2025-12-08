@@ -71,31 +71,44 @@
     # PostgreSQL offline installation block
     - name: Install PostgreSQL from offline packages
       block:
-        - name: Check PostgreSQL package installation status
+        - name: Check PostgreSQL package installation status and version
           ansible.builtin.shell: |
-            if dpkg-query -W -f='${Package}\t${Status}\n' {{ item.name }} 2>/dev/null | grep -q "install ok installed"; then
-              echo "installed"
-            else
+            EXPECTED_FILE="{{ item.url | basename }}"
+            PACKAGE_NAME="{{ item.name }}"
+
+            # Extract version from expected filename (e.g., "17.7-3" or "18.1-1")
+            EXPECTED_VERSION=$(echo "$EXPECTED_FILE" | grep -oP '\d+\.\d+-\d+' | head -1)
+
+            # Get installed version
+            INSTALLED_VERSION=$(dpkg-query -W -f='${Version}\n' "$PACKAGE_NAME" 2>/dev/null || echo "not_installed")
+
+            if [ "$INSTALLED_VERSION" = "not_installed" ]; then
               echo "not_installed"
+            elif echo "$INSTALLED_VERSION" | grep -q "^${EXPECTED_VERSION}\.pgdg"; then
+              echo "installed|${INSTALLED_VERSION}"
+            else
+              echo "needs_upgrade|${INSTALLED_VERSION}|${EXPECTED_VERSION}"
             fi
           register: pg_package_status
           loop: "{{ postgresql_core_packages }}"
           changed_when: false
           failed_when: false
 
-        - name: Identify PostgreSQL packages to install
+        - name: Identify PostgreSQL packages to install or upgrade
           ansible.builtin.set_fact:
             pg_packages_to_install: "{{ pg_packages_to_install | default([]) + [item.item] }}"
           loop: "{{ pg_package_status.results }}"
-          when: item.stdout == "not_installed"
+          when: item.stdout == "not_installed" or item.stdout is match("needs_upgrade.*")
 
         - name: Display PostgreSQL installation plan
           ansible.builtin.debug:
             msg: |
               PostgreSQL Installation Plan:
               - Total packages: {{ postgresql_core_packages | length }}
-              - Already installed: {{ (pg_package_status.results | selectattr('stdout', 'equalto', 'installed') | list | length) }}
-              - To install: {{ pg_packages_to_install | default([]) | length }}
+              - Already up-to-date: {{ (pg_package_status.results | selectattr('stdout', 'match', '^installed\|.*') | list | length) }}
+              - Need upgrade: {{ (pg_package_status.results | selectattr('stdout', 'match', '^needs_upgrade\|.*') | list | length) }}
+              - Need install: {{ (pg_package_status.results | selectattr('stdout', 'equalto', 'not_installed') | list | length) }}
+              - Total to process: {{ pg_packages_to_install | default([]) | length }}
 
         - name: Download PostgreSQL packages
           ansible.builtin.get_url:
@@ -106,13 +119,24 @@
             timeout: 30
           loop: "{{ pg_packages_to_install | default([]) }}"
 
-        - name: Install PostgreSQL packages
+        - name: Install PostgreSQL packages atomically
           become: yes
-          ansible.builtin.apt:
-            deb: "/tmp/{{ item.name }}.deb"
-            state: present
-          loop: "{{ pg_packages_to_install | default([]) }}"
+          ansible.builtin.shell: |
+            # Install all packages together to handle interdependencies
+            PACKAGES=""
+            {% for pkg in pg_packages_to_install | default([]) %}
+            PACKAGES="$PACKAGES /tmp/{{ pkg.name }}.deb"
+            {% endfor %}
+
+            if [ -n "$PACKAGES" ]; then
+              # Use apt-get to install all .deb files at once
+              # This ensures packages with tight version dependencies are upgraded atomically
+              apt-get install -y $PACKAGES
+            else
+              echo "No packages to install"
+            fi
           register: pg_installation_result
+          changed_when: "'0 upgraded, 0 newly installed' not in pg_installation_result.stdout"
 
         - name: Clean up PostgreSQL package files
           ansible.builtin.file:

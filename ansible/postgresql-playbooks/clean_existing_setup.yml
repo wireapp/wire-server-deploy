@@ -23,8 +23,7 @@
         is_fresh_install: >-
           {{
             not postgresql_installed.stat.exists or
-            not postgresql_data_exists.stat.exists or
-            not repmgr_config_exists.stat.exists
+            not postgresql_data_exists.stat.exists
           }}
 
     - name: Display installation type
@@ -57,6 +56,184 @@
     # ===== EXISTING DEPLOYMENT CLEANUP =====
     - name: Handle existing deployment cleanup
       block:
+        # ===== BACKUP ALL DATABASES TO ASSETHOST =====
+        # NOTE: Backups run in PARALLEL on all PostgreSQL nodes for faster completion
+        - name: Display backup skipped message
+          debug:
+            msg: |
+              ⚠️  BACKUP SKIPPED - ASSETHOST NOT DEFINED ⚠️
+
+              Backup requires 'assethost' host in inventory file.
+
+              To enable backup, define assethost in your inventory:
+
+              [all]
+              assethost ansible_host=IP_ADDRESS
+
+          run_once: true
+          when: "'assethost' not in groups['all']"
+
+        - name: Backup all PostgreSQL nodes before cleanup
+          block:
+            - name: Display assethost info
+              debug:
+                msg: "Assethost found: {{ hostvars['assethost']['ansible_host'] | default('assethost') }} - proceeding with backup"
+              run_once: true
+
+            - name: Generate backup timestamp
+              set_fact:
+                backup_timestamp: "{{ ansible_date_time.iso8601_basic_short }}"
+              run_once: true
+              delegate_to: localhost
+
+            - name: Create backup directory on assethost
+              file:
+                path: "/var/backups/postgresql/{{ backup_timestamp }}"
+                state: directory
+                mode: "0755"
+              delegate_to: assethost
+              run_once: true
+
+            - name: Check node replication status
+              ansible.builtin.shell: |
+                sudo -u postgres psql -t -A -c "SELECT pg_is_in_recovery();" postgres 2>/dev/null || echo "unknown"
+              register: pg_recovery_status
+              changed_when: false
+              failed_when: false
+
+            - name: Determine node role
+              set_fact:
+                node_role: "{{ 'primary' if pg_recovery_status.stdout | trim == 'f' else ('replica' if pg_recovery_status.stdout | trim == 't' else 'unknown') }}"
+
+            - name: Display backup plan
+              debug:
+                msg: |
+                  Backup Plan for {{ inventory_hostname }}:
+                  - Node role: {{ node_role | upper }}
+                  - Status: {{ 'Will create backup' if node_role != 'unknown' else 'SKIPPED - PostgreSQL not responding' }}
+                  - Destination: assethost:/var/backups/postgresql/{{ backup_timestamp }}/
+
+            - name: Create local backup directory
+              file:
+                path: "/tmp/pg_backup_{{ backup_timestamp }}"
+                state: directory
+                owner: postgres
+                group: postgres
+                mode: "0700"
+              when: node_role != 'unknown'
+
+            - name: Create full database backup (pg_dumpall)
+              ansible.builtin.shell: |
+                BACKUP_DIR="/tmp/pg_backup_{{ backup_timestamp }}"
+                BACKUP_FILE="$BACKUP_DIR/{{ inventory_hostname }}_{{ node_role }}_full.sql.gz"
+
+                echo "Creating backup from {{ node_role | upper }} node..."
+                sudo -u postgres pg_dumpall | gzip > "$BACKUP_FILE"
+
+                if [ $? -eq 0 ]; then
+                  BACKUP_SIZE=$(du -h "$BACKUP_FILE" | cut -f1)
+                  echo "SUCCESS|$BACKUP_FILE|$BACKUP_SIZE"
+                else
+                  echo "FAILED|$BACKUP_FILE|0"
+                  exit 1
+                fi
+              register: backup_result
+              when: node_role != 'unknown'
+              changed_when: true
+
+            - name: Parse backup result
+              set_fact:
+                backup_status: "{{ (backup_result.stdout_lines[-1] | default('')).split('|')[0] if backup_result.stdout_lines is defined and backup_result.stdout_lines | length > 0 else 'SKIPPED' }}"
+                backup_file: "{{ (backup_result.stdout_lines[-1] | default('')).split('|')[1] if backup_result.stdout_lines is defined and backup_result.stdout_lines | length > 0 and '|' in backup_result.stdout_lines[-1] else '' }}"
+                backup_size: "{{ (backup_result.stdout_lines[-1] | default('')).split('|')[2] if backup_result.stdout_lines is defined and backup_result.stdout_lines | length > 2 and (backup_result.stdout_lines[-1] | default('')).split('|') | length > 2 else 'N/A' }}"
+              when: node_role != 'unknown'
+
+            - name: Fetch backup from PostgreSQL node to control machine
+              ansible.builtin.fetch:
+                src: "{{ backup_file }}"
+                dest: "/tmp/pg_transfer_{{ backup_timestamp }}/"
+                flat: yes
+              when:
+                - node_role != 'unknown'
+                - backup_status | default('SKIPPED') == 'SUCCESS'
+
+            - name: Transfer backup to assethost
+              ansible.builtin.copy:
+                src: "/tmp/pg_transfer_{{ backup_timestamp }}/{{ inventory_hostname }}_{{ node_role }}_full.sql.gz"
+                dest: "/var/backups/postgresql/{{ backup_timestamp }}/{{ inventory_hostname }}_{{ node_role }}_full.sql.gz"
+              delegate_to: assethost
+              when:
+                - node_role != 'unknown'
+                - backup_status | default('SKIPPED') == 'SUCCESS'
+              register: transfer_result
+
+            - name: Clean up control machine transfer directory
+              ansible.builtin.file:
+                path: "/tmp/pg_transfer_{{ backup_timestamp }}/{{ inventory_hostname }}_{{ node_role }}_full.sql.gz"
+                state: absent
+              delegate_to: localhost
+              when:
+                - node_role != 'unknown'
+                - backup_status | default('SKIPPED') == 'SUCCESS'
+                - transfer_result is succeeded
+
+            - name: Clean up local backup file
+              file:
+                path: "{{ backup_file }}"
+                state: absent
+              when:
+                - node_role != 'unknown'
+                - backup_status | default('SKIPPED') == 'SUCCESS'
+                - transfer_result is succeeded
+
+            - name: Clean up local backup directory
+              file:
+                path: "/tmp/pg_backup_{{ backup_timestamp }}"
+                state: absent
+              when: node_role != 'unknown'
+
+            - name: Display backup status
+              debug:
+                msg: |
+                  Backup Status for {{ inventory_hostname }}:
+                  - Role: {{ node_role | upper }}
+                  - Status: {{ backup_status | default('SKIPPED') }}
+                  - Size: {{ backup_size | default('N/A') }}
+                  - Location: assethost:/var/backups/postgresql/{{ backup_timestamp }}/{{ inventory_hostname }}_{{ node_role }}_full.sql.gz
+              when: node_role != 'unknown' and backup_status | default('SKIPPED') == 'SUCCESS'
+
+          when: postgresql_installed.stat.exists
+
+        - name: Display backup summary
+          debug:
+            msg: |
+              ⚠️  ALL DATABASE BACKUPS COMPLETED ⚠️
+
+              Backup location: assethost:/var/backups/postgresql/{{ backup_timestamp }}/
+
+              To list all backups:
+              ssh assethost "ls -lh /var/backups/postgresql/{{ backup_timestamp }}/"
+
+              To restore a backup (example):
+              scp assethost:/var/backups/postgresql/{{ backup_timestamp }}/nodename_primary_full.sql.gz /tmp/
+              gunzip -c /tmp/nodename_primary_full.sql.gz | sudo -u postgres psql postgres
+
+              ⚠️  Proceeding with destructive cleanup in 10 seconds...
+          run_once: true
+
+        - name: Wait before proceeding with destructive operations
+          pause:
+            seconds: 10
+            prompt: |
+
+              ⚠️  WARNING: About to clean existing PostgreSQL setup ⚠️
+
+              All node backups have been saved to assethost.
+              Press Ctrl+C then 'A' to abort if you need to review backups.
+
+          run_once: true
+
+        # ===== DESTRUCTIVE CLEANUP OPERATIONS =====
         - name: Check if PostgreSQL service exists
           systemd:
             name: "postgresql@{{ postgresql_version }}-main.service"
@@ -167,7 +344,9 @@
           - repmgr config exists: {{ repmgr_config_exists.stat.exists }}
           {% if is_fresh_install %}
           - Action taken: Minimal setup (directories created)
+          - Backup: Skipped (no existing data)
           {% else %}
-          - Action taken: Full cleanup (services stopped, configs removed)
+          - Action taken: Full cleanup (backup created, services stopped, configs removed)
+          - Backup: {{ 'Created' if postgresql_installed.stat.exists else 'N/A' }}
           {% endif %}
           - Ready for deployment: ✅
