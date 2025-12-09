@@ -1,5 +1,7 @@
 - name: Clean the installation
   hosts: deploy_node
+  vars:
+    wire_vars: "{{ ansible_user_dir }}/wire_vars"
   tasks:
   # stopping the cluster defined in minikube_cluster playbook
   - name: clean minikube
@@ -27,6 +29,11 @@
     tags: [never, remove_packages]
     become: yes
     block:
+    - name: Remove Helm binary
+      file:
+        path: /usr/local/bin/helm
+        state: absent
+
     - name: Remove Minikube
       file:
         path: /usr/local/bin/minikube
@@ -61,14 +68,25 @@
         name: "{{ ansible_user }}"
         groups: docker
         append: no
-  
-    - name: Remove dependencies
+
+    - name: Remove APT dependencies
       apt:
         name:
-          - yq
-          - ncat
+          - jq
+          - python3-pip
+          - python3-venv
+          - python3-full
         state: absent
         autoremove: yes
+
+    - name: Remove Python libraries installed via pip
+      pip:
+        name:
+          - kubernetes
+          - pyyaml
+        executable: /usr/bin/pip3
+        state: absent
+      ignore_errors: yes
 
     - name: Update apt package index
       apt:
@@ -130,8 +148,6 @@
         path: "{{ item }}"
         state: absent
       loop:
-        - "{{ iptables_save_dir }}/rules_pre_wire.v4"
-        - "{{ iptables_save_dir }}/rules_post_wire.v4"
         - "{{ iptables_save_dir }}"
 
   - name: Remove ssh keys
@@ -152,8 +168,7 @@
     loop:
       - "{{ ansible_user_dir }}/wire-server-deploy"
       - "{{ ansible_user_dir }}/wire-server-deploy-static-demo-{{ artifact_hash }}.tgz"
-      - "{{ ansible_user_dir }}/wire_ip"
-      - "{{ ansible_user_dir }}/wire_secrets"
+      - "{{ wire_vars }}"
 
   - name: clean asset_host artifacts and remove service
     tags: [never, clean_assethost]

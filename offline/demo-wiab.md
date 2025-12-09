@@ -18,6 +18,7 @@ For more detailed instructions on each task, please refer to the [Deployment Flo
 - **Network**: No interference from UFW or other system specific firewalls, and IP forwarding enabled between network cards. Public internet access to download Wire artifacts and Ubuntu packages.
 - **Packages**: Ansible and unzip (or git) installed on the localhost (any machine you have access to)
   - Ansible version: [core 2.16.3] or compatible
+  - Note: The deployment will automatically install additional required packages on the deploy_node (see [Package Installation](#4-package-installation) section). You can skip this step using `--skip-tags install_pkgs` if these packages are already installed
 - **Permissions**: Sudo access required for installation on remote_node
 - **Ansible Playbooks**: 
   - The `ansible` directory from [wire-server-deploy repository](https://github.com/wireapp/wire-server-deploy)
@@ -25,14 +26,17 @@ For more detailed instructions on each task, please refer to the [Deployment Flo
     - **Download as ZIP:** [wire-server-deploy/archive/master.zip](https://github.com/wireapp/wire-server-deploy/archive/refs/heads/master.zip) (requires unzip)
     - **Clone with Git:** `git clone https://github.com/wireapp/wire-server-deploy.git` (requires git)
   - The inventory file [ansible/inventory/demo/host.yml](../ansible/inventory/demo/host.yml) to update and verify the following variables (required unless noted optional):
-    - ansible_host: aka **deploy_node** i.e. IP address or hostname of VM where Wire will be deployed (Required)
-    - ansible_user: username to access the deploy_node (Required)
-    - ansible_ssh_private_key_file: SSH key file path for ansible_user@deploy_node (Required)
-    - target_domain: The domain you want to use for wire installation eg. example.com (Required)
-    - wire_ip: Gateway IP address for Wire, could be same as deploy_node's IP (Optional). If not specified, the playbook will attempt to detect it (network ACLs permitting). If your deploy_node is only reachable on a private network, set this explicitly.
-    - artifact_hash: Check with wire support about this value (used by the download step)
+    - **ansible_host**: aka **deploy_node** i.e. IP address or hostname of VM where Wire will be deployed (Required)
+    - **ansible_user**: username to access the deploy_node (Required)
+    - **ansible_ssh_private_key_file**: SSH key file path for ansible_user@deploy_node (Required)
+    - **target_domain**: The domain you want to use for wire installation eg. example.com (Required)
+    - **wire_ip**: Gateway IP address for Wire, could be same as deploy_node's IP (Optional). If not specified, the playbook will attempt to detect it (network ACLs permitting). If your deploy_node is only reachable on a private network, set this explicitly.
+    - **use_cert_manager**: Controls TLS certificate management behavior (Optional, default: true)
+      - **true** (default): Deploys cert-manager and nginx-ingress-services for automatic HTTPS certificate generation via Let's Encrypt. This is the recommended option for most deployments with internet-accessible domains.
+      - **false**: Skips cert-manager deployment and nginx-ingress-services chart. When disabled, you must manually provide TLS certificates for your domain and configure ingress manually. See [Bring your own certificates](https://github.com/wireapp/wire-server/tree/develop/charts/nginx-ingress-services) for instructions.
+    - **artifact_hash**: Check with wire support about this value (used by the download step)
 
-Note: the playbook installs a set of system tools during the `install_pkgs` tasks (for example `docker`/`containerd`, `kubectl`, `minikube` when provisioning a cluster, `yq`, `jq`, `ncat`). If you already have these tools on the deploy node you may skip the `install_pkgs` tag when running the playbook.
+Note: The playbook installs a comprehensive set of system tools and libraries during the `install_pkgs` tasks. See [Package Installation](#4-package-installation) for the complete list. If you already have these tools on the deploy node you may skip the `install_pkgs` tag when running the playbook.
 
 - **Network Access Requirements**:
 
@@ -80,37 +84,52 @@ ansible-playbook -i ansible/inventory/demo/host.yml ansible/wiab-demo/deploy_wia
 
 The deployment process follows these steps as defined in the main playbook:
 
-### 1. DNS Verification
+### 1. Wire IP Access Verification (Always Runs)
 
-The playbook starts by verifying DNS records to ensure proper name resolution:
+- Imports [verify_wire_ip.yml](../ansible/wiab-demo/verify_wire_ip.yml) to check Wire IP access
+- **Always runs** - This step is crucial for identifying network ingress and cannot be skipped
+- Sets up variables (facts) for Kubernetes nodes based on the Minikube profile
+- If `wire_ip` is not already specified, the playbook attempts to detect it and saves it on the node
+
+### 2. DNS Verification
+
 - Imports [verify_dns.yml](../ansible/wiab-demo/verify_dns.yml)
 - Can be skipped using `--skip-tags verify_dns`
-- Checks for basic DNS record requirements as explained in the document [How to set up DNS records](https://docs.wire.com/latest/how-to/install/helm-prod.html#dns-records) .
+- Checks for basic DNS record requirements as explained in [DNS Requirements](https://docs.wire.com/latest/how-to/install/demo-wiab.html#dns-requirements)
 
-### 2. Common Setup Tasks
+### 3. Package Installation
 
-- Installs Netcat (ncat) on the deployment node, required to find a accessible IP address.
-- Sets up variables (facts required by ansible) for Kubernetes node based on the Minikube profile.
-
-### 3. Network Verification
-
-- Imports [verify_wire_ip.yml](../ansible/wiab-demo/verify_wire_ip.yml)  to check Wire IP access
-- This step is crucial for identifying network ingress and cannot be skipped
-- If wire_ip is not already specified, we try to save the tasks the wire_ip on the node in a file
-
-### 4. Package Installation
-
-- Imports [install_pkgs.yml](../ansible/wiab-demo/install_pkgs.yml)  to install required dependencies
+- Imports [install_pkgs.yml](../ansible/wiab-demo/install_pkgs.yml) to install required dependencies
 - Can be skipped using `--skip-tags install_pkgs`
 
-### 5. SSH Key Management
+**Packages Installed:**
+- **Binaries:**
+  - Helm v3.15.0 (downloaded with checksum verification)
+  - Minikube (latest release)
+  - kubectl (latest stable release)
 
-- Imports [setup_ssh.yml](../ansible/wiab-demo/setup_ssh.yml) to manage SSH keys for Minikube node and SSH proxying for the deploy_node and minikube node
-- **Dependency task:** This task has no tag and runs automatically when `minikube`, `asset_host`, or `seed_containers` are selected
-- Cannot be run independently or skipped manually - it's controlled entirely by dependent components
-- **Smart dependency:** SSH setup runs when any component that needs it is selected, and is automatically skipped when none of those components are running
+- **APT Packages:**
+  - jq (JSON query tool)
+  - python3-pip (Python package manager)
+  - python3-venv (Python virtual environments)
+  - python3-full (Complete Python installation)
+  - docker-ce (Docker Container Engine)
+  - docker-ce-cli (Docker CLI)
+  - containerd.io (Container runtime)
 
-### 6. Minikube Cluster Configuration
+- **Python Libraries (via pip):**
+  - kubernetes >= 18.0.0 (Kubernetes Python client)
+  - pyyaml >= 5.4.1 (YAML parser)
+
+
+### 4. SSH Key Management (Automatic Dependency)
+
+- Imports [setup_ssh.yml](../ansible/wiab-demo/setup_ssh.yml) to manage SSH keys for Minikube node and SSH proxying
+- **Automatic dependency:** Runs automatically when `minikube`, `asset_host`, or `seed_containers` are selected
+- Cannot be run independently or skipped manually - controlled entirely by dependent components
+- **Smart dependency:** SSH setup runs when any component that needs it is selected, and is automatically skipped otherwise
+
+### 5. Minikube Cluster Configuration
 
 - Imports [minikube_cluster.yml](../ansible/wiab-demo/minikube_cluster.yml) to set up a Kubernetes cluster using Minikube
 - All minikube configurable parameters are available in [host.yml](../ansible/inventory/demo/host.yml)
@@ -119,81 +138,80 @@ The playbook starts by verifying DNS records to ensure proper name resolution:
 ### 7. IPTables Rules
 
 - Imports [iptables_rules.yml](../ansible/wiab-demo/iptables_rules.yml) to configure network rules on deploy_node
-- It will configure network forwarding and postrouting rules to route traffic to k8s node
-- Runs automatically when using `--tags minikube`
+- Configures network forwarding and postrouting rules to route traffic to k8s node
+- Runs automatically with `--tags minikube`
+- Can be skipped using `--skip-tags minikube`
 
 ### 8. Wire Artifact Download
 
 - Imports [download_artifact.yml](../ansible/wiab-demo/download_artifact.yml) to fetch the Wire components
-- It is required to download all the artifacts required for further installation
+- Required to download all artifacts needed for further installation
 - Can be skipped using `--skip-tags download`
 
-### 9. SSH Proxy and Inventory Setup
+### 9. Minikube Node Inventory Setup (Automatic Dependency)
 
-The playbook then configures ssh access (via ssh proxy) for further operations:
-- **Dependency task:** This setup has no tag and runs automatically when `asset_host` or `seed_containers` are selected
-- Retrieves the host IP (asset_host) on the Minikube network and Ip addresses for minikube k8s node
-- Sets up SSH proxy access to cluster node by:
-  - Creating a temporary directory for SSH keys on the localhost
-  - Writing the private key to a file in the temporary directory
-  - Adding the above calculated hosts to the Ansible inventory with appropriate SSH settings
-- Cannot be run independently or skipped manually - controlled entirely by `asset_host` and `seed_containers` components
+- Adds Minikube node(s) to Ansible inventory dynamically
+- Extracts internal IP addresses from all Kubernetes nodes
+- Configures SSH proxy access to cluster nodes
+- **Automatic dependency:** Runs when `asset_host` or `seed_containers` are selected
+- Creates temporary directory for SSH keys on localhost
+- Cannot be run independently or skipped manually - controlled entirely by dependent components
 
 ### 10. Asset Host Setup
 
 - Imports [setup-offline-sources.yml](../ansible/setup-offline-sources.yml) to configure the asset host
-- It will offer wire deployment artifacts as service for further installation
+- Offers Wire deployment artifacts as HTTP service for installation
 - Can be skipped using `--skip-tags asset_host`
 
 ### 11. Container Seeding
 
-- Imports [seed-offline-containerd.yml](../ansible/seed-offline-containerd.yml) to seed containers in K8s cluster node
-- It will seed the docker images shipped for the wire related helm charts in the minikube k8s node
+- Imports [seed-offline-containerd.yml](../ansible/seed-offline-containerd.yml) to seed containers in K8s cluster nodes
+- Seeds Docker images shipped for Wire-related Helm charts in the Minikube K8s node
 - Can be skipped using `--skip-tags seed_containers`
 
 ### 12. Wire Helm Chart Values Preparation
 
-- Imports [wire_values.yml](../ansible/wiab-demo/wire_values.yml) to prepare the Helm chart values
-- Runs in two scenarios:
-  - When running the **full playbook** (no tags specified)
-  - When **both** `wire_values` **and** `helm_install` tags are explicitly passed: `--tags wire_values,helm_install`
-- Will be **skipped** if only `--tags wire_values` or only `--tags helm_install` is passed
+- Imports [wire_values.yml](../ansible/wiab-demo/wire_values.yml) to prepare Helm chart values
+- Updates configurations for:
+  - Wire services (domain names, IP addresses)
+  - SFT daemon (node affinity, domain settings)
+  - Coturn (IP addresses, node affinity)
+  - Ingress controller (node affinity)
+  - TLS/cert-manager settings
 - The playbook backs up existing values files before replacing them
-
-**Note:** An admin can skip this step by:
-- Running only `--tags helm_install` (if values already exist from previous deployments)
-- Providing pre-created values files in the expected `values/` paths and using `--skip-tags wire_values`
+- Uses idempotency checks to avoid unnecessary updates
 
 ### 13. Wire Secrets Creation
 
-- Imports [wire_secrets.yml](../ansible/wiab-demo/wire_secrets.yml) to create required secrets for wire helm charts
-- Runs automatically when using `--tags helm_secrets`
-- The playbook is idempotent: it won't regenerate secrets if they already exist from a previous run
-- If existing secret files are present (e.g., `values/wire-server/secrets.yaml`), the playbook backs them up before replacing them
-
- Note: an admin can choose to skip this step if they already have pre-created secrets in helm secerts files (from previous similar deployments) and wish to avoid overwriting them. Provide your secrets in the expected `values/` paths (eg. `values/wire-server/secrets.yaml`) and run the next playbook with appropriate tags.
+- Imports [wire_secrets.yml](../ansible/wiab-demo/wire_secrets.yml) to create required secrets for Wire Helm charts
+- Generates:
+  - Ed25519 cryptographic keys for zAuth
+  - Random strings for security credentials
+  - PostgreSQL credentials and Kubernetes secrets
+  - Prometheus authentication credentials
+- The playbook is idempotent: won't regenerate secrets if they already exist
+- If existing secret files are present, the playbook backs them up before replacing them
+- Can be skipped using `--skip-tags wire_secrets`
 
 ### 14. Helm Chart Installation
 
 - Imports [helm_install.yml](../ansible/wiab-demo/helm_install.yml) to deploy Wire components using Helm
-- These charts can be configured in [host.yml](../ansible/inventory/demo/host.yml)
+- Deploys core charts: fake-aws, smtp, rabbitmq, databases, postgresql, reaper, wire-server, webapp, and more
+- Deploys optional charts: cert-manager, wire-utility, kube-prometheus-stack (if configured)
+- Reports deployment status and pod health
 - Can be skipped using `--skip-tags helm_install`
 
-### 15. Enable Cert Manager hairpin Networking
+### 15. Cert Manager Hairpin Networking Configuration
 
-- This step([cert_manager_networking](../ansible/wiab-demo/hairpin_networking.yml)) configures hairpin (NAT) behavior on the host so that workloads (for example pods) that need to reach an external/public IP that resolves back to the same node can successfully connect. It performs a check if hairpin networking applies to the current deployment, if so it configures the necessary iptables rules and bridge settings.
-
-```
-a Pod (same node k8s)→ wants to reach → domain → which resolves to the public IP of the same node
-```
-
-If you do not use cert-manager (or you obtain certificates externally) and there is no need for this hairpin behaviour, you can skip this step by using the tag `--skip-tags cert_manager_networking`.
+- Imports [hairpin_networking.yml](../ansible/wiab-demo/hairpin_networking.yml)
+- Configures hairpin (NAT) behavior on the host so workloads (pods) can reach external/public IPs that resolve back to the same node
+- **Always runs when** `use_cert_manager` is true
 
 ### 16. Temporary Cleanup
 
 - Locates all temporary SSH key directories created during deployment
 - Lists and removes these directories
-- Stop `serve-assets` service on `deploy_node`
+- Stops `serve-assets` systemd service on `deploy_node`
 - Can be skipped using `--skip-tags cleanup`
 
 ## SSH Proxy Configuration
@@ -274,27 +292,31 @@ The following tags are available for controlling playbook execution:
 
 ### Main Component Tags
 
-| Tag | Description | Automatic Dependencies |
-|-----|-------------|----------------------|
-| `verify_dns` | DNS record verification | None |
-| `install_pkgs` | Package installation | None |
-| `minikube` | Minikube cluster setup | SSH keys setup, IPTables rules |
-| `download` | Wire artifact download | None |
-| `asset_host` | Asset host configuration | SSH Proxy and Inventory Setup |
-| `seed_containers` | Container seeding | SSH Proxy and Inventory Setup |
-| `wire_values` | Setup Wire Helm values | Requires `helm_install` tag |
-| `wire_secrets` | Create Wire secrets | None |
-| `helm_install` | Helm chart installation | None |
-| `cert_manager_networking` | Enable Cert Manager hairpin Networking | None |
-| `cleanup` | Temporary file cleanup | None |
+| Tag | Description | Automatic Dependencies | Skippable |
+|-----|-------------|----------------------|-----------|
+| `verify_dns` | DNS record verification | None | Yes (`--skip-tags verify_dns`) |
+| `install_pkgs` | Package installation | None | Yes (`--skip-tags install_pkgs`) |
+| `minikube` | Minikube cluster setup | SSH keys setup, IPTables rules | Yes (`--skip-tags minikube`) |
+| `download` | Wire artifact download | None | Yes (`--skip-tags download`) |
+| `asset_host` | Asset host configuration | Minikube node inventory setup | Yes (`--skip-tags asset_host`) |
+| `seed_containers` | Container seeding | Minikube node inventory setup | Yes (`--skip-tags seed_containers`) |
+| `wire_values` | Setup Wire Helm values | None | Yes (`--skip-tags wire_values`) |
+| `wire_secrets` | Create Wire secrets | None | Yes (`--skip-tags wire_secrets`) |
+| `helm_install` | Helm chart installation | None | Yes (`--skip-tags helm_install`) |
+| `cert_manager_networking` | Cert Manager hairpin networking | None | Yes (`use_cert_manager=true`) |
+| `cleanup` | Temporary file cleanup | None | Yes (`--skip-tags cleanup`) |
+
 
 ### Usage Examples
 
-- **Run a complete minikube setup:** `ansible-playbook ... --tags minikube` (automatically includes SSH setup and IPTables)
+- **Run full deployment:** `ansible-playbook -i ansible/inventory/demo/host.yml ansible/wiab-demo/deploy_wiab.yml`
+- **Run complete minikube setup:** `ansible-playbook ... --tags minikube` (automatically includes SSH setup and IPTables)
 - **Run only helm installation:** `ansible-playbook ... --tags helm_install`
-- **Run asset host setup:** `ansible-playbook ... --tags asset_host` (automatically includes SSH Proxy and Inventory Setup)
+- **Run asset host setup:** `ansible-playbook ... --tags asset_host` (automatically includes Minikube node inventory)
 - **Skip DNS verification:** `ansible-playbook ... --skip-tags verify_dns`
 - **Run everything except download:** `ansible-playbook ... --skip-tags download`
+- **Quick helm values and secrets update:** `ansible-playbook ... --tags wire_values,wire_secrets`
+- **Resume from artifact download:** `ansible-playbook ... --skip-tags verify_dns,install_pkgs,minikube`
 
 ## Cleaning/Uninstalling Wire-in-a-Box
 
@@ -321,7 +343,7 @@ ansible-playbook -i ansible/inventory/demo/host.yml ansible/wiab-demo/clean_clus
 | Tag | Description | What Gets Destroyed |
 |-----|-------------|-------------------|
 | `remove_minikube` | Stops and deletes the Kubernetes cluster | Minikube cluster, all pods, services, data |
-| `remove_packages` | Removes installed packages | Docker, kubectl, yq, ncat, minikube binary |
+| `remove_packages` | Removes installed packages | Helm binary, Minikube binary, kubectl, Docker (docker-ce, docker-ce-cli, containerd.io), APT packages (jq, python3-pip, python3-venv, python3-full), Python libraries (kubernetes, pyyaml), Docker configuration (GPG key, repository) |
 | `remove_iptables` | Restores pre-installation network rules | All Wire-related network forwarding rules |
 | `remove_ssh` | Removes generated SSH keys | Wire-specific SSH keys from deploy node |
 | `remove_artifacts` | Deletes downloaded deployment files | Wire artifacts, tarballs, temporary files |
@@ -364,4 +386,9 @@ ansible-playbook -i ansible/inventory/demo/host.yml ansible/wiab-demo/clean_clus
 - **Nothing runs by default:** The playbook requires explicit tags to perform any destruction
 - **Granular control:** You choose exactly what to destroy
 
-⚠️ **Warning:** Package removal (`remove_packages`) may affect other applications on the server. Use with caution in shared environments.
+⚠️ **Warning:** Package removal (`remove_packages`) may affect other applications on the server. This includes:
+- Docker and container runtime (containerd)
+- Python libraries and development tools
+- System utilities (jq)
+
+Use with caution in shared environments where these tools may be needed by other services.
