@@ -71,10 +71,19 @@
       comment: "{{ iptables_rules_comment }}"
 
   - name: Get the IP address of the coturn node
-    shell: |
-      kubectl --kubeconfig="{{ kube_config_path }}" get node {{ k8s_coturn_node }} -o json | jq -r '.status.addresses[] | select(.type=="InternalIP").address'
-    register: k8s_coturn_node_ip
-    changed_when: false
+    kubernetes.core.k8s_info:
+      kind: Node
+      name: "{{ k8s_coturn_node }}"
+      kubeconfig: "{{ kube_config }}"
+    register: coturn_node_info
+    retries: 3
+    delay: 2
+    until: coturn_node_info is succeeded
+
+  - name: Extract internal IP from coturn node
+    set_fact:
+      k8s_coturn_node_ip: "{{ coturn_node_info.resources[0].status.addresses | selectattr('type', 'equalto', 'InternalIP') | map(attribute='address') | first }}"
+    when: coturn_node_info.resources | length > 0
 
   - name: Display k8s_coturn_node
     debug:
@@ -89,7 +98,7 @@
       destination: "{{ default_interface_ip }}"
       destination_ports: "32768:65535"
       in_interface: "{{ default_interface }}"
-      to_destination: "{{ k8s_coturn_node_ip.stdout }}"
+      to_destination: "{{ k8s_coturn_node_ip }}"
       state: present
       action: insert
       comment: "{{ iptables_rules_comment }}"
@@ -103,13 +112,13 @@
       in_interface: "{{ default_interface }}"
       destination: "{{ default_interface_ip }}"
       destination_port: "{{ item.port }}"
-      to_destination: "{{ k8s_coturn_node_ip.stdout }}:{{ item.to_port }}"
+      to_destination: "{{ k8s_coturn_node_ip }}:{{ item.to_port }}"
       state: present
       action: insert
       comment: "{{ iptables_rules_comment }}"
     loop: "{{ turn_dnat_rules }}"
     loop_control:
-      label: "Setting DNAT rule for port {{ item.port }} -> {{ k8s_coturn_node_ip.stdout | default('undefined') }}:{{ item.to_port }}"
+      label: "Setting DNAT rule for port {{ item.port }} -> {{ k8s_coturn_node_ip | default('undefined') }}:{{ item.to_port }}"
 
   - name: Preserve the Iptables rules
     shell: iptables-save -f "{{ iptables_save_dir }}"/rules_post_wire.v4

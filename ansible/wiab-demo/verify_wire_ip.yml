@@ -2,6 +2,7 @@
   hosts: deploy_node
   vars:
     test_port: 3478
+    wire_ip_path: "{{ wire_vars }}/wire_ip"
   tasks:
 
   # this is an exception to install_pkgs, as it expects netcat before other tasks take place
@@ -11,19 +12,20 @@
       name:
         - ncat
       state: present
-      update_cache: yes
+      update_cache: no
+      cache_valid_time: 3600
 
   - name: Continue finding wire_ip on the node
     when: wire_ip is not defined or wire_ip == ''
     block:
     - name: Check if wire_ip file exists
       stat:
-        path: "{{ ansible_user_dir }}/wire_ip"
+        path: "{{ wire_ip_path }}"
       register: wire_ip_file
 
     - name: Read Wire IP from file if it exists
       slurp:
-        src: "{{ ansible_user_dir }}/wire_ip"
+        src: "{{ wire_ip_path }}"
       register: wire_ip_content
       when: wire_ip_file.stat.exists
 
@@ -105,7 +107,7 @@
 
     - name: Store public IP in file
       copy:
-        dest: "{{ ansible_user_dir }}/wire_ip"
+        dest: "{{ wire_ip_path }}"
         content: "{{ temp_wire_ip }}"
       when: connection_test.rc == 0
 
