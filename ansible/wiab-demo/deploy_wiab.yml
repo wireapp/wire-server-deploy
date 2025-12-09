@@ -9,9 +9,40 @@
       k8s_ingress_controller_node: "{{ minikube_profile }}"
       k8s_coturn_node: "{{ minikube_profile }}"
       k8s_sft_node: "{{ minikube_profile }}"
-      kube_config_path: "/home/{{ ansible_user }}/.kube/config"
       iptables_rules_comment: "Wire Iptables Rules"
       iptables_save_dir: "/home/{{ ansible_user }}/wire-iptables-rules"
+      kube_config: "/home/{{ ansible_user }}/.kube/config"
+      values_dir: "{{ ansible_user_dir }}/wire-server-deploy/values"
+      charts_dir: "{{ ansible_user_dir }}/wire-server-deploy/charts"
+      wire_vars: "{{ ansible_user_dir }}/wire_vars"
+
+      # list of all the basic required charts
+      # charts like cert-manager and nginx-ingress-services are managed based on tag cert_manager
+      charts_to_deploy:
+        - fake-aws
+        - smtp
+        - rabbitmq
+        - databases-ephemeral
+        - postgresql
+        - reaper
+        - smallstep-accomp
+        - wire-server
+        - webapp
+        - account-pages
+        - team-settings
+        - ingress-nginx-controller
+        - coturn
+        - sftd
+      
+      # charts to help with additional functions like prometheus stack and wire-utility
+      additional_charts:
+        - wire-utility
+        - kube-prometheus-stack
+
+  - name: Create wire_vars directory if it doesn't exist
+    file:
+      path: "{{ wire_vars }}"
+      state: directory
 
 # shouldn't be skipped, it is neccessary to identify the network ingress
 # potentially we can write the information on the node to avoid running it everytime
@@ -32,9 +63,10 @@
   import_playbook: ./setup_ssh.yml
   tags: always
   when: >
-    ('minikube' not in ansible_skip_tags or
-    'asset_host' not in ansible_skip_tags or  
+    (('minikube' not in ansible_skip_tags or
+    'asset_host' not in ansible_skip_tags or
     'seed_containers' not in ansible_skip_tags)
+    and (ansible_skip_tags | length > 0))
     or
     ('minikube' in ansible_run_tags or
     'asset_host' in ansible_run_tags or
@@ -52,10 +84,19 @@
   - name: Setting up inventory
     block:
     - name: Get the IP address of the k8s_ingress_controller node
-      shell: |
-        kubectl --kubeconfig="{{ kube_config_path }}"  get node {{ k8s_ingress_controller_node }} -o json | jq -r '.status.addresses[] | select(.type=="InternalIP").address'
-      register: k8s_ingress_controller_ip
-      changed_when: false
+      kubernetes.core.k8s_info:
+        kind: Node
+        name: "{{ k8s_ingress_controller_node }}"
+        kubeconfig: "{{ kube_config }}"
+      register: ingress_controller_node_info
+      retries: 3
+      delay: 2
+      until: ingress_controller_node_info is succeeded
+
+    - name: Extract internal IP from k8s_ingress_controller node
+      set_fact:
+        k8s_ingress_controller_ip: "{{ ingress_controller_node_info.resources[0].status.addresses | selectattr('type', 'equalto', 'InternalIP') | map(attribute='address') | first }}"
+      when: ingress_controller_node_info.resources | length > 0
 
     - name: Get the {{ minikube_network_name }} Docker network ID
       shell: |
@@ -82,21 +123,19 @@
 
     - name: set facts for k8s ingress controller ip
       set_fact:
-        k8s_ingress_controller_ip: "{{ k8s_ingress_controller_ip.stdout }}"
         matching_bridge_interface: "{{ matching_bridge_interface.stdout }}"
 
-    tags:
-      - always
+    tags: always
     when: >
-      ('minikube' not in ansible_skip_tags or
+      (('minikube' not in ansible_skip_tags or
       'asset_host' not in ansible_skip_tags or
-      'seed_containers' not in ansible_skip_tags or
-      'cert_manager_networking' not in ansible_skip_tags)
+      'seed_containers' not in ansible_skip_tags)
+      and (ansible_skip_tags | length > 0))
       or
       ('minikube' in ansible_run_tags or
       'asset_host' in ansible_run_tags or
-      'seed_containers' in ansible_run_tags or
-      'cert_manager_networking' in ansible_run_tags)
+      'seed_containers' in ansible_run_tags)
+      or use_cert_manager
 
 - name: Configure Iptables rules
   import_playbook: ./iptables_rules.yml
@@ -113,37 +152,31 @@
   tasks:
   - name: Create a block for Minikube node tasks
     block:
-      - name: Extract IPs of Minikube nodes
-        shell: |
-          kubectl get nodes -o json | jq -r '.items[].status.addresses[] | select(.type=="InternalIP").address'
-        register: kube_ips
+    - name: Extract IPs of Minikube nodes
+      kubernetes.core.k8s_info:
+        kind: Node
+        kubeconfig: "{{ kube_config }}"
+      register: nodes_info
+      retries: 3
+      delay: 2
+      until: nodes_info is succeeded
 
-      - name: Store Minikube node IPs as variable
-        set_fact:
-          kubernetes_node_ips: "{{ kube_ips.stdout_lines }}"
+    - name: Extract InternalIP addresses from all nodes
+      set_fact:
+        kubernetes_node_ips: "{{ nodes_info.resources | map(attribute='status.addresses') | map('selectattr', 'type', 'equalto', 'InternalIP') | map('map', attribute='address') | map('first') | list }}"
 
-      - name: Extract IP of "{{ minikube_network_name }}" interface on host machine
-        shell: |
-          docker network inspect "{{ minikube_network_name }}" | jq -r '.[0].IPAM.Config[0].Gateway'
-        register: host_ip
-    
-    tags: always
-    when: >
-      ('asset_host' not in ansible_skip_tags or
-      'seed_containers' not in ansible_skip_tags)
-      or
-      ('asset_host' in ansible_run_tags or
-      'seed_containers' in ansible_run_tags)
+    - name: Extract IP of "{{ minikube_network_name }}" interface on host machine
+      shell: |
+        docker network inspect "{{ minikube_network_name }}" | jq -r '.[0].IPAM.Config[0].Gateway'
+      register: host_ip
 
-  - name: Setup ssh proxy access to k8s-cluster nodes
-    become: no
-    block:
     - name: Create a temporary directory
       tempfile:
         state: directory
         suffix: _ssh_keys
       register: temp_dir
       delegate_to: localhost
+      become: no
 
     - name: Debug message for private key writing
       ansible.builtin.debug:
@@ -155,6 +188,7 @@
         dest: "{{ temp_dir.path }}/id_rsa_wire"
         mode: '0600'
       delegate_to: localhost
+      become: no
 
     - name: Add containers to inventory
       become: yes
@@ -197,10 +231,15 @@
       delegate_to: "{{ item }}"
       delegate_facts: true
       with_items: "{{ groups['k8s-cluster'] }}"
-  
+
+    tags: always
     when: >
-      'asset_host' not in ansible_skip_tags or
-      'seed_containers' not in ansible_skip_tags
+      (('asset_host' not in ansible_skip_tags or
+      'seed_containers' not in ansible_skip_tags)
+      and (ansible_skip_tags | length > 0))
+      or
+      ('asset_host' in ansible_run_tags or
+      'seed_containers' in ansible_run_tags)
 
 - name: Setup Asset Host
   import_playbook: ../setup-offline-sources.yml
@@ -221,11 +260,6 @@
   import_playbook: ./wire_values.yml
   tags: 
     - wire_values
-    - helm_install
-  when: >
-    ('wire_values' in ansible_run_tags and 'helm_install' in ansible_run_tags)
-    or
-    (ansible_run_tags == ['all'])
 
 - name: Create wire secrets
   import_playbook: ./wire_secrets.yml
@@ -235,9 +269,10 @@
   import_playbook: ./helm_install.yml
   tags: helm_install
 
-- name: Enable Cert Manager hairpin Networking
+- name: Veirfy Cert Manager hairpin Networking
   import_playbook: ./hairpin_networking.yml
-  tags: cert_manager_networking
+  tags: always
+  when: use_cert_manager
 
 # since, the temp_dir are created in a different set of tasks, these directories need to be searched 
 - name: Clean up temporary directories
