@@ -47,3 +47,26 @@ wiab:
     turn_dnat_rules:
       - { protocol: "tcp", port: 3478,  to_port: 3478 }
       - { protocol: "udp", port: 3478,  to_port: 3478 }
+
+    # list of all the basic required charts
+    # charts like cert-manager and nginx-ingress-services are managed based on tag cert_manager
+    charts_to_deploy:
+      - fake-aws
+      - smtp
+      - rabbitmq
+      - databases-ephemeral
+      - postgresql
+      - reaper
+      - smallstep-accomp
+      - wire-server
+      - webapp
+      - account-pages
+      - team-settings
+      - ingress-nginx-controller
+      - coturn
+      - sftd
+      
+    # charts to help with additional functions like prometheus stack and wire-utility
+    additional_charts:
+      - wire-utility
+      - kube-prometheus-stack

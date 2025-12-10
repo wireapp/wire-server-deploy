@@ -16,29 +16,6 @@
       charts_dir: "{{ ansible_user_dir }}/wire-server-deploy/charts"
       wire_vars: "{{ ansible_user_dir }}/wire_vars"
 
-      # list of all the basic required charts
-      # charts like cert-manager and nginx-ingress-services are managed based on tag cert_manager
-      charts_to_deploy:
-        - fake-aws
-        - smtp
-        - rabbitmq
-        - databases-ephemeral
-        - postgresql
-        - reaper
-        - smallstep-accomp
-        - wire-server
-        - webapp
-        - account-pages
-        - team-settings
-        - ingress-nginx-controller
-        - coturn
-        - sftd
-      
-      # charts to help with additional functions like prometheus stack and wire-utility
-      additional_charts:
-        - wire-utility
-        - kube-prometheus-stack
-
   - name: Create wire_vars directory if it doesn't exist
     file:
       path: "{{ wire_vars }}"

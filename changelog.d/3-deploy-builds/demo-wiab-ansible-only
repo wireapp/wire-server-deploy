@@ -1,8 +1,7 @@
 Fixed: the values for demo deployments as per new wiab process
-Fixed: move charts info from host inventory to deploy_wiab, introduced the flags for cert_manager, clean old kubectl commands and fix ansible tags
-Refactor: move helm values handling logic from offline_deploy_k8s.sh to wire_values, made it idempotent
-Refactor: move helm secrets handling logic from offline_deploy_k8s.sh to wire_secrets playbook, removed dependency from zauth container
-Refactor: move helm chart installation logic from offline_deploy_k8s.sh to helm_install playbook
-Refactor: add packages for helm and k8s operations in install_pkgs, converted native kubectl commands to ansible native tasks
-Refactor: improve wiab-demo document as per new changes and refactor clean_cluster playbook according to new changes
-Fixed: removed zauth and copy only offline-env.sh to demo bundle 
+Changed: introduced the flags for cert_manager, clean old kubectl commands and fix ansible tags
+Changed: move helm values handling logic from offline_deploy_k8s.sh to wire_values, made it idempotent
+Added: helm secrets handling moved from offline_deploy_k8s.sh to wire_secrets playbook, removed zauth container dependency
+Changed: added helm and kubernetes packages to install_pkgs, converted native kubectl commands to ansible native tasks
+Changed: improved wiab-demo documentation and refactored clean_cluster playbook according to new changes
+Removed: zauth container from demo bundle, copy only offline-env.sh 
