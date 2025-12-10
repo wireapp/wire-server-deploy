@@ -1,0 +1,23 @@
+# CHANGEME-PROD: This is often a good default when using calico's default CIDR
+#                https://github.com/kubernetes-sigs/kubespray/blob/master/docs/calico.md#optional--define-the-default-pool-cidr
+#                or flannel's https://github.com/kubernetes-sigs/kubespray/blob/master/docs/flannel.md#flannel
+#                If you override those values, etc., then verify that this CIDR still makes sense
+#                For all variables the "ixdotai/smtp" image supports see: https://github.com/ix-ai/smtp#readme
+envVars:
+  RELAY_NETWORKS: ":10.233.0.0/16"
+#
+#   PORT: "25"
+#   NET_DEV: eth0
+#   OTHER_HOSTNAMES: other.example.com
+#   DISABLE_IPV6: 1
+#   BIND_IP: 0.0.0.0
+#   BIND_IP6: ::0
+#   MAILNAME: mail.example.com
+#   DKIM_KEY_PATH: /etc/exim4/dkim.key
+#   KEY_PATH: /path/to/key.crt
+#   CERTIFICATE_PATH: /path/to/certificate.crt
+#   SMARTHOST_ADDRESS: mail.example.com
+#   SMARTHOST_PORT: "587"
+#   SMARTHOST_USER: exampleuser
+#   SMARTHOST_PASSWORD: secret
+#   SMARTHOST_ALIASES: "*.example.com"

@@ -52,10 +52,9 @@ wiab:
     # charts like cert-manager and nginx-ingress-services are managed based on tag cert_manager
     charts_to_deploy:
       - fake-aws
-      - smtp
+      - demo-smtp
       - rabbitmq
       - databases-ephemeral
-      - postgresql
       - reaper
       - smallstep-accomp
       - wire-server
@@ -67,6 +66,6 @@ wiab:
       - sftd
       
     # charts to help with additional functions like prometheus stack and wire-utility
-    additional_charts:
-      - wire-utility
-      - kube-prometheus-stack
+    #additional_charts:
+    #  - wire-utility
+    #  - kube-prometheus-stack
