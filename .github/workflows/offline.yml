@@ -30,7 +30,6 @@ jobs:
   # Build container in parallel
   build-container:
     name: Build container
-    needs: build-default
     runs-on:
       group: wire-server-deploy
     steps:
