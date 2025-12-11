@@ -33,7 +33,6 @@ rm -rf "${OUTPUT_DIR}/charts/reaper"
 # pulling the charts which are not present in wire_builds json file
 "${TASKS_DIR}"/proc_pull_ext_charts.sh OUTPUT_DIR="${OUTPUT_DIR}" HELM_CHART_INCLUDE_JSON="${SCRIPT_DIR}/extra_charts.json"
 
-exit 0
 # copy local copy of values from root directory to output directory
 cp -r "${ROOT_DIR}"/values "${OUTPUT_DIR}"/
 
