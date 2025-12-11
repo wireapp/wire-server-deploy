@@ -56,8 +56,8 @@ sed -i '/-integration/d' "${HELM_IMAGE_TREE_FILE}"
 # Replace docker.io/bitnami with docker.io/bitnamilegacy and log updated images
 # https://github.com/bitnami/charts/issues/35164
 echo "Replacing bitnami with bitnamilegacy..."
-sed -i 's|bitnami|bitnamilegacy|g' "${OUTPUT_DIR}"/images
-sed -i 's|bitnami|bitnamilegacy|g' "${HELM_IMAGE_TREE_FILE}"
+sed -i 's|bitnami/|bitnamilegacy/|g' "${OUTPUT_DIR}"/images
+sed -i 's|bitnami/|bitnamilegacy/|g' "${HELM_IMAGE_TREE_FILE}"
 echo "Updated images:"
 grep "bitnamilegacy" "${OUTPUT_DIR}"/images || echo "No bitnami images found"
 
