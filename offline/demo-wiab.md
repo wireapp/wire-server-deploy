@@ -121,6 +121,8 @@ The deployment process follows these steps as defined in the main playbook:
   - kubernetes >= 18.0.0 (Kubernetes Python client)
   - pyyaml >= 5.4.1 (YAML parser)
 
+> **Note on PEP668 Override:** Python packages are installed using `--break-system-packages` flag to override [PEP668](https://peps.python.org/pep-0668/) constraints on Ubuntu 24.04. This is necessary because the deployment requires system-wide access to Ansible Python modules (kubernetes, pyyaml) for infrastructure provisioning. The playbook installs these packages system-wide rather than in virtual environments to ensure they are available in the Ansible execution context.
+
 
 ### 4. SSH Key Management (Automatic Dependency)
 

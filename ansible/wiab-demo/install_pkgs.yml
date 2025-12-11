@@ -22,9 +22,9 @@
 
     - name: Install Helm binary
       block:
-      - name: Detect system architecture
+      - name: Set system architecture
         set_fact:
-          system_arch: "{{ 'amd64' if ansible_architecture == 'x86_64' else 'arm64' if ansible_architecture == 'aarch64' else 'amd64' }}"
+          system_arch: "amd64"
 
       - name: Download Helm {{ helm_version }} binary
         get_url:
