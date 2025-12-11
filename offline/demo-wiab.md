@@ -121,6 +121,8 @@ The deployment process follows these steps as defined in the main playbook:
   - kubernetes >= 18.0.0 (Kubernetes Python client)
   - pyyaml >= 5.4.1 (YAML parser)
 
+> **Note on PEP668 Override:** Python packages are installed using `--break-system-packages` flag to override [PEP668](https://peps.python.org/pep-0668/) constraints on Ubuntu 24.04. This is necessary because the deployment requires system-wide access to Ansible Python modules (kubernetes, pyyaml) for infrastructure provisioning. The playbook installs these packages system-wide rather than in virtual environments to ensure they are available in the Ansible execution context.
+
 
 ### 4. SSH Key Management (Automatic Dependency)
 
@@ -257,9 +259,8 @@ The deployment playbook downloads an offline bundle that contains:
 
 - Helm chart tarballs (the charts used by the deployment)
 - Docker/container image archives (used to seed Minikube/node container runtime)
-- Helper scripts such as `bin/wiab-demo/offline_deploy_k8s.sh` which are sourced during the playbook
 
-If you already have a working **Kubernetes cluster** and prefer to use it instead of creating a local Minikube node, you can skip the Minikube and seeding tasks, and run only the Helm chart installation (tags `wire_values` and `helm_install`). However, the offline bundle is still required to obtain the charts and the docker image archive(s) so you can:
+If you already have a working **Kubernetes cluster** and prefer to use it instead of creating a local Minikube node, you can skip the Minikube and seeding tasks, and run only the Helm chart installation (tags `wire_values`, `wire_secrets` and `helm_install`). However, the offline bundle is still required to obtain the charts and the docker image archive(s) so you can:
 
 1. Extract charts from the bundle and point Helm to the extracted chart directories, and
 2. Load container images into your cluster from the image archive.
