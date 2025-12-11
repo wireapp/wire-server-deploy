@@ -20,8 +20,8 @@ check_or_load_image() {
 }
 
 # Get container image names efficiently
-ZAUTH_CONTAINER=$(check_or_load_image "$SCRIPT_DIR/../../containers-adminhost/quay.io_wire_zauth_"*.tar "quay.io/wire/zauth")
-WSD_CONTAINER=$(check_or_load_image "$SCRIPT_DIR/../../containers-adminhost/container-wire-server-deploy.tgz" "quay.io/wire/wire-server-deploy")
+ZAUTH_CONTAINER=$(check_or_load_image "$SCRIPT_DIR/../containers-adminhost/quay.io_wire_zauth_"*.tar "quay.io/wire/zauth")
+WSD_CONTAINER=$(check_or_load_image "$SCRIPT_DIR/../containers-adminhost/container-wire-server-deploy.tgz" "quay.io/wire/wire-server-deploy")
 
 export ZAUTH_CONTAINER
 

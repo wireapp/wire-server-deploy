@@ -23,6 +23,8 @@ wiab:
     # docker vars
     docker_ce_version: "5:28.1.1-1~ubuntu.24.04~noble"
     containerd_version: "1.7.27-1"
+    helm_version: "v3.15.0"
+    helm_checksum_amd64: "a74747ac40777b86d3ff6f1be201504bba65ca46cd68b5fe25d3c394d0dcf745"
 
     # minikube vars
     minikube_profile: "k8s-wire" 
@@ -37,6 +39,7 @@ wiab:
     pod_network_cidr: "10.233.0.0/16"
     minikube_node_subnet: "192.168.99.0/24"
 
+    use_cert_manager: true
     # networking iptables dnat rules
     http_dnat_rules:
       - { protocol: "tcp", port: 443, to_port: 31773 }
@@ -45,19 +48,25 @@ wiab:
       - { protocol: "tcp", port: 3478,  to_port: 3478 }
       - { protocol: "udp", port: 3478,  to_port: 3478 }
 
-    # list of helm charts to deploy
+    # list of all the basic required charts
+    # charts like cert-manager and nginx-ingress-services are managed based on tag cert_manager
     charts_to_deploy:
       - fake-aws
       - smtp
       - rabbitmq
       - databases-ephemeral
-      - postgresql # postgresql chart should be deployed before deploying wire-server
+      - postgresql
       - reaper
       - smallstep-accomp
-      - kube-prometheus-stack
       - wire-server
       - webapp
       - account-pages
       - team-settings
       - ingress-nginx-controller
-      - nginx-ingress-services
+      - coturn
+      - sftd
+      
+    # charts to help with additional functions like prometheus stack and wire-utility
+    additional_charts:
+      - wire-utility
+      - kube-prometheus-stack

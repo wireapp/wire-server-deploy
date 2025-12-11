@@ -4,7 +4,7 @@
 ingress-nginx:
   controller:
     # There's no loadbalancer support in the Hetzner CI environment
-    kind: DaemonSet
+    kind: Deployment
     service:
       type: NodePort
     image:

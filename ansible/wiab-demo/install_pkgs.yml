@@ -1,8 +1,6 @@
 - name: Package installation and configuration
   hosts: deploy_node
   become: yes
-  vars:
-    yq_version: "4.48.1"
   tasks:
   - name: Install required packages
     block:
@@ -10,14 +8,73 @@
       apt:
         name:
           - jq
+          - python3-pip
+          - python3-venv
+          - python3-full
         state: present
-        update_cache: yes
+        update_cache: no
 
-    - name: Install yq-go
-      get_url:
-        url: "https://github.com/mikefarah/yq/releases/download/v{{ yq_version }}/yq_linux_amd64"
-        dest: /usr/local/bin/yq
-        mode: '0755'
+    - name: Check if Helm is already installed
+      command: which helm
+      register: helm_check
+      failed_when: false
+      changed_when: false
+
+    - name: Install Helm binary
+      block:
+      - name: Set system architecture
+        set_fact:
+          system_arch: "amd64"
+
+      - name: Download Helm {{ helm_version }} binary
+        get_url:
+          url: "https://get.helm.sh/helm-{{ helm_version }}-linux-{{ system_arch }}.tar.gz"
+          dest: /tmp/helm-{{ helm_version }}.tar.gz
+          mode: '0644'
+        register: helm_download
+
+      - name: Verify Helm binary checksum
+        shell: |
+          cd /tmp
+          echo "{{ helm_checksum_amd64 }}  helm-{{ helm_version }}.tar.gz" | sha256sum -c -
+        changed_when: false
+        register: checksum_verify
+
+      - name: Extract Helm binary
+        unarchive:
+          src: /tmp/helm-{{ helm_version }}.tar.gz
+          dest: /tmp
+          remote_src: yes
+
+      - name: Install Helm binary to /usr/local/bin
+        copy:
+          src: /tmp/linux-{{ system_arch }}/helm
+          dest: /usr/local/bin/helm
+          mode: '0755'
+          remote_src: yes
+
+      - name: Clean up temporary files
+        file:
+          path: "{{ item }}"
+          state: absent
+        loop:
+          - /tmp/helm-{{ helm_version }}.tar.gz
+          - /tmp/linux-{{ system_arch }}
+
+      when: helm_check.rc != 0
+
+  - name: Ensure required Python libraries are installed for Kubernetes operations
+    block:
+    - name: Install kubernetes Python library via pip
+      pip:
+        name: 
+          - kubernetes>=18.0.0
+          - pyyaml>=5.4.1
+        executable: /usr/bin/pip3
+        state: present
+        extra_args: "--break-system-packages"
+      become: yes
+      register: pip_install_result
 
     - name: Check if Docker CE is installed with correct version
       shell: apt policy docker-ce | grep "Installed:" | awk '{print $2}'

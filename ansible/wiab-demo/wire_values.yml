@@ -1,24 +1,331 @@
-- name: Prepare helm chart values
+- name: Update Helm chart values with Wire service configuration
   hosts: deploy_node
-  become: yes
-  become_user: "{{ ansible_user }}"
+  vars:
+    wire_values_path: "{{ wire_vars }}/wire_values.yaml"
   tasks:
-  - name: Prepare values.yaml files for the demo environment
-    shell: source {{ ansible_user_dir }}/wire-server-deploy/bin/wiab-demo/offline_deploy_k8s.sh && process_charts demo values
-    args:
-      executable: /bin/bash
-    environment:
-      BASE_DIR: "{{ ansible_user_dir }}/wire-server-deploy"
 
-  - name: Process vars for Helm chart values
-    shell: source {{ ansible_user_dir }}/wire-server-deploy/bin/wiab-demo/offline_deploy_k8s.sh && process_values
-    args:
-      executable: /bin/bash
-    environment:
-      BASE_DIR: "{{ ansible_user_dir }}/wire-server-deploy"
-      TARGET_SYSTEM: "{{ target_domain }}"
-      CERT_MASTER_EMAIL: "certmaster@{{ target_domain }}"
-      HOST_IP: "{{ wire_ip }}"
-      SFT_NODE: "{{ k8s_sft_node }}"
-      NGINX_K8S_NODE: "{{ k8s_ingress_controller_node }}"
-      COTURN_NODE: "{{ k8s_coturn_node }}"
+  - name: Validate required variables are defined
+    assert:
+      that:
+        - charts_to_deploy is defined
+        - additional_charts is defined
+        - target_domain is defined
+        - wire_ip is defined
+        - k8s_ingress_controller_node is defined
+        - k8s_sft_node is defined
+        - k8s_coturn_node is defined
+        - kube_config is defined
+      fail_msg: |
+        Required variables not defined:
+        - charts_to_deploy: {{ charts_to_deploy | default('UNDEFINED') }}
+        - additional_charts: {{ additional_charts | default('UNDEFINED') }}
+        - target_domain: {{ target_domain | default('UNDEFINED') }}
+        - wire_ip: {{ wire_ip | default('UNDEFINED') }}
+        - k8s_ingress_controller_node: {{ k8s_ingress_controller_node | default('UNDEFINED') }}
+        - k8s_sft_node: {{ k8s_sft_node | default('UNDEFINED') }}
+        - k8s_coturn_node: {{ k8s_coturn_node | default('UNDEFINED') }}
+        - kube_config: {{ kube_config | default('UNDEFINED') }}
+
+  - name: Get coturn node internal IP using kubernetes.core.k8s_info
+    kubernetes.core.k8s_info:
+      kind: Node
+      name: "{{ k8s_coturn_node }}"
+      kubeconfig: "{{ kube_config }}"
+    register: coturn_node_info
+    retries: 3
+    delay: 2
+    until: coturn_node_info is succeeded
+
+  - name: Extract internal IP address from node
+    set_fact:
+      coturn_node_ip_result:
+        stdout: "{{ coturn_node_info.resources[0].status.addresses | selectattr('type', 'equalto', 'InternalIP') | map(attribute='address') | first }}"
+    when: coturn_node_info.resources | length > 0
+
+  - name: Calculate and set Wire service configuration variables
+    set_fact:
+      wire_values_vars:
+        target_domain: "{{ target_domain }}"
+        wire_ip: "{{ wire_ip }}"
+        k8s_ingress_controller_node: "{{ k8s_ingress_controller_node }}"
+        coturn_node_ip: "{{ coturn_node_ip_result.stdout }}"
+        k8s_sft_node: "{{ k8s_sft_node }}"
+        k8s_coturn_node: "{{ k8s_coturn_node }}"
+
+  - name: Verify wire_values.yaml cache file exists
+    stat:
+      path: "{{ wire_values_path }}"
+    register: existing_wire_values
+
+  - name: Read existing wire_values.yaml for comparison
+    slurp:
+      src: "{{ wire_values_path }}"
+    register: existing_wire_values_content
+    when: existing_wire_values.stat.exists
+
+  - name: Detect changes by comparing existing and current wire values
+    set_fact:
+      wire_values_changed: "{{ (existing_wire_values_content.content | b64decode | from_yaml) != wire_values_vars }}"
+    when: existing_wire_values.stat.exists
+
+  - name: Mark wire values as changed if cache file doesn't exist
+    set_fact:
+      wire_values_changed: true
+    when: not existing_wire_values.stat.exists
+
+  - name: Display Wire configuration variables that will be updated
+    debug:
+      msg:
+        - "Following variables will be updated:"
+        - "target_domain: {{ wire_values_vars.target_domain }}"
+        - "wire_ip: {{ wire_values_vars.wire_ip }}"
+        - "k8s_ingress_controller_node: {{ wire_values_vars.k8s_ingress_controller_node }}"
+        - "coturn_node_ip: {{ wire_values_vars.coturn_node_ip }}"
+    when: wire_values_changed
+
+  - name: Initialize Helm chart values from demo templates
+    block:
+    - name: Discover all chart directories in values_dir for initialization
+      find:
+        paths: "{{ values_dir }}"
+        file_type: directory
+        recurse: no
+      register: chart_dirs
+
+    - name: Verify demo-values.example.yaml template files exist
+      stat:
+        path: "{{ item.path }}/demo-values.example.yaml"
+      register: demo_values_stat
+      loop: "{{ chart_dirs.files }}"
+      no_log: true
+
+    - name: Create timestamped backups of existing values.yaml files
+      block:
+      - name: Check if values.yaml file exists before backup
+        stat:
+          path: "{{ item.item.path }}/values.yaml"
+        register: values_file_stat
+        loop: "{{ demo_values_stat.results }}"
+        no_log: true
+
+      - name: Create backup with timestamp
+        shell: |
+          #!/bin/bash
+          source_file="{{ item.item.path }}/values.yaml"
+          backup_file="{{ item.item.path }}/values.yaml.bak.{{ lookup('pipe', 'date +%Y%m%d_%H%M%S') }}"
+          if [ -f "$source_file" ]; then
+            mv "$source_file" "$backup_file"
+          fi
+        args:
+          executable: /bin/bash
+        when: item.stat.exists
+        loop: "{{ demo_values_stat.results }}"
+        register: backup_result
+        no_log: true
+
+    - name: Initialize values.yaml from demo template for each chart
+      copy:
+        src: "{{ item.item.path }}/demo-values.example.yaml"
+        dest: "{{ item.item.path }}/values.yaml"
+        remote_src: yes
+      when: item.stat.exists
+      loop: "{{ demo_values_stat.results }}"
+      no_log: true
+    when: wire_values_changed
+
+  - name: Update core Wire service Helm chart values
+    block:
+    - name: Read wire-server values.yaml
+      slurp:
+        src: "{{ values_dir }}/wire-server/values.yaml"
+      register: wire_server_values_raw
+
+    - name: Parse and update wire-server values
+      set_fact:
+        wire_server_values: "{{ ((wire_server_values_raw.content | b64decode | from_yaml) or {}) | combine({'brig': {'turnStatic': {'v2': ['turn:' + wire_values_vars.wire_ip + ':3478', 'turn:' + wire_values_vars.wire_ip + ':3478?transport=tcp']}}}, recursive=True) }}"
+
+    - name: Replace domain in wire-server values
+      set_fact:
+        wire_server_values_str: "{{ wire_server_values | to_nice_yaml | regex_replace('([^\\w])example\\.com([^\\w])', '\\1' + wire_values_vars.target_domain + '\\2') }}"
+
+    - name: Write updated wire-server values
+      copy:
+        content: "{{ wire_server_values_str }}"
+        dest: "{{ values_dir }}/wire-server/values.yaml"
+
+    - name: Update front-end service Helm chart values with domain configuration
+      block:
+      - name: Read front-end service chart values (webapp, team-settings, account-pages)
+        slurp:
+          src: "{{ values_dir }}/{{ item }}/values.yaml"
+        register: chart_values_raw
+        loop:
+          - webapp
+          - team-settings
+          - account-pages
+
+      - name: Update and write chart values
+        copy:
+          content: "{{ (item.content | b64decode | from_yaml | to_nice_yaml) | regex_replace('([^\\w])example\\.com([^\\w])', '\\1' + wire_values_vars.target_domain + '\\2') }}"
+          dest: "{{ values_dir }}/{{ item_name }}/values.yaml"
+        vars:
+          item_name: "{{ chart_values_raw.results[loop_index].item }}"
+        loop: "{{ chart_values_raw.results }}"
+        loop_control:
+          loop_var: item
+          index_var: loop_index
+        no_log: true
+
+    - name: Configure nginx-ingress-services with TLS and domain settings
+      block:
+      - name: Read nginx-ingress-services values
+        slurp:
+          src: "{{ values_dir }}/nginx-ingress-services/values.yaml"
+        register: nginx_values_raw
+
+      - name: Update cert-manager config for nginx-ingress-services values
+        set_fact:
+          nginx_values: "{{ ((nginx_values_raw.content | b64decode | from_yaml) or {}) | combine({'tls': {'enabled': true, 'useCertManager': true}, 'certManager': {'certmasterEmail': 'certmaster@' + wire_values_vars.target_domain}}, recursive=True) }}"
+        when: use_cert_manager
+
+      - name: Disable cert-manager when not required
+        set_fact:
+          nginx_values: "{{ ((nginx_values_raw.content | b64decode | from_yaml) or {}) | combine({'tls': {'enabled': false, 'useCertManager': false}}, recursive=True) }}"
+        when: not use_cert_manager
+
+      - name: Replace domain references in nginx-ingress-services
+        set_fact:
+          nginx_values_str: "{{ nginx_values | to_nice_yaml | regex_replace('([^\\w])example\\.com([^\\w])', '\\1' + wire_values_vars.target_domain + '\\2') }}"
+
+      - name: Write updated nginx-ingress-services values
+        copy:
+          content: "{{ nginx_values_str }}"
+          dest: "{{ values_dir }}/nginx-ingress-services/values.yaml"
+
+    - name: Configure ingress controller node affinity
+      block:
+      - name: Read ingress-nginx-controller values
+        slurp:
+          src: "{{ values_dir }}/ingress-nginx-controller/values.yaml"
+        register: ingress_controller_values_raw
+
+      - name: Parse ingress-nginx-controller values
+        set_fact:
+          ingress_controller_values: "{{ (ingress_controller_values_raw.content | b64decode | from_yaml) or {} }}"
+
+      - name: Ensure ingress_controller_values is a dict
+        set_fact:
+          ingress_controller_values: "{{ {} if ingress_controller_values is string else ingress_controller_values }}"
+
+      - name: Set node affinity for ingress-nginx-controller
+        set_fact:
+          ingress_controller_values: "{{ ingress_controller_values | combine({'nodeSelector': {'kubernetes.io/hostname': wire_values_vars.k8s_ingress_controller_node}}, recursive=True) }}"
+
+      - name: Write updated ingress-nginx-controller values
+        copy:
+          content: "{{ ingress_controller_values | to_nice_yaml }}"
+          dest: "{{ values_dir }}/ingress-nginx-controller/values.yaml"
+
+    - name: Configure SFT daemon with domain and node affinity
+      block:
+      - name: Read sftd values
+        slurp:
+          src: "{{ values_dir }}/sftd/values.yaml"
+        register: sftd_values_raw
+
+      - name: Parse sftd values
+        set_fact:
+          sftd_values: "{{ (sftd_values_raw.content | b64decode | from_yaml) or {} }}"
+
+      - name: Ensure sftd_values is a dict
+        set_fact:
+          sftd_values: "{{ {} if sftd_values is string else sftd_values }}"
+
+      - name: Update sftd values with nodeSelector
+        set_fact:
+          sftd_values: "{{ sftd_values | combine({'nodeSelector': {'kubernetes.io/hostname': wire_values_vars.k8s_sft_node}}, recursive=True) }}"
+
+      - name: Replace domains in sftd values
+        set_fact:
+          sftd_values_str: "{{ sftd_values | to_nice_yaml | replace('webapp.example.com', 'webapp.' + wire_values_vars.target_domain) | replace('sftd.example.com', 'sftd.' + wire_values_vars.target_domain) }}"
+
+      - name: Write updated sftd values
+        copy:
+          content: "{{ sftd_values_str }}"
+          dest: "{{ values_dir }}/sftd/values.yaml"
+
+      - name: Annotate sftd node with external IP
+        kubernetes.core.k8s:
+          state: present
+          definition:
+            apiVersion: v1
+            kind: Node
+            metadata:
+              name: "{{ wire_values_vars.k8s_sft_node }}"
+              annotations:
+                wire.com/external-ip: "{{ wire_values_vars.wire_ip }}"
+          kubeconfig: "{{ kube_config }}"
+          wait: yes
+          wait_timeout: 300
+        register: sftd_annotation_result
+        retries: 3
+        delay: 5
+        until: sftd_annotation_result is succeeded
+
+      when: "'sftd' in charts_to_deploy"
+
+    - name: Configure coturn with IP addresses and node affinity
+      block:
+      - name: Read coturn values
+        slurp:
+          src: "{{ values_dir }}/coturn/values.yaml"
+        register: coturn_values_raw
+
+      - name: Parse coturn values
+        set_fact:
+          coturn_values: "{{ (coturn_values_raw.content | b64decode | from_yaml) or {} }}"
+
+      - name: Ensure coturn_values is a dict
+        set_fact:
+          coturn_values: "{{ {} if coturn_values is string else coturn_values }}"
+
+      - name: Update coturn IP values
+        set_fact:
+          coturn_values: "{{ coturn_values | combine({'coturnTurnListenIP': wire_values_vars.coturn_node_ip, 'coturnTurnRelayIP': wire_values_vars.coturn_node_ip, 'coturnTurnExternalIP': wire_values_vars.wire_ip, 'nodeSelector': {'kubernetes.io/hostname': wire_values_vars.k8s_coturn_node}}, recursive=True) }}"
+
+      - name: Write updated coturn values
+        copy:
+          content: "{{ coturn_values | to_nice_yaml }}"
+          dest: "{{ values_dir }}/coturn/values.yaml"
+
+      - name: Annotate coturn node with external IP
+        kubernetes.core.k8s:
+          state: present
+          definition:
+            apiVersion: v1
+            kind: Node
+            metadata:
+              name: "{{ wire_values_vars.k8s_coturn_node }}"
+              annotations:
+                wire.com/external-ip: "{{ wire_values_vars.wire_ip }}"
+          kubeconfig: "{{ kube_config }}"
+          wait: yes
+          wait_timeout: 300
+        register: coturn_annotation_result
+        retries: 3
+        delay: 5
+        until: coturn_annotation_result is succeeded
+
+      when: "'coturn' in charts_to_deploy"
+
+    - name: Cache wire configuration variables for future comparison
+      copy:
+        content: "{{ wire_values_vars | to_nice_yaml }}"
+        dest: "{{ wire_values_path }}"
+    
+    when: wire_values_changed
+
+  - name: Display skip message when wire values are unchanged
+    debug:
+      msg: "Wire values already up-to-date. Skipping updates."
+    when: not wire_values_changed
