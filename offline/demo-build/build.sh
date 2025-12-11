@@ -33,7 +33,7 @@ cp -r "${ROOT_DIR}"/dashboards "${OUTPUT_DIR}"/
 
 # copy offline-env.sh to bin directory in output
 mkdir "${OUTPUT_DIR}/bin"
-cp "${ROOT_DIR}/bin/wiab-demo/offline-env.sh" "${OUTPUT_DIR}/bin/"
+cp "${ROOT_DIR}/bin/offline-env-wiab.sh" "${OUTPUT_DIR}/bin/"
 
 # removing the values/$chart directories in values directory if not required
 "${TASKS_DIR}"/pre_clean_values_0.sh VALUES_DIR="${OUTPUT_DIR}/values" HELM_VALUES_EXCLUDE_LIST="${HELM_CHART_EXCLUDE_LIST}" VALUES_TYPE="demo"

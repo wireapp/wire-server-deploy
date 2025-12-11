@@ -259,9 +259,8 @@ The deployment playbook downloads an offline bundle that contains:
 
 - Helm chart tarballs (the charts used by the deployment)
 - Docker/container image archives (used to seed Minikube/node container runtime)
-- Helper scripts such as `bin/wiab-demo/offline_deploy_k8s.sh` which are sourced during the playbook
 
-If you already have a working **Kubernetes cluster** and prefer to use it instead of creating a local Minikube node, you can skip the Minikube and seeding tasks, and run only the Helm chart installation (tags `wire_values` and `helm_install`). However, the offline bundle is still required to obtain the charts and the docker image archive(s) so you can:
+If you already have a working **Kubernetes cluster** and prefer to use it instead of creating a local Minikube node, you can skip the Minikube and seeding tasks, and run only the Helm chart installation (tags `wire_values`, `wire_secrets` and `helm_install`). However, the offline bundle is still required to obtain the charts and the docker image archive(s) so you can:
 
 1. Extract charts from the bundle and point Helm to the extracted chart directories, and
 2. Load container images into your cluster from the image archive.
