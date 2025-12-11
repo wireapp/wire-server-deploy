@@ -66,6 +66,6 @@ wiab:
       - sftd
       
     # charts to help with additional functions like prometheus stack and wire-utility
-    #additional_charts:
+    additional_charts: []
     #  - wire-utility
     #  - kube-prometheus-stack
