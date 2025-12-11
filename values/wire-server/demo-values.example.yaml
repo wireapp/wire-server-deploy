@@ -27,11 +27,6 @@ brig:
       host: elasticsearch-ephemeral
     rabbitmq:
       host: rabbitmq # name of the rabbitmq service, either `rabbitmq-external` or `rabbitmq`
-    postgresql:
-      host: postgresql # DNS name without protocol
-      port: "5432"
-      user: wire-server
-      dbname: wire-server
     useSES: false
     # Set to false if you want to hand out DynamoDB to store prekeys
     randomPrekeys: true    
@@ -86,7 +81,7 @@ brig:
         deletionUrl: https://account.example.com/d/?key=${key}&code=${code}
         invitationUrl: https://account.example.com/i/${code}
     smtp:
-      host: smtp # change this if you want to use your own SMTP server
+      host: demo-smtp # change this if you want to use your own SMTP server
       port: 25        # change this
       connType: plain # change this. Possible values: plain|ssl|tls
 #    proxy:
@@ -104,7 +99,7 @@ brig:
       # - "turn:<IP of coturn2>:3478?transport=tcp"
   metrics:
     serviceMonitor:
-      enabled: true
+      enabled: false
 
 proxy:
   replicaCount: 1
@@ -119,7 +114,7 @@ proxy:
 #        - "10.23.0.0/16"
   metrics:
     serviceMonitor:
-      enabled: true
+      enabled: false
 cannon:
   replicaCount: 1
 #  image:
@@ -131,7 +126,7 @@ cannon:
       host: cassandra-ephemeral
   metrics:
     serviceMonitor:
-      enabled: true
+      enabled: false
 
 cargohold:
   replicaCount: 1
@@ -154,7 +149,7 @@ cargohold:
 #        - "10.23.0.0/16"
   metrics:
     serviceMonitor:
-      enabled: true
+      enabled: false
 
 galley:
   replicaCount: 1
@@ -165,11 +160,6 @@ galley:
       host: cassandra-ephemeral
     rabbitmq:
       host: rabbitmq # name of the rabbitmq service, either `rabbitmq-external` or `rabbitmq`
-    postgresql:
-      host: postgresql # DNS name without protocol
-      port: "5432"
-      user: wire-server
-      dbname: wire-server
     enableFederation: false # Enable to use federation
     settings:
       # prefix URI used when inviting users to a conversation by link
@@ -192,7 +182,7 @@ galley:
 #        - "10.23.0.0/16"
   metrics:
     serviceMonitor:
-      enabled: true
+      enabled: false
 
 gundeck:
   replicaCount: 1
@@ -217,7 +207,7 @@ gundeck:
 #        - "10.23.0.0/16"
   metrics:
     serviceMonitor:
-      enabled: true
+      enabled: false
 
 nginz:
   replicaCount: 1
@@ -229,7 +219,7 @@ nginz:
 #      tag: some-tag (only override if you want a newer/different version than what is in the chart)
   nginx_conf:
     # using prod means mostly that some internal endpoints are not exposed
-    dns_resolver: kube-dns
+    # dns_resolver: kube-dns
     env: prod
     external_env_domain: example.com
     deeplink:
@@ -251,7 +241,7 @@ nginz:
   terminationGracePeriodSeconds: 30
   metrics:
     serviceMonitor:
-      enabled: true
+      enabled: false
 spar:
   replicaCount: 1
 #  image:
@@ -278,7 +268,7 @@ spar:
 #        - "10.23.0.0/16"
   metrics:
     serviceMonitor:
-      enabled: true
+      enabled: false
 
 # Only needed when legalhold is enabled
 #legalhold:
@@ -298,4 +288,4 @@ background-worker:
     enableFederation: false
   metrics:
     serviceMonitor:
-      enabled: true
+      enabled: false
