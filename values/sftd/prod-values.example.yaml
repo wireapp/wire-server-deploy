@@ -1,7 +1,17 @@
+replicaCount: 3
+# image:
+#   tag: some-tag # (only override if you want a newer/different version than what is in the chart)
 allowOrigin: https://webapp.example.com
 host: sftd.example.com
-replicaCount: 3
 tls:
   issuerRef:
     name: letsencrypt-http01
     kind: ClusterIssuer
+# Uncomment to enable SFT to SFT communication for federated calls
+# multiSFT:
+#   enabled: true
+#   discoveryRequired: false
+#   turnServerURI: "turn:coturn.public.ip.address:3478?transport=udp"
+#   secret: "coturn_zrest_secret"
+# Turn on secondary IP listener (for internal IP) when using federation
+# internalIpListener: false
