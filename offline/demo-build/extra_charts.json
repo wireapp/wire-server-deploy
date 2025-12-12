@@ -32,6 +32,14 @@
         "commit": "69bed388b5ba112fd6e828b62a9ea872551eca80",
         "commitURL": "https://github.com/wireapp/wire-server/commit/69bed388b5ba112fd6e828b62a9ea872551eca80"
       }
+    },
+    "wire-utility": {
+      "repo": "https://s3-eu-west-1.amazonaws.com/public.wire.com/charts",
+      "version": "0.1.2",
+      "meta": {
+        "commit": "bac3086c75b922e7ea305cc8f2f7a546eae04c86",
+        "commitURL": "https://github.com/wireapp/helm-charts/commit/bac3086c75b922e7ea305cc8f2f7a546eae04c86"
+      }
     }
   }
 }
