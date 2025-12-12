@@ -26,7 +26,7 @@ brig:
     elasticsearch:
       host: elasticsearch-external
     rabbitmq:
-      host: rabbitmq-external # name of the rabbitmq service, either `rabbitmq-external` or `rabbitmq`
+      host: rabbitmq # For k8s-based RabbitMQ (default). Use 'rabbitmq-external' for production external RabbitMQ VMs
     postgresql:
       host: postgresql-external-rw # DNS name without protocol
       port: "5432"
@@ -163,7 +163,7 @@ galley:
     cassandra:
       host: cassandra-external
     rabbitmq:
-      host: rabbitmq # name of the rabbitmq service, either `rabbitmq-external` or `rabbitmq`
+      host: rabbitmq # For k8s-based RabbitMQ (default). Use 'rabbitmq-external' for production external RabbitMQ VMs
     postgresql:
       host: postgresql-external-rw # DNS name without protocol
       port: "5432"
