@@ -131,8 +131,8 @@ cannon:
   # For demo mode only, we don't need to keep websocket connections open on chart upgrades
   drainTimeout: 10
   config:
-    rabbitmq:
-      host: rabbitmq-external
+    rabbitmq: # Default value for CI, for on-prem deployment, use rabbitmq-external
+      host: rabbitmq
     cassandra:
       host: cassandra-external
   metrics:
@@ -168,8 +168,8 @@ galley:
   config:
     cassandra:
       host: cassandra-external
-    rabbitmq:
-      host: rabbitmq-external # name of the rabbitmq service, either `rabbitmq-external` or `rabbitmq`
+    rabbitmq: # Default value for CI, for on-prem deployment, use rabbitmq-external
+      host: rabbitmq
     postgresql:
       host: postgresql-external-rw # DNS name without protocol
       port: "5432"
