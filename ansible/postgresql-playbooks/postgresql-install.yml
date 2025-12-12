@@ -76,15 +76,16 @@
             EXPECTED_FILE="{{ item.url | basename }}"
             PACKAGE_NAME="{{ item.name }}"
 
-            # Extract version from expected filename (e.g., "17.7-3" or "18.1-1")
-            EXPECTED_VERSION=$(echo "$EXPECTED_FILE" | grep -oP '\d+\.\d+-\d+' | head -1)
+            # Extract full version from filename (handles both "17.7-3.pgdg22.04+1" and "287.pgdg22.04+1" patterns)
+            # Filename format: packagename_version_architecture.deb
+            EXPECTED_VERSION=$(echo "$EXPECTED_FILE" | sed -E 's/^[^_]+_([^_]+)_[^_]+\.deb$/\1/')
 
             # Get installed version
             INSTALLED_VERSION=$(dpkg-query -W -f='${Version}\n' "$PACKAGE_NAME" 2>/dev/null || echo "not_installed")
 
             if [ "$INSTALLED_VERSION" = "not_installed" ]; then
               echo "not_installed"
-            elif echo "$INSTALLED_VERSION" | grep -q "^${EXPECTED_VERSION}\.pgdg"; then
+            elif [ "$INSTALLED_VERSION" = "$EXPECTED_VERSION" ]; then
               echo "installed|${INSTALLED_VERSION}"
             else
               echo "needs_upgrade|${INSTALLED_VERSION}|${EXPECTED_VERSION}"

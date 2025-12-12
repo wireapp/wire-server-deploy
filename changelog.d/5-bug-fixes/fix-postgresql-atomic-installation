@@ -1,1 +1,1 @@
-Fixed: postgresql package installation now installs all packages atomically to prevent dependency conflicts between postgresql-common and postgresql-client-common
+Fixed: postgresql package installation dependency conflicts by installing packages atomically

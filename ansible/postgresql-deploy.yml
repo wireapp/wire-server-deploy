@@ -5,8 +5,8 @@
 # Playbooks run in strict order due to dependencies.
 #
 # Dependency Chain:
-#   secrets → primary → replica → verify → wire-setup → monitoring
-#   (cleanup/install are independent but should run first)
+#   backup → cleanup → install → secrets → primary → replica → verify → wire-setup → monitoring
+#   (backup should run before cleanup to create safety backup)
 #
 # Tag Strategy:
 #   - Use --skip-tags to exclude specific steps
@@ -14,7 +14,8 @@
 #   - Recommended: Run full playbook or use skip-tags
 #
 # Usage Examples:
-#   Full deployment(Cleans up the previous state if any, sets up HA pg cluster, deploy the guard against split-brain issues and sets up wire-server DB):    ansible-playbook -i <inventory_file> postgresql-deploy.yml
+#   Full deployment(Backs up existing data, cleans up the previous state if any, sets up HA pg cluster, deploy the guard against split-brain issues and sets up wire-server DB):    ansible-playbook -i <inventory_file> postgresql-deploy.yml
+#   Skip backup(not recommended):       ansible-playbook -i <inventory_file> postgresql-deploy.yml --skip-tags backup
 #   Skip cleanup(cleans up the previous repmgr state and re-initializes the database as new state):       ansible-playbook -i <inventory_file> postgresql-deploy.yml --skip-tags cleanup
 #   Skip monitoring(In general this step should not be skipped as it sets up the guard against split-brain issues):    ansible-playbook -i <inventory_file> postgresql-deploy.yml --skip-tags monitoring
 #   Skip wire-setup (sets up the wire-server database and user):    ansible-playbook -i <inventory_file> postgresql-deploy.yml --skip-tags wire-setup
@@ -23,8 +24,13 @@
 # To run from a specific point, comment out earlier playbooks.
 # ===================================================================
 
-- name: Clean previous deployment state
-  import_playbook: postgresql-playbooks/clean_existing_setup.yml
+- name: Backup all PostgreSQL nodes before cleanup
+  import_playbook: postgresql-playbooks/postgresql-backup.yml
+  tags: [postgresql, backup]
+  # Creates safety backup to assethost before destructive cleanup operations
+
+- name: Clean repmgr HA cluster configuration
+  import_playbook: postgresql-playbooks/postgresql-cleanup.yml
   tags: [postgresql, cleanup]
 
 - name: Install PostgreSQL packages

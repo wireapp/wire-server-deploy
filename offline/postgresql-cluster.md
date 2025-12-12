@@ -267,13 +267,15 @@ See the [Deployment Commands Reference](#deployment-commands-reference) section 
 **⏱️ Expected Duration: 10-15 minutes**
 
 A complete deployment performs:
-1. ✅ **Package Installation**: PostgreSQL 17 + repmgr + postgres_exporter + dependencies
-2. ✅ **Primary Setup**: Configure primary node with repmgr database
-3. ✅ **Replica Deployment**: Clone and configure replica nodes
-4. ✅ **Verification**: Health checks and replication status
-5. ✅ **Wire Integration**: Create Wire database and user
-6. ✅ **Monitoring**: Deploy split-brain detection system
-7. ✅ **Metrics Exporter**: Deploy postgres_exporter for Prometheus monitoring
+1. ✅ **Backup**: Create safety backup of existing data to assethost (skipped for fresh installs)
+2. ✅ **Cleanup**: Reset repmgr HA cluster configuration (preserves PostgreSQL data)
+3. ✅ **Package Installation**: PostgreSQL 17 + repmgr + postgres_exporter + dependencies
+4. ✅ **Primary Setup**: Configure primary node with repmgr database
+5. ✅ **Replica Deployment**: Clone and configure replica nodes
+6. ✅ **Verification**: Health checks and replication status
+7. ✅ **Wire Integration**: Create Wire database and user
+8. ✅ **Monitoring**: Deploy split-brain detection system
+9. ✅ **Metrics Exporter**: Deploy postgres_exporter for Prometheus monitoring
 
 #### **Step 3: Verify Installation**
 See the [Monitoring Checks](#monitoring-checks-after-installation) section for comprehensive verification procedures.
@@ -368,6 +370,9 @@ ansible-playbook -i ansible/inventory/offline/hosts.ini ansible/postgresql-deplo
 # Deploy PostgreSQL cluster (secrets + primary + replica + wire-setup + monitoring)
 ansible-playbook -i ansible/inventory/offline/hosts.ini ansible/postgresql-deploy.yml --tags postgresql
 
+# Skip backup (not recommended - only use for fresh installs)
+ansible-playbook -i ansible/inventory/offline/hosts.ini ansible/postgresql-deploy.yml --skip-tags backup
+
 # Deploy without cleanup (preserves existing data and configuration)
 ansible-playbook -i ansible/inventory/offline/hosts.ini ansible/postgresql-deploy.yml --skip-tags cleanup
 
@@ -381,6 +386,7 @@ ansible-playbook -i ansible/inventory/offline/hosts.ini ansible/postgresql-deplo
 |-----|-----------|----------|
 | _(none)_ | Full deployment | **Recommended for fresh deployment** |
 | `postgresql` | Secrets + Primary + Replica + Wire-setup + Monitoring + Metrics | Deploy/redeploy complete PostgreSQL cluster |
+| `backup` | Backup only | Create backup of all nodes to assethost |
 | `verify` | Verification checks only | Check cluster health without making changes |
 | `cleanup` | Cleanup only | For selective cleanup (use with `--skip-tags` to preserve data) |
 | `metrics` | Metrics exporter only | Deploy/redeploy postgres_exporter for monitoring |
@@ -390,18 +396,19 @@ ansible-playbook -i ansible/inventory/offline/hosts.ini ansible/postgresql-deplo
 The deployment follows this strict order:
 
 ```
-1. cleanup          → Clean previous state
-2. install          → Install PostgreSQL packages
-3. secrets          → Fetch/create passwords in K8s
-4. primary          → Deploy primary (read-write) node
-5. replica          → Deploy replica (read-only) nodes
-6. verify           → Verify HA cluster health
-7. wire-setup       → Create wire-server database and user
-8. monitoring       → Deploys a split-brain detection system that automatically fences isolated primary nodes to prevent data corruption
-9. metrics          → Deploy postgres_exporter for Prometheus monitoring (PostgreSQL 17 metrics including checkpoint stats)
+1. backup           → Create safety backup to assethost (skipped for fresh installs)
+2. cleanup          → Reset repmgr HA cluster configuration (preserves PostgreSQL data)
+3. install          → Install PostgreSQL packages
+4. secrets          → Fetch/create passwords in K8s
+5. primary          → Deploy primary (read-write) node
+6. replica          → Deploy replica (read-only) nodes
+7. verify           → Verify HA cluster health
+8. wire-setup       → Create wire-server database and user
+9. monitoring       → Deploys a split-brain detection system that automatically fences isolated primary nodes to prevent data corruption
+10. metrics         → Deploy postgres_exporter for Prometheus monitoring (PostgreSQL 17 metrics including checkpoint stats)
 ```
 
-**Important**: Steps 3-9 have dependencies and must run in order. The `postgresql` tag ensures all required steps run together.
+**Important**: Steps 4-10 have dependencies and must run in order. Backup (step 1) and cleanup (step 2) run first to prepare the environment. The `postgresql` tag ensures all required steps run together.
 
 ### 🔐 Password Management
 
@@ -519,7 +526,7 @@ sudo -u postgres repmgr -f /etc/repmgr/17-main/repmgr.conf node rejoin -d repmgr
 
 ### 🆕 Manual Standby Clone and Registration (New Node Setup)
 
-Note: You can always run the ansible playbook for a clean HA postgresql cluster setup. It won't remove the existing Postgresql Wire database. It will reset the repmgr to make sure a HA postgresql cluster is available.
+Note: You can always run the ansible playbook to reset the HA cluster configuration. It will NOT delete the existing PostgreSQL Wire database or any data - it only resets repmgr cluster state to prepare for redeployment.
 
 When you need to manually clone and register a standby from scratch (corrupted data, new node, or complete rebuild):
 
