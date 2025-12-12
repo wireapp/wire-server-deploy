@@ -59,7 +59,7 @@ cp "${ROOT_DIR}/bin/offline-env-wiab.sh" "${OUTPUT_DIR}/bin/"
 
 # --------------------------
 # building admin host containers, has dependency on the helm charts
-"${TASKS_DIR}"/build_adminhost_containers.sh "${OUTPUT_DIR}" --adminhost
+"${TASKS_DIR}"/build_adminhost_containers.sh "${OUTPUT_DIR}" --adminhost --zauth
 
 # --------------------------
 

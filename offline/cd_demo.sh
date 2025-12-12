@@ -13,8 +13,6 @@ INVENTORY_DIR="${ANSIBLE_DIR}/inventory/demo"
 INVENTORY_FILE="${INVENTORY_DIR}/host.yml"
 TEST_USER="demo"
 COMMIT_HASH="${GITHUB_SHA}"
-# remove me
-COMMIT_HASH="f385378b5fea272121e78a4e9ff6f7518cc76d70"
 
 function cleanup {
   (cd "$TF_DIR" && terraform destroy -auto-approve)
