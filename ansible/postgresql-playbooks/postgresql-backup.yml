@@ -233,4 +233,6 @@
           scp assethost:{{ backup_destination }}/{{ backup_timestamp }}/nodename_primary_full.sql.gz /tmp/
           gunzip -c /tmp/nodename_primary_full.sql.gz | sudo -u postgres psql postgres
       run_once: true
-      when: assethost_available or skip_assethost_check
+      when:
+        - backup_timestamp is defined
+        - assethost_available or skip_assethost_check
