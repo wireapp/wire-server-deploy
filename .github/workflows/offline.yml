@@ -6,10 +6,10 @@
 #   - min: Minimal deployment
 #
 # Build Optimization via PR Labels:
-#   - No label: Builds only min profile (fastest feedback)
+#   - No label: No builds run (must add label to trigger builds)
 #   - 'build-default': Builds only default profile
-#   - 'build-demo' or 'demo-only': Builds only demo profile
-#   - 'min-only': Builds only min profile
+#   - 'build-demo': Builds only demo profile
+#   - 'build-min': Builds only min profile
 #   - 'build-all': Explicitly builds all profiles (useful for workflow changes)
 #
 # Push to master/develop: Always builds all profiles regardless of labels
@@ -121,8 +121,7 @@ jobs:
       !contains(github.event.head_commit.message, 'skip ci') &&
       (github.event_name == 'push' ||
        contains(github.event.pull_request.labels.*.name, 'build-all') ||
-       contains(github.event.pull_request.labels.*.name, 'build-demo') ||
-       contains(github.event.pull_request.labels.*.name, 'demo-only'))
+       contains(github.event.pull_request.labels.*.name, 'build-demo'))
     runs-on:
       group: wire-server-deploy
     steps:
@@ -184,11 +183,7 @@ jobs:
       !contains(github.event.head_commit.message, 'skip ci') &&
       (github.event_name == 'push' ||
        contains(github.event.pull_request.labels.*.name, 'build-all') ||
-       contains(github.event.pull_request.labels.*.name, 'min-only') ||
-       (github.event_name == 'pull_request' &&
-        !contains(github.event.pull_request.labels.*.name, 'build-default') &&
-        !contains(github.event.pull_request.labels.*.name, 'build-demo') &&
-        !contains(github.event.pull_request.labels.*.name, 'demo-only')))
+       contains(github.event.pull_request.labels.*.name, 'build-min'))
     runs-on:
       group: wire-server-deploy
     steps:
