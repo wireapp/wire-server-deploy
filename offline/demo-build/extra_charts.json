@@ -1,0 +1,13 @@
+{
+  "version": "custom",
+  "helmCharts": {
+    "wire-utility": {
+      "repo": "https://s3-eu-west-1.amazonaws.com/public.wire.com/charts",
+      "version": "0.1.1",
+      "meta": {
+        "commit": "201fd9a0a0ab484d2a52d8b816ae2bf03c275965",
+        "commitURL": "https://github.com/wireapp/helm-charts/commit/201fd9a0a0ab484d2a52d8b816ae2bf03c275965"
+      }
+    }
+  }
+}
