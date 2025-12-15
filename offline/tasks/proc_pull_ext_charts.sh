@@ -38,8 +38,7 @@ echo "Using chart configuration from: $HELM_CHART_INCLUDE_JSON"
 
 # Extract charts from JSON file in format: <chart-name> <repo-url> <chart-version>
 extract_charts() {
-  jq -r '.helmCharts | to_entries | map("\(.key) \(.value.repo) \(.value.version)") | join("\n")' "$HELM_CHART_INCLUDE_JSON" 2>/dev/null
-  if [[ $? -ne 0 ]]; then
+  if ! jq -r '.helmCharts | to_entries | map("\(.key) \(.value.repo) \(.value.version)") | join("\n")' "$HELM_CHART_INCLUDE_JSON" 2>/dev/null; then
     echo "Error: Failed to parse JSON file. Expected format: {\"helmCharts\": {\"chart-name\": {\"repo\": \"url\", \"version\": \"version\"}, ...}}" >&2
     exit 1
   fi
