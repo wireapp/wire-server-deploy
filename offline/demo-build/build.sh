@@ -25,6 +25,9 @@ HELM_CHART_EXCLUDE_LIST="inbucket,wire-server-enterprise,k8ssandra-operator,k8ss
 # pulling the charts, charts to be skipped are passed as arguments HELM_CHART_EXCLUDE_LIST
 "${TASKS_DIR}"/proc_pull_charts.sh OUTPUT_DIR="${OUTPUT_DIR}" HELM_CHART_EXCLUDE_LIST="${HELM_CHART_EXCLUDE_LIST}"
 
+#  cleaning some charts which aren't required from wire_builds, these should be pulled in the next step
+rm -rf "${OUTPUT_DIR}/charts/wire-utility"
+
 # pulling the charts which are not present in wire_builds json file
 "${TASKS_DIR}"/proc_pull_ext_charts.sh OUTPUT_DIR="${OUTPUT_DIR}" HELM_CHART_INCLUDE_JSON="${SCRIPT_DIR}/extra_charts.json"
 
