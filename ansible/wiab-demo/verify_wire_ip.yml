@@ -2,19 +2,30 @@
   hosts: deploy_node
   vars:
     test_port: 3478
+    wire_ip_path: "{{ wire_vars }}/wire_ip"
   tasks:
+
+  # this is an exception to install_pkgs, as it expects netcat before other tasks take place
+  - name: Install Netcat
+    become: yes
+    apt:
+      name:
+        - ncat
+      state: present
+      update_cache: no
+      cache_valid_time: 3600
 
   - name: Continue finding wire_ip on the node
     when: wire_ip is not defined or wire_ip == ''
     block:
     - name: Check if wire_ip file exists
       stat:
-        path: "/home/{{ ansible_user }}/wire_ip"
+        path: "{{ wire_ip_path }}"
       register: wire_ip_file
 
     - name: Read Wire IP from file if it exists
       slurp:
-        src: "/home/{{ ansible_user }}/wire_ip"
+        src: "{{ wire_ip_path }}"
       register: wire_ip_content
       when: wire_ip_file.stat.exists
 
@@ -69,7 +80,12 @@
 
     - name: Display connection test result
       ansible.builtin.debug:
-        msg: "{{ 'Public IP {{ temp_wire_ip }} assigned to the node is reachable' if connection_test.rc == 0 else 'Connection test failed, trying setting wire_ip to avoid testing access' }}"
+        msg: >-
+          {% if connection_test.rc == 0 %}
+          Public IP {{ temp_wire_ip }} assigned to the node is reachable
+          {% else %}
+          Connection test failed, trying setting wire_ip to avoid testing access
+          {% endif %}
 
     - name: Stop TCP service
       ansible.builtin.shell: |
@@ -91,7 +107,7 @@
 
     - name: Store public IP in file
       copy:
-        dest: "/home/{{ ansible_user }}/wire_ip"
+        dest: "{{ wire_ip_path }}"
         content: "{{ temp_wire_ip }}"
       when: connection_test.rc == 0
 
@@ -99,3 +115,18 @@
       set_fact:
         wire_ip: "{{ temp_wire_ip }}"
       when: connection_test.rc == 0
+
+  - name: Get the default interface for the default route
+    shell: ip route | awk '/default/ {print $5}' | head -n 1
+    register: default_interface
+    changed_when: false
+
+  - name: Get the IP address of the default interface
+    shell: ip -4 addr show dev {{ default_interface.stdout }} | awk '/inet / {print $2}' | cut -d/ -f1
+    register: default_interface_ip
+    changed_when: false
+
+  - name: set facts for default address and interface
+    set_fact:
+      default_interface: "{{ default_interface.stdout }}"
+      default_interface_ip: "{{ default_interface_ip.stdout }}"

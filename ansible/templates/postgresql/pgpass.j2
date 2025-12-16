@@ -2,3 +2,6 @@
 {{ hostvars[host]['ansible_default_ipv4']['address'] | default(hostvars[host]['ansible_host']) }}:5432:{{ repmgr_database }}:{{ repmgr_user }}:{{ repmgr_password }}
 {{ hostvars[host]['ansible_default_ipv4']['address'] | default(hostvars[host]['ansible_host']) }}:5432:replication:{{ repmgr_user }}:{{ repmgr_password }}
 {% endfor %}
+# postgres_exporter localhost access
+127.0.0.1:5432:postgres:{{ repmgr_user }}:{{ repmgr_password }}
+localhost:5432:postgres:{{ repmgr_user }}:{{ repmgr_password }}

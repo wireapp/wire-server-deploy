@@ -51,7 +51,7 @@ if [ -d "./charts/team-settings" ]; then
 fi
 
 helm upgrade --install --wait --timeout=15m0s smallstep-accomp ./charts/smallstep-accomp --values ./values/smallstep-accomp/prod-values.example.yaml
-helm upgrade --install --wait --timeout=15m0s ingress-nginx-controller ./charts/ingress-nginx-controller --values ./values/ingress-nginx-controller/hetzner-ci.example.yaml
+helm upgrade --install --wait --timeout=15m0s ingress-nginx-controller ./charts/ingress-nginx-controller --values ./values/ingress-nginx-controller/prod-values.example.yaml
 
 echo "Printing all pods status: "
 kubectl get pods --all-namespaces -o wide
