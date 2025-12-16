@@ -24,6 +24,17 @@ helm upgrade --install --wait rabbitmq ./charts/rabbitmq --values ./values/rabbi
 # it will only deploy the redis cluster
 helm upgrade --install --wait databases-ephemeral ./charts/databases-ephemeral --values ./values/databases-ephemeral/prod-values.example.yaml
 helm upgrade --install --wait reaper ./charts/reaper --values ./values/reaper/prod-values.example.yaml
+
+# Sync postgresql secret before deploying wire-server
+./sync-k8s-secret-to-wire-secrets.sh \
+  wire-postgresql-external-secret \
+  password \
+  values/wire-server/secrets.yaml \
+  .brig.secrets.pgPassword \
+  .galley.secrets.pgPassword \
+  .spar.secrets.pgPassword \
+  .gundeck.secrets.pgPassword
+
 helm upgrade --install --wait --timeout=30m0s wire-server ./charts/wire-server --values ./values/wire-server/prod-values.example.yaml --values ./values/wire-server/secrets.yaml
 
 # if charts/webapp directory exists
