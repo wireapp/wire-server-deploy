@@ -26,7 +26,7 @@ helm upgrade --install --wait databases-ephemeral ./charts/databases-ephemeral -
 helm upgrade --install --wait reaper ./charts/reaper --values ./values/reaper/prod-values.example.yaml
 
 # Sync postgresql secret before deploying wire-server
-./sync-k8s-secret-to-wire-secrets.sh \
+./bin/sync-k8s-secret-to-wire-secrets.sh \
   wire-postgresql-external-secret \
   password \
   values/wire-server/secrets.yaml \
