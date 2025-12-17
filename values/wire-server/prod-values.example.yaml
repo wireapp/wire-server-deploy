@@ -51,7 +51,8 @@ brig:
       teamSettings: https://teams.example.com # change this (or unset if team settings are not used)
       teamCreatorWelcome: https://teams.example.com/login # change this
       teamMemberWelcome: https://wire.example.com/download # change this
-    enableFederation: false # Enable to use federation
+    # TODO: BUG! 5.23 brig charts wont deploy in CI unless federation is enabled!
+    enableFederation: true # Enable to use federation
     optSettings:
       setEnableMLS: false # Enable for MLS protocol use
       setFederationDomain: example.com # change this
