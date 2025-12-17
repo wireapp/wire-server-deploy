@@ -22,6 +22,18 @@ zauth_private=$(echo "$zauth" | awk 'NR==2{ print $2}')
 
 prometheus_pass="$(tr -dc A-Za-z0-9 </dev/urandom | head -c 16)"
 
+# Generate MLS private keys using openssl
+# Keys need 10 spaces indent (5 levels deep: galley > secrets > mlsPrivateKeys > removal > keyname)
+readonly MLS_KEY_INDENT="          "
+generate_mls_key() {
+    openssl genpkey "$@" 2>/dev/null | awk -v indent="$MLS_KEY_INDENT" '{printf "%s%s\n", indent, $0}'
+}
+
+mls_ed25519_key="$(generate_mls_key -algorithm ed25519)"
+mls_ecdsa_p256_key="$(generate_mls_key -algorithm ec -pkeyopt ec_paramgen_curve:P-256)"
+mls_ecdsa_p384_key="$(generate_mls_key -algorithm ec -pkeyopt ec_paramgen_curve:P-384)"
+mls_ecdsa_p521_key="$(generate_mls_key -algorithm ec -pkeyopt ec_paramgen_curve:P-521)"
+
 if [[ ! -f $VALUES_DIR/wire-server/secrets.yaml ]]; then
   echo "Writing $VALUES_DIR/wire-server/secrets.yaml"
   cat <<EOF > $VALUES_DIR/wire-server/secrets.yaml
@@ -37,8 +49,8 @@ brig:
     awsKeyId: dummykey
     awsSecretKey: dummysecret
     rabbitmq:
-      username: wire-server
-      password: verysecurepassword
+      username: guest
+      password: guest
     # These are only necessary if you wish to support sign up via SMS/calls
     # And require accounts at twilio.com / nexmo.com
     setTwilio: |-
@@ -52,25 +64,38 @@ cargohold:
     awsKeyId: "$minio_cargohold_access_key"
     awsSecretKey: "$minio_cargohold_secret_key"
     rabbitmq:
-      username: wire-server
-      password: verysecurepassword
+      username: guest
+      password: guest
 cannon:
   secrets:
     rabbitmq:
-      username: wire-server
-      password: verysecurepassword
+      username: guest
+      password: guest
 galley:
   secrets:
+    rabbitmq:
+      username: guest
+      password: guest
     pgPassword: verysecurepassword
     awsKeyId: dummykey
     awsSecretKey: dummysecret
+    mlsPrivateKeys:
+      removal:
+        ed25519: |
+$mls_ed25519_key
+        ecdsa_secp256r1_sha256: |
+$mls_ecdsa_p256_key
+        ecdsa_secp384r1_sha384: |
+$mls_ecdsa_p384_key
+        ecdsa_secp521r1_sha512: |
+$mls_ecdsa_p521_key
 gundeck:
   secrets:
     awsKeyId: dummykey
     awsSecretKey: dummysecret
     rabbitmq:
-      username: wire-server
-      password: verysecurepassword
+      username: guest
+      password: guest
 nginz:
   secrets:
     zAuth:
@@ -86,8 +111,8 @@ team-settings:
 background-worker:
   secrets:
     rabbitmq:
-      username: wire-server
-      password: verysecurepassword
+      username: guest
+      password: guest
 EOF
 
 fi

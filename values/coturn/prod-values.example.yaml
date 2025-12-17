@@ -1,1 +1,28 @@
 # using upstream values for coturn helm
+replicaCount: 3
+# image:
+#  tag: some-tag # (only override if you want a newer/different version than what is in the chart)
+config:
+  verboseLogging: false
+# rateLimit:
+#   allowlist: # List of IPs to be excluded from rate limiting
+#     -
+coturnTurnExternalIP: "__COTURN_EXT_IP__"
+coturnTurnListenIP: "__COTURN_HOST_IP__"
+coturnTurnRelayIP: "__COTURN_HOST_IP__"
+coturnFederationListeningIP: "__COTURN_HOST_IP__"
+# Uncomment to enable federation
+# federate:
+#   enabled: true
+#   port: 9191
+#   dtls:
+#     enabled: true
+#     tls:
+#       issuerRef: letsencrypt-http01
+#       kind: ClusterIssuer
+#     certificate:
+#       dnsNames:
+#         - coturn.example.com
+#         - coturn-0.example.com
+#         - coturn-1.example.com
+#         - coturn-2.example.com
