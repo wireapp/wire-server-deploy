@@ -7,7 +7,7 @@ tls:
   # NOTE: enable to automate certificate issuing with jetstack/cert-manager instead of
   #       providing your own certs in secrets.yaml. Cert-manager is not installed automatically,
   #       it needs to be installed beforehand (see ./../../charts/certificate-manager/README.md)
-  useCertManager: false
+  useCertManager: true
   issuer:
     kind: ClusterIssuer
 
@@ -15,7 +15,7 @@ certManager:
   inTestMode: false
   # CHANGEME-PROD: required, if certificate manager is used; set to receive cert expiration
   #                notice and other Letsencrypt related notification
-  certmasterEmail:
+  certmasterEmail: certmaster@example.com
 
 # CHANGEME-PROD: These values are suggested for deployments on bare metal and
 #                should be adjusted on a per installation basis

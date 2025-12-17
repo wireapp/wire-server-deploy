@@ -21,6 +21,15 @@ Fixes ${ISSUE_URL}
 * [ ] I ran/applied the changes myself, in a test environment.
 * [ ] The CI job attached to this repo will test it for me.
 
+#### Offline Build CI (label-based)
+Add one or more labels to trigger offline builds:
+- `build-default` - Full production build (ansible, terraform, all packages)
+- `build-demo` - Demo/WIAB build
+- `build-min` - Minimal build (fastest, essential charts only)
+- `build-all` - Run all three builds
+
+**Note:** No builds run by default. Add a label to trigger CI.
+
 ### Tracking
 
 * [ ] I added a new entry in an appropriate subdirectory of `changelog.d`

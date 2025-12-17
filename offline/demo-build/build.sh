@@ -31,6 +31,10 @@ cp -r "${ROOT_DIR}"/values "${OUTPUT_DIR}"/
 # copy local copy of dashboards from root directory to output directory
 cp -r "${ROOT_DIR}"/dashboards "${OUTPUT_DIR}"/
 
+# copy offline-env.sh to bin directory in output
+mkdir "${OUTPUT_DIR}/bin"
+cp "${ROOT_DIR}/bin/offline-env-wiab.sh" "${OUTPUT_DIR}/bin/"
+
 # removing the values/$chart directories in values directory if not required
 "${TASKS_DIR}"/pre_clean_values_0.sh VALUES_DIR="${OUTPUT_DIR}/values" HELM_VALUES_EXCLUDE_LIST="${HELM_CHART_EXCLUDE_LIST}" VALUES_TYPE="demo"
 
@@ -46,8 +50,8 @@ cp -r "${ROOT_DIR}"/dashboards "${OUTPUT_DIR}"/
 "${TASKS_DIR}"/post_chart_process_0.sh OUTPUT_DIR="${OUTPUT_DIR}" VALUES_TYPE="demo"
 
 # --------------------------
-# building admin host containers, has dependenct on the helm charts
-"${TASKS_DIR}"/build_adminhost_containers.sh "${OUTPUT_DIR}" --adminhost --zauth
+# building admin host containers, has dependency on the helm charts
+"${TASKS_DIR}"/build_adminhost_containers.sh "${OUTPUT_DIR}" --adminhost
 
 # --------------------------
 
@@ -57,7 +61,7 @@ ITEMS_TO_ARCHIVE=(
   "containers-helm.tar"
   "charts"
   "values"
-  "../../../bin"
+  "bin"
   "versions"
   "dashboards"
 )

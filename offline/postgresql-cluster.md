@@ -7,6 +7,7 @@
 - [High Availability Features](#high-availability-features)
 - [Inventory Definition](#inventory-definition)
 - [Installation Process](#installation-process)
+- [Package Upgrades and Binary Updates](#package-upgrades-and-binary-updates)
 - [Deployment Commands Reference](#deployment-commands-reference)
 - [Monitoring Checks After Installation](#monitoring-checks-after-installation)
 - [Configuration Options](#configuration-options)
@@ -50,7 +51,8 @@
 - **Offline Deployment**: For offline deployments, packages are installed from local URLs defined in [`ansible/inventory/offline/group_vars/postgresql/postgresql.yml`](ansible/inventory/offline/group_vars/postgresql/postgresql.yml), bypassing repositories.
 
 ### Software Versions
-- **PostgreSQL**: 17.5 (latest stable with enhanced replication features)
+- **PostgreSQL**: 17.7-3 (latest stable with enhanced replication features)
+- **postgres_exporter**: 0.18.1 (Prometheus metrics exporter for PostgreSQL monitoring)
 - **repmgr**: 5.5.0 (production-ready cluster management with advanced failover) ([docs](https://repmgr.org/docs/current/))
 - **Ubuntu/Debian**: 20.04+ / 11+ (tested platforms for production deployment)
 
@@ -59,17 +61,17 @@
 Based on the PostgreSQL configuration template, the deployment is optimized for resource-constrained environments:
 
 **Memory Requirements:**
-- **RAM**: 1GB minimum per node (based on configuration tuning)
-  - `shared_buffers = 256MB` (25% of total RAM)
-  - `effective_cache_size = 512MB` (50% of total RAM estimate)
+- **RAM**: 2GB minimum per node (based on configuration tuning)
+  - `shared_buffers = 512MB` (25% of total RAM)
+  - `effective_cache_size = 1GB` (50% of total RAM estimate)
   - `maintenance_work_mem = 64MB`
-  - `work_mem = 2MB` per connection (with `max_connections = 20`)
+  - `work_mem = 512kB` per connection (with `max_connections = 100`)
 
 **CPU Requirements:**
-- **Cores**: 1 CPU core minimum
+- **Cores**: 2 CPU cores minimum
   - `max_parallel_workers_per_gather = 0` (parallel queries disabled)
-  - `max_parallel_workers = 1`
-  - `max_worker_processes = 2` (minimum for repmgr operations)
+  - `max_parallel_workers = 4`
+  - `max_worker_processes = 8` (for repmgr operations and parallel workers)
 
 **Storage Requirements:**
 - **Disk Space**: 50GB minimum per node
@@ -86,7 +88,7 @@ Based on the PostgreSQL configuration template, the deployment is optimized for 
 **Network Requirements:**
 - **PostgreSQL Port**: 5432 open between all cluster nodes
 
-**Note**: Configuration supports up to 20 concurrent connections. For production workloads with higher loads, scale up resources accordingly.
+**Note**: Configuration supports up to 100 concurrent connections. For production workloads with higher loads, scale up resources accordingly.
 
 **⚠️ Important**: Review and optimize the [PostgreSQL configuration template](../ansible/templates/postgresql/postgresql.conf.j2) based on your specific hardware, workload, and performance requirements before deployment.
 
@@ -265,15 +267,97 @@ See the [Deployment Commands Reference](#deployment-commands-reference) section 
 **⏱️ Expected Duration: 10-15 minutes**
 
 A complete deployment performs:
-1. ✅ **Package Installation**: PostgreSQL 17 + repmgr + dependencies
-2. ✅ **Primary Setup**: Configure primary node with repmgr database
-3. ✅ **Replica Deployment**: Clone and configure replica nodes
-4. ✅ **Verification**: Health checks and replication status
-5. ✅ **Wire Integration**: Create Wire database and user
-6. ✅ **Monitoring**: Deploy split-brain detection system
+1. ✅ **Backup**: Create safety backup of existing data to assethost (skipped for fresh installs)
+2. ✅ **Cleanup**: Reset repmgr HA cluster configuration (preserves PostgreSQL data)
+3. ✅ **Package Installation**: PostgreSQL 17 + repmgr + postgres_exporter + dependencies
+4. ✅ **Primary Setup**: Configure primary node with repmgr database
+5. ✅ **Replica Deployment**: Clone and configure replica nodes
+6. ✅ **Verification**: Health checks and replication status
+7. ✅ **Wire Integration**: Create Wire database and user
+8. ✅ **Monitoring**: Deploy split-brain detection system
+9. ✅ **Metrics Exporter**: Deploy postgres_exporter for Prometheus monitoring
 
 #### **Step 3: Verify Installation**
 See the [Monitoring Checks](#monitoring-checks-after-installation) section for comprehensive verification procedures.
+
+## Package Upgrades and Binary Updates
+
+### 🔄 Upgrading PostgreSQL Packages
+
+The installation playbook automatically detects version mismatches and performs upgrades when newer packages are available in the configuration.
+
+**Version-Aware Detection:**
+- Compares installed package versions with configured versions in `group_vars/postgresql/postgresql.yml`
+- Triggers upgrades automatically when versions don't match (e.g., 17.5-1 → 17.7-3)
+- Handles interdependent packages atomically to prevent dependency conflicts
+
+**Upgrade Process:**
+```bash
+# Full redeployment with version upgrades
+ansible-playbook -i ansible/inventory/offline/hosts.ini ansible/postgresql-deploy.yml
+```
+
+The playbook will:
+1. ✅ Detect version differences in installed packages
+2. ✅ Download and install updated packages atomically
+3. ✅ Preserve existing data and replication configuration
+4. ✅ Verify successful installation
+
+**Verification:**
+```bash
+# Check installed PostgreSQL version
+dpkg -l | grep postgresql-17
+
+# Expected output shows new version (e.g., 17.7-3.pgdg22.04+1)
+```
+
+### 🛡️ Automatic Backup Before Cleanup
+
+When redeploying or cleaning existing PostgreSQL installations, automatic backups protect your data.
+
+**Backup Features:**
+- **Parallel backups** from all nodes (primary + replicas) for faster completion
+- **Automatic detection** of node roles (primary/replica)
+- **Centralized storage** on assethost with timestamp-based directories
+- **Graceful skip** if assethost is not defined in inventory
+
+**Backup Location:**
+```bash
+# Backups stored on assethost at:
+/var/backups/postgresql/<timestamp>/
+
+# Example:
+/var/backups/postgresql/20251208T152506/
+  - postgresql1_primary_full.sql.gz
+  - postgresql2_replica_full.sql.gz
+  - postgresql3_replica_full.sql.gz
+```
+
+**Assethost Configuration:**
+Define assethost in your inventory to enable automatic backups:
+```ini
+[all]
+assethost ansible_host=192.168.122.10
+```
+
+**Backup Process:**
+1. Detects existing PostgreSQL installation
+2. Creates backups on all nodes in parallel
+3. Transfers backups to assethost via Ansible file transfer
+4. Displays backup summary with restore instructions
+5. Provides 10-second safety pause before proceeding with cleanup
+
+**Restore Example:**
+```bash
+# List available backups
+ssh assethost "ls -lh /var/backups/postgresql/20251208T152506/"
+
+# Restore from primary backup
+scp assethost:/var/backups/postgresql/20251208T152506/postgresql1_primary_full.sql.gz /tmp/
+gunzip -c /tmp/postgresql1_primary_full.sql.gz | sudo -u postgres psql postgres
+```
+
+**Note:** Backups are only created when cleaning existing deployments. Fresh installations skip backup automatically.
 
 ## Deployment Commands Reference
 
@@ -285,6 +369,9 @@ ansible-playbook -i ansible/inventory/offline/hosts.ini ansible/postgresql-deplo
 
 # Deploy PostgreSQL cluster (secrets + primary + replica + wire-setup + monitoring)
 ansible-playbook -i ansible/inventory/offline/hosts.ini ansible/postgresql-deploy.yml --tags postgresql
+
+# Skip backup (not recommended - only use for fresh installs)
+ansible-playbook -i ansible/inventory/offline/hosts.ini ansible/postgresql-deploy.yml --skip-tags backup
 
 # Deploy without cleanup (preserves existing data and configuration)
 ansible-playbook -i ansible/inventory/offline/hosts.ini ansible/postgresql-deploy.yml --skip-tags cleanup
@@ -298,26 +385,30 @@ ansible-playbook -i ansible/inventory/offline/hosts.ini ansible/postgresql-deplo
 | Tag | What Runs | Use Case |
 |-----|-----------|----------|
 | _(none)_ | Full deployment | **Recommended for fresh deployment** |
-| `postgresql` | Secrets + Primary + Replica + Wire-setup + Monitoring | Deploy/redeploy complete PostgreSQL cluster |
+| `postgresql` | Secrets + Primary + Replica + Wire-setup + Monitoring + Metrics | Deploy/redeploy complete PostgreSQL cluster |
+| `backup` | Backup only | Create backup of all nodes to assethost |
 | `verify` | Verification checks only | Check cluster health without making changes |
 | `cleanup` | Cleanup only | For selective cleanup (use with `--skip-tags` to preserve data) |
+| `metrics` | Metrics exporter only | Deploy/redeploy postgres_exporter for monitoring |
 
 ### 📋 Deployment Pipeline
 
 The deployment follows this strict order:
 
 ```
-1. cleanup          → Clean previous state
-2. install          → Install PostgreSQL packages
-3. secrets          → Fetch/create passwords in K8s
-4. primary          → Deploy primary (read-write) node
-5. replica          → Deploy replica (read-only) nodes
-6. verify           → Verify HA cluster health
-7. wire-setup       → Create wire-server database and user
-8. monitoring       → Deploys a split-brain detection system that automatically fences isolated primary nodes to prevent data corruption.
+1. backup           → Create safety backup to assethost (skipped for fresh installs)
+2. cleanup          → Reset repmgr HA cluster configuration (preserves PostgreSQL data)
+3. install          → Install PostgreSQL packages
+4. secrets          → Fetch/create passwords in K8s
+5. primary          → Deploy primary (read-write) node
+6. replica          → Deploy replica (read-only) nodes
+7. verify           → Verify HA cluster health
+8. wire-setup       → Create wire-server database and user
+9. monitoring       → Deploys a split-brain detection system that automatically fences isolated primary nodes to prevent data corruption
+10. metrics         → Deploy postgres_exporter for Prometheus monitoring (PostgreSQL 17 metrics including checkpoint stats)
 ```
 
-**Important**: Steps 3-8 have dependencies and must run in order. The `postgresql` tag ensures all required steps run together.
+**Important**: Steps 4-10 have dependencies and must run in order. Backup (step 1) and cleanup (step 2) run first to prepare the environment. The `postgresql` tag ensures all required steps run together.
 
 ### 🔐 Password Management
 
@@ -435,7 +526,7 @@ sudo -u postgres repmgr -f /etc/repmgr/17-main/repmgr.conf node rejoin -d repmgr
 
 ### 🆕 Manual Standby Clone and Registration (New Node Setup)
 
-Note: You can always run the ansible playbook for a clean HA postgresql cluster setup. It won't remove the existing Postgresql Wire database. It will reset the repmgr to make sure a HA postgresql cluster is available.
+Note: You can always run the ansible playbook to reset the HA cluster configuration. It will NOT delete the existing PostgreSQL Wire database or any data - it only resets repmgr cluster state to prepare for redeployment.
 
 When you need to manually clone and register a standby from scratch (corrupted data, new node, or complete rebuild):
 

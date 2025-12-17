@@ -1,93 +1,273 @@
 - name: Install Helm charts
   hosts: deploy_node
-  become: yes
-  become_user: "{{ ansible_user }}"
-  vars:
-    # admin container definition for WSD (wire-server-deploy) 
-    docker_cmd_base: >-
-      docker run --network=host
-      -v "/home/{{ ansible_user }}/.ssh":/root/.ssh
-      -v "/home/{{ ansible_user }}/wire-server-deploy/":/wire-server-deploy
-      -v "/home/{{ ansible_user }}/.kube/config":/root/.kube/config
-      -v "/home/{{ ansible_user }}/.minikube":/home/ubuntu/.minikube
-      -e KUBECONFIG=/root/.kube/config
-      "{{ wsd_container.stdout }}"
   tasks:
+  - name: Validate required variables are defined
+    assert:
+      that:
+        - charts_dir is defined and charts_dir | length > 0
+        - values_dir is defined and values_dir | length > 0
+        - kube_config is defined and kube_config | length > 0
+        - charts_to_deploy is defined and charts_to_deploy | length > 0
+      fail_msg: |
+        Missing required variables:
+        - charts_dir: {{ charts_dir | default('UNDEFINED') }}
+        - values_dir: {{ values_dir | default('UNDEFINED') }}
+        - kube_config: {{ kube_config | default('UNDEFINED') }}
+        - charts_to_deploy: {{ charts_to_deploy | default('UNDEFINED') }}
+      quiet: yes
 
-  - name: Replace TARGET_SYSTEM example.com with target_domain in offline_deploy_k8s
-    lineinfile:
-      path: /home/{{ ansible_user }}/wire-server-deploy/bin/wiab-demo/offline_deploy_k8s.sh
-      regexp: '^TARGET_SYSTEM="example\.com"'
-      line: 'TARGET_SYSTEM="{{ target_domain }}"'
-      backrefs: yes
+  - name: Deploy cert-manager first (if enabled) to ensure crds exists
+    block:
+    - name: Create cert-manager-ns namespace if it doesn't exist
+      kubernetes.core.k8s:
+        name: cert-manager-ns
+        api_version: v1
+        kind: Namespace
+        state: present
+        kubeconfig: "{{ kube_config }}"
 
-  - name: Replace CERT_MASTER_EMAIL example.com with target_domain in offline_deploy_k8s
-    lineinfile:
-      path: /home/{{ ansible_user }}/wire-server-deploy/bin/wiab-demo/offline_deploy_k8s.sh
-      regexp: '^CERT_MASTER_EMAIL="certmaster@example\.com"'
-      line: 'CERT_MASTER_EMAIL="certmaster@{{ target_domain }}"'
-      backrefs: yes
+    - name: Deploy cert-manager Helm chart
+      kubernetes.core.helm:
+        name: cert-manager
+        chart_ref: "{{ charts_dir }}/cert-manager"
+        release_namespace: cert-manager-ns
+        kubeconfig: "{{ kube_config }}"
+        wait: yes
+        timeout: 2m0s
+        values_files: ["{{ values_dir }}/cert-manager/values.yaml"]
+      register: cert_manager_deploy
 
-  - name: Add HOST_IP with wire_ip in offline_deploy_k8s
-    lineinfile:
-      path: /home/{{ ansible_user }}/wire-server-deploy/bin/wiab-demo/offline_deploy_k8s.sh
-      regexp: '^HOST_IP="WIRE_IP"'
-      line: 'HOST_IP="{{ wire_ip }}"'
-      backrefs: yes
+    - name: Report deployment status for cert-manager
+      debug:
+        msg: |
+          Chart deployment status:
+          - cert-manager: {{ 'Deployed' if cert_manager_deploy.changed else 'Already up-to-date' }}
+    when: use_cert_manager
 
-  - name: Update SFT_NODE in the offline_deploy_k8s
-    lineinfile:
-      path: /home/{{ ansible_user }}/wire-server-deploy/bin/wiab-demo/offline_deploy_k8s.sh
-      regexp: '^SFT_NODE="K8S_SFT_NODE"'
-      line: 'SFT_NODE="{{ k8s_sft_node }}"'
-      backrefs: yes
+  - name: Deploy optional charts (wire-utility and kube-prometheus-stack)
+    block:
+    - name: Deploy wire-utility chart
+      block:
+      - name: Verify wire-utility chart directory exists
+        stat:
+          path: "{{ charts_dir }}/wire-utility"
+        register: wire_utility_chart_stat
 
-  - name: Update NGINX_K8S_NODE in the offline_deploy_k8s
-    lineinfile:
-      path: /home/{{ ansible_user }}/wire-server-deploy/bin/wiab-demo/offline_deploy_k8s.sh
-      regexp: '^NGINX_K8S_NODE="NGINX_K8S_NODE"'
-      line: 'NGINX_K8S_NODE="{{ k8s_ingress_controller_node }}"'
-      backrefs: yes
+      - name: Deploy wire-utility Helm chart
+        kubernetes.core.helm:
+          name: wire-utility
+          chart_ref: "{{ charts_dir }}/wire-utility"
+          release_namespace: default
+          kubeconfig: "{{ kube_config }}"
+          wait: yes
+          timeout: 5m0s
+          values_files:
+            - "{{ values_dir }}/wire-server/values.yaml"
+            - "{{ values_dir }}/wire-server/secrets.yaml"
+            - "{{ values_dir }}/wire-utility/values.yaml"
+        register: wire_utility_deploy
+        failed_when: false
+        when: wire_utility_chart_stat.stat.exists
 
-  - name: Update COTURN_NODE in the offline_deploy_k8s
-    lineinfile:
-      path: /home/{{ ansible_user }}/wire-server-deploy/bin/wiab-demo/offline_deploy_k8s.sh
-      regexp: '^COTURN_NODE="K8S_COTURN_NODE"'
-      line: 'COTURN_NODE="{{ k8s_coturn_node }}"'
-      backrefs: yes
+      - name: Display wire-utility deployment status
+        debug:
+          msg: "Wire-utility: {{ 'Deployed' if wire_utility_deploy.changed else 'Already up-to-date' }}"
+        when: wire_utility_deploy is changed or wire_utility_deploy is succeeded
 
-  - name: Load WSD Docker image
-    shell: |
-      docker load -i "/home/{{ ansible_user }}/wire-server-deploy/containers-adminhost/container-wire-server-deploy.tgz" | awk '{print $3}'
-    register: wsd_container
+      - name: Note wire-utility deployment attempt
+        debug:
+          msg: "Wire-utility deployment failed. Wire-services will still function without it. Read more about it here: https://docs.wire.com/latest/how-to/administrate/wire-utility-tool.html"
+        when: wire_utility_deploy is failed or not wire_utility_chart_stat.stat.exists
 
-  - name: Process charts for demo environment
-    shell: |
-      {{ docker_cmd_base }} bash -c "source /wire-server-deploy/bin/wiab-demo/offline_deploy_k8s.sh && process_charts demo"
-    args:
-      executable: /bin/bash
-    
-  - name: Process values
-    shell: |
-      {{ docker_cmd_base }} bash -c "source /wire-server-deploy/bin/wiab-demo/offline_deploy_k8s.sh && process_values"
-    args:
-      executable: /bin/bash
-    
-  - name: Deploy cert manager # disable if running in a private env
-    shell: |
-      {{ docker_cmd_base }} bash -c "source /wire-server-deploy/bin/wiab-demo/offline_deploy_k8s.sh && deploy_cert_manager"
-    args:
-      executable: /bin/bash
-    
-  - name: Deploy chart
-    shell: |
-      {{ docker_cmd_base }} bash -c "source /wire-server-deploy/bin/wiab-demo/offline_deploy_k8s.sh && deploy_charts {{ item }}"
-    args:
-      executable: /bin/bash
-    loop: "{{ charts_to_deploy }}"
+      when: "'wire-utility' in additional_charts"
 
-  - name: Deploy calling stack
-    shell: |
-      {{ docker_cmd_base }} bash -c "source /wire-server-deploy/bin/wiab-demo/offline_deploy_k8s.sh && deploy_calling_services"
-    args:
-      executable: /bin/bash
+    - name: Deploy kube-prometheus-stack chart
+      block:
+      - name: Verify kube-prometheus-stack chart directory exists
+        stat:
+          path: "{{ charts_dir }}/kube-prometheus-stack"
+        register: kube_prometheus_chart_stat
+
+      - name: Deploy kube-prometheus-stack Helm chart
+        kubernetes.core.helm:
+          name: kube-prometheus-stack
+          chart_ref: "{{ charts_dir }}/kube-prometheus-stack"
+          release_namespace: default
+          kubeconfig: "{{ kube_config }}"
+          wait: yes
+          timeout: 5m0s
+          values_files:
+            - "{{ values_dir }}/kube-prometheus-stack/values.yaml"
+            - "{{ values_dir }}/kube-prometheus-stack/secrets.yaml"
+        register: kube_prometheus_deploy
+        failed_when: false
+        when: kube_prometheus_chart_stat.stat.exists
+
+      - name: Display kube-prometheus-stack deployment status
+        debug:
+          msg: "kube-prometheus-stack: {{ 'Deployed' if kube_prometheus_deploy.changed else 'Already up-to-date' }}"
+        when: kube_prometheus_deploy is changed or kube_prometheus_deploy is succeeded
+
+      - name: Note kube-prometheus-stack deployment information
+        debug:
+          msg: "kube-prometheus-stack deployment skipped or failed. For more information, please refer to the documentation: https://github.com/wireapp/helm-charts/tree/main/charts/kube-prometheus-stack"
+        when: kube_prometheus_deploy is failed or not kube_prometheus_chart_stat.stat.exists
+
+      when: "'kube-prometheus-stack' in additional_charts"
+
+  - name: Deploy core Wire service Helm charts
+    block:
+    - name: Display charts that will be deployed
+      debug:
+        msg: "Following charts will be deployed: {{ charts_to_deploy | join(', ') }}"
+
+    - name: Verify chart directories exist for all required charts
+      stat:
+        path: "{{ charts_dir }}/{{ item }}"
+      register: chart_dir_stat
+      loop: "{{ charts_to_deploy }}"
+
+    - name: Verify values.yaml files exist for all required charts
+      stat:
+        path: "{{ values_dir }}/{{ item }}/values.yaml"
+      register: values_file_stat
+      loop: "{{ charts_to_deploy }}"
+
+    - name: Verify secrets.yaml files exist for all required charts
+      stat:
+        path: "{{ values_dir }}/{{ item }}/secrets.yaml"
+      register: secrets_file_stat
+      loop: "{{ charts_to_deploy }}"
+
+    - name: Construct dynamic values_files list with available config files for each chart
+      set_fact:
+        chart_values_files: "{{ chart_values_files | default({}) | combine({item.item: (([values_dir + '/' + item.item + '/values.yaml'] if item.stat.exists else []))}) }}"
+      vars:
+        values_file_results: "{{ values_file_stat.results }}"
+      loop: "{{ values_file_stat.results }}"
+      no_log: true
+
+    - name: Add secrets files to chart_values_files dictionary
+      set_fact:
+        chart_values_files: "{{ chart_values_files | combine({item.item: (chart_values_files[item.item] + ([values_dir + '/' + item.item + '/secrets.yaml'] if item.stat.exists else []))}, recursive=True) }}"
+      loop: "{{ secrets_file_stat.results }}"
+      no_log: true
+
+    - name: Deploy core Wire charts using their available configuration files
+      kubernetes.core.helm:
+        name: "{{ item }}"
+        chart_ref: "{{ charts_dir }}/{{ item }}"
+        release_namespace: default
+        kubeconfig: "{{ kube_config }}"
+        wait: yes
+        timeout: 5m0s
+        values_files: "{{ chart_values_files.get(item, []) }}"
+      loop: "{{ charts_to_deploy }}"
+      register: helm_deploy_result
+
+    - name: Report deployment status for all core charts
+      block:
+      - name: Build deployment status list
+        set_fact:
+          deployment_messages: "{{ deployment_messages | default([]) + [item.item + ': ' + ('Deployed' if item.changed else 'Already up-to-date')] }}"
+        loop: "{{ helm_deploy_result.results }}"
+        when: helm_deploy_result.results is defined
+        no_log: true
+
+      - name: Display chart deployment status
+        debug:
+          msg: "{{ ['Chart deployment status:'] + (deployment_messages | map('regex_replace', '^', '- ') | list) }}"
+        when: helm_deploy_result.results is defined
+
+    - name: Retrieve running pods from default namespace
+      kubernetes.core.k8s_info:
+        kind: Pod
+        namespace: default
+        kubeconfig: "{{ kube_config }}"
+      register: pods_info
+
+    - name: Display running pods sorted by creation time
+      block:
+      - name: Count running pods
+        set_fact:
+          running_pods_count: "{{ pods_info.resources | length }}"
+          running_pods: "{{ pods_info.resources | selectattr('status.phase', 'equalto', 'Running') | map(attribute='metadata.name') | list }}"
+          succeeded_pods: "{{ pods_info.resources | selectattr('status.phase', 'equalto', 'Succeeded') | map(attribute='metadata.name') | list }}"
+          pending_pods: "{{ pods_info.resources | selectattr('status.phase', 'equalto', 'Pending') | map(attribute='metadata.name') | list }}"
+
+      - name: Display pods summary
+        debug:
+          msg:
+            - "Total running pods: {{ running_pods_count }}"
+            - ""
+            - "Running ({{ running_pods | length }}):"
+            - "{{ running_pods | map('regex_replace', '^', '  - ') | list }}"
+            - ""
+            - "Succeeded ({{ succeeded_pods | length }}):"
+            - "{{ succeeded_pods | map('regex_replace', '^', '  - ') | list }}"
+            - ""
+            - "Pending ({{ pending_pods | length }}):"
+            - "{{ pending_pods | map('regex_replace', '^', '  - ') | list }}"
+
+  - name: Deploy nginx-ingress-services with TLS configuration
+    block:
+
+    - name: Deploy nginx-ingress-services Helm chart
+      kubernetes.core.helm:
+        name: nginx-ingress-services
+        chart_ref: "{{ charts_dir }}/nginx-ingress-services"
+        release_namespace: default
+        kubeconfig: "{{ kube_config }}"
+        wait: yes
+        timeout: 2m0s
+        values_files:
+        - "{{ values_dir }}/nginx-ingress-services/values.yaml"
+        - "{{ values_dir }}/nginx-ingress-services/secrets.yaml"
+      register: nginx_ingress_deploy
+
+    - name: Report deployment status nginx-ingress-services
+      debug:
+        msg: |
+          Chart deployment status:
+          - nginx-ingress-services: {{ 'Deployed' if nginx_ingress_deploy.changed else 'Already up-to-date' }}
+      when: nginx_ingress_deploy is defined
+
+    - name: Fetch certificates in the default namespace
+      kubernetes.core.k8s_info:
+        kind: Certificate
+        namespace: default
+        kubeconfig: "{{ kube_config }}"
+      register: certificates
+
+    - name: Display certificates in default namespace
+      block:
+      - name: Prepare certificate details
+        set_fact:
+          cert_details: "{{ certificates.resources | map(attribute='metadata.name') | list }}"
+          cert_count: "{{ certificates.resources | length }}"
+
+      - name: Display certificate summary
+        debug:
+          msg:
+            - "Total certificates: {{ cert_count }}"
+            - ""
+            - "Certificates in default namespace:"
+            - "{{ cert_details | map('regex_replace', '^', '  - ') | list }}"
+
+    when: use_cert_manager
+
+  - name: Update on skipped nginx-ingress-services and certificate behaviour
+    debug:
+      msg:
+        - "nginx-ingress-services chart deployment was skipped because use_cert_manager is set to false"
+        - ""
+        - "This chart sets up services, ingresses and secrets needed to access Wire from outside the cluster"
+        - "Without it, Wire services won't be accessible from outside the k8s cluster"
+        - ""
+        - "To proceed, you have two options:"
+        - "1. Enable cert-manager (set use_cert_manager to true)"
+        - "2. Manually provide TLS certificates for your domain"
+        - ""
+        - "For more information:"
+        - "https://github.com/wireapp/wire-server/tree/develop/charts/nginx-ingress-services"
+    when: not use_cert_manager
