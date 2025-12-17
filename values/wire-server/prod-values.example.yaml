@@ -333,10 +333,15 @@ federator:
       enabled: false
 background-worker:
   config:
+    federationDomain: example.com
     # logLevel: Debug
     rabbitmq: # Default value for CI, for on-prem deployment, use rabbitmq-external
       host: rabbitmq
     cassandra:
+      host: cassandra-external
+    cassandraGalley:
+      host: cassandra-external
+    cassandraBrig:
       host: cassandra-external
     # Enable for federation
     enableFederation: false
