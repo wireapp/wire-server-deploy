@@ -94,5 +94,5 @@ pull_charts() {
   #fi
 }
 
-wire_build="https://raw.githubusercontent.com/wireapp/wire-builds/258718e3f709d102b3b4050416a34fd0e36f5a0b/build.json"
+wire_build="https://raw.githubusercontent.com/wireapp/wire-builds/pinned-offline-5.23.0/build.json"
 wire_build_chart_release "$wire_build" | pull_charts
