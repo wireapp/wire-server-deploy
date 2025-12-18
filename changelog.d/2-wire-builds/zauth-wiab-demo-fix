@@ -1,0 +1,1 @@
+Fixed: Changed from Ansible variable slicing (which failed with binary data) to file-based operations
