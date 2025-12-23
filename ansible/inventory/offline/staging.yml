@@ -1,0 +1,115 @@
+all:
+  vars:
+    ansible_user: demo
+    ansible_ssh_common_args: >-
+      -o StrictHostKeyChecking=no
+      -o UserKnownHostsFile=/dev/null
+      -o ControlMaster=auto
+      -o ControlPersist=60s
+    # ssh private_key is stored in wire-server-deploy/ssh
+    # assuming all ansible commands will be issued from wire-server-deploy
+    ansible_ssh_private_key_file: "ssh/id_ed25519"
+
+assethost:
+  hosts:
+    assethost:
+      ansible_host: "assethost_ip"
+
+kube-node:
+  hosts:
+    kubenode1:
+      ansible_host: "kubenode1_ip"
+    kubenode2:
+      ansible_host: "kubenode2_ip"
+    kubenode3:
+      ansible_host: "kubenode3_ip"
+  vars:
+    calico_mtu: 1450
+    calico_veth_mtu: 1430
+    docker_dns_servers_strict: false
+
+kube-master:
+  children:
+    kube-node: {}
+
+etcd:
+  children:
+    kube-node: {}
+
+k8s-cluster:
+  children:
+    kube-node: {}
+    kube-master: {}
+
+cassandra:
+  hosts:
+    cassandra1:
+      ansible_host: "datanode1_ip"
+    cassandra2:
+      ansible_host: "datanode2_ip"
+    cassandra3:
+      ansible_host: "datanode3_ip"
+  vars:
+    cassandra_network_interface: enp1s0
+
+cassandra_seed:
+  hosts:
+    cassandra1: {}
+
+elasticsearch:
+  hosts:
+    elasticsearch1:
+      ansible_host: "datanode1_ip"
+    elasticsearch2:
+      ansible_host: "datanode2_ip"
+    elasticsearch3:
+      ansible_host: "datanode3_ip"
+  vars:
+    elasticsearch_network_interface: enp1s0
+
+elasticsearch_master:
+  children:
+    elasticsearch: {}
+
+minio:
+  hosts:
+    minio1:
+      ansible_host: "datanode1_ip"
+    minio2:
+      ansible_host: "datanode2_ip"
+    minio3:
+      ansible_host: "datanode3_ip"
+  vars:
+    minio_network_interface: enp1s0
+
+rabbitmq:
+  hosts:
+    rabbitmq1:
+      ansible_host: "datanode1_ip"
+    rabbitmq2:
+      ansible_host: "datanode2_ip"
+    rabbitmq3:
+      ansible_host: "datanode3_ip"
+  vars:
+    rabbitmq_network_interface: enp1s0
+
+postgresql:
+  hosts:
+    postgresql1:
+      ansible_host: "datanode1_ip"
+    postgresql2:
+      ansible_host: "datanode2_ip"
+    postgresql3:
+      ansible_host: "datanode3_ip"
+  vars:
+    wire_dbname: wire-server
+    postgresql_network_interface: enp1s0
+
+postgresql_rw:
+  hosts:
+    postgresql1: {}
+
+postgresql_ro:
+  hosts:
+    postgresql2: {}
+    postgresql3: {}
