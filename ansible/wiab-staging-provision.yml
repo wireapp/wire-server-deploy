@@ -1,0 +1,315 @@
+- hosts: deploy_node
+  vars:
+    artifact_hash: d5c1e25ac25d9cf4ade2f00c12f0cd05371b8616
+    deploy_dir: /home/demo/wire-server-deploy
+    inventory_file: "{{ deploy_dir }}/ansible/inventory/offline/inventory.yml"
+  tasks:
+  - name: system configuration and package management
+    become: true
+    block:
+
+    - name: set ipv4 forward
+      sysctl:
+        name: net.ipv4.ip_forward
+        value: '1'
+        sysctl_set: true
+        state: present
+        reload: true
+
+    - name: apt update
+      apt: update_cache=yes force_apt_get=yes
+
+    - name: apt upgrade
+      apt: upgrade=dist force_apt_get=yes
+
+    - name: install default packages
+      apt:
+        install_recommends: no
+        pkg:
+        - aptitude
+        - apt-transport-https
+        - bind9-host
+        - curl
+        - debian-goodies
+        - dnsutils
+        - git
+        - dnsmasq
+        - less
+        - lsof
+        - net-tools
+        - rsyslog
+        - screen
+        - sudo
+        - vim
+        - wget
+        - whois
+        - docker.io
+        - telnet
+        - python3-lxml
+        - qemu-system-x86
+        - qemu-kvm
+        - qemu-utils
+        - libvirt-clients
+        - libvirt-daemon-system
+        - virtinst
+        - bridge-utils
+        - cloud-image-utils
+
+    - name: install yq (YAML processor)
+      shell:
+        cmd: curl -sL https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64 -o /usr/local/bin/yq && chmod +x /usr/local/bin/yq
+        creates: /usr/local/bin/yq
+
+    - name: generate german locales
+      locale_gen:
+        name: de_DE.UTF-8
+        state: present
+
+    - name: generate us locales
+      locale_gen:
+        name: en_US.UTF-8
+        state: present
+
+    - name: set system language
+      lineinfile:
+        path: /etc/default/locale
+        regexp: '^#?LANG='
+        line: 'LANG="en_US.UTF-8"'
+
+    - name: set keyboard layout
+      lineinfile:
+        path: /etc/default/keyboard
+        regexp: '^#?XKBLAYOUT='
+        line: 'XKBLAYOUT="us"'
+
+    - name: set keyboard variant
+      lineinfile:
+        path: /etc/default/keyboard
+        regexp: '^#?XKVARIANT='
+        line: 'XKBVARIANT="de"'
+
+    - name: ensure default user is part of required groups
+      user:
+        name: "{{ ansible_user }}"
+        groups: sudo, kvm, docker
+        append: yes
+
+    - name: set proper ACLs for libvirt and "{{ ansible_user }}" user
+      acl:
+        path: /home/{{ ansible_user }}
+        entity: libvirt-qemu
+        etype: user
+        permissions: x
+        state: present
+
+    - name: deploy sshd config
+      copy:
+        src: files/wiab_server_sshd_config
+        dest: /etc/ssh/sshd_config
+        mode: 0644
+        owner: root
+        group: root
+      notify: sshd | restart
+
+    - name: stop and disable dnsmasq service
+      service:
+        name: dnsmasq
+        state: stopped
+        enabled: false
+
+    - name: collect libvirt network facts
+      virt_net:
+        command: facts
+
+    - name: remove & stop libvirt default network
+      when: ansible_libvirt_networks["default"] is defined
+      virt_net:
+        command: "{{ item }}"
+        name: default
+      with_items:
+        - destroy
+        - undefine
+
+    - name: create new libvirt network with appropriate defaults (no iptables hook)
+      when: ansible_libvirt_networks["wirebox"] is not defined
+      virt_net:
+        name: wirebox
+        command: define
+        xml: '{{ lookup("file", "files/wiab_server_libvirt_default_net.xml") }}'
+
+    - name: collect libvirt network facts after defining new network
+      virt_net:
+        command: facts
+
+    - name: start new default libvirt net
+      when: ansible_libvirt_networks["wirebox"].state != 'active'
+      virt_net:
+        name: wirebox
+        command: create
+        autostart: yes
+
+    - name: start new default libvirt net on boot
+      when: ansible_libvirt_networks["wirebox"].autostart != 'yes'
+      virt_net:
+        name: wirebox
+        autostart: yes
+
+    - name: check if nftables.conf is deployed already
+      stat:
+        path: /root/.nftables_deployed
+      register: nft_deployed
+
+    - name: deploy /etc/nftables.conf
+      template:
+        src: files/wiab_server_nftables.conf.j2
+        dest: /etc/nftables.conf
+        mode: 0750
+        owner: root
+        group: root
+      notify: nftables | restart
+      when: not nft_deployed.stat.exists
+
+    - name: add local file flag after nftables deployment
+      file:
+        path: /root/.nftables_deployed
+        state: touch
+        modification_time: preserve
+        access_time: preserve
+
+  - name: deploy wire artifact, ubuntu iso
+    become_user: demo
+    become: true
+    block:
+    - name: create wire-server-deploy directory for demo user
+      file:
+        path: "{{ deploy_dir }}"
+        state: directory
+        owner: demo
+        group: demo
+        mode: 0775
+
+    - name: check if wire-server-deploy-static-{{ artifact_hash }}.tgz exists
+      stat:
+        path: "{{ deploy_dir }}-static-{{ artifact_hash }}.tgz"
+        get_checksum: False
+      register: artifact_archive_file_check
+
+    - name: download wire-server-deploy archive
+      shell:
+        cmd: curl -fsSLo "{{ deploy_dir }}-static-{{ artifact_hash }}.tgz" https://s3-eu-west-1.amazonaws.com/public.wire.com/artifacts/wire-server-deploy-static-{{ artifact_hash }}.tgz
+        creates: "{{ deploy_dir }}-static-{{ artifact_hash }}.tgz"
+      when: not artifact_archive_file_check.stat.exists
+
+    - name: check if wire-server-deploy folder contents exist
+      stat:
+        path: "{{ deploy_dir }}/containers-helm.tar"
+        get_checksum: False
+      register: artifact_folder_content_check
+
+    - name: unpack wire-server-deploy archive
+      unarchive:
+        src: "{{ deploy_dir }}-static-{{ artifact_hash }}.tgz"
+        dest: "{{ deploy_dir }}"
+        remote_src: yes
+      when: not artifact_folder_content_check.stat.exists
+
+    - name: check if ubuntu img exists
+      stat:
+        path: "{{ deploy_dir }}/jammy-server-cloudimg-amd64.img"
+        get_checksum: False
+      register: img_file_check
+
+    - name: download ubuntu img file
+      shell:
+        cmd: curl -fsSLo "{{ deploy_dir }}/jammy-server-cloudimg-amd64.img" https://cloud-images.ubuntu.com/jammy/current/jammy-server-cloudimg-amd64.img
+        creates: "{{ deploy_dir }}/jammy-server-cloudimg-amd64.img"
+      when: not img_file_check.stat.exists
+
+    - name: set permissions inside wire-server-deploy via shell command (fails when using ansible directive)
+      shell:
+        cmd: sudo chmod -R 0775 "{{ deploy_dir }}"; sudo chown -R demo:demo /home/demo
+
+    - name: Start VMs on the node
+      shell: 
+        cmd: "{{ deploy_dir }}/bin/offline-vm-setup.sh"
+
+    - name: Display status of VMs
+      shell: 
+        cmd: sudo virsh list
+      register: vm_status
+
+    - name: Print VM status
+      debug:
+        msg: "{{ vm_status.stdout_lines }}"
+
+
+    - name: Get assethost IP address from inventory
+      shell: |
+        grep "assethost_ip=" "{{ deploy_dir }}/.vm-env" | cut -d'=' -f2
+      register: assethost_ip_result
+
+    - name: SSH into assethost and get gateway interface name
+      shell: |
+        ssh -i "{{ deploy_dir }}/ssh/id_ed25519" \
+            -o StrictHostKeyChecking=no \
+            -o UserKnownHostsFile=/dev/null \
+            {{ ansible_user }}@{{ assethost_ip_result.stdout }} \
+            "ip route show default | awk '{print \$5}'"
+      register: gateway_name
+
+    - name: Generate inventory.yaml with actual VM IPs from .vm-env
+      shell: |
+        #!/bin/bash
+        set -euo pipefail
+        
+        # Source the .vm-env file to get VM IP addresses
+        source "{{ deploy_dir }}/.vm-env"
+        
+        # Copy staging.yml to inventory.yaml as base
+        cp "{{ deploy_dir }}/ansible/inventory/offline/staging.yml" "{{ inventory_file }}"
+        
+        # Store gateway name for network interface updates
+        GATEWAY_NAME="{{ gateway_name.stdout }}"
+        
+        # Use yq-go to replace all placeholder IP values with actual IPs from .vm-env
+        yq -i ".assethost.hosts.assethost.ansible_host |= \"$assethost_ip\"" "{{ inventory_file }}"
+        yq -i ".kube_node.hosts.kubenode1.ansible_host |= \"$kubenode1_ip\"" "{{ inventory_file }}"
+        yq -i ".kube_node.hosts.kubenode2.ansible_host |= \"$kubenode2_ip\"" "{{ inventory_file }}"
+        yq -i ".kube_node.hosts.kubenode3.ansible_host |= \"$kubenode3_ip\"" "{{ inventory_file }}"
+        yq -i ".cassandra.hosts.cassandra1.ansible_host |= \"$datanode1_ip\"" "{{ inventory_file }}"
+        yq -i ".cassandra.hosts.cassandra2.ansible_host |= \"$datanode2_ip\"" "{{ inventory_file }}"
+        yq -i ".cassandra.hosts.cassandra3.ansible_host |= \"$datanode3_ip\"" "{{ inventory_file }}"
+        yq -i ".elasticsearch.hosts.elasticsearch1.ansible_host |= \"$datanode1_ip\"" "{{ inventory_file }}"
+        yq -i ".elasticsearch.hosts.elasticsearch2.ansible_host |= \"$datanode2_ip\"" "{{ inventory_file }}"
+        yq -i ".elasticsearch.hosts.elasticsearch3.ansible_host |= \"$datanode3_ip\"" "{{ inventory_file }}"
+        yq -i ".minio.hosts.minio1.ansible_host |= \"$datanode1_ip\"" "{{ inventory_file }}"
+        yq -i ".minio.hosts.minio2.ansible_host |= \"$datanode2_ip\"" "{{ inventory_file }}"
+        yq -i ".minio.hosts.minio3.ansible_host |= \"$datanode3_ip\"" "{{ inventory_file }}"
+        yq -i ".rabbitmq.hosts.rabbitmq1.ansible_host |= \"$datanode1_ip\"" "{{ inventory_file }}"
+        yq -i ".rabbitmq.hosts.rabbitmq2.ansible_host |= \"$datanode2_ip\"" "{{ inventory_file }}"
+        yq -i ".rabbitmq.hosts.rabbitmq3.ansible_host |= \"$datanode3_ip\"" "{{ inventory_file }}"
+        yq -i ".postgresql.hosts.postgresql1.ansible_host |= \"$datanode1_ip\"" "{{ inventory_file }}"
+        yq -i ".postgresql.hosts.postgresql2.ansible_host |= \"$datanode2_ip\"" "{{ inventory_file }}"
+        yq -i ".postgresql.hosts.postgresql3.ansible_host |= \"$datanode3_ip\"" "{{ inventory_file }}"
+        
+        # Update network interface variables with gateway name
+        yq -i ".cassandra.vars.cassandra_network_interface |= \"$GATEWAY_NAME\"" "{{ inventory_file }}"
+        yq -i ".elasticsearch.vars.elasticsearch_network_interface |= \"$GATEWAY_NAME\"" "{{ inventory_file }}"
+        yq -i ".minio.vars.minio_network_interface |= \"$GATEWAY_NAME\"" "{{ inventory_file }}"
+        yq -i ".rabbitmq.vars.rabbitmq_network_interface |= \"$GATEWAY_NAME\"" "{{ inventory_file }}"
+        yq -i ".postgresql.vars.postgresql_network_interface |= \"$GATEWAY_NAME\"" "{{ inventory_file }}"
+      args:
+        executable: /bin/bash
+
+  handlers:
+  - name: sshd | restart
+    service:
+      name: sshd
+      state: restarted
+    become: true
+  - name: nftables | restart
+    service:
+      name: nftables
+      enabled: true
+      state: restarted
+    become: true
