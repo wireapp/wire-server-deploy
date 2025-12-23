@@ -1,4 +1,3 @@
-
 #!/usr/bin/env bash
 #
 # Non-interactive script for deploying the Wire standard set of Ubuntu Server VMs 
@@ -156,13 +155,15 @@ get_vm_ip() {
   local max_wait=${2:-300}
   local elapsed=0
   
-  while [ $elapsed -lt $max_wait ]; do
+  while [ "$elapsed" -lt "$max_wait" ]; do
     # Get MAC address of VM
-    local mac=$(sudo virsh domiflist "$vm_name" 2>/dev/null | grep -oP '(?<=  )[0-9a-f:]{17}' | head -1)
+    local mac
+    mac=$(sudo virsh domiflist "$vm_name" 2>/dev/null | grep -oP '(?<=  )[0-9a-f:]{17}' | head -1)
     
     if [ -n "$mac" ]; then
       # Query DHCP leases for this MAC address
-      local ip=$(sudo virsh net-dhcp-leases "$VM_NETWORK" 2>/dev/null | grep "$mac" | awk '{print $5}' | cut -d'/' -f1)
+      local ip
+      ip=$(sudo virsh net-dhcp-leases "$VM_NETWORK" 2>/dev/null | grep "$mac" | awk '{print $5}' | cut -d'/' -f1)
       
       if [ -n "$ip" ]; then
         echo "$ip"
