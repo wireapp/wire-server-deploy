@@ -23,10 +23,6 @@ kube-node:
       ansible_host: "kubenode2_ip"
     kubenode3:
       ansible_host: "kubenode3_ip"
-  vars:
-    calico_mtu: 1450
-    calico_veth_mtu: 1430
-    docker_dns_servers_strict: false
 
 kube-master:
   children:
