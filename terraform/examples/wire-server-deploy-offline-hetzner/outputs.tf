@@ -144,8 +144,6 @@ output "static-inventory" {
       }
       vars = {
         wire_dbname                  = "wire-server"
-        wire_user                    = "wire-server"
-        wire_pass                    = "verysecurepassword"
         postgresql_network_interface = "enp7s0"
       }
     }
