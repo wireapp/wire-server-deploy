@@ -32,7 +32,14 @@ fi
 #  Create wire secrets
 ./bin/offline-secrets.sh
 
-sudo docker run --network=host -v $SSH_AUTH_SOCK:/ssh-agent -e SSH_AUTH_SOCK=/ssh-agent -v $PWD:/wire-server-deploy $WSD_CONTAINER ./bin/offline-cluster.sh
+# Build docker run command with conditional SSH_AUTH_SOCK mounting
+DOCKER_RUN_BASE="sudo docker run --network=host -v $PWD:/wire-server-deploy"
+SSH_MOUNT=""
+if [ -n "${SSH_AUTH_SOCK:-}" ]; then
+    SSH_MOUNT="-v $SSH_AUTH_SOCK:/ssh-agent -e SSH_AUTH_SOCK=/ssh-agent"
+fi
+
+$DOCKER_RUN_BASE $SSH_MOUNT $WSD_CONTAINER ./bin/offline-cluster.sh
 
 # Sync PostgreSQL password from K8s secret to secrets.yaml
 echo "Syncing PostgreSQL password from Kubernetes secret..."
