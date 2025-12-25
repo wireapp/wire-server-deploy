@@ -40,6 +40,7 @@ docker.io/library/nginx:1.25.4-alpine
 bats/bats:1.11.1
 cr.step.sm/smallstep/step-ca:0.25.3-rc7
 registry.k8s.io/ingress-nginx/kube-webhook-certgen:v20231011-8b53cabe0
+ghcr.io/kube-vip/kube-vip:v0.8.0
 EOF
 }
 
