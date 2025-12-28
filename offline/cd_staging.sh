@@ -49,8 +49,6 @@ for attempt in $(seq 1 $MAX_RETRIES); do
             echo "Waiting ${RETRY_DELAY}s for resources to become available..."
             sleep $RETRY_DELAY
 
-  }
-
             # Modify configuration for better availability
             echo "Adjusting server type preferences for attempt $((attempt + 1))..."
             case $attempt in
@@ -112,7 +110,6 @@ rm -f ssh_private_key || true
 echo "$ssh_private_key" > ssh_private_key
 chmod 400 ssh_private_key
 
-# TO-DO: make changes to test the deployment with demo user in 
 terraform output -json static-inventory > inventory.json
 yq eval -o=yaml '.' inventory.json > inventory.yml
 
@@ -129,7 +126,73 @@ ssh  -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectionAt
 # override for ingress-nginx-controller values for hetzner environment $TF_DIR/setup_nodes.yml
 scp -A "$VALUES_DIR/ingress-nginx-controller/hetzner-ci.example.yaml" "demo@$adminhost:./values/ingress-nginx-controller/prod-values.example.yaml"
 
-scp inventory.yml "demo@$adminhost":./ansible/inventory/offline/inventory.yml
+# Source and target files
+SOURCE="inventory.yml"
+cp "${CD_DIR}/../ansible/inventory/offline/staging.yml" "inventory-secondary.yml"
+TARGET="inventory-secondary.yml"
+
+# Read assethost IP
+ASSETHOST_IP=$(yq eval '.assethost.hosts.assethost.ansible_host' "$SOURCE")
+yq eval -i ".assethost.hosts.assethost.ansible_host = \"$ASSETHOST_IP\"" "$TARGET"
+
+# Read kube-node IPs using to_entries
+KUBENODE1_IP=$(yq eval '.["kube-node"].hosts | to_entries | .[0].value.ansible_host' "$SOURCE")
+KUBENODE2_IP=$(yq eval '.["kube-node"].hosts | to_entries | .[1].value.ansible_host' "$SOURCE")
+KUBENODE3_IP=$(yq eval '.["kube-node"].hosts | to_entries | .[2].value.ansible_host' "$SOURCE")
+
+yq eval -i ".kube-node.hosts.kubenode1.ansible_host = \"$KUBENODE1_IP\"" "$TARGET"
+yq eval -i ".kube-node.hosts.kubenode2.ansible_host = \"$KUBENODE2_IP\"" "$TARGET"
+yq eval -i ".kube-node.hosts.kubenode3.ansible_host = \"$KUBENODE3_IP\"" "$TARGET"
+
+# Read datanode IPs using to_entries
+DATANODE1_IP=$(yq eval '.datanode.hosts | to_entries | .[0].value.ansible_host' "$SOURCE")
+DATANODE2_IP=$(yq eval '.datanode.hosts | to_entries | .[1].value.ansible_host' "$SOURCE")
+DATANODE3_IP=$(yq eval '.datanode.hosts | to_entries | .[2].value.ansible_host' "$SOURCE")
+
+# Set cassandra IPs
+yq eval -i ".cassandra.hosts.cassandra1.ansible_host = \"$DATANODE1_IP\"" "$TARGET"
+yq eval -i ".cassandra.hosts.cassandra2.ansible_host = \"$DATANODE2_IP\"" "$TARGET"
+yq eval -i ".cassandra.hosts.cassandra3.ansible_host = \"$DATANODE3_IP\"" "$TARGET"
+
+# Set elasticsearch IPs
+yq eval -i ".elasticsearch.hosts.elasticsearch1.ansible_host = \"$DATANODE1_IP\"" "$TARGET"
+yq eval -i ".elasticsearch.hosts.elasticsearch2.ansible_host = \"$DATANODE2_IP\"" "$TARGET"
+yq eval -i ".elasticsearch.hosts.elasticsearch3.ansible_host = \"$DATANODE3_IP\"" "$TARGET"
+
+# Set minio IPs
+yq eval -i ".minio.hosts.minio1.ansible_host = \"$DATANODE1_IP\"" "$TARGET"
+yq eval -i ".minio.hosts.minio2.ansible_host = \"$DATANODE2_IP\"" "$TARGET"
+yq eval -i ".minio.hosts.minio3.ansible_host = \"$DATANODE3_IP\"" "$TARGET"
+
+# Set rabbitmq IPs
+yq eval -i ".rabbitmq.hosts.rabbitmq1.ansible_host = \"$DATANODE1_IP\"" "$TARGET"
+yq eval -i ".rabbitmq.hosts.rabbitmq2.ansible_host = \"$DATANODE2_IP\"" "$TARGET"
+yq eval -i ".rabbitmq.hosts.rabbitmq3.ansible_host = \"$DATANODE3_IP\"" "$TARGET"
+
+# Set postgresql IPs
+yq eval -i ".postgresql.hosts.postgresql1.ansible_host = \"$DATANODE1_IP\"" "$TARGET"
+yq eval -i ".postgresql.hosts.postgresql2.ansible_host = \"$DATANODE2_IP\"" "$TARGET"
+yq eval -i ".postgresql.hosts.postgresql3.ansible_host = \"$DATANODE3_IP\"" "$TARGET"
+
+# Override network_interface from SOURCE to TARGET for all service groups
+NETWORK_INTERFACE=$(yq eval '.datanode.vars.datanode_network_interface' "$SOURCE")
+yq eval -i ".cassandra.vars.cassandra_network_interface = \"$NETWORK_INTERFACE\"" "$TARGET"
+yq eval -i ".elasticsearch.vars.elasticsearch_network_interface = \"$NETWORK_INTERFACE\"" "$TARGET"
+yq eval -i ".minio.vars.minio_network_interface = \"$NETWORK_INTERFACE\"" "$TARGET"
+yq eval -i ".rabbitmq.vars.rabbitmq_network_interface = \"$NETWORK_INTERFACE\"" "$TARGET"
+yq eval -i ".postgresql.vars.postgresql_network_interface = \"$NETWORK_INTERFACE\"" "$TARGET"
+
+# Extract all kube-node vars from SOURCE and merge into TARGET
+KUBE_NODE_VARS_FILE=$(mktemp)
+yq eval '.["kube-node"].vars' "$SOURCE" > "$KUBE_NODE_VARS_FILE"
+yq eval -i '.kube-node.vars |= load("'"$KUBE_NODE_VARS_FILE"'")' "$TARGET"
+rm -f "$KUBE_NODE_VARS_FILE"
+
+yq eval -i ".all.vars.ansible_ssh_private_key_file = \"ssh/ssh_private_key\"" "$TARGET"
+
+echo "created secondary inventory file $TARGET successfully"
+
+scp "$TARGET" "demo@$adminhost":./ansible/inventory/offline/inventory.yml
 
 ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectionAttempts=10 "demo@$adminhost" cat ./ansible/inventory/offline/inventory.yml || true
 
