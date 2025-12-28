@@ -2,3 +2,4 @@ Fixed: offline-vm-setup script to use ubuntu cloud image, local seed iso and VM 
 Changed:  Add ansible playbook for wiab-staging VM provisioning
 Fixed: offline-deploy.sh for SSH_AUTH_SOCK handling and remove defunct passwords for postgresql
 Added: terraform resources for wiab-staging
+Added: cd_staging script to verify the default build bundle
