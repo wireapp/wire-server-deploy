@@ -25,6 +25,7 @@ Fixes ${ISSUE_URL}
 Add one or more labels to trigger offline builds:
 - `build-default` - Full production build (ansible, terraform, all packages)
 - `build-demo` - Demo/WIAB build
+- `build-wiab-staging` - WIAB-staging build
 - `build-min` - Minimal build (fastest, essential charts only)
 - `build-all` - Run all three builds
 
