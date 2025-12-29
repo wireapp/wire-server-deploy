@@ -124,7 +124,7 @@ ssh  -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectionAt
     "demo@$adminhost" tar xzf "$ARTIFACT.tgz"
 
 # override for ingress-nginx-controller values for hetzner environment $TF_DIR/setup_nodes.yml
-scp -A "$VALUES_DIR/ingress-nginx-controller/hetzner-ci.example.yaml" "demo@$adminhost:./values/ingress-nginx-controller/prod-values.example.yaml"
+scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectionAttempts=10 "$VALUES_DIR/ingress-nginx-controller/hetzner-ci.example.yaml" "demo@$adminhost:./values/ingress-nginx-controller/prod-values.example.yaml"
 
 # Source and target files
 SOURCE="inventory.yml"
@@ -172,7 +172,7 @@ yq eval -i ".all.vars.ansible_ssh_private_key_file = \"ssh/ssh_private_key\"" "$
 
 echo "created secondary inventory file $TARGET successfully"
 
-scp "$TARGET" "demo@$adminhost":./ansible/inventory/offline/inventory.yml
+scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectionAttempts=10 "$TARGET" "demo@$adminhost":./ansible/inventory/offline/inventory.yml
 
 ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectionAttempts=10 "demo@$adminhost" cat ./ansible/inventory/offline/inventory.yml || true
 
