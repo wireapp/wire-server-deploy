@@ -75,8 +75,7 @@ jobs:
 
   verify-default:
     name: Verify default profile
-    # uncomment me
-    # needs: build-default
+    needs: build-default
     if: |
       contains(github.event.pull_request.labels.*.name, 'build-all') ||
       contains(github.event.pull_request.labels.*.name, 'build-default')
@@ -115,8 +114,7 @@ jobs:
   # verify wiab-staging profile
   verify-wiab-staging:
     name: Verify wiab staging profile
-    # uncomment me
-    # needs: build-default
+    needs: build-default
     if: |
       contains(github.event.pull_request.labels.*.name, 'build-all') ||
       contains(github.event.pull_request.labels.*.name, 'build-wiab-staging')
