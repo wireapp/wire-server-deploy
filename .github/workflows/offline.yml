@@ -33,7 +33,6 @@ jobs:
   build-default:
     name: Build default profile
     if: |
-      github.event_name == 'push' ||
       contains(github.event.pull_request.labels.*.name, 'build-all') ||
       contains(github.event.pull_request.labels.*.name, 'build-default') ||
       contains(github.event.pull_request.labels.*.name, 'build-wiab-staging')
@@ -76,7 +75,8 @@ jobs:
 
   verify-default:
     name: Verify default profile
-    needs: build-default
+    # uncomment me
+    # needs: build-default
     if: |
       github.event_name == 'push' ||
       contains(github.event.pull_request.labels.*.name, 'build-all') ||
@@ -116,7 +116,8 @@ jobs:
   # verify wiab-staging profile
   verify-wiab-staging:
     name: Verify wiab staging profile
-    needs: build-default
+    # uncomment me
+    # needs: build-default
     if: |
       github.event_name == 'push' ||
       contains(github.event.pull_request.labels.*.name, 'build-all') ||
@@ -182,7 +183,6 @@ jobs:
   build-demo:
     name: Build demo profile
     if: |
-      github.event_name == 'push' ||
       contains(github.event.pull_request.labels.*.name, 'build-all') ||
       contains(github.event.pull_request.labels.*.name, 'build-demo')
     runs-on:
@@ -243,7 +243,6 @@ jobs:
   build-min:
     name: Build min profile
     if: |
-      github.event_name == 'push' ||
       contains(github.event.pull_request.labels.*.name, 'build-all') ||
       contains(github.event.pull_request.labels.*.name, 'build-min')
     runs-on:
