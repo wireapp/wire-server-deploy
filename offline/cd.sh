@@ -120,9 +120,9 @@ ssh  -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectionAt
     "root@$adminhost" tar xzf "$ARTIFACT.tgz"
 
 # override for ingress-nginx-controller values for hetzner environment $TF_DIR/setup_nodes.yml
-scp -A "$VALUES_DIR/ingress-nginx-controller/hetzner-ci.example.yaml" "root@$adminhost:./values/ingress-nginx-controller/prod-values.example.yaml"
+scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectionAttempts=10 "$VALUES_DIR/ingress-nginx-controller/hetzner-ci.example.yaml" "root@$adminhost:./values/ingress-nginx-controller/prod-values.example.yaml"
 
-scp inventory.yml "root@$adminhost":./ansible/inventory/offline/inventory.yml
+scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectionAttempts=10 inventory.yml "root@$adminhost":./ansible/inventory/offline/inventory.yml
 
 ssh "root@$adminhost" cat ./ansible/inventory/offline/inventory.yml || true
 
