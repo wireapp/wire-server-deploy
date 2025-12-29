@@ -6,7 +6,10 @@ CD_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 TF_DIR="${CD_DIR}/../terraform/examples/wiab-staging-hetzner"
 ARTIFACTS_DIR="${CD_DIR}/default-build/output"
 VALUES_DIR="${CD_DIR}/../values"
+
 COMMIT_HASH="${GITHUB_SHA}"
+#remove me
+COMMIT_HASH="59e6acf2e58e15d96f7de60b88df753e9b667007"
 ARTIFACT="wire-server-deploy-static-${COMMIT_HASH}"
 
 # Retry configuration
@@ -115,6 +118,9 @@ chmod 400 ssh_private_key
 
 terraform output -json static-inventory > inventory.json
 yq eval -o=yaml '.' inventory.json > inventory.yml
+
+# remove me
+cat inventory.yml
 
 echo "Running ansible playbook setup_nodes.yml via adminhost ($adminhost)..."
 ansible-playbook -i inventory.yml setup_nodes.yml --private-key "ssh_private_key"
