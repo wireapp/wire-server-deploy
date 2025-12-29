@@ -7,6 +7,8 @@ TF_DIR="${CD_DIR}/../terraform/examples/wiab-staging-hetzner"
 ARTIFACTS_DIR="${CD_DIR}/default-build/output"
 VALUES_DIR="${CD_DIR}/../values"
 COMMIT_HASH="${GITHUB_SHA}"
+#remove me
+COMMIT_HASH="59e6acf2e58e15d96f7de60b88df753e9b667007"
 ARTIFACT="wire-server-deploy-static-${COMMIT_HASH}"
 
 # Retry configuration
