@@ -8,8 +8,6 @@ ARTIFACTS_DIR="${CD_DIR}/default-build/output"
 VALUES_DIR="${CD_DIR}/../values"
 
 COMMIT_HASH="${GITHUB_SHA}"
-#remove me
-COMMIT_HASH="59e6acf2e58e15d96f7de60b88df753e9b667007"
 ARTIFACT="wire-server-deploy-static-${COMMIT_HASH}"
 
 # Retry configuration
@@ -127,7 +125,7 @@ scp -oStrictHostKeyChecking=accept-new -o ConnectionAttempts=10 "$VALUES_DIR/ing
 scp -oStrictHostKeyChecking=accept-new -o ConnectionAttempts=10 inventory.yml "root@$adminhost":./ansible/inventory/offline/inventory.yml
 
 ssh "root@$adminhost" cat ./ansible/inventory/offline/inventory.yml || true
-
+ls -ls ssh_private_key || true
 echo "Running ansible playbook setup_nodes.yml via adminhost ($adminhost)..."
 ansible-playbook -i inventory.yml setup_nodes.yml --private-key "ssh_private_key" \
   -e "ansible_ssh_common_args='-o ProxyCommand=\"ssh -W %h:%p -q root@$adminhost -i ssh_private_key\" -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null'"
