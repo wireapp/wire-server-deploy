@@ -271,3 +271,7 @@
         - "For more information:"
         - "https://github.com/wireapp/wire-server/tree/develop/charts/nginx-ingress-services"
     when: not use_cert_manager
+
+- name: Verify Cert Manager hairpin Networking
+  import_playbook: ./hairpin_networking.yml
+  when: use_cert_manager
