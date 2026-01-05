@@ -15,7 +15,7 @@ minio_secret_key="$(tr -dc A-Za-z0-9 </dev/urandom | head -c 42)"
 minio_cargohold_access_key="$(tr -dc A-Za-z0-9 </dev/urandom | head -c 20)"
 minio_cargohold_secret_key="$(tr -dc A-Za-z0-9 </dev/urandom | head -c 30)"
 
-zauth="$(sudo docker run $ZAUTH_CONTAINER -m gen-keypair)"
+zauth="$(sudo docker run $ZAUTH_CONTAINER -m gen-keypair -i 1)"
 
 zauth_public=$(echo "$zauth" | awk 'NR==1{ print $2}')
 zauth_private=$(echo "$zauth" | awk 'NR==2{ print $2}')
