@@ -53,6 +53,14 @@ done | list-helm-containers VALUES_DIR="${OUTPUT_DIR}"/values HELM_IMAGE_TREE_FI
 # containers (e.g. `quay.io_wire_galley-integration_4.22.0`.)
 sed -i '/-integration/d' "${HELM_IMAGE_TREE_FILE}"
 
+# Replace docker.io/bitnami with docker.io/bitnamilegacy and log updated images
+# https://github.com/bitnami/charts/issues/35164
+echo "Replacing bitnami with bitnamilegacy..."
+sed -i 's|bitnami/|bitnamilegacy/|g' "${OUTPUT_DIR}"/images
+sed -i 's|bitnami/|bitnamilegacy/|g' "${HELM_IMAGE_TREE_FILE}"
+echo "Updated images:"
+grep "bitnamilegacy" "${OUTPUT_DIR}"/images || echo "No bitnami images found"
+
 grep -vE "$EXCLUDE_PATTERN"  "${OUTPUT_DIR}"/images | create-container-dump  "${OUTPUT_DIR}"/containers-helm
 
 tar cf "${OUTPUT_DIR}"/containers-helm.tar -C "${OUTPUT_DIR}" containers-helm
