@@ -3,26 +3,26 @@
 set -euo pipefail
 set -x
 
-sync_pg_secrets() {
-  # Sync postgresql secret
-  ./bin/sync-k8s-secret-to-wire-secrets.sh \
-    wire-postgresql-external-secret \
-    password \
-    values/wire-server/secrets.yaml \
-    .brig.secrets.pgPassword \
-    .galley.secrets.pgPassword \
-    .spar.secrets.pgPassword \
-    .gundeck.secrets.pgPassword
-}
+#sync_pg_secrets() {
+#  # Sync postgresql secret
+#  ./bin/sync-k8s-secret-to-wire-secrets.sh \
+#    wire-postgresql-external-secret \
+#    password \
+#    values/wire-server/secrets.yaml \
+#    .brig.secrets.pgPassword \
+#    .galley.secrets.pgPassword \
+#    .spar.secrets.pgPassword \
+#    .gundeck.secrets.pgPassword
+#}
 
 helm upgrade --install --wait cassandra-external ./charts/cassandra-external --values ./values/cassandra-external/values.yaml
-helm upgrade --install --wait postgresql-external ./charts/postgresql-external --values ./values/postgresql-external/values.yaml
+#helm upgrade --install --wait postgresql-external ./charts/postgresql-external --values ./values/postgresql-external/values.yaml
 helm upgrade --install --wait elasticsearch-external ./charts/elasticsearch-external --values ./values/elasticsearch-external/values.yaml
 helm upgrade --install --wait minio-external ./charts/minio-external --values ./values/minio-external/values.yaml
 helm upgrade --install --wait rabbitmq-external ./charts/rabbitmq-external --values ./values/rabbitmq-external/values.yaml
 helm upgrade --install --wait fake-aws ./charts/fake-aws --values ./values/fake-aws/prod-values.example.yaml
 
-sync_pg_secrets
+#sync_pg_secrets
 
 # ensure that the RELAY_NETWORKS value is set to the podCIDR
 SMTP_VALUES_FILE="./values/smtp/prod-values.example.yaml"
