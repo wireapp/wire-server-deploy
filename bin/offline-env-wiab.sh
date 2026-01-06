@@ -23,7 +23,7 @@ check_or_load_image() {
     fi
 }
 
-ZAUTH_TAR=$(ls -1 "$SCRIPT_DIR/../containers-adminhost/quay.io_wire_zauth_"*.tar 2>/dev/null | sort | tail -1)
+ZAUTH_TAR=$(find "$SCRIPT_DIR/../containers-adminhost" -maxdepth 1 -name "quay.io_wire_zauth_*.tar" -type f | sort | tail -1)
 
 # Get container image names efficiently
 ZAUTH_CONTAINER=$(check_or_load_image "$ZAUTH_TAR" "quay.io/wire/zauth") || true
