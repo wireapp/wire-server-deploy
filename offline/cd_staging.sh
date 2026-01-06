@@ -101,6 +101,9 @@ fi
 echo ""
 echo "Infrastructure ready! Proceeding with application deployment..."
 
+# Common SSH options for all ssh and scp commands
+SSH_OPTS="-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectionAttempts=10 -o ConnectTimeout=15 -o ServerAliveInterval=15 -o ServerAliveCountMax=4 -o TCPKeepAlive=yes"
+
 # Continue with the rest of the original cd.sh logic
 adminhost=$(terraform output -raw adminhost)
 ssh_private_key=$(terraform output ssh_private_key)
@@ -121,14 +124,12 @@ echo "Running ansible playbook setup_nodes.yml via adminhost ($adminhost)..."
 ansible-playbook -i inventory.yml setup_nodes.yml --private-key "ssh_private_key"
 
 # user demo needs to exist
-ssh  -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectionAttempts=10 \
-    "demo@$adminhost" wget -q "https://s3-eu-west-1.amazonaws.com/public.wire.com/artifacts/${ARTIFACT}.tgz"
+ssh "$SSH_OPTS" "demo@$adminhost" wget -q "https://s3-eu-west-1.amazonaws.com/public.wire.com/artifacts/${ARTIFACT}.tgz"
 
-ssh  -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectionAttempts=10 \
-    "demo@$adminhost" tar xzf "$ARTIFACT.tgz"
+ssh "$SSH_OPTS" "demo@$adminhost" tar xzf "$ARTIFACT.tgz"
 
 # override for ingress-nginx-controller values for hetzner environment $TF_DIR/setup_nodes.yml
-scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectionAttempts=10 "$VALUES_DIR/ingress-nginx-controller/hetzner-ci.example.yaml" "demo@$adminhost:./values/ingress-nginx-controller/prod-values.example.yaml"
+scp "$SSH_OPTS" "$VALUES_DIR/ingress-nginx-controller/hetzner-ci.example.yaml" "demo@$adminhost:./values/ingress-nginx-controller/prod-values.example.yaml"
 
 # Source and target files
 SOURCE="inventory.yml"
@@ -176,12 +177,12 @@ yq eval -i ".all.vars.ansible_ssh_private_key_file = \"ssh/ssh_private_key\"" "$
 
 echo "created secondary inventory file $TARGET successfully"
 
-scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectionAttempts=10 "$TARGET" "demo@$adminhost":./ansible/inventory/offline/inventory.yml
+scp "$SSH_OPTS" "$TARGET" "demo@$adminhost":./ansible/inventory/offline/inventory.yml
 
-ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectionAttempts=10 "demo@$adminhost" cat ./ansible/inventory/offline/inventory.yml || true
+ssh "$SSH_OPTS" "demo@$adminhost" cat ./ansible/inventory/offline/inventory.yml || true
 
 # NOTE: Agent is forwarded; so that the adminhost can provision the other boxes
-ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectionAttempts=10 -A "demo@$adminhost" ./bin/offline-deploy.sh
+ssh "$SSH_OPTS" -A "demo@$adminhost" ./bin/offline-deploy.sh
 
 echo ""
 echo "Wire offline deployment completed successfully!"
