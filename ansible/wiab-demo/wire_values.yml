@@ -85,52 +85,44 @@
 
   - name: Initialize Helm chart values from demo templates
     block:
-    - name: Discover all chart directories in values_dir for initialization
+    - name: Find all demo-values.example.yaml files in one pass
       find:
         paths: "{{ values_dir }}"
-        file_type: directory
-        recurse: no
-      register: chart_dirs
+        patterns: "demo-values.example.yaml"
+        recurse: yes
+      register: demo_values_files
+      changed_when: false
 
-    - name: Verify demo-values.example.yaml template files exist
-      stat:
-        path: "{{ item.path }}/demo-values.example.yaml"
-      register: demo_values_stat
-      loop: "{{ chart_dirs.files }}"
+    - name: Backup and initialize values for all charts
+      shell: |
+        #!/bin/bash
+        set -e
+        demo_file="{{ item }}"
+        chart_dir="$(dirname "$demo_file")"
+        values_file="$chart_dir/values.yaml"
+        
+        # Create timestamped backup if values.yaml exists
+        if [ -f "$values_file" ]; then
+          backup_file="${values_file}.bak.$(date +%Y%m%d_%H%M%S)"
+          mv "$values_file" "$backup_file"
+          echo "Backed up: $backup_file"
+        fi
+        
+        # Copy demo template to values.yaml
+        cp "$demo_file" "$values_file"
+        echo "Initialized: $values_file"
+      args:
+        executable: /bin/bash
+      register: init_result
+      changed_when: "'Initialized:' in init_result.stdout"
+      loop: "{{ demo_values_files.files | map(attribute='path') | list }}"
       no_log: true
 
-    - name: Create timestamped backups of existing values.yaml files
-      block:
-      - name: Check if values.yaml file exists before backup
-        stat:
-          path: "{{ item.item.path }}/values.yaml"
-        register: values_file_stat
-        loop: "{{ demo_values_stat.results }}"
-        no_log: true
+    - name: Display backup and initialization summary
+      debug:
+        msg: "{{ init_result.results | map(attribute='stdout_lines') | flatten | list }}"
+      when: init_result.results | length > 0
 
-      - name: Create backup with timestamp
-        shell: |
-          #!/bin/bash
-          source_file="{{ item.item.path }}/values.yaml"
-          backup_file="{{ item.item.path }}/values.yaml.bak.{{ lookup('pipe', 'date +%Y%m%d_%H%M%S') }}"
-          if [ -f "$source_file" ]; then
-            mv "$source_file" "$backup_file"
-          fi
-        args:
-          executable: /bin/bash
-        when: item.stat.exists
-        loop: "{{ demo_values_stat.results }}"
-        register: backup_result
-        no_log: true
-
-    - name: Initialize values.yaml from demo template for each chart
-      copy:
-        src: "{{ item.item.path }}/demo-values.example.yaml"
-        dest: "{{ item.item.path }}/values.yaml"
-        remote_src: yes
-      when: item.stat.exists
-      loop: "{{ demo_values_stat.results }}"
-      no_log: true
     when: wire_values_changed
 
   - name: Update core Wire service Helm chart values
