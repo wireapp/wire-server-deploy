@@ -92,7 +92,7 @@ brig:
         deletionUrl: https://account.example.com/d/?key=${key}&code=${code}
         invitationUrl: https://account.example.com/i/${code}
     smtp:
-      host: smtp # change this if you want to use your own SMTP server
+      host: demo-smtp # change this if you want to use your own SMTP server
       port: 25        # change this
       connType: plain # change this. Possible values: plain|ssl|tls
 #    proxy:
