@@ -14,7 +14,7 @@
 
 **Resource Requirements:**
 - One physical machine with hypervisor support:
-  - **Memory:** 61 GiB RAM
+  - **Memory:** 55 GiB RAM
   - **Compute:** 29 vCPUs  
   - **Storage:** 550 GB disk space (thin-provisioned)
   - 7 VMs with [Ubuntu 22](https://releases.ubuntu.com/jammy/) as per (#VM-Provisioning)
@@ -36,13 +36,13 @@ We would require 7 VMs as per the following details, you can choose to use your 
 | Hostname | Role | RAM | vCPUs | Disk |
 |----------|------|-----|-------|------|
 | assethost | Asset/Storage Server | 4 GiB | 2 | 100 GB |
-| kubenode1 | Kubernetes Node 1 | 7 GiB | 5 | 50 GB |
-| kubenode2 | Kubernetes Node 2 | 7 GiB | 5 | 50 GB |
-| kubenode3 | Kubernetes Node 3 | 7 GiB | 5 | 50 GB |
-| datanode1 | Data Node 1 | 12 GiB | 4 | 100 GB |
-| datanode2 | Data Node 2 | 12 GiB | 4 | 100 GB |
-| datanode3 | Data Node 3 | 12 GiB | 4 | 100 GB |
-| **Total** | | **61 GiB** | **29** | **550 GB** |
+| kubenode1 | Kubernetes Node 1 | 9 GiB | 5 | 50 GB |
+| kubenode2 | Kubernetes Node 2 | 9 GiB | 5 | 50 GB |
+| kubenode3 | Kubernetes Node 3 | 9 GiB | 5 | 50 GB |
+| datanode1 | Data Node 1 | 8 GiB | 4 | 100 GB |
+| datanode2 | Data Node 2 | 8 GiB | 4 | 100 GB |
+| datanode3 | Data Node 3 | 8 GiB | 4 | 100 GB |
+| **Total** | | **55 GiB** | **29** | **550 GB** |
 
 *Note: These specifications are optimized for testing and validation purposes, not for performance benchmarking.*
 
