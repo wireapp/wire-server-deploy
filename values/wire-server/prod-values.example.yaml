@@ -172,11 +172,11 @@ galley:
       host: cassandra-external
     rabbitmq: # Default value for CI, for on-prem deployment, use rabbitmq-external
       host: rabbitmq-external
-    postgresql:
-      host: postgresql-external-rw # DNS name without protocol
-      port: "5432"
-      user: wire-server
-      dbname: wire-server
+    #postgresql:
+    #  host: postgresql-external-rw # DNS name without protocol
+    #  port: "5432"
+    #  user: wire-server
+    #  dbname: wire-server
     enableFederation: false # Enable to use federation
     settings:
       # prefix URI used when inviting users to a conversation by link
@@ -262,7 +262,7 @@ nginz:
 #      tag: some-tag (only override if you want a newer/different version than what is in the chart)
   nginx_conf:
     # using prod means mostly that some internal endpoints are not exposed
-    dns_resolver: coredns
+    # dns_resolver: coredns
     env: prod
     external_env_domain: example.com
     deeplink:
