@@ -13,7 +13,3 @@ redis-ephemeral:
       requests:
         cpu: "500m"
         memory: "512Mi"
-    image:
-      registry: docker.io
-      repository: bitnamilegacy/redis
-      tag: 7.2.5
