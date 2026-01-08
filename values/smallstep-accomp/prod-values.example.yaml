@@ -1,4 +1,13 @@
+global:
+  security:
+    allowInsecureImages: true
+
 nginx:
+  image:
+    registry: docker.io
+    repository: bitnamilegacy/nginx
+    tag: "1.27.3-debian-12-r5"
+    pullPolicy: IfNotPresent
   existingServerBlockConfigmap: "smallstep-accomp-server-block"
 
   service:
