@@ -162,6 +162,23 @@ output "static-inventory" {
       vars = {
         wire_dbname                  = "wire-server"
         postgresql_network_interface = "enp7s0"
+        repmgr_node_config = {
+          postgresql1 = {
+            node_id  = 1
+            priority = 150
+            role     = "primary"
+          }
+          postgresql2 = {
+            node_id  = 2
+            priority = 100
+            role     = "standby"
+          }
+          postgresql3 = {
+            node_id  = 3
+            priority = 50
+            role     = "standby"
+          }
+        }
       }
     }
     postgresql_rw = {
