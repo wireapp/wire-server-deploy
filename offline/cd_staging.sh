@@ -149,30 +149,10 @@ DATANODE1_IP=$(yq eval '.datanode.hosts | to_entries | .[0].value.ansible_host' 
 DATANODE2_IP=$(yq eval '.datanode.hosts | to_entries | .[1].value.ansible_host' "$SOURCE")
 DATANODE3_IP=$(yq eval '.datanode.hosts | to_entries | .[2].value.ansible_host' "$SOURCE")
 
-# Set cassandra IPs
-yq eval -i ".cassandra.hosts.cassandra1.ansible_host = \"$DATANODE1_IP\"" "$TARGET"
-yq eval -i ".cassandra.hosts.cassandra2.ansible_host = \"$DATANODE2_IP\"" "$TARGET"
-yq eval -i ".cassandra.hosts.cassandra3.ansible_host = \"$DATANODE3_IP\"" "$TARGET"
-
-# Set elasticsearch IPs
-yq eval -i ".elasticsearch.hosts.elasticsearch1.ansible_host = \"$DATANODE1_IP\"" "$TARGET"
-yq eval -i ".elasticsearch.hosts.elasticsearch2.ansible_host = \"$DATANODE2_IP\"" "$TARGET"
-yq eval -i ".elasticsearch.hosts.elasticsearch3.ansible_host = \"$DATANODE3_IP\"" "$TARGET"
-
-# Set minio IPs
-yq eval -i ".minio.hosts.minio1.ansible_host = \"$DATANODE1_IP\"" "$TARGET"
-yq eval -i ".minio.hosts.minio2.ansible_host = \"$DATANODE2_IP\"" "$TARGET"
-yq eval -i ".minio.hosts.minio3.ansible_host = \"$DATANODE3_IP\"" "$TARGET"
-
-# Set rabbitmq IPs
-yq eval -i ".rabbitmq.hosts.rabbitmq1.ansible_host = \"$DATANODE1_IP\"" "$TARGET"
-yq eval -i ".rabbitmq.hosts.rabbitmq2.ansible_host = \"$DATANODE2_IP\"" "$TARGET"
-yq eval -i ".rabbitmq.hosts.rabbitmq3.ansible_host = \"$DATANODE3_IP\"" "$TARGET"
-
-# Set postgresql IPs
-yq eval -i ".postgresql.hosts.postgresql1.ansible_host = \"$DATANODE1_IP\"" "$TARGET"
-yq eval -i ".postgresql.hosts.postgresql2.ansible_host = \"$DATANODE2_IP\"" "$TARGET"
-yq eval -i ".postgresql.hosts.postgresql3.ansible_host = \"$DATANODE3_IP\"" "$TARGET"
+# Set datanodes IPs
+yq eval -i ".datanodes.hosts.datanode1.ansible_host = \"$DATANODE1_IP\"" "$TARGET"
+yq eval -i ".datanodes.hosts.datanode2.ansible_host = \"$DATANODE2_IP\"" "$TARGET"
+yq eval -i ".datanodes.hosts.datanode3.ansible_host = \"$DATANODE3_IP\"" "$TARGET"
 
 # Override network_interface from SOURCE to TARGET for all service groups
 NETWORK_INTERFACE=$(yq eval '.datanode.vars.datanode_network_interface' "$SOURCE")
