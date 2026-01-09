@@ -165,7 +165,6 @@ yq eval -i ".cassandra.vars.cassandra_network_interface = \"$NETWORK_INTERFACE\"
 yq eval -i ".elasticsearch.vars.elasticsearch_network_interface = \"$NETWORK_INTERFACE\"" "$TARGET"
 yq eval -i ".minio.vars.minio_network_interface = \"$NETWORK_INTERFACE\"" "$TARGET"
 yq eval -i ".rabbitmq.vars.rabbitmq_network_interface = \"$NETWORK_INTERFACE\"" "$TARGET"
-yq eval -i ".postgresql.vars.postgresql_network_interface = \"$NETWORK_INTERFACE\"" "$TARGET"
 
 # Extract all kube-node vars from SOURCE and merge into TARGET
 KUBE_NODE_VARS_FILE=$(mktemp)
