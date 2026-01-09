@@ -6,7 +6,7 @@ install Wire.
 
 ## Demo / Testing installation
 
-To install a self-hosted instance of Wire deployed on one Server ("Wire in a box") for testing purposes, we recommend the [autodeploy.sh](../bin/autodeploy.sh) script. See also: [Automated full install](single_hetzner_machine_installation.md#automated-full-install) section in the Single Hetzner Machine installation readme.
+To install a self-hosted instance of Wire deployed on one Server ("Wire in a box") for testing purposes, we recommend the [WIAB Staging](wiab-staging.md) or [WIAB Dev](https://docs.wire.com/latest/how-to/install/demo-wiab.html) solution.
 
 ## Installing docker
 
@@ -57,8 +57,6 @@ If you see the curent docker version and no error, it means that Docker is now c
 
 
 ## Downloading and extracting the artifact
-
-Note: If you have followed the Ubuntu installation instructions (`single_hetzner_machine_installation.md`) before following this page, you already have a wire-server-deploy folder with an artifact extracted into it, and you can simply use that.
 
 Create a fresh workspace to download the artifacts:
 
@@ -743,7 +741,6 @@ ufw allow in on $OUTBOUNDINTERFACE proto tcp to any port 80;
 "
 ```
 
-For wire-in-a-box deployments based on single_hetzner_machine_installation.md, an nftables based firewall including a predefined ruleset should already exist.
 By default, the predefined ruleset forwards ingress traffic to kubenode1 (192.168.122.21). To check on which node the ingress controller has been deployed, get the node IP via kubectl:
 ```
 d kubectl get pods -l app.kubernetes.io/name=ingress-nginx -o=custom-columns=NAME:.metadata.name,NODE:.spec.nodeName,IP:.status.hostIP

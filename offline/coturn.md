@@ -10,8 +10,8 @@ This document explains how to install Coturn on a newly deployed Wire-Server ins
 
 This presumes you already have:
 
-* Followed the [single Hetzner machine installation](single_hetzner_machine_installation.md) guide or otherwise have a machine ready to accept a Wire-Server deployment.
-* Have followed the [Wire-Server installation](docs_ubuntu_22.04.md) guide and have Wire-Server deployed and working.
+* Followed the [WIAB Staging](wiab-staging.md) guide to setup a Wire in a Box staging solution.
+* OR, Have followed the [Wire-Server installation](docs_ubuntu_22.04.md) guide and have Wire-Server deployed and working.
 
 ## Plan. 
 
