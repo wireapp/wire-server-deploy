@@ -78,18 +78,4 @@ rabbitmq:
   vars:
     rabbitmq_network_interface: enp1s0
 
-postgresql:
-  children:
-    datanodes: {}
-  vars:
-    wire_dbname: wire-server
-    postgresql_network_interface: enp1s0
-
-postgresql_rw:
-  hosts:
-    datanode1: {}
-
-postgresql_ro:
-  hosts:
-    datanode2: {}
-    datanode3: {}
+postgresql: {}
