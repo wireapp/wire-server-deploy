@@ -177,7 +177,19 @@ postgresql3 ansible_host=192.168.122.206
 
 [postgresql:vars]
 postgresql_network_interface = enp1s0
-
+repmgr_node_config:
+  postgresql1:  # Maps to postgresql_rw group
+    node_id: 1
+    priority: 150
+    role: primary
+  postgresql2:  # Maps to first postgresql_ro
+    node_id: 2
+    priority: 100
+    role: standby
+  postgresql3:  # Maps to second postgresql_ro
+    node_id: 3
+    priority: 50
+    role: standby
 
 # All PostgreSQL nodes
 [postgresql]
