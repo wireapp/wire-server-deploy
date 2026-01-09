@@ -15,7 +15,7 @@ minio_secret_key="$(tr -dc A-Za-z0-9 </dev/urandom | head -c 42)"
 minio_cargohold_access_key="$(tr -dc A-Za-z0-9 </dev/urandom | head -c 20)"
 minio_cargohold_secret_key="$(tr -dc A-Za-z0-9 </dev/urandom | head -c 30)"
 
-zauth="$(sudo docker run $ZAUTH_CONTAINER -m gen-keypair)"
+zauth="$(sudo docker run $ZAUTH_CONTAINER -m gen-keypair -i 1)"
 
 zauth_public=$(echo "$zauth" | awk 'NR==1{ print $2}')
 zauth_private=$(echo "$zauth" | awk 'NR==2{ print $2}')
@@ -24,22 +24,21 @@ prometheus_pass="$(tr -dc A-Za-z0-9 </dev/urandom | head -c 16)"
 
 # Generate MLS private keys using openssl
 # Keys need 10 spaces indent (5 levels deep: galley > secrets > mlsPrivateKeys > removal > keyname)
-readonly MLS_KEY_INDENT="          "
-generate_mls_key() {
-    openssl genpkey "$@" 2>/dev/null | awk -v indent="$MLS_KEY_INDENT" '{printf "%s%s\n", indent, $0}'
-}
+#readonly MLS_KEY_INDENT="          "
+#generate_mls_key() {
+#    openssl genpkey "$@" 2>/dev/null | awk -v indent="$MLS_KEY_INDENT" '{printf "%s%s\n", indent, $0}'
+#}
 
-mls_ed25519_key="$(generate_mls_key -algorithm ed25519)"
-mls_ecdsa_p256_key="$(generate_mls_key -algorithm ec -pkeyopt ec_paramgen_curve:P-256)"
-mls_ecdsa_p384_key="$(generate_mls_key -algorithm ec -pkeyopt ec_paramgen_curve:P-384)"
-mls_ecdsa_p521_key="$(generate_mls_key -algorithm ec -pkeyopt ec_paramgen_curve:P-521)"
+#mls_ed25519_key="$(generate_mls_key -algorithm ed25519)"
+#mls_ecdsa_p256_key="$(generate_mls_key -algorithm ec -pkeyopt ec_paramgen_curve:P-256)"
+#mls_ecdsa_p384_key="$(generate_mls_key -algorithm ec -pkeyopt ec_paramgen_curve:P-384)"
+#mls_ecdsa_p521_key="$(generate_mls_key -algorithm ec -pkeyopt ec_paramgen_curve:P-521)"
 
 if [[ ! -f $VALUES_DIR/wire-server/secrets.yaml ]]; then
   echo "Writing $VALUES_DIR/wire-server/secrets.yaml"
   cat <<EOF > $VALUES_DIR/wire-server/secrets.yaml
 brig:
   secrets:
-    pgPassword: verysecurepassword
     smtpPassword: dummyPassword
     zAuth:
       publicKeys: "$zauth_public"
@@ -76,19 +75,8 @@ galley:
     rabbitmq:
       username: guest
       password: guest
-    pgPassword: verysecurepassword
     awsKeyId: dummykey
     awsSecretKey: dummysecret
-    mlsPrivateKeys:
-      removal:
-        ed25519: |
-$mls_ed25519_key
-        ecdsa_secp256r1_sha256: |
-$mls_ecdsa_p256_key
-        ecdsa_secp384r1_sha384: |
-$mls_ecdsa_p384_key
-        ecdsa_secp521r1_sha512: |
-$mls_ecdsa_p521_key
 gundeck:
   secrets:
     awsKeyId: dummykey
