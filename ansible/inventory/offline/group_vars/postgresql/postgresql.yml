@@ -24,19 +24,8 @@ repmgr_namespace: "{{ wire_namespace | default('default') }}"
 wire_pg_secret_name: "wire-postgresql-external-secret"
 
 # Node configuration for repmgr
-repmgr_node_config:
-  postgresql1:  # Maps to postgresql_rw group
-    node_id: 1
-    priority: 150
-    role: primary
-  postgresql2:  # Maps to first postgresql_ro
-    node_id: 2
-    priority: 100
-    role: standby
-  postgresql3:  # Maps to second postgresql_ro
-    node_id: 3
-    priority: 50
-    role: standby
+# NOTE: repmgr_node_config is defined in the inventory file ansible/inventory/offline/99-static, ansible/inventory/offline/staging.yml and terraform/examples/wire-server-deploy-offline-hetzner/outputs.tf
+# to allow environment-specific node mappings. Do not define here.
 
 # repmgr settings
 # repmgrd monitoring and reconnection configuration
