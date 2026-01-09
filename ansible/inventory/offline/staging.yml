@@ -37,66 +37,46 @@ k8s-cluster:
     kube-node: {}
     kube-master: {}
 
-cassandra:
+datanodes:
   hosts:
-    cassandra1:
+    datanode1:
       ansible_host: "datanode1_ip"
-    cassandra2:
+    datanode2:
       ansible_host: "datanode2_ip"
-    cassandra3:
+    datanode3:
       ansible_host: "datanode3_ip"
+
+cassandra:
+  children:
+    datanodes: {}
   vars:
     cassandra_network_interface: enp1s0
 
 cassandra_seed:
   hosts:
-    cassandra1: {}
+    datanode1: {}
 
 elasticsearch:
-  hosts:
-    elasticsearch1:
-      ansible_host: "datanode1_ip"
-    elasticsearch2:
-      ansible_host: "datanode2_ip"
-    elasticsearch3:
-      ansible_host: "datanode3_ip"
+  children:
+    datanodes: {}
   vars:
     elasticsearch_network_interface: enp1s0
 
-elasticsearch_master:
-  children:
-    elasticsearch: {}
-
 minio:
-  hosts:
-    minio1:
-      ansible_host: "datanode1_ip"
-    minio2:
-      ansible_host: "datanode2_ip"
-    minio3:
-      ansible_host: "datanode3_ip"
+  children:
+    datanodes: {}
   vars:
     minio_network_interface: enp1s0
 
 rabbitmq:
-  hosts:
-    rabbitmq1:
-      ansible_host: "datanode1_ip"
-    rabbitmq2:
-      ansible_host: "datanode2_ip"
-    rabbitmq3:
-      ansible_host: "datanode3_ip"
+  children:
+    datanodes: {}
   vars:
     rabbitmq_network_interface: enp1s0
 
 postgresql:
-  hosts:
-    postgresql1:
-      ansible_host: "datanode1_ip"
-    postgresql2:
-      ansible_host: "datanode2_ip"
-    postgresql3:
-      ansible_host: "datanode3_ip"
+  children:
+    datanodes: {}
   vars:
     wire_dbname: wire-server
     postgresql_network_interface: enp1s0
