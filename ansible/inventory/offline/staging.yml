@@ -56,11 +56,15 @@ cassandra_seed:
   hosts:
     datanode1: {}
 
-elasticsearch_master:
+elasticsearch:
   children:
     datanodes: {}
   vars:
     elasticsearch_network_interface: enp1s0
+
+elasticsearch_master:
+  children:
+    datanodes: {}
 
 minio:
   children:
