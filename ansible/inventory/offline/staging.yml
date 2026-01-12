@@ -56,7 +56,7 @@ cassandra_seed:
   hosts:
     datanode1: {}
 
-elasticsearch:
+elasticsearch_master:
   children:
     datanodes: {}
   vars:
