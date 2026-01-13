@@ -1,9 +1,19 @@
+#
+# TODO: This playbook needs updates for offline/systemd environments:
+# - cassandra_up.yml references runit (not systemd)
+# - cassandra_up.yml uses AWS-specific variables (ansible_ec2_local_ipv4, routing_table)
+# - cassandra_up.yml needs offline mode support
+#
+# For now, use manual restart approach:
+#   ssh <node> 'sudo systemctl restart cassandra.service'
+#   Wait for startup, then verify with: nodetool version && nodetool status
+#
 - name: restart cassandra nodes
   hosts: "cassandra"
   any_errors_fatal: yes
   gather_facts: no
   serial: 1
   tasks:
-    - include: tasks/cassandra_cluster_healthy.yml
-    - include: tasks/cassandra_down.yml
-    - include: tasks/cassandra_up.yml
+    - include_tasks: tasks/cassandra_cluster_healthy.yml
+    - include_tasks: tasks/cassandra_down.yml
+    - include_tasks: tasks/cassandra_up.yml
