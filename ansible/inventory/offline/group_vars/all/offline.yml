@@ -35,6 +35,10 @@ containerd_download_url: "{{ binaries_url }}/containerd-{{ containerd_version }}
 runc_download_url: "{{ binaries_url }}/runc.{{ image_arch }}"
 etcd_download_url: "{{ binaries_url }}/etcd-{{ etcd_version }}-linux-{{ image_arch }}.tar.gz"
 nerdctl_download_url: "{{ binaries_url }}/nerdctl-{{ nerdctl_version }}-linux-{{ image_arch }}.tar.gz"
+
+# Cassandra configuration - overrides ansible-cassandra role defaults
+# cassandra_version determines installation directory: /opt/apache-cassandra-{{ cassandra_version }}/
+# Both version and URL must be updated when upgrading Cassandra
 cassandra_version: "3.11.19"
 cassandra_url: "{{ binaries_url }}/apache-cassandra-3.11.19-bin.tar.gz"
 prometheus_jmx_url: "{{ binaries_url }}/jmx_prometheus_javaagent-0.10.jar"
