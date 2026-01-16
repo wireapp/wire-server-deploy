@@ -1,20 +1,11 @@
 - hosts: deploy_node
   vars:
-    artifact_hash: d5c1e25ac25d9cf4ade2f00c12f0cd05371b8616
-    deploy_dir: /home/demo/wire-server-deploy
+    deploy_dir: "/home/{{ ansible_user }}/wire-server-deploy"
     inventory_file: "{{ deploy_dir }}/ansible/inventory/offline/inventory.yml"
   tasks:
-  - name: system configuration and package management
+  - name: package management
     become: true
     block:
-
-    - name: set ipv4 forward
-      sysctl:
-        name: net.ipv4.ip_forward
-        value: '1'
-        sysctl_set: true
-        state: present
-        reload: true
 
     - name: apt update
       apt: update_cache=yes force_apt_get=yes
@@ -87,6 +78,11 @@
         regexp: '^#?XKVARIANT='
         line: 'XKBVARIANT="de"'
 
+    tags: install_pkgs
+
+  - name: Libvirt management
+    become: true
+    block:
     - name: ensure default user is part of required groups
       user:
         name: "{{ ansible_user }}"
@@ -100,15 +96,6 @@
         etype: user
         permissions: x
         state: present
-
-    - name: deploy sshd config
-      copy:
-        src: files/wiab_server_sshd_config
-        dest: /etc/ssh/sshd_config
-        mode: 0644
-        owner: root
-        group: root
-      notify: sshd | restart
 
     - name: stop and disable dnsmasq service
       service:
@@ -153,29 +140,9 @@
         name: wirebox
         autostart: yes
 
-    - name: check if nftables.conf is deployed already
-      stat:
-        path: /root/.nftables_deployed
-      register: nft_deployed
+    tags: libvirt_setup
 
-    - name: deploy /etc/nftables.conf
-      template:
-        src: files/wiab_server_nftables.conf.j2
-        dest: /etc/nftables.conf
-        mode: 0750
-        owner: root
-        group: root
-      notify: nftables | restart
-      when: not nft_deployed.stat.exists
-
-    - name: add local file flag after nftables deployment
-      file:
-        path: /root/.nftables_deployed
-        state: touch
-        modification_time: preserve
-        access_time: preserve
-
-  - name: deploy wire artifact, ubuntu iso
+  - name: Download wire artifact and ubuntu iso
     become_user: demo
     become: true
     block:
@@ -228,6 +195,12 @@
       shell:
         cmd: sudo chmod -R 0775 "{{ deploy_dir }}"; sudo chown -R demo:demo /home/demo
 
+    tags: download
+
+  - name: Start VMs
+    become_user: demo
+    become: true
+    block:
     - name: Start VMs on the node
       shell: 
         cmd: "{{ deploy_dir }}/bin/offline-vm-setup.sh"
@@ -240,7 +213,6 @@
     - name: Print VM status
       debug:
         msg: "{{ vm_status.stdout_lines }}"
-
 
     - name: Get assethost IP address from inventory
       shell: |
@@ -272,12 +244,12 @@
         
         # Use yq-go to replace all placeholder IP values with actual IPs from .vm-env
         yq -i ".assethost.hosts.assethost.ansible_host |= \"$assethost_ip\"" "{{ inventory_file }}"
-        yq -i ".kube_node.hosts.kubenode1.ansible_host |= \"$kubenode1_ip\"" "{{ inventory_file }}"
-        yq -i ".kube_node.hosts.kubenode2.ansible_host |= \"$kubenode2_ip\"" "{{ inventory_file }}"
-        yq -i ".kube_node.hosts.kubenode3.ansible_host |= \"$kubenode3_ip\"" "{{ inventory_file }}"
+        yq -i ".kube-node.hosts.kubenode1.ansible_host |= \"$kubenode1_ip\"" "{{ inventory_file }}"
+        yq -i ".kube-node.hosts.kubenode2.ansible_host |= \"$kubenode2_ip\"" "{{ inventory_file }}"
+        yq -i ".kube-node.hosts.kubenode3.ansible_host |= \"$kubenode3_ip\"" "{{ inventory_file }}"
         yq -i ".datanodes.hosts.datanode1.ansible_host |= \"$datanode1_ip\"" "{{ inventory_file }}"
         yq -i ".datanodes.hosts.datanode2.ansible_host |= \"$datanode2_ip\"" "{{ inventory_file }}"
-        yq -i ".datanodes.hosts.datanode3.ansible_host |= \"$datanode2_ip\"" "{{ inventory_file }}"
+        yq -i ".datanodes.hosts.datanode3.ansible_host |= \"$datanode3_ip\"" "{{ inventory_file }}"
         
         # Update network interface variables with gateway name
         yq -i ".cassandra.vars.cassandra_network_interface |= \"$GATEWAY_NAME\"" "{{ inventory_file }}"
@@ -288,15 +260,42 @@
       args:
         executable: /bin/bash
 
-  handlers:
-  - name: sshd | restart
-    service:
-      name: sshd
-      state: restarted
-    become: true
-  - name: nftables | restart
-    service:
-      name: nftables
-      enabled: true
-      state: restarted
-    become: true
+    tags: start_vms
+
+  - name: Manage inventory
+    block:
+    - name: Check if inventory file exists
+      stat:
+        path: "{{ inventory_file }}"
+      register: inventory_file_check
+
+    - name: Fail if inventory file does not exist
+      fail:
+        msg: "Inventory file {{ inventory_file }} does not exist"
+      when: not inventory_file_check.stat.exists
+
+    - name: Read kubenode IPs from inventory YAML using yq
+      shell: |
+        yq -r '.["kube-node"].hosts.kubenode{{ item }}.ansible_host' "{{ inventory_file }}" 2>/dev/null || echo "NOTFOUND"
+      register: kubenode_ip_result
+      loop: [1, 2, 3]
+      changed_when: false
+
+    - name: Validate kubenode IPs were found in inventory
+      fail:
+        msg: "Failed to read kubenode{{ item.item }}_ip from {{ inventory_file }}. Value: {{ item.stdout }}"
+      when: item.stdout == "NOTFOUND" or item.stdout == "" or item.stdout == "null"
+      loop: "{{ kubenode_ip_result.results }}"
+
+    - name: Parse and register kubenode IPs as facts
+      set_fact:
+        kubenode1_ip: "{{ kubenode_ip_result.results[0].stdout }}"
+        kubenode2_ip: "{{ kubenode_ip_result.results[1].stdout }}"
+        kubenode3_ip: "{{ kubenode_ip_result.results[2].stdout }}"
+        wire_comment: "wiab-stag"
+
+    tags: always
+
+- name: Configure nftables
+  import_playbook: ./wiab-staging-nftables.yaml
+  tags: nftables
