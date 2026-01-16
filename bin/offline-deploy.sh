@@ -53,4 +53,4 @@ sudo docker run --network=host -v $PWD:/wire-server-deploy $WSD_CONTAINER ./bin/
   .gundeck.secrets.pgPassword
 
 
-sudo docker run --network=host -v $PWD:/wire-server-deploy $WSD_CONTAINER ./bin/offline-helm.sh
+sudo docker run --network=host -v $PWD:/wire-server-deploy $WSD_CONTAINER ./bin/helm-operations.sh
