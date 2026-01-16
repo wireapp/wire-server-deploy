@@ -55,7 +55,6 @@ brig:
     # TODO: BUG! 5.23 brig charts wont deploy in CI unless federation is enabled!
     enableFederation: true # Enable to use federation
     optSettings:
-      setEnableMLS: false # Enable for MLS protocol use
       setFederationDomain: example.com # change this
       # Sync the domain with the 'host' variable in the sftd chart
       # Comment the next line (by adding '#' before it) if conference calling is not used
@@ -184,35 +183,6 @@ galley:
       federationDomain: example.com # change this
       # see #RefConfigOptions in `/docs/reference` (https://github.com/wireapp/wire-server/)
       featureFlags:
-        mls:
-          defaults:
-            status: enabled
-            config:
-              protocolToggleUsers: []
-              defaultProtocol: mls
-              allowedCipherSuites: [2]
-              defaultCipherSuite: 2
-              supportedProtocols: [proteus, mls]
-            lockStatus: unlocked
-        mlsMigration:
-          defaults:
-            status: enabled
-            config:
-              startTime: null
-              finalizeRegardlessAfter: null
-              usersThreshold: 100
-              clientsThreshold: 100
-            lockStatus: unlocked
-        sso: enabled-by-default
-        # channels: # Uncomment to enable channels by default for all newly created teams
-        #   defaults:
-        #     status: enabled
-        #     config:
-        #       allowed_to_create_channels: team-members
-        #       allowed_to_open_channels: team-members
-        #     lockStatus: unlocked
-        # NOTE: Change this to "disabled-by-default" for legalhold support
-        # legalhold: disabled-by-default
         legalhold: disabled-permanently
         teamSearchVisibility: disabled-by-default
     aws:
