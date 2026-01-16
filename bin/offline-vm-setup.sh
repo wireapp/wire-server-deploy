@@ -12,14 +12,14 @@
 # | hostname  | RAM    | VCPUs | disk space (thin provisioned) |
 #  --------------------------------------------------------------
 # | assethost | 4 GiB  | 2     | 100 GB                        |
-# | kubenode1 | 9 GiB  | 5     | 50 GB                         |
-# | kubenode2 | 9 GiB  | 5     | 50 GB                         |
-# | kubenode3 | 9 GiB  | 5     | 50 GB                         |
+# | kubenode1 | 9 GiB  | 5     | 150 GB                         |
+# | kubenode2 | 9 GiB  | 5     | 150 GB                         |
+# | kubenode3 | 9 GiB  | 5     | 150 GB                         |
 # | datanode1  | 8 GiB | 4     | 100 GB                        |
 # | datanode2  | 8 GiB | 4     | 100 GB                        |
 # | datanode3  | 8 GiB | 4     | 100 GB                        |
 #  --------------------------------------------------------------
-# | total     | 55 GiB |  29   | 550 GB                        |
+# | total     | 55 GiB |  29   | 850 GB                        |
 
 set -Eeuo pipefail
 
@@ -98,7 +98,7 @@ SSHKEY_DEMO=$(cat "$SSH_PUBKEY")
 VM_NAME=(assethost kubenode1 kubenode2 kubenode3 datanode1 datanode2 datanode3)
 VM_VCPU=(2 5 5 5 4 4 4)
 VM_RAM=(4096 9216 9216 9216 8192 8192 8192)
-VM_DISK=(100 50 50 50 100 100 100)
+VM_DISK=(100 150 150 150 100 100 100)
 VM_NETWORK='wirebox'
 
 # Check if VM_NETWORK exists, if not fall back to 'default'
