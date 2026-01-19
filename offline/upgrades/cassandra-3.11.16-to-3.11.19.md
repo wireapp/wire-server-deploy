@@ -31,7 +31,6 @@
    # Copy updated Cassandra playbooks
    scp ansible/db-operations/cassandra_pre_upgrade.yml <admin-host>:~/wire-server-deploy/ansible/db-operations/
    scp ansible/db-operations/cassandra_post_upgrade.yml <admin-host>:~/wire-server-deploy/ansible/db-operations/
-   scp ansible/db-operations/cassandra_restart.yml <admin-host>:~/wire-server-deploy/ansible/db-operations/
    scp ansible/cassandra.yml <admin-host>:~/wire-server-deploy/ansible/
 
    # Copy updated ansible-cassandra role
@@ -71,14 +70,14 @@ ansible-playbook -i ansible/inventory/offline/hosts.ini cassandra.yml
 ### 3. Restart services (manual rolling restart)
 ```bash
 # On each node, one at a time:
-ssh ansnode1 'sudo systemctl restart cassandra.service'
+ssh <cassandra_node_1> 'sudo systemctl restart cassandra.service'
 # Wait 30-60s for startup, monitor with:
-ssh ansnode1 'sudo journalctl -u cassandra.service -f'
+ssh <cassandra_node_1> 'sudo journalctl -u cassandra.service -f'
 
 # Verify version and cluster health:
-ssh ansnode1 'nodetool version && nodetool status'
+ssh <cassandra_node_1> 'nodetool version && nodetool status'
 
-# Repeat for remaining nodes (ansnode2, ansnode3, ...)
+# Repeat for remaining nodes
 ```
 
 ### 4. Post-upgrade (sstable optimization)
@@ -107,9 +106,9 @@ nodetool describecluster
 
 ### 2. Verify version on all nodes
 ```bash
-ssh ansnode1 'nodetool version'  # Expected: ReleaseVersion: 3.11.19
-ssh ansnode2 'nodetool version'  # Expected: ReleaseVersion: 3.11.19
-ssh ansnode3 'nodetool version'  # Expected: ReleaseVersion: 3.11.19
+ssh <cassandra_node_1> 'nodetool version'  # Expected: ReleaseVersion: 3.11.19
+ssh <cassandra_node_2> 'nodetool version'  # Expected: ReleaseVersion: 3.11.19
+ssh <cassandra_node_3> 'nodetool version'  # Expected: ReleaseVersion: 3.11.19
 ```
 
 ### 3. Verify data integrity with cqlsh
@@ -137,4 +136,3 @@ exit
 - Always restart nodes one at a time (serial: 1)
 - Wait for each node to fully start before proceeding to next node
 - Monitor startup: `sudo journalctl -u cassandra.service -f`
-- `cassandra_restart.yml` playbook not compatible with offline/systemd environments
