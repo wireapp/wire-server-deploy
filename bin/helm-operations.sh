@@ -14,8 +14,12 @@ if [ -z "$HOST_IP" ]; then
 HOST_IP=$(wget -qO- https://api.ipify.org)
 fi
 
-# picking a node for calling traffic
-CALLING_NODE="kubenode3"
+# picking a node for calling traffic (3rd kube worker node)
+CALLING_NODE=$(kubectl get nodes --no-headers | tail -n 1 | awk '{print $1}')
+if [[ -z "$CALLING_NODE" ]]; then
+  echo "Error: could not determine the last kube worker node via kubectl"
+  exit 1
+fi
 
 # Creates values.yaml from prod-values.example.yaml and secrets.yaml from prod-secrets.example.yaml
 # Works on all chart directories in $BASE_DIR/values/
@@ -23,7 +27,7 @@ process_values() {
 
   ENV=$1
   TYPE=$2
-  charts=(fake-aws smtp rabbitmq databases-ephemeral reaper wire-server webapp account-pages team-settings smallstep-accomp ingress-nginx-controller nginx-ingress-services)
+  charts=(fake-aws smtp rabbitmq databases-ephemeral reaper wire-server webapp account-pages team-settings smallstep-accomp ingress-nginx-controller nginx-ingress-services coturn sftd cert-manager)
 
   if [[ "$ENV" != "prod" ]] || [[ -z "$TYPE" ]] ; then
     echo "Error: This function only supports prod deployments with TYPE as values or secrets. ENV must be 'prod', got: '$ENV' and '$TYPE'"
@@ -186,10 +190,13 @@ process_values "prod" "secrets"
 configure_values
 
 # deploying with external datastores, useful for prod setup
-deploy_charts cassandra-external elasticsearch-external minio-external fake-aws smtp rabbitmq databases-ephemeral reaper wire-server webapp account-pages team-settings smallstep-accomp ingress-nginx-controller nginx-ingress-services
+deploy_charts cassandra-external elasticsearch-external minio-external postgresql-external fake-aws smtp rabbitmq databases-ephemeral reaper wire-server webapp account-pages team-settings smallstep-accomp ingress-nginx-controller
 
 # deploying cert manager to issue certs, by default letsencrypt-http01 issuer is configured
 deploy_cert_manager
+
+# nginx-ingress-services chart needs cert-manager to be deployed
+deploy_charts nginx-ingress-services
 
 # deploying sft and coturn services
 # not implemented yet
