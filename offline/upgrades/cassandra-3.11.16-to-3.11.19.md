@@ -61,13 +61,15 @@ ansible-playbook -i ansible/inventory/offline/hosts.ini db-operations/cassandra_
 
 ### 2. Install new binaries
 ```bash
-ansible-playbook -i ansible/inventory/offline/hosts.ini cassandra.yml
+ansible-playbook -i ansible/inventory/offline/hosts.ini ansible/cassandra.yml
 ```
 - Downloads and installs new Cassandra version
 - Updates symlinks
 - Does NOT restart service
 
 ### 3. Restart services (manual rolling restart)
+**IMPORTANT:** This step must happen BEFORE post-upgrade. The new version must be running before upgrading sstables.
+
 ```bash
 # On each node, one at a time:
 ssh <cassandra_node_1> 'sudo systemctl restart cassandra.service'
@@ -80,9 +82,15 @@ ssh <cassandra_node_1> 'nodetool version && nodetool status'
 # Repeat for remaining nodes
 ```
 
+**Why this order matters:**
+- Step 2 installs new binaries but doesn't restart (old version still running)
+- Step 3 restarts to load the new 3.11.19 binary
+- Step 4 upgrades sstables using the NEW version's format
+- If you skip restart, sstable upgrade will fail or use wrong format
+
 ### 4. Post-upgrade (sstable optimization)
 ```bash
-ansible-playbook -i inventory/<env>/hosts.ini db-operations/cassandra_post_upgrade.yml
+ansible-playbook -i inventory/offline/hosts.ini ansible/db-operations/cassandra_post_upgrade.yml
 ```
 - Upgrades sstables to new format
 - Verifies cluster health
