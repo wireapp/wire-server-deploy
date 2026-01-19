@@ -7,6 +7,9 @@ TF_DIR="${CD_DIR}/../terraform/examples/wire-server-deploy-offline-hetzner"
 ARTIFACTS_DIR="${CD_DIR}/default-build/output"
 VALUES_DIR="${CD_DIR}/../values"
 
+COMMIT_HASH="${GITHUB_SHA}"
+ARTIFACT="wire-server-deploy-static-${COMMIT_HASH}"
+
 # Retry configuration
 MAX_RETRIES=3
 RETRY_DELAY=30
@@ -110,12 +113,16 @@ ssh-add - <<< "$ssh_private_key"
 terraform output -json static-inventory > inventory.json
 yq eval -o=yaml '.' inventory.json > inventory.yml
 
-ssh -oStrictHostKeyChecking=accept-new -oConnectionAttempts=10 "root@$adminhost" tar xzv < "$ARTIFACTS_DIR/assets.tgz"
+ssh  -oStrictHostKeyChecking=accept-new -o ConnectionAttempts=10 \
+    "root@$adminhost" wget -q "https://s3-eu-west-1.amazonaws.com/public.wire.com/artifacts/${ARTIFACT}.tgz"
+
+ssh  -oStrictHostKeyChecking=accept-new -o ConnectionAttempts=10 \
+    "root@$adminhost" tar xzf "$ARTIFACT.tgz"
 
 # override for ingress-nginx-controller values for hetzner environment $TF_DIR/setup_nodes.yml
-scp -A "$VALUES_DIR/ingress-nginx-controller/hetzner-ci.example.yaml" "root@$adminhost:./values/ingress-nginx-controller/prod-values.example.yaml"
+scp -oStrictHostKeyChecking=accept-new -o ConnectionAttempts=10 "$VALUES_DIR/ingress-nginx-controller/hetzner-ci.example.yaml" "root@$adminhost:./values/ingress-nginx-controller/prod-values.example.yaml"
 
-scp inventory.yml "root@$adminhost":./ansible/inventory/offline/inventory.yml
+scp -oStrictHostKeyChecking=accept-new -o ConnectionAttempts=10 inventory.yml "root@$adminhost":./ansible/inventory/offline/inventory.yml
 
 ssh "root@$adminhost" cat ./ansible/inventory/offline/inventory.yml || true
 
