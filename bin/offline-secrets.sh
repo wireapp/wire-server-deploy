@@ -34,9 +34,9 @@ mls_ecdsa_p256_key="$(generate_mls_key -algorithm ec -pkeyopt ec_paramgen_curve:
 mls_ecdsa_p384_key="$(generate_mls_key -algorithm ec -pkeyopt ec_paramgen_curve:P-384)"
 mls_ecdsa_p521_key="$(generate_mls_key -algorithm ec -pkeyopt ec_paramgen_curve:P-521)"
 
-if [[ ! -f $VALUES_DIR/wire-server/secrets.yaml ]]; then
-  echo "Writing $VALUES_DIR/wire-server/secrets.yaml"
-  cat <<EOF > $VALUES_DIR/wire-server/secrets.yaml
+
+echo "Writing $VALUES_DIR/wire-server/prod-secrets.example.yaml"
+cat <<EOF > $VALUES_DIR/wire-server/prod-secrets.example.yaml
 brig:
   secrets:
     pgPassword: verysecurepassword
@@ -115,7 +115,13 @@ background-worker:
       password: guest
 EOF
 
-fi
+echo "Writing $VALUES_DIR/coturn/prod-secrets.example.yaml"
+cat <<EOF > $VALUES_DIR/coturn/prod-secrets.example.yaml
+secrets:
+  zrestSecrets:
+    - "$zrest"
+EOF
+
 
 if [[ ! -f $ANSIBLE_DIR/inventory/offline/group_vars/all/secrets.yaml ]]; then
   echo "Writing $ANSIBLE_DIR/inventory/offline/group_vars/all/secrets.yaml"
@@ -127,7 +133,7 @@ minio_cargohold_secret_key: "$minio_cargohold_secret_key"
 EOT
 fi
 
-PROM_AUTH_FILE="$VALUES_DIR/kube-prometheus-stack/secrets.yaml"
+PROM_AUTH_FILE="$VALUES_DIR/kube-prometheus-stack/prod-secrets.example.yaml"
 if [[ ! -f $PROM_AUTH_FILE ]]; then
   echo "Writing $PROM_AUTH_FILE"
   cat <<EOF > $PROM_AUTH_FILE

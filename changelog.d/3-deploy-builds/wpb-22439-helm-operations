@@ -1,0 +1,3 @@
+Added: bin/helm-operations.sh to replace offline-helm to be more closer to our production instrcutions
+Changed: bin/offline-secrets.sh to support helm-operations.sh script and add support for coturn secret
+Changed: reduce replica count for sftd and coturn to support wiab-staging
