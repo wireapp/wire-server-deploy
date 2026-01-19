@@ -46,11 +46,10 @@ echo "Syncing PostgreSQL password from Kubernetes secret..."
 sudo docker run --network=host -v $PWD:/wire-server-deploy $WSD_CONTAINER ./bin/sync-k8s-secret-to-wire-secrets.sh \
   wire-postgresql-external-secret \
   password \
-  values/wire-server/secrets.yaml \
+  values/wire-server/prod-secrets.example.yaml \
   .brig.secrets.pgPassword \
   .galley.secrets.pgPassword \
   .spar.secrets.pgPassword \
   .gundeck.secrets.pgPassword
-
 
 sudo docker run --network=host -v $PWD:/wire-server-deploy $WSD_CONTAINER ./bin/helm-operations.sh
