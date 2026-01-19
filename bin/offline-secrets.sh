@@ -22,21 +22,8 @@ zauth_private=$(echo "$zauth" | awk 'NR==2{ print $2}')
 
 prometheus_pass="$(tr -dc A-Za-z0-9 </dev/urandom | head -c 16)"
 
-# Generate MLS private keys using openssl
-# Keys need 10 spaces indent (5 levels deep: galley > secrets > mlsPrivateKeys > removal > keyname)
-#readonly MLS_KEY_INDENT="          "
-#generate_mls_key() {
-#    openssl genpkey "$@" 2>/dev/null | awk -v indent="$MLS_KEY_INDENT" '{printf "%s%s\n", indent, $0}'
-#}
-
-#mls_ed25519_key="$(generate_mls_key -algorithm ed25519)"
-#mls_ecdsa_p256_key="$(generate_mls_key -algorithm ec -pkeyopt ec_paramgen_curve:P-256)"
-#mls_ecdsa_p384_key="$(generate_mls_key -algorithm ec -pkeyopt ec_paramgen_curve:P-384)"
-#mls_ecdsa_p521_key="$(generate_mls_key -algorithm ec -pkeyopt ec_paramgen_curve:P-521)"
-
-if [[ ! -f $VALUES_DIR/wire-server/secrets.yaml ]]; then
-  echo "Writing $VALUES_DIR/wire-server/secrets.yaml"
-  cat <<EOF > $VALUES_DIR/wire-server/secrets.yaml
+echo "Writing $VALUES_DIR/wire-server/prod-secrets.example.yaml"
+cat <<EOF > $VALUES_DIR/wire-server/prod-secrets.example.yaml
 brig:
   secrets:
     smtpPassword: dummyPassword
@@ -103,7 +90,13 @@ background-worker:
       password: guest
 EOF
 
-fi
+echo "Writing $VALUES_DIR/coturn/prod-secrets.example.yaml"
+cat <<EOF > $VALUES_DIR/coturn/prod-secrets.example.yaml
+secrets:
+  zrestSecrets:
+    - "$zrest"
+EOF
+
 
 if [[ ! -f $ANSIBLE_DIR/inventory/offline/group_vars/all/secrets.yaml ]]; then
   echo "Writing $ANSIBLE_DIR/inventory/offline/group_vars/all/secrets.yaml"
@@ -115,7 +108,7 @@ minio_cargohold_secret_key: "$minio_cargohold_secret_key"
 EOT
 fi
 
-PROM_AUTH_FILE="$VALUES_DIR/kube-prometheus-stack/secrets.yaml"
+PROM_AUTH_FILE="$VALUES_DIR/kube-prometheus-stack/prod-secrets.example.yaml"
 if [[ ! -f $PROM_AUTH_FILE ]]; then
   echo "Writing $PROM_AUTH_FILE"
   cat <<EOF > $PROM_AUTH_FILE
