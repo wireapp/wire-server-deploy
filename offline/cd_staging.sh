@@ -117,9 +117,6 @@ chmod 400 ssh_private_key
 terraform output -json static-inventory > inventory.json
 yq eval -o=yaml '.' inventory.json > inventory.yml
 
-# remove me
-cat inventory.yml
-
 echo "Running ansible playbook setup_nodes.yml via adminhost ($adminhost)..."
 ansible-playbook -i inventory.yml setup_nodes.yml --private-key "ssh_private_key"
 
