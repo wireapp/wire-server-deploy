@@ -36,13 +36,13 @@ We would require 7 VMs as per the following details, you can choose to use your 
 | Hostname | Role | RAM | vCPUs | Disk |
 |----------|------|-----|-------|------|
 | assethost | Asset/Storage Server | 4 GiB | 2 | 100 GB |
-| kubenode1 | Kubernetes Node 1 | 9 GiB | 5 | 50 GB |
-| kubenode2 | Kubernetes Node 2 | 9 GiB | 5 | 50 GB |
-| kubenode3 | Kubernetes Node 3 | 9 GiB | 5 | 50 GB |
+| kubenode1 | Kubernetes Node 1 | 9 GiB | 5 | 150 GB |
+| kubenode2 | Kubernetes Node 2 | 9 GiB | 5 | 150 GB |
+| kubenode3 | Kubernetes Node 3 | 9 GiB | 5 | 150 GB |
 | datanode1 | Data Node 1 | 8 GiB | 4 | 100 GB |
 | datanode2 | Data Node 2 | 8 GiB | 4 | 100 GB |
 | datanode3 | Data Node 3 | 8 GiB | 4 | 100 GB |
-| **Total** | | **55 GiB** | **29** | **550 GB** |
+| **Total** | | **55 GiB** | **29** | **850 GB** |
 
 *Note: These specifications are optimized for testing and validation purposes, not for performance benchmarking.*
 
@@ -169,6 +169,21 @@ Since the inventory is ready, please continue with the following steps:
 
 - **[Acquiring / Deploying SSL Certificates](docs_ubuntu_22.04.md#acquiring--deploying-ssl-certificates)**
   - Configure SSL/TLS certificates either by bringing your own or using cert-manager with Let's Encrypt. SSL certificates are required by the nginx-ingress-services helm chart for secure HTTPS connections.
+
+  > **Note (cert-manager & hairpin NAT):** When cert-manager performs HTTP-01 self-checks inside the cluster, traffic can hairpin (Pod → Node → host public IP → DNAT → Node → Ingress). If your nftables rules DNAT in PREROUTING without a matching SNAT on virbr0→virbr0, return packets may bypass the host and break conntrack, causing HTTP-01 timeouts. Also, strict rp_filter can drop asymmetric return packets. If cert-manager is deployed, verify whether hairpin handling is needed:
+  >
+  > - Enable hairpin SNAT for DNATed traffic (forces return traffic through the host):
+  >   ```bash
+  >   sudo nft insert rule ip nat POSTROUTING position 0 \
+  >     iifname "virbr0" oifname "virbr0" \
+  >     ct status dnat counter masquerade
+  >   ```
+  > - Relax reverse-path filtering to loose mode to allow asymmetric flows:
+  >   ```bash
+  >   sudo sysctl -w net.ipv4.conf.all.rp_filter=2
+  >   sudo sysctl -w net.ipv4.conf.virbr0.rp_filter=2
+  >   ```
+  > These settings help conntrack reverse DNAT correctly and avoid drops during cert-manager’s HTTP-01 challenges in NAT/bridge (virbr0) environments.
 
 ### Calling Services
 
