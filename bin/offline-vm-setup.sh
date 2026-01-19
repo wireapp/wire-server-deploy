@@ -48,7 +48,7 @@ die() {
 SCRIPT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" &>/dev/null && pwd -P)
 DEPLOY_DIR="$(cd "$SCRIPT_DIR/../" && pwd)"
 NOCLOUD_DIR=$DEPLOY_DIR/nocloud
-BASE_IMAGE_DIR="/home/demo/wire-server-deploy/"
+BASE_IMAGE_DIR="$DEPLOY_DIR/"
 BASE_IMAGE="$BASE_IMAGE_DIR/ubuntu-22.04-base.qcow2"
 IMAGE_URL="https://cloud-images.ubuntu.com/jammy/current/jammy-server-cloudimg-amd64.img"
 
