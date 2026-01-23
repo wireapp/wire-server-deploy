@@ -86,12 +86,12 @@
   import_playbook: ./setup_ssh.yml
   tags: always
   when: >
-    (('minikube' not in ansible_skip_tags or
+    ('minikube' not in ansible_skip_tags or
     'asset_host' not in ansible_skip_tags or
     'seed_containers' not in ansible_skip_tags)
-    and (ansible_skip_tags | length > 0))
-    or
-    ('minikube' in ansible_run_tags or
+    and
+    ('all' in ansible_run_tags or
+    'minikube' in ansible_run_tags or
     'asset_host' in ansible_run_tags or
     'seed_containers' in ansible_run_tags)
 
@@ -150,15 +150,16 @@
 
     tags: always
     when: >
-      (('minikube' not in ansible_skip_tags or
+      ('minikube' not in ansible_skip_tags or
       'asset_host' not in ansible_skip_tags or
-      'seed_containers' not in ansible_skip_tags)
-      and (ansible_skip_tags | length > 0))
-      or
-      ('minikube' in ansible_run_tags or
+      'seed_containers' not in ansible_skip_tags or
+      'helm_install' not in ansible_skip_tags)
+      and
+      ('all' in ansible_run_tags or
+      'minikube' in ansible_run_tags or
       'asset_host' in ansible_run_tags or
-      'seed_containers' in ansible_run_tags)
-      or use_cert_manager
+      'seed_containers' in ansible_run_tags or
+      'helm_install' in ansible_run_tags)
 
 - name: Configure Iptables rules
   import_playbook: ./iptables_rules.yml
@@ -172,6 +173,7 @@
   hosts: deploy_node
   become: yes
   become_user: "{{ ansible_user }}"
+  tags: always
   tasks:
   - name: Create a block for Minikube node tasks
     block:
@@ -255,13 +257,12 @@
       delegate_facts: true
       with_items: "{{ groups['k8s-cluster'] }}"
 
-    tags: always
     when: >
-      (('asset_host' not in ansible_skip_tags or
+      ('asset_host' not in ansible_skip_tags or
       'seed_containers' not in ansible_skip_tags)
-      and (ansible_skip_tags | length > 0))
-      or
-      ('asset_host' in ansible_run_tags or
+      and
+      ('all' in ansible_run_tags or
+      'asset_host' in ansible_run_tags or
       'seed_containers' in ansible_run_tags)
 
 - name: Setup Asset Host
