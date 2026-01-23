@@ -36,16 +36,62 @@
   import_playbook: ./install_pkgs.yml
   tags: install_pkgs
 
+- name: Check and configure Ansible Python interpreter for Kubernetes operations
+  tags: always
+  hosts: deploy_node
+  tasks:
+  - name: Detect available Python interpreters and Kubernetes module
+    block:
+    - name: Check if kubernetes module is available in system Python
+      shell: "python3 -c 'import kubernetes; print(kubernetes.__version__)' 2>/dev/null"
+      register: system_k8s_check
+      changed_when: false
+      failed_when: false
+
+    - name: Check virtual environment only if system Python doesn't have kubernetes
+      block:
+      - name: Check if kubernetes module is available in virtual environment
+        shell: "/opt/ansible-venv/bin/python -c 'import kubernetes; print(kubernetes.__version__)' 2>/dev/null"
+        register: venv_k8s_check
+        changed_when: false
+        failed_when: false
+
+      - name: Configure to use virtual environment
+        block:
+        - name: Set ansible_python_interpreter to use virtual environment
+          set_fact:
+            ansible_python_interpreter: /opt/ansible-venv/bin/python
+            ansible_venv_path: /opt/ansible-venv
+
+        when: venv_k8s_check.rc == 0
+
+      - name: Kubernetes module not found - run install_pkgs playbook
+        fail:
+          msg: |
+            ❌ Kubernetes Python module not found!
+            
+            System Python (/usr/bin/python3):
+              Status: NOT available
+              
+            Virtual Environment (/opt/ansible-venv/bin/python):
+              Status: NOT available
+              
+            To install kubernetes module, run:
+            ansible-playbook -i inventory.yml deploy_wiab.yml --tags install_pkgs
+        when: venv_k8s_check.rc != 0
+
+      when: system_k8s_check.rc != 0
+
 - name: Manage SSH keys (dependency for minikube, asset_host, seed_containers)
   import_playbook: ./setup_ssh.yml
   tags: always
   when: >
-    (('minikube' not in ansible_skip_tags or
+    ('minikube' not in ansible_skip_tags or
     'asset_host' not in ansible_skip_tags or
     'seed_containers' not in ansible_skip_tags)
-    and (ansible_skip_tags | length > 0))
-    or
-    ('minikube' in ansible_run_tags or
+    and
+    ('all' in ansible_run_tags or
+    'minikube' in ansible_run_tags or
     'asset_host' in ansible_run_tags or
     'seed_containers' in ansible_run_tags)
 
@@ -104,15 +150,16 @@
 
     tags: always
     when: >
-      (('minikube' not in ansible_skip_tags or
+      ('minikube' not in ansible_skip_tags or
       'asset_host' not in ansible_skip_tags or
-      'seed_containers' not in ansible_skip_tags)
-      and (ansible_skip_tags | length > 0))
-      or
-      ('minikube' in ansible_run_tags or
+      'seed_containers' not in ansible_skip_tags or
+      'helm_install' not in ansible_skip_tags)
+      and
+      ('all' in ansible_run_tags or
+      'minikube' in ansible_run_tags or
       'asset_host' in ansible_run_tags or
-      'seed_containers' in ansible_run_tags)
-      or use_cert_manager
+      'seed_containers' in ansible_run_tags or
+      'helm_install' in ansible_run_tags)
 
 - name: Configure Iptables rules
   import_playbook: ./iptables_rules.yml
@@ -126,6 +173,7 @@
   hosts: deploy_node
   become: yes
   become_user: "{{ ansible_user }}"
+  tags: always
   tasks:
   - name: Create a block for Minikube node tasks
     block:
@@ -209,13 +257,12 @@
       delegate_facts: true
       with_items: "{{ groups['k8s-cluster'] }}"
 
-    tags: always
     when: >
-      (('asset_host' not in ansible_skip_tags or
+      ('asset_host' not in ansible_skip_tags or
       'seed_containers' not in ansible_skip_tags)
-      and (ansible_skip_tags | length > 0))
-      or
-      ('asset_host' in ansible_run_tags or
+      and
+      ('all' in ansible_run_tags or
+      'asset_host' in ansible_run_tags or
       'seed_containers' in ansible_run_tags)
 
 - name: Setup Asset Host
@@ -245,11 +292,6 @@
 - name: Install Helm charts
   import_playbook: ./helm_install.yml
   tags: helm_install
-
-- name: Veirfy Cert Manager hairpin Networking
-  import_playbook: ./hairpin_networking.yml
-  tags: always
-  when: use_cert_manager
 
 # since, the temp_dir are created in a different set of tasks, these directories need to be searched 
 - name: Clean up temporary directories
