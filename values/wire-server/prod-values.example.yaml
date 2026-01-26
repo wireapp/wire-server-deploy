@@ -29,12 +29,12 @@ brig:
       host: elasticsearch-external
     rabbitmq:
       host: rabbitmq-external 
-      # For k8s-based RabbitMQ for k8s based rabbitmq. Use 'rabbitmq-external' for production external RabbitMQ VMs
-    postgresql:
-      host: postgresql-external-rw # DNS name without protocol
-      port: "5432"
-      user: wire-server
-      dbname: wire-server
+      # For k8s-based RabbitMQ (default). Use 'rabbitmq-external' for production external RabbitMQ VMs
+    #postgresql:
+    #  host: postgresql-external-rw # DNS name without protocol
+    #  port: "5432"
+    #  user: wire-server
+    #  dbname: wire-server
     useSES: false
     # Set to false if you want to hand out DynamoDB to store prekeys
     randomPrekeys: true
