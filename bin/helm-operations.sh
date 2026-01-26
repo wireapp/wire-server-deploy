@@ -27,7 +27,7 @@ process_values() {
 
   ENV=$1
   TYPE=$2
-  charts=(fake-aws demo-smtp rabbitmq databases-ephemeral reaper wire-server webapp account-pages team-settings smallstep-accomp ingress-nginx-controller nginx-ingress-services coturn sftd cert-manager)
+  charts=(fake-aws demo-smtp databases-ephemeral reaper wire-server webapp account-pages team-settings smallstep-accomp ingress-nginx-controller nginx-ingress-services coturn sftd cert-manager)
 
   if [[ "$ENV" != "prod" ]] || [[ -z "$TYPE" ]] ; then
     echo "Error: This function only supports prod deployments with TYPE as values or secrets. ENV must be 'prod', got: '$ENV' and '$TYPE'"
@@ -174,7 +174,7 @@ process_values "prod" "secrets"
 configure_values
 
 # deploying with external datastores, useful for prod setup
-deploy_charts cassandra-external elasticsearch-external minio-external fake-aws demo-smtp rabbitmq databases-ephemeral reaper wire-server webapp account-pages team-settings smallstep-accomp ingress-nginx-controller
+deploy_charts cassandra-external elasticsearch-external minio-external rabbitmq-external fake-aws demo-smtp databases-ephemeral reaper wire-server webapp account-pages team-settings smallstep-accomp ingress-nginx-controller
 
 # deploying cert manager to issue certs, by default letsencrypt-http01 issuer is configured
 deploy_cert_manager
