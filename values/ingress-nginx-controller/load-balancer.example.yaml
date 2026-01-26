@@ -3,10 +3,6 @@
 # `containerd`.
 ingress-nginx:
   controller:
-    # There's no loadbalancer support in the Hetzner CI environment
-    kind: DaemonSet
-    service:
-      type: NodePort
     image:
       tag: "v1.10.6"
       digest: ""
@@ -16,3 +12,8 @@ ingress-nginx:
         image:
           tag: "v20220916-gd32f8c343"
           digest: ""
+    # Enable prometheus operator to scrape metrics from the ingress-nginx controller with servicemonitor.
+    metrics:
+      enabled: false
+      serviceMonitor:
+        enabled: false
