@@ -256,7 +256,6 @@
         yq -i ".elasticsearch.vars.elasticsearch_network_interface |= \"$GATEWAY_NAME\"" "{{ inventory_file }}"
         yq -i ".minio.vars.minio_network_interface |= \"$GATEWAY_NAME\"" "{{ inventory_file }}"
         yq -i ".rabbitmq.vars.rabbitmq_network_interface |= \"$GATEWAY_NAME\"" "{{ inventory_file }}"
-        yq -i ".postgresql.vars.postgresql_network_interface |= \"$GATEWAY_NAME\"" "{{ inventory_file }}"
       args:
         executable: /bin/bash
 

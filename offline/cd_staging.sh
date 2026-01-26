@@ -125,9 +125,6 @@ ssh $SSH_OPTS "demo@$adminhost" wget -q "https://s3-eu-west-1.amazonaws.com/publ
 
 ssh $SSH_OPTS "demo@$adminhost" tar xzf "$ARTIFACT.tgz"
 
-# override for ingress-nginx-controller values for hetzner environment $TF_DIR/setup_nodes.yml
-scp $SSH_OPTS "$VALUES_DIR/ingress-nginx-controller/hetzner-ci.example.yaml" "demo@$adminhost:./values/ingress-nginx-controller/prod-values.example.yaml"
-
 # Source and target files
 SOURCE="inventory.yml"
 cp "${CD_DIR}/../ansible/inventory/offline/staging.yml" "inventory-secondary.yml"
@@ -162,7 +159,6 @@ yq eval -i ".cassandra.vars.cassandra_network_interface = \"$NETWORK_INTERFACE\"
 yq eval -i ".elasticsearch.vars.elasticsearch_network_interface = \"$NETWORK_INTERFACE\"" "$TARGET"
 yq eval -i ".minio.vars.minio_network_interface = \"$NETWORK_INTERFACE\"" "$TARGET"
 yq eval -i ".rabbitmq.vars.rabbitmq_network_interface = \"$NETWORK_INTERFACE\"" "$TARGET"
-yq eval -i ".postgresql.vars.postgresql_network_interface = \"$NETWORK_INTERFACE\"" "$TARGET"
 
 # Extract all kube-node vars from SOURCE and merge into TARGET
 KUBE_NODE_VARS_FILE=$(mktemp)
