@@ -119,9 +119,6 @@ ssh  -oStrictHostKeyChecking=accept-new -o ConnectionAttempts=10 \
 ssh  -oStrictHostKeyChecking=accept-new -o ConnectionAttempts=10 \
     "root@$adminhost" tar xzf "$ARTIFACT.tgz"
 
-# override for ingress-nginx-controller values for hetzner environment $TF_DIR/setup_nodes.yml
-scp -oStrictHostKeyChecking=accept-new -o ConnectionAttempts=10 "$VALUES_DIR/ingress-nginx-controller/hetzner-ci.example.yaml" "root@$adminhost:./values/ingress-nginx-controller/prod-values.example.yaml"
-
 scp -oStrictHostKeyChecking=accept-new -o ConnectionAttempts=10 inventory.yml "root@$adminhost":./ansible/inventory/offline/inventory.yml
 
 ssh "root@$adminhost" cat ./ansible/inventory/offline/inventory.yml || true
