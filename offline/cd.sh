@@ -112,9 +112,6 @@ yq eval -o=yaml '.' inventory.json > inventory.yml
 
 ssh -oStrictHostKeyChecking=accept-new -oConnectionAttempts=10 "root@$adminhost" tar xzv < "$ARTIFACTS_DIR/assets.tgz"
 
-# override for ingress-nginx-controller values for hetzner environment $TF_DIR/setup_nodes.yml
-scp -A "$VALUES_DIR/ingress-nginx-controller/hetzner-ci.example.yaml" "root@$adminhost:./values/ingress-nginx-controller/prod-values.example.yaml"
-
 scp inventory.yml "root@$adminhost":./ansible/inventory/offline/inventory.yml
 
 ssh "root@$adminhost" cat ./ansible/inventory/offline/inventory.yml || true
