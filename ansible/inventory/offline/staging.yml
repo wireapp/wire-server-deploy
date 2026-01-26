@@ -77,5 +77,3 @@ rabbitmq:
     datanodes: {}
   vars:
     rabbitmq_network_interface: enp1s0
-
-postgresql: {}
