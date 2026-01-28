@@ -98,6 +98,8 @@ postgresql_network_interface = enp1s0
 
 # Rabbitmq specific variables
 [rmq-cluster:vars]
+# this node name should match the hostname for the ansible host rabbitmq1
+rabbitmq_cluster_master: rabbitmq1
 # rabbitmq_network_interface = enp1s0
 
 # For the following groups, add all nodes defined above to the sections below.
@@ -172,6 +174,7 @@ elasticsearch
 
 # Add all rabbitmq nodes here
 [rmq-cluster]
+# all node names here should match the hostname of these hosts
 # rabbitmq1
 # rabbitmq2
 # rabbitmq3
