@@ -52,9 +52,8 @@ ansible-playbook -i $INVENTORY_FILE $ANSIBLE_DIR/elasticsearch.yml
 ansible-playbook -i $INVENTORY_FILE $ANSIBLE_DIR/minio.yml
 ansible-playbook -i $INVENTORY_FILE $ANSIBLE_DIR/postgresql-deploy.yml
 
-# Uncomment to deploy external RabbitMQ (temporarily commented out until implemented in CD), PS. remote --skip-tags=rabbitmq-external from the next section
-#ansible-playbook -i $INVENTORY_FILE $ANSIBLE_DIR/roles/rabbitmq-cluster/tasks/configure_dns.yml
-#ansible-playbook -i $INVENTORY_FILE $ANSIBLE_DIR/rabbitmq.yml
+ansible-playbook -i $INVENTORY_FILE $ANSIBLE_DIR/roles/rabbitmq-cluster/tasks/configure_dns.yml
+ansible-playbook -i $INVENTORY_FILE $ANSIBLE_DIR/rabbitmq.yml
 
 # create helm values that tell our helm charts what the IP addresses of cassandra, elasticsearch and minio are:
-ansible-playbook -i $INVENTORY_FILE $ANSIBLE_DIR/helm_external.yml --skip-tags=rabbitmq-external
+ansible-playbook -i $INVENTORY_FILE $ANSIBLE_DIR/helm_external.yml

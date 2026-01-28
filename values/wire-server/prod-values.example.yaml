@@ -28,7 +28,8 @@ brig:
     elasticsearch:
       host: elasticsearch-external
     rabbitmq:
-      host: rabbitmq # For k8s-based RabbitMQ (default). Use 'rabbitmq-external' for production external RabbitMQ VMs
+      host: rabbitmq-external 
+      # For k8s-based RabbitMQ for k8s based rabbitmq. Use 'rabbitmq-external' for production external RabbitMQ VMs
     postgresql:
       host: postgresql-external-rw # DNS name without protocol
       port: "5432"
@@ -133,7 +134,7 @@ cannon:
   drainTimeout: 10
   config:
     rabbitmq: # Default value for CI, for on-prem deployment, use rabbitmq-external
-      host: rabbitmq
+      host: rabbitmq-external
     cassandra:
       host: cassandra-external
   metrics:
@@ -170,7 +171,7 @@ galley:
     cassandra:
       host: cassandra-external
     rabbitmq: # Default value for CI, for on-prem deployment, use rabbitmq-external
-      host: rabbitmq
+      host: rabbitmq-external
     postgresql:
       host: postgresql-external-rw # DNS name without protocol
       port: "5432"
@@ -231,7 +232,7 @@ gundeck:
 #    tag: some-tag (only override if you want a newer/different version than what is in the chart)
   config:
     rabbitmq: # Default value for CI, for on-prem deployment, use rabbitmq-external
-      host: rabbitmq
+      host: rabbitmq-external
     cassandra:
       host: cassandra-external
     aws:
@@ -337,7 +338,7 @@ background-worker:
     federationDomain: example.com
     # logLevel: Debug
     rabbitmq: # Default value for CI, for on-prem deployment, use rabbitmq-external
-      host: rabbitmq
+      host: rabbitmq-external
     cassandra:
       host: cassandra-external
     cassandraGalley:
