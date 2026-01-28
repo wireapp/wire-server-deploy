@@ -52,25 +52,18 @@ BASE_IMAGE_DIR="/home/demo/wire-server-deploy/"
 BASE_IMAGE="$BASE_IMAGE_DIR/ubuntu-22.04-base.qcow2"
 IMAGE_URL="https://cloud-images.ubuntu.com/jammy/current/jammy-server-cloudimg-amd64.img"
 
-if [ ! -d "$NOCLOUD_DIR" ]; then
-  mkdir -p "$NOCLOUD_DIR"
-fi
-
-if [ ! -d "$BASE_IMAGE_DIR" ]; then
-  mkdir -p "$BASE_IMAGE_DIR"
-fi
+mkdir -p "$NOCLOUD_DIR"
+mkdir -p "$BASE_IMAGE_DIR"
 
 # Download base Ubuntu cloud image if not present
 if [ ! -f "$BASE_IMAGE" ]; then
   msg "Downloading Ubuntu 22.04 cloud image to $BASE_IMAGE ..."
-  wget -q "$IMAGE_URL" -O "$BASE_IMAGE" || die "Failed to download Ubuntu cloud image"
+  curl -fL -o "$BASE_IMAGE" "$IMAGE_URL" || die "Failed to download Ubuntu cloud image"
   msg "Base image downloaded successfully"
 fi
 
 SSH_DIR="$DEPLOY_DIR/ssh"
-if [ ! -d "$SSH_DIR" ]; then
-  mkdir -p "$SSH_DIR"
-fi
+mkdir -p "$SSH_DIR"
 
 # SSH key paths
 SSH_PRIVKEY="$SSH_DIR/id_ed25519"
