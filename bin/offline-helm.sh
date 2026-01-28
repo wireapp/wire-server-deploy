@@ -19,6 +19,7 @@ helm upgrade --install --wait cassandra-external ./charts/cassandra-external --v
 helm upgrade --install --wait postgresql-external ./charts/postgresql-external --values ./values/postgresql-external/values.yaml
 helm upgrade --install --wait elasticsearch-external ./charts/elasticsearch-external --values ./values/elasticsearch-external/values.yaml
 helm upgrade --install --wait minio-external ./charts/minio-external --values ./values/minio-external/values.yaml
+helm upgrade --install --wait rabbitmq-external ./charts/rabbitmq-external --values ./values/rabbitmq-external/values.yaml
 helm upgrade --install --wait fake-aws ./charts/fake-aws --values ./values/fake-aws/prod-values.example.yaml
 
 sync_pg_secrets
@@ -34,7 +35,8 @@ else
 fi
 helm upgrade --install --wait smtp ./charts/smtp --values $SMTP_VALUES_FILE
 
-helm upgrade --install --wait rabbitmq ./charts/rabbitmq --values ./values/rabbitmq/prod-values.example.yaml --values ./values/rabbitmq/prod-secrets.example.yaml
+
+# helm upgrade --install --wait rabbitmq ./charts/rabbitmq --values ./values/rabbitmq/prod-values.example.yaml --values ./values/rabbitmq/prod-secrets.example.yaml
 # it will only deploy the redis cluster
 helm upgrade --install --wait databases-ephemeral ./charts/databases-ephemeral --values ./values/databases-ephemeral/prod-values.example.yaml
 helm upgrade --install --wait reaper ./charts/reaper --values ./values/reaper/prod-values.example.yaml
