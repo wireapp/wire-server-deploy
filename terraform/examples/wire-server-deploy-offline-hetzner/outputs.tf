@@ -156,5 +156,16 @@ output "static-inventory" {
       hosts = { "postgresql2" = {},
       "postgresql3" = {} }
     }
+  rabbitmq = {
+      hosts = {
+        for index, server in hcloud_server.rabbitmq : "rabbitmq${index + 1}" => {
+          ansible_host = tolist(hcloud_server.rabbitmq[index].network)[0].ip
+        }
+      }
+      vars = {
+        rabbitmq_cluster_master    = "rabbitmq1"
+        rabbitmq_network_interface = "enp7s0"
+      }
+    }
   }
 }
