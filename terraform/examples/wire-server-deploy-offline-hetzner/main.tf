@@ -5,6 +5,7 @@ locals {
   elasticsearch_count = 2
   cassandra_count     = 3
   postgresql_count    = 3
+  rabbitmq_count      = 3
   ssh_keys            = [hcloud_ssh_key.adminhost.name]
 
   # Location preferences with fallbacks (EU only)
@@ -12,7 +13,7 @@ locals {
 
   # Server type preferences with fallbacks (optimized for availability)
   preferred_server_types = {
-    small  = ["cx23", "cx33", "cpx22"] # For cassandra, elasticsearch, minio, postgresql
+    small  = ["cx23", "cx33", "cpx22"] # For cassandra, elasticsearch, minio, postgresql, rabbitmq
     medium = ["cx33", "cx43", "cpx32"] # For adminhost, assethost, kubenode
   }
 }
@@ -291,6 +292,31 @@ resource "hcloud_server" "postgresql" {
   count       = local.postgresql_count
   location    = local.selected_location
   name        = "postgresql-${random_pet.postgresql[count.index].id}"
+  image       = "ubuntu-22.04"
+  ssh_keys    = local.ssh_keys
+  server_type = local.small_server_type
+  public_net {
+    ipv4_enabled = false
+    ipv6_enabled = false
+  }
+  network {
+    network_id = hcloud_network.main.id
+    ip         = ""
+  }
+}
+
+resource "random_pet" "rabbitmq" {
+  count = local.rabbitmq_count
+}
+
+resource "hcloud_server" "rabbitmq" {
+  depends_on = [
+    null_resource.deployment_info,
+    hcloud_network_subnet.main
+  ]
+  count       = local.rabbitmq_count
+  location    = local.selected_location
+  name        = "rabbitmq${count.index + 1}"
   image       = "ubuntu-22.04"
   ssh_keys    = local.ssh_keys
   server_type = local.small_server_type
