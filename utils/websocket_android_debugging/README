@@ -1,0 +1,10 @@
+Situation:
+
+you have android logs, and suspect a problem with the websocket connection.
+
+cat wire_2026-01-19_09-06-42 | sed -n \"/Websocket Closed/s/^/CLOSE /p;/Websocket open/s/^/OPEN /p;/Received Frame/s/^/FRAME /p\" | awk 'BEGIN{FS=\"[ :.=()]+\"}{hh=$2;mm=$3;ss=$4;ms=$5;tt=hh*3600+mm*60+ss+ms/1000;if($1==\"CLOSE\") {lose[tt]=300};if ($1==\"OPEN\") {open[tt]=200};if ($1==\"FRAME\") {frame[tt]=$(NF-1)};};END{for(t in lose) print t, lose[t]>\"closed.dat\";for(t in open) print t, open[t]>\"open.dat\";for(t in frame) print t, frame[t]>\"frame.dat\"}'
+
+that generates three files, one for attempts to open the websocket(open.dat), one for close acknowledgements(closed.dat), and one for frames sent(frame.dat).
+
+to run gnuplot:
+gnuplot-nox -c plot_websocket.gnuplot
