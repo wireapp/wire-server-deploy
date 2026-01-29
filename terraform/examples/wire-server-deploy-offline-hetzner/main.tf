@@ -316,7 +316,7 @@ resource "hcloud_server" "rabbitmq" {
   ]
   count       = local.rabbitmq_count
   location    = local.selected_location
-  name        = "rabbitmq${count.index + 1}"
+  name        = "rabbitmq-${random_pet.rabbitmq[count.index].id}"
   image       = "ubuntu-22.04"
   ssh_keys    = local.ssh_keys
   server_type = local.small_server_type
