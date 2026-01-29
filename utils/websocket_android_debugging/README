@@ -2,11 +2,38 @@ Situation:
 
 You have android logs, and suspect a problem with the websocket connection.
 
+To explode the websocket related lines of an android log file into separate files:
 ```
-cat wire_2026-01-19_09-06-42 | sed -n "/Websocket Closed/s/^/CLOSE /p;/Websocket open/s/^/OPEN /p;/Received Frame/s/^/FRAME /p" | awk 'BEGIN{FS="[ :.=()]+"}{hh=$2;mm=$3;ss=$4;ms=$5;tt=hh*3600+mm*60+ss+ms/1000;if($1=="CLOSE") {lose[tt]=300};if ($1=="OPEN") {open[tt]=200};if ($1=="FRAME") {frame[tt]=$(NF-1)};};END{for(t in lose) print t, lose[t]>"closed.dat";for(t in open) print t, open[t]>"open.dat";for(t in frame) print t, frame[t]>"frame.dat"}'
+zcat ~demo/Downloads/wire_2026-01-19_09-06-42.gz | awk 'BEGIN{FS="[ :.=()]+"}function q(){return $2*3600+$3*60+$4+$5/1000}/Websocket Closed/ {lose[q()]=300};/Websocket open/ {open[q()]=200};/Received Frame/ {frame[q()]=$(NF-1)};/PersistentWebsocketCheckWorker returned/ {workerOK[q()]=250};/for com.wire.android.workmanager.worker.PersistentWebsocketCheckWorker/ {workerSTART[q()]=250};/PersistentWebsocketCheckWorker,/ {workerRESULT[q()]=250};/featureId:ManagedConfigurationsManager/ {configREFRESH[q()]=250}; /Nh.k: Websocket/ {disconnect[q()]=250};/java.io.EOFException/ {eo[q()]=250};/java.net.ProtocolException:/ {protocol[q()]=250};/java.net.SocketException/{socketEx[q()]=250};/java.net.SocketTimeoutException/{socketTimeEx[q()]=250};/onMessage()/{onMessage[q()]=250};/WebSocket Protocol Handshake/{handshake[q()]=250};/PersistentWebsocketCheckWorker/{persistent[q()]=250};/ServicesManager: PersistentWebsocketService/{norestart[q()]=250};/Starting PersistentWebsocketService/{serviceSTART[q()]=250};/Worker result SUCCESS/{resultSUCCESS[q()]=250};END{for(t in lose) print t, lose[t]>"closed.dat";for(t in open) print t, open[t]>"open.dat";for(t in frame) print t, frame[t]>"frame.dat"; for (t in workerOK) print t, workerOK[t]>"workerOK.dat"; for (t in workerSTART) print t, workerSTART[t]>"workerSTART.dat"; for (t in workerRESULT) print t, workerRESULT[t]>"workerRESULT.dat";  for (t in configREFRESH) print t, configREFRESH[t]>"configREFRESH.dat"; for (t in disconnect) print t, disconnect[t]>"disconnect.dat";  for (t in eo) print t,eo[t]>"eof.dat"; for (t in protocol) print t, protocol[t]>"protocol.dat"; for (t in socketEx) print t,socketEx[t]>"socketException.dat";for (t in socketTimeEx) print t,socketTimeEx[t]>"socketTimeoutException.dat";for (t in onMessage) print t,onMessage[t]>"onMessage.dat";for (t in handshake) print t,handshake[t]>"handshake.dat";for (t in persistent) print t,persistent[t]>"persistent.dat";for (t in norestart) print t,norestart[t]>"norestart.dat";for (t in serviceSTART) print t,serviceSTART[t]>"servicestart.dat";for (t in resultSUCCESS) print t,resultSUCCESS[t]>"resultsuccess.dat";}'
 ```
 
-That generates three files, one for attempts to open the websocket(open.dat), one for close acknowledgements(closed.dat), and one for frames sent(frame.dat).
+That will create the following files:
+```
+closed.dat
+disconnect.dat
+frame.dat
+norestart.dat
+open.dat
+protocol.dat
+servicestart.dat
+socketTimeoutException.dat
+workerRESULT.dat
+configREFRESH.dat
+eof.dat
+handshake.dat
+onMessage.dat
+persistent.dat
+resultsuccess.dat
+socketException.dat
+workerOK.dat
+workerSTART.dat
+```
 
-To run gnuplot, and generate a websocket.svg:
-gnuplot-nox -c plot_websocket.gnuplot
+Each one of these files contains only the timestamps when a given log line type was seen, with the exception of frame.dat (which contains amount of data transfered(?)).
+
+To run gnuplot, and generate an image:
+plot_websocket.gnuplot <name of output file>
+
+Feel free to play with the height of the bars (the hard coded values in the awk command), or play with the colours and ordering of them.
+
+websocket_with_refresh_and_disconnect_and_eof_and_handshake.svg contains an example of an environment with a malfunctioning firewall.
