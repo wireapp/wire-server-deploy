@@ -1,9 +1,34 @@
 #!/usr/bin/env bash
+#
+# Non-interactive script for deploying the Wire standard set of Ubuntu Server VMs 
+# on a single dedicated server using libvirt.
+# 
+# Script will create VMs with a sudo user "demo" and PW auth disabled.
+# All VMs are created with DHCP IPs from default libvirt subnet (192.168.122.0/24). 
+# IPs and hostnames are automatically appended to /etc/hosts once VMs receive their addresses.
+#
+# The script will exit gracefully if VMs already exist.
+#
+# | hostname  | RAM    | VCPUs | disk space (thin provisioned) |
+#  --------------------------------------------------------------
+# | assethost | 4 GiB  | 2     | 100 GB                        |
+# | kubenode1 | 9 GiB  | 5     | 150 GB                         |
+# | kubenode2 | 9 GiB  | 5     | 150 GB                         |
+# | kubenode3 | 9 GiB  | 5     | 150 GB                         |
+# | datanode1  | 8 GiB | 4     | 100 GB                        |
+# | datanode2  | 8 GiB | 4     | 100 GB                        |
+# | datanode3  | 8 GiB | 4     | 100 GB                        |
+#  --------------------------------------------------------------
+# | total     | 55 GiB |  29   | 850 GB                        |
 
 set -Eeuo pipefail
 
 msg() {
   echo >&2 -e "${1-}"
+}
+
+cleanup() {
+  trap - SIGINT SIGTERM ERR EXIT
 }
 
 if [[ $EUID -eq 0 ]]; then
@@ -13,56 +38,6 @@ fi
 
 trap cleanup SIGINT SIGTERM ERR EXIT
 
-usage() {
-  cat <<EOF
-Usage: $(basename "${BASH_SOURCE[0]}") [-h] [-v] [--deploy-vm vmname]
-
-Non-interactive script for deploying the Wire standard set of Ubuntu Server VMs on a single dedicated server using libvirt.
-Script will create VMs with a sudo user "demo" and PW auth disabled.
-
-All VMs are created with static IPs from default libvirt subnet (192.168.122.0/24). IPs and hostnames are appended to /etc/hosts for convenience.
-
-For SSH access, it'll use two keys:
- * The first key found in ~/.ssh/authorized_keys. Will ask interactively if no key can be found (and accept any input, so be careful).
- * The key found in ~/.ssh/id_ed25519.pub. Will silently generate a new key pair if none can be found.
-
-The script will exit gracefully if VMs already exist.
-
-Default mode with no arguments creates seven libvirt VMs using cloud-init:
-
- | hostname  | IP             | RAM      | VCPUs | disk space (thin provisioned) |
-  -------------------------------------------------------------------------------
- | assethost | 192.168.122.10 | 4096 MiB | 2     | 100 GB                        |
- | kubenode1 | 192.168.122.21 | 8192 MiB | 6     | 100 GB                        |
- | kubenode2 | 192.168.122.22 | 8192 MiB | 6     | 100 GB                        |
- | kubenode3 | 192.168.122.23 | 8192 MiB | 6     | 100 GB                        |
- | ansnode1  | 192.168.122.31 | 8192 MiB | 4     | 350 GB                        |
- | ansnode2  | 192.168.122.32 | 8192 MiB | 4     | 350 GB                        |
- | ansnode3  | 192.168.122.33 | 8192 MiB | 4     | 350 GB                        |
-
-For single VM deployment ("--deploy-vm" flag) a static IP is chosen randomly from .100 to .240 range.
-If an IP from that range already exists in /etc/hosts, the shuffle will reiterate until an unused IP is found in order to avoid collisions.
-
-Single VM deployment will create a VM with the following resoures (can be editied in the script prior execution):
-
- | hostname             | IP                        | RAM      | VCPUs | disk space (thin provisioned) |
-  ------------------------------------------------------------------------------------------------------
- | (argument from flag) | (range from .100 to .240) | 8192 MiB | 4     | 100 GB                        |
-
-Available options:
--h, --help          Print this help and exit
--v, --verbose       Print script debug info
---deploy-vm vmname  Deploys a single Ubuntu VM
-EOF
-  exit
-}
-
-cleanup() {
-  trap - SIGINT SIGTERM ERR EXIT
-  pkill -f "http.server"
-  rm -r "$DEPLOY_DIR"/nocloud/* 2>/dev/null
-}
-
 die() {
   local msg=$1
   local code=${2-1} # default exit status 1
@@ -70,129 +45,164 @@ die() {
   exit "$code"
 }
 
-parse_params() {
-  while :; do
-    case "${1-}" in
-    -h | --help) usage ;;
-    -v | --verbose) set -x ;;
-    --deploy-vm) DEPLOY_SINGLE_VM=1 ;;
-    -?*) die "Unknown option: $1" ;;
-    *) break ;;
-    esac
-    shift
-  done
-  return 0
-}
-
-parse_params "$@"
-
 SCRIPT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" &>/dev/null && pwd -P)
 DEPLOY_DIR="$(cd "$SCRIPT_DIR/../" && pwd)"
 NOCLOUD_DIR=$DEPLOY_DIR/nocloud
+BASE_IMAGE_DIR="$DEPLOY_DIR/"
+BASE_IMAGE="$BASE_IMAGE_DIR/ubuntu-22.04-base.qcow2"
+IMAGE_URL="https://cloud-images.ubuntu.com/jammy/current/jammy-server-cloudimg-amd64.img"
 
-if [ ! -d "$NOCLOUD_DIR" ]; then
-  mkdir -p "$NOCLOUD_DIR"
+mkdir -p "$NOCLOUD_DIR"
+mkdir -p "$BASE_IMAGE_DIR"
+
+# Download base Ubuntu cloud image if not present
+if [ ! -f "$BASE_IMAGE" ]; then
+  msg "Downloading Ubuntu 22.04 cloud image to $BASE_IMAGE ..."
+  curl -fL -o "$BASE_IMAGE" "$IMAGE_URL" || die "Failed to download Ubuntu cloud image"
+  msg "Base image downloaded successfully"
 fi
 
-if [[ -n "${DEPLOY_SINGLE_VM-}" ]]; then
-  VM_NAME=("$2")
-  VM_IP=("192.168.122.$(shuf -i100-240 -n1)")
-  VM_VCPU=(4)
-  VM_RAM=(8192)
-  VM_DISK=(100)
-  while grep -Fq "${VM_IP[0]}" /etc/hosts; do
-    VM_IP=("192.168.122.$(shuf -i100-240 -n1)")
-  done
-else
-  VM_NAME=(assethost kubenode1 kubenode2 kubenode3 ansnode1 ansnode2 ansnode3)
-  VM_IP=(192.168.122.10 192.168.122.21 192.168.122.22 192.168.122.23 192.168.122.31 192.168.122.32 192.168.122.33)
-  VM_VCPU=(2 6 6 6 4 4 4)
-  VM_RAM=(4096 8192 8192 8192 8192 8192 8192)
-  VM_DISK=(100 100 100 100 100 100 100)
+SSH_DIR="$DEPLOY_DIR/ssh"
+mkdir -p "$SSH_DIR"
+
+# SSH key paths
+SSH_PRIVKEY="$SSH_DIR/id_ed25519"
+SSH_PUBKEY="$SSH_DIR/id_ed25519.pub"
+
+# Create SSH keypair if it doesn't exist
+if [ ! -f "$SSH_PRIVKEY" ]; then
+  msg "Generating SSH keypair in $SSH_DIR..."
+  ssh-keygen -t ed25519 -q -N '' -f "$SSH_PRIVKEY"
+  msg "SSH keypair generated successfully"
 fi
 
-if [[ -f "$HOME"/.ssh/authorized_keys && -s "$HOME"/.ssh/authorized_keys ]]; then
-  SSHKEY_HUMAN=$(head -n 1 ~/.ssh/authorized_keys)
-else
-  read -r -p "No local SSH keys for current user ""$USER"" found; please enter a vaild key now: " SSHKEY_HUMAN
+# Check and fix SSH private key permissions
+if [ -f "$SSH_PRIVKEY" ]; then
+  current_perms=$(stat -c %a "$SSH_PRIVKEY" 2>/dev/null || stat -f %A "$SSH_PRIVKEY" 2>/dev/null)
+  if [ "$current_perms" != "400" ]; then
+    msg "Fixing SSH private key permissions from $current_perms to 400"
+    chmod 400 "$SSH_PRIVKEY"
+  fi
 fi
 
-if [[ -f "$HOME"/.ssh/id_ed25519 ]]; then
-  SSHKEY_DEMO=$(cat "$HOME"/.ssh/id_ed25519.pub)
-else
-  ssh-keygen -t ed25519 -q -N '' -f "$HOME"/.ssh/id_ed25519
-  SSHKEY_DEMO=$(cat "$HOME"/.ssh/id_ed25519.pub)
+# Read the public key
+SSHKEY_DEMO=$(cat "$SSH_PUBKEY")
+
+VM_NAME=(assethost kubenode1 kubenode2 kubenode3 datanode1 datanode2 datanode3)
+VM_VCPU=(2 5 5 5 4 4 4)
+VM_RAM=(4096 9216 9216 9216 8192 8192 8192)
+VM_DISK=(100 150 150 150 100 100 100)
+VM_NETWORK='wirebox'
+
+# Check if VM_NETWORK exists, if not fall back to 'default'
+if ! sudo virsh net-list --all 2>/dev/null | grep -Fq "$VM_NETWORK"; then
+  msg "Network $VM_NETWORK not found, switching to default network"
+  VM_NETWORK='default'
 fi
 
 msg ""
 msg "Including the following SSH Keys for VM deployment:"
 msg ""
-msg "Existing key from ~/.ssh/authorized_keys: ""$SSHKEY_HUMAN"""
-msg "Local keypair key from ~/.ssh/id_ed25519: ""$SSHKEY_DEMO"""
+msg "SSH keys stored in: $SSH_DIR"
+msg "Public key: $SSHKEY_DEMO"
 msg ""
 
-nohup python3 -m http.server 3003 -d "$NOCLOUD_DIR" </dev/null >/dev/null 2>&1 &
 
 prepare_config() {
   VM_DIR=$NOCLOUD_DIR/${VM_NAME[i]}
   mkdir -p "$VM_DIR"
-  touch "$VM_DIR"/{vendor-data,meta-data}
+  
   cat >"$VM_DIR/user-data"<<EOF
 #cloud-config
-autoinstall:
-  version: 1
-  id: ubuntu-server-minimized
-  network:
-    version: 2
-    ethernets:
-      enp1s0:
-        dhcp4: no
-        addresses: [${VM_IP[i]}/24]
-        nameservers:
-          addresses: ['192.168.122.1']
-        routes:
-          - to: default
-            via: 192.168.122.1
-  storage:
-    layout:
-      sizing-policy: all
-      name: lvm
-      match:
-        path: /dev/vda
-        size: largest
-  ssh:
-    allow-pw: false
-    install-server: true
-  apt:
-    fallback: offline-install
-  user-data:
-    hostname: ${VM_NAME[i]}
-    users:
-    - default
-    - name: demo
-      groups: sudo
-      sudo: ALL=(ALL) NOPASSWD:ALL
-      shell: /bin/bash
-      ssh_authorized_keys: 
-        - $SSHKEY_HUMAN
-        - $SSHKEY_DEMO
+hostname: ${VM_NAME[i]}
+fqdn: ${VM_NAME[i]}.local
+manage_etc_hosts: true
+network:
+  version: 2
+  ethernets:
+    enp1s0:
+      dhcp4: true
+users:
+  - name: demo
+    groups: sudo
+    sudo: ALL=(ALL) NOPASSWD:ALL
+    shell: /bin/bash
+    ssh_authorized_keys:
+      - $SSHKEY_DEMO
+ssh_pwauth: false
+disable_root: true
 EOF
+
+  cat >"$VM_DIR/meta-data"<<EOF
+instance-id: ${VM_NAME[i]}
+local-hostname: ${VM_NAME[i]}
+EOF
+
+  # Generate cloud-init seed ISO
+  cloud-localds "$VM_DIR/seed.iso" "$VM_DIR/user-data" "$VM_DIR/meta-data" 2>/dev/null || \
+    die "Failed to create cloud-init seed ISO for ${VM_NAME[i]}"
+}
+
+get_vm_ip() {
+  local vm_name=$1
+  local max_wait=${2:-300}
+  local elapsed=0
+  
+  while [ "$elapsed" -lt "$max_wait" ]; do
+    # Get MAC address of VM
+    local mac
+    mac=$(sudo virsh domiflist "$vm_name" 2>/dev/null | grep -oP '(?<=  )[0-9a-f:]{17}' | head -1)
+    
+    if [ -n "$mac" ]; then
+      # Query DHCP leases for this MAC address
+      local ip
+      ip=$(sudo virsh net-dhcp-leases "$VM_NETWORK" 2>/dev/null | grep "$mac" | awk '{print $5}' | cut -d'/' -f1)
+      
+      if [ -n "$ip" ]; then
+        echo "$ip"
+        return 0
+      fi
+    fi
+    
+    sleep 30
+    elapsed=$((elapsed + 30))
+  done
+  
+  return 1
 }
 
 create_vm () {
+  # Check if VM already exists
+  if sudo virsh list --all | grep -Fq "${VM_NAME[i]}"; then
+    msg "VM ${VM_NAME[i]} already exists, skipping creation"
+    return 0
+  fi
+
   prepare_config "${VM_NAME[i]}"
+
+  VM_DISK_PATH="/var/lib/libvirt/images/${VM_NAME[i]}.qcow2"
+  SEED_ISO="$NOCLOUD_DIR/${VM_NAME[i]}/seed.iso"
+
+  # Create qcow2 backing file from base image
+  sudo qemu-img create -f qcow2 -b "$BASE_IMAGE" -F qcow2 "$VM_DISK_PATH" || \
+    die "Failed to create backing file for ${VM_NAME[i]}"
+
+  # Resize backing file to desired size
+  sudo qemu-img resize "$VM_DISK_PATH" "${VM_DISK[i]}G" || \
+    die "Failed to resize disk for ${VM_NAME[i]}"
 
   sudo virt-install \
     --name "${VM_NAME[i]}" \
     --ram "${VM_RAM[i]}" \
-    --disk path=/var/lib/libvirt/images/"${VM_NAME[i]}".qcow2,size="${VM_DISK[i]}" \
+    --disk "path=$VM_DISK_PATH,format=qcow2,bus=virtio" \
+    --disk "path=$SEED_ISO,device=cdrom" \
     --vcpus "${VM_VCPU[i]}" \
-    --network bridge=virbr0 \
+    --network "bridge=virbr0,model=virtio" \
     --graphics none \
-    --osinfo detect=on,require=off \
+    --osinfo ubuntu22.04 \
     --noautoconsole \
-    --location "$DEPLOY_DIR"/ubuntu.iso,kernel=casper/vmlinuz,initrd=casper/initrd \
-    --extra-args "console=ttyS0,115200n8 autoinstall ds=nocloud-net;s=http://192.168.122.1:3003/${VM_NAME[i]}"
+    --import \
+    --console pty,target_type=serial
 }
 
 for (( i=0; i<${#VM_NAME[@]}; i++ )); do
@@ -205,26 +215,75 @@ for (( i=0; i<${#VM_NAME[@]}; i++ )); do
     set -u
     msg ""
     msg "Creating VM ""${VM_NAME[i]}"" ..."
-    msg "IP:    ""${VM_IP[i]}"""
     msg "VCPUs: ""${VM_VCPU[i]}"""
     msg "RAM:   ""${VM_RAM[i]}"" MiB"
     msg "DISK:  ""${VM_DISK[i]}"" GB"
     create_vm "${VM_NAME[i]}"
-    if grep -Fq "${VM_NAME[i]}" /etc/hosts; then
-      msg ""
-      msg "Updating existing record in /etc/hosts for ""${VM_NAME[i]}"" with IP ""${VM_IP[i]}"""
-      sudo sed -i -e "/${VM_NAME[i]}/c\\${VM_IP[i]} ${VM_NAME[i]}" /etc/hosts
-    else
-      msg ""
-      msg "Writing IP and hostname to /etc/hosts ..."
-      echo """${VM_IP[i]}"" ""${VM_NAME[i]}""" | sudo tee -a /etc/hosts
-      msg ""
-    fi
-    sleep 20
   fi
 done
 
-while sudo virsh list --all | grep -Fq running; do
-  sleep 20
-  msg "INFO: VM deployment still in progress ..."
+msg ""
+msg "Waiting for VMs to complete cloud-init provisioning..."
+msg ""
+
+# Create environment file to store VM IPs
+ENV_FILE="$DEPLOY_DIR/.vm-env"
+: > "$ENV_FILE"  # Clear the file
+
+for (( i=0; i<${#VM_NAME[@]}; i++ )); do
+  # Skip if VM already existed
+  if sudo virsh list --all | grep -Fq "${VM_NAME[i]}"; then
+    msg ""
+    msg "Waiting for ${VM_NAME[i]} to acquire DHCP IP address..."
+    
+    # Wait for VM to get IP address from DHCP
+    if vm_ip=$(get_vm_ip "${VM_NAME[i]}" 120); then
+      msg "${VM_NAME[i]} acquired IP: $vm_ip"
+      
+      # Set environment variable for this VM
+      env_var_name="${VM_NAME[i]}_ip"
+      export "${env_var_name}=$vm_ip"
+      echo "export ${env_var_name}=$vm_ip" >> "$ENV_FILE"
+      
+      # Update /etc/hosts with the actual DHCP IP
+      if grep -Fq "${VM_NAME[i]}" /etc/hosts; then
+        msg "Updating /etc/hosts for ${VM_NAME[i]} with IP $vm_ip"
+        sudo sed -i -e "/${VM_NAME[i]}/c\\$vm_ip ${VM_NAME[i]}" /etc/hosts
+      else
+        msg "Writing ${VM_NAME[i]} ($vm_ip) to /etc/hosts"
+        echo "$vm_ip ${VM_NAME[i]}" | sudo tee -a /etc/hosts >/dev/null
+      fi
+      
+      # Wait for SSH connectivity
+      msg "Waiting for SSH connectivity on ${VM_NAME[i]} ($vm_ip)..."
+      max_attempts=10
+      attempt=0
+      
+      while ! ssh -i "$SSH_PRIVKEY" -o ConnectTimeout=2 -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null \
+              "demo@$vm_ip" "exit" 2>/dev/null; do
+        attempt=$((attempt + 1))
+        if [ $attempt -gt $max_attempts ]; then
+          msg "WARNING: ${VM_NAME[i]} ($vm_ip) did not become reachable after $max_attempts attempts"
+          break
+        fi
+        sleep 30
+      done
+      
+      # Wait for cloud-init to complete
+      if [ $attempt -le $max_attempts ]; then
+        msg "Waiting for cloud-init to complete on ${VM_NAME[i]}..."
+        ssh -i "$SSH_PRIVKEY" -o ConnectTimeout=2 -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null \
+            "demo@$vm_ip" "cloud-init status --wait" 2>/dev/null || true
+        msg "VM ${VM_NAME[i]} is ready at $vm_ip"
+      fi
+    else
+      msg "ERROR: ${VM_NAME[i]} did not acquire an IP address within timeout period"
+    fi
+  fi
 done
+
+msg ""
+msg "Environment variables saved to: $ENV_FILE"
+msg "Source with: source $ENV_FILE"
+msg "VM IPs:"
+grep export "$ENV_FILE" | sed 's/export /  /'

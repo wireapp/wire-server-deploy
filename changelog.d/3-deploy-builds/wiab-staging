@@ -1,0 +1,2 @@
+Changed: offline-vm-setup.sh script now uses an ubuntu cloud image and local seed iso.
+Added: now offline-vm-setup.sh waits on VMs to be alive, and health checks them.
