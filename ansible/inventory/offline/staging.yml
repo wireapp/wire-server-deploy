@@ -6,9 +6,9 @@ all:
       -o UserKnownHostsFile=/dev/null
       -o ControlMaster=auto
       -o ControlPersist=60s
-    # ssh private_key is stored in wire-server-deploy/ssh
-    # assuming all ansible commands will be issued from wire-server-deploy
-    ansible_ssh_private_key_file: "ssh/id_ed25519"
+    # ssh private_key is stored in wire-server-deploy/ssh in case vms are created using bin/offline-vm-setup.sh
+    # in case of terraform automated-tests, it will be vailable via forwarded ssh agents
+    # ansible_ssh_private_key_file: "ssh/id_ed25519"
 
 assethost:
   hosts:
@@ -38,6 +38,8 @@ k8s-cluster:
     kube-master: {}
 
 datanodes:
+  # host names here must match each node's actual hostname
+  # its a requirement for rabbitmq
   hosts:
     datanode1:
       ansible_host: "datanode1_ip"
@@ -72,11 +74,13 @@ minio:
   vars:
     minio_network_interface: enp1s0
 
-rabbitmq:
+rmq-cluster:
   children:
     datanodes: {}
   vars:
     rabbitmq_network_interface: enp1s0
+    # host name here must match each node's actual hostname
+    rabbitmq_cluster_master: datanode1
 
 postgresql:
   children:
