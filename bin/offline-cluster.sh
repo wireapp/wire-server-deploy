@@ -37,9 +37,6 @@ ansible-playbook -i $INVENTORY_FILE $ANSIBLE_DIR/setup-offline-sources.yml
 # are part of the offline bundle
 ansible-playbook -i $INVENTORY_FILE $ANSIBLE_DIR/kubernetes.yml --tags bastion,bootstrap-os,preinstall,container-engine
 
-# Install docker on the restund nodes
-ansible-playbook -i $INVENTORY_FILE $ANSIBLE_DIR/restund.yml --tags docker
-
 # With ctr being installed on all nodes that need it, seed all container images:
 ansible-playbook -i $INVENTORY_FILE $ANSIBLE_DIR/seed-offline-containerd.yml
 
@@ -53,7 +50,11 @@ ansible-playbook -i $INVENTORY_FILE $ANSIBLE_DIR/kubernetes.yml --skip-tags boot
 ansible-playbook -i $INVENTORY_FILE $ANSIBLE_DIR/cassandra.yml
 ansible-playbook -i $INVENTORY_FILE $ANSIBLE_DIR/elasticsearch.yml
 ansible-playbook -i $INVENTORY_FILE $ANSIBLE_DIR/minio.yml
-ansible-playbook -i $INVENTORY_FILE $ANSIBLE_DIR/restund.yml
+ansible-playbook -i $INVENTORY_FILE $ANSIBLE_DIR/postgresql-deploy.yml
+
+# Uncomment to deploy external RabbitMQ (temporarily commented out until implemented in CD), PS. remote --skip-tags=rabbitmq-external from the next section
+#ansible-playbook -i $INVENTORY_FILE $ANSIBLE_DIR/roles/rabbitmq-cluster/tasks/configure_dns.yml
+#ansible-playbook -i $INVENTORY_FILE $ANSIBLE_DIR/rabbitmq.yml
 
 # create helm values that tell our helm charts what the IP addresses of cassandra, elasticsearch and minio are:
 ansible-playbook -i $INVENTORY_FILE $ANSIBLE_DIR/helm_external.yml --skip-tags=rabbitmq-external

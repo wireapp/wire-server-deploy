@@ -1,29 +1,72 @@
 output "ssh_private_key" {
   sensitive = true
-  value = tls_private_key.admin.private_key_pem
+  value     = tls_private_key.admin.private_key_pem
 }
+
+output "selected_server_types" {
+  description = "Server types selected after checking availability"
+  value = {
+    small_server_type  = local.small_server_type
+    medium_server_type = local.medium_server_type
+  }
+}
+
+output "selected_location" {
+  description = "Location selected after checking availability"
+  value       = local.selected_location
+}
+
+output "resource_fallback_info" {
+  description = "Information about resource fallback selections"
+  value = {
+    requested_locations = local.preferred_locations
+    available_locations = local.available_location_names
+    selected_location   = local.selected_location
+
+    requested_small_types = local.preferred_server_types.small
+    available_small_types = local.available_small_server_types
+    selected_small_type   = local.small_server_type
+
+    requested_medium_types = local.preferred_server_types.medium
+    available_medium_types = local.available_medium_server_types
+    selected_medium_type   = local.medium_server_type
+  }
+}
+
 output "adminhost" {
   sensitive = true
-  value = hcloud_server.adminhost.ipv4_address
+  value     = hcloud_server.adminhost.ipv4_address
 }
 # output format that a static inventory file expects
 output "static-inventory" {
   sensitive = true
   value = {
-
-    assethost = {
-      hosts = {
-        "assethost" = {
-          ansible_host = hcloud_server_network.assethost.ip
-          ansible_user = "root"
-        }
+    all = {
+      vars = {
+        ansible_user            = "root"
+        private_interface       = "enp7s0"
+        adminhost_ip            = tolist(hcloud_server.adminhost.network)[0].ip
+        ansible_ssh_common_args = "-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ControlMaster=auto -o ControlPersist=60s"
       }
     }
     adminhost = {
       hosts = {
         "adminhost" = {
           ansible_host = hcloud_server.adminhost.ipv4_address
-          ansible_user = "root"
+        }
+      }
+    }
+    adminhost_local = {
+      hosts = {
+        "adminhost" = {
+          ansible_host = tolist(hcloud_server.adminhost.network)[0].ip
+        }
+      }
+    }
+    assethost = {
+      hosts = {
+        "assethost" = {
+          ansible_host = tolist(hcloud_server.assethost.network)[0].ip
         }
       }
     }
@@ -36,9 +79,8 @@ output "static-inventory" {
     kube-node = {
       hosts = {
         for index, server in hcloud_server.kubenode : server.name => {
-          ansible_host     = hcloud_server_network.kubenode[index].ip
-          ip               = hcloud_server_network.kubenode[index].ip
-          ansible_user     = "root"
+          ansible_host     = tolist(hcloud_server.kubenode[index].network)[0].ip
+          ip               = tolist(hcloud_server.kubenode[index].network)[0].ip
           etcd_member_name = server.name
         }
       }
@@ -54,18 +96,18 @@ output "static-inventory" {
         calico_mtu      = 1450
         calico_veth_mtu = 1430
         # NOTE: relax handling a list with more than 3 items; required on Hetzner
-        docker_dns_servers_strict: false
+        docker_dns_servers_strict = false
+        upstream_dns_servers      = [tolist(hcloud_server.adminhost.network)[0].ip]
       }
     }
     cassandra = {
       hosts = {
         for index, server in hcloud_server.cassandra : server.name => {
-          ansible_host = hcloud_server_network.cassandra[index].ip
-          ansible_user = "root"
+          ansible_host = tolist(hcloud_server.cassandra[index].network)[0].ip
         }
       }
       vars = {
-        cassandra_network_interface = "ens10"
+        cassandra_network_interface = "enp7s0"
       }
     }
     cassandra_seed = {
@@ -74,12 +116,11 @@ output "static-inventory" {
     elasticsearch = {
       hosts = {
         for index, server in hcloud_server.elasticsearch : server.name => {
-          ansible_host = hcloud_server_network.elasticsearch[index].ip
-          ansible_user = "root"
+          ansible_host = tolist(hcloud_server.elasticsearch[index].network)[0].ip
         }
       }
       vars = {
-        elasticsearch_network_interface = "ens10"
+        elasticsearch_network_interface = "enp7s0"
       }
     }
     elasticsearch_master = {
@@ -88,25 +129,32 @@ output "static-inventory" {
     minio = {
       hosts = {
         for index, server in hcloud_server.minio : server.name => {
-          ansible_host = hcloud_server_network.minio[index].ip
-          ansible_user = "root"
+          ansible_host = tolist(hcloud_server.minio[index].network)[0].ip
         }
       }
       vars = {
-        minio_network_interface = "ens10"
+        minio_network_interface = "enp7s0"
       }
     }
-    restund = {
+    postgresql = {
       hosts = {
-        for index, server in hcloud_server.restund : server.name => {
-          ansible_host = hcloud_server_network.restund[index].ip
-          ansible_user = "root"
+        for index, server in hcloud_server.postgresql : "postgresql${index + 1}" => {
+          ansible_host = tolist(hcloud_server.postgresql[index].network)[0].ip
         }
       }
       vars = {
-        restund_network_interface = "ens10"
+        wire_dbname                  = "wire-server"
+        wire_user                    = "wire-server"
+        wire_pass                    = "verysecurepassword"
+        postgresql_network_interface = "enp7s0"
       }
     }
-
+    postgresql_rw = {
+      hosts = { "postgresql1" = {} }
+    }
+    postgresql_ro = {
+      hosts = { "postgresql2" = {},
+      "postgresql3" = {} }
+    }
   }
 }

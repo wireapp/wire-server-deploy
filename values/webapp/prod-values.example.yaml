@@ -1,4 +1,4 @@
-replicaCount: 1
+replicaCount: 3
 #  image:
 #    tag: some-tag (only override if you want a newer/different version than what is in the chart)
 config:
@@ -8,16 +8,25 @@ config:
     backendDomain: example.com
     backendTeamSettings: teams.example.com
     appHost: webapp.example.com
-# See full list of available environment variables: https://github.com/wireapp/wire-webapp/blob/dev/server/config.ts
+# See full list of available environment variables: https://github.com/wireapp/wire-web-config-default/blob/master/wire-webapp/.env.defaults
 envVars:
   APP_NAME: "Webapp"
   ENFORCE_HTTPS: "true"
   FEATURE_CHECK_CONSENT: "false"
+  # Note: disabling showing the user creation is not the same thing as user creation being disabled.
+  # To disable user/team creation completely from backend, update the brig configuration in wire-server
   FEATURE_ENABLE_ACCOUNT_REGISTRATION: "true"
   FEATURE_ENABLE_DEBUG: "false"
   FEATURE_ENABLE_PHONE_LOGIN: "false"
   FEATURE_ENABLE_SSO: "false"
+  FEATURE_ENABLE_IN_CALL_REACTIONS: "true"
+  FEATURE_ENABLE_IN_CALL_HAND_RAISE: "true"
+  FEATURE_ENABLE_DETACHED_CALLING_WINDOW: "true"
+  FEATURE_ENABLE_MESSAGE_FORMAT_BUTTONS: "true"
   FEATURE_SHOW_LOADING_INFORMATION: "false"
+  FEATURE_ENABLE_CHANNELS: "false"
+  FEATURE_ENABLE_CHANNELS_HISTORY_SHARING: "false"
+  FEATURE_ENABLE_PUBLIC_CHANNELS: "false"
   URL_ACCOUNT_BASE: "https://account.example.com"
   #URL_MOBILE_BASE: "https://wire-pwa-staging.zinfra.io" # TODO: is this needed?
   URL_PRIVACY_POLICY: "https://www.example.com/terms-conditions"

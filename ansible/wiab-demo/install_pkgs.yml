@@ -1,0 +1,151 @@
+- name: Package installation and configuration
+  hosts: deploy_node
+  become: yes
+  tasks:
+  - name: Install required packages
+    block:
+    - name: Install dependencies
+      apt:
+        name:
+          - jq
+          - python3-pip
+          - python3-venv
+          - python3-full
+        state: present
+        update_cache: no
+
+    - name: Check if Helm is already installed
+      command: which helm
+      register: helm_check
+      failed_when: false
+      changed_when: false
+
+    - name: Install Helm binary
+      block:
+      - name: Set system architecture
+        set_fact:
+          system_arch: "amd64"
+
+      - name: Download Helm {{ helm_version }} binary
+        get_url:
+          url: "https://get.helm.sh/helm-{{ helm_version }}-linux-{{ system_arch }}.tar.gz"
+          dest: /tmp/helm-{{ helm_version }}.tar.gz
+          mode: '0644'
+        register: helm_download
+
+      - name: Verify Helm binary checksum
+        shell: |
+          cd /tmp
+          echo "{{ helm_checksum_amd64 }}  helm-{{ helm_version }}.tar.gz" | sha256sum -c -
+        changed_when: false
+        register: checksum_verify
+
+      - name: Extract Helm binary
+        unarchive:
+          src: /tmp/helm-{{ helm_version }}.tar.gz
+          dest: /tmp
+          remote_src: yes
+
+      - name: Install Helm binary to /usr/local/bin
+        copy:
+          src: /tmp/linux-{{ system_arch }}/helm
+          dest: /usr/local/bin/helm
+          mode: '0755'
+          remote_src: yes
+
+      - name: Clean up temporary files
+        file:
+          path: "{{ item }}"
+          state: absent
+        loop:
+          - /tmp/helm-{{ helm_version }}.tar.gz
+          - /tmp/linux-{{ system_arch }}
+
+      when: helm_check.rc != 0
+
+  - name: Ensure required Python libraries are installed for Kubernetes operations
+    block:
+    - name: Install kubernetes Python library via pip
+      pip:
+        name: 
+          - kubernetes>=18.0.0
+          - pyyaml>=5.4.1
+        executable: /usr/bin/pip3
+        state: present
+        extra_args: "--break-system-packages"
+      become: yes
+      register: pip_install_result
+
+    - name: Check if Docker CE is installed with correct version
+      shell: apt policy docker-ce | grep "Installed:" | awk '{print $2}'
+      register: installed_docker_version
+      changed_when: false
+
+    - name: Check if containerd.io is installed with correct version
+      shell: apt policy containerd.io | grep "Installed:" | awk '{print $2}'
+      register: installed_containerd_version
+      changed_when: false
+
+    - name: Determine if Docker packages need installation
+      set_fact:
+        docker_needs_install: "{{ installed_docker_version.stdout != docker_ce_version or installed_containerd_version.stdout != containerd_version }}"
+
+    - name: Setup Docker if packages not installed or wrong version
+      when: docker_needs_install | bool
+      block:
+      - name: Create /etc/apt/keyrings directory
+        file:
+          path: /etc/apt/keyrings
+          state: directory
+          mode: '0755'
+
+      - name: Download Docker GPG key
+        get_url:
+          url: https://download.docker.com/linux/ubuntu/gpg
+          dest: /etc/apt/keyrings/docker.asc
+          mode: '0644'
+
+      - name: Add Docker repository to apt sources
+        shell: |
+          echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu $(. /etc/os-release && echo $VERSION_CODENAME) stable" > /etc/apt/sources.list.d/docker.list
+        args:
+          executable: /bin/bash
+
+      - name: Update apt package index
+        apt:
+          update_cache: yes
+
+      - name: Install Docker packages
+        apt:
+          name:
+          - docker-ce={{ docker_ce_version }}
+          - docker-ce-cli={{ docker_ce_version }}
+          - containerd.io={{ containerd_version }}
+          state: present
+
+    - name: Add {{ ansible_user }} to the docker group
+      user:
+        name: "{{ ansible_user }}"
+        groups: docker
+        append: yes
+
+    - name: Enable and start Docker service
+      systemd:
+        name: docker
+        enabled: yes
+        state: started
+
+    - name: Reset SSH connection to apply docker group membership changes
+      meta: reset_connection
+
+    - name: Install Minikube
+      get_url:
+        url: "https://github.com/kubernetes/minikube/releases/download/{{ minikube_version }}/minikube-linux-amd64"
+        dest: /usr/local/bin/minikube
+        mode: '0755'
+
+    - name: Install kubectl
+      get_url:
+        url: "https://dl.k8s.io/release/{{ kubernetes_version }}/bin/linux/amd64/kubectl"
+        dest: /usr/local/bin/kubectl
+        mode: '0755'

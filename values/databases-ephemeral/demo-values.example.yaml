@@ -1,0 +1,15 @@
+# Note that these are the correct values assuming that both Cassandra
+# and Elasticsearch are deployed outside of Kubernetes
+tags:
+  cassandra-ephemeral: true
+  elasticsearch-ephemeral: true
+
+redis-ephemeral:
+  redis-ephemeral:
+    resources:
+      limits:
+        cpu: "1000m"
+        memory: "1024Mi"
+      requests:
+        cpu: "500m"
+        memory: "512Mi"

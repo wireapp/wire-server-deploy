@@ -1,0 +1,68 @@
+- name: Configure minikube cluster
+  hosts: deploy_node
+  become: yes
+  become_user: "{{ ansible_user }}"
+  tasks:
+  - name: start minikube cluster
+    block: 
+    - name: Check if Minikube is running
+      shell: minikube status --profile="{{ minikube_profile }}"
+      register: minikube_status
+      failed_when: false
+      changed_when: false
+
+    - name: Start Minikube with specified configurations
+      shell: |
+        minikube start \
+          --nodes={{ minikube_nodes }} \
+          --cpus={{ minikube_cpus }} \
+          --memory={{ minikube_memory }} \
+          --disk-size={{ minikube_disk_size }} \
+          --kubernetes-version="{{ kubernetes_version }}" \
+          --container-runtime="{{ container_runtime }}" \
+          --driver=docker \
+          --extra-config=kubeadm.pod-network-cidr={{ pod_network_cidr }} \
+          --network={{ minikube_network_name }} \
+          --subnet={{ minikube_node_subnet }} \
+          --profile="{{ minikube_profile }}" \
+          --wait-timeout=15m0s \
+          --force \
+          --wait=all
+      when: "'Running' not in minikube_status.stdout"
+
+    - name: Get list of running Minikube nodes
+      shell: minikube node list --profile="{{ minikube_profile }}" | awk '{print $1}'
+      register: minikube_nodes_raw
+
+    - name: Get authorized_keys from minikube nodes
+      shell: |
+        minikube cp --profile="{{ minikube_profile }}" {{ item }}:/home/docker/.ssh/authorized_keys "{{ ansible_user_dir }}/{{ item }}_authorized_keys"
+      args:
+        executable: /bin/bash
+      with_items: "{{ minikube_nodes_raw.stdout_lines }}"
+      async: 30
+      poll: 5
+
+    - name: Ensure our SSH key is present
+      lineinfile:
+        path: "{{ ansible_user_dir }}/{{ item }}_authorized_keys"
+        line: "{{ ssh_public_key }}"
+        create: yes
+        mode: '0600'
+      with_items: "{{ minikube_nodes_raw.stdout_lines }}"
+      register: ssh_key_result
+
+    - name: Put back the authorized_keys file back to the minikube nodes
+      shell: minikube cp --profile="{{ minikube_profile }}" "{{ ansible_user_dir }}/{{ item }}_authorized_keys" {{ item }}:/home/docker/.ssh/authorized_keys
+      args:
+        executable: /bin/bash
+      with_items: "{{ minikube_nodes_raw.stdout_lines }}"
+      async: 30
+      poll: 5
+      when: ssh_key_result is changed
+
+    - name: Clean the copied authorized_keys
+      shell: rm "{{ ansible_user_dir }}/{{ item }}_authorized_keys"
+      args:
+        executable: /bin/bash
+      with_items: "{{ minikube_nodes_raw.stdout_lines }}"

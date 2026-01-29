@@ -1,0 +1,9 @@
+allowOrigin: https://webapp.example.com
+host: sftd.example.com
+replicaCount: 1
+joinCall:
+  replicaCount: 1
+tls:
+  issuerRef:
+    name: letsencrypt-http01
+    kind: ClusterIssuer

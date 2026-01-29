@@ -19,7 +19,7 @@ set -ex
 echo $cn > dns_name
 
 ALLDOMAINS=""
-for ONEREGISTRYIN in quay.io k8s.gcr.io gcr.io docker.caching.proxy.internal registry-1.docker.io auth.docker.io ${REGISTRIES}; do
+for ONEREGISTRYIN in quay.io registry.k8s.io gcr.io docker.caching.proxy.internal registry-1.docker.io auth.docker.io ${REGISTRIES}; do
     ONEREGISTRY=$(echo ${ONEREGISTRYIN} | xargs) # Remove whitespace
     echo "Adding certificate for registry: $ONEREGISTRY"
     ALLDOMAINS="${ALLDOMAINS},DNS:${ONEREGISTRY}"

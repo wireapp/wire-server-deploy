@@ -11,7 +11,7 @@ This document explains how to install Coturn on a newly deployed Wire-Server ins
 This presumes you already have:
 
 * Followed the [single Hetzner machine installation](single_hetzner_machine_installation.md) guide or otherwise have a machine ready to accept a Wire-Server deployment.
-* Have followed the [Wire-Server installation](docs_ubuntu_22.04.md) guide and have Wire-Server deployed and working (with Restund as the TURN server, which is currently the default, and will be replaced by Coturn as part of this process).
+* Have followed the [Wire-Server installation](docs_ubuntu_22.04.md) guide and have Wire-Server deployed and working.
 
 ## Plan. 
 
@@ -20,10 +20,9 @@ To setup Coturn, we will:
 * Create a `values.yaml` file and fill it with configuration.
 * Create a `secret.yaml` file for the Coturn secrets.
 * Configure the Coturn labels to select on which machine(s) it will run.
-* Configure the SFT labels for Coturn and SFT to share a port range.
+* Configure the SFT deployment for node selection and public IP discovery.
 * Configure the port redirection in Nftables.
-* Change the Wire-Server configuration to use Coturn instead of Restund.
-* Disable Restund.
+* Change the Wire-Server configuration to use Coturn.
 * Install Coturn using Helm.
 * Verify that Coturn is working.
 
@@ -58,14 +57,22 @@ Add the following configuration to the `values.yaml` file:
 # See: https://github.com/wireapp/wire-server/blob/develop/charts/coturn/values.yaml
 # And: https://github.com/wireapp/wire-server/blob/develop/charts/coturn/README.md
 
+# use nodeSelector only if you are planning on using coturn on fewer than the number of workers in your cluster. This is used to pin coturn to specific nodes.
 nodeSelector:
   wire.com/role: coturn
 
-coturnTurnListenIP: '192.168.122.23'
-
+replicaCount: 3
+coturnTurnListenIP: "__COTURN_POD_IP__"
+coturnTurnExternalIP: "__COTURN_EXT_IP__"
+coturnTurnRelayIP: "__COTURN_POD_IP__"
 ```
 
-Where `192.168.122.23` is the IP address of the machine where you want to run Coturn (in our example, the third kubernetes node, `kubenode3`).
+Annotate nodes with the wire.com/external-ip annotation if the nodes are behind a 1:1 NAT. This is to make coturn aware of its external IP address.
+
+ie.
+```
+d kubectl annotate node kubenode1 wire.com/external-ip=IP.ADDRESS
+```
 
 ## Create a `secret.yaml` file for the Coturn secrets.
 
@@ -145,7 +152,7 @@ If you want to run Coturn on multiple machines, you must:
 
 2. Change the `replicaCount` in the `charts/coturn/values.yaml` file to the number of machines you want to run Coturn on.
 
-## Configure the SFT labels for Coturn and SFT to share a port range. 
+## Configure the SFT deployment for node selection and public IP discovery
 
 First, we must locate what the "external" IP address of the machine is. 
 
@@ -182,17 +189,13 @@ demo@install-docs:~/wire-server-deploy$ ip addr
 
 In this case, the external IP address is `5.9.84.121`.
 
-```{note}
-
-Note this step is also documented in the [ Wire install docs](docs_ubuntu_22.04.md)
-
-``` 
+Please note: This step is also documented in the [Wire install docs](docs_ubuntu_22.04)
 
 We must make sure that Coturn pods and SFT pods do not run on the same kubernetes nodes.
 
 This means we must label the kubernetes nodes to run on nodes that we did not select to run Coturn in the previous step.
 
-In this example, we've decided to run Coturn on the first kubernetes node, `kubenode1`, which has an IP address of `192.168.122.21`.
+In this example, we've decided to run Coturn on the third kubernetes node, `kubenode3`, which has an IP address of `192.168.122.23`.
 
 First we make sure the SFT chart is configured to only run on kubernetes nodes with the right label (`sftd`).
 
@@ -205,7 +208,7 @@ nodeSelector:
 
 ``` 
 
-Then we label the `kubenode1` machine with the `wire.com/role: coturn` label:
+Then we label the `kubenode1` machine with the `wire.com/role: sftd` label:
 
 ```bash
 
@@ -217,7 +220,7 @@ We must also annotate the node with the exrenal IP address we will be listening 
 
 ```bash
 
-kubectl annotate node kubenode3 wire.com/external-ip='your.public.ip.address'
+d kubectl annotate node kubenode3 wire.com/external-ip='your.public.ip.address'
 
 ```
 
@@ -241,20 +244,15 @@ Note: This section is only relevant if you are running Wire-Server/Coturn/SFT be
 
 ``` 
 
-We must configure the port redirection in Nftables to allow traffic to reach Coturn and SFT.
+We must configure the port redirection in Nftables to allow traffic to reach Coturn.
 
-Calling and TURN services (Coturn, Restund, SFT) require being reachable on a range of ports used to transmit the calling data.
-
-Both SFT and Coturn both want to use the same port range, therefore predicting which node is using which port range ahead of time requires dividing/configuring port ranges in advance.
-
-Therefore, we configure the port redirection in Nftables to allow traffic to reach Coturn and SFT by splitting the ports between the two services.
+Calling and TURN services (Coturn, SFT) require being reachable on a range of ports used to transmit the calling data. SFT service listens on port 443 which is managed through k8s ingress controller, we must ensure that external traffic for port 443 is able to reach ingress controller.
 
 Here we have decided the following distribution of ports:
 
-* Coturn will operate between ports 32768 and 46883.
-* SFT will operate between ports 46884 and 61000.
+* Coturn will operate between ports 49152 and 65535.
 
-We will configure the port redirection in Nftables to allow traffic to reach Coturn and SFT.
+We will configure the port redirection in Nftables to allow traffic to reach Coturn.
 
 In the file `/etc/nftables.conf`, which we edit with:
 
@@ -269,21 +267,15 @@ We will do the following modifications:
 First, we create some definitions in the beginning of the file for readability:
 
 ```
-define COTURNIP    = 192.168.122.21
-define SFTIP       = 192.168.122.23
-
-define ANSNODEIP  = 192.168.122.31
-define ASSETHOSTIP= 192.168.122.10
-
+define COTURNIP   = 192.168.122.23
+define KUBENODEIP = 192.168.122.21
 define INF_WAN    = enp41s0
 ``` 
 
 Where:
 
-* `COTURNIP` is the IP address of the machine where Coturn will run (in our example, the first kubernetes node, `kubenode1`).
-* `SFTIP` is the IP address of the machine where SFT will run (in our example, the third kubernetes node, `kubenode3`).
-* `ANSNODEIP` is the IP address the first machine where ansible will install non-kubernetes services (in our example, the first ansible node, `ansnode1`).
-* `ASSETHOSTIP` is the IP address of the machine where the assethost will run (see earlier steps in the installation process.)
+* `COTURNIP` is the IP address of the machine where Coturn will run (in our example, the third kubernetes node, `kubenode3`).
+* `KUBENODEIP` is the IP address of the machine running nginx HTTP / HTTPS ingress.
 * `INF_WAN` is the name of the WAN interface exposed to the outside world (the Internet).
 
 Then, we edit the `table ip nat` / `chain PREROUTING` section of the file:
@@ -295,17 +287,13 @@ table ip nat {
 
     type nat hook prerouting priority -100;
 
-    iifname { $INF_WAN, virbr0 } tcp dport 80  fib daddr type local dnat to $SFTIP:31772
-    iifname { $INF_WAN, virbr0 } tcp dport 443 fib daddr type local dnat to $SFTIP:31773
+    iifname { $INF_WAN, virbr0 } tcp dport 80 fib daddr type local dnat to $KUBENODEIP:31772 comment "HTTP ingress"
+    iifname { $INF_WAN, virbr0 } tcp dport 443 fib daddr type local dnat to $KUBENODEIP:31773 comment "HTTPS ingress"
 
-    udp dport 80   dnat ip to $ANSNODEIP:80
-    udp dport 1194 dnat ip to $ASSETHOSTIP:1194
+    iifname { $INF_WAN, virbr0 } tcp dport 3478 fib daddr type local dnat to $COTURNIP comment "COTURN control TCP"
+    iifname { $INF_WAN, virbr0 } udp dport 3478 fib daddr type local dnat to $COTURNIP comment "COTURN control UDP"
 
-    iifname $INF_WAN ip daddr 5.9.84.121 udp dport 32768-46883 dnat to $COTURNIP
-    iifname $INF_WAN ip daddr 5.9.84.121 udp dport 46884-61000 dnat to $SFTIP
-
-    iifname $INF_WAN udp dport 3478 dnat to $COTURNIP:3478
-    iifname $INF_WAN tcp dport 3478 dnat to $COTURNIP:3478
+    iifname { $INF_WAN, virbr0 } udp dport 49152-65535 fib daddr type local dnat to $COTURNIP comment "COTURN UDP range"
 
     fib daddr type local counter jump DOCKER
   }
@@ -314,25 +302,24 @@ table ip nat {
 
 Some explanations:
 
-This is used for the SFT control:
+This is used for the HTTP(S) ingress:
 
 ```nft 
-    iifname { $INF_WAN, virbr0 } tcp dport 80  fib daddr type local dnat to $SFTIP:31772
-    iifname { $INF_WAN, virbr0 } tcp dport 443 fib daddr type local dnat to $SFTIP:31773
+    iifname { $INF_WAN, virbr0 } tcp dport 80 fib daddr type local dnat to $KUBENODEIP:31772 comment "HTTP ingress"
+    iifname { $INF_WAN, virbr0 } tcp dport 443 fib daddr type local dnat to $KUBENODEIP:31773 comment "HTTPS ingress"
 ``` 
 
-This is the part that distributes the UDP packets (media/calling traffic) in two different port ranges for SFT and Coturn:
+This is the part that routes the UDP packets (media/calling traffic) to the calling services:
 
 ```nft
-    iifname $INF_WAN ip daddr 5.9.84.121 udp dport 32768-46883 dnat to $COTURNIP
-    iifname $INF_WAN ip daddr 5.9.84.121 udp dport 46884-61000 dnat to $SFTIP
+    iifname { $INF_WAN, virbr0 } udp dport 49152-65535 fib daddr type local dnat to $COTURNIP comment "COTURN UDP range"
 ``` 
 
 This is the part that redirects the control traffic to the Coturn port:
 
 ```nft
-    iifname $INF_WAN udp dport 3478 dnat to $COTURNIP:3478
-    iifname $INF_WAN tcp dport 3478 dnat to $COTURNIP:3478
+    iifname { $INF_WAN, virbr0 } tcp dport 3478 fib daddr type local dnat to $COTURNIP comment "COTURN control TCP"
+    iifname { $INF_WAN, virbr0 } udp dport 3478 fib daddr type local dnat to $COTURNIP comment "COTURN control UDP"
 ```
 
 
@@ -344,9 +331,9 @@ sudo systemctl restart nftables
 
 ```
 
-## Change the Wire-Server configuration to use Coturn instead of Restund.
+## Change the Wire-Server configuration to use Coturn.
 
-We must change the Wire-Server configuration to use Coturn instead of Restund.
+We must change the Wire-Server configuration to use Coturn.
 
 First, we must locate what the "external" IP address of the machine is. 
 
@@ -360,7 +347,7 @@ sudo ip addr
 
 ```
 
-For more details on getting the extrenal IP address see the `Configure the SFT labels for Coturn and SFT to share a port range` section above.
+For more details on getting the extrenal IP address see the `Configure the SFT deployment for node selection and public IP discovery` section above.
 
 Edit the `values/wire-server/values.yaml` file:
 
@@ -377,26 +364,10 @@ You will find a section that looks like this (default):
   turnStatic:
     v1: []
     v2:
-      # - "turn:<IP of restund1>:80"
-      # - "turn:<IP of restund2:80"
-      # - "turn:<IP of restund1>:80?transport=tcp"
-      # - "turn:<IP of restund2>:80?transport=tcp"
-      # - "turns:<IP of restund1>:443?transport=tcp"
-      # - "turns:<IP of restund2>:443?transport=tcp"
-
-``` 
-
-Or if you have already configured Restund, something like this:
-
-```yaml 
-
-  turnStatic:
-    v1: []
-    v2:
-      - "turn:<IP of restund1>:80"
-      - "turn:<IP of restund2>:80"
-      - "turn:<IP of restund1>:80?transport=tcp"
-      - "turn:<IP of restund2>:80?transport=tcp"
+      # - "turn:<IP of coturn1>:3478"
+      # - "turn:<IP of coturn2>:3478"
+      # - "turn:<IP of coturn1>:3478?transport=tcp"
+      # - "turn:<IP of coturn2>:3478?transport=tcp"
 
 ``` 
 
@@ -412,21 +383,108 @@ Instead, we configure it to use the external IP addres we found above, and the C
 
 As we have changed our Wire-Server configuration, we must re-deploy the Wire-Server chart to apply the new configuration:
 
-If wire-server is already installed, first uninstall it:
-
 ```bash
 
-d helm uninstall wire-server
+d helm upgrade --install wire-server ./charts/wire-server --timeout=15m0s --values ./values/wire-server/values.yaml --values ./values/wire-server/secrets.yaml
 
 ```
 
-Then install wire-server with:
+
+## Install Coturn with Helm.
+
+We have now configured our Coturn `value` and `secret` files, configured `wire-server` to use Coturn.
+
+It is time to actually deploy Coturn.
+
+To actually install coturn, you run:
 
 ```bash
-
-d helm install wire-server ./charts/wire-server --timeout=15m0s --values ./values/wire-server/values.yaml --values ./values/wire-server/secrets.yaml
-
+d helm install coturn ./charts/coturn --timeout=15m0s --values values/coturn/values.yaml --values values/coturn/secret.yaml
 ```
+
+## Verify that coturn is running.
+
+To verify that coturn is running, you can run:
+
+```bash
+d kubectl get pods -l app=coturn
+```
+
+Which should give you something like:
+
+```bash
+demo@install-docs:~/wire-server-deploy$ d kubectl get pods -l app=coturn
+NAME       READY   STATUS    RESTARTS   AGE
+coturn-0   1/1     Running   0          1d
+```
+
+## Appendix: Debugging procedure.
+
+If coturn has already been installed once (for example if something went wrong and you are re-trying), before running a new deploy of Coturn first do:
+
+```bash
+d helm uninstall coturn
+```
+
+Also make sure you stop any running coturn service:
+
+```bash
+d kubectl delete pod -l app=coturn
+```
+
+And then re-run the `helm install` command.
+
+```bash
+d helm install coturn ./charts/coturn --timeout=15m0s --values values/coturn/values.yaml --values values/coturn/secret.yaml
+```
+
+For further debugging, enable `verboseLogging` in `charts/coturn/values.yaml` and redeploy coturn:
+
+```yaml
+config:
+  verboseLogging: true
+```
+
+```bash
+d helm uninstall coturn
+d helm install coturn ./charts/coturn --timeout=15m0s --values values/coturn/values.yaml --values values/coturn/secret.yaml
+```
+
+Debug log should now be visible in the coturn pod stdout:
+
+```bash
+d kubectl logs coturn-0
+```
+
+Check if the pod has the correct IP configuration in place.
+
+```bash
+d kubectl exec -it coturn-0 -- bash
+grep ip= coturn-config/turnserver.conf
+
+# output will look something like this
+
+listening-ip=xxx.xxx.xxx.xxx
+relay-ip=xxx.xxx.xxx.xxx.xxx
+external-ip=xxx.xxx.xxx.xxx
+```
+
+
+## Appendix: Note on migration.
+
+The current guide is written with the assumption that you are setting up Coturn for the first time, on a fresh Wire-Server installation.
+
+If you are migrating from Restund to Coturn to an existing/running/in-use installation, as clients are currently using Restund, you can not disable Restund before all clients have migrated to Coturn, which they do by retrieving a freshly updated calling configuration from Wire-Server that instructs them to use the Coturn IPs instead of the Restund IPs.
+
+This configuration update occurs every 24 hours, so you will have to wait at least 24 hours before you can disable Restund.
+
+These are the additional steps to ensure a smooth transition:
+
+1. Deploy Coturn as described in this guide, without disabling Restund yet.
+2. Change the `turnStatic` call configuration in the `values/wire-server/values.yaml` file to use the Coturn IPs instead of the Restund IPs.
+3. Re-deploy the Wire-Server chart to apply the new configuration.
+4. Wait at least 24 hours for all clients to retrieve the new configuration.
+5. Once you are sure all clients have migrated to Coturn, you can disable Restund as described in this guide below.
 
 ## Disable Restund.
 
@@ -453,72 +511,3 @@ And check it is stopped with:
 ```bash
 sudo service restund status
 ```
-
-## Install Coturn with Helm.
-
-We have now configured our Coturn `value` and `secret` files, configured `wire-server` to use Coturn, and disabled Restund.
-
-It is time to actually deploy Coturn.
-
-To actually install coturn, you run:
-
-```bash
-d helm install coturn ./charts/coturn --timeout=15m0s --values values/coturn/values.yaml --values values/coturn/secret.yaml
-```
-
-## Verify that coturn is running.
-
-To verify that coturn is running, you can run:
-
-```bash
-d kubectl get pods -l app=coturn
-```
-
-Which should give you something like:
-
-```bash
-demo@install-docs:~/wire-server-deploy$ d kubectl get pods -l app=coturn
-NAME       READY   STATUS    RESTARTS   AGE
-coturn-0   1/1     Running   0          1d
-```
-
-
-
-
-
-## Appendix: Debugging procedure.
-
-If coturn has already been installed once (for example if something went wrong and you are re-trying), before running a new deploy of Coturn first do:
-
-```bash
-d helm uninstall coturn
-```
-
-Also make sure you stop any running coturn service:
-
-```bash
-d kubectl delete pod -l app=coturn
-```
-
-And then re-run the `helm install` command.
-
-```bash
-d helm install coturn ./charts/coturn --timeout=15m0s --values values/coturn/values.yaml --values values/coturn/secret.yaml
-```
-
-## Appendix: Note on migration.
-
-The current guide is written with the assumption that you are setting up Coturn for the first time, on a fresh Wire-Server installation.
-
-If you are migrating from Restund to Coturn to an existing/running/in-use installation, as clients are currently using Restund, you can not disable Restund before all clients have migrated to Coturn, which they do by retrieving a freshly updated calling configuration from Wire-Server that instructs them to use the Coturn IPs instead of the Restund IPs.
-
-This configuration update occurs every 24 hours, so you will have to wait at least 24 hours before you can disable Restund.
-
-These are the additional steps to ensure a smooth transition:
-
-1. Deploy Coturn as described in this guide, without disabling Restund yet.
-2. Change the `turnStatic` call configuration in the `values/wire-server/values.yaml` file to use the Coturn IPs instead of the Restund IPs.
-3. Re-deploy the Wire-Server chart to apply the new configuration.
-4. Wait at least 24 hours for all clients to retrieve the new configuration.
-5. Once you are sure all clients have migrated to Coturn, you can disable Restund as described in this guide.
-

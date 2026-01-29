@@ -45,7 +45,7 @@ echo "NAMESPACE = $NAMESPACE"
 
 phase_0_charts_metallb=( metallb )
 phase_0_charts_ingress_controller=( ingress-nginx-controller )
-phase_1_charts_pre=( fake-aws databases-ephemeral demo-smtp )
+phase_1_charts_pre=( fake-aws databases-ephemeral smtp )
 phase_2_charts_main=( wire-server )
 # charts for ingress, creating ELB's and DNS records
 phase_3_charts_ingress=( nginx-ingress-services )
@@ -96,18 +96,53 @@ for chart in "${phase_1_charts_pre[@]}"; do
     fi
 done
 
+# Retrieve PostgreSQL password from databases-ephemeral for later use
+echo "######################################################"
+echo "Retrieving PostgreSQL password..."
+echo "######################################################"
+if command -v kubectl &> /dev/null; then
+    if kubectl get secret wire-postgresql-secret -n "${NAMESPACE}" &>/dev/null; then
+        PG_PASSWORD_B64=$(kubectl get secret wire-postgresql-secret -n "${NAMESPACE}" -o jsonpath='{.data.password}')
+        if [ -n "$PG_PASSWORD_B64" ]; then
+            echo "✓ PostgreSQL password retrieved successfully"
+            # Decode password for use in helm --set
+            PG_PASSWORD_PLAIN=$(echo "$PG_PASSWORD_B64" | base64 -d)
+            export PG_PASSWORD_B64
+            export PG_PASSWORD_PLAIN
+        else
+            echo "⚠️ Warning: PostgreSQL secret exists but password is empty"
+        fi
+    else
+        echo "⚠️ Warning: PostgreSQL secret 'wire-postgresql-secret' not found in namespace '${NAMESPACE}'"
+        echo "    PostgreSQL password will need to be synced manually"
+    fi
+else
+    echo "⚠️ Warning: kubectl not found, PostgreSQL password will need to be synced manually"
+fi
+echo ""
+
 echo "Installing wire-server, this may take a long time, and take a long time before reporting errors. (timeout of $timeout seconds.) You may check for potential problems with 'kubectl -n $NAMESPACE get pods -w' or 'kubectl -n $NAMESPACE get all' and look for errors/pending."
 for chart in "${phase_2_charts_main[@]}"; do
     valuesfile="${DIR}/values/${chart}/${valuesfilename}"
     secretsfile="${DIR}/values/${chart}/${secretsfilename}"
+
+    # Build helm command with PostgreSQL password injection if available
+    HELM_EXTRA_ARGS=""
+    if [ -n "${PG_PASSWORD_PLAIN:-}" ]; then
+        HELM_EXTRA_ARGS="--set brig.secrets.pgPassword=${PG_PASSWORD_PLAIN} --set galley.secrets.pgPassword=${PG_PASSWORD_PLAIN}"
+        echo "Injecting PostgreSQL password into brig and galley secrets"
+    fi
+
     if [ -f "$secretsfile" ]; then
         helm upgrade --install --namespace "${NAMESPACE}" "${NAMESPACE}-${chart}" "${DIR}/charts/${chart}" \
             -f "$valuesfile" \
             -f "$secretsfile" \
+            ${HELM_EXTRA_ARGS} \
             --wait --timeout 900
     else
         helm upgrade --install --namespace "${NAMESPACE}" "${NAMESPACE}-${chart}" "${DIR}/charts/${chart}" \
             -f "$valuesfile" \
+            ${HELM_EXTRA_ARGS} \
             --wait --timeout 900
     fi
 done

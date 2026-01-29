@@ -20,8 +20,8 @@ docker_ubuntu_repo_gpgkey: "{{ ubuntu_repos }}/gpg"
 binaries_url: "http://{{ assethost_host }}/binaries"
 nodelocaldns_ip: 10.233.0.10
 
-kube_version: "v1.28.2"
-etcd_version: "v3.5.9"
+kube_version: "v1.29.10"
+etcd_version: "v3.5.16"
 
 kubeadm_download_url: "{{ binaries_url }}/kubeadm"
 kubectl_download_url: "{{ binaries_url }}/kubectl"
@@ -35,7 +35,12 @@ containerd_download_url: "{{ binaries_url }}/containerd-{{ containerd_version }}
 runc_download_url: "{{ binaries_url }}/runc.{{ image_arch }}"
 etcd_download_url: "{{ binaries_url }}/etcd-{{ etcd_version }}-linux-{{ image_arch }}.tar.gz"
 nerdctl_download_url: "{{ binaries_url }}/nerdctl-{{ nerdctl_version }}-linux-{{ image_arch }}.tar.gz"
-cassandra_url: "{{ binaries_url }}/apache-cassandra-3.11.16-bin.tar.gz"
+
+# Cassandra configuration - overrides ansible-cassandra role defaults
+# cassandra_version determines installation directory: /opt/apache-cassandra-{{ cassandra_version }}/
+# Both version and URL must be updated when upgrading Cassandra
+cassandra_version: "3.11.19"
+cassandra_url: "{{ binaries_url }}/apache-cassandra-3.11.19-bin.tar.gz"
 prometheus_jmx_url: "{{ binaries_url }}/jmx_prometheus_javaagent-0.10.jar"
 
 # The elasticsearch role is turing-complete in determining the right repo,
@@ -50,9 +55,9 @@ minio_server_artifact_url: "{{ binaries_url }}/minio.RELEASE.2023-07-07T07-13-57
 minio_server_artifact_checksum: sha256:f6d1aadf4baec1556880e659748d7fbc6bc8d2dac3554f816e95492d3881660a
 minio_server_upgrade_from_checksums : [ "sha256:2c7e6774a9befbba6a126791f363550f8f14e34008e100d0e0e57e2ad9b2ab8c" ]
 
-minio_client_artifact_url: "{{ binaries_url }}/mc.RELEASE.2023-07-07T05-25-51Z"
-minio_client_artifact_checksum: sha256:205a2dc5a49dc467f78228c43c7d368e376c6cc14492597a7c4fe195c291f074
-minio_client_upgrade_from_checksums : [ "sha256:59e184bd4e2c3a8a19837b0f0da3977bd4e301495a24e4a5d50e291728a1de51" ]
+minio_client_artifact_url: "{{ binaries_url }}/mc.RELEASE.2023-10-24T05-18-28Z"
+minio_client_artifact_checksum: sha256:5f12926b646b533cdea1a548c54460a4dad78f27b8b17d399ba02ff4ee368e4d
+minio_client_upgrade_from_checksums : [ "sha256:59e184bd4e2c3a8a19837b0f0da3977bd4e301495a24e4a5d50e291728a1de51", "sha256:205a2dc5a49dc467f78228c43c7d368e376c6cc14492597a7c4fe195c291f074" ]
 
 kubeconfig_localhost: true
 #resolvconf_mode: none
@@ -62,4 +67,14 @@ kubeconfig_localhost: true
 is_aws_environment: False
 
 # IP address for the logging (for example QRadar) server
-syslog_target_ip: 12.34.56.78
+# this is not used in offline mode, but is here if required
+# syslog_target_ip: 12.34.56.78
+
+# OVERRIDES
+
+coredns_version: "v1.11.4"
+ingress_nginx_version: "v1.12.1"
+metrics_server_version: "v0.7.2"
+ingress_nginx_kube_webhook_certgen_image_tag: "v20231011-8b53cabe0"
+cert_manager_version: "v1.16.3"
+nginx_image_tag: "1.25.4-alpine"

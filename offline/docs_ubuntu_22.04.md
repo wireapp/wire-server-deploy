@@ -4,6 +4,10 @@ We have a pipeline in  `wire-server-deploy` producing container images, static
 binaries, ansible playbooks, debian package sources and everything required to
 install Wire.
 
+## Demo / Testing installation
+
+To install a self-hosted instance of Wire deployed on one Server ("Wire in a box") for testing purposes, we recommend the [autodeploy.sh](../bin/autodeploy.sh) script. See also: [Automated full install](single_hetzner_machine_installation.md#automated-full-install) section in the Single Hetzner Machine installation readme.
+
 ## Installing docker
 
 Note: If you are using a Hetzner machine, docker should already be installed (you can check with `docker version`) and you can skip this section.
@@ -129,9 +133,6 @@ The following artifacts are provided:
  - `containers-helm.tar`
    These are the container images our charts (and charts we depend on) refer to.
    Also come as tarballs, and are seeded like the system containers.
- - `containers-other.tar`
-   These are other container images, not deployed inside k8s. Currently, only
-   contains `restund`.
  - `debs-jammy.tar`
    This acts as a self-contained dump of all packages required to install
    kubespray, as well as all other packages that are installed by ansible
@@ -145,7 +146,7 @@ The following artifacts are provided:
 
 ## Editing the inventory
 
-Copy `ansible/inventory/offline/99-static`  to `ansible/inventory/offline/hosts.ini`, and remove the original. 
+Copy `ansible/inventory/offline/99-static`  to `ansible/inventory/offline/hosts.ini`, and remove the original.
 
 ```
 cp ansible/inventory/offline/99-static ansible/inventory/offline/hosts.ini
@@ -171,7 +172,7 @@ It's recommended to update the lists of what nodes belong to which group, so ans
 
 For our Wire internal offline deployments using seven VMs, we edit the inventory to run all services outside of K8s on three `ansnode` VMs.
 For productive on-prem deployments, these sections can be divided into individual host groups, reflecting the architecture of the target infrastructure.
-Examples with individual nodes for Elastic, MinIO, Cassandra and Restund are commented out below.
+Examples with individual nodes for Elastic, MinIO, and Cassandra are commented out below.
 ```
 [elasticsearch]
 # elasticsearch1
@@ -201,11 +202,6 @@ ansnode3
 # cassandraseed1
 ansnode1
 
-[restund]
-# restund1
-# restund2
-ansnode1
-ansnode2
 ```
 
 ### Configuring kubernetes and etcd
@@ -252,28 +248,9 @@ Do this for all of the instances.
 ### Setting up Database network interfaces.
 * Make sure that `assethost` is present in the inventory file with the correct `ansible_host` (and `ip` values if required)
 * Make sure that `cassandra_network_interface` is set to the name of the network interface on which the kubenodes should talk to cassandra and on which the cassandra nodes
-  should communicate among each other. Run `ip addr` on one of the cassandra nodes to determine the network interface names, and which networks they correspond to. In Ubuntu 22.04 for example, interface names are predictable and individualized, eg. `enp41s0`. 
+  should communicate among each other. Run `ip addr` on one of the cassandra nodes to determine the network interface names, and which networks they correspond to. In Ubuntu 22.04 for example, interface names are predictable and individualized, eg. `enp41s0`.
 * Similarly `elasticsearch_network_interface` and `minio_network_interface` should be set to the network interface names you want elasticsearch and minio to communicate with kubernetes with, as well.
-  
 
-### Configuring Restund
-
-Restund is deployed for NAT-hole punching and relaying. So that 1-to-1 calls
-can be established between Wire users. Restund needs to be directly publicly
-reachable on a public IP.
-
-If you need Restund to listen on a different interface than the default gateway, set `restund_network_interface`
-
-If the interface on which Restund is listening does not know its own public IP
-(e.g. because it is behind NAT itself) extra configuration is necessary. Please provide the public IP on which
-Restund is available as `restund_peer_udp_advertise_addr`.
-
-Due to this *NAT-hole punching* relay purpose and depending on where the Restund instance resides within your network
-topology, it could be used to access private services. We consider this to be unintended and thus set a couple
-of network rules on a Restund instance. If egress traffic to certain private network ranges should still
-be allowed, you may adjust `restund_allowed_private_network_cidrs` according to your setup.
-If you install restund together with other services on the same machine you need to set `restund_allowed_private_network_cidrs`
-for these services to communicate over the private network.
 
 ### Marking kubenode for calling server (SFT)
 
@@ -318,7 +295,7 @@ ansible_user = demo
 cassandra_network_interface = enp1s0
 cassandra_backup_enabled = False
 cassandra_incremental_backup_enabled = False
-# cassandra_backup_s3_bucket = 
+# cassandra_backup_s3_bucket =
 
 [elasticsearch:vars]
 elasticsearch_network_interface = enp1s0
@@ -328,10 +305,6 @@ minio_network_interface = enp1s0
 prefix = ""
 domain = "example.com"
 deeplink_title = "wire demo environment, example.com"
-
-[restund:vars]
-restund_uid = root
-restund_allowed_private_network_cidrs='["192.168.122.0/24"]'
 
 [rmq-cluster:vars]
 rabbitmq_network_interface = enp1s0
@@ -354,12 +327,6 @@ kubenode3
 [k8s-cluster:children]
 kube-master
 kube-node
-
-# Note: If you install restund on the same nodes as other services
-# you need to set `restund_allowed_private_network_cidrs`
-[restund]
-ansnode1
-ansnode2
 
 [cassandra]
 ansnode1
@@ -391,13 +358,15 @@ ansnode3
 
 ## Generating secrets
 
-Minio and restund services have shared secrets with the `wire-server` helm chart. Run the folllowing script that generates a fresh set of secrets for these components:
+Minio and coturn services have shared secrets with the `wire-server` helm chart. Run the folllowing script that generates a fresh set of secrets for these components:
 
 ```
 ./bin/offline-secrets.sh
 ```
 
-This should generate two files. `./ansible/inventory/group_vars/all/secrets.yaml` and `values/wire-server/secrets.yaml`.
+This should generate two secret files.
+- `./ansible/inventory/group_vars/all/secrets.yaml`
+- `values/wire-server/secrets.yaml`
 
 
 ### WORKAROUND: old debian key
@@ -448,7 +417,7 @@ Hash: SHA1, RIPEMD160, SHA256, SHA384, SHA512, SHA224
 Compression: Uncompressed, ZIP, ZLIB, BZIP2
 ```
 
-## Deploying Kubernetes, Restund and stateful services
+## Deploying Kubernetes and stateful services
 
 In order to deploy all mentioned services, run:
 ```
@@ -466,28 +435,10 @@ d kubectl get nodes -owide
 ```
 They should all report ready.
 
+### Troubleshooting external services
+Cassandra, Minio and Elasticsearch are running outside Kubernets cluster, make sure those machines have necessary ports open -
 
-#### Troubleshooting restund
-
-In case the restund firewall fails to start. Fix
-
-On each ansnode you set in the `[restund]` section of the `hosts.ini` file
-
-Delete the outbound rule to 172.16.0.0/12
-
-```
-sudo ufw status numbered;
-```
-
-Then find the right number and delete it
-
-```
-ufw delete <right number>;
-```
-
-
-and enable the ports for colocated services running on these nodes:
-
+On each of the machines running Cassandra, Minio and Elasticsearch, run the following commands to open the necessary ports, if needed:
 ```
 sudo bash -c '
 set -eo pipefail;
@@ -513,6 +464,9 @@ ufw allow 4369/tcp;
 ufw allow 25672/tcp;
 '
 ```
+
+### Deploy RabbitMQ cluster
+Follow the steps mentioned here to create a RabbitMQ cluster based on your setup - [offline/rabbitmq_setup.md](./rabbitmq_setup.md)
 
 ### Preparation for Federation
 For enabling Federation, we need to have RabbitMQ in place. Please follow the instructions in [offline/federation_preparation.md](./federation_preparation.md) for setting up RabbitMQ.
@@ -542,11 +496,30 @@ cp values/databases-ephemeral/prod-values.example.yaml values/databases-ephemera
 d helm install databases-ephemeral ./charts/databases-ephemeral/ --values ./values/databases-ephemeral/values.yaml
 ```
 
-Next, three more services that need no additional configuration need to be deployed:
+Next, two more services will be deployed without additional configuration:
 ```
 d helm install fake-aws ./charts/fake-aws --values ./values/fake-aws/prod-values.example.yaml
-d helm install demo-smtp ./charts/demo-smtp --values ./values/demo-smtp/prod-values.example.yaml
+
 d helm install reaper ./charts/reaper
+```
+
+#### SMTP
+
+For onboarding users via e-mail, update the configuration for `brig.config.smtp` with your SMTP. We also ship a `smtp` package with our bundle for demo/testing purposes, which is also possible to be used outside that scope, as an actual SMTP relay. For a generic setup, please read [docs.md](smtp.md) for more details.
+
+For a temporary SMTP service:
+
+### ensure that the RELAY_NETWORKS value is set to the podCIDR
+
+```
+SMTP_VALUES_FILE="./values/smtp/prod-values.example.yaml"
+podCIDR=$(d kubectl get configmap -n kube-system kubeadm-config -o yaml | grep -i 'podSubnet' | awk '{print $2}' 2>/dev/null)
+if [[ $? -eq 0 && -n "$podCIDR" ]]; then
+  sed -i "s|RELAY_NETWORKS: \".*\"|RELAY_NETWORKS: \":${podCIDR}\"|" $SMTP_VALUES_FILE
+else
+    echo "Failed to fetch podSubnet. Attention using the default value: $(grep -i RELAY_NETWORKS $SMTP_VALUES_FILE)"
+fi
+d helm install smtp ./charts/smtp --values $SMTP_VALUES_FILE
 ```
 
 #### Preparing your values
@@ -559,15 +532,15 @@ cp ./values/wire-server/prod-values.example.yaml ./values/wire-server/values.yam
 
 Inspect all the values and adjust domains to your domains where needed.
 
-Add the IPs of your `restund` servers to the `turnStatic.v2` list:
+Add the IPs of your `coturn` servers to the `turnStatic.v2` list:
 ```yaml
   turnStatic:
     v1: []
     v2:
-      - "turn:<IP of restund1>:3478"
-      - "turn:<IP of restund2>:3478"
-      - "turn:<IP of restund1>:3478?transport=tcp"
-      - "turn:<IP of restund2>:3478?transport=tcp"
+      - "turn:<IP of coturn1>:3478"
+      - "turn:<IP of coturn2>:3478"
+      - "turn:<IP of coturn1>:3478?transport=tcp"
+      - "turn:<IP of coturn2>:3478?transport=tcp"
 ```
 
 Open up `./values/wire-server/secrets.yaml` and inspect the values. In theory
@@ -581,7 +554,7 @@ sed -i 's/example.com/<your-domain>/g' ./values/wire-server/values.yaml
 ```
 
 #### [Optional] Using Kubernetes managed Cassandra (K8ssandra)
-You can deploy K8ssandra by following these docs - 
+You can deploy K8ssandra by following these docs -
 [offline/k8ssandra_setup.md](./k8ssandra_setup.md)
 
 Once K8ssandra is deployed, change the host address in `values/wire-server/values.yaml` to the K8ssandra service address, i.e.
@@ -589,6 +562,25 @@ Once K8ssandra is deployed, change the host address in `values/wire-server/value
 sed -i 's/cassandra-external/k8ssandra-cluster-datacenter-1-service.database/g' ./values/wire-server/values.yaml
 ```
 
+#### Update postgresql secret
+
+If postgresql is part of the deployment, you need to update the postgresql credential in the `values/wire-server/secrets.yaml` file like following as the secrets are stored in the k8s environment.
+
+```bash
+For manual deployments or troubleshooting, use the generic sync script:
+
+```bash
+d bash
+# Sync PostgreSQL password from K8s secret to secrets.yaml
+./bin/sync-k8s-secret-to-wire-secrets.sh \
+  wire-postgresql-external-secret \
+  password \
+  values/wire-server/secrets.yaml \
+  .brig.secrets.pgPassword \
+  .galley.secrets.pgPassword
+```
+
+Check the details in the [Postgresql Cluster setup documentation](postgresql-cluster.md#manual-password-synchronization)
 
 #### Deploying Wire-Server
 
@@ -604,7 +596,7 @@ Update the values in `./values/webapp/prod-values.example.yaml`
 
 Set your domain name with sed:
 ```
-sed -i "s/example.com/YOURDOMAINHERE/" values/webapp/prod-values.example.yaml
+sed -i "s/example.com/YOURDOMAINHERE/g" values/webapp/prod-values.example.yaml
 ```
 and run
 ```
@@ -617,7 +609,7 @@ Update the values in `./values/team-settings/prod-values.example.yaml` and `./va
 
 Set your domain name with sed:
 ```
-sed -i "s/example.com/YOURDOMAINHERE/" values/team-settings/prod-values.example.yaml
+sed -i "s/example.com/YOURDOMAINHERE/g" values/team-settings/prod-values.example.yaml
 ```
 then run
 ```
@@ -630,7 +622,7 @@ Update the values in `./values/account-pages/prod-values.example.yaml`
 
 Set your domain name with sed:
 ```
-sed -i "s/example.com/YOURDOMAINHERE/" values/account-pages/prod-values.example.yaml
+sed -i "s/example.com/YOURDOMAINHERE/g" values/account-pages/prod-values.example.yaml
 ```
 and run
 ```
@@ -789,37 +781,6 @@ iptables -t nat -A PREROUTING -i $INTERNALINTERFACE -d $PUBLICIPADDRESS -p tcp -
 or add the corresponding rules to a config file (for UFW, /etc/ufw/before.rules) so they persist after rebooting.
 
 
-### Incoming Calling Traffic
-
-Make sure `OUTBOUNDINTERFACE` and `PUBLICIPADDRESS` are exported (see above).
-
-Select one of your kubernetes nodes that hosts restund:
-
-```
-export RESTUND01IP=<your.restund.ip>
-```
-
-then run the following:
-```
-sudo bash -c "
-set -eo pipefail;
-
-iptables -t nat -A PREROUTING -d $PUBLICIPADDRESS -i $OUTBOUNDINTERFACE -p tcp --dport 80 -j DNAT --to-destination $RESTUND01IP:80;
-iptables -t nat -A PREROUTING -d $PUBLICIPADDRESS -i $OUTBOUNDINTERFACE -p udp --dport 80 -j DNAT --to-destination $RESTUND01IP:80;
-iptables -t nat -A PREROUTING -d $PUBLICIPADDRESS -i $OUTBOUNDINTERFACE -p udp -m udp --dport 32768:60999 -j DNAT --to-destination $RESTUND01IP;
-"
-```
-
-or add the corresponding rules to a config file (for UFW, /etc/ufw/before.rules) so they persist after rebooting.
-
-Using nftables, the firewall deployed via single_hetzner_machine_installation.md should already DNAT restund traffic to the correct node (ansnode1, 192.168.122.31).
-To verify, check the NAT table status:
-
-```
-sudo nft list table nat
-```
-
-
 ### Changing the TURN port
 
 FIXME: ansibleize this!
@@ -842,6 +803,7 @@ cp ./values/nginx-ingress-services/prod-secrets.example.yaml ./values/nginx-ingr
 
 #### Bring your own certificates
 
+The `values/nginx-ingress-services/values.yaml` file should be patched for `.Values.tls.useCertManager=false`.
 if you generated your SSL certificates yourself, there are two ways to give these to wire:
 
 ##### From the command line
@@ -881,23 +843,13 @@ taint the node
 d kubectl cordon kubenode1
 ```
 
-first, download cert manager, and place it in the appropriate location:
-```
-wget https://charts.jetstack.io/charts/cert-manager-v1.13.2.tgz
-tar -C ./charts -xvzf cert-manager-v1.13.2.tgz
-```
+Next step is to install and configure the cert-manager using the cert-manager charts from the offline package.
 
-In case `values.yaml` and `secrets.yaml` doesn't exist yet in `./values/nginx-ingress-services` create them from templates
-```
-cp ./values/nginx-ingress-services/prod-secrets.example.yaml ./values/nginx-ingress-services/secrets.yaml
-cp ./values/nginx-ingress-services/prod-values.example.yaml ./values/nginx-ingress-services/values.yaml
-```
-and customize.
+To enable and configure automatic SSL/TLS certification management for nginx ingress resources, update the `values/nginx-ingress-services/values.yaml` with:
 
-Edit `values.yaml`:
+ * set `useCertManager: true` : to tell the nginx-ingress-service to use cert-manager for obtaining and managing SSL certificates, rather than expecting you to provide your own certificates manually.
+ * set `certmasterEmail: <your email address>` : is used by cert-manager when requesting certificates from certificate authorities like Let's Encrypt. This email address is important for receiving notifications about certificate expiration or issues.
 
- * set `useCertManager: true`
- * set `certmasterEmail: <your email address>`
 
 Set your domain name with sed:
 ```
@@ -918,7 +870,7 @@ d kubectl uncordon kubenode1
 Then run:
 
 ```
-d helm upgrade --install nginx-ingress-services charts/nginx-ingress-services -f values/nginx-ingress-services/values.yaml 
+d helm upgrade --install nginx-ingress-services charts/nginx-ingress-services -f values/nginx-ingress-services/values.yaml
 ```
 
 In order to acquire SSL certificates from letsencrypt, outgoing traffic needs from VMs needs to be enabled temporarily.
@@ -962,7 +914,7 @@ For full docs with details and explanations please see https://github.com/wireap
 First, make sure you have a certificate for `sftd.<yourdomain>`, or you are using letsencrypt certificate.
 for bring-your-own-certificate, this could be the same wildcard or SAN certificate you used at previous steps.
 
-Next, copy `values/sftd/prod-values.example.yaml` to `values/sftd/values.yaml`, and change the contents accordingly. 
+Next, copy `values/sftd/prod-values.example.yaml` to `values/sftd/values.yaml`, and change the contents accordingly.
 
  * If your turn servers can be reached on their public IP by the SFT service, Wire recommends you enable cooperation between turn and SFT. add a line reading `turnDiscoveryEnabled: true` to `values/sftd/values.yaml`.
 
@@ -1033,10 +985,14 @@ d helm upgrade --install fluent-bit ./charts/fluent-bit --values values/fluent-b
 
 Make sure that traffic is allowed from your kubernetes nodes to your destination server (elasticsearch or syslog).
 
+## Configure Prometheus
+
+To scrape metrics from wire systems and export those to your desired Observability tool, preferably grafana, configure prometheus operator.
+Follow the [Instrument monitoring guidelines](./instrument_monitoring.md) to setup monitoring for wire.
 
 ## Appendixes
 
-
+### Syncing time on cassandra nodes
 The nodes running cassandra (`ansnode` 1, 2 and 3) require precise synchronization of their clock.
 
 In case the cassandra migration doesn't complete, it might be probably due to the clock not being in sync.
@@ -1047,3 +1003,15 @@ d ansible-playbook -i ./ansible/inventory/offline/hosts.ini ansible/sync_time.ym
 ```
 
 The above playbook will configure NTP on all Cassandra nodes, assigns first node as the authoritative node. All other nodes will sync their time with the authoritative node.
+
+### Resetting the k8s cluster
+To reset the k8s cluster, run the following command:
+```
+d ansible-playbook -i ansible/inventory/offline/hosts.ini ansible/roles-external/kubespray/reset.yml --skip-tags files
+```
+You can remove the `--skip-tags files` option if you want to remove all the loaded container images as well.
+
+After that, to reinstall the cluster, comment out the steps in the `offline-cluster.sh` script, such as setup-offline-sources and seed-offline-containerd to avoid re-downloading the container images to save time, and run -
+```
+d ./bin/offline-cluster.sh
+```

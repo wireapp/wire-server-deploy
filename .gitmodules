@@ -3,7 +3,7 @@
 	url = https://github.com/kubernetes-sigs/kubespray.git
 [submodule "ansible/roles-external/elasticsearch"]
 	path = ansible/roles-external/elasticsearch
-	url = https://github.com/elastic/ansible-elasticsearch.git
+	url = https://github.com/wireapp/wire-elasticsearch-fork.git
 [submodule "ansible/roles-external/hostname"]
 	path = ansible/roles-external/hostname
 	url = https://github.com/ANXS/hostname.git
@@ -22,9 +22,6 @@
 [submodule "ansible/roles-external/ansible-minio"]
 	path = ansible/roles-external/ansible-minio
 	url = https://github.com/wireapp/ansible-minio.git
-[submodule "ansible/roles-external/ansible-restund"]
-	path = ansible/roles-external/ansible-restund
-	url = https://github.com/wireapp/ansible-restund.git
 [submodule "ansible/roles-external/ansible-tinc"]
 	path = ansible/roles-external/ansible-tinc
 	url = https://github.com/wireapp/ansible-tinc.git

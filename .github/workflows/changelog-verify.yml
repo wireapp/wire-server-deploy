@@ -1,0 +1,77 @@
+name: Changelog verification
+on:
+  pull_request:
+    branches: [master]
+  push:
+    branches: [master]
+
+permissions:
+  contents: read
+
+jobs:
+  commitlint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: true
+          fetch-depth: 0
+
+      - name: Check for entry in changelog.d changes in the PR
+        run: |
+          set -x
+          
+          # Set BASE_SHA and HEAD_SHA based on event type
+          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+            BASE_SHA=${{ github.event.pull_request.base.sha }}
+            HEAD_SHA=${{ github.event.pull_request.head.sha }}
+          else
+            # For push events, compare with the previous commit
+            HEAD_SHA=${{ github.sha }}
+            BASE_SHA=$(git rev-parse HEAD~1)
+          fi
+          
+          echo "BASE_SHA: $BASE_SHA"
+          echo "HEAD_SHA: $HEAD_SHA"
+          
+          # Check if commit is by zebot with wire-build update message
+          COMMIT_AUTHOR=$(git log --format="%an" -1 $HEAD_SHA)
+          COMMIT_MESSAGE=$(git log --format="%s" -1 $HEAD_SHA)
+          
+          if [[ "$COMMIT_AUTHOR" == "Zebot" && "$COMMIT_MESSAGE" == "Update wire-build to version"* ]]; then
+            echo "Skipping changelog check for zebot wire-build update commit"
+            echo "Author: $COMMIT_AUTHOR"
+            echo "Message: $COMMIT_MESSAGE"
+            exit 0
+          fi
+          
+          CHANGED_FILES=$(git diff --name-only $BASE_SHA $HEAD_SHA -- changelog.d/ | grep -vE "^$")
+
+          if [ -z "$CHANGED_FILES" ]; then
+            echo "No files changed in changelog.d/"
+            exit 1
+          fi
+
+          PATTERN='^(Added|Changed|Deprecated|Removed|Fixed|Security): .+'
+          LINE_FOUND=false
+
+          for file in $CHANGED_FILES; do
+            while IFS= read -r line; do
+              if [[ -z "$line" ]]; then
+                continue
+              fi
+              if echo "$line" | grep -qE "$PATTERN"; then
+                LINE_FOUND=true
+                echo "Valid pattern found in file $file: '$line'"
+              else
+                echo "Invalid format in file $file: '$line'"
+                exit 1
+              fi
+            done < "$file"
+          done
+
+          if [ "$LINE_FOUND" = false ]; then
+            echo "No valid lines found in changelog.d/ files. Ensure there is a newline at the end of files."
+            echo "Please read more policies about changelog at https://keepachangelog.com/en/1.1.0"
+            exit 1
+          fi

@@ -2,6 +2,10 @@
 
 set -Eeuo pipefail
 
+msg() {
+  echo >&2 -e "${1-}"
+}
+
 if [[ $EUID -eq 0 ]]; then
   msg "Please don't run me as root" 1>&2
   exit 1
@@ -59,10 +63,6 @@ cleanup() {
   rm -r "$DEPLOY_DIR"/nocloud/* 2>/dev/null
 }
 
-msg() {
-  echo >&2 -e "${1-}"
-}
-
 die() {
   local msg=$1
   local code=${2-1} # default exit status 1
@@ -108,7 +108,7 @@ else
   VM_IP=(192.168.122.10 192.168.122.21 192.168.122.22 192.168.122.23 192.168.122.31 192.168.122.32 192.168.122.33)
   VM_VCPU=(2 6 6 6 4 4 4)
   VM_RAM=(4096 8192 8192 8192 8192 8192 8192)
-  VM_DISK=(100 100 100 100 350 350 350)
+  VM_DISK=(100 100 100 100 100 100 100)
 fi
 
 if [[ -f "$HOME"/.ssh/authorized_keys && -s "$HOME"/.ssh/authorized_keys ]]; then
@@ -222,4 +222,9 @@ for (( i=0; i<${#VM_NAME[@]}; i++ )); do
     fi
     sleep 20
   fi
+done
+
+while sudo virsh list --all | grep -Fq running; do
+  sleep 20
+  msg "INFO: VM deployment still in progress ..."
 done

@@ -1,0 +1,55 @@
+- name: Check DNS A records
+  hosts: deploy_node
+  vars:
+    dns_records:
+      - sftd.{{ target_domain }}
+      - nginz-https.{{ target_domain }}
+      - nginz-ssl.{{ target_domain }}
+      - webapp.{{ target_domain }}
+      - assets.{{ target_domain }}
+      - teams.{{ target_domain }}
+      - account.{{ target_domain }}
+    test_port: 3478
+  tasks:
+  - name: Query DNS A records
+    command: "dig +short {{ item }}"
+    register: dns_result
+    failed_when: false
+    changed_when: false
+    with_items: "{{ dns_records }}"
+
+  - name: Verify if records do not exist
+    fail:
+      msg: "DNS record {{ item.item }} does not exist."
+    when: item.stdout | trim == ''
+    with_items: "{{ dns_result.results }}"
+    loop_control:
+      label: "{% if item.stdout is defined %}{{ item.item }}{% else %}checking{% endif %}"
+
+  - name: Check SPF TXT record for the domain
+    command: "dig +short TXT {{ target_domain }}"
+    register: spf_result
+    failed_when: false
+    changed_when: false
+
+  - name: display SPF TXT record
+    debug:
+      msg: "SPF TXT record for {{ target_domain }}: {{ spf_result.stdout | default('No TXT record found') }}"
+
+  - name: Verify SPF TXT record exists and contains expected IP
+    debug:
+      msg: |
+        WARNING: SPF TXT record for {{ target_domain }} is missing or does not contain the expected IP {{ wire_ip }}.
+        Found: {{ spf_result.stdout | default('No TXT record found') }}
+
+        SPF (Sender Policy Framework) records are used by email services to verify the authenticity of mail sources.
+        Without proper SPF configuration, emails from Wire services may be marked as spam or rejected by recipient mail servers.
+
+        Expected SPF record: "v=spf1 ip4:{{ wire_ip }} -all"
+
+        For more information about SPF records, see: https://docs.wire.com/latest/how-to/install/demo-wiab.html#dns-requirements
+    when: >
+      spf_result.stdout | trim == '' or
+      wire_ip not in spf_result.stdout
+
+  # create dns entries on the deploy_node in /etc/hosts and suggest dns records creation in case of a private ip
