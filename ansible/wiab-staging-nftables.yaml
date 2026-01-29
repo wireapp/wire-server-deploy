@@ -1,0 +1,84 @@
+- hosts: deploy_node
+  become: true
+  tasks:
+  - name: Validate required variables are defined
+    assert:
+      that:
+        - kubenode1_ip is defined
+        - kubenode2_ip is defined
+        - kubenode3_ip is defined
+      fail_msg: |
+        Required variables not defined:
+        - kubenode1_ip: {{ kubenode1_ip | default('UNDEFINED') }}
+        - kubenode2_ip: {{ kubenode2_ip | default('UNDEFINED') }}
+        - kubenode3_ip: {{ kubenode3_ip | default('UNDEFINED') }}
+      quiet: yes
+
+  - name: set ipv4 forward
+    sysctl:
+      name: net.ipv4.ip_forward
+      value: '1'
+      sysctl_set: true
+      state: present
+      reload: true
+
+  - name: Check if /etc/nftables.conf exists
+    stat:
+      path: /etc/nftables.conf
+    register: nftables_conf_check
+
+  - name: Generate nftables.conf.new to compare
+    template:
+      src: files/wiab_server_nftables.conf.j2
+      dest: /tmp/nftables.conf.new
+      mode: 0750
+      owner: root
+      group: root
+
+  - name: Compare existing and new nftables config
+    shell: |
+      if diff -q /etc/nftables.conf /tmp/nftables.conf.new > /dev/null; then
+        echo "NO_CHANGE"
+      else
+        echo "CHANGE_DETECTED"
+      fi
+    register: nftables_diff_result
+    changed_when: false
+    when: nftables_conf_check.stat.exists
+
+  - name: Backup existing nftables.conf before update
+    shell: |
+      TIMESTAMP=$(date +%Y%m%d_%H%M%S)
+      cp /etc/nftables.conf /etc/nftables.conf.pre_wire.$TIMESTAMP
+      echo "Backed up to /etc/nftables.conf.pre_wire.$TIMESTAMP"
+    register: backup_result
+    when:
+      - nftables_conf_check.stat.exists
+      - nftables_diff_result.stdout == "CHANGE_DETECTED"
+
+  - name: Copy /etc/nftables.conf
+    copy:
+      src: /tmp/nftables.conf.new
+      dest: /etc/nftables.conf
+      mode: 0750
+      owner: root
+      group: root
+      remote_src: yes
+    register: nftables_template
+    notify: nftables | restart
+    when: |
+      not nftables_conf_check.stat.exists or
+      nftables_diff_result.stdout == "CHANGE_DETECTED"
+
+  - name: Clean up temporary template file
+    file:
+      path: /tmp/nftables.conf.new
+      state: absent
+
+  handlers:
+  - name: nftables | restart
+    service:
+      name: nftables
+      enabled: true
+      state: restarted
+    become: true
