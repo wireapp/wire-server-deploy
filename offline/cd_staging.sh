@@ -100,6 +100,9 @@ fi
 echo ""
 echo "Infrastructure ready! Proceeding with application deployment..."
 
+# Common SSH options for all ssh and scp commands
+SSH_OPTS="-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectionAttempts=10 -o ConnectTimeout=15 -o ServerAliveInterval=15 -o ServerAliveCountMax=4 -o TCPKeepAlive=yes"
+
 # Continue with the rest of the original cd.sh logic
 adminhost=$(terraform output -raw adminhost)
 ssh_private_key=$(terraform output ssh_private_key)
@@ -117,14 +120,12 @@ echo "Running ansible playbook setup_nodes.yml via adminhost ($adminhost)..."
 ansible-playbook -i inventory.yml setup_nodes.yml --private-key "ssh_private_key"
 
 # user demo needs to exist
-ssh  -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectionAttempts=10 \
-    "demo@$adminhost" wget -q "https://s3-eu-west-1.amazonaws.com/public.wire.com/artifacts/${ARTIFACT}.tgz"
+ssh $SSH_OPTS "demo@$adminhost" wget -q "https://s3-eu-west-1.amazonaws.com/public.wire.com/artifacts/${ARTIFACT}.tgz"
 
-ssh  -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectionAttempts=10 \
-    "demo@$adminhost" tar xzf "$ARTIFACT.tgz"
+ssh $SSH_OPTS "demo@$adminhost" tar xzf "$ARTIFACT.tgz"
 
 # override for ingress-nginx-controller values for hetzner environment $TF_DIR/setup_nodes.yml
-scp -A "$VALUES_DIR/ingress-nginx-controller/hetzner-ci.example.yaml" "demo@$adminhost:./values/ingress-nginx-controller/prod-values.example.yaml"
+scp $SSH_OPTS "$VALUES_DIR/ingress-nginx-controller/hetzner-ci.example.yaml" "demo@$adminhost:./values/ingress-nginx-controller/prod-values.example.yaml"
 
 # Source and target files
 SOURCE="inventory.yml"
@@ -144,23 +145,21 @@ yq eval -i ".kube-node.hosts.kubenode1.ansible_host = \"$KUBENODE1_IP\"" "$TARGE
 yq eval -i ".kube-node.hosts.kubenode2.ansible_host = \"$KUBENODE2_IP\"" "$TARGET"
 yq eval -i ".kube-node.hosts.kubenode3.ansible_host = \"$KUBENODE3_IP\"" "$TARGET"
 
-# Read datanode IPs using to_entries
-DATANODE1_IP=$(yq eval '.datanode.hosts | to_entries | .[0].value.ansible_host' "$SOURCE")
-DATANODE2_IP=$(yq eval '.datanode.hosts | to_entries | .[1].value.ansible_host' "$SOURCE")
-DATANODE3_IP=$(yq eval '.datanode.hosts | to_entries | .[2].value.ansible_host' "$SOURCE")
-
-# Set datanodes IPs
-yq eval -i ".datanodes.hosts.datanode1.ansible_host = \"$DATANODE1_IP\"" "$TARGET"
-yq eval -i ".datanodes.hosts.datanode2.ansible_host = \"$DATANODE2_IP\"" "$TARGET"
-yq eval -i ".datanodes.hosts.datanode3.ansible_host = \"$DATANODE3_IP\"" "$TARGET"
+# Reset datanodes hosts and repopulate with actual names from SOURCE
+yq eval -i '.datanodes.hosts = {}' "$TARGET"
+while IFS= read -r DATANODE_NAME; do
+    DATANODE_IP=$(yq eval ".datanode.hosts[\"${DATANODE_NAME}\"].ansible_host" "$SOURCE")
+    yq eval -i ".datanodes.hosts[\"${DATANODE_NAME}\"].ansible_host = \"${DATANODE_IP}\"" "$TARGET"
+done < <(yq eval '.datanode.hosts | keys | .[]' "$SOURCE")
 
 # Override network_interface from SOURCE to TARGET for all service groups
 NETWORK_INTERFACE=$(yq eval '.datanode.vars.datanode_network_interface' "$SOURCE")
 yq eval -i ".cassandra.vars.cassandra_network_interface = \"$NETWORK_INTERFACE\"" "$TARGET"
 yq eval -i ".elasticsearch.vars.elasticsearch_network_interface = \"$NETWORK_INTERFACE\"" "$TARGET"
 yq eval -i ".minio.vars.minio_network_interface = \"$NETWORK_INTERFACE\"" "$TARGET"
-yq eval -i ".rabbitmq.vars.rabbitmq_network_interface = \"$NETWORK_INTERFACE\"" "$TARGET"
-yq eval -i ".postgresql.vars.postgresql_network_interface = \"$NETWORK_INTERFACE\"" "$TARGET"
+yq eval -i ".rmq-cluster.vars.rabbitmq_network_interface = \"$NETWORK_INTERFACE\"" "$TARGET"
+RABBITMQ_MASTER=$(yq eval '.datanode.hosts | keys | .[0]' "$SOURCE")
+yq eval -i ".rmq-cluster.vars.rabbitmq_cluster_master = \"${RABBITMQ_MASTER}\"" "$TARGET"
 
 # Extract all kube-node vars from SOURCE and merge into TARGET
 KUBE_NODE_VARS_FILE=$(mktemp)
@@ -168,16 +167,14 @@ yq eval '.["kube-node"].vars' "$SOURCE" > "$KUBE_NODE_VARS_FILE"
 yq eval -i '.kube-node.vars |= load("'"$KUBE_NODE_VARS_FILE"'")' "$TARGET"
 rm -f "$KUBE_NODE_VARS_FILE"
 
-yq eval -i ".all.vars.ansible_ssh_private_key_file = \"ssh/ssh_private_key\"" "$TARGET"
-
 echo "created secondary inventory file $TARGET successfully"
 
-scp "$TARGET" "demo@$adminhost":./ansible/inventory/offline/inventory.yml
+scp $SSH_OPTS "$TARGET" "demo@$adminhost":./ansible/inventory/offline/inventory.yml
 
-ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectionAttempts=10 "demo@$adminhost" cat ./ansible/inventory/offline/inventory.yml || true
+ssh $SSH_OPTS "demo@$adminhost" cat ./ansible/inventory/offline/inventory.yml || true
 
 # NOTE: Agent is forwarded; so that the adminhost can provision the other boxes
-ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectionAttempts=10 -A "demo@$adminhost" ./bin/offline-deploy.sh
+ssh $SSH_OPTS -A "demo@$adminhost" ./bin/offline-deploy.sh
 
 echo ""
 echo "Wire offline deployment completed successfully!"
