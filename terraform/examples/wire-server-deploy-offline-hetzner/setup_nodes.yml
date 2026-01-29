@@ -107,7 +107,7 @@
         enabled: yes
 
 - name: Setup default routing for all k8s and datastore nodes
-  hosts: cassandra:elasticsearch:minio:postgresql:kube-node
+  hosts: cassandra:elasticsearch:minio:postgresql:kube-node:rmq-cluster
   become: yes
 
   tasks:      
@@ -143,7 +143,7 @@
       - gateway_check.stdout != ""
 
 - name: Configure DNS for all k8s and datastore nodes
-  hosts: cassandra:elasticsearch:minio:postgresql:kube-node
+  hosts: cassandra:elasticsearch:minio:postgresql:kube-node:rmq-cluster
   become: yes
     
   tasks:
