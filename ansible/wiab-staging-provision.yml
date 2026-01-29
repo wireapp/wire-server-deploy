@@ -257,7 +257,6 @@
         yq -i ".minio.vars.minio_network_interface |= \"$GATEWAY_NAME\"" "{{ inventory_file }}"
         yq -i ".rmq-cluster.vars.rabbitmq_network_interface |= \"$GATEWAY_NAME\"" "{{ inventory_file }}"
         yq -i ".rmq-cluster.vars.rabbitmq_cluster_master |= \"datanode1\"" "{{ inventory_file }}"
-        yq -i ".postgresql.vars.postgresql_network_interface |= \"$GATEWAY_NAME\"" "{{ inventory_file }}"
       args:
         executable: /bin/bash
 
