@@ -38,8 +38,6 @@ k8s-cluster:
     kube-master: {}
 
 datanodes:
-  # host names here must match each node's actual hostname
-  # its a requirement for rabbitmq
   hosts:
     datanode1:
       ansible_host: "datanode1_ip"
@@ -76,6 +74,8 @@ minio:
 
 rmq-cluster:
   children:
+    # host names here must match each node's actual hostname
+    # its a requirement for rabbitmq
     datanodes: {}
   vars:
     rabbitmq_network_interface: enp1s0
