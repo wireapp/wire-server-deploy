@@ -145,12 +145,15 @@ yq eval -i ".kube-node.hosts.kubenode1.ansible_host = \"$KUBENODE1_IP\"" "$TARGE
 yq eval -i ".kube-node.hosts.kubenode2.ansible_host = \"$KUBENODE2_IP\"" "$TARGET"
 yq eval -i ".kube-node.hosts.kubenode3.ansible_host = \"$KUBENODE3_IP\"" "$TARGET"
 
-# Reset datanodes hosts and repopulate with actual names from SOURCE
-yq eval -i '.datanodes.hosts = {}' "$TARGET"
-while IFS= read -r DATANODE_NAME; do
-    DATANODE_IP=$(yq eval ".datanode.hosts[\"${DATANODE_NAME}\"].ansible_host" "$SOURCE")
-    yq eval -i ".datanodes.hosts[\"${DATANODE_NAME}\"].ansible_host = \"${DATANODE_IP}\"" "$TARGET"
-done < <(yq eval '.datanode.hosts | keys | .[]' "$SOURCE")
+# Read datanode IPs using to_entries
+DATANODE1_IP=$(yq eval '.datanode.hosts | to_entries | .[0].value.ansible_host' "$SOURCE")
+DATANODE2_IP=$(yq eval '.datanode.hosts | to_entries | .[1].value.ansible_host' "$SOURCE")
+DATANODE3_IP=$(yq eval '.datanode.hosts | to_entries | .[2].value.ansible_host' "$SOURCE")
+
+# Set datanodes IPs
+yq eval -i ".datanodes.hosts.datanode1.ansible_host = \"$DATANODE1_IP\"" "$TARGET"
+yq eval -i ".datanodes.hosts.datanode2.ansible_host = \"$DATANODE2_IP\"" "$TARGET"
+yq eval -i ".datanodes.hosts.datanode3.ansible_host = \"$DATANODE3_IP\"" "$TARGET"
 
 # Override network_interface from SOURCE to TARGET for all service groups
 NETWORK_INTERFACE=$(yq eval '.datanode.vars.datanode_network_interface' "$SOURCE")
@@ -158,8 +161,18 @@ yq eval -i ".cassandra.vars.cassandra_network_interface = \"$NETWORK_INTERFACE\"
 yq eval -i ".elasticsearch.vars.elasticsearch_network_interface = \"$NETWORK_INTERFACE\"" "$TARGET"
 yq eval -i ".minio.vars.minio_network_interface = \"$NETWORK_INTERFACE\"" "$TARGET"
 yq eval -i ".rmq-cluster.vars.rabbitmq_network_interface = \"$NETWORK_INTERFACE\"" "$TARGET"
-RABBITMQ_MASTER=$(yq eval '.datanode.hosts | keys | .[0]' "$SOURCE")
-yq eval -i ".rmq-cluster.vars.rabbitmq_cluster_master = \"${RABBITMQ_MASTER}\"" "$TARGET"
+
+# create a new group rabbitmq-nodes with actual names from SOURCE
+while IFS= read -r DATANODE_NAME; do
+    DATANODE_IP=$(yq eval ".datanode.hosts[\"${DATANODE_NAME}\"].ansible_host" "$SOURCE")
+    yq eval -i ".rabbitmq-nodes.hosts[\"${DATANODE_NAME}\"].ansible_host = \"${DATANODE_IP}\"" "$TARGET"
+done < <(yq eval '.datanode.hosts | keys | .[]' "$SOURCE")
+
+# point rmq-cluster to use rabbitmq-nodes
+yq eval -i '.rmq-cluster.children.rabbitmq-nodes = {}' "$TARGET"
+
+DATANODE1=$(yq eval '.datanode.hosts | keys | .[0]' "$SOURCE")
+yq eval -i ".rmq-cluster.vars.rabbitmq_cluster_master = \"${DATANODE1}\"" "$TARGET"
 
 # Extract all kube-node vars from SOURCE and merge into TARGET
 KUBE_NODE_VARS_FILE=$(mktemp)
