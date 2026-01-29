@@ -5,4 +5,4 @@ Fixed: offline-deploy.sh for SSH_AUTH_SOCK handling and remove defunct passwords
 Added: terraform resources for wiab-staging
 Added: cd_staging script to verify the default build bundle
 Changed: changed the flow of offline.yml - introduced wiab-staging build and split bundle processing with default-build
-Added: wiab-staging documetation to wire-server-deploy and fix coturn port ranges
+Added: wiab-staging documentation to wire-server-deploy and fix coturn port ranges
