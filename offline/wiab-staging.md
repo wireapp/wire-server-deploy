@@ -16,7 +16,7 @@
 - One physical machine with hypervisor support:
   - **Memory:** 55 GiB RAM
   - **Compute:** 29 vCPUs  
-  - **Storage:** 550 GB disk space (thin-provisioned)
+  - **Storage:** 850 GB disk space (thin-provisioned)
   - 7 VMs with [Ubuntu 22](https://releases.ubuntu.com/jammy/) as per (#VM-Provisioning)
 - **DNS Records**: 
     - a way to create DNS records for your domain name (e.g. wire.example.com) 
@@ -138,11 +138,13 @@ Since the inventory is ready, please continue with the following steps:
 - **[Deploying Kubernetes and stateful services](docs_ubuntu_22.04.md#deploying-kubernetes-and-stateful-services)**
   - Run `d ./bin/offline-cluster.sh` to deploy Kubernetes and stateful services (Cassandra, PostgreSQL, Elasticsearch, Minio, RabbitMQ). This script deploys all infrastructure needed for Wire backend operations.
 
+*Note: Ensure all Helm charts use the values and secrets files in their `values/` directories—do not run `helm install` without them, or it will fall back to defaults and the artifact-provided values won’t apply.*
+
 ### Wire Components Deployment
 
 - **Deploying Helm charts**
   - **[Deploying stateless services and other dependencies](docs_ubuntu_22.04.md#deploying-stateless-dependencies)**
-    - Deploy cassandra-external, elasticsearch-external, minio-external, and databases-ephemeral helm charts to set up connections to external data services and stateless database dependencies.
+    - Deploy cassandra-external, elasticsearch-external, minio-external, rabbitmq-external and databases-ephemeral helm charts to set up connections to external data services and stateless database dependencies.
   
   - **[Deploying Wire Server](docs_ubuntu_22.04.md#deploying-wire-server)**
     - Install the core Wire backend platform with `d helm install wire-server ./charts/wire-server`. Update `values/wire-server/values.yaml` with your domain and inspect `values/wire-server/secrets.yaml` for required secrets.
