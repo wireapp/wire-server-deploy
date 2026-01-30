@@ -111,6 +111,9 @@ ssh_private_key=$(terraform output ssh_private_key)
 
 eval "$(ssh-agent)"
 ssh-add - <<< "$ssh_private_key"
+rm -f ssh_private_key || true
+echo "$ssh_private_key" > ssh_private_key
+chmod 400 ssh_private_key
 
 # TO-DO: make changes to test the deployment with demo user in 
 terraform output -json static-inventory > inventory.json
@@ -128,8 +131,7 @@ scp $SSH_OPTS inventory.yml "root@$adminhost":./ansible/inventory/offline/invent
 ssh $SSH_OPTS "root@$adminhost" cat ./ansible/inventory/offline/inventory.yml || true
 
 echo "Running ansible playbook setup_nodes.yml via adminhost ($adminhost)..."
-ansible-playbook -i inventory.yml setup_nodes.yml --private-key "ssh_private_key" \
-  -e "ansible_ssh_common_args='-o ProxyCommand=\"ssh -W %h:%p -q root@$adminhost -i ssh_private_key\" -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null'"
+ansible-playbook -i inventory.yml setup_nodes.yml --private-key "ssh_private_key"
 
 # NOTE: Agent is forwarded; so that the adminhost can provision the other boxes
 ssh $SSH_OPTS -A "root@$adminhost" ./bin/offline-deploy.sh
