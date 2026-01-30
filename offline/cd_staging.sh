@@ -165,7 +165,6 @@ NETWORK_INTERFACE=$(yq eval '.datanode.vars.datanode_network_interface' "$SOURCE
 yq eval -i ".cassandra.vars.cassandra_network_interface = \"$NETWORK_INTERFACE\"" "$TARGET"
 yq eval -i ".elasticsearch.vars.elasticsearch_network_interface = \"$NETWORK_INTERFACE\"" "$TARGET"
 yq eval -i ".minio.vars.minio_network_interface = \"$NETWORK_INTERFACE\"" "$TARGET"
-yq eval -i ".postgresql.vars.postgresql_network_interface = \"$NETWORK_INTERFACE\"" "$TARGET"
 yq eval -i ".rmq-cluster.vars.rabbitmq_network_interface = \"$NETWORK_INTERFACE\"" "$TARGET"
 
 # re-writing sub-groups for rabbitmq_cluster_master, cassandra_seed, postgresql_rw and postgresql_ro
