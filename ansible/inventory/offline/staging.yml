@@ -38,8 +38,6 @@ k8s-cluster:
     kube-master: {}
 
 datanodes:
-  # host names here must match each node's actual hostname
-  # its a requirement for rabbitmq
   hosts:
     datanode1:
       ansible_host: "datanode1_ip"
@@ -76,6 +74,8 @@ minio:
 
 rmq-cluster:
   children:
+    # host names here must match each node's actual hostname
+    # its a requirement for rabbitmq
     datanodes: {}
   vars:
     rabbitmq_network_interface: enp1s0
@@ -88,6 +88,19 @@ postgresql:
   vars:
     wire_dbname: wire-server
     postgresql_network_interface: enp1s0
+    repmgr_node_config:
+      datanode1:  # Maps to postgresql_rw group
+        node_id: 1
+        priority: 150
+        role: primary
+      datanode2:  # Maps to first postgresql_ro
+        node_id: 2
+        priority: 100
+        role: standby
+      datanode3:  # Maps to second postgresql_ro
+        node_id: 3
+        priority: 50
+        role: standby
 
 postgresql_rw:
   hosts:
