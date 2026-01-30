@@ -138,7 +138,7 @@ Since the inventory is ready, please continue with the following steps:
 - **[Deploying Kubernetes and stateful services](docs_ubuntu_22.04.md#deploying-kubernetes-and-stateful-services)**
   - Run `d ./bin/offline-cluster.sh` to deploy Kubernetes and stateful services (Cassandra, PostgreSQL, Elasticsearch, Minio, RabbitMQ). This script deploys all infrastructure needed for Wire backend operations.
 
-*Note: Ensure all Helm charts use the values and secrets files in their `values/` directories—do not run `helm install` without them, or it will fall back to defaults and the artifact-provided values won’t apply.*
+*Note: Ensure all Helm charts use the values and secrets files in their `values/` directories—do not run `helm install` without them, or it will fall back to defaults and the artifact-provided values won’t apply. Sample commands can be found at [offline-helm.sh](https://github.com/wireapp/wire-server-deploy/blob/master/bin/offline-helm.sh)*
 
 ### Wire Components Deployment
 
@@ -215,8 +215,32 @@ The physical machine must forward traffic from external clients to the Kubernete
 
 **Implementation:**
 
-Follow the detailed nftables configuration instructions in [Configure the port redirection in Nftables](coturn.md#configure-the-port-redirection-in-nftables). The guide covers:
+Use the detailed nftables rules in [../ansible/files/wiab_server_nftables.conf.j2](../ansible/files/wiab_server_nftables.conf.j2) as the template. The guide covers:
 - Defining your network variables (Coturn IP, Kubernetes node IP, WAN interface)
 - Creating NAT rules for HTTP/HTTPS ingress traffic
 - Setting up TURN protocol forwarding for Coturn
 - Restarting nftables to apply changes
+
+You can also apply these rules using the Ansible playbook, by following:
+
+```bash
+ansible-playbook -i inventory.yml ansible/wiab-staging-nftables.yml
+```
+
+*Note: If you ran the playbook wiab-staging-provision.yml then it might already be configured for you. Please confirm before running.*
+
+The inventory should define the following variables:
+
+```ini
+[all:vars]
+# Kubernetes node IPs
+kubenode1_ip=192.168.122.11
+kubenode2_ip=192.168.122.12
+kubenode3_ip=192.168.122.13
+
+# Calling services node (usually kubenode3)
+calling_node_ip=192.168.122.13
+
+# Host WAN interface name
+inf_wan=eth0
+```
