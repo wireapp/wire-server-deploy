@@ -17,14 +17,14 @@
 #
 on:
   push:
-    branches: [wpb-21356*]
+    branches: ["**"]
     tags: [v*]
     paths-ignore:
       - "*.md"
       - "**/*.md"
   pull_request:
     types: [synchronize, reopened, labeled]
-    branches: [wpb-21356*]
+    branches: ["**"]
     paths-ignore:
       - "*.md"
       - "**/*.md"
