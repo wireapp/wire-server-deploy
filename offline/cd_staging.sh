@@ -168,6 +168,8 @@ while IFS= read -r DATANODE_NAME; do
     yq eval -i ".rabbitmq-nodes.hosts[\"${DATANODE_NAME}\"].ansible_host = \"${DATANODE_IP}\"" "$TARGET"
 done < <(yq eval '.datanode.hosts | keys | .[]' "$SOURCE")
 
+# clean old children nodes for rmq-cluster
+yq eval -i '.rmq-cluster.children = {}' "$TARGET"
 # point rmq-cluster to use rabbitmq-nodes
 yq eval -i '.rmq-cluster.children.rabbitmq-nodes = {}' "$TARGET"
 
