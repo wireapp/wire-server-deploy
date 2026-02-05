@@ -6,7 +6,10 @@ if (ARGC != 1) { print "usage: ", ARG0, " <svgfileout>";
 set terminal svg size 2560,1440 enhanced
 set output ARG1
 
-set xlabel "Time (seconds)"
+set xdata time
+set timefmt "%Y-%m-%d %H:%M:%S"
+set format x "%Y-%m-%d\n%H:%M:%S"
+# set format x "%H:%M:%.3S"
 set ylabel "Value"
 set key outside
 
@@ -19,10 +22,10 @@ set style data impulses
 
 
 plot \
-  "eof.dat" using 1:2 title "EOF" lc rgb "pink" lw 2, \
-  "closed.dat" using 1:2 title "Closed"  lc rgb "red"   lw 2, \
-  "open.dat" using 1:2 title "Open"    lc rgb "blue"  lw 2, \
-  "handshake.dat" using 1:2 title "Handshake"    lc rgb "purple"  lw 2, \
-  "frame.dat" using 1:2 title "Frames"  lc rgb "green" lw 2, \
-  "configREFRESH.dat" using 1:2 title "Refresh" lc rgb "green" lw 2, \
-  "disconnect.dat" using 1:2 title "Disconnect" lc rgb "orange" lw 2, \
+  "eof.dat" using 1:3 title "EOF" lc rgb "pink" lw 2, \
+  "closed.dat" using 1:3 title "Closed"  lc rgb "red"   lw 2, \
+  "open.dat" using 1:3 title "Open"    lc rgb "blue"  lw 2, \
+  "handshake.dat" using 1:3 title "Handshake"    lc rgb "purple"  lw 2, \
+  "frame.dat" using 1:3 title "Frames"  lc rgb "green" lw 2, \
+  "configREFRESH.dat" using 1:3 title "Refresh" lc rgb "green" lw 2, \
+  "disconnect.dat" using 1:3 title "Disconnect" lc rgb "orange" lw 2, \
