@@ -3,7 +3,7 @@ set -euo pipefail
 
 OUTPUT_DIR=""
 # Default exclude list
-IMAGE_EXCLUDE_LIST=""
+IMAGE_EXCLUDE_LIST="restund,rust-sft"
 
 # Default values type will expect to use prod values
 VALUES_TYPE="prod"
