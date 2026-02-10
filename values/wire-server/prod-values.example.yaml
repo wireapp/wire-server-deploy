@@ -177,6 +177,10 @@ galley:
       port: "5432"
       user: wire-server
       dbname: wire-server
+    # Explicitly set postgresMigration to cassandra for fresh deployments.
+    # This controls whether galley reads conversations from Cassandra or PostgreSQL.
+    postgresMigration:
+      conversation: cassandra
     enableFederation: false # Enable to use federation
     settings:
       # prefix URI used when inviting users to a conversation by link
@@ -345,6 +349,18 @@ background-worker:
       host: cassandra-external
     cassandraBrig:
       host: cassandra-external
+    postgresql:
+      host: postgresql-external-rw # DNS name without protocol
+      port: "5432"
+      user: wire-server
+      dbname: wire-server
+    # IMPORTANT: At Chart 5.25.0, the background-worker Helm chart incorrectly defaults
+    # postgresMigration.conversation to "postgresql" instead of "cassandra".
+    # This MUST be explicitly set to "cassandra" unless you have already migrated
+    # conversations to PostgreSQL. Without this override, User Group to Channel sync
+    # jobs will silently skip member synchronization.
+    postgresMigration:
+      conversation: cassandra
     # Enable for federation
     enableFederation: false
   metrics:
