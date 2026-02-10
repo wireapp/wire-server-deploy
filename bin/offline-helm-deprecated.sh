@@ -12,7 +12,8 @@ sync_pg_secrets() {
     .brig.secrets.pgPassword \
     .galley.secrets.pgPassword \
     .spar.secrets.pgPassword \
-    .gundeck.secrets.pgPassword
+    .gundeck.secrets.pgPassword \
+    .background-worker.secrets.pgPassword
 }
 
 helm upgrade --install --wait cassandra-external ./charts/cassandra-external --values ./values/cassandra-external/values.yaml
