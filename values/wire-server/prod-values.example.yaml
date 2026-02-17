@@ -236,7 +236,7 @@ gundeck:
 #    tag: some-tag (only override if you want a newer/different version than what is in the chart)
   config:
     redis:
-      host: redis-ephemeral-master # Updated hostname for redis-ephemeral chart
+      host: databases-ephemeral-redis-ephemeral # Updated hostname for redis-ephemeral chart
     rabbitmq: # Default value for CI, for on-prem deployment, use rabbitmq-external
       host: rabbitmq-external
     cassandra:
