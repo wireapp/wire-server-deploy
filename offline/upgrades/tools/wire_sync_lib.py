@@ -2,13 +2,17 @@
 import datetime as dt
 import hashlib
 import json
+import os
 import socket
 import subprocess
 import tarfile
+from typing import Optional
 from pathlib import Path
 
 def now_ts():
     return dt.datetime.utcnow().replace(microsecond=0).isoformat() + "Z"
+
+BUNDLE_ROOT = os.environ.get("WIRE_BUNDLE_ROOT") or "/home/demo/new"
 
 def host_name():
     return socket.gethostname()
@@ -36,7 +40,7 @@ def run_cmd(cmd, env=None, verbose=False):
     end = dt.datetime.utcnow()
     return proc.returncode, out, err, int((end - start).total_seconds() * 1000)
 
-def write_audit(log_dir: Path, base_name: str, audit: dict, summary_lines: list, ts_override: str = None):
+def write_audit(log_dir: Path, base_name: str, audit: dict, summary_lines: list, ts_override: Optional[str] = None):
     ensure_dir(log_dir)
     ts = ts_override or dt.datetime.utcnow().strftime("%Y%m%dT%H%M%SZ")
     json_path = log_dir / f"{ts}_{base_name}.json"

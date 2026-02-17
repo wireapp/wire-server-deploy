@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-inventory=/home/demo/new/ansible/inventory/offline/hosts.ini
+BUNDLE_ROOT=${WIRE_BUNDLE_ROOT:-/home/demo/new}
+inventory=${BUNDLE_ROOT}/ansible/inventory/offline/hosts.ini
 mapfile -t nodes < <(
   awk '
     /^\[kube-master\]/ {section="kube-master"; next}
@@ -22,7 +23,7 @@ if [ ${#nodes[@]} -eq 0 ]; then
   echo "No kube-master or kube-node hosts found in $inventory" >&2
   exit 1
 fi
-log_dir=/home/demo/new/bin/tools/logs
+log_dir=${BUNDLE_ROOT}/bin/tools/logs
 mkdir -p "$log_dir"
 
 stamp=$(date +%Y%m%d-%H%M%S)

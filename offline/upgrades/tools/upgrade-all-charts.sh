@@ -1,10 +1,12 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-cd /home/demo/new
+BUNDLE_ROOT=${WIRE_BUNDLE_ROOT:-/home/demo/new}
+
+cd "$BUNDLE_ROOT"
 source bin/offline-env.sh
 
-log_dir=/home/demo/new/bin/tools/logs
+log_dir=${BUNDLE_ROOT}/bin/tools/logs
 mkdir -p "$log_dir"
 log_file="$log_dir/upgrade-all-charts-$(date +%Y%m%d-%H%M%S).log"
 
