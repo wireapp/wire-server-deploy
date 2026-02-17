@@ -28,8 +28,9 @@ brig:
     elasticsearch:
       host: elasticsearch-external
     rabbitmq:
-      host: rabbitmq-external 
-      # For k8s-based RabbitMQ for k8s based rabbitmq. Use 'rabbitmq-external' for production external RabbitMQ VMs
+      # Default: rabbitmq-external (for production external RabbitMQ VMs)
+      # CI/Demo: Change to rabbitmq when using rabbitmq chart from databases-ephemeral
+      host: rabbitmq-external
     postgresql:
       host: postgresql-external-rw # DNS name without protocol
       port: "5432"
@@ -52,11 +53,10 @@ brig:
       teamSettings: https://teams.example.com # change this (or unset if team settings are not used)
       teamCreatorWelcome: https://teams.example.com/login # change this
       teamMemberWelcome: https://wire.example.com/download # change this
-    # TODO: BUG! 5.23 brig charts wont deploy in CI unless federation is enabled!
-    enableFederation: true # Enable to use federation
+    enableFederation: false # Keep false unless federation is explicitly configured
     optSettings:
       setEnableMLS: false # Enable for MLS protocol use
-      setFederationDomain: example.com # change this
+      setFederationDomain: example.com # change this per host deployment
       # Sync the domain with the 'host' variable in the sftd chart
       # Comment the next line (by adding '#' before it) if conference calling is not used
       setSftStaticUrl: "https://sftd.example.com:443"
@@ -188,9 +188,9 @@ galley:
       federationDomain: example.com # change this
       # see #RefConfigOptions in `/docs/reference` (https://github.com/wireapp/wire-server/)
       featureFlags:
-        mls:
+        mls: # Keep disabled unless MLS is explicitly configured
           defaults:
-            status: enabled
+            status: disabled
             config:
               protocolToggleUsers: []
               defaultProtocol: mls
@@ -198,9 +198,9 @@ galley:
               defaultCipherSuite: 2
               supportedProtocols: [proteus, mls]
             lockStatus: unlocked
-        mlsMigration:
+        mlsMigration: # Keep disabled unless MLS migration is explicitly configured
           defaults:
-            status: enabled
+            status: disabled
             config:
               startTime: null
               finalizeRegardlessAfter: null
@@ -235,6 +235,8 @@ gundeck:
 #  image:
 #    tag: some-tag (only override if you want a newer/different version than what is in the chart)
   config:
+    redis:
+      host: redis-ephemeral-master # Updated hostname for redis-ephemeral chart
     rabbitmq: # Default value for CI, for on-prem deployment, use rabbitmq-external
       host: rabbitmq-external
     cassandra:
