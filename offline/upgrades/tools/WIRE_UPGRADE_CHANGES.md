@@ -23,7 +23,7 @@ This document captures the concrete changes applied during the upgrade work so t
 
 ### MinIO / S3 (cargohold)
 
-- MinIO is running on `192.168.122.31-33` (validated with `mc admin info`)
+- MinIO is running on the minio nodes (validated with `mc admin info`)
 - Cargohold configured to use `minio-external:9000`
 - MinIO credentials taken from:
   `/home/demo/wire-server-deploy/ansible/inventory/offline/group_vars/all/secrets.yaml`

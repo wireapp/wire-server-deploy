@@ -8,7 +8,7 @@ Can run on any node that has Cassandra installed and nodetool available.
 Usage:
     # Backup
     python3 cassandra_backup.py --keyspaces brig,galley,gundeck,spar --snapshot-name pre-migration-5.25
-    python3 cassandra_backup.py --keyspaces all --snapshot-name pre-migration-5.25 --host 192.168.122.31
+    python3 cassandra_backup.py --keyspaces all --snapshot-name pre-migration-5.25 --hosts <cassandra-hosts>
     
     # List snapshots
     python3 cassandra_backup.py --list-snapshots --snapshot-name pre-migration-5.25
@@ -60,30 +60,35 @@ def run_ssh(host, cmd, key_check=False):
 
 
 def get_cassandra_hosts(inventory_path):
-    """Parse hosts.ini to get Cassandra node IPs."""
+    """Parse hosts.ini to get Cassandra node hosts."""
     hosts = []
-    if not Path(inventory_path).exists():
-        print(f"Warning: Inventory file not found: {inventory_path}")
-        return ["192.168.122.31", "192.168.122.32", "192.168.122.33"]
-    
-    content = Path(inventory_path).read_text()
-    for line in content.splitlines():
-        line = line.strip()
-        if line.startswith("cassandra") and not line.startswith("#"):
-            parts = line.split()
-            if parts:
-                for part in parts:
-                    if "ansible_host" in part:
-                        host = part.split("=")[1]
-                        hosts.append(host)
-                if not hosts:
-                    hosts.append(parts[0])
-    
-    if not hosts:
-        print("Warning: No Cassandra hosts found in inventory, using defaults")
-        return ["192.168.122.31", "192.168.122.32", "192.168.122.33"]
-    
-    return hosts
+    inventory = Path(inventory_path)
+    if not inventory.exists():
+        print(f"Error: Inventory file not found: {inventory_path}")
+        return []
+
+    section = ""
+    for raw_line in inventory.read_text().splitlines():
+        line = raw_line.strip()
+        if not line or line.startswith("#"):
+            continue
+        if line.startswith("[") and line.endswith("]"):
+            section = line[1:-1].strip()
+            continue
+        section_lower = section.lower()
+        if "cassandra" not in section_lower or section_lower.endswith(":vars"):
+            continue
+        parts = line.split()
+        if "=" in parts[0]:
+            continue
+        host = parts[0]
+        for part in parts[1:]:
+            if part.startswith("ansible_host="):
+                host = part.split("=", 1)[1]
+                break
+        hosts.append(host)
+
+    return sorted(set(hosts))
 
 
 def create_snapshot(host, keyspace, snapshot_name, verbose=False):
@@ -262,6 +267,9 @@ def main():
         hosts = [h.strip() for h in args.hosts.split(",")]
     else:
         hosts = get_cassandra_hosts(args.inventory)
+        if not hosts:
+            print("Error: No Cassandra hosts found. Provide --hosts or fix inventory.")
+            return 1
     
     print(f"Cassandra Backup Tool")
     print(f"=====================")
