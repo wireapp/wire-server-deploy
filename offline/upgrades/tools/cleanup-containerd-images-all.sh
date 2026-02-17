@@ -1,7 +1,27 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-nodes=(192.168.122.21 192.168.122.22 192.168.122.23)
+inventory=/home/demo/new/ansible/inventory/offline/hosts.ini
+mapfile -t nodes < <(
+  awk '
+    /^\[kube-master\]/ {section="kube-master"; next}
+    /^\[kube-node\]/ {section="kube-node"; next}
+    /^\[/ {section=""; next}
+    section ~ /^kube-(master|node)$/ && $0 !~ /^#/ && NF>0 {
+      host=$1
+      for (i=2;i<=NF;i++) {
+        if ($i ~ /^ansible_host=/) {
+          split($i,a,"="); host=a[2]
+        }
+      }
+      print host
+    }
+  ' "$inventory" | sort -u
+)
+if [ ${#nodes[@]} -eq 0 ]; then
+  echo "No kube-master or kube-node hosts found in $inventory" >&2
+  exit 1
+fi
 log_dir=/home/demo/new/bin/tools/logs
 mkdir -p "$log_dir"
 
