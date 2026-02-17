@@ -214,7 +214,7 @@ def main():
     parser.add_argument(
         "--inventory",
         type=str,
-        default="/home/demo/new/ansible/inventory/offline/hosts.ini",
+        default=os.environ.get("WIRE_BUNDLE_ROOT", "/home/demo/new") + "/ansible/inventory/offline/hosts.ini",
         help="Path to Ansible inventory file"
     )
     parser.add_argument(
