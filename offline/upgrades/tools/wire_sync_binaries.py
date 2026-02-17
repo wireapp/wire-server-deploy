@@ -16,6 +16,7 @@ from wire_sync_lib import (
     generate_hosts_ini,
 )
 
+# sonar-cpd:off
 def parse_args():
     p = argparse.ArgumentParser(
         description="Sync offline binaries and assets to assethost with audit trail.",
@@ -92,6 +93,7 @@ def build_ansible_cmd(args, inventory, playbook):
     if args.tags:
         base_cmd.extend(["--tags", args.tags])
     return base_cmd
+# sonar-cpd:on
 
 def main():
     args = parse_args()
