@@ -145,15 +145,23 @@ yq eval -i ".kube-node.hosts.kubenode1.ansible_host = \"$KUBENODE1_IP\"" "$TARGE
 yq eval -i ".kube-node.hosts.kubenode2.ansible_host = \"$KUBENODE2_IP\"" "$TARGET"
 yq eval -i ".kube-node.hosts.kubenode3.ansible_host = \"$KUBENODE3_IP\"" "$TARGET"
 
-# Read datanode IPs using to_entries
+# Read datanodes IPs using to_entries
 DATANODE1_IP=$(yq eval '.datanode.hosts | to_entries | .[0].value.ansible_host' "$SOURCE")
 DATANODE2_IP=$(yq eval '.datanode.hosts | to_entries | .[1].value.ansible_host' "$SOURCE")
 DATANODE3_IP=$(yq eval '.datanode.hosts | to_entries | .[2].value.ansible_host' "$SOURCE")
 
-# Set datanodes IPs
-yq eval -i ".datanodes.hosts.datanode1.ansible_host = \"$DATANODE1_IP\"" "$TARGET"
-yq eval -i ".datanodes.hosts.datanode2.ansible_host = \"$DATANODE2_IP\"" "$TARGET"
-yq eval -i ".datanodes.hosts.datanode3.ansible_host = \"$DATANODE3_IP\"" "$TARGET"
+# Read datanodes names using to_entries
+DATANODE1_NAME=$(yq eval '.datanode.hosts | keys | .[0]' "$SOURCE")
+DATANODE2_NAME=$(yq eval '.datanode.hosts | keys | .[1]' "$SOURCE")
+DATANODE3_NAME=$(yq eval '.datanode.hosts | keys | .[2]' "$SOURCE")
+
+# clean old hosts for datanodes
+yq eval -i '.datanodes.hosts = {}' "$TARGET"
+
+# re-create the datanodes group with actual names from SOURCE
+yq eval -i ".datanodes.hosts[\"${DATANODE1_NAME}\"].ansible_host = \"${DATANODE1_IP}\"" "$TARGET"
+yq eval -i ".datanodes.hosts[\"${DATANODE2_NAME}\"].ansible_host = \"${DATANODE2_IP}\"" "$TARGET"
+yq eval -i ".datanodes.hosts[\"${DATANODE3_NAME}\"].ansible_host = \"${DATANODE3_IP}\"" "$TARGET"
 
 # Override network_interface from SOURCE to TARGET for all service groups
 NETWORK_INTERFACE=$(yq eval '.datanode.vars.datanode_network_interface' "$SOURCE")
@@ -163,24 +171,34 @@ yq eval -i ".minio.vars.minio_network_interface = \"$NETWORK_INTERFACE\"" "$TARG
 yq eval -i ".postgresql.vars.postgresql_network_interface = \"$NETWORK_INTERFACE\"" "$TARGET"
 yq eval -i ".rmq-cluster.vars.rabbitmq_network_interface = \"$NETWORK_INTERFACE\"" "$TARGET"
 
-# create a new group rabbitmq-nodes with actual names from SOURCE
-while IFS= read -r DATANODE_NAME; do
-    DATANODE_IP=$(yq eval ".datanode.hosts[\"${DATANODE_NAME}\"].ansible_host" "$SOURCE")
-    yq eval -i ".rabbitmq-nodes.hosts[\"${DATANODE_NAME}\"].ansible_host = \"${DATANODE_IP}\"" "$TARGET"
-done < <(yq eval '.datanode.hosts | keys | .[]' "$SOURCE")
+# re-writing sub-groups for rabbitmq_cluster_master, cassandra_seed, postgresql_rw and postgresql_ro
+yq eval -i ".rmq-cluster.vars.rabbitmq_cluster_master = \"${DATANODE1_NAME}\"" "$TARGET"
 
-# clean old children nodes for rmq-cluster
-yq eval -i '.rmq-cluster.children = {}' "$TARGET"
-# point rmq-cluster to use rabbitmq-nodes
-yq eval -i '.rmq-cluster.children.rabbitmq-nodes = {}' "$TARGET"
+yq eval -i '.cassandra_seed.hosts = {}' "$TARGET"
+yq eval -i ".cassandra_seed.hosts.[\"${DATANODE1_NAME}\"] = \"\"" "$TARGET"
 
-DATANODE1=$(yq eval '.datanode.hosts | keys | .[0]' "$SOURCE")
-yq eval -i ".rmq-cluster.vars.rabbitmq_cluster_master = \"${DATANODE1}\"" "$TARGET"
+yq eval -i '.postgresql_rw.hosts = {}' "$TARGET"
+yq eval -i '.postgresql_ro.hosts = {}' "$TARGET"
+yq eval -i ".postgresql_rw.hosts.[\"${DATANODE1_NAME}\"] = \"\"" "$TARGET"
+yq eval -i ".postgresql_ro.hosts.[\"${DATANODE2_NAME}\"] = \"\"" "$TARGET"
+yq eval -i ".postgresql_ro.hosts.[\"${DATANODE3_NAME}\"] = \"\"" "$TARGET"
+
+# re-populate the postgresql.vars.repmgr_node_config group with actual names from SOURCE
+i=1
+while IFS= read -r actual_name; do
+  yq eval -i "
+    .postgresql.vars.repmgr_node_config[\"${actual_name}\"] =
+      .postgresql.vars.repmgr_node_config.datanode${i}
+    | del(.postgresql.vars.repmgr_node_config.datanode${i})
+  " "$TARGET"
+  i=$((i+1))
+done < <(yq eval -r '.datanode.hosts | keys | .[]' "$SOURCE")
 
 # Extract all kube-node vars from SOURCE and merge into TARGET
 KUBE_NODE_VARS_FILE=$(mktemp)
 yq eval '.["kube-node"].vars' "$SOURCE" > "$KUBE_NODE_VARS_FILE"
 yq eval -i '.kube-node.vars |= load("'"$KUBE_NODE_VARS_FILE"'")' "$TARGET"
+
 rm -f "$KUBE_NODE_VARS_FILE"
 
 echo "created secondary inventory file $TARGET successfully"
