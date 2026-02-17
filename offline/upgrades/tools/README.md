@@ -61,7 +61,7 @@ ssh hetzner3
 python3 /Users/sukanta.ghosh/Workspace/tools/cassandra_backup.py \
   --keyspaces brig,galley,gundeck,spar \
   --snapshot-name pre-migration-5.25 \
-  --hosts 192.168.122.31,192.168.122.32,192.168.122.33 \
+  --hosts <cassandra-hosts> \
   --verbose
 
 # Or backup specific keyspaces
