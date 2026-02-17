@@ -32,14 +32,17 @@ echo "Starting cleanup at $stamp" | tee -a "$log_file"
 
 for node in "${nodes[@]}"; do
   echo "==> $node" | tee -a "$log_file"
-  ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null demo@"${node}" \
-    "python3 /home/demo/cleanup-containerd-images.py \
-      --sudo \
-      --kubectl-shell \
-      --kubectl-cmd 'sudo kubectl --kubeconfig /etc/kubernetes/admin.conf' \
-      --log-dir /home/demo/cleanup-logs \
-      --audit-tag "${node}" \
-      --apply" | tee -a "$log_file"
+  ssh_cmd=(
+    ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null "demo@${node}"
+    python3 /home/demo/cleanup-containerd-images.py
+    --sudo
+    --kubectl-shell
+    --kubectl-cmd "sudo kubectl --kubeconfig /etc/kubernetes/admin.conf"
+    --log-dir /home/demo/cleanup-logs
+    --audit-tag "$node"
+    --apply
+  )
+  "${ssh_cmd[@]}" | tee -a "$log_file"
   echo "" | tee -a "$log_file"
 done
 
