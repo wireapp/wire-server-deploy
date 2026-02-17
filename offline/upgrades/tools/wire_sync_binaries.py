@@ -6,6 +6,7 @@ import sys
 import datetime as dt
 
 from wire_sync_lib import (
+    BUNDLE_ROOT,
     now_ts,
     host_name,
     run_cmd,
@@ -21,26 +22,26 @@ def parse_args():
     p = argparse.ArgumentParser(
         description="Sync offline binaries and assets to assethost with audit trail.",
     )
-    p.add_argument("--bundle", default=os.environ.get("WIRE_SYNC_BUNDLE", "/home/demo/new"))
-    p.add_argument("--inventory", default=os.environ.get("WIRE_SYNC_INVENTORY", "/home/demo/new/ansible/inventory/offline/hosts.ini"))
-    p.add_argument("--playbook", default=os.environ.get("WIRE_SYNC_PLAYBOOK", "/home/demo/new/ansible/setup-offline-sources.yml"))
+    p.add_argument("--bundle", default=os.environ.get("WIRE_SYNC_BUNDLE", BUNDLE_ROOT))
+    p.add_argument("--inventory", default=os.environ.get("WIRE_SYNC_INVENTORY", f"{BUNDLE_ROOT}/ansible/inventory/offline/hosts.ini"))
+    p.add_argument("--playbook", default=os.environ.get("WIRE_SYNC_PLAYBOOK", f"{BUNDLE_ROOT}/ansible/setup-offline-sources.yml"))
     p.add_argument("--log-dir", default=os.environ.get("WIRE_SYNC_LOG_DIR", "/var/log/audit_log"))
     p.add_argument("--dry-run", action="store_true")
     p.add_argument("--tags", default="")
-    p.add_argument("--extra-vars", default="src_path=/home/demo/new")
+    p.add_argument("--extra-vars", default=f"src_path={BUNDLE_ROOT}")
     p.add_argument("--assethost", default=os.environ.get("WIRE_SYNC_ASSETHOST", "assethost"))
     p.add_argument("--ssh-user", default=os.environ.get("WIRE_SYNC_SSH_USER", "demo"))
     p.add_argument("--generate-hosts", action="store_true")
-    p.add_argument("--template", default=os.environ.get("WIRE_SYNC_TEMPLATE", "/home/demo/new/ansible/inventory/offline/99-static"))
+    p.add_argument("--template", default=os.environ.get("WIRE_SYNC_TEMPLATE", f"{BUNDLE_ROOT}/ansible/inventory/offline/99-static"))
     p.add_argument("--source-hosts", default=os.environ.get("WIRE_SYNC_SOURCE_HOSTS", "/home/demo/wire-server-deploy/ansible/inventory/offline/hosts.ini"))
-    p.add_argument("--output-hosts", default=os.environ.get("WIRE_SYNC_INVENTORY", "/home/demo/new/ansible/inventory/offline/hosts.ini"))
+    p.add_argument("--output-hosts", default=os.environ.get("WIRE_SYNC_INVENTORY", f"{BUNDLE_ROOT}/ansible/inventory/offline/hosts.ini"))
     p.add_argument("--pause-after-generate", action="store_true")
     p.add_argument("--fail-on-duplicates", action="store_true")
     p.add_argument("--ansible-cmd", default="ansible-playbook")
     p.add_argument("--use-d", action="store_true")
-    p.add_argument("--offline-env", default=os.environ.get("WIRE_SYNC_OFFLINE_ENV", "/home/demo/new/bin/offline-env.sh"))
-    p.add_argument("--kubeconfig", default=os.environ.get("WIRE_SYNC_KUBECONFIG", "/home/demo/new/ansible/inventory/kubeconfig.dec"))
-    p.add_argument("--host-root", default=os.environ.get("WIRE_SYNC_BUNDLE", "/home/demo/new"))
+    p.add_argument("--offline-env", default=os.environ.get("WIRE_SYNC_OFFLINE_ENV", f"{BUNDLE_ROOT}/bin/offline-env.sh"))
+    p.add_argument("--kubeconfig", default=os.environ.get("WIRE_SYNC_KUBECONFIG", f"{BUNDLE_ROOT}/ansible/inventory/kubeconfig.dec"))
+    p.add_argument("--host-root", default=os.environ.get("WIRE_SYNC_BUNDLE", BUNDLE_ROOT))
     p.add_argument("--container-root", default=os.environ.get("WIRE_SYNC_CONTAINER_ROOT", "/wire-server-deploy"))
     p.add_argument("--verbose", action="store_true", help="Show ansible playbook output in real-time")
     return p.parse_args()
