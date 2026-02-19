@@ -3,6 +3,7 @@
   hosts: adminhost_local
   become: yes
   tasks:
+
     - name: Check if private interface exists
       shell: ip addr show {{ private_interface }}
       register: interface_check
@@ -107,10 +108,23 @@
         enabled: yes
 
 - name: Setup default routing for all k8s and datastore nodes
-  hosts: cassandra:elasticsearch:minio:postgresql:kube-node:rmq-cluster
+  hosts: datanode:kube-node
   become: yes
+  gather_facts: false
 
-  tasks:      
+  pre_tasks:
+    - name: Wait for SSH to become reachable
+      ansible.builtin.wait_for_connection:
+        timeout: 20
+      register: _wait
+      retries: 6
+      delay: 10
+      until: _wait is succeeded
+
+    - name: Gather facts after connection is stable
+      ansible.builtin.setup:
+
+  tasks:
     - name: Check if private interface exists
       shell: ip addr show {{ private_interface }}
       register: interface_check
@@ -143,7 +157,7 @@
       - gateway_check.stdout != ""
 
 - name: Configure DNS for all k8s and datastore nodes
-  hosts: cassandra:elasticsearch:minio:postgresql:kube-node:rmq-cluster
+  hosts: datanode:kube-node
   become: yes
     
   tasks:

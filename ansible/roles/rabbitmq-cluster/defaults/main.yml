@@ -17,11 +17,11 @@
 #
 update_hosts: false
 
-rabbitmq_cluster_master: ansnode1
-rabbitmq_hosts: |
-  172.16.0.132 ansnode1
-  172.16.0.133 ansnode2
-  172.16.0.134 ansnode3
+#rabbitmq_cluster_master: ansnode1
+#rabbitmq_hosts: |
+#  172.16.0.132 ansnode1
+#  172.16.0.133 ansnode2
+#  172.16.0.134 ansnode3
 
 # erlang
 # erlang_version: "1:20.2.2"

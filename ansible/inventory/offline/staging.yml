@@ -1,0 +1,112 @@
+all:
+  vars:
+    ansible_user: demo
+    ansible_ssh_common_args: >-
+      -o StrictHostKeyChecking=no
+      -o UserKnownHostsFile=/dev/null
+      -o ControlMaster=auto
+      -o ControlPersist=60s
+    # ssh private_key is stored in wire-server-deploy/ssh in case vms are created using bin/offline-vm-setup.sh
+    # in case of terraform automated-tests, it will be vailable via forwarded ssh agents
+    # ansible_ssh_private_key_file: "ssh/id_ed25519"
+
+assethost:
+  hosts:
+    assethost:
+      ansible_host: "assethost_ip"
+
+kube-node:
+  hosts:
+    kubenode1:
+      ansible_host: "kubenode1_ip"
+    kubenode2:
+      ansible_host: "kubenode2_ip"
+    kubenode3:
+      ansible_host: "kubenode3_ip"
+
+kube-master:
+  children:
+    kube-node: {}
+
+etcd:
+  children:
+    kube-node: {}
+
+k8s-cluster:
+  children:
+    kube-node: {}
+    kube-master: {}
+
+datanodes:
+  hosts:
+    datanode1:
+      ansible_host: "datanode1_ip"
+    datanode2:
+      ansible_host: "datanode2_ip"
+    datanode3:
+      ansible_host: "datanode3_ip"
+
+cassandra:
+  children:
+    datanodes: {}
+  vars:
+    cassandra_network_interface: enp1s0
+
+cassandra_seed:
+  hosts:
+    datanode1: {}
+
+elasticsearch:
+  children:
+    datanodes: {}
+  vars:
+    elasticsearch_network_interface: enp1s0
+
+elasticsearch_master:
+  children:
+    datanodes: {}
+
+minio:
+  children:
+    datanodes: {}
+  vars:
+    minio_network_interface: enp1s0
+
+rmq-cluster:
+  children:
+    # host names here must match each node's actual hostname
+    # its a requirement for rabbitmq
+    datanodes: {}
+  vars:
+    rabbitmq_network_interface: enp1s0
+    # host name here must match each node's actual hostname
+    rabbitmq_cluster_master: datanode1
+
+postgresql:
+  children:
+    datanodes: {}
+  vars:
+    wire_dbname: wire-server
+    postgresql_network_interface: enp1s0
+    repmgr_node_config:
+      datanode1:  # Maps to postgresql_rw group
+        node_id: 1
+        priority: 150
+        role: primary
+      datanode2:  # Maps to first postgresql_ro
+        node_id: 2
+        priority: 100
+        role: standby
+      datanode3:  # Maps to second postgresql_ro
+        node_id: 3
+        priority: 50
+        role: standby
+
+postgresql_rw:
+  hosts:
+    datanode1: {}
+
+postgresql_ro:
+  hosts:
+    datanode2: {}
+    datanode3: {}
