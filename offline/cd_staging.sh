@@ -119,12 +119,13 @@ echo "Running ansible playbook setup_nodes.yml via adminhost ($adminhost)..."
 ansible-playbook -i inventory.yml setup_nodes.yml --private-key "ssh_private_key"
 
 # user demo needs to exist
-ssh $SSH_OPTS "demo@$adminhost" wget -q "https://s3-eu-west-1.amazonaws.com/public.wire.com/artifacts/${ARTIFACT}.tgz"
+ssh "$SSH_OPTS" "demo@$adminhost" wget -q "https://s3-eu-west-1.amazonaws.com/public.wire.com/artifacts/${ARTIFACT}.tgz"
 
-ssh $SSH_OPTS "demo@$adminhost" tar xzf "$ARTIFACT.tgz"
+# shellcheck disable=SC2029
+ssh "$SSH_OPTS" "demo@$adminhost" tar xzf "${ARTIFACT}.tgz"
 
 # override for ingress-nginx-controller values for hetzner environment $TF_DIR/setup_nodes.yml
-scp $SSH_OPTS "$VALUES_DIR/ingress-nginx-controller/hetzner-ci.example.yaml" "demo@$adminhost:./values/ingress-nginx-controller/prod-values.example.yaml"
+scp "$SSH_OPTS" "$VALUES_DIR/ingress-nginx-controller/hetzner-ci.example.yaml" "demo@$adminhost:./values/ingress-nginx-controller/prod-values.example.yaml"
 
 # Source and target files
 SOURCE="inventory.yml"
@@ -202,12 +203,12 @@ rm -f "$KUBE_NODE_VARS_FILE"
 
 echo "created secondary inventory file $TARGET successfully"
 
-scp $SSH_OPTS "$TARGET" "demo@$adminhost":./ansible/inventory/offline/inventory.yml
+scp "$SSH_OPTS" "$TARGET" "demo@$adminhost":./ansible/inventory/offline/inventory.yml
 
-ssh $SSH_OPTS "demo@$adminhost" cat ./ansible/inventory/offline/inventory.yml || true
+ssh "$SSH_OPTS" "demo@$adminhost" cat ./ansible/inventory/offline/inventory.yml || true
 
 # NOTE: Agent is forwarded; so that the adminhost can provision the other boxes
-ssh $SSH_OPTS -A "demo@$adminhost" ./bin/offline-deploy.sh
+ssh "$SSH_OPTS" -A "demo@$adminhost" ./bin/offline-deploy.sh
 
 echo ""
 echo "Wire offline deployment completed successfully!"
