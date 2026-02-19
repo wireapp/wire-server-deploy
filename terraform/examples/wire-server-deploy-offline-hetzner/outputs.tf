@@ -46,7 +46,6 @@ output "static-inventory" {
         ansible_user            = "root"
         private_interface       = "enp7s0"
         adminhost_ip            = tolist(hcloud_server.adminhost.network)[0].ip
-        ansible_ssh_common_args = "-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ControlMaster=auto -o ControlPersist=60s"
       }
     }
     adminhost = {
@@ -55,10 +54,28 @@ output "static-inventory" {
           ansible_host = hcloud_server.adminhost.ipv4_address
         }
       }
+      vars = {
+        ansible_ssh_common_args = "-o StrictHostKeyChecking=accept-new -o UserKnownHostsFile=/dev/null -o ControlMaster=auto -o ControlPersist=60s -o BatchMode=yes -o ConnectionAttempts=10 -o ServerAliveInterval=60 -o ServerAliveCountMax=3"
+      }
+    }
+    private = {
+      children = {
+        adminhost_local = {}
+        assethost       = {}
+        "kube-node"     = {}
+        cassandra       = {}
+        elasticsearch   = {}
+        minio           = {}
+        postgresql      = {}
+        rmq-cluster     = {}
+      }
+      vars = {
+        ansible_ssh_common_args = "-o ProxyCommand=\"ssh -i ssh_private_key -o StrictHostKeyChecking=accept-new -o UserKnownHostsFile=/dev/null -W %h:%p -q root@${hcloud_server.adminhost.ipv4_address}\" -o StrictHostKeyChecking=accept-new -o UserKnownHostsFile=/dev/null -o ControlMaster=auto -o ControlPersist=60s -o BatchMode=yes -o ConnectionAttempts=10 -o ServerAliveInterval=60 -o ServerAliveCountMax=3"
+      }
     }
     adminhost_local = {
       hosts = {
-        "adminhost" = {
+        "adminhost_local" = {
           ansible_host = tolist(hcloud_server.adminhost.network)[0].ip
         }
       }
@@ -145,6 +162,23 @@ output "static-inventory" {
       vars = {
         wire_dbname                  = "wire-server"
         postgresql_network_interface = "enp7s0"
+        repmgr_node_config = {
+          postgresql1 = {
+            node_id  = 1
+            priority = 150
+            role     = "primary"
+          }
+          postgresql2 = {
+            node_id  = 2
+            priority = 100
+            role     = "standby"
+          }
+          postgresql3 = {
+            node_id  = 3
+            priority = 50
+            role     = "standby"
+          }
+        }
       }
     }
     postgresql_rw = {
