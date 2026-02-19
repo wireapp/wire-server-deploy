@@ -92,7 +92,9 @@ brig:
         deletionUrl: https://account.example.com/d/?key=${key}&code=${code}
         invitationUrl: https://account.example.com/i/${code}
     smtp:
-      host: demo-smtp # use demo-smtp for offline/CI; override for production
+      # Default: smtp (for CI/demo environments with demo-smtp chart)
+      # Production: Change to your actual SMTP server hostname
+      host: smtp
       port: 25        # change this
       connType: plain # change this. Possible values: plain|ssl|tls
 #    proxy:
@@ -133,8 +135,10 @@ cannon:
   # For demo mode only, we don't need to keep websocket connections open on chart upgrades
   drainTimeout: 10
   config:
-    rabbitmq: # Default value for CI, for on-prem deployment, use rabbitmq-external
-      host: rabbitmq-external
+    rabbitmq:
+      # Default: rabbitmq (for CI/demo environments with databases-ephemeral chart)
+      # Production: Change to rabbitmq-external when using external RabbitMQ deployment
+      host: rabbitmq
     cassandra:
       host: cassandra-external
   metrics:
@@ -170,8 +174,10 @@ galley:
   config:
     cassandra:
       host: cassandra-external
-    rabbitmq: # Default value for CI, for on-prem deployment, use rabbitmq-external
-      host: rabbitmq-external
+    rabbitmq:
+      # Default: rabbitmq (for CI/demo environments with databases-ephemeral chart)
+      # Production: Change to rabbitmq-external when using external RabbitMQ deployment
+      host: rabbitmq
     postgresql:
       host: postgresql-external-rw # DNS name without protocol
       port: "5432"
@@ -237,8 +243,10 @@ gundeck:
   config:
     redis:
       host: databases-ephemeral-redis-ephemeral # Updated hostname for redis-ephemeral chart
-    rabbitmq: # Default value for CI, for on-prem deployment, use rabbitmq-external
-      host: rabbitmq-external
+    rabbitmq:
+      # Default: rabbitmq (for CI/demo environments with databases-ephemeral chart)
+      # Production: Change to rabbitmq-external when using external RabbitMQ deployment
+      host: rabbitmq
     cassandra:
       host: cassandra-external
     aws:
@@ -343,8 +351,10 @@ background-worker:
   config:
     federationDomain: example.com
     # logLevel: Debug
-    rabbitmq: # Default value for CI, for on-prem deployment, use rabbitmq-external
-      host: rabbitmq-external
+    rabbitmq:
+      # Default: rabbitmq (for CI/demo environments with databases-ephemeral chart)
+      # Production: Change to rabbitmq-external when using external RabbitMQ deployment
+      host: rabbitmq
     cassandra:
       host: cassandra-external
     cassandraGalley:

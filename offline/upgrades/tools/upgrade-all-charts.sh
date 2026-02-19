@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-BUNDLE_ROOT=${WIRE_BUNDLE_ROOT:-/home/demo/new}
+BUNDLE_ROOT=${WIRE_BUNDLE_ROOT:-/home/demo/wire-server-deploy-new}
 
 cd "$BUNDLE_ROOT"
 source bin/offline-env.sh

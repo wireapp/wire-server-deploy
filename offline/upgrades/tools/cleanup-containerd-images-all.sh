@@ -1,7 +1,17 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-BUNDLE_ROOT=${WIRE_BUNDLE_ROOT:-/home/demo/new}
+# This script runs cleanup-containerd-images.py on each kube node via SSH.
+# The script automatically copies cleanup-containerd-images.py to each node before execution.
+
+BUNDLE_ROOT=${WIRE_BUNDLE_ROOT:-/home/demo/wire-server-deploy-new}
+cleanup_script=${BUNDLE_ROOT}/bin/tools/cleanup-containerd-images.py
+
+if [ ! -f "$cleanup_script" ]; then
+  echo "ERROR: Cleanup script not found at $cleanup_script" >&2
+  exit 1
+fi
+
 inventory=${BUNDLE_ROOT}/ansible/inventory/offline/hosts.ini
 mapfile -t nodes < <(
   awk '
@@ -33,6 +43,13 @@ echo "Starting cleanup at $stamp" | tee -a "$log_file"
 
 for node in "${nodes[@]}"; do
   echo "==> $node" | tee -a "$log_file"
+
+  # Copy cleanup script to remote node
+  echo "Copying cleanup script to $node..." | tee -a "$log_file"
+  scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null \
+    "$cleanup_script" "demo@${node}:/home/demo/cleanup-containerd-images.py" 2>&1 | tee -a "$log_file"
+
+  # Run cleanup on remote node
   ssh_cmd=(
     ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null "demo@${node}"
     python3 /home/demo/cleanup-containerd-images.py

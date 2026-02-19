@@ -12,7 +12,7 @@ from pathlib import Path
 def now_ts():
     return dt.datetime.utcnow().replace(microsecond=0).isoformat() + "Z"
 
-BUNDLE_ROOT = os.environ.get("WIRE_BUNDLE_ROOT") or "/home/demo/new"
+BUNDLE_ROOT = os.environ.get("WIRE_BUNDLE_ROOT") or "/home/demo/wire-server-deploy-new"
 
 def host_name():
     return socket.gethostname()
