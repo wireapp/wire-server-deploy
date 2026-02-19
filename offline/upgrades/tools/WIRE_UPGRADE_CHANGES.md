@@ -2,11 +2,19 @@
 
 This document captures the concrete changes applied during the upgrade work so the setup can be reproduced reliably.
 
+## Environment Variable (Required)
+
+**IMPORTANT:** Set `WIRE_BUNDLE_ROOT` to point to your new Wire bundle location. See [README.md](./README.md#environment-variable-required) for setup details.
+
+```bash
+export WIRE_BUNDLE_ROOT=/home/demo/wire-server-deploy-new
+```
+
 ## Environment Context
 
 - Admin host: hetzner3
-- New bundle path: `/home/demo/new`
-- Existing deployment path: `/home/demo/wire-server-deploy`
+- New bundle path: `${WIRE_BUNDLE_ROOT}` (e.g., `/home/demo/wire-server-deploy-new`)
+- Existing deployment path: `/home/demo/wire-server-deploy` (current running version - do not change)
 - Cluster access via `bin/offline-env.sh` and `d` wrapper
 
 ## Core Infrastructure Setup
@@ -46,7 +54,7 @@ This document captures the concrete changes applied during the upgrade work so t
 ### 3. Wire Server Values (critical overrides)
 
 **Mapped from** `wire-server-deploy/values/wire-server/values.yaml` into
-`new/values/wire-server/prod-values.example.yaml`:
+`${WIRE_BUNDLE_ROOT}/values/wire-server/prod-values.example.yaml`:
 
 - `brig.config.externalUrls.*`
 - `brig.config.optSettings.setFederationDomain`
@@ -91,7 +99,7 @@ Mapped from `/home/demo/wire-server-deploy/values/wire-server/secrets.yaml`:
 ### Cassandra schema migrations
 
 ```bash
-cd /home/demo/new
+cd ${WIRE_BUNDLE_ROOT}
 source bin/offline-env.sh
 
 d helm upgrade --install cassandra-migrations ./charts/wire-server/charts/cassandra-migrations \
@@ -102,7 +110,7 @@ d helm upgrade --install cassandra-migrations ./charts/wire-server/charts/cassan
 ### Migrate-features
 
 ```bash
-cd /home/demo/new
+cd ${WIRE_BUNDLE_ROOT}
 source bin/offline-env.sh
 
 d helm upgrade --install migrate-features ./charts/migrate-features -n default
@@ -121,17 +129,17 @@ d helm upgrade --install migrate-features ./charts/migrate-features -n default
    - Fixed by using correct `pgPassword` from secret
 
 4. **gundeck redis errors**
-   - Fixed by setting `redis.host: redis-ephemeral-master`
+   - Fixed by setting `redis.host: databases-ephemeral-redis-ephemeral`
 
 5. **cargohold upload errors (403 / InvalidAccessKeyId)**
    - Fixed by setting correct MinIO credentials in secrets
 
 6. **nginz crashloop (kube-dns resolver)**
-   - Added `nginz.nginx_conf.dns_resolver: coredns` in `/home/demo/new/values/wire-server/prod-values.example.yaml`
+   - Added `nginz.nginx_conf.dns_resolver: coredns` in `${WIRE_BUNDLE_ROOT}/values/wire-server/prod-values.example.yaml`
    - Redeployed wire-server to regenerate nginz configmap
    - Commands:
      ```bash
-     cd /home/demo/new
+     cd ${WIRE_BUNDLE_ROOT}
      source bin/offline-env.sh
      d helm upgrade --install wire-server ./charts/wire-server \
        -f values/wire-server/prod-values.example.yaml \
@@ -144,7 +152,7 @@ d helm upgrade --install migrate-features ./charts/migrate-features -n default
    - Resolved 400 mapping conflict for `email_unvalidated`
    - Commands:
      ```bash
-     cd /home/demo/new
+     cd ${WIRE_BUNDLE_ROOT}
      source bin/offline-env.sh
 
      # delete index
@@ -172,7 +180,7 @@ d helm upgrade --install migrate-features ./charts/migrate-features -n default
    - Fix: disable the Redis NetworkPolicy in the `databases-ephemeral` release
    - Commands:
      ```bash
-     cd /home/demo/new
+     cd ${WIRE_BUNDLE_ROOT}
      source bin/offline-env.sh
 
      d helm upgrade --install databases-ephemeral ./charts/databases-ephemeral \
@@ -186,7 +194,7 @@ d helm upgrade --install migrate-features ./charts/migrate-features -n default
    - Fix: pin ingress-nginx controller to the node receiving public traffic (per offline docs)
    - Commands:
      ```bash
-     cd /home/demo/new
+     cd ${WIRE_BUNDLE_ROOT}
      source bin/offline-env.sh
 
      cat <<'EOF' > values/ingress-nginx-controller/node-selector.yaml
@@ -208,12 +216,12 @@ d helm upgrade --install migrate-features ./charts/migrate-features -n default
    - Workaround: keep MLS disabled and pin webapp to `2025-11-05-production.0` (or earlier), or re-enable MLS on the backend if you must run the newer webapp.
 
 11. **Containerd image cleanup after migration**
-   - Cleanup script (dry-run and apply) stored in `/home/demo/new/bin/tools/cleanup-containerd-images.py` and synced to local `tools/cleanup-containerd-images.py`
-   - Multi-node runner script stored in `/home/demo/new/bin/tools/cleanup-containerd-images-all.sh` and synced to local `tools/cleanup-containerd-images-all.sh`
+   - Cleanup script (dry-run and apply) stored in `${WIRE_BUNDLE_ROOT}/bin/tools/cleanup-containerd-images.py`
+   - Multi-node runner script stored in `${WIRE_BUNDLE_ROOT}/bin/tools/cleanup-containerd-images-all.sh`
    - Run across kubenodes via jump host using demo user; audit logs written per-node to `/home/demo/cleanup-logs`
    - Example command (runs on all nodes):
      ```bash
-     /home/demo/new/bin/tools/cleanup-containerd-images-all.sh
+     ${WIRE_BUNDLE_ROOT}/bin/tools/cleanup-containerd-images-all.sh
      ```
    - Example audit logs:
      - `/home/demo/cleanup-logs/cleanup_192.168.122.21_<timestamp>.json`
