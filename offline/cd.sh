@@ -122,9 +122,6 @@ ssh $SSH_OPTS "root@$adminhost" wget -q "https://s3-eu-west-1.amazonaws.com/publ
 
 ssh $SSH_OPTS "root@$adminhost" tar xzf "$ARTIFACT.tgz"
 
-# override for ingress-nginx-controller values for hetzner environment $TF_DIR/setup_nodes.yml
-scp $SSH_OPTS "$VALUES_DIR/ingress-nginx-controller/hetzner-ci.example.yaml" "root@$adminhost:./values/ingress-nginx-controller/prod-values.example.yaml"
-
 scp $SSH_OPTS inventory.yml "root@$adminhost":./ansible/inventory/offline/inventory.yml
 
 ssh $SSH_OPTS "root@$adminhost" cat ./ansible/inventory/offline/inventory.yml || true
