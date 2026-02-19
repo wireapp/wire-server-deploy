@@ -1,0 +1,15 @@
+postgresql:
+  fullnameOverride: postgresql
+  ####### Uncomment and set these creds.
+#  auth:
+#    postgresPassword:
+#    username:
+#    password:
+#    database:
+
+  primary:
+    persistence:
+      # Create a pv and pvc for storing data. Refer to pv_pvc.yaml
+      existingClaim: postgresql-pv-claim
+  volumePermissions:
+    enabled: true
