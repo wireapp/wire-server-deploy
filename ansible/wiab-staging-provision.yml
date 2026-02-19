@@ -257,6 +257,10 @@
         yq -i ".minio.vars.minio_network_interface |= \"$GATEWAY_NAME\"" "{{ inventory_file }}"
         yq -i ".rmq-cluster.vars.rabbitmq_network_interface |= \"$GATEWAY_NAME\"" "{{ inventory_file }}"
         yq -i ".rmq-cluster.vars.rabbitmq_cluster_master |= \"datanode1\"" "{{ inventory_file }}"
+
+        # setting up ansible_ssh_private_key_file to access VMs for secondary ansible operations
+        yq -i ".all.vars.ansible_ssh_private_key_file |= \"ssh/id_ed25519\"" "{{ inventory_file }}"
+
       args:
         executable: /bin/bash
 
