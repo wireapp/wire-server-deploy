@@ -2,30 +2,48 @@
 
 This document explains how to run Cassandra schema migrations for the wire-server upgrade.
 
+## Environment Variable (Required)
+
+**IMPORTANT:** All commands in this guide require the `WIRE_BUNDLE_ROOT` environment variable to point to your new Wire bundle location.
+
+See [README.md](./README.md#environment-variable-required) for detailed setup instructions on unpacking the bundle and setting the environment variable.
+
+**Quick reference:**
+
+```bash
+# Set the bundle root to your unpacked bundle location
+export WIRE_BUNDLE_ROOT=/home/demo/wire-server-deploy-new
+```
+
 ## Prerequisites
 
-1. **SSH to hetzner3** (or any admin host with kubectl access)
-2. **Images synced** - Ensure container images are synced to k8s cluster first:
-   ```bash
-   ssh hetzner3
-   cd /home/demo/new
-   ./bin/tools/wire_sync_images.py --use-d --verbose
-   ```
+1. **SSH to admin host** (e.g., hetzner3) with kubectl access
+2. **Set environment variable** - Export `WIRE_BUNDLE_ROOT` pointing to your bundle
+3. **Images synced** - Container images must be synced to k8s cluster first (see Step 1 below)
 
 ## Running Cassandra Migrations
 
 ### Step 1: Sync Images (if not already done)
 
 ```bash
+# SSH to admin host
 ssh hetzner3
-cd /home/demo/new
+
+# Set bundle root
+export WIRE_BUNDLE_ROOT=/home/demo/wire-server-deploy-new
+
+# Sync container images to k8s cluster
+cd ${WIRE_BUNDLE_ROOT}
 ./bin/tools/wire_sync_images.py --use-d --verbose
 ```
 
 ### Step 2: Run cassandra-migrations
 
 ```bash
-cd /home/demo/new
+# Set bundle root (if not already set in current session)
+export WIRE_BUNDLE_ROOT=/home/demo/wire-server-deploy-new
+
+cd ${WIRE_BUNDLE_ROOT}
 source bin/offline-env.sh
 
 # Install cassandra-migrations chart
@@ -104,8 +122,11 @@ d helm upgrade --install cassandra-migrations ./charts/wire-server/charts/cassan
 ## Command Summary
 
 ```bash
+# Set bundle root
+export WIRE_BUNDLE_ROOT=/home/demo/wire-server-deploy-new
+
 # Full command to run cassandra-migrations
-cd /home-demo/new
+cd ${WIRE_BUNDLE_ROOT}
 source bin/offline-env.sh
 d helm upgrade --install cassandra-migrations ./charts/wire-server/charts/cassandra-migrations \
   -n default \
