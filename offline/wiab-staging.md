@@ -244,3 +244,70 @@ calling_node_ip=192.168.122.13
 # Host WAN interface name
 inf_wan=eth0
 ```
+
+> **Note (cert-manager & hairpin NAT):**
+> When cert-manager performs HTTP-01 self-checks inside the cluster, traffic can hairpin (Pod → Node → host public IP → DNAT → Node → Ingress).
+> If your nftables rules DNAT in `PREROUTING` without a matching SNAT on `virbr0 → virbr0`, return packets may bypass the host and break conntrack, causing HTTP-01 timeouts, resulting in certificate verification failure.
+> Additionally, strict `rp_filter` can drop asymmetric return packets.
+> If cert-manager is deployed in a NAT/bridge (`virbr0`) environment, first verify whether certificate issuance is failing before applying hairpin handling.
+> Check whether certificates are successfully issued:
+> ```bash
+> d kubectl get certificates
+> ```
+> If certificates are not in `Ready=True` state, inspect cert-manager logs for HTTP-01 self-check or timeout errors:
+> ```bash
+> d kubectl logs -n cert-manager-ns <cert-manager-pod-id>
+> ```
+> If you observe HTTP-01 challenge timeouts or self-check failures in a NAT/bridge environment, hairpin SNAT and relaxed reverse-path filtering handling may be required.
+  > - Relax reverse-path filtering to loose mode to allow asymmetric flows:
+  >   ```bash
+  >   sudo sysctl -w net.ipv4.conf.all.rp_filter=2
+  >   sudo sysctl -w net.ipv4.conf.virbr0.rp_filter=2
+  >   ```
+  >   These settings help conntrack reverse DNAT correctly and avoid drops during cert-manager’s HTTP-01 challenges in NAT/bridge (virbr0) environments.
+  >
+  > - Enable Hairpin SNAT (temporary for cert-manager HTTP-01):
+  >   ```bash
+  >   sudo nft insert rule ip nat POSTROUTING position 0 \
+  >   iifname "virbr0" oifname "virbr0" \
+  >   ip daddr 192.168.122.0/24 ct status dnat \
+  >   counter masquerade \
+  >   comment "wire-hairpin-dnat-virbr0"
+  >   ```
+  >   This forces DNATed traffic that hairpins over the bridge to be masqueraded, ensuring return traffic flows back through the host and conntrack can correctly reverse the DNAT.
+  >   Verify the rule was added:
+  >   ```bash
+  >   sudo nft list chain ip nat POSTROUTING
+  >   ```
+  >   You should see a rule similar to:
+  >   ```
+  >   iifname "virbr0" oifname "virbr0" ip daddr 192.168.122.0/24 ct status dnat counter masquerade # handle <id>
+  >   ```
+  >
+  > - Remove the rule after certificates are issued
+  >   ```bash
+  >   d kubectl get certificates
+  >   ```
+  > - Once Let's Encrypt validation completes and certificates are issued, remove the temporary hairpin SNAT rule. Use the following pipeline to locate the rule handle and delete it safely:
+  >   ```bash
+  >   sudo nft list chain ip nat POSTROUTING | \
+  >     grep wire-hairpin-dnat-virbr0 | \
+  >     sed -E 's/.*handle ([0-9]+).*/\1/' | \
+  >     xargs -r -I {} sudo nft delete rule ip nat POSTROUTING handle {}
+  >   ```
+
+
+## Further Reading
+
+- **[Deploying stateless services and other dependencies](docs_ubuntu_22.04.md#deploying-stateless-dependencies)**: Read more about external datastores and stateless dependencies.
+- **[Deploying Wire Server](docs_ubuntu_22.04.md#deploying-wire-server)**: Read more about core Wire backend deployment and required values/secrets.
+- **[Deploying webapp](docs_ubuntu_22.04.md#deploying-webapp)**: Read more about webapp deployment and domain configuration.
+- **[Deploying team-settings](docs_ubuntu_22.04.md#deploying-team-settings)**: Read more about team settings services.
+- **[Deploying account-pages](docs_ubuntu_22.04.md#deploying-account-pages)**: Read more about account management services.
+- **[Deploying smallstep-accomp](docs_ubuntu_22.04.md#deploying-smallstep-accomp)**: Read more about the ACME companion.
+- **[Enabling emails for wire](smtp.md)**: Read more about SMTP options for onboarding email delivery and relay setup.
+- **[Deploy ingress-nginx-controller](docs_ubuntu_22.04.md#deploy-ingress-nginx-controller)**: Read more about ingress configuration and traffic forwarding requirements.
+- **[Acquiring / Deploying SSL Certificates](docs_ubuntu_22.04.md#acquiring--deploying-ssl-certificates)**: Read more about TLS options (Bring Your Own or cert-manager) and certificate requirements.
+- **[Installing SFTD](docs_ubuntu_22.04.md#installing-sftd)**: Read more about the Selective Forwarding Unit (SFT) and related configuration.
+- **[Installing Coturn](coturn.md)**: Read more about TURN/STUN setup for WebRTC connectivity and NAT traversal.
+- **[Configure the port redirection in Nftables](coturn.md#configure-the-port-redirection-in-nftables)**: Read more about configuring Nftables rules
