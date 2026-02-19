@@ -215,20 +215,56 @@ calling_node_ip=192.168.122.13
 inf_wan=eth0
 ```
 
-  > **Note (cert-manager & hairpin NAT):** When cert-manager performs HTTP-01 self-checks inside the cluster, traffic can hairpin (Pod → Node → host public IP → DNAT → Node → Ingress). If your nftables rules DNAT in PREROUTING without a matching SNAT on virbr0→virbr0, return packets may bypass the host and break conntrack, causing HTTP-01 timeouts. Also, strict rp_filter can drop asymmetric return packets. If cert-manager is deployed, verify whether hairpin handling is needed:
-  >
-  > - Enable hairpin SNAT for DNATed traffic (forces return traffic through the host):
-  >   ```bash
-  >   sudo nft insert rule ip nat POSTROUTING position 0 \
-  >     iifname "virbr0" oifname "virbr0" \
-  >     ct status dnat counter masquerade
-  >   ```
+> **Note (cert-manager & hairpin NAT):**
+> When cert-manager performs HTTP-01 self-checks inside the cluster, traffic can hairpin (Pod → Node → host public IP → DNAT → Node → Ingress).
+> If your nftables rules DNAT in `PREROUTING` without a matching SNAT on `virbr0 → virbr0`, return packets may bypass the host and break conntrack, causing HTTP-01 timeouts, resulting in certificate verification failure.
+> Additionally, strict `rp_filter` can drop asymmetric return packets.
+> If cert-manager is deployed in a NAT/bridge (`virbr0`) environment, first verify whether certificate issuance is failing before applying hairpin handling.
+> Check whether certificates are successfully issued:
+> ```bash
+> d kubectl get certificates
+> ```
+> If certificates are not in `Ready=True` state, inspect cert-manager logs for HTTP-01 self-check or timeout errors:
+> ```bash
+> d kubectl logs -n cert-manager-ns <cert-manager-pod-id>
+> ```
+> If you observe HTTP-01 challenge timeouts or self-check failures in a NAT/bridge environment, hairpin SNAT and relaxed reverse-path filtering handling may be required.
   > - Relax reverse-path filtering to loose mode to allow asymmetric flows:
   >   ```bash
   >   sudo sysctl -w net.ipv4.conf.all.rp_filter=2
   >   sudo sysctl -w net.ipv4.conf.virbr0.rp_filter=2
   >   ```
-  > These settings help conntrack reverse DNAT correctly and avoid drops during cert-manager’s HTTP-01 challenges in NAT/bridge (virbr0) environments.
+  >   These settings help conntrack reverse DNAT correctly and avoid drops during cert-manager’s HTTP-01 challenges in NAT/bridge (virbr0) environments.
+  >
+  > - Enable Hairpin SNAT (temporary for cert-manager HTTP-01):
+  >   ```bash
+  >   sudo nft insert rule ip nat POSTROUTING position 0 \
+  >   iifname "virbr0" oifname "virbr0" \
+  >   ip daddr 192.168.122.0/24 ct status dnat \
+  >   counter masquerade \
+  >   comment "wire-hairpin-dnat-virbr0"
+  >   ```
+  >   This forces DNATed traffic that hairpins over the bridge to be masqueraded, ensuring return traffic flows back through the host and conntrack can correctly reverse the DNAT.
+  >   Verify the rule was added:
+  >   ```bash
+  >   sudo nft list chain ip nat POSTROUTING
+  >   ```
+  >   You should see a rule similar to:
+  >   ```
+  >   iifname "virbr0" oifname "virbr0" ip daddr 192.168.122.0/24 ct status dnat counter masquerade # handle <id>
+  >   ```
+  >
+  > - Remove the rule after certificates are issued
+  >   ```bash
+  >   d kubectl get certificates
+  >   ```
+  > - Once Let's Encrypt validation completes and certificates are issued, remove the temporary hairpin SNAT rule. Use the following pipeline to locate the rule handle and delete it safely:
+  >   ```bash
+  >   sudo nft list chain ip nat POSTROUTING | \
+  >     grep wire-hairpin-dnat-virbr0 | \
+  >     sed -E 's/.*handle ([0-9]+).*/\1/' | \
+  >     xargs -r -I {} sudo nft delete rule ip nat POSTROUTING handle {}
+  >   ```
 
 
 ## Further Reading
