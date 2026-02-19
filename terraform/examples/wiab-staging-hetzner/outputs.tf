@@ -43,9 +43,9 @@ output "static-inventory" {
   value = {
     all = {
       vars = {
-        ansible_user            = "root"
-        private_interface       = "enp7s0"
-        adminhost_ip            = tolist(hcloud_server.adminhost.network)[0].ip
+        adminhost_ip      = tolist(hcloud_server.adminhost.network)[0].ip
+        ansible_user      = "root"
+        private_interface = "enp7s0"
       }
     }
     adminhost = {
@@ -60,14 +60,10 @@ output "static-inventory" {
     }
     private = {
       children = {
-        adminhost_local = {}
         assethost       = {}
+        datanode        = {}
         "kube-node"     = {}
-        cassandra       = {}
-        elasticsearch   = {}
-        minio           = {}
-        postgresql      = {}
-        rmq-cluster     = {}
+        adminhost_local = {}
       }
       vars = {
         ansible_ssh_common_args = "-o ProxyCommand=\"ssh -i ssh_private_key -o StrictHostKeyChecking=accept-new -o UserKnownHostsFile=/dev/null -W %h:%p -q root@${hcloud_server.adminhost.ipv4_address}\" -o StrictHostKeyChecking=accept-new -o UserKnownHostsFile=/dev/null -o ControlMaster=auto -o ControlPersist=60s -o BatchMode=yes -o ConnectionAttempts=10 -o ServerAliveInterval=60 -o ServerAliveCountMax=3"
@@ -87,25 +83,12 @@ output "static-inventory" {
         }
       }
     }
-    etcd = {
-      children = { "kube-master" = {} }
-    }
-    kube-master = {
-      children = { "kube-node" = {} }
-    }
     kube-node = {
       hosts = {
         for index, server in hcloud_server.kubenode : server.name => {
           ansible_host     = tolist(hcloud_server.kubenode[index].network)[0].ip
           ip               = tolist(hcloud_server.kubenode[index].network)[0].ip
-          etcd_member_name = server.name
         }
-      }
-    }
-    k8s-cluster = {
-      children = {
-        "kube-node"   = {}
-        "kube-master" = {}
       }
       # NOTE: Necessary for the Hetzner Cloud until Calico v3.17 arrives in Kubespray
       # Hetzner private networks have an MTU of 1450 instead of 1500
@@ -117,88 +100,14 @@ output "static-inventory" {
         upstream_dns_servers      = [tolist(hcloud_server.adminhost.network)[0].ip]
       }
     }
-    cassandra = {
+    datanode = {
       hosts = {
-        for index, server in hcloud_server.cassandra : server.name => {
-          ansible_host = tolist(hcloud_server.cassandra[index].network)[0].ip
+        for index, server in hcloud_server.datanode : server.name => {
+          ansible_host = tolist(hcloud_server.datanode[index].network)[0].ip
         }
       }
       vars = {
-        cassandra_network_interface = "enp7s0"
-      }
-    }
-    cassandra_seed = {
-      hosts = { (hcloud_server.cassandra[0].name) = {} }
-    }
-    elasticsearch = {
-      hosts = {
-        for index, server in hcloud_server.elasticsearch : server.name => {
-          ansible_host = tolist(hcloud_server.elasticsearch[index].network)[0].ip
-        }
-      }
-      vars = {
-        elasticsearch_network_interface = "enp7s0"
-      }
-    }
-    elasticsearch_master = {
-      children = { "elasticsearch" = {} }
-    }
-    minio = {
-      hosts = {
-        for index, server in hcloud_server.minio : server.name => {
-          ansible_host = tolist(hcloud_server.minio[index].network)[0].ip
-        }
-      }
-      vars = {
-        minio_network_interface = "enp7s0"
-      }
-    }
-    postgresql = {
-      hosts = {
-        for index, server in hcloud_server.postgresql : "postgresql${index + 1}" => {
-          ansible_host = tolist(hcloud_server.postgresql[index].network)[0].ip
-        }
-      }
-      vars = {
-        wire_dbname                  = "wire-server"
-        postgresql_network_interface = "enp7s0"
-        repmgr_node_config = {
-          postgresql1 = {
-            node_id  = 1
-            priority = 150
-            role     = "primary"
-          }
-          postgresql2 = {
-            node_id  = 2
-            priority = 100
-            role     = "standby"
-          }
-          postgresql3 = {
-            node_id  = 3
-            priority = 50
-            role     = "standby"
-          }
-        }
-      }
-    }
-    postgresql_rw = {
-      hosts = { "postgresql1" = {} }
-    }
-    postgresql_ro = {
-      hosts = { "postgresql2" = {},
-      "postgresql3" = {} }
-    }
-    rmq-cluster = {
-      hosts = {
-        # host names here must match each node's actual hostname
-        for index, server in hcloud_server.rabbitmq : server.name => {
-          ansible_host = tolist(hcloud_server.rabbitmq[index].network)[0].ip
-        }
-      }
-      vars = {
-        # host name here must match each node's actual hostname
-        rabbitmq_cluster_master    = hcloud_server.rabbitmq[0].name
-        rabbitmq_network_interface = "enp7s0"
+        datanode_network_interface = "enp7s0"
       }
     }
   }

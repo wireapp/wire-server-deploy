@@ -2,3 +2,7 @@ Changed: offline-vm-setup.sh script now uses an ubuntu cloud image and local see
 Added: now offline-vm-setup.sh waits on VMs to be alive, and health checks them.
 Changed: Add ansible playbook for wiab-staging VM provisioning
 Fixed: offline-deploy.sh for SSH_AUTH_SOCK handling and remove defunct passwords for postgresql
+Added: terraform resources for wiab-staging
+Added: cd_staging script to verify the default build bundle
+Changed: changed the flow of offline.yml - introduced wiab-staging build and split bundle processing with default-build
+Added: wiab-staging documentation to wire-server-deploy and fix coturn port ranges
