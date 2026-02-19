@@ -16,3 +16,8 @@ ingress-nginx:
         image:
           tag: "v20220916-gd32f8c343"
           digest: ""
+    # Enable prometheus operator to scrape metrics from the ingress-nginx controller with servicemonitor.
+    metrics:
+      enabled: false
+      serviceMonitor:
+        enabled: false
