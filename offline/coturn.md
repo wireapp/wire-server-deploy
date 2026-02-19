@@ -10,8 +10,8 @@ This document explains how to install Coturn on a newly deployed Wire-Server ins
 
 This presumes you already have:
 
-* Followed the [single Hetzner machine installation](single_hetzner_machine_installation.md) guide or otherwise have a machine ready to accept a Wire-Server deployment.
-* Have followed the [Wire-Server installation](docs_ubuntu_22.04.md) guide and have Wire-Server deployed and working.
+* Followed the [WIAB Staging](wiab-staging.md) guide to setup a Wire in a Box staging solution.
+* OR, Have followed the [Wire-Server installation](docs_ubuntu_22.04.md) guide and have Wire-Server deployed and working.
 
 ## Plan. 
 
@@ -250,7 +250,7 @@ Calling and TURN services (Coturn, SFT) require being reachable on a range of po
 
 Here we have decided the following distribution of ports:
 
-* Coturn will operate between ports 49152 and 65535.
+* Coturn will operate between ports 32768 and 65535.
 
 We will configure the port redirection in Nftables to allow traffic to reach Coturn.
 
@@ -293,7 +293,7 @@ table ip nat {
     iifname { $INF_WAN, virbr0 } tcp dport 3478 fib daddr type local dnat to $COTURNIP comment "COTURN control TCP"
     iifname { $INF_WAN, virbr0 } udp dport 3478 fib daddr type local dnat to $COTURNIP comment "COTURN control UDP"
 
-    iifname { $INF_WAN, virbr0 } udp dport 49152-65535 fib daddr type local dnat to $COTURNIP comment "COTURN UDP range"
+    iifname { $INF_WAN, virbr0 } udp dport 32768-65535 fib daddr type local dnat to $COTURNIP comment "COTURN UDP range"
 
     fib daddr type local counter jump DOCKER
   }
@@ -312,7 +312,7 @@ This is used for the HTTP(S) ingress:
 This is the part that routes the UDP packets (media/calling traffic) to the calling services:
 
 ```nft
-    iifname { $INF_WAN, virbr0 } udp dport 49152-65535 fib daddr type local dnat to $COTURNIP comment "COTURN UDP range"
+    iifname { $INF_WAN, virbr0 } udp dport 32768-65535 fib daddr type local dnat to $COTURNIP comment "COTURN UDP range"
 ``` 
 
 This is the part that redirects the control traffic to the Coturn port:
