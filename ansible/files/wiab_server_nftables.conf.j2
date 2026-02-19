@@ -1,0 +1,79 @@
+#!/usr/sbin/nft -f
+
+flush ruleset
+
+define KUBENODE1_IP = {{ kubenode1_ip }}
+define KUBENODE2_IP = {{ kubenode2_ip }}
+define KUBENODE3_IP = {{ kubenode3_ip }}
+define CALLING_NODE_IP   = {{ kubenode3_ip }}
+define INF_WAN    = {{ ansible_default_ipv4.interface }}
+define INF_VIRT = "virbr0"
+
+table inet filter {
+  chain block_definitions {
+    ct state established,related accept
+    ct state invalid drop
+    tcp flags != syn ct state new counter drop
+    counter drop
+#    log prefix "DROP " counter drop
+  }
+  chain INPUT {
+    type filter hook input priority 0;
+    ip protocol icmp icmp type echo-request counter accept
+    iifname { lo, $INF_VIRT } counter accept
+    tcp dport 22 counter accept comment "{{ wire_comment }} SSH incoming"
+    jump block_definitions
+  }
+  chain FORWARD {
+    type filter hook forward priority 0;
+    iifname $INF_VIRT oifname $INF_WAN counter accept comment "{{ wire_comment }} allow internet for internal VMs, needed fo things like letsencrypt cert issue"
+    iifname $INF_VIRT oifname $INF_VIRT counter accept comment "{{ wire_comment }} allow traffic between VMs"
+    iifname $INF_WAN oifname $INF_VIRT ct status dnat counter accept comment "{{ wire_comment }} allow DNAT forward from external interface to $INF_VIRT"
+    iifname docker0 oifname $INF_VIRT counter accept
+    jump block_definitions
+  }
+  chain OUTPUT {
+    type filter hook output priority 0;
+    policy accept;
+  }
+}
+table ip nat {
+  chain PREROUTING {
+    type nat hook prerouting priority -100;
+
+    # HTTP load balancing across kubenodes using numgen map (dnat target)
+    iifname { $INF_WAN, $INF_VIRT } tcp dport 80 fib daddr type local counter \
+      dnat to numgen random mod 3 map { \
+        0 : $KUBENODE1_IP, \
+        1 : $KUBENODE2_IP, \
+        2 : $KUBENODE3_IP \
+      }:31772 comment "{{ wire_comment }} HTTP ingress LB"
+
+    # HTTPS load balancing across kubenodes using numgen map (dnat target)
+    iifname { $INF_WAN, $INF_VIRT } tcp dport 443 fib daddr type local counter \
+      dnat to numgen random mod 3 map { \
+        0 : $KUBENODE1_IP, \
+        1 : $KUBENODE2_IP, \
+        2 : $KUBENODE3_IP \
+      }:31773 comment "{{ wire_comment }} HTTPS ingress LB"
+
+    iifname { $INF_WAN, $INF_VIRT } tcp dport 3478 fib daddr type local counter dnat to $CALLING_NODE_IP comment "{{ wire_comment }} COTURN control TCP"
+    iifname { $INF_WAN, $INF_VIRT } udp dport 3478 fib daddr type local counter dnat to $CALLING_NODE_IP comment "{{ wire_comment }} COTURN control UDP"
+
+    iifname { $INF_WAN, $INF_VIRT } udp dport 32768-65535 fib daddr type local counter dnat to $CALLING_NODE_IP comment "{{ wire_comment }} Calling UDP range"
+
+    fib daddr type local counter jump DOCKER
+  }
+  chain POSTROUTING {
+    type nat hook postrouting priority 100;
+    oifname != docker0 ip saddr 172.17.0.0/16 counter masquerade
+    oifname $INF_WAN counter masquerade comment "{{ wire_comment }} masquerade outgoing traffic"
+  }
+  chain DOCKER {
+    iifname docker0 counter return
+  }
+  chain OUTPUT {
+    type nat hook output priority -100; policy accept;
+    ip daddr != 127.0.0.0/8 fib daddr type local counter jump DOCKER
+  }
+}

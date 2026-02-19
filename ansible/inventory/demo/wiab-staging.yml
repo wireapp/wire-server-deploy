@@ -1,0 +1,9 @@
+wiab-staging:
+  hosts:
+    deploy_node:
+      ansible_host: example.com
+      ansible_ssh_common_args: '-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ServerAliveInterval=60 -o ServerAliveCountMax=3 -o TCPKeepAlive=yes'
+      ansible_user: 'demo'
+      ansible_ssh_private_key_file: "~/.ssh/id_ed25519"
+  vars:
+    artifact_hash: cdf194bb9185a5c2e01d6d41218bd1393c513364
