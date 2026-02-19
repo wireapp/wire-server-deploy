@@ -21,20 +21,12 @@ brig:
 #  image:
 #    tag: some-tag (only override if you want a newer/different version than what is in the chart)
   config:
-    multiSFT:
-      enabled: false # enable to turn on SFT to SFT communication for federated calls
     cassandra:
       host: cassandra-external
     elasticsearch:
       host: elasticsearch-external
     rabbitmq:
-      host: rabbitmq-external 
-      # For k8s-based RabbitMQ (default). Use 'rabbitmq-external' for production external RabbitMQ VMs
-    #postgresql:
-    #  host: postgresql-external-rw # DNS name without protocol
-    #  port: "5432"
-    #  user: wire-server
-    #  dbname: wire-server
+      host: rabbitmq # name of the rabbitmq service, either `rabbitmq-external` or `rabbitmq`
     useSES: false
     # Set to false if you want to hand out DynamoDB to store prekeys
     randomPrekeys: true
@@ -52,14 +44,12 @@ brig:
       teamSettings: https://teams.example.com # change this (or unset if team settings are not used)
       teamCreatorWelcome: https://teams.example.com/login # change this
       teamMemberWelcome: https://wire.example.com/download # change this
-    # TODO: BUG! 5.23 brig charts wont deploy in CI unless federation is enabled!
-    enableFederation: true # Enable to use federation
+    enableFederation: false # Enable to use federation
     optSettings:
       setFederationDomain: example.com # change this
       # Sync the domain with the 'host' variable in the sftd chart
       # Comment the next line (by adding '#' before it) if conference calling is not used
       setSftStaticUrl: "https://sftd.example.com:443"
-      # setSftListAllServers: "enabled" # Uncomment for Federation!
       # If set to true, creating new personal users or new teams on your instance from
       # outside your backend installation is disabled
       setRestrictUserCreation: false
@@ -103,13 +93,13 @@ brig:
   turnStatic:
     v1: []
     v2:
-      # - "turn:<IP of coturn1>:3478"
-      # - "turn:<IP of coturn2>:3478"
-      # - "turn:<IP of coturn1>:3478?transport=tcp"
-      # - "turn:<IP of coturn2>:3478?transport=tcp"
-  metrics:
-    serviceMonitor:
-      enabled: false
+      # - "turn:<IP of restund1>:80"
+      # - "turn:<IP of restund2:80"
+      # - "turn:<IP of restund1>:80?transport=tcp"
+      # - "turn:<IP of restund2>:80?transport=tcp"
+      # - "turns:<IP of restund1>:443?transport=tcp"
+      # - "turns:<IP of restund2>:443?transport=tcp"
+
 
 proxy:
   replicaCount: 3
@@ -122,23 +112,14 @@ proxy:
 #      noProxyList:
 #        - "local.example.com"
 #        - "10.23.0.0/16"
-  metrics:
-    serviceMonitor:
-      enabled: false
+
 cannon:
   replicaCount: 3
 #  image:
 #    tag: some-tag (only override if you want a newer/different version than what is in the chart)
   # For demo mode only, we don't need to keep websocket connections open on chart upgrades
   drainTimeout: 10
-  config:
-    rabbitmq: # Default value for CI, for on-prem deployment, use rabbitmq-external
-      host: rabbitmq-external
-    cassandra:
-      host: cassandra-external
-  metrics:
-    serviceMonitor:
-      enabled: false
+
 cargohold:
   replicaCount: 3
 #  image:
@@ -159,9 +140,7 @@ cargohold:
 #      noProxyList:
 #        - "local.example.com"
 #        - "10.23.0.0/16"
-  metrics:
-    serviceMonitor:
-      enabled: false
+
 galley:
   replicaCount: 3
 #  image:
@@ -169,13 +148,8 @@ galley:
   config:
     cassandra:
       host: cassandra-external
-    rabbitmq: # Default value for CI, for on-prem deployment, use rabbitmq-external
-      host: rabbitmq-external
-    #postgresql:
-    #  host: postgresql-external-rw # DNS name without protocol
-    #  port: "5432"
-    #  user: wire-server
-    #  dbname: wire-server
+    rabbitmq:
+      host: rabbitmq-external # name of the rabbitmq service, either `rabbitmq-external` or `rabbitmq`
     enableFederation: false # Enable to use federation
     settings:
       # prefix URI used when inviting users to a conversation by link
@@ -183,6 +157,9 @@ galley:
       federationDomain: example.com # change this
       # see #RefConfigOptions in `/docs/reference` (https://github.com/wireapp/wire-server/)
       featureFlags:
+        sso: disabled-by-default
+        # NOTE: Change this to "disabled-by-default" for legalhold support
+        # legalhold: disabled-by-default
         legalhold: disabled-permanently
         teamSearchVisibility: disabled-by-default
     aws:
@@ -193,16 +170,12 @@ galley:
 #      noProxyList:
 #        - "local.example.com"
 #        - "10.23.0.0/16"
-  metrics:
-    serviceMonitor:
-      enabled: false
+
 gundeck:
   replicaCount: 3
 #  image:
 #    tag: some-tag (only override if you want a newer/different version than what is in the chart)
   config:
-    rabbitmq: # Default value for CI, for on-prem deployment, use rabbitmq-external
-      host: rabbitmq-external
     cassandra:
       host: cassandra-external
     aws:
@@ -219,9 +192,7 @@ gundeck:
 #      noProxyList:
 #        - "local.example.com"
 #        - "10.23.0.0/16"
-  metrics:
-    serviceMonitor:
-      enabled: false
+
 nginz:
   replicaCount: 3
   config:
@@ -232,7 +203,6 @@ nginz:
 #      tag: some-tag (only override if you want a newer/different version than what is in the chart)
   nginx_conf:
     # using prod means mostly that some internal endpoints are not exposed
-    # dns_resolver: coredns
     env: prod
     external_env_domain: example.com
     deeplink:
@@ -252,9 +222,7 @@ nginz:
   # For demo mode only, we don't need to keep websocket connections open on upgrade:
   drainTimeout: 10
   terminationGracePeriodSeconds: 30
-  metrics:
-    serviceMonitor:
-      enabled: false
+
 spar:
   replicaCount: 3
 #  image:
@@ -279,44 +247,14 @@ spar:
 #      noProxyList:
 #        - "local.example.com"
 #        - "10.23.0.0/16"
-  metrics:
-    serviceMonitor:
-      enabled: false
+
 
 # Only needed when legalhold is enabled
 legalhold:
   host: "legalhold.example.com"
   wireApiHost: "https://nginz-https.example.com"
-  metrics:
-    serviceMonitor:
-      enabled: false
+
 # Only needed when federation is enabled
 federator:
-  # config:
-  #   optSettings:
-  #     federationStrategy:
-  #       allowedDomains:
-  #         - example.com
   tls:
     useSharedFederatorSecret: true
-  # remoteCAContents: | # Uncomment and place the federating backends root CA certificates in chain (if there are multiple)
-  metrics:
-    serviceMonitor:
-      enabled: false
-background-worker:
-  config:
-    federationDomain: example.com
-    # logLevel: Debug
-    rabbitmq: # Default value for CI, for on-prem deployment, use rabbitmq-external
-      host: rabbitmq-external
-    cassandra:
-      host: cassandra-external
-    cassandraGalley:
-      host: cassandra-external
-    cassandraBrig:
-      host: cassandra-external
-    # Enable for federation
-    enableFederation: false
-  metrics:
-    serviceMonitor:
-      enabled: false
