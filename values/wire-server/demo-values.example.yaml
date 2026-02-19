@@ -1,7 +1,6 @@
 tags:
   proxy: false # enable if you want/need giphy/youtube/etc proxying
-  legalhold: false # Enable if you need legalhold
-  federation: false # Enable to use federation
+  spar: false # enable if you want/need Single-Sign-On (SSO)
 
 cassandra-migrations:
 #  images:
@@ -23,88 +22,50 @@ brig:
   config:
     cassandra:
       host: cassandra-ephemeral
+      replicaCount: 1
     elasticsearch:
       host: elasticsearch-ephemeral
-    rabbitmq:
-      host: rabbitmq # name of the rabbitmq service, either `rabbitmq-external` or `rabbitmq`
-    postgresql:
-      host: postgresql # DNS name without protocol
-      port: "5432"
-      user: wire-server
-      dbname: wire-server
     useSES: false
-    # Set to false if you want to hand out DynamoDB to store prekeys
-    randomPrekeys: true    
     aws:
       # change if using real AWS
       region: "eu-west-1"
       sqsEndpoint: http://fake-aws-sqs:4568
-      #dynamoDBEndpoint: http://fake-aws-dynamodb:4567
-      
+      dynamoDBEndpoint: http://fake-aws-dynamodb:4567
       # these must match the table names created on fake or real AWS services
       internalQueue: integration-brig-events-internal
       prekeyTable: integration-brig-prekeys
     externalUrls:
-      nginz: https://nginz-https.example.com # change this
+      nginz: https://api.example.com # change this
       teamSettings: https://teams.example.com # change this (on unset if team settings are not used)
       teamCreatorWelcome: https://teams.example.com/login # change this
       teamMemberWelcome: https://wire.example.com/download # change this
-    enableFederation: false # Enable to use federation
     optSettings:
       setFederationDomain: example.com # change this
       # Sync the domain with the 'host' variable in the sftd chart
-      # Comment the next line (by adding '#' before it) if conference calling is not used
-      setSftStaticUrl: "https://sftd.example.com:443"
-      # If set to true, creating new personal users or new teams on your instance from
-      # outside your backend installation is disabled
-      setRestrictUserCreation: false
-      # Uncomment and replace values below for adding federated backends
-      # setFederationStrategy: allowDynamic
-      # setFederationDomainConfigs:
-      #   - domain: remotebackend1.example.com
-      #     search_policy: full_search
+      # uncomment this section if conference calling is not used
+      setSftStaticUrl: "https://sftd.example.om:443"
     emailSMS:
       general:
         emailSender: email@example.com # change this
         smsSender: "insert-sms-sender-for-twilio" # change this if SMS support is desired
-        templateBranding: # change all of these, they are used in emails
-          brand: Wire
-          brandUrl: https://wire.com
-          brandLabel: wire.com
-          brandLabelUrl: https://wire.com
-          brandLogoUrl: https://wire.com/p/img/email/logo-email-black.png
-          brandService: Wire Service Provider
-          copyright: © WIRE SWISS GmbH
-          misuse: misuse@wire.com
-          legal: https://wire.com/legal/
-          forgot: https://wire.com/forgot/
-          support: https://support.wire.com/
-      user:
-        passwordResetUrl: https://account.example.com/reset/?key=${key}&code=${code}
-        activationUrl: https://account.example.com/verify/?key=${key}&code=${code}
-        smsActivationUrl: https://account.example.com/v/${code}
-        deletionUrl: https://account.example.com/d/?key=${key}&code=${code}
-        invitationUrl: https://account.example.com/i/${code}
     smtp:
-      host: smtp # change this if you want to use your own SMTP server
+      host: demo-smtp # change this if you want to use your own SMTP server
       port: 25        # change this
       connType: plain # change this. Possible values: plain|ssl|tls
+    turnStatic:
+      v1: []
+      v2:
+        # - "turn:<IP of coturn1>:3478"
+        # - "turn:<IP of coturn2>:3478"
+        # - "turn:<IP of coturn1>:3478?transport=tcp"
+        # - "turn:<IP of coturn2>:3478?transport=tcp"
 #    proxy:
 #      httpProxy: "http://proxy.example.com"
 #      httpsProxy: "https://proxy.example.com"
 #      noProxyList:
 #        - "local.example.com"
 #        - "10.23.0.0/16"
-  turnStatic:
-    v1: []
-    v2:
-      # - "turn:<IP of coturn1>:3478"
-      # - "turn:<IP of coturn2>:3478"
-      # - "turn:<IP of coturn1>:3478?transport=tcp"
-      # - "turn:<IP of coturn2>:3478?transport=tcp"
-  metrics:
-    serviceMonitor:
-      enabled: true
+
 
 proxy:
   replicaCount: 1
@@ -117,21 +78,13 @@ proxy:
 #      noProxyList:
 #        - "local.example.com"
 #        - "10.23.0.0/16"
-  metrics:
-    serviceMonitor:
-      enabled: true
+
 cannon:
   replicaCount: 1
 #  image:
 #    tag: some-tag (only override if you want a newer/different version than what is in the chart)
   # For demo mode only, we don't need to keep websocket connections open on chart upgrades
   drainTimeout: 10
-  config:
-    cassandra: 
-      host: cassandra-ephemeral
-  metrics:
-    serviceMonitor:
-      enabled: true
 
 cargohold:
   replicaCount: 1
@@ -141,7 +94,7 @@ cargohold:
     aws:
       # change if using real AWS
       region: "eu-west-1"
-      s3Bucket: assets
+      s3Bucket: dummy-bucket
       s3Endpoint: http://fake-aws-s3:9000
       s3DownloadEndpoint: https://assets.example.com
     settings:
@@ -152,9 +105,6 @@ cargohold:
 #      noProxyList:
 #        - "local.example.com"
 #        - "10.23.0.0/16"
-  metrics:
-    serviceMonitor:
-      enabled: true
 
 galley:
   replicaCount: 1
@@ -163,25 +113,11 @@ galley:
   config:
     cassandra:
       host: cassandra-ephemeral
-    rabbitmq:
-      host: rabbitmq # name of the rabbitmq service, either `rabbitmq-external` or `rabbitmq`
-    postgresql:
-      host: postgresql # DNS name without protocol
-      port: "5432"
-      user: wire-server
-      dbname: wire-server
-    enableFederation: false # Enable to use federation
+      replicaCount: 1
     settings:
-      # prefix URI used when inviting users to a conversation by link
-      conversationCodeURI: https://account.example.com/conversation-join/ # change this
       federationDomain: example.com # change this
-      # see #RefConfigOptions in `/docs/reference` (https://github.com/wireapp/wire-server/)
-      featureFlags:
-        sso: disabled-by-default
-        # NOTE: Change this to "disabled-by-default" for legalhold support
-        # legalhold: disabled-by-default
-        legalhold: disabled-permanently
-        teamSearchVisibility: disabled-by-default
+      # prefix URI used when inviting users to a conversation by link
+      conversationCodeURI: https://example.com/conversation-join/ # change this to poitn to your account pages.
     aws:
       region: "eu-west-1"
 #    proxy:
@@ -190,9 +126,6 @@ galley:
 #      noProxyList:
 #        - "local.example.com"
 #        - "10.23.0.0/16"
-  metrics:
-    serviceMonitor:
-      enabled: true
 
 gundeck:
   replicaCount: 1
@@ -201,6 +134,7 @@ gundeck:
   config:
     cassandra:
       host: cassandra-ephemeral
+      replicaCount: 1
     aws:
       # change if using real AWS
       account: "123456789012"
@@ -215,9 +149,6 @@ gundeck:
 #      noProxyList:
 #        - "local.example.com"
 #        - "10.23.0.0/16"
-  metrics:
-    serviceMonitor:
-      enabled: true
 
 nginz:
   replicaCount: 1
@@ -229,73 +160,20 @@ nginz:
 #      tag: some-tag (only override if you want a newer/different version than what is in the chart)
   nginx_conf:
     # using prod means mostly that some internal endpoints are not exposed
-    dns_resolver: kube-dns
     env: prod
     external_env_domain: example.com
-    deeplink:
-      endpoints:
-        backendURL: "https://nginz-https.example.com"
-        backendWSURL: "https://nginz-ssl.example.com"
-        teamsURL: "https://teams.example.com"
-        accountsURL: "https://account.example.com"
-        blackListURL: "https://clientblacklist.wire.com/prod"
-        websiteURL: "https://wire.com"
-      title: "My Custom Wire Backend"
-      # Optional -- Uncomment these if you want to direct all of your mobile users to use the same proxy.
-      #apiProxy:
-        #host: "socks5.proxy.com"
-        #port: 1080
-        #needsAuthentication: true
   # For demo mode only, we don't need to keep websocket connections open on upgrade:
   drainTimeout: 10
   terminationGracePeriodSeconds: 30
-  metrics:
-    serviceMonitor:
-      enabled: true
-spar:
+
+account-pages:
   replicaCount: 1
 #  image:
 #    tag: some-tag (only override if you want a newer/different version than what is in the chart)
+  envVars:
+    IS_SELF_HOSTED: "true"
   config:
-    cassandra:
-      host: cassandra-ephemeral
-    logLevel: Debug
-    domain: example.com
-    appUri: https://nginz-https.example.com
-    ssoUri: https://nginz-https.example.com/sso
-    maxttlAuthreq: 28800
-    maxttlAuthresp: 28800
-    # maxScimTokens: 16 # uncomment this if you want to use SCIM provisioning
-    contacts:
-    - type: ContactSupport
-      company: YourCompany
-      email: email:support@example.com
-#    proxy:
-#      httpProxy: "http://proxy.example.com"
-#      httpsProxy: "https://proxy.example.com"
-#      noProxyList:
-#        - "local.example.com"
-#        - "10.23.0.0/16"
-  metrics:
-    serviceMonitor:
-      enabled: true
-
-# Only needed when legalhold is enabled
-#legalhold:
-#  host: "legalhold.example.com"
-#  wireApiHost: "https://nginz-https.example.com"
-
-# Only needed when federation is enabled
-#federator:
-#  tls:
-#    useSharedFederatorSecret: true
-
-background-worker:
-  config:
-    cassandra:
-      host: cassandra-ephemeral
-    # Enable for federation
-    enableFederation: false
-  metrics:
-    serviceMonitor:
-      enabled: true
+    externalUrls:
+      backendRest: nginz-https.example.com
+      backendDomain: example.com
+      appHost: account.example.com
