@@ -65,16 +65,29 @@
 
   - name: Ensure required Python libraries are installed for Kubernetes operations
     block:
-    - name: Install kubernetes Python library via pip
+    - name: Create Python virtual environment for Ansible
+      command: python3 -m venv /opt/ansible-venv
+      args:
+        creates: /opt/ansible-venv/bin/python
+      become: yes
+
+    - name: Install kubernetes Python library in virtual environment
       pip:
         name: 
           - kubernetes>=18.0.0
           - pyyaml>=5.4.1
-        executable: /usr/bin/pip3
+        executable: /opt/ansible-venv/bin/pip
         state: present
-        extra_args: "--break-system-packages"
       become: yes
       register: pip_install_result
+
+    - name: Create symbolic link for ansible Python interpreter
+      file:
+        src: /opt/ansible-venv/bin/python
+        dest: /usr/local/bin/ansible-python
+        state: link
+        force: yes
+      become: yes
 
     - name: Check if Docker CE is installed with correct version
       shell: apt policy docker-ce | grep "Installed:" | awk '{print $2}'

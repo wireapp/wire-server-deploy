@@ -121,8 +121,7 @@ The deployment process follows these steps as defined in the main playbook:
   - kubernetes >= 18.0.0 (Kubernetes Python client)
   - pyyaml >= 5.4.1 (YAML parser)
 
-> **Note on PEP668 Override:** Python packages are installed using `--break-system-packages` flag to override [PEP668](https://peps.python.org/pep-0668/) constraints on Ubuntu 24.04. This is necessary because the deployment requires system-wide access to Ansible Python modules (kubernetes, pyyaml) for infrastructure provisioning. The playbook installs these packages system-wide rather than in virtual environments to ensure they are available in the Ansible execution context.
-
+> **Virtual Environment Approach:** Python packages are installed in an isolated virtual environment at `/opt/ansible-venv` instead of system-wide installation. This eliminates conflicts with system Python packages and respects [PEP668](https://peps.python.org/pep-0668/) constraints on Ubuntu 24.04. The playbook automatically detects the best Python interpreter available (system Python if kubernetes is installed, or venv otherwise) and configures Ansible accordingly. If neither has the kubernetes module, it fails with clear remediation instructions.
 
 ### 4. SSH Key Management (Automatic Dependency)
 
@@ -137,20 +136,20 @@ The deployment process follows these steps as defined in the main playbook:
 - All minikube configurable parameters are available in [host.yml](../ansible/inventory/demo/host.yml)
 - Can be skipped using `--skip-tags minikube`
 
-### 7. IPTables Rules
+### 6. IPTables Rules
 
 - Imports [iptables_rules.yml](../ansible/wiab-demo/iptables_rules.yml) to configure network rules on deploy_node
 - Configures network forwarding and postrouting rules to route traffic to k8s node
 - Runs automatically with `--tags minikube`
 - Can be skipped using `--skip-tags minikube`
 
-### 8. Wire Artifact Download
+### 7. Wire Artifact Download
 
 - Imports [download_artifact.yml](../ansible/wiab-demo/download_artifact.yml) to fetch the Wire components
 - Required to download all artifacts needed for further installation
 - Can be skipped using `--skip-tags download`
 
-### 9. Minikube Node Inventory Setup (Automatic Dependency)
+### 8. Minikube Node Inventory Setup (Automatic Dependency)
 
 - Adds Minikube node(s) to Ansible inventory dynamically
 - Extracts internal IP addresses from all Kubernetes nodes
@@ -159,19 +158,19 @@ The deployment process follows these steps as defined in the main playbook:
 - Creates temporary directory for SSH keys on localhost
 - Cannot be run independently or skipped manually - controlled entirely by dependent components
 
-### 10. Asset Host Setup
+### 9. Asset Host Setup
 
 - Imports [setup-offline-sources.yml](../ansible/setup-offline-sources.yml) to configure the asset host
 - Offers Wire deployment artifacts as HTTP service for installation
 - Can be skipped using `--skip-tags asset_host`
 
-### 11. Container Seeding
+### 10. Container Seeding
 
 - Imports [seed-offline-containerd.yml](../ansible/seed-offline-containerd.yml) to seed containers in K8s cluster nodes
 - Seeds Docker images shipped for Wire-related Helm charts in the Minikube K8s node
 - Can be skipped using `--skip-tags seed_containers`
 
-### 12. Wire Helm Chart Values Preparation
+### 11. Wire Helm Chart Values Preparation
 
 - Imports [wire_values.yml](../ansible/wiab-demo/wire_values.yml) to prepare Helm chart values
 - Updates configurations for:
@@ -183,7 +182,7 @@ The deployment process follows these steps as defined in the main playbook:
 - The playbook backs up existing values files before replacing them
 - Uses idempotency checks to avoid unnecessary updates
 
-### 13. Wire Secrets Creation
+### 12. Wire Secrets Creation
 
 - Imports [wire_secrets.yml](../ansible/wiab-demo/wire_secrets.yml) to create required secrets for Wire Helm charts
 - Generates:
@@ -195,7 +194,7 @@ The deployment process follows these steps as defined in the main playbook:
 - If existing secret files are present, the playbook backs them up before replacing them
 - Can be skipped using `--skip-tags wire_secrets`
 
-### 14. Helm Chart Installation
+### 13. Helm Chart Installation
 
 - Imports [helm_install.yml](../ansible/wiab-demo/helm_install.yml) to deploy Wire components using Helm
 - Deploys core charts: fake-aws, smtp, rabbitmq, databases, postgresql, reaper, wire-server, webapp, and more
@@ -203,13 +202,11 @@ The deployment process follows these steps as defined in the main playbook:
 - Reports deployment status and pod health
 - Can be skipped using `--skip-tags helm_install`
 
-### 15. Cert Manager Hairpin Networking Configuration
+**Cert Manager Hairpin Networking Configuration:**
+- If `use_cert_manager` is true, automatically configures hairpin (NAT) behavior on the host so workloads (pods) can reach external/public IPs that resolve back to the same node
+- Runs automatically at the end of helm chart installation when cert-manager is enabled
 
-- Imports [hairpin_networking.yml](../ansible/wiab-demo/hairpin_networking.yml)
-- Configures hairpin (NAT) behavior on the host so workloads (pods) can reach external/public IPs that resolve back to the same node
-- **Always runs when** `use_cert_manager` is true
-
-### 16. Temporary Cleanup
+### 14. Temporary Cleanup
 
 - Locates all temporary SSH key directories created during deployment
 - Lists and removes these directories
@@ -303,8 +300,7 @@ The following tags are available for controlling playbook execution:
 | `seed_containers` | Container seeding | Minikube node inventory setup | Yes (`--skip-tags seed_containers`) |
 | `wire_values` | Setup Wire Helm values | None | Yes (`--skip-tags wire_values`) |
 | `wire_secrets` | Create Wire secrets | None | Yes (`--skip-tags wire_secrets`) |
-| `helm_install` | Helm chart installation | None | Yes (`--skip-tags helm_install`) |
-| `cert_manager_networking` | Cert Manager hairpin networking | None | Yes (`use_cert_manager=true`) |
+| `helm_install` | Helm chart installation + cert-manager hairpin networking | None | Yes (`--skip-tags helm_install`) |
 | `cleanup` | Temporary file cleanup | None | Yes (`--skip-tags cleanup`) |
 
 
