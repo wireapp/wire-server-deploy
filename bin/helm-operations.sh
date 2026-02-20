@@ -190,7 +190,7 @@ process_values "prod" "secrets"
 configure_values
 
 # deploying with external datastores, useful for prod setup
-deploy_charts cassandra-external elasticsearch-external minio-external postgresql-external fake-aws smtp rabbitmq databases-ephemeral reaper wire-server webapp account-pages team-settings smallstep-accomp ingress-nginx-controller
+deploy_charts cassandra-external elasticsearch-external minio-external postgresql-external fake-aws smtp rabbitmq-external databases-ephemeral reaper wire-server webapp account-pages team-settings smallstep-accomp ingress-nginx-controller
 
 # deploying cert manager to issue certs, by default letsencrypt-http01 issuer is configured
 deploy_cert_manager
