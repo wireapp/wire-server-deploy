@@ -1,4 +1,6 @@
-replicaCount: 3
+# this value should be set to 3 when deployed in a full production DMZ manner
+# replicaCount = 1 is to support the simple wiab-staging solution
+replicaCount: 1
 # image:
 #   tag: some-tag # (only override if you want a newer/different version than what is in the chart)
 allowOrigin: https://webapp.example.com

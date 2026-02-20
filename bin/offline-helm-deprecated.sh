@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-
+# this script has been deprecated in favour to helm-operations.sh, which is closer to all value changes in helm values files.
 set -euo pipefail
 set -x
 
