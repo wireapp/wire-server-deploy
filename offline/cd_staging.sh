@@ -124,9 +124,6 @@ ssh $SSH_OPTS "demo@$adminhost" wget -q "https://s3-eu-west-1.amazonaws.com/publ
 
 ssh $SSH_OPTS "demo@$adminhost" tar xzf "$ARTIFACT.tgz"
 
-# override for ingress-nginx-controller values for hetzner environment $TF_DIR/setup_nodes.yml
-scp $SSH_OPTS "$VALUES_DIR/ingress-nginx-controller/hetzner-ci.example.yaml" "demo@$adminhost:./values/ingress-nginx-controller/prod-values.example.yaml"
-
 # Source and target files
 SOURCE="inventory.yml"
 cp "${CD_DIR}/../ansible/inventory/offline/staging.yml" "inventory-secondary.yml"
@@ -168,7 +165,6 @@ NETWORK_INTERFACE=$(yq eval '.datanode.vars.datanode_network_interface' "$SOURCE
 yq eval -i ".cassandra.vars.cassandra_network_interface = \"$NETWORK_INTERFACE\"" "$TARGET"
 yq eval -i ".elasticsearch.vars.elasticsearch_network_interface = \"$NETWORK_INTERFACE\"" "$TARGET"
 yq eval -i ".minio.vars.minio_network_interface = \"$NETWORK_INTERFACE\"" "$TARGET"
-yq eval -i ".postgresql.vars.postgresql_network_interface = \"$NETWORK_INTERFACE\"" "$TARGET"
 yq eval -i ".rmq-cluster.vars.rabbitmq_network_interface = \"$NETWORK_INTERFACE\"" "$TARGET"
 
 # re-writing sub-groups for rabbitmq_cluster_master, cassandra_seed, postgresql_rw and postgresql_ro

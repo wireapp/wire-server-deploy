@@ -49,6 +49,7 @@
 
 - hosts: "postgresql"
   become: false
+  tags: postgresql-external
   tasks:
   - name: Create external IP directory for postgresql
     file:

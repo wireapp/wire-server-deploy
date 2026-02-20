@@ -29,12 +29,12 @@ brig:
       host: elasticsearch-external
     rabbitmq:
       host: rabbitmq-external 
-      # For k8s-based RabbitMQ for k8s based rabbitmq. Use 'rabbitmq-external' for production external RabbitMQ VMs
-    postgresql:
-      host: postgresql-external-rw # DNS name without protocol
-      port: "5432"
-      user: wire-server
-      dbname: wire-server
+      # For k8s-based RabbitMQ (default). Use 'rabbitmq-external' for production external RabbitMQ VMs
+    #postgresql:
+    #  host: postgresql-external-rw # DNS name without protocol
+    #  port: "5432"
+    #  user: wire-server
+    #  dbname: wire-server
     useSES: false
     # Set to false if you want to hand out DynamoDB to store prekeys
     randomPrekeys: true
@@ -55,7 +55,6 @@ brig:
     # TODO: BUG! 5.23 brig charts wont deploy in CI unless federation is enabled!
     enableFederation: true # Enable to use federation
     optSettings:
-      setEnableMLS: false # Enable for MLS protocol use
       setFederationDomain: example.com # change this
       # Sync the domain with the 'host' variable in the sftd chart
       # Comment the next line (by adding '#' before it) if conference calling is not used
@@ -92,7 +91,7 @@ brig:
         deletionUrl: https://account.example.com/d/?key=${key}&code=${code}
         invitationUrl: https://account.example.com/i/${code}
     smtp:
-      host: smtp # change this if you want to use your own SMTP server
+      host: demo-smtp # change this if you want to use your own SMTP server
       port: 25        # change this
       connType: plain # change this. Possible values: plain|ssl|tls
 #    proxy:
@@ -172,11 +171,11 @@ galley:
       host: cassandra-external
     rabbitmq: # Default value for CI, for on-prem deployment, use rabbitmq-external
       host: rabbitmq-external
-    postgresql:
-      host: postgresql-external-rw # DNS name without protocol
-      port: "5432"
-      user: wire-server
-      dbname: wire-server
+    #postgresql:
+    #  host: postgresql-external-rw # DNS name without protocol
+    #  port: "5432"
+    #  user: wire-server
+    #  dbname: wire-server
     enableFederation: false # Enable to use federation
     settings:
       # prefix URI used when inviting users to a conversation by link
@@ -184,35 +183,6 @@ galley:
       federationDomain: example.com # change this
       # see #RefConfigOptions in `/docs/reference` (https://github.com/wireapp/wire-server/)
       featureFlags:
-        mls:
-          defaults:
-            status: enabled
-            config:
-              protocolToggleUsers: []
-              defaultProtocol: mls
-              allowedCipherSuites: [2]
-              defaultCipherSuite: 2
-              supportedProtocols: [proteus, mls]
-            lockStatus: unlocked
-        mlsMigration:
-          defaults:
-            status: enabled
-            config:
-              startTime: null
-              finalizeRegardlessAfter: null
-              usersThreshold: 100
-              clientsThreshold: 100
-            lockStatus: unlocked
-        sso: enabled-by-default
-        # channels: # Uncomment to enable channels by default for all newly created teams
-        #   defaults:
-        #     status: enabled
-        #     config:
-        #       allowed_to_create_channels: team-members
-        #       allowed_to_open_channels: team-members
-        #     lockStatus: unlocked
-        # NOTE: Change this to "disabled-by-default" for legalhold support
-        # legalhold: disabled-by-default
         legalhold: disabled-permanently
         teamSearchVisibility: disabled-by-default
     aws:
@@ -262,7 +232,7 @@ nginz:
 #      tag: some-tag (only override if you want a newer/different version than what is in the chart)
   nginx_conf:
     # using prod means mostly that some internal endpoints are not exposed
-    dns_resolver: coredns
+    # dns_resolver: coredns
     env: prod
     external_env_domain: example.com
     deeplink:
