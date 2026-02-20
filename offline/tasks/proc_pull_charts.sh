@@ -83,5 +83,5 @@ pull_charts() {
   echo "Pulling charts done."
 }
 
-wire_build="https://raw.githubusercontent.com/wireapp/wire-builds/22741cbaa6c8a6c1bd99055a12f9c605f2a67fe6/build.json"
+wire_build="https://raw.githubusercontent.com/wireapp/wire-builds/refs/heads/wiab-5.5/build.json"
 wire_build_chart_release "$wire_build" | pull_charts
