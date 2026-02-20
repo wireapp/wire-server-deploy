@@ -138,66 +138,36 @@ Since the inventory is ready, please continue with the following steps:
 - **[Deploying Kubernetes and stateful services](docs_ubuntu_22.04.md#deploying-kubernetes-and-stateful-services)**
   - Run `d ./bin/offline-cluster.sh` to deploy Kubernetes and stateful services (Cassandra, PostgreSQL, Elasticsearch, Minio, RabbitMQ). This script deploys all infrastructure needed for Wire backend operations.
 
-*Note: Ensure all Helm charts use the values and secrets files in their `values/` directories—do not run `helm install` without them, or it will fall back to defaults and the artifact-provided values won’t apply. Sample commands can be found at [offline-helm.sh](https://github.com/wireapp/wire-server-deploy/blob/master/bin/offline-helm.sh)*
+### Helm Operations to install wire services and supporting helm charts
 
-### Wire Components Deployment
+**Helm chart deployment (automated):** The script `bin/helm-operations.sh` will deploy the charts for you. It prepares `values.yaml`/`secrets.yaml`, customizes them for your domain/IPs, then runs Helm installs/upgrades in the correct order.
 
-- **Deploying Helm charts**
-  - **[Deploying stateless services and other dependencies](docs_ubuntu_22.04.md#deploying-stateless-dependencies)**
-    - Deploy cassandra-external, elasticsearch-external, minio-external, rabbitmq-external and databases-ephemeral helm charts to set up connections to external data services and stateless database dependencies.
-  
-  - **[Deploying Wire Server](docs_ubuntu_22.04.md#deploying-wire-server)**
-    - Install the core Wire backend platform with `d helm install wire-server ./charts/wire-server`. Update `values/wire-server/values.yaml` with your domain and inspect `values/wire-server/secrets.yaml` for required secrets.
-  
-  - **[Deploying webapp](docs_ubuntu_22.04.md#deploying-webapp)**
-    - Deploy the Wire web application frontend. Set your domain name and configure it for user access to the Wire interface.
-  
-  - **[Deploying team-settings](docs_ubuntu_22.04.md#deploying-team-settings)**
-    - Install team management and settings services for enterprise features and team administration.
-  
-  - **[Deploying account-pages](docs_ubuntu_22.04.md#deploying-account-pages)**
-    - Deploy account management pages for user profile, password reset, and account-related functionalities.
-  
-  - **[Deploying smallstep-accomp](docs_ubuntu_22.04.md#deploying-smallstep-accomp)**
-    - Install the smallstep ACME companion for certificate management integration.
+**User-provided inputs (set these before running):**
+- `TARGET_SYSTEM`: your domain (e.g., `wire.example.com` or `example.dev`).
+- `CERT_MASTER_EMAIL`: email used by cert-manager for ACME registration.
+- `HOST_IP`: public IP that matches your DNS A record (auto-detected if empty).
 
-### Network & Security
+**Charts deployed by the script:**
+- External datastores and helpers: `cassandra-external`, `elasticsearch-external`, `minio-external`, `rabbitmq-external`, `databases-ephemeral`, `reaper`, `fake-aws`, `demo-smtp`.
+- Wire services: `wire-server`, `webapp`, `account-pages`, `team-settings`, `smallstep-accomp`.
+- Ingress and certificates: `ingress-nginx-controller`, `cert-manager`, `nginx-ingress-services`.
+- Calling services: `sftd`, `coturn`.
 
-- **[Enabling emails for wire](smtp.md)**
-  - Configure SMTP for user onboarding via email. Deploy either a temporary SMTP service included in the bundle or integrate with your existing SMTP relay, and ensure proper network configuration for email delivery.
+**Values and secrets generation:**
+- Creates `values.yaml` and `secrets.yaml` from `prod-values.example.yaml` and `prod-secrets.example.yaml` for each chart under `values/`.
+- Backs up any existing `values.yaml`/`secrets.yaml` before replacing them.
 
-- **[Deploy ingress-nginx-controller](docs_ubuntu_22.04.md#deploy-ingress-nginx-controller)**
-  - Install nginx ingress controller as the entry point for HTTP/HTTPS traffic routing to Wire services. This component is required for all traffic forwarding methods.
+**Values configured by the script:**
+- Replaces `example.com` with `TARGET_SYSTEM` in Wire and webapp hostnames.
+- Enables cert-manager and sets `certmasterEmail` using `CERT_MASTER_EMAIL`.
+- Sets SFTD hosts and switches issuer to `letsencrypt-http01`.
+- Sets coturn listen/relay/external IPs using the calling node IP and `HOST_IP`.
 
-- **[Acquiring / Deploying SSL Certificates](docs_ubuntu_22.04.md#acquiring--deploying-ssl-certificates)**
-  - Configure SSL/TLS certificates either by bringing your own or using cert-manager with Let's Encrypt. SSL certificates are required by the nginx-ingress-services helm chart for secure HTTPS connections.
-
-  > **Note (cert-manager & hairpin NAT):** When cert-manager performs HTTP-01 self-checks inside the cluster, traffic can hairpin (Pod → Node → host public IP → DNAT → Node → Ingress). If your nftables rules DNAT in PREROUTING without a matching SNAT on virbr0→virbr0, return packets may bypass the host and break conntrack, causing HTTP-01 timeouts. Also, strict rp_filter can drop asymmetric return packets. If cert-manager is deployed, verify whether hairpin handling is needed:
-  >
-  > - Enable hairpin SNAT for DNATed traffic (forces return traffic through the host):
-  >   ```bash
-  >   sudo nft insert rule ip nat POSTROUTING position 0 \
-  >     iifname "virbr0" oifname "virbr0" \
-  >     ct status dnat counter masquerade
-  >   ```
-  > - Relax reverse-path filtering to loose mode to allow asymmetric flows:
-  >   ```bash
-  >   sudo sysctl -w net.ipv4.conf.all.rp_filter=2
-  >   sudo sysctl -w net.ipv4.conf.virbr0.rp_filter=2
-  >   ```
-  > These settings help conntrack reverse DNAT correctly and avoid drops during cert-manager’s HTTP-01 challenges in NAT/bridge (virbr0) environments.
-
-### Calling Services
-
-- **[Installing SFTD](docs_ubuntu_22.04.md#installing-sftd)**
-  - Deploy the Selective Forwarding Unit (SFT) calling server for Wire's voice and video calling capabilities. Optionally enable cooperation with TURN servers and configure appropriate node annotations for external IPs.
-
-- **[Installing Coturn](coturn.md)**
-  - Deploy TURN/STUN servers for WebRTC connectivity, enabling peer-to-peer communication for calling services and ensuring connectivity through firewalls and NATs.
+*Note: The `bin/helm-operations.sh` script above deploys these charts; you do not need to run the Helm commands manually unless you want to customize or debug.*
 
 ## Network Traffic Configuration
 
-### Bring traffic from Physical machine to Wire services in k8s cluster
+### Bring traffic from the physical machine to Wire services in the k8s cluster
 
 If you used the Ansible playbook earlier, nftables firewall rules are pre-configured to forward traffic. If you set up VMs manually with your own hypervisor, you must manually configure network traffic flow using nftables.
 

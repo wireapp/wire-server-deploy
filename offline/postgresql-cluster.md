@@ -890,7 +890,7 @@ Keep the Wire server password in sync with the Kubernetes secret. Choose one of 
 - Orchestrated by the pipeline ([bin/offline-deploy.sh](../bin/offline-deploy.sh)):
   1. `postgresql-wire-setup.yml` ensures the K8s secret `wire-postgresql-external-secret` exists.
   2. [`bin/sync-k8s-secret-to-wire-secrets.sh`](../bin/sync-k8s-secret-to-wire-secrets.sh) writes the password into `values/wire-server/secrets.yaml`.
-  3. `offline-helm.sh` deploys using the updated values file.
+  3. `bin/helm-operations.sh` deploys using the updated values file.
 
 #### Manual sync
 Use the generic sync script to copy the password from the K8s secret into your values file:
