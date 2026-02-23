@@ -29,6 +29,9 @@ import sys
 from pathlib import Path
 
 
+CASSANDRA_DATA_DIR = "/mnt/cassandra/data"
+
+
 def now_ts():
     return dt.datetime.utcnow().replace(microsecond=0).isoformat() + "Z"
 
@@ -140,7 +143,7 @@ def clear_snapshot(host, snapshot_name, verbose=False):
 
 def get_snapshot_size(host, snapshot_name, verbose=False):
     """Get total size of snapshot files."""
-    cmd = f"du -sh /var/lib/cassandra/data/*/snapshots/{snapshot_name} 2>/dev/null | tail -1"
+    cmd = f"du -sh {CASSANDRA_DATA_DIR}/*/snapshots/{snapshot_name} 2>/dev/null | tail -1"
     
     rc, out, err = run_ssh(host, cmd)
     
@@ -152,19 +155,25 @@ def get_snapshot_size(host, snapshot_name, verbose=False):
 
 def restore_snapshot(host, keyspace, snapshot_name, verbose=False):
     """Restore a Cassandra keyspace from snapshot."""
-    cmd = f"""
-        SNAPSHOT_DIR=$(find /var/lib/cassandra/data/{keyspace}/ -path "*/snapshots/{snapshot_name}" -type d 2>/dev/null | head -1)
-        if [ -z "$SNAPSHOT_DIR" ]; then
-            echo "Snapshot not found: {snapshot_name}"
-            exit 1
-        fi
-        systemctl stop cassandra 2>/dev/null || true
-        rm -rf /var/lib/cassandra/data/{keyspace}/*
-        cp -a $SNAPSHOT_DIR/* /var/lib/cassandra/data/{keyspace}/
-        chown -R cassandra:cassandra /var/lib/cassandra/data/{keyspace}/
-        systemctl start cassandra 2>/dev/null || true
-        echo "Restore completed for {keyspace}"
-    """
+    script = f"""sudo bash -c 'SNAPSHOT_DIR=$(find {CASSANDRA_DATA_DIR}/{keyspace}/ -path "*/snapshots/{snapshot_name}" -type d 2>/dev/null | head -1); \
+if [ -z "$SNAPSHOT_DIR" ]; then echo "Snapshot not found: {snapshot_name}"; exit 1; fi; \
+systemctl stop cassandra 2>/dev/null || true; \
+rm -rf {CASSANDRA_DATA_DIR}/{keyspace}/*; \
+cp -a $SNAPSHOT_DIR/* {CASSANDRA_DATA_DIR}/{keyspace}/; \
+chown -R cassandra:cassandra {CASSANDRA_DATA_DIR}/{keyspace}/; \
+systemctl start cassandra 2>/dev/null || true; \
+echo "Restore completed for {keyspace}\"'"""
+    
+    if verbose:
+        print(f"[{host}] Restoring snapshot '{snapshot_name}' for keyspace '{keyspace}'...")
+    
+    rc, out, err = run_ssh(host, script)
+    
+    if rc != 0:
+        print(f"Error restoring snapshot on {host}: {err}")
+        return False, err
+    
+    return True, out
     
     if verbose:
         print(f"[{host}] Restoring snapshot '{snapshot_name}' for keyspace '{keyspace}'...")
@@ -180,7 +189,7 @@ def restore_snapshot(host, keyspace, snapshot_name, verbose=False):
 
 def list_keyspaces(host, verbose=False):
     """List available keyspaces on a Cassandra node."""
-    cmd = "cqlsh -e 'SELECT keyspace_name FROM system_schema.keyspaces;' localhost"
+    cmd = "nodetool -h localhost cfstats 2>&1 | grep -E '^Keyspace :' | awk '{print $NF}' | sort"
     
     rc, out, err = run_ssh(host, cmd)
     
