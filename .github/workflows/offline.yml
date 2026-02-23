@@ -2,13 +2,14 @@
 #
 # This workflow builds offline deployment artifacts for different profiles:
 #   - default: Production deployment (includes external charts, ansible, terraform)
-#   - demo: Demo/WIAB deployment (includes databases-ephemeral)
+#   - build-wiab-staging: Wire-in-a-box (wiab-stag) a production like deployment (includes external charts, ansible, terraform)
+#   - wiab-dev: Wire-in-a-box dev deployment (includes databases-ephemeral)
 #   - min: Minimal deployment
 #
 # Build Optimization via PR Labels:
 #   - No label: No builds run (must add label to trigger builds)
 #   - 'build-default': Builds only default profile
-#   - 'build-demo': Builds only demo profile
+#   - 'build-dev': Builds only demo profile
 #   - 'build-wiab-staging' - Builds only wiab-staging profile
 #   - 'build-min': Builds only min profile
 #   - 'build-all': Explicitly builds all profiles (useful for workflow changes)
@@ -33,7 +34,7 @@ jobs:
   build-default:
     name: Build default profile
     if: |
-      github.event_name == 'push' ||
+      (github.event_name == 'push' && github.ref == 'refs/heads/master') ||
       contains(github.event.pull_request.labels.*.name, 'build-all') ||
       contains(github.event.pull_request.labels.*.name, 'build-default') ||
       contains(github.event.pull_request.labels.*.name, 'build-wiab-staging')
@@ -78,7 +79,7 @@ jobs:
     name: Verify default profile
     needs: build-default
     if: |
-      github.event_name == 'push' ||
+      (github.event_name == 'push' && github.ref == 'refs/heads/master') ||
       contains(github.event.pull_request.labels.*.name, 'build-all') ||
       contains(github.event.pull_request.labels.*.name, 'build-default')
     runs-on:
@@ -118,7 +119,7 @@ jobs:
     name: Verify wiab staging profile
     needs: build-default
     if: |
-      github.event_name == 'push' ||
+      (github.event_name == 'push' && github.ref == 'refs/heads/master') ||
       contains(github.event.pull_request.labels.*.name, 'build-all') ||
       contains(github.event.pull_request.labels.*.name, 'build-wiab-staging')
     runs-on:
@@ -179,12 +180,12 @@ jobs:
           DOCKER_LOGIN: '${{ secrets.DOCKER_LOGIN }}'
 
   # Build demo profile
-  build-demo:
+  build-dev:
     name: Build demo profile
     if: |
-      github.event_name == 'push' ||
+      (github.event_name == 'push' && github.ref == 'refs/heads/master') ||
       contains(github.event.pull_request.labels.*.name, 'build-all') ||
-      contains(github.event.pull_request.labels.*.name, 'build-demo')
+      contains(github.event.pull_request.labels.*.name, 'build-dev')
     runs-on:
       group: wire-server-deploy
     steps:
@@ -243,7 +244,7 @@ jobs:
   build-min:
     name: Build min profile
     if: |
-      github.event_name == 'push' ||
+      (github.event_name == 'push' && github.ref == 'refs/heads/master') ||
       contains(github.event.pull_request.labels.*.name, 'build-all') ||
       contains(github.event.pull_request.labels.*.name, 'build-min')
     runs-on:

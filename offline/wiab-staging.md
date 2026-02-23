@@ -128,7 +128,7 @@ Since the inventory is ready, please continue with the following steps:
 ### Environment Setup
 
 - **[Making tooling available in your environment](docs_ubuntu_22.04.md#making-tooling-available-in-your-environment)**
-  - Source the `bin/offline-env.sh` shell script to set up a `d` alias that runs commands inside a Docker container with all necessary tools for offline deployment.
+  - Source the `bin/offline-env.sh` shell script by running `source bin/offline-env.sh` to set up a `d` alias that runs commands inside a Docker container with all necessary tools for offline deployment.
 
 - **[Generating secrets](docs_ubuntu_22.04.md#generating-secrets)**
   - Run `./bin/offline-secrets.sh` to generate fresh secrets for Minio and coturn services. This creates two secret files: `ansible/inventory/group_vars/all/secrets.yaml` and `values/wire-server/secrets.yaml`.
@@ -146,6 +146,14 @@ Since the inventory is ready, please continue with the following steps:
 - `TARGET_SYSTEM`: your domain (e.g., `wire.example.com` or `example.dev`).
 - `CERT_MASTER_EMAIL`: email used by cert-manager for ACME registration.
 - `HOST_IP`: public IP that matches your DNS A record (auto-detected if empty).
+
+**TLS / certificate behavior (cert-manager vs. Bring Your Own):**
+- By default, `bin/helm-operations.sh` runs `deploy_cert_manager`, which installs cert-manager and configures a Let’s Encrypt (HTTP-01) issuer for the ingress charts.
+- If you **do not** want Let’s Encrypt / cert-manager (for example, you are using **[Bring Your Own certificates](docs_ubuntu_22.04.md#acquiring--deploying-ssl-certificates)** or you cannot satisfy HTTP-01 requirements), disable this step by commenting out the `deploy_cert_manager` call inside `bin/helm-operations.sh`.
+  - After disabling cert-manager, ensure your ingress is configured with your own TLS secret(s) as described in the TLS documentation below.
+
+**To run the automated helm chart deployment**:
+`d ./bin/helm-operations.sh`
 
 **Charts deployed by the script:**
 - External datastores and helpers: `cassandra-external`, `elasticsearch-external`, `minio-external`, `rabbitmq-external`, `databases-ephemeral`, `reaper`, `fake-aws`, `demo-smtp`.
