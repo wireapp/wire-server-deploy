@@ -136,9 +136,9 @@ cannon:
   drainTimeout: 10
   config:
     rabbitmq:
-      # Default: rabbitmq (for CI/demo environments with databases-ephemeral chart)
-      # Production: Change to rabbitmq-external when using external RabbitMQ deployment
-      host: rabbitmq
+      # Default: rabbitmq-external (for production external RabbitMQ VMs)
+      # CI/Demo: Change to rabbitmq when using rabbitmq chart from databases-ephemeral
+      host: rabbitmq-external
     cassandra:
       host: cassandra-external
   metrics:
@@ -175,9 +175,9 @@ galley:
     cassandra:
       host: cassandra-external
     rabbitmq:
-      # Default: rabbitmq (for CI/demo environments with databases-ephemeral chart)
-      # Production: Change to rabbitmq-external when using external RabbitMQ deployment
-      host: rabbitmq
+      # Default: rabbitmq-external (for production external RabbitMQ VMs)
+      # CI/Demo: Change to rabbitmq when using rabbitmq chart from databases-ephemeral
+      host: rabbitmq-external
     postgresql:
       host: postgresql-external-rw # DNS name without protocol
       port: "5432"
@@ -244,9 +244,9 @@ gundeck:
     redis:
       host: databases-ephemeral-redis-ephemeral # Updated hostname for redis-ephemeral chart
     rabbitmq:
-      # Default: rabbitmq (for CI/demo environments with databases-ephemeral chart)
-      # Production: Change to rabbitmq-external when using external RabbitMQ deployment
-      host: rabbitmq
+      # Default: rabbitmq-external (for production external RabbitMQ VMs)
+      # CI/Demo: Change to rabbitmq when using rabbitmq chart from databases-ephemeral
+      host: rabbitmq-external
     cassandra:
       host: cassandra-external
     aws:
@@ -352,9 +352,9 @@ background-worker:
     federationDomain: example.com
     # logLevel: Debug
     rabbitmq:
-      # Default: rabbitmq (for CI/demo environments with databases-ephemeral chart)
-      # Production: Change to rabbitmq-external when using external RabbitMQ deployment
-      host: rabbitmq
+      # Default: rabbitmq-external (for production external RabbitMQ VMs)
+      # CI/Demo: Change to rabbitmq when using rabbitmq chart from databases-ephemeral
+      host: rabbitmq-external
     cassandra:
       host: cassandra-external
     cassandraGalley:
