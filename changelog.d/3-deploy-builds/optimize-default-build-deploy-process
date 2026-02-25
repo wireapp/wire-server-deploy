@@ -1,5 +1,0 @@
-Changed: Optimize Wire offline deployment pipeline with parallel job execution and S3 direct downloads
-Added: Retry logic with progressive server type fallbacks for Hetzner Cloud resource availability issues
-Changed: Implement parallel terraform operations (15 parallelism) and fast SSH connection multiplexing
-Changed: Move ansible execution directly to adminhost for faster private network connectivity
-Changed: Reduce CI deployment time from 60+ minutes to ~30-40 minutes through parallel builds and optimized deployment process

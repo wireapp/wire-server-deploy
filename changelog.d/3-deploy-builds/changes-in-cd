@@ -1,3 +1,0 @@
-Removed: github artifact dependency from offline.yml and simplified default-build process 
-Fixed: cd.sh for manual values patch for ingress-nginx-controller and cleaning s3 download logic 
-Fixed: Hetzner terraform to create a demo user and changes for soon to be deprecated VM types

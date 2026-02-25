@@ -1,3 +1,0 @@
-Changed: pre_clean_values_0.sh to clean unnecessary files
-Removed: patch-chart-images.sh as it is not required anymore
-Fixed: default|demo|min-build definitions to have more precise values and chart definitions

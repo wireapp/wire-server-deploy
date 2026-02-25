@@ -1,1 +1,0 @@
-Changed: upgrade Cassandra from 3.11.16 to 3.11.19 and fix upgrade playbooks for Ansible 2.16+ compatibility and offline environments
