@@ -6,3 +6,4 @@ Added: terraform resources for wiab-staging
 Added: cd_staging script to verify the default build bundle
 Changed: changed the flow of offline.yml - introduced wiab-staging build and split bundle processing with default-build
 Added: wiab-staging documentation to wire-server-deploy and fix coturn port ranges
+Fixed: remove reference of hetzner-ci.example.yaml as it has been renamed to prod-values.example.yaml
