@@ -12,6 +12,65 @@
 
 -->
 
+# Relase 5.23 
+
+## release-notes
+
+* Changed: wire-server updated to version 5.23.0 for prod, wiab-staging and wiab-dev/demo
+* Changed: cargohold service will use the scoped `cargohold` user with least privilege, with access limited to its `assets` bucket only (#814)
+* Changed: Enable Ansible-based RabbitMQ deployment and fix RabbitMQ host configuration for wire-server (#861)
+
+### Data stores (PostgreSQL, Cassandra)
+
+* Added: enable support for PostgreSQL deployment via Ansible (#797)
+* Added: PostgreSQL high availability cluster with repmgr (#807)
+* Changed: PostgreSQL password management is now centralized in Kubernetes Secrets (repmgr and wire-server credentials), eliminating hardcoded passwords from inventory (#819)
+* Changed: update Cassandra from 3.11.16 to 3.11.19 (#831)
+
+### Features / configuration
+* Added: config for MLS deployment into example files (#824)
+
+## wire-builds
+
+* Changed: pre_clean_values_0.sh to clean unnecessary files
+  * Removed: `patch-chart-images.sh` as it is not required anymore
+  * Fixed: default|demo|min-build definitions to have more precise values and chart definitions (#825)
+* Changed: Standardized all scripts to use `yq-go` (v4+) for YAML processing, replacing deprecated `python-yq`. Updated syntax in offline deployment scripts (`cd.sh`, `cd-with-retry.sh`), build scripts (`build_adminhost_containers.sh`), demo deployment (`offline_deploy_k8s.sh`), secret sync utilities, and chart image extraction to ensure reliable YAML manipulation and fix CI build errors (#820)
+
+## deploy-builds
+
+### WIAB demo / staging (high‑level)
+
+* Fixed: coturn and PostgreSQL secrets for demo-wiab
+  * Added: `kube-prometheus-stack` values and enabled monitoring support from wire-server for demo-wiab
+  * Added: values for wire-utility in demo-wiab (#826)
+* Added: enable `cd-demo.sh` to verify demo-wiab builds (#826)
+* Changed: add Ansible playbook for wiab-staging VM provisioning
+  * Added: Terraform resources for wiab-staging
+  * Added: `cd_staging` script to verify the default build bundle
+  * Changed: restructured `offline.yml` flow – introduced wiab-staging build and split bundle processing with default-build (#861)
+
+### Offline / CI / deployment pipeline
+
+* Added: `bin/helm-operations.sh` to replace `offline-helm` and more closely follow production instructions
+  * Changed: `bin/offline-secrets.sh` to support `helm-operations.sh` and add support for coturn secret (#858)
+* Changed: Optimize Wire offline deployment pipeline with parallel job execution and S3 direct downloads
+  * Added: retry logic with progressive server type fallbacks for Hetzner Cloud resource availability issues (#815)
+* Changed: offline workflow to require explicit labels for PR builds (`build-default`, `build-demo`, `build-min`, `build-all`); PRs without labels no longer trigger builds (#836)
+* Changed: remove hardcoded PostgreSQL passwords from `demo-secrets.example.yaml` and automatically inject passwords from `databases-ephemeral` chart during deployment (#817)
+
+## docs
+
+* Added: documentation on how to set up DKIM for SMTP in wire-server (#793)
+* Added: enable cert-manager Helm chart deployment with example values files (#805)
+* Added: wiab-staging documentation to wire-server-deploy and fixed coturn port ranges (#861)
+* Added: Enable changelog management in wire-server-deploy (#764)
+
+## bug-fixes
+* Fixed: Optimize the `offline-env` load and add pipe/redirect functionality with `d` (#812)
+* Fixed:  add localhost authentication for `postgres_exporter`, upgrade to v0.18.1, and enable `stat_checkpointer` collector for PostgreSQL 17 checkpoint metrics (#832)
+* Fixed: changelog-verify.yml workflow to allow Zebot pushes to master (#806)
+* Changed: offline-vm-setup.sh script now uses an Ubuntu cloud image and local seed ISO (#861) 
 
 # 2021-08-27
 

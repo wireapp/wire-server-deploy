@@ -1,1 +1,0 @@
-Added: backup step before cleanup in PostgreSQL deployment pipeline; removed backup duplication from cleanup playbook

@@ -1,3 +1,0 @@
-Fixed: coturn and postgresql secrets for demo-wiab
-Added: kube-prometheus-stack values and enabled monitoring support from wire-server for demo-wiab
-Added: add values for wire-utility in demo-wiab

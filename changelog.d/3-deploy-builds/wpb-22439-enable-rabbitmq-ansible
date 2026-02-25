@@ -1,1 +1,0 @@
-Changed: Enable ansible based rabbitmq deployment and fix rabbitmq host accordingly for wire-server

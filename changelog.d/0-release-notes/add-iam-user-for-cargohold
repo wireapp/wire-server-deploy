@@ -1,1 +1,0 @@
-Changed: cargohold service will use the scoped `cargohold user` with least privilege, so that it has the necessary access to its bucket `assets` only

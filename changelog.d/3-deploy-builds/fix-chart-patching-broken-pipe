@@ -1,1 +1,0 @@
-Fixed: Chart patching script broken pipe error caused by set -euo pipefail interaction with non-zero return codes

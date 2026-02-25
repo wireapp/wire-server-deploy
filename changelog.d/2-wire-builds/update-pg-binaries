@@ -1,1 +1,0 @@
-Changed: update PostgreSQL to 17.7-3, postgresql-common to 287, libpq5 to 18.1-1, repmgr to debpgdg-3, remove postgresql-common-dev (not needed for runtime), and add postgres_exporter v0.18.1
