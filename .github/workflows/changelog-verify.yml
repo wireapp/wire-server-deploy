@@ -25,15 +25,21 @@ jobs:
           if [[ "${{ github.event_name }}" == "pull_request" ]]; then
             BASE_SHA=${{ github.event.pull_request.base.sha }}
             HEAD_SHA=${{ github.event.pull_request.head.sha }}
+
+          # Use 3-dot syntax so we only see changes introduced by this PR
+            CHANGED_FILES=$(git diff --name-only "$BASE_SHA...$HEAD_SHA" -- changelog.d/ | grep -vE "^$" || true)
           else
             # For push events, compare with the previous commit
             HEAD_SHA=${{ github.sha }}
             BASE_SHA=$(git rev-parse HEAD~1)
+            CHANGED_FILES=$(git diff --name-only "$BASE_SHA" "$HEAD_SHA" -- changelog.d/ | grep -vE "^$" || true)
           fi
           
           echo "BASE_SHA: $BASE_SHA"
           echo "HEAD_SHA: $HEAD_SHA"
-          
+          echo "CHANGED_FILES:"
+          echo "$CHANGED_FILES"
+
           # Check if commit is by zebot with wire-build update message
           COMMIT_AUTHOR=$(git log --format="%an" -1 $HEAD_SHA)
           COMMIT_MESSAGE=$(git log --format="%s" -1 $HEAD_SHA)
@@ -44,11 +50,10 @@ jobs:
             echo "Message: $COMMIT_MESSAGE"
             exit 0
           fi
-          
-          CHANGED_FILES=$(git diff --name-only $BASE_SHA $HEAD_SHA -- changelog.d/ | grep -vE "^$")
 
           if [ -z "$CHANGED_FILES" ]; then
-            echo "No files changed in changelog.d/"
+            echo "No files changed in changelog.d/ for this ${GITHUB_EVENT_NAME:-event}."
+            echo "Every PR must add or modify at least one changelog.d/ entry."
             exit 1
           fi
 
