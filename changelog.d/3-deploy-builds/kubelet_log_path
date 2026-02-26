@@ -1,0 +1,1 @@
+Fixed: Update kubernetes_logging.yml to use the standard kubelet log path instead of Docker-specific paths.
