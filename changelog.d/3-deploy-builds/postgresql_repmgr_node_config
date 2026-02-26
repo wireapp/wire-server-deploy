@@ -1,1 +1,0 @@
-Changed: remove repmgr_node_config from group_vars and put with node inventory

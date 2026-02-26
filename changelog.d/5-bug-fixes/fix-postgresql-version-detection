@@ -1,1 +1,0 @@
-Fixed: postgresql package version detection for postgresql-common packages preventing false upgrade warnings
