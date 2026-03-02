@@ -1,1 +1,0 @@
-Fixed: add localhost authentication for postgres_exporter to access postgres database, upgrade to v0.18.1, and enable stat_checkpointer collector for PostgreSQL 17 checkpoint metrics

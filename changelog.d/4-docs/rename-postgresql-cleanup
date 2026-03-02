@@ -1,1 +1,0 @@
-Changed: renamed clean_existing_setup.yml to postgresql-cleanup.yml and updated documentation to clarify cleanup only resets HA cluster configuration without deleting PostgreSQL data
