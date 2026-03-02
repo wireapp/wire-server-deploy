@@ -71,6 +71,7 @@
 * Fixed:  add localhost authentication for `postgres_exporter`, upgrade to v0.18.1, and enable `stat_checkpointer` collector for PostgreSQL 17 checkpoint metrics (#832)
 * Fixed: changelog-verify.yml workflow to allow Zebot pushes to master (#806)
 * Changed: offline-vm-setup.sh script now uses an Ubuntu cloud image and local seed ISO (#861) 
+* Fixed: Update kubernetes_logging.yml to use the standard kubelet log path instead of Docker-specific paths. (#864)
 
 # 2021-08-27
 
