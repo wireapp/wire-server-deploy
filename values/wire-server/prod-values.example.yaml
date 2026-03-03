@@ -28,8 +28,9 @@ brig:
     elasticsearch:
       host: elasticsearch-external
     rabbitmq:
-      host: rabbitmq-external 
-      # For k8s-based RabbitMQ for k8s based rabbitmq. Use 'rabbitmq-external' for production external RabbitMQ VMs
+      # Default: rabbitmq-external (for production external RabbitMQ VMs)
+      # CI/Demo: Change to rabbitmq when using rabbitmq chart from databases-ephemeral
+      host: rabbitmq-external
     postgresql:
       host: postgresql-external-rw # DNS name without protocol
       port: "5432"
@@ -52,11 +53,10 @@ brig:
       teamSettings: https://teams.example.com # change this (or unset if team settings are not used)
       teamCreatorWelcome: https://teams.example.com/login # change this
       teamMemberWelcome: https://wire.example.com/download # change this
-    # TODO: BUG! 5.23 brig charts wont deploy in CI unless federation is enabled!
-    enableFederation: true # Enable to use federation
+    enableFederation: false # Keep false unless federation is explicitly configured
     optSettings:
       setEnableMLS: false # Enable for MLS protocol use
-      setFederationDomain: example.com # change this
+      setFederationDomain: example.com # change this per host deployment
       # Sync the domain with the 'host' variable in the sftd chart
       # Comment the next line (by adding '#' before it) if conference calling is not used
       setSftStaticUrl: "https://sftd.example.com:443"
@@ -92,7 +92,9 @@ brig:
         deletionUrl: https://account.example.com/d/?key=${key}&code=${code}
         invitationUrl: https://account.example.com/i/${code}
     smtp:
-      host: smtp # change this if you want to use your own SMTP server
+      # Default: smtp (for CI/demo environments with demo-smtp chart)
+      # Production: Change to your actual SMTP server hostname
+      host: smtp
       port: 25        # change this
       connType: plain # change this. Possible values: plain|ssl|tls
 #    proxy:
@@ -133,7 +135,9 @@ cannon:
   # For demo mode only, we don't need to keep websocket connections open on chart upgrades
   drainTimeout: 10
   config:
-    rabbitmq: # Default value for CI, for on-prem deployment, use rabbitmq-external
+    rabbitmq:
+      # Default: rabbitmq-external (for production external RabbitMQ VMs)
+      # CI/Demo: Change to rabbitmq when using rabbitmq chart from databases-ephemeral
       host: rabbitmq-external
     cassandra:
       host: cassandra-external
@@ -170,13 +174,19 @@ galley:
   config:
     cassandra:
       host: cassandra-external
-    rabbitmq: # Default value for CI, for on-prem deployment, use rabbitmq-external
+    rabbitmq:
+      # Default: rabbitmq-external (for production external RabbitMQ VMs)
+      # CI/Demo: Change to rabbitmq when using rabbitmq chart from databases-ephemeral
       host: rabbitmq-external
     postgresql:
       host: postgresql-external-rw # DNS name without protocol
       port: "5432"
       user: wire-server
       dbname: wire-server
+    # Explicitly set postgresMigration to cassandra for fresh deployments.
+    # This controls whether galley reads conversations from Cassandra or PostgreSQL.
+    postgresMigration:
+      conversation: cassandra
     enableFederation: false # Enable to use federation
     settings:
       # prefix URI used when inviting users to a conversation by link
@@ -184,9 +194,9 @@ galley:
       federationDomain: example.com # change this
       # see #RefConfigOptions in `/docs/reference` (https://github.com/wireapp/wire-server/)
       featureFlags:
-        mls:
+        mls: # Keep disabled unless MLS is explicitly configured
           defaults:
-            status: enabled
+            status: disabled
             config:
               protocolToggleUsers: []
               defaultProtocol: mls
@@ -194,9 +204,9 @@ galley:
               defaultCipherSuite: 2
               supportedProtocols: [proteus, mls]
             lockStatus: unlocked
-        mlsMigration:
+        mlsMigration: # Keep disabled unless MLS migration is explicitly configured
           defaults:
-            status: enabled
+            status: disabled
             config:
               startTime: null
               finalizeRegardlessAfter: null
@@ -231,7 +241,11 @@ gundeck:
 #  image:
 #    tag: some-tag (only override if you want a newer/different version than what is in the chart)
   config:
-    rabbitmq: # Default value for CI, for on-prem deployment, use rabbitmq-external
+    redis:
+      host: databases-ephemeral-redis-ephemeral # Updated hostname for redis-ephemeral chart
+    rabbitmq:
+      # Default: rabbitmq-external (for production external RabbitMQ VMs)
+      # CI/Demo: Change to rabbitmq when using rabbitmq chart from databases-ephemeral
       host: rabbitmq-external
     cassandra:
       host: cassandra-external
@@ -337,7 +351,9 @@ background-worker:
   config:
     federationDomain: example.com
     # logLevel: Debug
-    rabbitmq: # Default value for CI, for on-prem deployment, use rabbitmq-external
+    rabbitmq:
+      # Default: rabbitmq-external (for production external RabbitMQ VMs)
+      # CI/Demo: Change to rabbitmq when using rabbitmq chart from databases-ephemeral
       host: rabbitmq-external
     cassandra:
       host: cassandra-external
@@ -345,6 +361,18 @@ background-worker:
       host: cassandra-external
     cassandraBrig:
       host: cassandra-external
+    postgresql:
+      host: postgresql-external-rw # DNS name without protocol
+      port: "5432"
+      user: wire-server
+      dbname: wire-server
+    # IMPORTANT: At Chart 5.25.0, the background-worker Helm chart incorrectly defaults
+    # postgresMigration.conversation to "postgresql" instead of "cassandra".
+    # This MUST be explicitly set to "cassandra" unless you have already migrated
+    # conversations to PostgreSQL. Without this override, User Group to Channel sync
+    # jobs will silently skip member synchronization.
+    postgresMigration:
+      conversation: cassandra
     # Enable for federation
     enableFederation: false
   metrics:
