@@ -7,7 +7,7 @@ echo "------------------------------------"
 namespaces="cert-manager-ns default"
 echo "Namespaces = $namespaces"
 for ns in $namespaces; do
-    pods=$(kubectl get pods -n $ns -o=jsonpath='{.items[*].metadata.name}')
+    pods=$(kubectl get pods -n "$ns" -o=jsonpath='{.items[*].metadata.name}')
     echo "Pods in namespace: $ns = $pods"
     for pod in $pods; do
         echo "Logs for pod: $pod"
