@@ -3,6 +3,10 @@ host: sftd.example.com
 replicaCount: 1
 joinCall:
   replicaCount: 1
+  image:
+    repository: docker.io/bitnamilegacy/nginx
+    pullPolicy: IfNotPresent
+    tag: "1.27.3-debian-12-r5"
 tls:
   issuerRef:
     name: letsencrypt-http01

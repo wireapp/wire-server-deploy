@@ -1,0 +1,8 @@
+Fixed: debug_logs.sh to log only the pods for default and cert-manager-ns namespace and limit log lines
+Added: enabled debug_logs.sh on helm install failures (helm_operations.sh) with a flag DUMP_LOGS_ON_FAIL
+Added: env vars to helm_operations.sh to improve UX while configuring variables 
+Fixed: sync_pg_secrets operation in helm_operations.sh and clean the deploy_charts logic 
+Added: wait and timeout on cert-manager and calling_services helm chart operations
+Fixed: offline-cluster.sh to run helm-operations.sh using new env vars and with default DUMP_LOGS_ON_FAIL=TRUE 
+Fixed: documentation for wiab-staging.md based on a user feedback
+Fixed: sftd helm chart values for joinCall component which fails to find hashbased images
