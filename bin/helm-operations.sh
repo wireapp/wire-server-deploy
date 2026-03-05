@@ -25,7 +25,7 @@ fi
 
 function dump_debug_logs {
   if [[ "$DUMP_LOGS_ON_FAIL" == "TRUE" ]]; then 
-    $BASE_DIR/bin/debug_logs.sh
+    "$BASE_DIR"/bin/debug_logs.sh
   fi
 }
 trap dump_debug_logs ERR
