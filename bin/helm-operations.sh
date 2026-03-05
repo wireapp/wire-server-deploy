@@ -3,16 +3,32 @@
 set -Eeo pipefail
 
 # Read values from environment variables with defaults
-BASE_DIR="/wire-server-deploy"
-TARGET_SYSTEM="example.dev"
-CERT_MASTER_EMAIL="certmaster@${TARGET_SYSTEM}"
+BASE_DIR="${BASE_DIR:-/wire-server-deploy}"
+TARGET_SYSTEM="${TARGET_SYSTEM:-example.com}"
+CERT_MASTER_EMAIL="certmaster@${CERT_MASTER_EMAIL}:-certmaster@${TARGET_SYSTEM}"
+
+# DEPLOY_CERT_MANAGER env variable to decide to check if cert_manager and nginx-ingress-services charts should get deployed
+# default is set to TRUE to deploy it unless changed
+DEPLOY_CERT_MANAGER="${DEPLOY_CERT_MANAGER:-TRUE}"
+
+# DUMP_LOGS_ON_FAIL to dump logs on failure
+# it is false by default
+DUMP_LOGS_ON_FAIL="${DUMP_LOGS_ON_FAIL:-FALSE}"
 
 # this IP should match the DNS A record value for TARGET_SYSTEM
 # assuming it to be the public address used by clients to reach public Address 
-HOST_IP=""
+HOST_IP="${HOST_IP:-}"
+
 if [ -z "$HOST_IP" ]; then 
 HOST_IP=$(wget -qO- https://api.ipify.org)
 fi
+
+function dump_debug_logs {
+  if [[ "$DUMP_LOGS_ON_FAIL" == "TRUE" ]]; then 
+    $BASE_DIR/bin/debug_logs.sh
+  fi
+}
+trap dump_debug_logs ERR
 
 # picking a node for calling traffic (3rd kube worker node)
 CALLING_NODE=$(kubectl get nodes --no-headers | tail -n 1 | awk '{print $1}')
@@ -20,6 +36,20 @@ if [[ -z "$CALLING_NODE" ]]; then
   echo "Error: could not determine the last kube worker node via kubectl"
   exit 1
 fi
+
+sync_pg_secrets() {
+  echo "Retrieving PostgreSQL password from databases-ephemeral for wire-server deployment..."
+  if kubectl get secret wire-postgresql-external-secret &>/dev/null; then
+  # Usage: sync-k8s-secret-to-wire-secrets.sh <secret-name> <secret-key> <yaml-file> <yaml-path's>
+     "$BASE_DIR/bin/sync-k8s-secret-to-wire-secrets.sh" \
+      wire-postgresql-external-secret password \
+      "$BASE_DIR/values/wire-server/secrets.yaml" \
+      .brig.secrets.pgPassword .galley.secrets.pgPassword
+  else
+    echo "⚠️  Warning: PostgreSQL secret 'wire-postgresql-secret' not found, skipping secret sync"
+    echo "    Make sure databases-ephemeral chart is deployed before wire-server"
+  fi
+}
 
 # Creates values.yaml from prod-values.example.yaml and secrets.yaml from prod-secrets.example.yaml
 # Works on all chart directories in $BASE_DIR/values/
@@ -136,23 +166,6 @@ deploy_charts() {
       helm_command+=" --values $secrets_file"
     fi
 
-    # handle wire-server to inject PostgreSQL password from databases-ephemeral
-    if [[ "$chart" == "wire-server" ]]; then
-
-      echo "Retrieving PostgreSQL password from databases-ephemeral for wire-server deployment..."
-      if kubectl get secret wire-postgresql-external-secret &>/dev/null; then
-      # Usage: sync-k8s-secret-to-wire-secrets.sh <secret-name> <secret-key> <yaml-file> <yaml-path's>
-         "$BASE_DIR/bin/sync-k8s-secret-to-wire-secrets.sh" \
-          "wire-postgresql-external-secret" \
-          "password" \
-          "$BASE_DIR/values/wire-server/secrets.yaml" \
-          .brig.secrets.pgPassword .galley.secrets.pgPassword .background-worker.secrets.pgPassword
-      else
-        echo "⚠️  Warning: PostgreSQL secret 'wire-postgresql-external-secret' not found, skipping secret sync"
-        echo "    Make sure databases-ephemeral chart is deployed before wire-server"
-      fi
-    fi
-
     echo "Deploying $chart as $helm_command"
     eval "$helm_command"
   done
@@ -164,7 +177,7 @@ deploy_charts() {
 deploy_cert_manager() {
 
   kubectl get namespace cert-manager-ns || kubectl create namespace cert-manager-ns
-  helm upgrade --install -n cert-manager-ns cert-manager  "$BASE_DIR/charts/cert-manager" --values "$BASE_DIR/values/cert-manager/values.yaml"
+  helm upgrade --install --wait --timeout=5m0s -n cert-manager-ns cert-manager  "$BASE_DIR/charts/cert-manager" --values "$BASE_DIR/values/cert-manager/values.yaml"
 
   # display running pods
   kubectl get pods --sort-by=.metadata.creationTimestamp -n cert-manager-ns
@@ -175,20 +188,24 @@ deploy_calling_services() {
   echo "Deploying sftd and coturn"
   # select the node to deploy sftd
   kubectl annotate node "$CALLING_NODE" wire.com/external-ip="$HOST_IP" --overwrite
-  helm upgrade --install sftd "$BASE_DIR/charts/sftd" --set "nodeSelector.kubernetes\\.io/hostname=$CALLING_NODE" --values  "$BASE_DIR/values/sftd/values.yaml"
+  helm upgrade --install --wait --timeout=5m0s sftd "$BASE_DIR/charts/sftd" --set "nodeSelector.kubernetes\\.io/hostname=$CALLING_NODE" --values  "$BASE_DIR/values/sftd/values.yaml"
 
   kubectl annotate node "$CALLING_NODE" wire.com/external-ip="$HOST_IP" --overwrite
-  helm upgrade --install coturn "$BASE_DIR/charts/coturn" --set "nodeSelector.kubernetes\\.io/hostname=$CALLING_NODE" --values "$BASE_DIR/values/coturn/values.yaml" --values "$BASE_DIR/values/coturn/secrets.yaml"
+  helm upgrade --install --wait --timeout=5m0s coturn "$BASE_DIR/charts/coturn" --set "nodeSelector.kubernetes\\.io/hostname=$CALLING_NODE" --values "$BASE_DIR/values/coturn/values.yaml" --values "$BASE_DIR/values/coturn/secrets.yaml"
 
   # display running pods post deploying all helm charts in default namespace
   kubectl get pods --sort-by=.metadata.creationTimestamp
 }
 
 main() {
+
 # Create prod-values.example.yaml to values.yaml and take backup
 process_values "prod" "values"
 # Create prod-secrets.example.yaml to secrets.yaml and take backup
 process_values "prod" "secrets"
+
+# Sync postgresql secret
+sync_pg_secrets
 
 # configure chart specific variables for each chart in values.yaml file
 configure_values
@@ -196,18 +213,20 @@ configure_values
 # deploying with external datastores, useful for prod setup
 deploy_charts cassandra-external elasticsearch-external minio-external postgresql-external fake-aws smtp rabbitmq-external databases-ephemeral reaper wire-server webapp account-pages team-settings smallstep-accomp ingress-nginx-controller
 
-# deploying cert manager to issue certs, by default letsencrypt-http01 issuer is configured
-deploy_cert_manager
+# deploying cert-manager only when the env var DEPLOY_CERT_MANAGER is set to TRUE 
+if [[ "$DEPLOY_CERT_MANAGER" == "TRUE" ]]; then 
+  # deploying cert manager to issue certs, by default letsencrypt-http01 issuer is configured
+  deploy_cert_manager
 
-# nginx-ingress-services chart needs cert-manager to be deployed
-deploy_charts nginx-ingress-services
+  # nginx-ingress-services chart needs cert-manager to be deployed
+  deploy_charts nginx-ingress-services
+
+  # print status of certs
+  kubectl get certificate
+fi
 
 # deploying sft and coturn services
-# not implemented yet
 deploy_calling_services
-
-# print status of certs
-kubectl get certificate
 }
 
 main
