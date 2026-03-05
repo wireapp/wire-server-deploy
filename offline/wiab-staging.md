@@ -268,7 +268,7 @@ inf_wan=eth0
   >   ```
   > - Once Let's Encrypt validation completes and certificates are issued, remove the temporary hairpin SNAT rule. Use the following pipeline to locate the rule handle and delete it safely:
   >   ```bash
-  >   sudo nft list chain ip nat POSTROUTING | \
+  >   sudo nft -a list chain ip nat POSTROUTING | \
   >     grep wire-hairpin-dnat-virbr0 | \
   >     sed -E 's/.*handle ([0-9]+).*/\1/' | \
   >     xargs -r -I {} sudo nft delete rule ip nat POSTROUTING handle {}
