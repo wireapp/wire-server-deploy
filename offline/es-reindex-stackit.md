@@ -83,5 +83,5 @@ Verify everything is alright on the client side (Team Settings).
 
 ## Elasticsearch useful requests
 
-List indices - `curl "localhost:9200/_cat/indices?v"`
-Delete index - curl -X DELETE "localhost:9200/<index-name>"
+- List indices - `curl "localhost:9200/_cat/indices?v"`
+- Delete index - curl -X DELETE "localhost:9200/<index-name>"
