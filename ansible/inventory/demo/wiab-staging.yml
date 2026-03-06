@@ -6,4 +6,4 @@ wiab-staging:
       ansible_user: 'demo'
       ansible_ssh_private_key_file: "~/.ssh/id_ed25519"
   vars:
-    artifact_hash: 78a52d4686b6de91853d715fd08ef42fe8e2fd20
+    artifact_hash: 82edf88d9193e9f7e0a62ee4b287fd0c7cebb1bd
