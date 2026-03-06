@@ -107,7 +107,7 @@ cd wire-server-deploy
 
 A sample inventory is available at [ansible/inventory/demo/wiab-staging.yml](https://github.com/wireapp/wire-server-deploy/blob/master/ansible/inventory/demo/wiab-staging.yml).
 
-*Note: Replace example.com with your physical machine address where KVM is available and adjust other variables like ansible_user and ansible_ssh_private_key_file. The SSH user for ansible `ansible_user` should have password-less `sudo` access. The physical host should be running Ubuntu 22.04.*
+*Note: Replace example.com with your physical machine (adminhost) address where KVM is available and adjust other variables like ansible_user and ansible_ssh_private_key_file. The SSH user for ansible `ansible_user` should have password-less `sudo` access. The physical host should be running Ubuntu 22.04.*
 
 **Step 3: Run the VM and network provision**
 
@@ -126,6 +126,8 @@ Ensure the inventory file `ansible/inventory/offline/inventory.yml` in the direc
 ## Next steps
 
 Since the inventory is ready, please continue with the following steps:
+
+> **Note**: All next steps assume that the wire-server-deploy artifact has been downloaded on the `adminhost` (your physical machine) and extracted at `/home/ansible_user/wire-server-deploy`. All commands from here on will be issued from this directory on the `adminhost`, ssh on the node before proceeding.
 
 ### Environment Setup
 
@@ -150,7 +152,7 @@ Since the inventory is ready, please continue with the following steps:
 - `HOST_IP`: public IP that matches your DNS A record (auto-detected if empty).
 
 **TLS / certificate behavior (cert-manager vs. Bring Your Own):**
-- By default, `bin/helm-operations.sh` runs `deploy_cert_manager`, which installs cert-manager and configures a Let’s Encrypt (HTTP-01) issuer for the ingress charts.
+- By default, `bin/helm-operations.sh` has `DEPLOY_CERT_MANAGER=TRUE`, which installs cert-manager and configures a Let’s Encrypt (HTTP-01) issuer for the ingress charts.
 - If you **do not** want Let’s Encrypt / cert-manager (for example, you are using **[Bring Your Own certificates](docs_ubuntu_22.04.md#acquiring--deploying-ssl-certificates)**), disable this step by passing  env variable `DEPLOY_CERT_MANAGER=FALSE` when running `bin/helm-operations.sh`.
   - When choosing `DEPLOY_CERT_MANAGER=FALSE`, ensure your ingress is configured with your own TLS secret(s) as described at [Acquiring / Deploying SSL Certificates](docs_ubuntu_22.04.md#acquiring--deploying-ssl-certificates).
   - When choosing `DEPLOY_CERT_MANAGER=TRUE`, ensure if further network configuration is required by following [cert-manager behaviour in NAT / bridge environments](#cert-manager-behaviour-in-nat--bridge-environments).
@@ -162,7 +164,7 @@ d sh -c 'TARGET_SYSTEM="example.dev" CERT_MASTER_EMAIL="certmaster@example.dev" 
 ```
 
 **Charts deployed by the script:**
-- External datastores and helpers: `cassandra-external`, `elasticsearch-external`, `minio-external`, `rabbitmq-external`, `databases-ephemeral`, `reaper`, `fake-aws`, `demo-smtp`.
+- External datastores and helpers: `cassandra-external`, `elasticsearch-external`, `minio-external`, `rabbitmq-external`,`postgresql-external`, `databases-ephemeral`, `reaper`, `fake-aws`, `demo-smtp`.
 - Wire services: `wire-server`, `webapp`, `account-pages`, `team-settings`, `smallstep-accomp`.
 - Ingress and certificates: `ingress-nginx-controller`, `cert-manager`, `nginx-ingress-services`.
 - Calling services: `sftd`, `coturn`.
@@ -171,23 +173,17 @@ d sh -c 'TARGET_SYSTEM="example.dev" CERT_MASTER_EMAIL="certmaster@example.dev" 
 - Creates `values.yaml` and `secrets.yaml` from `prod-values.example.yaml` and `prod-secrets.example.yaml` for each chart under `values/`.
 - Backs up any existing `values.yaml`/`secrets.yaml` before replacing them.
 
-**Values configured by the script:**
-- Replaces `example.com` with `TARGET_SYSTEM` in Wire and webapp hostnames.
-- Enables cert-manager and sets `certmasterEmail` using `CERT_MASTER_EMAIL`.
-- Sets SFTD hosts and switches issuer to `letsencrypt-http01`.
-- Sets coturn listen/relay/external IPs using the calling node IP and `HOST_IP`.
-
 *Note: The `bin/helm-operations.sh` script above deploys these charts; you do not need to run the Helm commands manually unless you want to customize or debug.*
 
 ## Network Traffic Configuration
 
 ### Bring traffic from the physical machine to Wire services in the k8s cluster
 
-If you used the Ansible playbook earlier, nftables firewall rules are pre-configured to forward traffic. If you set up VMs manually with your own hypervisor, you must manually configure network traffic flow using nftables.
+If you used the Ansible playbook earlier, nftables firewall rules are pre-configured to forward traffic. If you set up VMs manually with your own hypervisor, you must manually configure network traffic flow using nftables as descibed below.
 
 **Required Network Configuration:**
 
-The physical machine must forward traffic from external clients to the Kubernetes cluster running Wire services. This involves:
+The physical machine (adminhost) must forward traffic from external clients to the Kubernetes cluster running Wire services. This involves:
 
 1. **HTTP/HTTPS Traffic (Ingress)** - Forward ports 80 and 443 to the nginx-ingress-controller running on a Kubernetes node
    - Port 80 (HTTP) → Kubernetes node port 31772
@@ -199,19 +195,20 @@ The physical machine must forward traffic from external clients to the Kubernete
 
 **Implementation:**
 
-Use the detailed nftables rules in [../ansible/files/wiab_server_nftables.conf.j2](../ansible/files/wiab_server_nftables.conf.j2) as the template. The guide covers:
+Use the detailed nftables rules in [../ansible/files/wiab_server_nftables.conf.j2](../ansible/files/wiab_server_nftables.conf.j2) as the template. The nftable configuration template covers:
 - Defining your network variables (Coturn IP, Kubernetes node IP, WAN interface)
 - Creating NAT rules for HTTP/HTTPS ingress traffic
-- Setting up TURN protocol forwarding for Coturn
-- Restarting nftables to apply changes
+- Setting up TURN protocol forwarding for Coturn and traffic for SFTD
 
-You can also apply these rules using the Ansible playbook, by following:
+*Note: If you have already ran the playbook wiab-staging-provision.yml then it is already be configured for you. Confirm it by checking if the wire endpoint `https://webapp.TARGET_SYSTEM` is reachable from public internet or your private network (in case of private network), but not from the adminhost itself.*
+
+You can also apply these rules using the Ansible playbook against your adminhost, by following:
 
 ```bash
 ansible-playbook -i inventory.yml ansible/wiab-staging-nftables.yml
 ```
 
-*Note: If you ran the playbook wiab-staging-provision.yml then it might already be configured for you. Please confirm before running.*
+You can run the above playbook from local system or where you have cloned/downloaded the [Wire server deploy ansible playbooks](#getting-the-ansible-playbooks).
 
 The inventory should define the following variables:
 
@@ -227,6 +224,12 @@ calling_node_ip=192.168.122.13
 
 # Host WAN interface name
 inf_wan=eth0
+
+# These are the same as wiab-staging.yml
+# user and ssh key for adminhost
+ansible_user='demo'
+ansible_ssh_private_key_file='~/.ssh/id_ed25519'
+
 ```
 
 ### cert-manager behaviour in NAT / bridge environments
