@@ -8,9 +8,9 @@ TARGET_SYSTEM="example.dev"
 CERT_MASTER_EMAIL="certmaster@${TARGET_SYSTEM}"
 
 # this IP should match the DNS A record value for TARGET_SYSTEM
-# assuming it to be the public address used by clients to reach public Address 
+# assuming it to be the public address used by clients to reach public Address
 HOST_IP=""
-if [ -z "$HOST_IP" ]; then 
+if [ -z "$HOST_IP" ]; then
 HOST_IP=$(wget -qO- https://api.ipify.org)
 fi
 
@@ -145,7 +145,9 @@ deploy_charts() {
          "$BASE_DIR/bin/sync-k8s-secret-to-wire-secrets.sh" \
           wire-postgresql-secret password \
           "$BASE_DIR/values/wire-server/secrets.yaml" \
-          .brig.secrets.pgPassword .galley.secrets.pgPassword
+          .brig.secrets.pgPassword \
+          .galley.secrets.pgPassword \
+          .background-worker.secrets.pgPassword
       else
         echo "⚠️  Warning: PostgreSQL secret 'wire-postgresql-secret' not found, skipping secret sync"
         echo "    Make sure databases-ephemeral chart is deployed before wire-server"
