@@ -143,7 +143,8 @@ deploy_charts() {
       if kubectl get secret wire-postgresql-external-secret &>/dev/null; then
       # Usage: sync-k8s-secret-to-wire-secrets.sh <secret-name> <secret-key> <yaml-file> <yaml-path's>
          "$BASE_DIR/bin/sync-k8s-secret-to-wire-secrets.sh" \
-          wire-postgresql-external-secret \
+          "wire-postgresql-external-secret" \
+          "password" \
           "$BASE_DIR/values/wire-server/secrets.yaml" \
           .brig.secrets.pgPassword .galley.secrets.pgPassword .background-worker.secrets.pgPassword
       else
