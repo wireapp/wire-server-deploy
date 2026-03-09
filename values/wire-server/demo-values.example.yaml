@@ -127,7 +127,9 @@ cannon:
   # For demo mode only, we don't need to keep websocket connections open on chart upgrades
   drainTimeout: 10
   config:
-    cassandra: 
+    rabbitmq:
+      host: rabbitmq
+    cassandra:
       host: cassandra-ephemeral
   metrics:
     serviceMonitor:
@@ -170,6 +172,9 @@ galley:
       port: "5432"
       user: wire-server
       dbname: wire-server
+    postgresMigration:
+      conversation: cassandra
+      teamFeatures: cassandra
     enableFederation: false # Enable to use federation
     settings:
       # prefix URI used when inviting users to a conversation by link
@@ -199,6 +204,8 @@ gundeck:
 #  image:
 #    tag: some-tag (only override if you want a newer/different version than what is in the chart)
   config:
+    rabbitmq:
+      host: rabbitmq
     cassandra:
       host: cassandra-ephemeral
     aws:
@@ -292,8 +299,24 @@ spar:
 
 background-worker:
   config:
+    federationDomain: example.com
+    rabbitmq:
+      host: rabbitmq
     cassandra:
       host: cassandra-ephemeral
+    cassandraGalley:
+      host: cassandra-ephemeral
+    cassandraBrig:
+      host: cassandra-ephemeral
+    postgresql:
+      host: postgresql # DNS name without protocol
+      port: "5432"
+      user: wire-server
+      dbname: wire-server
+    postgresMigration:
+      conversation: cassandra
+      teamFeatures: cassandra
+    # migrateTeamFeatures: false # Set to true only AFTER setting galley postgresMigration.teamFeatures to migration-to-postgresql
     # Enable for federation
     enableFederation: false
   metrics:
