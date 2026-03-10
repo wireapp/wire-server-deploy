@@ -7,7 +7,7 @@ BASE_DIR="${BASE_DIR:-/wire-server-deploy}"
 TARGET_SYSTEM="${TARGET_SYSTEM:-example.com}"
 CERT_MASTER_EMAIL="certmaster@${CERT_MASTER_EMAIL}:-certmaster@${TARGET_SYSTEM}"
 
-# DEPLOY_CERT_MANAGER env variable to decide to check if cert_manager and nginx-ingress-services charts should get deployed
+# DEPLOY_CERT_MANAGER env variable is used to decide if cert_manager and nginx-ingress-services charts should get deployed
 # default is set to TRUE to deploy it unless changed
 DEPLOY_CERT_MANAGER="${DEPLOY_CERT_MANAGER:-TRUE}"
 
@@ -24,9 +24,11 @@ HOST_IP=$(wget -qO- https://api.ipify.org)
 fi
 
 function dump_debug_logs {
+  local exit_code=$?
   if [[ "$DUMP_LOGS_ON_FAIL" == "TRUE" ]]; then 
     "$BASE_DIR"/bin/debug_logs.sh
   fi
+  return $exit_code
 }
 trap dump_debug_logs ERR
 
@@ -49,6 +51,7 @@ sync_pg_secrets() {
     echo "⚠️  Warning: PostgreSQL secret 'wire-postgresql-secret' not found, skipping secret sync"
     echo "    Make sure databases-ephemeral chart is deployed before wire-server"
   fi
+  return $?
 }
 
 # Creates values.yaml from prod-values.example.yaml and secrets.yaml from prod-secrets.example.yaml

@@ -153,7 +153,7 @@ Since the inventory is ready, please continue with the following steps:
 
 **TLS / certificate behavior (cert-manager vs. Bring Your Own):**
 - By default, `bin/helm-operations.sh` has `DEPLOY_CERT_MANAGER=TRUE`, which installs cert-manager and configures a Let’s Encrypt (HTTP-01) issuer for the ingress charts.
-- If you **do not** want Let’s Encrypt / cert-manager (for example, you are using **[Bring Your Own certificates](docs_ubuntu_22.04.md#acquiring--deploying-ssl-certificates)**), disable this step by passing  env variable `DEPLOY_CERT_MANAGER=FALSE` when running `bin/helm-operations.sh`.
+- If you **do not** want Let’s Encrypt / cert-manager (for example, you are using **[Bring Your Own certificates](docs_ubuntu_22.04.md#acquiring--deploying-ssl-certificates)**), disable this step by passing the environment variable `DEPLOY_CERT_MANAGER=FALSE` when running `bin/helm-operations.sh`.
   - When choosing `DEPLOY_CERT_MANAGER=FALSE`, ensure your ingress is configured with your own TLS secret(s) as described at [Acquiring / Deploying SSL Certificates](docs_ubuntu_22.04.md#acquiring--deploying-ssl-certificates).
   - When choosing `DEPLOY_CERT_MANAGER=TRUE`, ensure if further network configuration is required by following [cert-manager behaviour in NAT / bridge environments](#cert-manager-behaviour-in-nat--bridge-environments).
 
@@ -240,8 +240,8 @@ When cert-manager performs HTTP-01 self-checks inside the cluster, traffic can h
 
 In NAT/bridge setups (for example, using `virbr0` on the host):
 
-- If nftables rules DNAT in `PREROUTING` without a matching SNAT on `virbr0 → virbr0`, return packets may bypass the host and break conntrack, causing HTTP-01 timeouts and certificate verification failures.
-- Strict `rp_filter` can drop asymmetric return packets.
+- If nftables DNAT rules exist in `PREROUTING` without a matching SNAT on `virbr0 → virbr0`, return packets may bypass the host and break conntrack, causing HTTP-01 timeouts and certificate verification failures.
+-  too strict of `rp_filter` settings can drop asymmetric return packets.
 
 Before changing anything, first verify whether certificate issuance is actually failing:
 
