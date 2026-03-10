@@ -90,6 +90,7 @@ We need the whole ansible directory as ansible-playbook uses some templates for 
 
 **Option A: Download as ZIP**
 ```bash
+# requirements: wget and unzip
 wget https://github.com/wireapp/wire-server-deploy/archive/refs/heads/master.zip
 unzip master.zip
 cd wire-server-deploy-master
@@ -97,6 +98,7 @@ cd wire-server-deploy-master
 
 **Option B: Clone with Git**
 ```bash
+# requirements: git
 git clone https://github.com/wireapp/wire-server-deploy.git
 cd wire-server-deploy
 ```
@@ -105,7 +107,7 @@ cd wire-server-deploy
 
 A sample inventory is available at [ansible/inventory/demo/wiab-staging.yml](https://github.com/wireapp/wire-server-deploy/blob/master/ansible/inventory/demo/wiab-staging.yml).
 
-*Note: Replace example.com with your physical machine address where KVM is available and adjust other variables accordingly.* 
+*Note: Replace example.com with your physical machine (adminhost) address where KVM is available and adjust other variables like ansible_user and ansible_ssh_private_key_file. The SSH user for ansible `ansible_user` should have password-less `sudo` access. The physical host should be running Ubuntu 22.04.*
 
 **Step 3: Run the VM and network provision**
 
@@ -125,6 +127,8 @@ Ensure the inventory file `ansible/inventory/offline/inventory.yml` in the direc
 
 Since the inventory is ready, please continue with the following steps:
 
+> **Note**: All next steps assume that the wire-server-deploy artifact has been downloaded on the `adminhost` (your physical machine) and extracted at `/home/ansible_user/wire-server-deploy`. All commands from here on will be issued from this directory on the `adminhost`, ssh on the node before proceeding.
+
 ### Environment Setup
 
 - **[Making tooling available in your environment](docs_ubuntu_22.04.md#making-tooling-available-in-your-environment)**
@@ -140,7 +144,7 @@ Since the inventory is ready, please continue with the following steps:
 
 ### Helm Operations to install wire services and supporting helm charts
 
-**Helm chart deployment (automated):** The script `bin/helm-operations.sh` will deploy the charts for you. It prepares `values.yaml`/`secrets.yaml`, customizes them for your domain/IPs, then runs Helm installs/upgrades in the correct order.
+**Helm chart deployment (automated):** The script `bin/helm-operations.sh` will deploy the charts for you. It prepares `values.yaml`/`secrets.yaml`, customizes them for your domain/IPs, then runs Helm installs/upgrades in the correct order. Prepare the values before running it.
 
 **User-provided inputs (set these before running):**
 - `TARGET_SYSTEM`: your domain (e.g., `wire.example.com` or `example.dev`).
@@ -148,15 +152,19 @@ Since the inventory is ready, please continue with the following steps:
 - `HOST_IP`: public IP that matches your DNS A record (auto-detected if empty).
 
 **TLS / certificate behavior (cert-manager vs. Bring Your Own):**
-- By default, `bin/helm-operations.sh` runs `deploy_cert_manager`, which installs cert-manager and configures a Let’s Encrypt (HTTP-01) issuer for the ingress charts.
-- If you **do not** want Let’s Encrypt / cert-manager (for example, you are using **[Bring Your Own certificates](docs_ubuntu_22.04.md#acquiring--deploying-ssl-certificates)** or you cannot satisfy HTTP-01 requirements), disable this step by commenting out the `deploy_cert_manager` call inside `bin/helm-operations.sh`.
-  - After disabling cert-manager, ensure your ingress is configured with your own TLS secret(s) as described in the TLS documentation below.
+- By default, `bin/helm-operations.sh` has `DEPLOY_CERT_MANAGER=TRUE`, which installs cert-manager and configures a Let’s Encrypt (HTTP-01) issuer for the ingress charts.
+- If you **do not** want Let’s Encrypt / cert-manager (for example, you are using **[Bring Your Own certificates](docs_ubuntu_22.04.md#acquiring--deploying-ssl-certificates)**), disable this step by passing the environment variable `DEPLOY_CERT_MANAGER=FALSE` when running `bin/helm-operations.sh`.
+  - When choosing `DEPLOY_CERT_MANAGER=FALSE`, ensure your ingress is configured with your own TLS secret(s) as described at [Acquiring / Deploying SSL Certificates](docs_ubuntu_22.04.md#acquiring--deploying-ssl-certificates).
+  - When choosing `DEPLOY_CERT_MANAGER=TRUE`, ensure if further network configuration is required by following [cert-manager behaviour in NAT / bridge environments](#cert-manager-behaviour-in-nat--bridge-environments).
 
-**To run the automated helm chart deployment**:
-`d ./bin/helm-operations.sh`
+**To run the automated helm chart deployment with your variables**:
+```bash
+# example command - verify the variables before running it
+d sh -c 'TARGET_SYSTEM="example.dev" CERT_MASTER_EMAIL="certmaster@example.dev" DEPLOY_CERT_MANAGER=TRUE ./bin/helm-operations.sh'
+```
 
 **Charts deployed by the script:**
-- External datastores and helpers: `cassandra-external`, `elasticsearch-external`, `minio-external`, `rabbitmq-external`, `databases-ephemeral`, `reaper`, `fake-aws`, `demo-smtp`.
+- External datastores and helpers: `cassandra-external`, `elasticsearch-external`, `minio-external`, `rabbitmq-external`,`postgresql-external`, `databases-ephemeral`, `reaper`, `fake-aws`, `demo-smtp`.
 - Wire services: `wire-server`, `webapp`, `account-pages`, `team-settings`, `smallstep-accomp`.
 - Ingress and certificates: `ingress-nginx-controller`, `cert-manager`, `nginx-ingress-services`.
 - Calling services: `sftd`, `coturn`.
@@ -165,23 +173,17 @@ Since the inventory is ready, please continue with the following steps:
 - Creates `values.yaml` and `secrets.yaml` from `prod-values.example.yaml` and `prod-secrets.example.yaml` for each chart under `values/`.
 - Backs up any existing `values.yaml`/`secrets.yaml` before replacing them.
 
-**Values configured by the script:**
-- Replaces `example.com` with `TARGET_SYSTEM` in Wire and webapp hostnames.
-- Enables cert-manager and sets `certmasterEmail` using `CERT_MASTER_EMAIL`.
-- Sets SFTD hosts and switches issuer to `letsencrypt-http01`.
-- Sets coturn listen/relay/external IPs using the calling node IP and `HOST_IP`.
-
 *Note: The `bin/helm-operations.sh` script above deploys these charts; you do not need to run the Helm commands manually unless you want to customize or debug.*
 
 ## Network Traffic Configuration
 
 ### Bring traffic from the physical machine to Wire services in the k8s cluster
 
-If you used the Ansible playbook earlier, nftables firewall rules are pre-configured to forward traffic. If you set up VMs manually with your own hypervisor, you must manually configure network traffic flow using nftables.
+If you used the Ansible playbook earlier, nftables firewall rules are pre-configured to forward traffic. If you set up VMs manually with your own hypervisor, you must manually configure network traffic flow using nftables as descibed below.
 
 **Required Network Configuration:**
 
-The physical machine must forward traffic from external clients to the Kubernetes cluster running Wire services. This involves:
+The physical machine (adminhost) must forward traffic from external clients to the Kubernetes cluster running Wire services. This involves:
 
 1. **HTTP/HTTPS Traffic (Ingress)** - Forward ports 80 and 443 to the nginx-ingress-controller running on a Kubernetes node
    - Port 80 (HTTP) → Kubernetes node port 31772
@@ -193,19 +195,20 @@ The physical machine must forward traffic from external clients to the Kubernete
 
 **Implementation:**
 
-Use the detailed nftables rules in [../ansible/files/wiab_server_nftables.conf.j2](../ansible/files/wiab_server_nftables.conf.j2) as the template. The guide covers:
+Use the detailed nftables rules in [../ansible/files/wiab_server_nftables.conf.j2](../ansible/files/wiab_server_nftables.conf.j2) as the template. The nftable configuration template covers:
 - Defining your network variables (Coturn IP, Kubernetes node IP, WAN interface)
 - Creating NAT rules for HTTP/HTTPS ingress traffic
-- Setting up TURN protocol forwarding for Coturn
-- Restarting nftables to apply changes
+- Setting up TURN protocol forwarding for Coturn and traffic for SFTD
 
-You can also apply these rules using the Ansible playbook, by following:
+*Note: If you have already ran the playbook wiab-staging-provision.yml then it is already be configured for you. Confirm it by checking if the wire endpoint `https://webapp.TARGET_SYSTEM` is reachable from public internet or your private network (in case of private network), but not from the adminhost itself.*
+
+You can also apply these rules using the Ansible playbook against your adminhost, by following:
 
 ```bash
 ansible-playbook -i inventory.yml ansible/wiab-staging-nftables.yml
 ```
 
-*Note: If you ran the playbook wiab-staging-provision.yml then it might already be configured for you. Please confirm before running.*
+You can run the above playbook from local system or where you have cloned/downloaded the [Wire server deploy ansible playbooks](#getting-the-ansible-playbooks).
 
 The inventory should define the following variables:
 
@@ -221,59 +224,78 @@ calling_node_ip=192.168.122.13
 
 # Host WAN interface name
 inf_wan=eth0
+
+# These are the same as wiab-staging.yml
+# user and ssh key for adminhost
+ansible_user='demo'
+ansible_ssh_private_key_file='~/.ssh/id_ed25519'
+
 ```
 
-> **Note (cert-manager & hairpin NAT):**
-> When cert-manager performs HTTP-01 self-checks inside the cluster, traffic can hairpin (Pod → Node → host public IP → DNAT → Node → Ingress).
-> If your nftables rules DNAT in `PREROUTING` without a matching SNAT on `virbr0 → virbr0`, return packets may bypass the host and break conntrack, causing HTTP-01 timeouts, resulting in certificate verification failure.
-> Additionally, strict `rp_filter` can drop asymmetric return packets.
-> If cert-manager is deployed in a NAT/bridge (`virbr0`) environment, first verify whether certificate issuance is failing before applying hairpin handling.
-> Check whether certificates are successfully issued:
-> ```bash
-> d kubectl get certificates
-> ```
-> If certificates are not in `Ready=True` state, inspect cert-manager logs for HTTP-01 self-check or timeout errors:
-> ```bash
-> d kubectl logs -n cert-manager-ns <cert-manager-pod-id>
-> ```
-> If you observe HTTP-01 challenge timeouts or self-check failures in a NAT/bridge environment, hairpin SNAT and relaxed reverse-path filtering handling may be required.
-  > - Relax reverse-path filtering to loose mode to allow asymmetric flows:
-  >   ```bash
-  >   sudo sysctl -w net.ipv4.conf.all.rp_filter=2
-  >   sudo sysctl -w net.ipv4.conf.virbr0.rp_filter=2
-  >   ```
-  >   These settings help conntrack reverse DNAT correctly and avoid drops during cert-manager’s HTTP-01 challenges in NAT/bridge (virbr0) environments.
-  >
-  > - Enable Hairpin SNAT (temporary for cert-manager HTTP-01):
-  >   ```bash
-  >   sudo nft insert rule ip nat POSTROUTING position 0 \
-  >   iifname "virbr0" oifname "virbr0" \
-  >   ip daddr 192.168.122.0/24 ct status dnat \
-  >   counter masquerade \
-  >   comment "wire-hairpin-dnat-virbr0"
-  >   ```
-  >   This forces DNATed traffic that hairpins over the bridge to be masqueraded, ensuring return traffic flows back through the host and conntrack can correctly reverse the DNAT.
-  >   Verify the rule was added:
-  >   ```bash
-  >   sudo nft list chain ip nat POSTROUTING
-  >   ```
-  >   You should see a rule similar to:
-  >   ```
-  >   iifname "virbr0" oifname "virbr0" ip daddr 192.168.122.0/24 ct status dnat counter masquerade # handle <id>
-  >   ```
-  >
-  > - Remove the rule after certificates are issued
-  >   ```bash
-  >   d kubectl get certificates
-  >   ```
-  > - Once Let's Encrypt validation completes and certificates are issued, remove the temporary hairpin SNAT rule. Use the following pipeline to locate the rule handle and delete it safely:
-  >   ```bash
-  >   sudo nft list chain ip nat POSTROUTING | \
-  >     grep wire-hairpin-dnat-virbr0 | \
-  >     sed -E 's/.*handle ([0-9]+).*/\1/' | \
-  >     xargs -r -I {} sudo nft delete rule ip nat POSTROUTING handle {}
-  >   ```
+### cert-manager behaviour in NAT / bridge environments
 
+When cert-manager performs HTTP-01 self-checks inside the cluster, traffic can hairpin:
+
+- Pod → Node → host public IP → DNAT → Node → Ingress
+
+In NAT/bridge setups (for example, using `virbr0` on the host):
+
+- If nftables DNAT rules exist in `PREROUTING` without a matching SNAT on `virbr0 → virbr0`, return packets may bypass the host and break conntrack, causing HTTP-01 timeouts and certificate verification failures.
+-  too strict of `rp_filter` settings can drop asymmetric return packets.
+
+Before changing anything, first verify whether certificate issuance is actually failing:
+
+1. Check whether certificates are successfully issued:
+   ```bash
+   d kubectl get certificates
+   ```
+2. If certificates are not in `Ready=True` state, inspect cert-manager logs for HTTP-01 self-check or timeout errors:
+   ```bash
+   d kubectl logs -n cert-manager-ns <cert-manager-pod-id>
+   ```
+
+If you observe HTTP-01 challenge timeouts or self-check failures in a NAT/bridge environment, hairpin SNAT and relaxed reverse-path filtering handling may be required. One possible approach is:
+
+- Relax reverse-path filtering to loose mode to allow asymmetric flows:
+  ```bash
+  sudo sysctl -w net.ipv4.conf.all.rp_filter=2
+  sudo sysctl -w net.ipv4.conf.virbr0.rp_filter=2
+  ```
+  These settings help conntrack reverse DNAT correctly and avoid drops during cert-manager’s HTTP-01 challenges in NAT/bridge (`virbr0`) environments.
+
+- Enable Hairpin SNAT (temporary for cert-manager HTTP-01):
+  ```bash
+  sudo nft insert rule ip nat POSTROUTING position 0 \
+    iifname "virbr0" oifname "virbr0" \
+    ip daddr 192.168.122.0/24 ct status dnat \
+    counter masquerade \
+    comment "wire-hairpin-dnat-virbr0"
+  ```
+  This forces DNATed traffic that hairpins over the bridge to be masqueraded, ensuring return traffic flows back through the host and conntrack can correctly reverse the DNAT.
+
+  Verify the rule was added:
+  ```bash
+  sudo nft list chain ip nat POSTROUTING
+  ```
+  You should see a rule similar to:
+  ```
+  iifname "virbr0" oifname "virbr0" ip daddr 192.168.122.0/24 ct status dnat counter masquerade # handle <id>
+  ```
+
+- Remove the rule after certificates are issued, confirm by running the following:
+  ```bash
+  d kubectl get certificates
+  ```
+
+  Once Let’s Encrypt validation completes and certificates are issued, remove the temporary hairpin SNAT rule. Use the following pipeline to locate the rule handle and delete it safely:
+  ```bash
+  sudo nft -a list chain ip nat POSTROUTING | \
+    grep wire-hairpin-dnat-virbr0 | \
+    sed -E 's/.*handle ([0-9]+).*/\1/' | \
+    xargs -r -I {} sudo nft delete rule ip nat POSTROUTING handle {}
+  ```
+
+For additional background on when hairpin NAT is required and how it relates to WIAB Dev and WIAB Staging, see [Hairpin networking for WIAB Dev and WIAB Staging](tls-certificates.md#hairpin-networking-for-wiab-dev-and-wiab-staging).
 
 ## Further Reading
 
