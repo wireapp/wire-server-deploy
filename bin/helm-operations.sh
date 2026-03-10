@@ -46,7 +46,7 @@ sync_pg_secrets() {
      "$BASE_DIR/bin/sync-k8s-secret-to-wire-secrets.sh" \
       wire-postgresql-external-secret password \
       "$BASE_DIR/values/wire-server/secrets.yaml" \
-      .brig.secrets.pgPassword .galley.secrets.pgPassword
+      .brig.secrets.pgPassword .galley.secrets.pgPassword .background-worker.secrets.pgPassword
   else
     echo "⚠️  Warning: PostgreSQL secret 'wire-postgresql-secret' not found, skipping secret sync"
     echo "    Make sure databases-ephemeral chart is deployed before wire-server"
