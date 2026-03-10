@@ -140,14 +140,15 @@ deploy_charts() {
     if [[ "$chart" == "wire-server" ]]; then
 
       echo "Retrieving PostgreSQL password from databases-ephemeral for wire-server deployment..."
-      if kubectl get secret wire-postgresql-secret &>/dev/null; then
+      if kubectl get secret wire-postgresql-external-secret &>/dev/null; then
       # Usage: sync-k8s-secret-to-wire-secrets.sh <secret-name> <secret-key> <yaml-file> <yaml-path's>
          "$BASE_DIR/bin/sync-k8s-secret-to-wire-secrets.sh" \
-          wire-postgresql-secret password \
+          "wire-postgresql-external-secret" \
+          "password" \
           "$BASE_DIR/values/wire-server/secrets.yaml" \
-          .brig.secrets.pgPassword .galley.secrets.pgPassword
+          .brig.secrets.pgPassword .galley.secrets.pgPassword .background-worker.secrets.pgPassword
       else
-        echo "⚠️  Warning: PostgreSQL secret 'wire-postgresql-secret' not found, skipping secret sync"
+        echo "⚠️  Warning: PostgreSQL secret 'wire-postgresql-external-secret' not found, skipping secret sync"
         echo "    Make sure databases-ephemeral chart is deployed before wire-server"
       fi
     fi
@@ -178,6 +179,9 @@ deploy_calling_services() {
 
   kubectl annotate node "$CALLING_NODE" wire.com/external-ip="$HOST_IP" --overwrite
   helm upgrade --install coturn "$BASE_DIR/charts/coturn" --set "nodeSelector.kubernetes\\.io/hostname=$CALLING_NODE" --values "$BASE_DIR/values/coturn/values.yaml" --values "$BASE_DIR/values/coturn/secrets.yaml"
+
+  # display running pods post deploying all helm charts in default namespace
+  kubectl get pods --sort-by=.metadata.creationTimestamp
 }
 
 main() {
