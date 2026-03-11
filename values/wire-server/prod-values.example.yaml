@@ -36,6 +36,8 @@ brig:
       port: "5432"
       user: wire-server
       dbname: wire-server
+    postgresqlPool:
+      size: 10 # adjust pool size as needed based on expected load and available resources
     useSES: false
     # Set to false if you want to hand out DynamoDB to store prekeys
     randomPrekeys: true
@@ -183,6 +185,8 @@ galley:
       port: "5432"
       user: wire-server
       dbname: wire-server
+    postgresqlPool:
+      size: 10 # adjust pool size as needed based on expected load and available resources
     # Explicitly set postgresMigration to cassandra for fresh deployments.
     # This controls whether galley reads conversations/teamFeatures from Cassandra or PostgreSQL.
     postgresMigration:
@@ -367,6 +371,8 @@ background-worker:
       port: "5432"
       user: wire-server
       dbname: wire-server
+    postgresqlPool:
+      size: 3 # Background worker has fewer connections to DB, so smaller pool size is fine
     postgresMigration:
       conversation: cassandra
       teamFeatures: cassandra
