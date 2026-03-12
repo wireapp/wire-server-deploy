@@ -372,11 +372,10 @@ background-worker:
       user: wire-server
       dbname: wire-server
     postgresqlPool:
-      size: 3 # Background worker has fewer connections to DB, so smaller pool size is fine
+      size: 5 # Background worker has fewer connections to DB, so smaller pool size is fine
     postgresMigration:
       conversation: cassandra
       teamFeatures: cassandra
-    migrateTeamFeatures: false # Set to true only AFTER setting galley postgresMigration.teamFeatures to migration-to-postgresql
     # Enable for federation
     enableFederation: false
   metrics:
