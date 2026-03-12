@@ -17,7 +17,7 @@ if ! echo "$commit_message" | grep -E "$pattern" | grep -E "$pattern2"; then
     echo "  test: add unit tests wpb-1234"
     echo "  chore!: WPB-1234 drop support for k8s 1.16 - add a 'BREAKING CHANGE:' statement"
     echo " Read more about it here: https://www.conventionalcommits.org/en/v1.0.0/"
-    echo " If you want to skip these commit message verification rules, run the following command to unset it"
-    echo " git config --unset core.hooksPath"
+    echo " If you don't want to use it, then set NO_GIT_HOOKS=FALSE in file .envrc.local and re-laod the envionment by running:"
+    echo " direnv reload"
     exit 1
 fi
