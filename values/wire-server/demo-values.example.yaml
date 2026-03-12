@@ -1,4 +1,4 @@
-# CHANGEME-PROD: All values here should be changed/reviewed
+# CHANGEME-DEV: All values here should be changed/reviewed
 tags:
   proxy: false # enable if you want/need giphy/youtube/etc proxying
   legalhold: false # Enable if you need legalhold
