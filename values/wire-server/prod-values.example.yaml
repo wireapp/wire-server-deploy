@@ -32,7 +32,7 @@ brig:
       # CI/Demo: Change to rabbitmq when using rabbitmq chart from databases-ephemeral
       host: rabbitmq-external
     postgresql:
-      host: postgresql-external-rw # DNS name without protocol
+      host: postgresql # name of the postgresql service, either `postgresql-external-rw or `postgresql`
       port: "5432"
       user: wire-server
       dbname: wire-server
