@@ -153,7 +153,7 @@ cargohold:
       # change if using real AWS
       region: "eu-west-1"
       s3Bucket: assets
-      s3Endpoint: http://fake-aws-s3:9000
+      s3Endpoint: http://minio-external:9000
       s3DownloadEndpoint: https://assets.example.com
     enableFederation: false # Enable to use federation
     settings:
