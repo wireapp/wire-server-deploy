@@ -1,0 +1,4 @@
+Fixed: sync offline-secrets and prod-secrets.example.yaml and add comments
+Added: enable postgresql secret for background-worker in wiab-dev
+Fixed: sync wire-server helm chart values for wiab-dev from prod values for 5.25
+Fixed: sync wire-server helm chart secrets for wiab-dev from prod values for 5.25

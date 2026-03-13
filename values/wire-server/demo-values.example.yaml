@@ -1,3 +1,4 @@
+# CHANGEME-DEV: All values here should be changed/reviewed
 tags:
   proxy: false # enable if you want/need giphy/youtube/etc proxying
   legalhold: false # Enable if you need legalhold
@@ -15,18 +16,21 @@ elasticsearch-index:
     host: elasticsearch-ephemeral
   cassandra:
     host: cassandra-ephemeral
-
 brig:
   replicaCount: 1
 #  image:
 #    tag: some-tag (only override if you want a newer/different version than what is in the chart)
   config:
+    multiSFT:
+      enabled: false # enable to turn on SFT to SFT communication for federated calls
     cassandra:
       host: cassandra-ephemeral
     elasticsearch:
       host: elasticsearch-ephemeral
     rabbitmq:
-      host: rabbitmq # name of the rabbitmq service, either `rabbitmq-external` or `rabbitmq`
+      # Default: rabbitmq-external (for production external RabbitMQ VMs)
+      # CI/Demo: Change to rabbitmq when using rabbitmq chart from databases-ephemeral
+      host: rabbitmq
     postgresql:
       host: postgresql # DNS name without protocol
       port: "5432"
@@ -34,27 +38,29 @@ brig:
       dbname: wire-server
     useSES: false
     # Set to false if you want to hand out DynamoDB to store prekeys
-    randomPrekeys: true    
+    randomPrekeys: true
     aws:
       # change if using real AWS
       region: "eu-west-1"
       sqsEndpoint: http://fake-aws-sqs:4568
-      #dynamoDBEndpoint: http://fake-aws-dynamodb:4567
-      
+      # dynamoDBEndpoint: http://fake-aws-dynamodb:4567
+
       # these must match the table names created on fake or real AWS services
       internalQueue: integration-brig-events-internal
       prekeyTable: integration-brig-prekeys
     externalUrls:
       nginz: https://nginz-https.example.com # change this
-      teamSettings: https://teams.example.com # change this (on unset if team settings are not used)
+      teamSettings: https://teams.example.com # change this (or unset if team settings are not used)
       teamCreatorWelcome: https://teams.example.com/login # change this
       teamMemberWelcome: https://wire.example.com/download # change this
-    enableFederation: false # Enable to use federation
+    enableFederation: false # Keep false unless federation is explicitly configured
     optSettings:
-      setFederationDomain: example.com # change this
+      setEnableMLS: false # Enable for MLS protocol use
+      setFederationDomain: example.com # change this per host deployment
       # Sync the domain with the 'host' variable in the sftd chart
       # Comment the next line (by adding '#' before it) if conference calling is not used
       setSftStaticUrl: "https://sftd.example.com:443"
+      # setSftListAllServers: "enabled" # Uncomment for Federation!
       # If set to true, creating new personal users or new teams on your instance from
       # outside your backend installation is disabled
       setRestrictUserCreation: false
@@ -86,7 +92,9 @@ brig:
         deletionUrl: https://account.example.com/d/?key=${key}&code=${code}
         invitationUrl: https://account.example.com/i/${code}
     smtp:
-      host: smtp # change this if you want to use your own SMTP server
+      # Default: smtp (for CI/demo environments with demo-smtp chart)
+      # Production: Change to your actual SMTP server hostname
+      host: smtp
       port: 25        # change this
       connType: plain # change this. Possible values: plain|ssl|tls
 #    proxy:
@@ -127,12 +135,15 @@ cannon:
   # For demo mode only, we don't need to keep websocket connections open on chart upgrades
   drainTimeout: 10
   config:
-    cassandra: 
+    rabbitmq:
+      # Default: rabbitmq-external (for production external RabbitMQ VMs)
+      # CI/Demo: Change to rabbitmq when using rabbitmq chart from databases-ephemeral
+      host: rabbitmq
+    cassandra:
       host: cassandra-ephemeral
   metrics:
     serviceMonitor:
       enabled: true
-
 cargohold:
   replicaCount: 1
 #  image:
@@ -142,8 +153,9 @@ cargohold:
       # change if using real AWS
       region: "eu-west-1"
       s3Bucket: assets
-      s3Endpoint: http://fake-aws-s3:9000
+      s3Endpoint: http://minio-external:9000
       s3DownloadEndpoint: https://assets.example.com
+    enableFederation: false # Enable to use federation
     settings:
       federationDomain: example.com # change this
 #    proxy:
@@ -155,7 +167,6 @@ cargohold:
   metrics:
     serviceMonitor:
       enabled: true
-
 galley:
   replicaCount: 1
 #  image:
@@ -164,12 +175,18 @@ galley:
     cassandra:
       host: cassandra-ephemeral
     rabbitmq:
-      host: rabbitmq # name of the rabbitmq service, either `rabbitmq-external` or `rabbitmq`
+      # Default: rabbitmq-external (for production external RabbitMQ VMs)
+      # CI/Demo: Change to rabbitmq when using rabbitmq chart from databases-ephemeral
+      host: rabbitmq
     postgresql:
       host: postgresql # DNS name without protocol
       port: "5432"
       user: wire-server
       dbname: wire-server
+    # Explicitly set postgresMigration to cassandra for fresh deployments.
+    # This controls whether galley reads conversations from Cassandra or PostgreSQL.
+    postgresMigration:
+      conversation: cassandra
     enableFederation: false # Enable to use federation
     settings:
       # prefix URI used when inviting users to a conversation by link
@@ -177,7 +194,33 @@ galley:
       federationDomain: example.com # change this
       # see #RefConfigOptions in `/docs/reference` (https://github.com/wireapp/wire-server/)
       featureFlags:
+        mls: # Keep disabled unless MLS is explicitly configured
+          defaults:
+            status: disabled
+            config:
+              protocolToggleUsers: []
+              defaultProtocol: mls
+              allowedCipherSuites: [2]
+              defaultCipherSuite: 2
+              supportedProtocols: [proteus, mls]
+            lockStatus: unlocked
+        mlsMigration: # Keep disabled unless MLS migration is explicitly configured
+          defaults:
+            status: disabled
+            config:
+              startTime: null
+              finalizeRegardlessAfter: null
+              usersThreshold: 100
+              clientsThreshold: 100
+            lockStatus: unlocked
         sso: disabled-by-default
+        # channels: # Uncomment to enable channels by default for all newly created teams
+        #   defaults:
+        #     status: enabled
+        #     config:
+        #       allowed_to_create_channels: team-members
+        #       allowed_to_open_channels: team-members
+        #     lockStatus: unlocked
         # NOTE: Change this to "disabled-by-default" for legalhold support
         # legalhold: disabled-by-default
         legalhold: disabled-permanently
@@ -193,12 +236,17 @@ galley:
   metrics:
     serviceMonitor:
       enabled: true
-
 gundeck:
   replicaCount: 1
 #  image:
 #    tag: some-tag (only override if you want a newer/different version than what is in the chart)
   config:
+    redis:
+      host: databases-ephemeral-redis-ephemeral # Updated hostname for redis-ephemeral chart
+    rabbitmq:
+      # Default: rabbitmq-external (for production external RabbitMQ VMs)
+      # CI/Demo: Change to rabbitmq when using rabbitmq chart from databases-ephemeral
+      host: rabbitmq
     cassandra:
       host: cassandra-ephemeral
     aws:
@@ -218,7 +266,6 @@ gundeck:
   metrics:
     serviceMonitor:
       enabled: true
-
 nginz:
   replicaCount: 1
   config:
@@ -281,19 +328,51 @@ spar:
       enabled: true
 
 # Only needed when legalhold is enabled
-#legalhold:
-#  host: "legalhold.example.com"
-#  wireApiHost: "https://nginz-https.example.com"
-
+legalhold:
+  host: "legalhold.example.com"
+  wireApiHost: "https://nginz-https.example.com"
+  metrics:
+    serviceMonitor:
+      enabled: true
 # Only needed when federation is enabled
-#federator:
-#  tls:
-#    useSharedFederatorSecret: true
-
+federator:
+  # config:
+  #   optSettings:
+  #     federationStrategy:
+  #       allowedDomains:
+  #         - example.com
+  tls:
+    useSharedFederatorSecret: true
+  # remoteCAContents: | # Uncomment and place the federating backends root CA certificates in chain (if there are multiple)
+  metrics:
+    serviceMonitor:
+      enabled: true
 background-worker:
   config:
+    federationDomain: example.com
+    # logLevel: Debug
+    rabbitmq:
+      # Default: rabbitmq-external (for production external RabbitMQ VMs)
+      # CI/Demo: Change to rabbitmq when using rabbitmq chart from databases-ephemeral
+      host: rabbitmq
     cassandra:
       host: cassandra-ephemeral
+    cassandraGalley:
+      host: cassandra-ephemeral
+    cassandraBrig:
+      host: cassandra-ephemeral
+    postgresql:
+      host: postgresql # DNS name without protocol
+      port: "5432"
+      user: wire-server
+      dbname: wire-server
+    # IMPORTANT: At Chart 5.25.0, the background-worker Helm chart incorrectly defaults
+    # postgresMigration.conversation to "postgresql" instead of "cassandra".
+    # This MUST be explicitly set to "cassandra" unless you have already migrated
+    # conversations to PostgreSQL. Without this override, User Group to Channel sync
+    # jobs will silently skip member synchronization.
+    postgresMigration:
+      conversation: cassandra
     # Enable for federation
     enableFederation: false
   metrics:
