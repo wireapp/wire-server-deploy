@@ -303,4 +303,4 @@
 
 - name: Configure nftables
   import_playbook: ./wiab-staging-nftables.yaml
-  tags: nftables
+  tags: [never, nftables]
