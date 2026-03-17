@@ -67,7 +67,9 @@ table ip nat {
   chain POSTROUTING {
     type nat hook postrouting priority 100;
     oifname != docker0 ip saddr 172.17.0.0/16 counter masquerade
+{% if not (private_deployment | default(false) | bool) %}
     oifname $INF_WAN counter masquerade comment "{{ wire_comment }} masquerade outgoing traffic"
+{% endif %}
   }
   chain DOCKER {
     iifname docker0 counter return

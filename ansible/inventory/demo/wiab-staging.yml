@@ -7,3 +7,5 @@ wiab-staging:
       ansible_ssh_private_key_file: "~/.ssh/id_ed25519"
   vars:
     artifact_hash: 2200257f7a528f3a8157e8878fc7ee1c945594d1
+    # it will disable internet access to VMs created on the private network
+    private_deployment: true
