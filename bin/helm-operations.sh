@@ -5,7 +5,7 @@ set -Eeo pipefail
 # Read values from environment variables with defaults
 BASE_DIR="${BASE_DIR:-/wire-server-deploy}"
 TARGET_SYSTEM="${TARGET_SYSTEM:-example.com}"
-CERT_MASTER_EMAIL="certmaster@${CERT_MASTER_EMAIL}:-certmaster@${TARGET_SYSTEM}"
+CERT_MASTER_EMAIL="${CERT_MASTER_EMAIL:-certmaster@example.com}"
 
 # DEPLOY_CERT_MANAGER env variable is used to decide if cert_manager and nginx-ingress-services charts should get deployed
 # default is set to TRUE to deploy it unless changed
