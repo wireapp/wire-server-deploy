@@ -57,7 +57,6 @@ wiab:
       - databases-ephemeral
       - postgresql
       - reaper
-      - smallstep-accomp
       - wire-server
       - webapp
       - account-pages

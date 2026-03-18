@@ -194,7 +194,7 @@ d sh -c 'TARGET_SYSTEM="example.dev" CERT_MASTER_EMAIL="certmaster@example.dev" 
 
 **Charts deployed by the script:**
 - External datastores and helpers: `cassandra-external`, `elasticsearch-external`, `minio-external`, `rabbitmq-external`,`postgresql-external`, `databases-ephemeral`, `reaper`, `fake-aws`, `demo-smtp`.
-- Wire services: `wire-server`, `webapp`, `account-pages`, `team-settings`, `smallstep-accomp`.
+- Wire services: `wire-server`, `webapp`, `account-pages`, `team-settings`.
 - Ingress and certificates: `ingress-nginx-controller`, `cert-manager`, `nginx-ingress-services`.
 - Calling services: `sftd`, `coturn`.
 
@@ -424,7 +424,6 @@ For additional background on when hairpin NAT is required and how it relates to 
 - **[Deploying webapp](docs_ubuntu_22.04.md#deploying-webapp)**: Read more about webapp deployment and domain configuration.
 - **[Deploying team-settings](docs_ubuntu_22.04.md#deploying-team-settings)**: Read more about team settings services.
 - **[Deploying account-pages](docs_ubuntu_22.04.md#deploying-account-pages)**: Read more about account management services.
-- **[Deploying smallstep-accomp](docs_ubuntu_22.04.md#deploying-smallstep-accomp)**: Read more about the ACME companion.
 - **[Enabling emails for wire](smtp.md)**: Read more about SMTP options for onboarding email delivery and relay setup.
 - **[Deploy ingress-nginx-controller](docs_ubuntu_22.04.md#deploy-ingress-nginx-controller)**: Read more about ingress configuration and traffic forwarding requirements.
 - **[Acquiring / Deploying SSL Certificates](docs_ubuntu_22.04.md#acquiring--deploying-ssl-certificates)**: Read more about TLS options (Bring Your Own or cert-manager) and certificate requirements.
