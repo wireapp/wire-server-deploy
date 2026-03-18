@@ -13,7 +13,7 @@
 - This solution helps developers understand Wire's infrastructure requirements and test deployment processes
 
 **Resource Requirements:**
-- One physical machine with hypervisor support:
+- One physical machine (aka `adminhost`) with hypervisor support:
   - **Memory:** 55 GiB RAM
   - **Compute:** 29 vCPUs  
   - **Storage:** 850 GB disk space (thin-provisioned)
@@ -117,7 +117,7 @@ cd wire-server-deploy
 **Step 2: Configure your Ansible inventory for your physical machine**
 
 A sample inventory is available at [ansible/inventory/demo/wiab-staging.yml](https://github.com/wireapp/wire-server-deploy/blob/master/ansible/inventory/demo/wiab-staging.yml).
-Replace example.com with your physical machine (adminhost) address where KVM is available and adjust other variables like `ansible_user` and `ansible_ssh_private_key_file`. The SSH user for ansible `ansible_user` should have password-less `sudo` access. The physical host should be running Ubuntu 22.04.
+Replace example.com with your physical machine (`adminhost`) address where KVM is available and adjust other variables like `ansible_user` and `ansible_ssh_private_key_file`. The SSH user for ansible `ansible_user` should have password-less `sudo` access. The adminhost should be running Ubuntu 22.04. From here on, we would refer the physical machine as `adminhost`.
 
 The `private_deployment` variable determines whether the VMs created below will have internet access. When set to `true` (default value), no internet access is available to VMs. Check [Internet access for VMs](#internet-access-for-vms) to understand more about it.
 
@@ -131,9 +131,11 @@ ansible-playbook -i ansible/inventory/demo/wiab-staging.yml ansible/wiab-staging
 
 ## Ensure secondary ansible inventory for VMs
 
-Now you should have 7 VMs running on your physical machine. If you have used the ansible playbook, you should also have a directory `/home/ansible_user/wire-server-deploy` with all resources required for further deployment. If you didn't use the above playbook, download the `wire-server-deploy` artifact shared by Wire support and unarchieve (tar tgz) it.
+Now you should have 7 VMs running on your `adminhost`. If you have used the ansible playbook, you should also have a directory `/home/ansible_user/wire-server-deploy` with all resources required for further deployment. If you didn't use the above playbook, download the `wire-server-deploy` artifact shared by Wire support and unarchieve (tar tgz) it.
 
 Ensure the inventory file `ansible/inventory/offline/inventory.yml` in the directory `/home/ansible_user/wire-server-deploy` contains values corresponding to your VMs. If you have already used the [Ansible playbook above](#getting-started-with-ansible-playbook) to set up VMs, this file should have been prepared for you.
+
+The purpose of secondary ansible inventory is to interact only with the VMs. All the operations concerning the secondary inventory are meant to install datastores and k8s services.
 
 ## Next steps
 
@@ -143,16 +145,31 @@ Since the inventory is ready, please continue with the following steps:
 
 ### Environment Setup
 
-- **[Making tooling available in your environment](docs_ubuntu_22.04.md#making-tooling-available-in-your-environment)**
-  - Source the `bin/offline-env.sh` shell script by running `source bin/offline-env.sh` to set up a `d` alias that runs commands inside a Docker container with all necessary tools for offline deployment.
-
 - **[Generating secrets](docs_ubuntu_22.04.md#generating-secrets)**
-  - Run `./bin/offline-secrets.sh` to generate fresh secrets for Minio and coturn services. This creates two secret files: `ansible/inventory/group_vars/all/secrets.yaml` and `values/wire-server/secrets.yaml`.
+  - Run `bin/offline-secrets.sh` to generate fresh secrets for Minio and coturn services. It uses the docker container images shipped inside the `wire-server-deploy` directory.
+    ```bash
+    ./bin/offline-secrets.sh
+    ```
+  - This creates following secret files:
+    - `ansible/inventory/group_vars/all/secrets.yaml`
+    - `values/wire-server/secrets.yaml`
+    - `values/coturn/prod-secrets.example.yaml`
+
+- **[Making tooling available in your environment](docs_ubuntu_22.04.md#making-tooling-available-in-your-environment)**
+  - Source the `bin/offline-env.sh` shell script by running following command to set up a `d` alias that runs commands inside a Docker container with all necessary tools for offline deployment.
+  ```bash
+  source bin/offline-env.sh
+  ```
+  - You can always use this alias `d` later to interact with the ansible playbooks, k8s cluster and the helm charts.
+  - The docker container mounts everything here from the `wire-server-deploy` directory, hence this acts an entry point for all the future interactions with ansible, k8s and helm charts.
 
 ### Kubernetes & Data Services Deployment
 
 - **[Deploying Kubernetes and stateful services](docs_ubuntu_22.04.md#deploying-kubernetes-and-stateful-services)**
-  - Run `d ./bin/offline-cluster.sh` to deploy Kubernetes and stateful services (Cassandra, PostgreSQL, Elasticsearch, Minio, RabbitMQ). This script deploys all infrastructure needed for Wire backend operations.
+  ```bash
+  d ./bin/offline-cluster.sh
+  ```
+  - Run the above command to deploy Kubernetes and stateful services (Cassandra, PostgreSQL, Elasticsearch, Minio, RabbitMQ). This script deploys all infrastructure needed for Wire backend operations.
 
 ### Helm Operations to install wire services and supporting helm charts
 
@@ -189,13 +206,13 @@ d sh -c 'TARGET_SYSTEM="example.dev" CERT_MASTER_EMAIL="certmaster@example.dev" 
 
 ## Network Traffic Configuration
 
-### Bring traffic from the physical machine to Wire services in the k8s cluster
+### Bring traffic from the adminhost to Wire services in the k8s cluster
 
-Our Wire services are ready to receive traffic but we must enable network access from the physical machine network interface to the k8s pods running in the virtual network. We can acheive it by setting up [nftables](https://documentation.ubuntu.com/security/security-features/network/firewall/nftables/) rules on the physical machine. When using any other type of firewall tools, please ensure following network configuration is achieved.
+Our Wire services are ready to receive traffic but we must enable network access from the `adminhost` network interface to the k8s pods running in the virtual network. We can acheive it by setting up [nftables](https://documentation.ubuntu.com/security/security-features/network/firewall/nftables/) rules on the `adminhost`. When using any other type of firewall tools, please ensure following network configuration is achieved.
 
 **Required Network Configuration:**
 
-The physical machine (adminhost) must forward traffic from external clients to the Kubernetes cluster running Wire services. This involves:
+The `adminhost` must forward traffic from external clients to the Kubernetes cluster running Wire services. This involves:
 
 1. **HTTP/HTTPS Traffic (Ingress)** – Forward external web traffic to Kubernetes ingress with load balancing across nodes
   - Port 80 (TCP, from any external source to adminhost WAN IP) → DNAT to any Kubernetes node on port 31772 → HTTP ingress
@@ -272,22 +289,23 @@ The inventory file `inventory.yml` should define the following variables:
 wiab-staging:
   hosts:
     deploy_node:
-      # this should be the physical machine
+      # this should be the adminhost
       ansible_host: example.com
       ansible_ssh_common_args: '-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ServerAliveInterval=60 -o ServerAliveCountMax=3 -o TCPKeepAlive=yes'
       ansible_user: 'demo'
       ansible_ssh_private_key_file: "~/.ssh/id_ed25519"
   vars:
     # Kubernetes node IPs
-    kubenode1_ip=192.168.122.11
-    kubenode2_ip=192.168.122.12
-    kubenode3_ip=192.168.122.13
+    kubenode1_ip: 192.168.122.11
+    kubenode2_ip: 192.168.122.12
+    kubenode3_ip: 192.168.122.13
     # Calling services node(kubenode3)
-    calling_node_ip=192.168.122.13
+    calling_node_ip: 192.168.122.13
     # Host WAN interface name
-    inf_wan=enp41s0
+    inf_wan: enp41s0
+    wire_comment: "wiab-stag"
     # it will disable internet access to VMs created on the private network
-    private_deployment=true
+    private_deployment: true
 ```
 
 To implement the nftables rules, now execute the following command:
@@ -303,7 +321,7 @@ When cert-manager performs HTTP-01 self-checks inside the cluster, traffic can h
 
 > **Note**: Using Let's encrypt with `cert-manager` requires internet access eg. `acme-v02.api.letsencrypt.org` to issue TLS certs and if you have chosen to keep the network private i.e. `private_deployment=true` for the VMs when applying nftables rules aka no internet access to VMs, then we need to make a temporary exception for this.
 >
-> To add a nftables masquerading rule for all outgoing traffic run the following command:
+> To add a nftables masquerading rule for all outgoing traffic run the following command on the `adminhost` or make a similar change in your firewall:
 >
 > ```bash
 >   # Host WAN interface name
@@ -324,15 +342,25 @@ In NAT/bridge setups (for example, using `virbr0` on the host):
 Before changing anything, first verify whether certificate issuance is actually failing:
 
 1. Check whether certificates are successfully issued:
-   ```bash
-   d kubectl get certificates
-   ```
-2. If certificates are not in `Ready=True` state, inspect cert-manager logs for HTTP-01 self-check or timeout errors:
-   ```bash
-   d kubectl logs -n cert-manager-ns <cert-manager-pod-id>
-   ```
+  ```bash
+  d kubectl get certificates
+  ```
+2. Check if k8s pods can access to its own domain:
+  ```bash
+  # Replace <your-domain> below. To find the aws-sns pod id, run the command:
+  # d kubectl get pods -l 'app=fake-aws-sns'
+  d kubectl exec -ti fake-aws-sns-<pod-id> -- sh -c 'curl --connect-timeout 10 -v webapp.<your-domain>'
+  ```
+3. If certificates are not in `Ready=True` state, inspect cert-manager logs for HTTP-01 self-check or timeout errors:
+  ```bash
+  # To find the <cert-manager-pod-id>, run the following command:
+  # d kubectl get pods -n cert-manager-ns -l 'app=cert-manager'
+  d kubectl logs -n cert-manager-ns <cert-manager-pod-id>
+  ```
 
 If you observe HTTP-01 challenge timeouts or self-check failures in a NAT/bridge environment, hairpin SNAT and relaxed reverse-path filtering handling may be required. One possible approach is:
+
+> **Note:** All `nft` and `sysctl` commands should run on the adminhost.
 
 - Relax reverse-path filtering to loose mode to allow asymmetric flows:
   ```bash
