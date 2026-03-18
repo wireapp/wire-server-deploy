@@ -117,7 +117,7 @@ cd wire-server-deploy
 **Step 2: Configure your Ansible inventory for your physical machine**
 
 A sample inventory is available at [ansible/inventory/demo/wiab-staging.yml](https://github.com/wireapp/wire-server-deploy/blob/master/ansible/inventory/demo/wiab-staging.yml).
-Replace example.com with the address of your physical machine (`adminhost`) where KVM is available. Make sure you set `ansible_user` and `ansible_ssh_private_key_file`. For `ansible_user`, The SSH user must have password-less `sudo` access. The adminhost must be running Ubuntu 22.04. From here on, we will refer the physical machine as `adminhost`.
+Replace example.com with your physical machine (`adminhost`) address where KVM is available and adjust other variables like `ansible_user` and `ansible_ssh_private_key_file`. The SSH user for ansible `ansible_user` should have password-less `sudo` access. The adminhost should be running Ubuntu 22.04. From here on, we would refer the physical machine as `adminhost`.
 
 The `private_deployment` variable determines whether the VMs created below will have internet access. When set to `true` (default value), no internet access is available to VMs. Check [Internet access for VMs](#internet-access-for-vms) to understand more about it.
 
@@ -321,7 +321,7 @@ When cert-manager performs HTTP-01 self-checks inside the cluster, traffic can h
 
 > **Note**: Using Let's encrypt with `cert-manager` requires internet access ([to at least `acme-v02.api.letsencrypt.org`](https://letsencrypt.org/docs/acme-protocol-updates/)) to issue TLS certs. If you have chosen to keep the network private i.e. `private_deployment=true` for the VMs when applying nftables rules aka no internet access to VMs, then we need to make a temporary exception for this.
 >
-> To add a nftables masquerading rule for all outgoing traffic from your Wire environment, run the following command on the `adminhost`:
+> To add a nftables masquerading rule for all outgoing traffic run the following command on the `adminhost` or make a similar change in your firewall:
 >
 > ```bash
 >   # Host WAN interface name
@@ -359,6 +359,8 @@ Before changing anything, first verify whether certificate issuance is actually 
   ```
 
 If you observe HTTP-01 challenge timeouts or self-check failures in a NAT/bridge environment, hairpin SNAT and relaxed reverse-path filtering handling may be required. One possible approach is by making following changes to the adminhost:
+
+> **Note:** All `nft` and `sysctl` commands should run on the adminhost.
 
 - Relax reverse-path filtering to loose mode to allow asymmetric flows:
   ```bash
