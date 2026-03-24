@@ -71,7 +71,7 @@ In most cases, Wire Server components do not require internet access, except in 
 
 ## WIAB staging ansible playbook
 
-The ansible playbook will perform the following operations for you and it expects the access to internet on the target system to be available to be able to download/install packages:
+The WIAB-staging ansible playbooks require internet access to be available on the target machine. Assuming it is available, these playbooks will perform the following steps automatically:
 
 **System Setup & Networking**:
   - Updates all system packages and installs required tools (git, curl, docker, qemu, libvirt, yq, etc.)
@@ -117,7 +117,7 @@ cd wire-server-deploy
 **Step 2: Configure your Ansible inventory for your physical machine**
 
 A sample inventory is available at [ansible/inventory/demo/wiab-staging.yml](https://github.com/wireapp/wire-server-deploy/blob/master/ansible/inventory/demo/wiab-staging.yml).
-Replace example.com with your physical machine (`adminhost`) address where KVM is available and adjust other variables like `ansible_user` and `ansible_ssh_private_key_file`. The SSH user for ansible `ansible_user` should have password-less `sudo` access. The adminhost should be running Ubuntu 22.04. From here on, we would refer the physical machine as `adminhost`.
+Replace example.com with the address of your physical machine (`adminhost`) where KVM is available. Make sure you set `ansible_user` and `ansible_ssh_private_key_file`. For `ansible_user`, The SSH user must have password-less `sudo` access. The adminhost must be running Ubuntu 22.04. From here on, we will refer the physical machine as `adminhost`.
 
 The `private_deployment` variable determines whether the VMs created below will have internet access. When set to `true` (default value), no internet access is available to VMs. Check [Internet access for VMs](#internet-access-for-vms) to understand more about it.
 
@@ -131,7 +131,7 @@ ansible-playbook -i ansible/inventory/demo/wiab-staging.yml ansible/wiab-staging
 
 ## Ensure secondary ansible inventory for VMs
 
-Now you should have 7 VMs running on your `adminhost`. If you have used the ansible playbook, you should also have a directory `/home/ansible_user/wire-server-deploy` with all resources required for further deployment. If you didn't use the above playbook, download the `wire-server-deploy` artifact shared by Wire support and unarchieve (tar tgz) it.
+Now you should have 7 VMs running on your `adminhost`. If you have used the ansible playbook, you should also have a directory `/home/ansible_user/wire-server-deploy` with all resources required for further deployment. If you didn't use the above playbook, download the `wire-server-deploy` artifact shared by Wire support and extract it with tar.
 
 Ensure the inventory file `ansible/inventory/offline/inventory.yml` in the directory `/home/ansible_user/wire-server-deploy` contains values corresponding to your VMs. If you have already used the [Ansible playbook above](#getting-started-with-ansible-playbook) to set up VMs, this file should have been prepared for you.
 
@@ -275,9 +275,9 @@ AdminHost-.->|Request TLS certificate| LetsEncrypt
 
 **Implementation:**
 
-The nftables rules are detailed in [wiab_server_nftables.conf.j2](https://github.com/wireapp/wire-server-deploy/blob/master/ansible/files/wiab_server_nftables.conf.j2) as the configuration template. Please ensure no other firewall services like `ufw` or `iptables` are configured on the node before continuing.
+The nftables rules are detailed in [wiab_server_nftables.conf.j2](https://github.com/wireapp/wire-server-deploy/blob/master/ansible/files/wiab_server_nftables.conf.j2). Please ensure no other firewall services like `ufw` or `iptables` are configured on the node before continuing.
 
-If you have already used the `wiab-staging-provision.yml` ansible playbook to create the VMs, then you can apply these rules using the sme playbook (with the tag `nftables`) against your adminhost, by following:
+If you have already used the `wiab-staging-provision.yml` ansible playbook to create the VMs, then you can apply these rules using the same playbook (with the tag `nftables`) against your adminhost, by following:
 
 ```bash
 ansible-playbook -i ansible/inventory/demo/wiab-staging.yml ansible/wiab-staging-provision.yml --tags nftables
@@ -308,7 +308,7 @@ wiab-staging:
     private_deployment: true
 ```
 
-To implement the nftables rules, now execute the following command:
+To implement the nftables rules, execute the following command:
 ```bash
 ansible-playbook -i inventory.yml wire-server-deploy/ansible/wiab-staging-nftables.yaml
 ```
@@ -321,7 +321,7 @@ When cert-manager performs HTTP-01 self-checks inside the cluster, traffic can h
 
 > **Note**: Using Let's encrypt with `cert-manager` requires internet access eg. `acme-v02.api.letsencrypt.org` to issue TLS certs and if you have chosen to keep the network private i.e. `private_deployment=true` for the VMs when applying nftables rules aka no internet access to VMs, then we need to make a temporary exception for this.
 >
-> To add a nftables masquerading rule for all outgoing traffic run the following command on the `adminhost` or make a similar change in your firewall:
+> To add a nftables masquerading rule for all outgoing traffic from your Wire environment, run the following command on the `adminhost`:
 >
 > ```bash
 >   # Host WAN interface name
@@ -413,7 +413,7 @@ If you observe HTTP-01 challenge timeouts or self-check failures in a NAT/bridge
 >    xargs -r -I {} sudo nft delete rule ip nat POSTROUTING handle {}
 > ```
 >
-> If you are using a different implementation than nftables then please ensure temporary Internet access to VMs has been remved.
+> If you are using a different implementation than nftables then please ensure temporary Internet access to VMs has been removed.
 
 For additional background on when hairpin NAT is required and how it relates to WIAB Dev and WIAB Staging, see [Hairpin networking for WIAB Dev and WIAB Staging](tls-certificates.md#hairpin-networking-for-wiab-dev-and-wiab-staging).
 
