@@ -1,6 +1,6 @@
 # Scope
 
-**Wire in a Box (WIAB) Staging** is a staging installation of Wire running on a single physical machine using KVM-based virtual machines. This setup replicates the multi-node production Wire architecture in a consolidated environment suitable for testing, evaluation, and learning about Wire's infrastructure—but **not for production use**.
+**Wire in a Box (WIAB) Staging** is an installation of Wire running on a single physical machine using KVM-based virtual machines. This setup replicates the multi-node production Wire architecture in a consolidated environment suitable for testing, evaluation, and learning about Wire's infrastructure—but **not for production use**. The main use of this package is to verify that automation inside and outside of the wire product functions in the fashion you expect, before you run said automation in production. This will not test your network environment, load based behaviors, or the interface between wire and it's calling services when using a DMZ'd network configuration.
 
 **Important:** This is a sandbox environment. Data from a staging installation cannot be migrated to production. WIAB Staging is designed for experimentation, validation, and understanding Wire's deployment model.
 
@@ -319,7 +319,7 @@ When cert-manager performs HTTP-01 self-checks inside the cluster, traffic can h
 
 - Pod → Node → host public IP → DNAT → Node → Ingress
 
-> **Note**: Using Let's encrypt with `cert-manager` requires internet access eg. `acme-v02.api.letsencrypt.org` to issue TLS certs and if you have chosen to keep the network private i.e. `private_deployment=true` for the VMs when applying nftables rules aka no internet access to VMs, then we need to make a temporary exception for this.
+> **Note**: Using Let's encrypt with `cert-manager` requires internet access ([to at least `acme-v02.api.letsencrypt.org`](https://letsencrypt.org/docs/acme-protocol-updates/)) to issue TLS certs. If you have chosen to keep the network private i.e. `private_deployment=true` for the VMs when applying nftables rules aka no internet access to VMs, then we need to make a temporary exception for this.
 >
 > To add a nftables masquerading rule for all outgoing traffic from your Wire environment, run the following command on the `adminhost`:
 >
@@ -358,9 +358,7 @@ Before changing anything, first verify whether certificate issuance is actually 
   d kubectl logs -n cert-manager-ns <cert-manager-pod-id>
   ```
 
-If you observe HTTP-01 challenge timeouts or self-check failures in a NAT/bridge environment, hairpin SNAT and relaxed reverse-path filtering handling may be required. One possible approach is:
-
-> **Note:** All `nft` and `sysctl` commands should run on the adminhost.
+If you observe HTTP-01 challenge timeouts or self-check failures in a NAT/bridge environment, hairpin SNAT and relaxed reverse-path filtering handling may be required. One possible approach is by making following changes to the adminhost:
 
 - Relax reverse-path filtering to loose mode to allow asymmetric flows:
   ```bash
