@@ -193,7 +193,7 @@ d sh -c 'TARGET_SYSTEM="example.dev" CERT_MASTER_EMAIL="certmaster@example.dev" 
 ```
 
 **Charts deployed by the script:**
-- External datastores and helpers: `cassandra-external`, `elasticsearch-external`, `minio-external`, `rabbitmq-external`,`postgresql-external`, `databases-ephemeral`, `reaper`, `fake-aws`, `demo-smtp`.
+- External datastores and helpers: `cassandra-external`, `elasticsearch-external`, `minio-external`, `rabbitmq-external`,`postgresql-external`, `databases-ephemeral`, `reaper`, `fake-aws`, `smtp`.
 - Wire services: `wire-server`, `webapp`, `account-pages`, `team-settings`.
 - Ingress and certificates: `ingress-nginx-controller`, `cert-manager`, `nginx-ingress-services`.
 - Calling services: `sftd`, `coturn`.
