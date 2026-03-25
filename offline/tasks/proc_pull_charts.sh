@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-set -euo pipefail
+set -exuo pipefail
 
 OUTPUT_DIR=""
 # Default exclude lists
@@ -94,5 +94,5 @@ pull_charts() {
   #fi
 }
 
-wire_build="https://github.com/wireapp/wire-builds/blob/2026-q1/build.json"
+wire_build="https://raw.githubusercontent.com/wireapp/wire-builds/refs/heads/2026-q1/build.json"
 wire_build_chart_release "$wire_build" | pull_charts
