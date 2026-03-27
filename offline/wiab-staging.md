@@ -127,7 +127,7 @@ Ensure the inventory file `ansible/inventory/offline/inventory.yml` in the direc
 
 Since the inventory is ready, please continue with the following steps:
 
-> **Note**: All next steps assume that the wire-server-deploy artifact has been downloaded on the `adminhost` (your physical machine) and extracted at `/home/ansible_user/wire-server-deploy`. All commands from here on will be issued from this directory on the `adminhost`, ssh on the node before proceeding.
+> **Note**: All next steps assume that the wire-server-deploy artifact has been downloaded on the `adminhost` (your physical machine) and extracted at `/home/ansible_user/wire-server-deploy`. All commands from here on will be issued from this directory on the `adminhost`. Make sure you SSH into the node before proceeding.
 
 ### Environment Setup
 
