@@ -17,7 +17,7 @@
   - **Memory:** 55 GiB RAM
   - **Compute:** 29 vCPUs  
   - **Storage:** 850 GB disk space (thin-provisioned)
-  - 7 VMs with [Ubuntu 22](https://releases.ubuntu.com/jammy/) as per [requried resources](#vm-provisioning)
+  - 7 VMs with [Ubuntu 22](https://releases.ubuntu.com/jammy/) as per [required resources](#vm-provisioning)
 - **DNS Records**: 
     - a way to create DNS records for your domain name (e.g. wire.example.com) 
     - Find a detailed explanation at [How to set up DNS records](https://docs.wire.com/latest/how-to/install/demo-wiab.html#dns-requirements)
@@ -208,7 +208,7 @@ d sh -c 'TARGET_SYSTEM="example.dev" CERT_MASTER_EMAIL="certmaster@example.dev" 
 
 ### Bring traffic from the adminhost to Wire services in the k8s cluster
 
-Our Wire services are ready to receive traffic but we must enable network access from the `adminhost` network interface to the k8s pods running in the virtual network. We can acheive it by setting up [nftables](https://documentation.ubuntu.com/security/security-features/network/firewall/nftables/) rules on the `adminhost`. When using any other type of firewall tools, please ensure following network configuration is achieved.
+Our Wire services are ready to receive traffic but we must enable network access from the `adminhost` network interface to the k8s pods running in the virtual network. We can achieve it by setting up [nftables](https://documentation.ubuntu.com/security/security-features/network/firewall/nftables/) rules on the `adminhost`. When using any other type of firewall tools, please ensure following network configuration is achieved.
 
 **Required Network Configuration:**
 
@@ -301,16 +301,16 @@ wiab-staging:
     kubenode3_ip: 192.168.122.13
     # Calling services node(kubenode3)
     calling_node_ip: 192.168.122.13
-    # Host WAN interface name
-    inf_wan: enp41s0
     wire_comment: "wiab-stag"
     # it will disable internet access to VMs created on the private network
     private_deployment: true
+    # the playbook will try to find the default interface i.e. INF_WAN from ansible_default_ipv4.interface
 ```
 
 To implement the nftables rules, execute the following command:
 ```bash
-ansible-playbook -i inventory.yml wire-server-deploy/ansible/wiab-staging-nftables.yaml
+# assuming the inventory.yml storead at wire-server-deploy and run command from the same directory
+ansible-playbook -i inventory.yml ansible/wiab-staging-nftables.yaml
 ```
 
 ### cert-manager behaviour in NAT / bridge environments
