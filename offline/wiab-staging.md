@@ -9,7 +9,7 @@
 **Architecture Overview:**
 - Multiple VMs (7) are deployed to simulate production infrastructure with separate roles (Kubernetes, data services, asset storage)
 - All VMs share the same physical node and storage, creating a single failure domain
-- [Calling services](https://docs.wire.com/latest/understand/overview.html#calling) will share the same k8s cluster as Wire services hence, all infrastructure will be DMZ (De-militarized zone).
+- [Calling services](https://docs.wire.com/latest/understand/overview.html#calling) are deployed in the same Kubernetes cluster as Wire services. This setup does not implement a separate DMZ, and all components share the same network boundary, reducing the level of isolation compared to a production deployment.
 - This solution helps developers understand Wire's infrastructure requirements and test deployment processes
 
 **Resource Requirements:**
@@ -17,19 +17,18 @@
   - **Memory:** 55 GiB RAM
   - **Compute:** 29 vCPUs  
   - **Storage:** 850 GB disk space (thin-provisioned)
-  - 7 VMs with [Ubuntu 22](https://releases.ubuntu.com/jammy/) as per [required resources](#vm-provisioning)
 - **DNS Records**: 
-    - a way to create DNS records for your domain name (e.g. wire.example.com) 
+    - A method to create DNS records for your domain name (e.g. wire.example.com)
     - Find a detailed explanation at [How to set up DNS records](https://docs.wire.com/latest/how-to/install/demo-wiab.html#dns-requirements)
 - **SSL/TLS certificates**:
-    - a way to create SSL/TLS certificates for your domain name (to allow connecting via https://)
+    - A method to create SSL/TLS certificates for your domain name (to allow connecting via https://)
     - To ease out the process of managing certs, we recommend using [Let's Encrypt](https://letsencrypt.org/getting-started/) & [cert-manager](https://cert-manager.io/docs/tutorials/acme/http-validation/)
 - **Network**: No interference from UFW or other system specific firewalls, and IP forwarding enabled between network cards. An IP address reachable for ssh and which can act as entry point for Wire traffic.
 - **Wire-server-deploy artifact**: A tar bundle containing all the required bash scripts, deb packages, ansible playbooks, helm charts and docker images to help with the installation. Reach out to [Wire support](https://support.wire.com/) to get access to the latest stable Wire artifact.
 
 ## VM Provisioning
 
-We would require 7 VMs as per the following details, you can choose to use your own hypervisor to manage the VMs or use our [Wiab staging ansible playbook](https://github.com/wireapp/wire-server-deploy/blob/master/ansible/wiab-staging-provision.yml) against your physical node to setup the VMs.
+Our deployment will be into 7 VMs with [Ubuntu 22](https://releases.ubuntu.com/jammy/), shown in the below VM Archetecture and Resource Allocation table, You can choose to use your own hypervisor to manage the VMs or use our [Wiab staging ansible playbook](https://github.com/wireapp/wire-server-deploy/blob/master/ansible/wiab-staging-provision.yml) against your physical node to setup the VMs.
 
 **VM Architecture and Resource Allocation:**
 
@@ -139,11 +138,19 @@ The purpose of secondary ansible inventory is to interact only with the VMs. All
 
 ## Next steps
 
-Since the inventory is ready, please continue with the following steps:
+Once the inventory is ready, please continue with the following steps:
 
 > **Note**: All next steps assume that the wire-server-deploy artifact has been downloaded on the `adminhost` (your physical machine) and extracted at `/home/ansible_user/wire-server-deploy`. All commands from here on will be issued from this directory on the `adminhost`. Make sure you SSH into the node before proceeding.
 
 ### Environment Setup
+
+- **[Making tooling available in your environment](docs_ubuntu_22.04.md#making-tooling-available-in-your-environment)**
+  - Source the `bin/offline-env.sh` shell script by running following command to set up a `d` alias that runs commands inside a Docker container with all necessary tools for offline deployment.
+  ```bash
+  source bin/offline-env.sh
+  ```
+  - You can always use this alias `d` later to interact with the ansible playbooks, k8s cluster and the helm charts.
+  - The docker container mounts everything here from the `wire-server-deploy` directory, hence this acts an entry point for all the future interactions with ansible, k8s and helm charts.
 
 - **[Generating secrets](docs_ubuntu_22.04.md#generating-secrets)**
   - Run `bin/offline-secrets.sh` to generate fresh secrets for Minio and coturn services. It uses the docker container images shipped inside the `wire-server-deploy` directory.
@@ -154,14 +161,6 @@ Since the inventory is ready, please continue with the following steps:
     - `ansible/inventory/group_vars/all/secrets.yaml`
     - `values/wire-server/secrets.yaml`
     - `values/coturn/prod-secrets.example.yaml`
-
-- **[Making tooling available in your environment](docs_ubuntu_22.04.md#making-tooling-available-in-your-environment)**
-  - Source the `bin/offline-env.sh` shell script by running following command to set up a `d` alias that runs commands inside a Docker container with all necessary tools for offline deployment.
-  ```bash
-  source bin/offline-env.sh
-  ```
-  - You can always use this alias `d` later to interact with the ansible playbooks, k8s cluster and the helm charts.
-  - The docker container mounts everything here from the `wire-server-deploy` directory, hence this acts an entry point for all the future interactions with ansible, k8s and helm charts.
 
 ### Kubernetes & Data Services Deployment
 
@@ -193,7 +192,7 @@ d sh -c 'TARGET_SYSTEM="example.dev" CERT_MASTER_EMAIL="certmaster@example.dev" 
 ```
 
 **Charts deployed by the script:**
-- External datastores and helpers: `cassandra-external`, `elasticsearch-external`, `minio-external`, `rabbitmq-external`,`postgresql-external`, `databases-ephemeral`, `reaper`, `fake-aws`, `smtp`.
+- External datastores and helpers: `cassandra-external`, `elasticsearch-external`, `postgresql-external`, `minio-external`, `rabbitmq-external`, `databases-ephemeral`, `reaper`, `fake-aws`, `smtp`.
 - Wire services: `wire-server`, `webapp`, `account-pages`, `team-settings`.
 - Ingress and certificates: `ingress-nginx-controller`, `cert-manager`, `nginx-ingress-services`.
 - Calling services: `sftd`, `coturn`.
