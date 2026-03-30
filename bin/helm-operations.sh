@@ -60,7 +60,7 @@ process_values() {
 
   ENV=$1
   TYPE=$2
-  charts=(fake-aws smtp rabbitmq databases-ephemeral reaper wire-server webapp account-pages team-settings ingress-nginx-controller nginx-ingress-services coturn sftd cert-manager)
+  charts=(fake-aws demo-smtp rabbitmq databases-ephemeral reaper wire-server webapp account-pages team-settings ingress-nginx-controller nginx-ingress-services coturn sftd cert-manager)
 
   if [[ "$ENV" != "prod" ]] || [[ -z "$TYPE" ]] ; then
     echo "Error: This function only supports prod deployments with TYPE as values or secrets. ENV must be 'prod', got: '$ENV' and '$TYPE'"
@@ -214,7 +214,7 @@ process_values "prod" "secrets"
 configure_values
 
 # deploying with external datastores, useful for prod setup
-deploy_charts cassandra-external elasticsearch-external minio-external fake-aws smtp rabbitmq-external databases-ephemeral reaper wire-server webapp account-pages team-settings ingress-nginx-controller
+deploy_charts cassandra-external elasticsearch-external minio-external fake-aws demo-smtp rabbitmq-external databases-ephemeral reaper wire-server webapp account-pages team-settings ingress-nginx-controller
 
 # deploying cert-manager only when the env var DEPLOY_CERT_MANAGER is set to TRUE 
 if [[ "$DEPLOY_CERT_MANAGER" == "TRUE" ]]; then 
