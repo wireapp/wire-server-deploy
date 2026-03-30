@@ -297,9 +297,8 @@
         kubenode2_ip: "{{ kubenode_ip_result.results[1].stdout }}"
         kubenode3_ip: "{{ kubenode_ip_result.results[2].stdout }}"
         wire_comment: "wiab-stag"
-
     tags: always
 
 - name: Configure nftables
   import_playbook: ./wiab-staging-nftables.yaml
-  tags: nftables
+  tags: [never, nftables]
