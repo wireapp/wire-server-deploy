@@ -5,6 +5,10 @@ OUTPUT_DIR=""
 # Default exclude list
 IMAGE_EXCLUDE_LIST=""
 
+# Comma-separated list of chart basenames to skip during image processing
+# Use this for upstream charts with untagged/latest images that can't be fixed
+HELM_CHART_SKIP_LIST="rust-sft, fluent-bit"
+
 # Default values type will expect to use prod values
 VALUES_TYPE="prod"
 
@@ -20,6 +24,9 @@ do
       ;;
     IMAGE_EXCLUDE_LIST=*)
       IMAGE_EXCLUDE_LIST="${arg#*=}"
+      ;;
+    HELM_CHART_SKIP_LIST=*)
+      HELM_CHART_SKIP_LIST="${arg#*=}"
       ;;
     *)
       echo "Unknown argument: $arg" >&2
@@ -46,6 +53,19 @@ echo "Excluding images matching the pattern: $EXCLUDE_PATTERN"
 # Get and dump required containers from Helm charts. Omit integration test
 # containers (e.g. `quay.io_wire_galley-integration_4.22.0`.)
 for chartPath in "${OUTPUT_DIR}"/charts/*; do
+  chartName=$(basename "$chartPath")
+  if [[ -n "$HELM_CHART_SKIP_LIST" ]]; then
+    IFS=',' read -ra skip_arr <<< "$HELM_CHART_SKIP_LIST"
+    skip=false
+    for skip_chart in "${skip_arr[@]}"; do
+      if [[ "$chartName" == "$skip_chart" ]]; then
+        echo "Skipping chart $chartName (in HELM_CHART_SKIP_LIST)" >&2
+        skip=true
+        break
+      fi
+    done
+    [[ "$skip" == true ]] && continue
+  fi
   echo "$chartPath"
 done | list-helm-containers VALUES_DIR="${OUTPUT_DIR}"/values HELM_IMAGE_TREE_FILE="$HELM_IMAGE_TREE_FILE" VALUES_TYPE="$VALUES_TYPE" | grep -v "\-integration:" > "${OUTPUT_DIR}"/images
 
