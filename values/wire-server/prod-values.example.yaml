@@ -191,6 +191,7 @@ galley:
     # This controls whether galley reads conversations/teamFeatures from Cassandra or PostgreSQL.
     postgresMigration:
       conversation: cassandra
+      conversationCodes: cassandra
       teamFeatures: cassandra
     enableFederation: false # Enable to use federation
     settings:
@@ -375,7 +376,11 @@ background-worker:
       size: 5 # Background worker has fewer connections to DB, so smaller pool size is fine
     postgresMigration:
       conversation: cassandra
+      conversationCodes: cassandra
       teamFeatures: cassandra
+    migrateConversations: false
+    migrateConversationCodes: false
+    migrateTeamFeatures: false
     # Enable for federation
     enableFederation: false
   metrics:
