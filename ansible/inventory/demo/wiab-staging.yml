@@ -6,4 +6,6 @@ wiab-staging:
       ansible_user: 'demo'
       ansible_ssh_private_key_file: "~/.ssh/id_ed25519"
   vars:
-    artifact_hash: deed80d356cbbc2274de3b125313dfa506a1034e
+    artifact_hash: 8cd7cf27c149f990a9bca54f196e21fc326cde04
+    # when enabled, disable WAN SNAT/masquerading for VMs on the private network
+    private_deployment: true
