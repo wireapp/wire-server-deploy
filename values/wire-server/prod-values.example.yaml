@@ -202,7 +202,7 @@ galley:
       featureFlags:
         mls: # Keep disabled unless MLS is explicitly configured
           defaults:
-            status: enabled
+            status: disabled
             config:
               protocolToggleUsers: []
               defaultProtocol: mls
@@ -212,7 +212,7 @@ galley:
             lockStatus: unlocked
         mlsMigration: # Keep disabled unless MLS migration is explicitly configured
           defaults:
-            status: enabled
+            status: disabled
             config:
               startTime: null
               finalizeRegardlessAfter: null

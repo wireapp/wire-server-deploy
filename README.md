@@ -92,9 +92,24 @@ This repository uses a Git commit [hook](./.git-hooks/commit-msg) to enforce the
 - *chore!: WPB-1234 drop support for k8s 1.16 - add a 'BREAKING CHANGE:' statement*
 
 #### Activation/Deactivation:
-The commit hook is optional and can be activated or deactivated using the `.envrc` script with direnv:
-```
+The commit hook is optional and can be activated using the `.envrc` script with direnv as:
+```bash
 wire-server-deploy$ direnv allow
 direnv: loading ~/projects/git/wire-server-deploy/.envrc
-Do you want to setup git commit hooks? (y/Y to continue):
+direnv: ([/usr/bin/direnv export zsh]) is taking a while to execute. Use CTRL-C to give up.
+/nix/store/bbh6750da4dmnbizgwzh5q2g5z6njd81-wire-server-deploy
+direnv: loading ~/projects/git/wire-server-deploy/.nix-env/.nix-env/.profile
+
+ Git Hooks has been configured in your current environment.
+ Read more about them here: https://github.com/wireapp/wire-server-deploy?tab=readme-ov-file#optional-git-commit-message-verification
+ If you don't want to use it, run the following command to unset it
+ git config --unset core.hooksPath
+
+direnv: export +LOCALHOST_PYTHON +NIX_PATH ~PATH
+```
+
+The `.git-hooks` get configured when the whole `.envrc` environment is allowed. Run the following command if hooks for commit message verification aren't required:
+
+```bash
+git config --unset core.hooksPath
 ```
