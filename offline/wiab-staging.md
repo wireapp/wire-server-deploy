@@ -120,7 +120,7 @@ cd wire-server-deploy
 A sample inventory is available at [ansible/inventory/demo/wiab-staging.yml](https://github.com/wireapp/wire-server-deploy/blob/master/ansible/inventory/demo/wiab-staging.yml).
 Replace example.com with your physical machine (`adminhost`) address where KVM is available and adjust other variables like `ansible_user` and `ansible_ssh_private_key_file`. The SSH user for ansible `ansible_user` should have password-less `sudo` access. The adminhost should be running Ubuntu 22.04. From here on, we would refer the physical machine as `adminhost`.
 
-The `private_deployment` variable determines whether the VMs created below will have internet access. When set to `true` (default value), no internet access is available to VMs. Check [Internet access for VMs](#internet-access-for-vms) to understand more about it.
+The `private_deployment` variable determines whether the VMs created below will have internet access. When set to `true` (default value), no internet access is available to VMs. Check [Network Traffic Configuration](#network-traffic-configuration) to understand more about it.
 
 **Step 3: Run the VM and network provision**
 
@@ -230,7 +230,8 @@ The `adminhost` must forward traffic from external clients to the Kubernetes clu
   - All other inbound traffic to adminhost → drop → default deny policy
 
 4. **Masquerading (If [Internet access for VMs](#internet-access-for-vms) is required)** – Enable outbound connectivity for VMs
-  - Any traffic from VM subnet leaving via WAN interface → SNAT/masquerade → ensures return traffic from internet. 
+  - Any traffic from VM subnet leaving via WAN interface → SNAT/masquerade → ensures return traffic from internet.
+  - Controlled by the variable `private_deployment`
 
 5. **Conditional Rules (cert-manager / HTTP-01 in NAT setups)** – Temporary adjustments for certificate validation
   - DNAT hairpin traffic (VM → public IP → VM) → may require SNAT/masquerade on VM bridge → ensures return path during HTTP-01 self-checks
@@ -283,6 +284,9 @@ If you have already used the `wiab-staging-provision.yml` ansible playbook to cr
 ```bash
 ansible-playbook -i ansible/inventory/demo/wiab-staging.yml ansible/wiab-staging-provision.yml --tags nftables
 ```
+
+> **Note:** You can use this playbook to change the internet access to VMs by modifying the variable `private_deployment` and re-run the above playbook.
+
 Alternatively, if you have not used the `wiab-staging-provision.yml` ansible playbook to create the VMs but would like to configure nftables rules, you can invoke the ansible playbook [wiab-staging-nftables.yaml](https://github.com/wireapp/wire-server-deploy/blob/master/ansible/wiab-staging-nftables.yaml) against the physical node. The playbook is available in the directory `wire-server-deploy/ansible`.
 
 The inventory file `inventory.yml` should define the following variables:
