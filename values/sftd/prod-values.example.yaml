@@ -1,3 +1,5 @@
+# this value should be set to 3 when deployed in a full production DMZ manner
+# replicaCount = 1 is to support the simple wiab-staging solution
 replicaCount: 1
 # image:
 #   tag: some-tag # (only override if you want a newer/different version than what is in the chart)
@@ -7,6 +9,16 @@ tls:
   issuerRef:
     name: letsencrypt-http01
     kind: ClusterIssuer
+
+joinCall:
+# this value should be set to 3 when deployed in a full production DMZ manner
+# replicaCount = 1 is to support the simple wiab-staging solution
+  replicaCount: 1
+  image:
+    repository: docker.io/bitnamilegacy/nginx
+    pullPolicy: IfNotPresent
+    tag: "1.27.3-debian-12-r5"
+
 # Uncomment to enable SFT to SFT communication for federated calls
 # multiSFT:
 #   enabled: true
