@@ -61,7 +61,7 @@ Our deployment will be into 7 VMs with [Ubuntu 22](https://releases.ubuntu.com/j
 ### Internet access for VMs:
 
 In most cases, Wire Server components do not require internet access, except in the following situations:
-- **External email services** – If your users’ email servers are hosted on the public internet (for example, user@gmail.com etc).
+- **External email services** – If your users’ email providers are hosted on the public internet (for example, `user@gmail.com`). If outbound internet access is not allowed and no internal email service is available on your local network, email-based flows such as verification codes, invitations, and some login emails will not be delivered. In that case, you must retrieve the required codes from the logs instead. Read more at [I deployed demo-smtp and I want to skip email configuration and retrieve verification codes directly](https://docs.wire.com/latest/how-to/install/troubleshooting.html?h=smtp#i-deployed-demo-smtp-and-i-want-to-skip-email-configuration-and-retrieve-verification-codes-directly).
 - **Mobile push notifications (FCM/APNS)** – Required to enable notifications for Android and Apple mobile devices. Wire uses [AWS services](https://docs.wire.com/latest/how-to/install/infrastructure-configuration.html#enable-push-notifications-using-the-public-appstore-playstore-mobile-wire-clients) to relay notifications to Firebase Cloud Messaging (FCM) and Apple Push Notification Service (APNS).
 - **Third-party content previews** – If you want clients to display previews for services such as Giphy, Google, Spotify, or SoundCloud. Wire provides a proxy service for third-party content so clients do not communicate directly with these services, preventing exposure of IP addresses, cookies, or other metadata.
 - **Federation with other Wire servers** – Required if your deployment needs to federate with another Wire server hosted on the public internet.
@@ -320,9 +320,9 @@ When cert-manager performs HTTP-01 self-checks inside the cluster, traffic can h
 
 - Pod → Node → host public IP → DNAT → Node → Ingress
 
-> **Note**: Using Let's encrypt with `cert-manager` requires internet access ([to at least `acme-v02.api.letsencrypt.org`](https://letsencrypt.org/docs/acme-protocol-updates/)) to issue TLS certs. If you have chosen to keep the network private i.e. `private_deployment=true` for the VMs when applying nftables rules aka no internet access to VMs, then we need to make a temporary exception for this.
+> **Note**: Using Let's Encrypt with `cert-manager` requires internet access ([to at least `acme-v02.api.letsencrypt.org`](https://letsencrypt.org/docs/acme-protocol-updates/)) to issue TLS certificates. If you have chosen to keep the network private, that is `private_deployment=true` for the VMs when applying nftables rules, then you need to make a temporary exception for this traffic. The same outbound access will also be required later for certificate renewals (after 180 days).
 >
-> To add a nftables masquerading rule for all outgoing traffic run the following command on the `adminhost` or make a similar change in your firewall:
+> To temporarily provide outbound internet access from the VMs, add the following nftables masquerading rule on the `adminhost`. Replace `INF_WAN` with the WAN interface that should carry this traffic, or make an equivalent change in your firewall:
 >
 > ```bash
 >   # Host WAN interface name
@@ -402,7 +402,7 @@ If you observe HTTP-01 challenge timeouts or self-check failures in a NAT/bridge
     xargs -r -I {} sudo nft delete rule ip nat POSTROUTING handle {}
   ```
 
-> **Note**: If above you had made an exception to allow temporary internet access to VMs by adding a nftables rules, then this should be removed now.
+> **Note**: If you added an nftables rule above to allow temporary internet access for the VMs, remove it after certificate issuance is complete.
 >
 > To remove the nftables masquerading rule for all outgoing traffic run the following command:
 >
@@ -416,7 +416,7 @@ If you observe HTTP-01 challenge timeouts or self-check failures in a NAT/bridge
 >
 > If you are using a different implementation than nftables then please ensure temporary Internet access to VMs has been removed.
 
-For additional background on when hairpin NAT is required and how it relates to WIAB Dev and WIAB Staging, see [Hairpin networking for WIAB Dev and WIAB Staging](tls-certificates.md#hairpin-networking-for-wiab-dev-and-wiab-staging).
+> **Note**: If email delivery is not working, or if Android/iOS push notifications are still not working after you have configured the required AWS credentials, ensure the required outbound access is allowed as explained at [Internet access for VMs](#internet-access-for-vms).
 
 ## Further Reading
 
