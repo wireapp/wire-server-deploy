@@ -83,7 +83,7 @@
 
 [postgresql:vars]
 postgresql_network_interface = enp1s0
-# repmgr_node_config is defined in group_vars/postgresql/repmgr_node_config.yml
+# repmgr_node_config is defined in group_vars/postgresql/postgresql.yml
 
 [elasticsearch:vars]
 # elasticsearch_network_interface = enp1s0
@@ -98,7 +98,9 @@ postgresql_network_interface = enp1s0
 
 # Rabbitmq specific variables
 [rmq-cluster:vars]
-# host name here must match each node's actual hostname
+# host name here must match each node's actual hostname (short hostname, not FQDN)
+# e.g. if the node's FQDN is rabbitmq1.example.com, use: rabbitmq_cluster_master = rabbitmq1
+# Using FQDN here will cause rabbitmqctl join_cluster to fail with a :badarg error
 rabbitmq_cluster_master = rabbitmq1
 # rabbitmq_network_interface = enp1s0
 
