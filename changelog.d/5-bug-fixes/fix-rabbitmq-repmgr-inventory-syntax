@@ -1,0 +1,1 @@
+Fixed: rabbitmq_cluster_master and repmgr_node_config syntax errors in offline inventory 99-static
