@@ -9,7 +9,7 @@
 **Architecture Overview:**
 - Multiple VMs (7) are deployed to simulate production infrastructure with separate roles (Kubernetes, data services, asset storage)
 - All VMs share the same physical node and storage, creating a single failure domain
-- [Calling services](https://docs.wire.com/latest/understand/overview.html#calling) will share the same k8s cluster as Wire services hence, all infrastructure will be DMZ (De-militarized zone).
+- [Calling services](https://docs.wire.com/latest/understand/overview.html#calling) are deployed in the same Kubernetes cluster as Wire services. This setup does not implement a separate DMZ, and all components share the same network boundary, reducing the level of isolation compared to a production deployment.
 - This solution helps developers understand Wire's infrastructure requirements and test deployment processes
 
 **Resource Requirements:**
@@ -17,19 +17,18 @@
   - **Memory:** 55 GiB RAM
   - **Compute:** 29 vCPUs  
   - **Storage:** 850 GB disk space (thin-provisioned)
-  - 7 VMs with [Ubuntu 22](https://releases.ubuntu.com/jammy/) as per [required resources](#vm-provisioning)
 - **DNS Records**: 
-    - a way to create DNS records for your domain name (e.g. wire.example.com) 
+    - A method to create DNS records for your domain name (e.g. wire.example.com)
     - Find a detailed explanation at [How to set up DNS records](https://docs.wire.com/latest/how-to/install/demo-wiab.html#dns-requirements)
 - **SSL/TLS certificates**:
-    - a way to create SSL/TLS certificates for your domain name (to allow connecting via https://)
+    - A method to create SSL/TLS certificates for your domain name (to allow connecting via https://)
     - To ease out the process of managing certs, we recommend using [Let's Encrypt](https://letsencrypt.org/getting-started/) & [cert-manager](https://cert-manager.io/docs/tutorials/acme/http-validation/)
 - **Network**: No interference from UFW or other system specific firewalls, and IP forwarding enabled between network cards. An IP address reachable for ssh and which can act as entry point for Wire traffic.
 - **Wire-server-deploy artifact**: A tar bundle containing all the required bash scripts, deb packages, ansible playbooks, helm charts and docker images to help with the installation. Reach out to [Wire support](https://support.wire.com/) to get access to the latest stable Wire artifact.
 
 ## VM Provisioning
 
-We would require 7 VMs as per the following details, you can choose to use your own hypervisor to manage the VMs or use our [Wiab staging ansible playbook](https://github.com/wireapp/wire-server-deploy/blob/master/ansible/wiab-staging-provision.yml) against your physical node to setup the VMs.
+Our deployment will be into 7 VMs with [Ubuntu 22](https://releases.ubuntu.com/jammy/), shown in the below VM Archetecture and Resource Allocation table, You can choose to use your own hypervisor to manage the VMs or use our [Wiab staging ansible playbook](https://github.com/wireapp/wire-server-deploy/blob/master/ansible/wiab-staging-provision.yml) against your physical node to setup the VMs.
 
 **VM Architecture and Resource Allocation:**
 
@@ -117,7 +116,7 @@ cd wire-server-deploy
 **Step 2: Configure your Ansible inventory for your physical machine**
 
 A sample inventory is available at [ansible/inventory/demo/wiab-staging.yml](https://github.com/wireapp/wire-server-deploy/blob/master/ansible/inventory/demo/wiab-staging.yml).
-Replace example.com with the address of your physical machine (`adminhost`) where KVM is available. Make sure you set `ansible_user` and `ansible_ssh_private_key_file`. For `ansible_user`, The SSH user must have password-less `sudo` access. The adminhost must be running Ubuntu 22.04. From here on, we will refer the physical machine as `adminhost`.
+Replace example.com with your physical machine (`adminhost`) address where KVM is available and adjust other variables like `ansible_user` and `ansible_ssh_private_key_file`. The SSH user for ansible `ansible_user` should have password-less `sudo` access. The adminhost should be running Ubuntu 22.04. From here on, we would refer the physical machine as `adminhost`.
 
 The `private_deployment` variable determines whether the VMs created below will have internet access. When set to `true` (default value), no internet access is available to VMs. Check [Internet access for VMs](#internet-access-for-vms) to understand more about it.
 
@@ -139,11 +138,19 @@ The purpose of secondary ansible inventory is to interact only with the VMs. All
 
 ## Next steps
 
-Since the inventory is ready, please continue with the following steps:
+Once the inventory is ready, please continue with the following steps:
 
 > **Note**: All next steps assume that the wire-server-deploy artifact has been downloaded on the `adminhost` (your physical machine) and extracted at `/home/ansible_user/wire-server-deploy`. All commands from here on will be issued from this directory on the `adminhost`. Make sure you SSH into the node before proceeding.
 
 ### Environment Setup
+
+- **[Making tooling available in your environment](docs_ubuntu_22.04.md#making-tooling-available-in-your-environment)**
+  - Source the `bin/offline-env.sh` shell script by running following command to set up a `d` alias that runs commands inside a Docker container with all necessary tools for offline deployment.
+  ```bash
+  source bin/offline-env.sh
+  ```
+  - You can always use this alias `d` later to interact with the ansible playbooks, k8s cluster and the helm charts.
+  - The docker container mounts everything here from the `wire-server-deploy` directory, hence this acts an entry point for all the future interactions with ansible, k8s and helm charts.
 
 - **[Generating secrets](docs_ubuntu_22.04.md#generating-secrets)**
   - Run `bin/offline-secrets.sh` to generate fresh secrets for Minio and coturn services. It uses the docker container images shipped inside the `wire-server-deploy` directory.
@@ -154,14 +161,6 @@ Since the inventory is ready, please continue with the following steps:
     - `ansible/inventory/group_vars/all/secrets.yaml`
     - `values/wire-server/secrets.yaml`
     - `values/coturn/prod-secrets.example.yaml`
-
-- **[Making tooling available in your environment](docs_ubuntu_22.04.md#making-tooling-available-in-your-environment)**
-  - Source the `bin/offline-env.sh` shell script by running following command to set up a `d` alias that runs commands inside a Docker container with all necessary tools for offline deployment.
-  ```bash
-  source bin/offline-env.sh
-  ```
-  - You can always use this alias `d` later to interact with the ansible playbooks, k8s cluster and the helm charts.
-  - The docker container mounts everything here from the `wire-server-deploy` directory, hence this acts an entry point for all the future interactions with ansible, k8s and helm charts.
 
 ### Kubernetes & Data Services Deployment
 
@@ -193,8 +192,8 @@ d sh -c 'TARGET_SYSTEM="example.dev" CERT_MASTER_EMAIL="certmaster@example.dev" 
 ```
 
 **Charts deployed by the script:**
-- External datastores and helpers: `cassandra-external`, `elasticsearch-external`, `minio-external`, `rabbitmq-external`,`postgresql-external`, `databases-ephemeral`, `reaper`, `fake-aws`, `demo-smtp`.
-- Wire services: `wire-server`, `webapp`, `account-pages`, `team-settings`, `smallstep-accomp`.
+- External datastores and helpers: `cassandra-external`, `elasticsearch-external`, `postgresql-external`, `minio-external`, `rabbitmq-external`, `databases-ephemeral`, `reaper`, `fake-aws`, `smtp`.
+- Wire services: `wire-server`, `webapp`, `account-pages`, `team-settings`.
 - Ingress and certificates: `ingress-nginx-controller`, `cert-manager`, `nginx-ingress-services`.
 - Calling services: `sftd`, `coturn`.
 
@@ -321,7 +320,7 @@ When cert-manager performs HTTP-01 self-checks inside the cluster, traffic can h
 
 > **Note**: Using Let's encrypt with `cert-manager` requires internet access ([to at least `acme-v02.api.letsencrypt.org`](https://letsencrypt.org/docs/acme-protocol-updates/)) to issue TLS certs. If you have chosen to keep the network private i.e. `private_deployment=true` for the VMs when applying nftables rules aka no internet access to VMs, then we need to make a temporary exception for this.
 >
-> To add a nftables masquerading rule for all outgoing traffic from your Wire environment, run the following command on the `adminhost`:
+> To add a nftables masquerading rule for all outgoing traffic run the following command on the `adminhost` or make a similar change in your firewall:
 >
 > ```bash
 >   # Host WAN interface name
@@ -359,6 +358,8 @@ Before changing anything, first verify whether certificate issuance is actually 
   ```
 
 If you observe HTTP-01 challenge timeouts or self-check failures in a NAT/bridge environment, hairpin SNAT and relaxed reverse-path filtering handling may be required. One possible approach is by making following changes to the adminhost:
+
+> **Note:** All `nft` and `sysctl` commands should run on the adminhost.
 
 - Relax reverse-path filtering to loose mode to allow asymmetric flows:
   ```bash
@@ -422,7 +423,6 @@ For additional background on when hairpin NAT is required and how it relates to 
 - **[Deploying webapp](docs_ubuntu_22.04.md#deploying-webapp)**: Read more about webapp deployment and domain configuration.
 - **[Deploying team-settings](docs_ubuntu_22.04.md#deploying-team-settings)**: Read more about team settings services.
 - **[Deploying account-pages](docs_ubuntu_22.04.md#deploying-account-pages)**: Read more about account management services.
-- **[Deploying smallstep-accomp](docs_ubuntu_22.04.md#deploying-smallstep-accomp)**: Read more about the ACME companion.
 - **[Enabling emails for wire](smtp.md)**: Read more about SMTP options for onboarding email delivery and relay setup.
 - **[Deploy ingress-nginx-controller](docs_ubuntu_22.04.md#deploy-ingress-nginx-controller)**: Read more about ingress configuration and traffic forwarding requirements.
 - **[Acquiring / Deploying SSL Certificates](docs_ubuntu_22.04.md#acquiring--deploying-ssl-certificates)**: Read more about TLS options (Bring Your Own or cert-manager) and certificate requirements.
