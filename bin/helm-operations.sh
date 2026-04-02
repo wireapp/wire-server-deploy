@@ -11,6 +11,10 @@ CERT_MASTER_EMAIL="${CERT_MASTER_EMAIL:-certmaster@example.com}"
 # default is set to TRUE to deploy it unless changed
 DEPLOY_CERT_MANAGER="${DEPLOY_CERT_MANAGER:-TRUE}"
 
+# DEPLOY_CALLING_SERVICES env variable is used to decide if sftd and coturn should get deployed
+# default is set to TRUE to deploy them unless changed
+DEPLOY_CALLING_SERVICES="${DEPLOY_CALLING_SERVICES:-TRUE}"
+
 # DUMP_LOGS_ON_FAIL to dump logs on failure
 # it is false by default
 DUMP_LOGS_ON_FAIL="${DUMP_LOGS_ON_FAIL:-FALSE}"
@@ -19,9 +23,7 @@ DUMP_LOGS_ON_FAIL="${DUMP_LOGS_ON_FAIL:-FALSE}"
 # assuming it to be the public address used by clients to reach public Address 
 HOST_IP="${HOST_IP:-}"
 
-if [ -z "$HOST_IP" ]; then 
-HOST_IP=$(wget -qO- https://api.ipify.org)
-fi
+CALLING_NODE=""
 
 function dump_debug_logs {
   local exit_code=$?
@@ -32,12 +34,28 @@ function dump_debug_logs {
 }
 trap dump_debug_logs ERR
 
-# picking a node for calling traffic (3rd kube worker node)
-CALLING_NODE=$(kubectl get nodes --no-headers | tail -n 1 | awk '{print $1}')
-if [[ -z "$CALLING_NODE" ]]; then
-  echo "Error: could not determine the last kube worker node via kubectl"
-  exit 1
-fi
+configure_calling_environment() {
+
+  if [[ "$DEPLOY_CALLING_SERVICES" != "TRUE" ]]; then
+    return 0
+  fi
+
+  if [[ -z "$HOST_IP" ]]; then
+    HOST_IP=$(wget -qO- https://api.ipify.org)
+  fi
+
+  if [[ -z "$HOST_IP" ]]; then
+    echo "Error: could not determine HOST_IP automatically"
+    exit 1
+  fi
+
+  # picking a node for calling traffic (3rd kube worker node)
+  CALLING_NODE=$(kubectl get nodes --no-headers | tail -n 1 | awk '{print $1}')
+  if [[ -z "$CALLING_NODE" ]]; then
+    echo "Error: could not determine the last kube worker node via kubectl"
+    exit 1
+  fi
+}
 
 sync_pg_secrets() {
   echo "Retrieving PostgreSQL password from databases-ephemeral for wire-server deployment..."
@@ -60,7 +78,15 @@ process_values() {
 
   ENV=$1
   TYPE=$2
-  charts=(fake-aws demo-smtp rabbitmq databases-ephemeral reaper wire-server webapp account-pages team-settings ingress-nginx-controller nginx-ingress-services coturn sftd cert-manager)
+  charts=(fake-aws demo-smtp rabbitmq databases-ephemeral reaper wire-server webapp account-pages team-settings ingress-nginx-controller)
+
+  if [[ "$DEPLOY_CERT_MANAGER" == "TRUE" ]]; then
+    charts+=(nginx-ingress-services cert-manager)
+  fi
+
+  if [[ "$DEPLOY_CALLING_SERVICES" == "TRUE" ]]; then
+    charts+=(coturn sftd)
+  fi
 
   if [[ "$ENV" != "prod" ]] || [[ -z "$TYPE" ]] ; then
     echo "Error: This function only supports prod deployments with TYPE as values or secrets. ENV must be 'prod', got: '$ENV' and '$TYPE'"
@@ -92,41 +118,53 @@ configure_values() {
   TEMP_DIR=$(mktemp -d)
   trap 'rm -rf $TEMP_DIR' EXIT
 
-  # to find IP address of calling NODE
-  CALLING_NODE_IP=$(kubectl get node "$CALLING_NODE" -o jsonpath='{.status.addresses[?(@.type=="InternalIP")].address}')
-
   # Fixing the hosts with TARGET_SYSTEM and setting the turn server
   sed -e "s/example.com/$TARGET_SYSTEM/g" \
       "$BASE_DIR/values/wire-server/values.yaml" > "$TEMP_DIR/wire-server-values.yaml"
-
-  # fixing the turnStatic values
-  yq eval -i ".brig.turnStatic.v2 = [\"turn:$HOST_IP:3478\", \"turn:$HOST_IP:3478?transport=tcp\"]" "$TEMP_DIR/wire-server-values.yaml"
 
   # Fixing the hosts in webapp team-settings and account-pages charts
   for chart in webapp team-settings account-pages; do
     sed "s/example.com/$TARGET_SYSTEM/g" "$BASE_DIR/values/$chart/values.yaml" > "$TEMP_DIR/$chart-values.yaml"
   done
 
-  # Setting certManager and DNS records
-  sed -e 's/useCertManager: false/useCertManager: true/g' \
-    -e "/certmasterEmail:$/s/certmasterEmail:/certmasterEmail: $CERT_MASTER_EMAIL/" \
-    -e "s/example.com/$TARGET_SYSTEM/" \
-    "$BASE_DIR/values/nginx-ingress-services/values.yaml" > "$TEMP_DIR/nginx-ingress-services-values.yaml"
+  files=(wire-server-values.yaml webapp-values.yaml team-settings-values.yaml account-pages-values.yaml)
 
-  # Fixing SFTD hosts and setting the cert-manager to http01
-  sed -e "s/webapp.example.com/webapp.$TARGET_SYSTEM/" \
-      -e "s/sftd.example.com/sftd.$TARGET_SYSTEM/" \
-      -e 's/name: letsencrypt-prod/name: letsencrypt-http01/' \
-      "$BASE_DIR/values/sftd/values.yaml" > "$TEMP_DIR/sftd-values.yaml"
+  if [[ "$DEPLOY_CERT_MANAGER" == "TRUE" ]]; then
+    # Setting certManager and DNS records for Let's Encrypt based certificate management
+    sed -e 's/useCertManager: false/useCertManager: true/g' \
+      -e "/certmasterEmail:$/s/certmasterEmail:/certmasterEmail: $CERT_MASTER_EMAIL/" \
+      -e "s/example.com/$TARGET_SYSTEM/" \
+      "$BASE_DIR/values/nginx-ingress-services/values.yaml" > "$TEMP_DIR/nginx-ingress-services-values.yaml"
 
-  # Setting coturn node IP values
-  yq eval -i ".coturnTurnListenIP = \"$CALLING_NODE_IP\"" "$BASE_DIR/values/coturn/values.yaml"
-  yq eval -i ".coturnTurnRelayIP = \"$CALLING_NODE_IP\"" "$BASE_DIR/values/coturn/values.yaml"
-  yq eval -i ".coturnTurnExternalIP = \"$HOST_IP\"" "$BASE_DIR/values/coturn/values.yaml"
+    files+=(nginx-ingress-services-values.yaml)
+  fi
+
+  if [[ "$DEPLOY_CALLING_SERVICES" == "TRUE" ]]; then
+    # to find IP address of calling NODE
+    CALLING_NODE_IP=$(kubectl get node "$CALLING_NODE" -o jsonpath='{.status.addresses[?(@.type=="InternalIP")].address}')
+
+    # fixing the turnStatic values
+    yq eval -i ".brig.turnStatic.v2 = [\"turn:$HOST_IP:3478\", \"turn:$HOST_IP:3478?transport=tcp\"]" "$TEMP_DIR/wire-server-values.yaml"
+
+    # Fix SFTD hostnames, and only enable Let's Encrypt specific issuer changes when cert-manager is enabled.
+    sed -e "s/webapp.example.com/webapp.$TARGET_SYSTEM/" \
+        -e "s/sftd.example.com/sftd.$TARGET_SYSTEM/" \
+        "$BASE_DIR/values/sftd/values.yaml" > "$TEMP_DIR/sftd-values.yaml"
+
+    if [[ "$DEPLOY_CERT_MANAGER" == "TRUE" ]]; then
+      yq eval -i '.tls.issuerRef.name = "letsencrypt-http01"' "$TEMP_DIR/sftd-values.yaml"
+    fi
+
+    # Setting coturn node IP values
+    yq eval -i ".coturnTurnListenIP = \"$CALLING_NODE_IP\"" "$BASE_DIR/values/coturn/values.yaml"
+    yq eval -i ".coturnTurnRelayIP = \"$CALLING_NODE_IP\"" "$BASE_DIR/values/coturn/values.yaml"
+    yq eval -i ".coturnTurnExternalIP = \"$HOST_IP\"" "$BASE_DIR/values/coturn/values.yaml"
+
+    files+=(sftd-values.yaml)
+  fi
 
   # Compare and copy files if different
-  for file in wire-server-values.yaml webapp-values.yaml team-settings-values.yaml account-pages-values.yaml \
-              nginx-ingress-services-values.yaml sftd-values.yaml; do
+  for file in "${files[@]}"; do
     if ! cmp -s "$TEMP_DIR/$file" "$BASE_DIR/values/${file%-values.yaml}/values.yaml"; then
       cp "$TEMP_DIR/$file" "$BASE_DIR/values/${file%-values.yaml}/values.yaml"
       echo "Updating  $BASE_DIR/values/${file%-values.yaml}/values.yaml"
@@ -188,6 +226,11 @@ deploy_cert_manager() {
 
 deploy_calling_services() {
 
+  if [[ "$DEPLOY_CALLING_SERVICES" != "TRUE" ]]; then
+    echo "Skipping sftd and coturn deployment because DEPLOY_CALLING_SERVICES=$DEPLOY_CALLING_SERVICES"
+    return 0
+  fi
+
   echo "Deploying sftd and coturn"
   # select the node to deploy sftd
   kubectl annotate node "$CALLING_NODE" wire.com/external-ip="$HOST_IP" --overwrite
@@ -201,6 +244,9 @@ deploy_calling_services() {
 }
 
 main() {
+
+# initialize calling-service specific values only when enabled
+configure_calling_environment
 
 # Create prod-values.example.yaml to values.yaml and take backup
 process_values "prod" "values"
@@ -228,7 +274,7 @@ if [[ "$DEPLOY_CERT_MANAGER" == "TRUE" ]]; then
   kubectl get certificate
 fi
 
-# deploying sft and coturn services
+# deploying sft and coturn services when enabled
 deploy_calling_services
 }
 
