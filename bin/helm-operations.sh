@@ -5,7 +5,7 @@ set -Eeo pipefail
 # Read values from environment variables with defaults
 BASE_DIR="${BASE_DIR:-/wire-server-deploy}"
 TARGET_SYSTEM="${TARGET_SYSTEM:-example.com}"
-CERT_MASTER_EMAIL="certmaster@${CERT_MASTER_EMAIL}:-certmaster@${TARGET_SYSTEM}"
+CERT_MASTER_EMAIL="${CERT_MASTER_EMAIL:-certmaster@example.com}"
 
 # DEPLOY_CERT_MANAGER env variable is used to decide if cert_manager and nginx-ingress-services charts should get deployed
 # default is set to TRUE to deploy it unless changed
@@ -60,7 +60,7 @@ process_values() {
 
   ENV=$1
   TYPE=$2
-  charts=(fake-aws smtp rabbitmq databases-ephemeral reaper wire-server webapp account-pages team-settings smallstep-accomp ingress-nginx-controller nginx-ingress-services coturn sftd cert-manager)
+  charts=(fake-aws smtp rabbitmq databases-ephemeral reaper wire-server webapp account-pages team-settings ingress-nginx-controller nginx-ingress-services coturn sftd cert-manager)
 
   if [[ "$ENV" != "prod" ]] || [[ -z "$TYPE" ]] ; then
     echo "Error: This function only supports prod deployments with TYPE as values or secrets. ENV must be 'prod', got: '$ENV' and '$TYPE'"
@@ -214,7 +214,7 @@ sync_pg_secrets
 configure_values
 
 # deploying with external datastores, useful for prod setup
-deploy_charts cassandra-external elasticsearch-external minio-external postgresql-external fake-aws smtp rabbitmq-external databases-ephemeral reaper wire-server webapp account-pages team-settings smallstep-accomp ingress-nginx-controller
+deploy_charts cassandra-external elasticsearch-external minio-external postgresql-external fake-aws smtp rabbitmq-external databases-ephemeral reaper wire-server webapp account-pages team-settings ingress-nginx-controller
 
 # deploying cert-manager only when the env var DEPLOY_CERT_MANAGER is set to TRUE 
 if [[ "$DEPLOY_CERT_MANAGER" == "TRUE" ]]; then 

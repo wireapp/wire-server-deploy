@@ -1,0 +1,5 @@
+Added: variable private_deployment with default true to disable SNAT on adminhost
+Fixed: cert_master_email env var parsing in helm-operations.sh 
+Fixed: made running wiab-staging-nftables.yaml playbook explicit
+Added: wiab-staging.md documentation to add details about default SNAT access being denied and how to enable it
+Added: wiab-staging.md network flow diagram
