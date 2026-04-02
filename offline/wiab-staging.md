@@ -52,7 +52,6 @@ Our deployment will be into 7 VMs with [Ubuntu 22](https://releases.ubuntu.com/j
 - **kubenodes (kubenode1, kubenode2, kubenode3):** Run the Kubernetes cluster and host Wire backend services
 - **datanodes (datanode1, datanode2, datanode3):** Run distributed data services:
   - Cassandra
-  - PostgreSQL
   - Elasticsearch
   - Minio
   - RabbitMQ
@@ -117,7 +116,7 @@ cd wire-server-deploy
 
 **Step 2: Configure your Ansible inventory for your physical machine**
 
-A sample inventory is available at [ansible/inventory/demo/wiab-staging.yml](https://github.com/wireapp/wire-server-deploy/blob/master/ansible/inventory/demo/wiab-staging.yml).
+A sample inventory is available at [ansible/inventory/demo/wiab-staging.yml](../ansible/inventory/demo/wiab-staging.yml).
 Replace example.com with your physical machine (`adminhost`) address where KVM is available and adjust other variables like `ansible_user` and `ansible_ssh_private_key_file`. The SSH user for ansible `ansible_user` should have password-less `sudo` access. The adminhost should be running Ubuntu 22.04. From here on, we would refer the physical machine as `adminhost`.
 
 The `private_deployment` variable determines whether the VMs created below will have internet access. When set to `true` (default value), no internet access is available to VMs. Check [Network Traffic Configuration](#network-traffic-configuration) to understand more about it.
@@ -130,13 +129,63 @@ ansible-playbook -i ansible/inventory/demo/wiab-staging.yml ansible/wiab-staging
 
 *Note: Ansible core version 2.16.3 or compatible is required for this step*
 
-## Ensure secondary ansible inventory for VMs
+## When VMs are ready
 
 Now you should have 7 VMs running on your `adminhost`. If you have used the ansible playbook, you should also have a directory `/home/ansible_user/wire-server-deploy` with all resources required for further deployment. If you didn't use the above playbook, download the `wire-server-deploy` artifact shared by Wire support and extract it with tar.
 
+```bash
+wget https://s3-eu-west-1.amazonaws.com/public.wire.com/artifacts/wire-server-deploy-static-<HASH>.tgz
+tar xvzf wire-server-deploy-static-<HASH>.tgz
+cd wire-server-deploy
+```
+
 Ensure the inventory file `ansible/inventory/offline/inventory.yml` in the directory `/home/ansible_user/wire-server-deploy` contains values corresponding to your VMs. If you have already used the [Ansible playbook above](#getting-started-with-ansible-playbook) to set up VMs, this file should have been prepared for you.
 
-The purpose of secondary ansible inventory is to interact only with the VMs. All the operations concerning the secondary inventory are meant to install datastores and k8s services.
+The purpose of this secondary Ansible inventory is to interact only with the 7 VMs after they have been created. It is used by the offline deployment steps to install Kubernetes and the stateful services. If the provisioning playbook did not generate it for you, create it from the template [ansible/inventory/offline/staging.yml](../ansible/inventory/offline/staging.yml):
+
+```bash
+cp ansible/inventory/offline/staging.yml ansible/inventory/offline/inventory.yml
+```
+
+Then edit `ansible/inventory/offline/inventory.yml` and replace all placeholder values.
+
+**Critical values to review in the inventory:**
+
+- `all.vars.ansible_user`: the SSH user present on every VM, should be part of `sudoers` list.
+- `all.vars.ansible_ssh_private_key_file`: uncomment and set this if you authenticate with a private key, for example `ssh/id_ed25519`.
+- `assethost.hosts.assethost.ansible_host`: IP address of the asset host VM.
+- `kube-node.hosts.kubenode1|2|3.ansible_host`: IP addresses of the three Kubernetes VMs.
+- `datanodes.hosts.datanode1|2|3.ansible_host`: IP addresses of the three data VMs.
+- `cassandra.vars.cassandra_network_interface`, `elasticsearch.vars.elasticsearch_network_interface`, `minio.vars.minio_network_interface`, `rmq-cluster.vars.rabbitmq_network_interface`: the network interface name used by those services inside each data VM, for example `enp1s0`. Do not assume this value; verify it on your machines.
+- `rmq-cluster.vars.rabbitmq_cluster_master`: the RabbitMQ primary node. Keep this aligned with the hostname of one of the data nodes, typically `datanode1`.
+
+**Hostnames matter:**
+
+- The inventory hostnames `assethost`, `kubenode1`, `kubenode2`, `kubenode3`, `datanode1`, `datanode2`, and `datanode3` should match the actual hostnames configured inside the VMs.
+- This is especially important for RabbitMQ, because the nodes in `rmq-cluster` must match each VM's real hostname.
+- `datanode1` is also referenced as the Cassandra seed and as the default RabbitMQ cluster master in the template, so change those only if your topology differs.
+
+**SSH authentication options:**
+
+- If the VMs are reachable with a private key, set `ansible_ssh_private_key_file` in the inventory and run Ansible normally.
+- If you rely on an SSH agent, keep `ansible_ssh_private_key_file` commented out and ensure the agent on the `adminhost` can reach all VMs.
+- If you do not use a private key entry in the inventory and password authentication is enabled on the VMs, add `--ask-pass` when runing ansible-playbooks manually and `--ask-become-pass` for sudo access.
+- Our installation scripts are non-interactive, define `ansible_password` and `ansible_become_pass` in the inventory instead of relying on interactive password prompts.
+
+Before running the offline deployment scripts, verify that the inventory resolves to the expected machines. The commands below assume you are running them from `/home/ansible_user/wire-server-deploy` on the `adminhost`.
+
+```bash
+# confirm the inventory hostnames match the actual VM hostnames
+ansible all -i ansible/inventory/offline/inventory.yml -m shell -a 'hostname'
+
+# verify the default IPv4 interface and address reported by Ansible
+ansible all -i ansible/inventory/offline/inventory.yml -m setup -a 'filter=ansible_default_ipv4'
+
+# verify time and timezone consistency across the machines
+ansible all -i ansible/inventory/offline/inventory.yml -m shell -a 'date'
+```
+
+If any hostname, IP address, SSH setting, or interface name is wrong at this stage, correct `ansible/inventory/offline/inventory.yml` before continuing. The next deployment steps assume this inventory is accurate.
 
 ## Next steps
 
@@ -153,6 +202,7 @@ Once the inventory is ready, please continue with the following steps:
   ```
   - You can always use this alias `d` later to interact with the ansible playbooks, k8s cluster and the helm charts.
   - The docker container mounts everything here from the `wire-server-deploy` directory, hence this acts an entry point for all the future interactions with ansible, k8s and helm charts.
+  - Please ensure that this environment doesn't contain `quay.io/wire/wire-server-deploy` docker image from previous installations, if it does then such images need to be removed.
 
 - **[Generating secrets](docs_ubuntu_22.04.md#generating-secrets)**
   - Run `bin/offline-secrets.sh` to generate fresh secrets for Minio and coturn services. It uses the docker container images shipped inside the `wire-server-deploy` directory.
@@ -170,40 +220,58 @@ Once the inventory is ready, please continue with the following steps:
   ```bash
   d ./bin/offline-cluster.sh
   ```
-  - Run the above command to deploy Kubernetes and stateful services (Cassandra, PostgreSQL, Elasticsearch, Minio, RabbitMQ). This script deploys all infrastructure needed for Wire backend operations.
+  - Run the above command to deploy Kubernetes and stateful services (Cassandra, Elasticsearch, Minio, RabbitMQ). This script deploys all infrastructure needed for Wire backend operations.
 
 ### Helm Operations to install wire services and supporting helm charts
 
 **Helm chart deployment (automated):** The script `bin/helm-operations.sh` will deploy the charts for you. It prepares `values.yaml`/`secrets.yaml`, customizes them for your domain/IPs, then runs Helm installs/upgrades in the correct order. Prepare the values before running it.
 
 **User-provided inputs (set these before running):**
-- `TARGET_SYSTEM`: your domain (e.g., `wire.example.com` or `example.dev`).
-- `CERT_MASTER_EMAIL`: email used by cert-manager for ACME registration.
-- `HOST_IP`: public IP that matches your DNS A record (auto-detected if empty).
+- `TARGET_SYSTEM`: your domain (e.g., `wire.example.com` or `example.dev`) using which you have created subdomains, check more at [How to set up DNS records](https://docs.wire.com/latest/how-to/install/demo-wiab.html#dns-requirements).
+- `CERT_MASTER_EMAIL`: email used by cert-manager for ACME registration (dy default=TRUE).
+- `DEPLOY_CALLING_SERVICES`: set to `TRUE` or `FALSE` to control deployment of the calling services (`sftd` and `coturn`). Default is `TRUE`.
+- `HOST_IP`: the IP address on which traffic for Wire calling services is expected to arrive. This should match your public DNS A record since we are expected to deploy Wire and calling services behind a single firewall. The calling traffic configuration described in [Network Traffic Configuration](#network-traffic-configuration) and [Configure the port redirection in Nftables](coturn.md#configure-the-port-redirection-in-nftables). It is not required if `DEPLOY_CALLING_SERVICES=FALSE`
+
+**Calling services behavior:**
+- When `DEPLOY_CALLING_SERVICES=TRUE` and `HOST_IP` is not passed, the script tries to detect the publicly visible address for this setup by running `wget -qO- https://api.ipify.org`.
+- When `DEPLOY_CALLING_SERVICES=FALSE`, the script skips deployment of `sftd` and `coturn`, and it does not evaluate any `HOST_IP`-dependent logic.
 
 **TLS / certificate behavior (cert-manager vs. Bring Your Own):**
 - By default, `bin/helm-operations.sh` has `DEPLOY_CERT_MANAGER=TRUE`, which installs cert-manager and configures a Let’s Encrypt (HTTP-01) issuer for the ingress charts.
-- If you **do not** want Let’s Encrypt / cert-manager (for example, you are using **[Bring Your Own certificates](docs_ubuntu_22.04.md#acquiring--deploying-ssl-certificates)**), disable this step by passing the environment variable `DEPLOY_CERT_MANAGER=FALSE` when running `bin/helm-operations.sh`.
-  - When choosing `DEPLOY_CERT_MANAGER=FALSE`, ensure your ingress is configured with your own TLS secret(s) as described at [Acquiring / Deploying SSL Certificates](docs_ubuntu_22.04.md#acquiring--deploying-ssl-certificates).
+- If you **do not** want Let’s Encrypt / cert-manager for TLS certs for the ingress, disable this step by passing the environment variable `DEPLOY_CERT_MANAGER=FALSE` when running `bin/helm-operations.sh`.
+  - When choosing `DEPLOY_CERT_MANAGER=FALSE`, ensure your ingress is configured with your own TLS secret(s) as described at [Acquiring / Deploying SSL Certificates](docs_ubuntu_22.04.md#acquiring--deploying-ssl-certificates). The `nginx-ingress-services` should be deployed manually.
   - When choosing `DEPLOY_CERT_MANAGER=TRUE`, ensure if further network configuration is required by following [cert-manager behaviour in NAT / bridge environments](#cert-manager-behaviour-in-nat--bridge-environments).
 
 **To run the automated helm chart deployment with your variables**:
 ```bash
 # example command - verify the variables before running it
-d sh -c 'TARGET_SYSTEM="example.dev" CERT_MASTER_EMAIL="certmaster@example.dev" DEPLOY_CERT_MANAGER=TRUE ./bin/helm-operations.sh'
+d sh -c 'TARGET_SYSTEM="example.dev" CERT_MASTER_EMAIL="certmaster@example.dev" DEPLOY_CERT_MANAGER=TRUE DEPLOY_CALLING_SERVICES=TRUE HOST_IP="a.a.a.a" ./bin/helm-operations.sh'
+```
+
+If you do not want to deploy the calling services, run:
+
+```bash
+d sh -c 'TARGET_SYSTEM="example.dev" CERT_MASTER_EMAIL="certmaster@example.dev" DEPLOY_CERT_MANAGER=TRUE DEPLOY_CALLING_SERVICES=FALSE ./bin/helm-operations.sh'
 ```
 
 **Charts deployed by the script:**
 - External datastores and helpers: `cassandra-external`, `elasticsearch-external`, `minio-external`, `rabbitmq-external`, `databases-ephemeral`, `reaper`, `fake-aws`, `demo-smtp`.
 - Wire services: `wire-server`, `webapp`, `account-pages`, `team-settings`.
 - Ingress and certificates: `ingress-nginx-controller`, `cert-manager`, `nginx-ingress-services`.
-- Calling services: `sftd`, `coturn`.
+- Calling services: `sftd`, `coturn` when `DEPLOY_CALLING_SERVICES=TRUE`.
 
 **Values and secrets generation:**
 - Creates `values.yaml` and `secrets.yaml` from `prod-values.example.yaml` and `prod-secrets.example.yaml` for each chart under `values/`.
 - Backs up any existing `values.yaml`/`secrets.yaml` before replacing them.
 
 *Note: The `bin/helm-operations.sh` script above deploys these charts; you do not need to run the Helm commands manually unless you want to customize or debug.*
+
+**Manually removing non-required helm charts**:
+- If some helm charts are not required in your environment like `demo-smtp` for email relayomg then use the following command to uninstall them:
+```bash
+#d helm uninstall CHART_NAME
+d helm uninstall demo-smtp
+```
 
 ## Network Traffic Configuration
 
