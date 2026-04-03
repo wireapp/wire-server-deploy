@@ -55,7 +55,7 @@ brig:
       teamMemberWelcome: https://wire.example.com/download # change this
     enableFederation: false # Keep false unless federation is explicitly configured
     optSettings:
-      setEnableMLS: false # Enable for MLS protocol use
+      setEnableMLS: true # Enable for MLS protocol use
       setFederationDomain: example.com # change this per host deployment
       # Sync the domain with the 'host' variable in the sftd chart
       # Comment the next line (by adding '#' before it) if conference calling is not used
