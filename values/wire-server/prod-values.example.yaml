@@ -36,6 +36,8 @@ brig:
       port: "5432"
       user: wire-server
       dbname: wire-server
+    postgresqlPool:
+      size: 10 # adjust pool size as needed based on expected load and available resources
     useSES: false
     # Set to false if you want to hand out DynamoDB to store prekeys
     randomPrekeys: true
@@ -183,10 +185,14 @@ galley:
       port: "5432"
       user: wire-server
       dbname: wire-server
+    postgresqlPool:
+      size: 10 # adjust pool size as needed based on expected load and available resources
     # Explicitly set postgresMigration to cassandra for fresh deployments.
-    # This controls whether galley reads conversations from Cassandra or PostgreSQL.
+    # This controls whether galley reads conversations/teamFeatures from Cassandra or PostgreSQL.
     postgresMigration:
       conversation: cassandra
+      conversationCodes: cassandra
+      teamFeatures: cassandra
     enableFederation: false # Enable to use federation
     settings:
       # prefix URI used when inviting users to a conversation by link
@@ -366,13 +372,15 @@ background-worker:
       port: "5432"
       user: wire-server
       dbname: wire-server
-    # IMPORTANT: At Chart 5.25.0, the background-worker Helm chart incorrectly defaults
-    # postgresMigration.conversation to "postgresql" instead of "cassandra".
-    # This MUST be explicitly set to "cassandra" unless you have already migrated
-    # conversations to PostgreSQL. Without this override, User Group to Channel sync
-    # jobs will silently skip member synchronization.
+    postgresqlPool:
+      size: 5 # Background worker has fewer connections to DB, so smaller pool size is fine
     postgresMigration:
       conversation: cassandra
+      conversationCodes: cassandra
+      teamFeatures: cassandra
+    migrateConversations: false
+    migrateConversationCodes: false
+    migrateTeamFeatures: false
     # Enable for federation
     enableFederation: false
   metrics:
