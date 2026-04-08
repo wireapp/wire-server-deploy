@@ -51,8 +51,6 @@ brig:
     rabbitmq:
       username: guest
       password: guest
-    # These are only necessary if you wish to support sign up via SMS/calls
-    # And require accounts at twilio.com / nexmo.com
 
 cargohold:
   secrets:
@@ -105,6 +103,7 @@ team-settings:
     configJson: "e30K"
 background-worker:
   secrets:
+    pgPassword: verysecurepassword
     rabbitmq:
       username: guest
       password: guest

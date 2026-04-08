@@ -1,0 +1,2 @@
+Fixed: 99-static inventory to be up-to-date with current state of ansible
+Added: added a sample inventory for dmz-k8s cluster

@@ -1,9 +1,9 @@
 name: Changelog verification
 on:
   pull_request:
-    branches: [master]
+    branches: ["**"]
   push:
-    branches: [master]
+    branches: ["master"]
 
 permissions:
   contents: read
