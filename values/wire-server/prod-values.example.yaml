@@ -36,6 +36,7 @@ brig:
       port: "5432"
       user: wire-server
       dbname: wire-server
+    # See pool size calculation guide: https://docs.wire.com/latest/how-to/administrate/postgresql.html
     postgresqlPool:
       size: 10 # adjust pool size as needed based on expected load and available resources
     useSES: false
@@ -185,6 +186,7 @@ galley:
       port: "5432"
       user: wire-server
       dbname: wire-server
+    # See pool size calculation guide: https://docs.wire.com/latest/how-to/administrate/postgresql.html
     postgresqlPool:
       size: 10 # adjust pool size as needed based on expected load and available resources
     # Explicitly set postgresMigration to cassandra for fresh deployments.
@@ -372,6 +374,7 @@ background-worker:
       port: "5432"
       user: wire-server
       dbname: wire-server
+    # See pool size calculation guide: https://docs.wire.com/latest/how-to/administrate/postgresql.html
     postgresqlPool:
       size: 5 # Background worker has fewer connections to DB, so smaller pool size is fine
     postgresMigration:
