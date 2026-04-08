@@ -59,7 +59,7 @@ brig:
     enableFederation: false # Keep false unless federation is explicitly configured
     optSettings:
       setEnableMLS: false # Enable for MLS protocol use
-      setFederationDomain: example.com # change this per host deployment
+      setFederationDomain: example.com # change this
       # Sync the domain with the 'host' variable in the sftd chart
       # Comment the next line (by adding '#' before it) if conference calling is not used
       setSftStaticUrl: "https://sftd.example.com:443"
