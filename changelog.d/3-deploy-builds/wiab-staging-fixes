@@ -1,0 +1,2 @@
+Added documentation around managing staging.yml inventory, how to verify, download artifact, and documentation around cert-manager and calling components
+Added a flag DEPLOY_CALLING_SERVICES to control the calling services and improved the flow based on cert-manager and calling services requirement
