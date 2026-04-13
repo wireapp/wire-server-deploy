@@ -42,6 +42,6 @@ fi
 $DOCKER_RUN_BASE $SSH_MOUNT $WSD_CONTAINER ./bin/offline-cluster.sh
 
 # verify if all kube-system pods are running well
-sudo docker run --network=host -v $PWD:/wire-server-deploy $WSD_CONTAINER 'kubectl -n kube-system get pods'
+sudo docker run --network=host -v $PWD:/wire-server-deploy $WSD_CONTAINER sh -c 'kubectl -n kube-system get pods'
 
 sudo docker run --network=host -v $PWD:/wire-server-deploy $WSD_CONTAINER sh -c 'TARGET_SYSTEM="example.dev" CERT_MASTER_EMAIL="certmaster@example.dev" DEPLOY_CERT_MANAGER=TRUE DUMP_LOGS_ON_FAIL=TRUE ./bin/helm-operations.sh'
