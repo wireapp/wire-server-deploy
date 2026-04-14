@@ -151,16 +151,18 @@ configure_values() {
         -e "s/sftd.example.com/sftd.$TARGET_SYSTEM/" \
         "$BASE_DIR/values/sftd/values.yaml" > "$TEMP_DIR/sftd-values.yaml"
 
+    cp "$BASE_DIR/values/coturn/values.yaml" "$TEMP_DIR/coturn-values.yaml"
+
     if [[ "$DEPLOY_CERT_MANAGER" == "TRUE" ]]; then
       yq eval -i '.tls.issuerRef.name = "letsencrypt-http01"' "$TEMP_DIR/sftd-values.yaml"
     fi
 
     # Setting coturn node IP values
-    yq eval -i ".coturnTurnListenIP = \"$CALLING_NODE_IP\"" "$BASE_DIR/values/coturn/values.yaml"
-    yq eval -i ".coturnTurnRelayIP = \"$CALLING_NODE_IP\"" "$BASE_DIR/values/coturn/values.yaml"
-    yq eval -i ".coturnTurnExternalIP = \"$HOST_IP\"" "$BASE_DIR/values/coturn/values.yaml"
+    yq eval -i ".coturnTurnListenIP = \"$CALLING_NODE_IP\"" "$TEMP_DIR/coturn-values.yaml"
+    yq eval -i ".coturnTurnRelayIP = \"$CALLING_NODE_IP\"" "$TEMP_DIR/coturn-values.yaml"
+    yq eval -i ".coturnTurnExternalIP = \"$HOST_IP\"" "$TEMP_DIR/coturn-values.yaml"
 
-    files+=(sftd-values.yaml)
+    files+=(sftd-values.yaml coturn-values.yaml)
   fi
 
   # Compare and copy files if different
