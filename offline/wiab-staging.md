@@ -185,7 +185,7 @@ Then edit `ansible/inventory/offline/inventory.yml` and replace all placeholder 
 
 - If the VMs are reachable with a private key, set `ansible_ssh_private_key_file` in the inventory and run Ansible normally.
 - If you rely on an SSH agent, keep `ansible_ssh_private_key_file` commented out and ensure the agent on the `adminhost` can reach all VMs.
-- If you do not use a private key entry in the inventory and password authentication is enabled on the VMs, add `--ask-pass` when runing ansible-playbooks manually and `--ask-become-pass` for sudo access.
+- If you do not use a private key entry in the inventory and password authentication is enabled on the VMs, add `--ask-pass` when running ansible-playbooks manually and `--ask-become-pass` for sudo access.
 - Our installation scripts are non-interactive, define `ansible_password` and `ansible_become_pass` in the inventory instead of relying on interactive password prompts.
 
 Before running the offline deployment scripts, verify that the inventory resolves to the expected machines. The commands below assume you are running them from `/home/ansible_user/wire-server-deploy` on the `adminhost`.
@@ -252,7 +252,7 @@ d kubectl -n kube-system get pods
 
 **User-provided inputs (set these before running):**
 - `TARGET_SYSTEM`: your domain (e.g., `wire.example.com` or `example.dev`) using which you have created subdomains, check more at [How to set up DNS records](https://docs.wire.com/latest/how-to/install/demo-wiab.html#dns-requirements).
-- `CERT_MASTER_EMAIL`: email used by cert-manager for ACME registration (dy default=TRUE).
+- `CERT_MASTER_EMAIL`: email used by cert-manager for ACME registration (by default=TRUE).
 - `DEPLOY_CALLING_SERVICES`: set to `TRUE` or `FALSE` to control deployment of the calling services (`sftd` and `coturn`). Default is `TRUE`.
 - `HOST_IP`: the IP address on which traffic for Wire calling services is expected to arrive. This should match your public DNS A record since we are expected to deploy Wire and calling services behind a single firewall. The calling traffic configuration described in [Network Traffic Configuration](#network-traffic-configuration) and [Configure the port redirection in Nftables](coturn.md#configure-the-port-redirection-in-nftables). It is not required if `DEPLOY_CALLING_SERVICES=FALSE`
 
@@ -291,7 +291,7 @@ d sh -c 'TARGET_SYSTEM="example.dev" CERT_MASTER_EMAIL="certmaster@example.dev" 
 *Note: The `bin/helm-operations.sh` script above deploys these charts; you do not need to run the Helm commands manually unless you want to customize or debug.*
 
 **Manually removing non-required helm charts**:
-- If some helm charts are not required in your environment like `demo-smtp` for email relayomg then use the following command to uninstall them:
+- If some helm charts are not required in your environment like `demo-smtp` for email relaying then use the following command to uninstall them:
 ```bash
 #d helm uninstall CHART_NAME
 d helm uninstall demo-smtp
