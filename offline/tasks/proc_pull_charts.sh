@@ -94,5 +94,5 @@ pull_charts() {
   #fi
 }
 
-wire_build="https://raw.githubusercontent.com/wireapp/wire-builds/pinned-offline-multi-20260224-142104/build.json"
+wire_build="https://raw.githubusercontent.com/wireapp/wire-builds/104d7ebc0407d3dc4592b93ff08f08180a3e612a/build.json"
 wire_build_chart_release "$wire_build" | pull_charts
