@@ -12,6 +12,57 @@
 
 -->
 
+# Relase 5.25
+
+## release-notes
+
+* Added: bump wire-server to 5.25.0 and update prod values defaults for federation/MLS and external dependencies (#867)
+* Removed: removing all old changelogs to cut a release for wire-server-deploy 5.23 for prod, wiab-staging and wiab-dev (#873)
+
+### Data stores (PostgreSQL, Cassandra)
+
+* Added: background-worker postgresql config and pgPassword secret sync, and explicit postgresMigration.conversation=cassandra for galley and background-worker (#867)
+* Fixed: sync_pg_secrets operation in helm_operations.sh, sync offline-secrets and prod-secrets.example.yaml, and sync wire-server helm chart values and secrets for wiab-dev from prod values for 5.25 (#875)
+* Added: enable postgresql secret for background-worker in wiab-dev (#875)
+
+### Features / configuration
+
+* Fixed: stop deploying smallstep in wiab-staging and wiab-dev environments (#875)
+
+## deploy-builds
+
+### WIAB demo / staging (high‑level)
+
+* Fixed: 99-static inventory to be up-to-date with current state of ansible
+  Added: added a sample inventory for dmz-k8s cluster (#885)
+* Added: variable private_deployment with default true to disable SNAT on adminhost
+  Fixed: made running wiab-staging-nftables.yaml playbook explicit (#875)
+
+### Offline / CI / deployment pipeline
+
+* Fixed: debug_logs.sh to log only the pods for default and cert-manager-ns namespace and limit log lines
+  Added: enabled debug_logs.sh on helm install failures (helm_operations.sh) with a flag DUMP_LOGS_ON_FAIL
+  Added: env vars to helm_operations.sh to improve UX while configuring variables
+  Added: wait and timeout on cert-manager and calling_services helm chart operations
+  Fixed: offline-cluster.sh to run helm-operations.sh using new env vars and with default DUMP_LOGS_ON_FAIL=TRUE
+  Fixed: sftd helm chart values for joinCall component which fails to find hashbased images (#875)
+* Removed: obsolete secrets from scripts and references for improved security and clarity. (#874)
+* Added: a flag DEPLOY_CALLING_SERVICES to control the calling services and improved the flow based on cert-manager and calling services requirement (#896)
+* Fixed: cert_master_email env var parsing in helm-operations.sh (#875)
+
+## docs
+
+* Fixed: documentation for wiab-staging.md based on a user feedback (#875)
+* Added: documentation around managing staging.yml inventory, how to verify, download artifact, and documentation around cert-manager and calling components (#896)
+* Added: instructions around verifying MTU management and calico kernel requirements (#896)
+* Added: wiab-staging.md documentation to add details about default SNAT access being denied and how to enable it
+* Added: wiab-staging.md network flow diagram (#875)
+
+## bug-fixes
+
+* Fixed: github workflow and PR template references for wiab-dev (#880)
+* Fixed: remove read function to operate .envrc and updated the README.md (#877)
+
 # Relase 5.23 
 
 ## release-notes
