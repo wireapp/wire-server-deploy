@@ -141,7 +141,9 @@ cd wire-server-deploy
 
 Ensure the inventory file `ansible/inventory/offline/inventory.yml` in the directory `/home/ansible_user/wire-server-deploy` contains values corresponding to your VMs. If you have already used the [Ansible playbook above](#getting-started-with-ansible-playbook) to set up VMs, this file should have been prepared for you.
 
-The purpose of this secondary Ansible inventory is to interact only with the 7 VMs after they have been created. It is used by the offline deployment steps to install Kubernetes and the stateful services. If the provisioning playbook did not generate it for you, create it from the template [ansible/inventory/offline/staging.yml](../ansible/inventory/offline/staging.yml):
+The purpose of this secondary Ansible inventory is to interact only with the 7 VMs after they have been created. It is used by the offline deployment steps to install Kubernetes and the stateful services. Our kubernetes solution uses `Calico` as the default `Container Network Interface (CNI)` plugin for cluster networking and ensure the [kernel requirements](https://docs.tigera.io/calico/latest/getting-started/kubernetes/requirements#kernel-dependencies) are met on the VMs before deploying Kubernetes.
+
+If the provisioning playbook did not generate it for you, create it from the template [ansible/inventory/offline/staging.yml](../ansible/inventory/offline/staging.yml):
 
 ```bash
 cp ansible/inventory/offline/staging.yml ansible/inventory/offline/inventory.yml
@@ -159,6 +161,20 @@ Then edit `ansible/inventory/offline/inventory.yml` and replace all placeholder 
 - `cassandra.vars.cassandra_network_interface`, `elasticsearch.vars.elasticsearch_network_interface`, `minio.vars.minio_network_interface`, `rmq-cluster.vars.rabbitmq_network_interface`: the network interface name used by those services inside each data VM, for example `enp1s0`. Do not assume this value; verify it on your machines.
 - `rmq-cluster.vars.rabbitmq_cluster_master`: the RabbitMQ primary node. Keep this aligned with the hostname of one of the data nodes, typically `datanode1`.
 
+> **Note:** If your environment uses a non-standard MTU (e.g. cloud providers, VPNs, or overlay networks), you must [configure the MTU](https://github.com/kubernetes-sigs/kubespray/blob/master/docs/CNI/calico.md#configuring-interface-mtu) for Calico in `k8s-cluster.vars`. Ensure all VMs have the same MTU on their primary interface:
+> ```bash
+>   ip link show
+> ``` 
+> Then set:
+> ```yaml 
+> # k8s-cluster.vars.
+> calico_mtu: <value>
+> calico_veth_mtu: <value>
+> ```
+> As a rule of thumb:  
+> - `calico_mtu = underlying network MTU - encapsulation overhead`  
+> - `calico_veth_mtu` ≤ `calico_mtu`
+
 **Hostnames matter:**
 
 - The inventory hostnames `assethost`, `kubenode1`, `kubenode2`, `kubenode3`, `datanode1`, `datanode2`, and `datanode3` should match the actual hostnames configured inside the VMs.
@@ -169,7 +185,7 @@ Then edit `ansible/inventory/offline/inventory.yml` and replace all placeholder 
 
 - If the VMs are reachable with a private key, set `ansible_ssh_private_key_file` in the inventory and run Ansible normally.
 - If you rely on an SSH agent, keep `ansible_ssh_private_key_file` commented out and ensure the agent on the `adminhost` can reach all VMs.
-- If you do not use a private key entry in the inventory and password authentication is enabled on the VMs, add `--ask-pass` when runing ansible-playbooks manually and `--ask-become-pass` for sudo access.
+- If you do not use a private key entry in the inventory and password authentication is enabled on the VMs, add `--ask-pass` when running ansible-playbooks manually and `--ask-become-pass` for sudo access.
 - Our installation scripts are non-interactive, define `ansible_password` and `ansible_become_pass` in the inventory instead of relying on interactive password prompts.
 
 Before running the offline deployment scripts, verify that the inventory resolves to the expected machines. The commands below assume you are running them from `/home/ansible_user/wire-server-deploy` on the `adminhost`.
@@ -183,6 +199,9 @@ ansible all -i ansible/inventory/offline/inventory.yml -m setup -a 'filter=ansib
 
 # verify time and timezone consistency across the machines
 ansible all -i ansible/inventory/offline/inventory.yml -m shell -a 'date'
+
+# verify if the MTU is consistent across all the VMs
+d ansible all -i ansible/inventory/offline/inventory.yml -m shell -a "ip link show | grep mtu"
 ```
 
 If any hostname, IP address, SSH setting, or interface name is wrong at this stage, correct `ansible/inventory/offline/inventory.yml` before continuing. The next deployment steps assume this inventory is accurate.
@@ -222,13 +241,18 @@ Once the inventory is ready, please continue with the following steps:
   ```
   - Run the above command to deploy Kubernetes and stateful services (Cassandra, Elasticsearch, Minio, RabbitMQ). This script deploys all infrastructure needed for Wire backend operations.
 
+To confirm if the kubernetes cluster has been setup correctly. All pods should be in `Running` or `Completed` state. Any `CrashLoopBackOff`, `Error`, or `Pending` states indicate a problem.:
+```bash
+d kubectl -n kube-system get pods
+```
+
 ### Helm Operations to install wire services and supporting helm charts
 
 **Helm chart deployment (automated):** The script `bin/helm-operations.sh` will deploy the charts for you. It prepares `values.yaml`/`secrets.yaml`, customizes them for your domain/IPs, then runs Helm installs/upgrades in the correct order. Prepare the values before running it.
 
 **User-provided inputs (set these before running):**
 - `TARGET_SYSTEM`: your domain (e.g., `wire.example.com` or `example.dev`) using which you have created subdomains, check more at [How to set up DNS records](https://docs.wire.com/latest/how-to/install/demo-wiab.html#dns-requirements).
-- `CERT_MASTER_EMAIL`: email used by cert-manager for ACME registration (dy default=TRUE).
+- `CERT_MASTER_EMAIL`: email used by cert-manager for ACME registration (by default=TRUE).
 - `DEPLOY_CALLING_SERVICES`: set to `TRUE` or `FALSE` to control deployment of the calling services (`sftd` and `coturn`). Default is `TRUE`.
 - `HOST_IP`: the IP address on which traffic for Wire calling services is expected to arrive. This should match your public DNS A record since we are expected to deploy Wire and calling services behind a single firewall. The calling traffic configuration described in [Network Traffic Configuration](#network-traffic-configuration) and [Configure the port redirection in Nftables](coturn.md#configure-the-port-redirection-in-nftables). It is not required if `DEPLOY_CALLING_SERVICES=FALSE`
 
@@ -255,7 +279,7 @@ d sh -c 'TARGET_SYSTEM="example.dev" CERT_MASTER_EMAIL="certmaster@example.dev" 
 ```
 
 **Charts deployed by the script:**
-- External datastores and helpers: `cassandra-external`, `elasticsearch-external`, `minio-external`, `rabbitmq-external`, `databases-ephemeral`, `reaper`, `fake-aws`, `demo-smtp`.
+- External datastores and helpers: `cassandra-external`, `elasticsearch-external`, `minio-external`, `rabbitmq-external`, `databases-ephemeral`, `reaper`, `fake-aws`, `smtp`.
 - Wire services: `wire-server`, `webapp`, `account-pages`, `team-settings`.
 - Ingress and certificates: `ingress-nginx-controller`, `cert-manager`, `nginx-ingress-services`.
 - Calling services: `sftd`, `coturn` when `DEPLOY_CALLING_SERVICES=TRUE`.
@@ -267,7 +291,7 @@ d sh -c 'TARGET_SYSTEM="example.dev" CERT_MASTER_EMAIL="certmaster@example.dev" 
 *Note: The `bin/helm-operations.sh` script above deploys these charts; you do not need to run the Helm commands manually unless you want to customize or debug.*
 
 **Manually removing non-required helm charts**:
-- If some helm charts are not required in your environment like `demo-smtp` for email relayomg then use the following command to uninstall them:
+- If some helm charts are not required in your environment like `demo-smtp` for email relaying then use the following command to uninstall them:
 ```bash
 #d helm uninstall CHART_NAME
 d helm uninstall demo-smtp
