@@ -1,57 +1,45 @@
 locals {
-  rfc1918_cidr        = "10.0.0.0/8"
-  kubenode_count      = 3
-  datanode_count      = 3
-  ssh_keys            = [hcloud_ssh_key.adminhost.name]
+  rfc1918_cidr   = "10.0.0.0/8"
+  kubenode_count = 3
+  datanode_count = 3
+  ssh_keys       = [hcloud_ssh_key.adminhost.name]
+}
 
-  # Location preferences with fallbacks (EU only)
-  preferred_locations = ["fsn1", "hel1", "nbg1"]
+variable "location" {
+  description = "Hetzner location selected by the deployment script"
+  type        = string
+  default     = "hel1"
+}
 
-  # Server type preferences with fallbacks (optimized for availability)
-  preferred_server_types = {
-    small  = ["cx33", "cpx22", "cx43"] # For assethost and adminhost
-    medium = ["cx43", "cx53", "cpx42"] # For datanodes and k8s_nodes
-  }
+variable "small_server_type" {
+  description = "Server type for assethost and adminhost selected by the deployment script"
+  type        = string
+  default     = "cx23"
+}
+
+variable "medium_server_type" {
+  description = "Server type for datanodes and Kubernetes nodes selected by the deployment script"
+  type        = string
+  default     = "cx43"
 }
 
 # Get available server types and locations
 data "hcloud_server_types" "available" {}
 data "hcloud_datacenters" "available" {}
 
-# Helper locals to select available resources with robust fallback logic
+# Validate the exact combination requested by the deployment script.
 locals {
   available_server_type_names = [for st in data.hcloud_server_types.available.server_types : st.name]
   available_location_names    = [for dc in data.hcloud_datacenters.available.datacenters : dc.location.name]
-
-  # Select the first available location from the preference list
-  available_preferred_locations = [
-    for preferred in local.preferred_locations :
-    preferred if contains(local.available_location_names, preferred)
-  ]
-  selected_location = length(local.available_preferred_locations) > 0 ? local.available_preferred_locations[0] : null
-
-  # Select the first available server type from the preference list (with validation)
-  available_small_server_types = [
-    for preferred in local.preferred_server_types.small :
-    preferred if contains(local.available_server_type_names, preferred)
-  ]
-  small_server_type = length(local.available_small_server_types) > 0 ? local.available_small_server_types[0] : null
-
-  available_medium_server_types = [
-    for preferred in local.preferred_server_types.medium :
-    preferred if contains(local.available_server_type_names, preferred)
-  ]
-  medium_server_type = length(local.available_medium_server_types) > 0 ? local.available_medium_server_types[0] : null
 }
 
-# Validation checks - fail early with helpful error messages
 resource "null_resource" "location_validation" {
-  count = local.selected_location != null ? 0 : 1
+  count = contains(local.available_location_names, var.location) ? 0 : 1
 
   provisioner "local-exec" {
     command = <<-EOT
-      echo "DEPLOYMENT FAILED: No suitable location available"
-      echo "Requested locations: ${join(", ", local.preferred_locations)}"
+      echo "DEPLOYMENT FAILED: Requested location is unavailable"
+      echo "Requested location: ${var.location}"
       echo "Available locations: ${join(", ", local.available_location_names)}"
       echo "Please check Hetzner Cloud region availability"
       exit 1
@@ -60,28 +48,28 @@ resource "null_resource" "location_validation" {
 }
 
 resource "null_resource" "small_server_type_validation" {
-  count = local.small_server_type != null ? 0 : 1
+  count = contains(local.available_server_type_names, var.small_server_type) ? 0 : 1
 
   provisioner "local-exec" {
     command = <<-EOT
-      echo "DEPLOYMENT FAILED: No suitable database server types available"
-      echo "Requested types: ${join(", ", local.preferred_server_types.small)}"
+      echo "DEPLOYMENT FAILED: Requested small server type is currently unavailable"
+      echo "Requested small server type: ${var.small_server_type}"
       echo "Available types: ${join(", ", local.available_server_type_names)}"
-      echo "Please check server type availability in the selected region"
+      echo "Please check server type availability"
       exit 1
     EOT
   }
 }
 
 resource "null_resource" "medium_server_type_validation" {
-  count = local.medium_server_type != null ? 0 : 1
+  count = contains(local.available_server_type_names, var.medium_server_type) ? 0 : 1
 
   provisioner "local-exec" {
     command = <<-EOT
-      echo "DEPLOYMENT FAILED: No suitable Kubernetes server types available"
-      echo "Requested types: ${join(", ", local.preferred_server_types.medium)}"
+      echo "DEPLOYMENT FAILED: Requested medium server type is currently unavailable"
+      echo "Requested medium server type: ${var.medium_server_type}"
       echo "Available types: ${join(", ", local.available_server_type_names)}"
-      echo "Please check server type availability in the selected region"
+      echo "Please check server type availability"
       exit 1
     EOT
   }
@@ -96,10 +84,10 @@ resource "null_resource" "deployment_info" {
 
   provisioner "local-exec" {
     command = <<-EOT
-      echo "VALIDATION PASSED: Deploying Wire offline infrastructure"
-      echo "Location: ${local.selected_location}"
-      echo "Database server type: ${local.medium_server_type}"
-      echo "Kubernetes server type: ${local.medium_server_type}"
+      echo "VALIDATION PASSED: Deploying WIAB staging infrastructure"
+      echo "Location: ${var.location}"
+      echo "Small server type: ${var.small_server_type}"
+      echo "Medium server type: ${var.medium_server_type}"
       echo "Total instances: ${local.datanode_count + local.kubenode_count + 2}"
     EOT
   }
@@ -141,11 +129,11 @@ resource "hcloud_server" "adminhost" {
     null_resource.deployment_info,
     hcloud_network_subnet.main
   ]
-  location    = local.selected_location
+  location    = var.location
   name        = "adminhost-${random_pet.adminhost.id}"
   image       = "ubuntu-22.04"
   ssh_keys    = local.ssh_keys
-  server_type = local.small_server_type
+  server_type = var.small_server_type
   network {
     network_id = hcloud_network.main.id
     ip         = ""
@@ -161,11 +149,11 @@ resource "hcloud_server" "assethost" {
     null_resource.deployment_info,
     hcloud_network_subnet.main
   ]
-  location    = local.selected_location
+  location    = var.location
   name        = "assethost-${random_pet.assethost.id}"
   image       = "ubuntu-22.04"
   ssh_keys    = local.ssh_keys
-  server_type = local.small_server_type
+  server_type = var.small_server_type
   public_net {
     ipv4_enabled = false
     ipv6_enabled = false
@@ -186,11 +174,11 @@ resource "hcloud_server" "kubenode" {
     hcloud_network_subnet.main
   ]
   count       = local.kubenode_count
-  location    = local.selected_location
+  location    = var.location
   name        = "kubenode-${random_pet.kubenode[count.index].id}"
   image       = "ubuntu-22.04"
   ssh_keys    = local.ssh_keys
-  server_type = local.medium_server_type
+  server_type = var.medium_server_type
   public_net {
     ipv4_enabled = false
     ipv6_enabled = false
@@ -211,11 +199,11 @@ resource "hcloud_server" "datanode" {
     hcloud_network_subnet.main
   ]
   count       = local.datanode_count
-  location    = local.selected_location
+  location    = var.location
   name        = "datanode-${random_pet.datanode[count.index].id}"
   image       = "ubuntu-22.04"
   ssh_keys    = local.ssh_keys
-  server_type = local.medium_server_type
+  server_type = var.medium_server_type
   public_net {
     ipv4_enabled = false
     ipv6_enabled = false

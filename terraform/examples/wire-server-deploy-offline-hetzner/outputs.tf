@@ -4,32 +4,32 @@ output "ssh_private_key" {
 }
 
 output "selected_server_types" {
-  description = "Server types selected after checking availability"
+  description = "Server types selected for the current deployment attempt"
   value = {
-    small_server_type  = local.small_server_type
-    medium_server_type = local.medium_server_type
+    small_server_type  = var.small_server_type
+    medium_server_type = var.medium_server_type
   }
 }
 
 output "selected_location" {
-  description = "Location selected after checking availability"
-  value       = local.selected_location
+  description = "Location selected for the current deployment attempt"
+  value       = var.location
 }
 
 output "resource_fallback_info" {
-  description = "Information about resource fallback selections"
+  description = "Information about the requested deployment combination and its availability"
   value = {
-    requested_locations = local.preferred_locations
+    requested_location  = var.location
     available_locations = local.available_location_names
-    selected_location   = local.selected_location
+    selected_location   = var.location
 
-    requested_small_types = local.preferred_server_types.small
-    available_small_types = local.available_small_server_types
-    selected_small_type   = local.small_server_type
+    requested_small_type = var.small_server_type
+    selected_small_type  = var.small_server_type
 
-    requested_medium_types = local.preferred_server_types.medium
-    available_medium_types = local.available_medium_server_types
-    selected_medium_type   = local.medium_server_type
+    requested_medium_type = var.medium_server_type
+    selected_medium_type  = var.medium_server_type
+
+    available_server_types = local.available_server_type_names
   }
 }
 
@@ -43,9 +43,9 @@ output "static-inventory" {
   value = {
     all = {
       vars = {
-        ansible_user            = "root"
-        private_interface       = "enp7s0"
-        adminhost_ip            = tolist(hcloud_server.adminhost.network)[0].ip
+        ansible_user      = "root"
+        private_interface = "enp7s0"
+        adminhost_ip      = tolist(hcloud_server.adminhost.network)[0].ip
       }
     }
     adminhost = {
