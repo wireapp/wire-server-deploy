@@ -192,13 +192,13 @@ Before running the offline deployment scripts, verify that the inventory resolve
 
 ```bash
 # confirm the inventory hostnames match the actual VM hostnames
-ansible all -i ansible/inventory/offline/inventory.yml -m shell -a 'hostname'
+d ansible all -i ansible/inventory/offline/inventory.yml -m shell -a 'hostname'
 
 # verify the default IPv4 interface and address reported by Ansible
-ansible all -i ansible/inventory/offline/inventory.yml -m setup -a 'filter=ansible_default_ipv4'
+d ansible all -i ansible/inventory/offline/inventory.yml -m setup -a 'filter=ansible_default_ipv4'
 
 # verify time and timezone consistency across the machines
-ansible all -i ansible/inventory/offline/inventory.yml -m shell -a 'date'
+d ansible all -i ansible/inventory/offline/inventory.yml -m shell -a 'date'
 
 # verify if the MTU is consistent across all the VMs
 d ansible all -i ansible/inventory/offline/inventory.yml -m shell -a "ip link show | grep mtu"
