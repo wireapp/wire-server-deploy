@@ -11,7 +11,7 @@ ARTIFACT="wire-server-deploy-static-${COMMIT_HASH}"
 
 # Retry matrix
 LOCATIONS=("hel1" "nbg1" "fsn1")
-SMALL_SERVER_TYPES=("cx23" "cx33" "cpx22")
+SMALL_SERVER_TYPES=("cx33" "cpx22")
 MEDIUM_SERVER_TYPES=("cx43" "cx53" "cpx42")
 
 # Retry configuration

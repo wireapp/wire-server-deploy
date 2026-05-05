@@ -14,7 +14,7 @@ variable "location" {
 variable "small_server_type" {
   description = "Server type for assethost and adminhost selected by the deployment script"
   type        = string
-  default     = "cx23"
+  default     = "cx33"
 }
 
 variable "medium_server_type" {
