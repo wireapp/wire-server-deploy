@@ -5,6 +5,7 @@ set -euo pipefail
 CD_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 TF_DIR="${CD_DIR}/../terraform/examples/wiab-staging-hetzner"
 VALUES_DIR="${CD_DIR}/../values"
+TF_VARS_FILE="${TF_DIR}/retry-selection.auto.tfvars.json"
 COMMIT_HASH="${GITHUB_SHA}"
 ARTIFACT="wire-server-deploy-static-${COMMIT_HASH}"
 
@@ -25,6 +26,17 @@ function cleanup {
   echo "Cleanup completed"
 }
 trap cleanup EXIT
+
+function persist_terraform_vars {
+        local location="$1"
+        local small_server_type="$2"
+        local medium_server_type="$3"
+
+        printf '{\n  "location": "%s",\n  "small_server_type": "%s",\n  "medium_server_type": "%s"\n}\n' \
+                "$location" \
+                "$small_server_type" \
+                "$medium_server_type" > "$TF_VARS_FILE"
+}
 
 cd "$TF_DIR"
 terraform init
@@ -61,18 +73,15 @@ for server_type_index in $(seq 0 $((server_type_count - 1))); do
         attempt_small_server_type="${SMALL_SERVER_TYPES[$server_type_index]}"
         attempt_medium_server_type="${MEDIUM_SERVER_TYPES[$server_type_index]}"
 
-        terraform_args=(
-            "-var=location=${attempt_location}"
-            "-var=small_server_type=${attempt_small_server_type}"
-            "-var=medium_server_type=${attempt_medium_server_type}"
-        )
+        persist_terraform_vars "$attempt_location" "$attempt_small_server_type" "$attempt_medium_server_type"
+
 
         echo ""
         echo "Deployment attempt $attempt of $MAX_RETRIES"
         echo "   -> location=${attempt_location}, small=${attempt_small_server_type}, medium=${attempt_medium_server_type}"
         date
 
-        if timeout "${APPLY_TIMEOUT_SECONDS}s" terraform apply -auto-approve "${terraform_args[@]}"; then
+        if timeout "${APPLY_TIMEOUT_SECONDS}s" terraform apply -auto-approve; then
             echo "Infrastructure deployment successful on attempt $attempt!"
             deployment_succeeded=true
             break 2
@@ -90,7 +99,7 @@ for server_type_index in $(seq 0 $((server_type_count - 1))); do
             echo "Will retry with the next location and server type combination..."
 
             echo "Cleaning up partial deployment..."
-            terraform destroy -auto-approve "${terraform_args[@]}" || true
+            terraform destroy -auto-approve || true
 
             echo "Waiting ${RETRY_DELAY}s for resources to become available..."
             sleep $RETRY_DELAY
@@ -227,4 +236,3 @@ ssh $SSH_OPTS -A "demo@$adminhost" ./bin/offline-deploy.sh
 
 echo ""
 echo "Wire offline deployment completed successfully!"
-cleanup

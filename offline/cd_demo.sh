@@ -11,6 +11,7 @@ ARTIFACTS_DIR="${CD_DIR}/demo-build/output"
 ANSIBLE_DIR="${CD_DIR}/../ansible"
 INVENTORY_DIR="${ANSIBLE_DIR}/inventory/demo"
 INVENTORY_FILE="${INVENTORY_DIR}/host.yml"
+TF_VARS_FILE="${TF_DIR}/retry-selection.auto.tfvars.json"
 TEST_USER="demo"
 COMMIT_HASH="${GITHUB_SHA}"
 
@@ -29,6 +30,15 @@ function cleanup {
 }
 
 trap cleanup EXIT
+
+function persist_terraform_vars {
+	local location="$1"
+	local server_type="$2"
+
+	printf '{\n  "location": "%s",\n  "server_type": "%s"\n}\n' \
+		"$location" \
+		"$server_type" > "$TF_VARS_FILE"
+}
 
 cd "$TF_DIR"
 terraform init
@@ -57,16 +67,13 @@ for server_type_index in $(seq 0 $((server_type_count - 1))); do
 		attempt_location="${LOCATIONS[$location_index]}"
 		attempt_server_type="${SERVER_TYPES[$server_type_index]}"
 
-		terraform_args=(
-			"-var=location=${attempt_location}"
-			"-var=server_type=${attempt_server_type}"
-		)
+		persist_terraform_vars "$attempt_location" "$attempt_server_type"
 
 		echo "Deployment attempt $attempt of $MAX_RETRIES"
 		echo "   -> location=${attempt_location}, size=${attempt_server_type}"
 		date
 
-		if timeout "${APPLY_TIMEOUT_SECONDS}s" terraform apply -auto-approve "${terraform_args[@]}"; then
+		if timeout "${APPLY_TIMEOUT_SECONDS}s" terraform apply -auto-approve; then
 			deployment_succeeded=true
 			break 2
 		fi
@@ -81,7 +88,7 @@ for server_type_index in $(seq 0 $((server_type_count - 1))); do
 
 		if [[ $attempt -lt $MAX_RETRIES ]]; then
 			echo "Cleaning up partial deployment..."
-			terraform destroy -auto-approve "${terraform_args[@]}" || true
+			terraform destroy -auto-approve || true
 
 			echo "Waiting ${RETRY_DELAY}s for resources to become available..."
 			sleep $RETRY_DELAY
@@ -132,5 +139,3 @@ echo "Running ansible playbook deploy_wiab.yml against node $host"
 ansible-playbook -i "${INVENTORY_FILE}" "${ANSIBLE_DIR}/wiab-demo/deploy_wiab.yml" --skip-tags verify_dns
 # cleaning demo-wiab
 ansible-playbook -i "${INVENTORY_FILE}" "${ANSIBLE_DIR}/wiab-demo/clean_cluster.yml" --tags remove_minikube,remove_artifacts,remove_packages,remove_iptables,remove_ssh
-
-cleanup
