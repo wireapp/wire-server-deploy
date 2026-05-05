@@ -8,7 +8,8 @@ PGUSER="{{ repmgr_user }}"
 PGDATABASE="{{ repmgr_database }}"
 LOGFILE="/var/log/postgresql/fence_events.log"
 SCRIPT_NAME="simple_fence"
-LOCAL_NODE_ID="{{ repmgr_node_config[inventory_hostname].node_id if repmgr_node_config is defined and repmgr_node_config.get(inventory_hostname) and repmgr_node_config[inventory_hostname].get('node_id') else '1' }}"
+{% set _all_pg = groups['postgresql_rw'] | default([]) + groups['postgresql_ro'] | default([]) %}
+LOCAL_NODE_ID="{{ _all_pg.index(inventory_hostname) + 1 }}"
 
 # Node mappings (id → ip/name), generated from inventory if available
 declare -A NODE_HOSTS=({% set nodes = ((groups.postgresql_rw|default([])) + (groups.postgresql_ro|default([]))) -%}

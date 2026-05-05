@@ -5,12 +5,12 @@
 # NODE IDENTIFICATION
 # Ref: https://www.repmgr.org/docs/current/configuration-file.html
 # ====================================================================
-{% set node_config = repmgr_node_config[inventory_hostname] | default({}) %}
-node_id={{ node_config.node_id | default(1) }}
+{% set _rw = groups['postgresql_rw'] | default([]) %}
+{% set _ro = groups['postgresql_ro'] | default([]) %}
+{% set _all_pg = _rw + _ro %}
+node_id={{ _all_pg.index(inventory_hostname) + 1 }}
 node_name='{{ inventory_hostname }}'
-{% if node_config.priority is defined %}
-priority={{ node_config.priority }}
-{% endif %}
+priority={{ 150 if inventory_hostname in _rw else ((_ro | length - _ro.index(inventory_hostname)) * 50) }}
 
 # ====================================================================
 # CONNECTION SETTINGS
