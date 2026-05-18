@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-set -euxo pipefail
+set -euo pipefail
 
 CD_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 TF_DIR="${CD_DIR}/../terraform/examples/wiab-demo-hetzner"
@@ -100,7 +100,6 @@ done
 
 if [[ "$deployment_succeeded" != true ]]; then
 	echo "All deployment attempts failed after $MAX_RETRIES tries"
-    cleanup
 	exit 1
 fi
 
