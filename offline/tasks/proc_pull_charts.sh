@@ -82,17 +82,7 @@ pull_charts() {
   done
   echo "Pulling charts done."
 
-  # Patch bitnami repository references in pulled charts
-  # Remove the extraction and replacement when there will be no more bitnami charts
-  #echo "Patching bitnami repository references..."
-  #SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-  #PATCH_SCRIPT="${SCRIPT_DIR}/patch-chart-images.sh"
-  #if [[ -f "$PATCH_SCRIPT" ]]; then
-  #  "$PATCH_SCRIPT" "${OUTPUT_DIR}/charts"
-  #else
-  #  echo "Warning: patch-chart-images.sh not found at $PATCH_SCRIPT, skipping chart patching"
-  #fi
 }
 
-wire_build="https://raw.githubusercontent.com/wireapp/wire-builds/pinned-offline-multi-20260224-142104/build.json"
+wire_build="https://raw.githubusercontent.com/wireapp/wire-builds/f941851bee7666441a23ba782766cd8d7de5043e/build.json"
 wire_build_chart_release "$wire_build" | pull_charts
