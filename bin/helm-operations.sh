@@ -78,7 +78,7 @@ process_values() {
 
   ENV=$1
   TYPE=$2
-  charts=(fake-aws demo-smtp rabbitmq databases-ephemeral reaper wire-server webapp account-pages team-settings ingress-nginx-controller)
+  charts=(fake-aws smtp rabbitmq databases-ephemeral reaper wire-server webapp account-pages team-settings ingress-nginx-controller)
 
   if [[ "$DEPLOY_CERT_MANAGER" == "TRUE" ]]; then
     charts+=(nginx-ingress-services cert-manager)

@@ -117,6 +117,13 @@
 
   - name: Deploy core Wire service Helm charts
     block:
+    - name: Reset core Helm deployment status
+      set_fact:
+        helm_deploy_failed: false
+        helm_deploy_failure_task: ''
+        helm_deploy_failure_message: ''
+        deployment_messages: []
+
     - name: Display charts that will be deployed
       debug:
         msg: "Following charts will be deployed: {{ charts_to_deploy | join(', ') }}"
@@ -165,32 +172,46 @@
       loop: "{{ charts_to_deploy }}"
       register: helm_deploy_result
 
-    - name: Report deployment status for all core charts
-      block:
+    rescue:
+      - name: Store core Helm deployment failure details
+        set_fact:
+          helm_deploy_failed: true
+          helm_deploy_failure_task: "{{ ansible_failed_task.name | default('Deploy core Wire charts using their available configuration files') }}"
+          helm_deploy_failure_message: "{{ ansible_failed_result.msg | default(ansible_failed_result.stderr | default('Unknown error during Helm chart deployment')) }}"
+
+    always:
       - name: Build deployment status list
         set_fact:
-          deployment_messages: "{{ deployment_messages | default([]) + [item.item + ': ' + ('Deployed' if item.changed else 'Already up-to-date')] }}"
-        loop: "{{ helm_deploy_result.results }}"
-        when: helm_deploy_result.results is defined
+          deployment_messages: "{{ deployment_messages + [item.item + ': ' + ('Failed' if item.failed | default(false) else ('Deployed' if item.changed | default(false) else 'Already up-to-date'))] }}"
+        loop: "{{ helm_deploy_result.results | default([]) }}"
         no_log: true
 
       - name: Display chart deployment status
         debug:
           msg: "{{ ['Chart deployment status:'] + (deployment_messages | map('regex_replace', '^', '- ') | list) }}"
-        when: helm_deploy_result.results is defined
+        when: deployment_messages | length > 0
 
-    - name: Retrieve running pods from default namespace
-      kubernetes.core.k8s_info:
-        kind: Pod
-        namespace: default
-        kubeconfig: "{{ kube_config }}"
-      register: pods_info
+      - name: Display core Helm deployment failure details
+        debug:
+          msg:
+            - "Core Wire chart deployment failed."
+            - "Failed task: {{ helm_deploy_failure_task }}"
+            - "Error: {{ helm_deploy_failure_message }}"
+        when: helm_deploy_failed | default(false)
 
-    - name: Display running pods sorted by creation time
-      block:
+      - name: Retrieve running pods from default namespace
+        kubernetes.core.k8s_info:
+          kind: Pod
+          namespace: default
+          kubeconfig: "{{ kube_config }}"
+        register: pods_info
+
       - name: Count running pods
         set_fact:
-          running_pods_count: "{{ pods_info.resources | length }}"
+          total_pods_count: "{{ pods_info.resources | length }}"
+          all_pods: "{{ pods_info.resources | map(attribute='metadata.name') | list }}"
+          failing_pod_resources: "{{ pods_info.resources | rejectattr('status.phase', 'equalto', 'Running') | rejectattr('status.phase', 'equalto', 'Succeeded') | list }}"
+          failing_pods: "{{ pods_info.resources | rejectattr('status.phase', 'equalto', 'Running') | rejectattr('status.phase', 'equalto', 'Succeeded') | map(attribute='metadata.name') | list }}"
           running_pods: "{{ pods_info.resources | selectattr('status.phase', 'equalto', 'Running') | map(attribute='metadata.name') | list }}"
           succeeded_pods: "{{ pods_info.resources | selectattr('status.phase', 'equalto', 'Succeeded') | map(attribute='metadata.name') | list }}"
           pending_pods: "{{ pods_info.resources | selectattr('status.phase', 'equalto', 'Pending') | map(attribute='metadata.name') | list }}"
@@ -198,7 +219,7 @@
       - name: Display pods summary
         debug:
           msg:
-            - "Total running pods: {{ running_pods_count }}"
+            - "Total pods: {{ total_pods_count }}"
             - ""
             - "Running ({{ running_pods | length }}):"
             - "{{ running_pods | map('regex_replace', '^', '  - ') | list }}"
@@ -208,6 +229,59 @@
             - ""
             - "Pending ({{ pending_pods | length }}):"
             - "{{ pending_pods | map('regex_replace', '^', '  - ') | list }}"
+
+      - name: Display failing pod details
+        debug:
+          msg: |
+            Failing pod details:
+            {{ failing_pod_resources | to_nice_yaml }}
+        when:
+          - helm_deploy_failed | default(false)
+          - dump_logs_on_failure | default(false)
+          - failing_pod_resources | length > 0
+
+      - name: Note when no failing pods were found
+        debug:
+          msg: "No failing pods found in pod inventory; skipping pod detail dump."
+        when:
+          - helm_deploy_failed | default(false)
+          - dump_logs_on_failure | default(false)
+          - failing_pod_resources | length == 0
+
+      - name: Collect logs from all pods
+        kubernetes.core.k8s_log:
+          name: "{{ item }}"
+          namespace: default
+          kubeconfig: "{{ kube_config }}"
+          tail_lines: 30
+          all_containers: true
+        failed_when: false
+        register: pod_logs
+        loop: "{{ all_pods }}"
+        when:
+          - helm_deploy_failed | default(false)
+          - dump_logs_on_failure | default(false)
+
+      - name: Display pod logs
+        debug:
+          msg: |
+            Pod logs for {{ item.item }}:
+            {% if item.failed | default(false) %}
+            Failed to collect logs: {{ item.msg | default('Unknown error') }}
+            {% else %}
+            {{ item.log | default(item.content | default('No logs returned')) }}
+            {% endif %}
+        loop: "{{ pod_logs.results | default([]) }}"
+        loop_control:
+          label: "{{ item.item }}"
+        when:
+          - helm_deploy_failed | default(false)
+          - dump_logs_on_failure | default(false)
+
+      - name: Stop play after core Helm deployment failure
+        fail:
+          msg: "Core Wire chart deployment failed in task '{{ helm_deploy_failure_task }}': {{ helm_deploy_failure_message }}"
+        when: helm_deploy_failed | default(false)
 
   - name: Deploy nginx-ingress-services with TLS configuration
     block:
