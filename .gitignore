@@ -30,6 +30,7 @@ secrets_cache/
 
 terraform.tfstate
 terraform.tfstate.backup
+*.auto.tfvars.json
 kubeconfig.new
 .vscode/*
 

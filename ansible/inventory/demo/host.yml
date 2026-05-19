@@ -39,6 +39,9 @@ wiab:
     pod_network_cidr: "10.233.0.0/16"
     minikube_node_subnet: "192.168.99.0/24"
 
+    # will dump logs on failure when deploying helm charts
+    dump_logs_on_failure: true
+    # will use certmanager for certs
     use_cert_manager: true
     # networking iptables dnat rules
     http_dnat_rules:

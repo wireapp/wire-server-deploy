@@ -5,13 +5,19 @@ set -euo pipefail
 CD_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 TF_DIR="${CD_DIR}/../terraform/examples/wire-server-deploy-offline-hetzner"
 VALUES_DIR="${CD_DIR}/../values"
+TF_VARS_FILE="${TF_DIR}/retry-selection.auto.tfvars.json"
 
 COMMIT_HASH="${GITHUB_SHA}"
 ARTIFACT="wire-server-deploy-static-${COMMIT_HASH}"
 
+# Retry matrix
+LOCATIONS=("hel1" "fsn1" "nbg1")
+SMALL_SERVER_TYPES=("cx23" "cx33" "cpx22")
+MEDIUM_SERVER_TYPES=("cx33" "cx43" "cpx32")
+
 # Retry configuration
-MAX_RETRIES=3
 RETRY_DELAY=30
+APPLY_TIMEOUT_SECONDS=300
 
 echo "Wire Offline Deployment with Retry Logic"
 echo "========================================"
@@ -22,79 +28,100 @@ function cleanup {
 }
 trap cleanup EXIT
 
+function persist_terraform_vars {
+        local location="$1"
+        local small_server_type="$2"
+        local medium_server_type="$3"
+
+        printf '{\n  "location": "%s",\n  "small_server_type": "%s",\n  "medium_server_type": "%s"\n}\n' \
+                "$location" \
+                "$small_server_type" \
+                "$medium_server_type" > "$TF_VARS_FILE"
+}
+
 cd "$TF_DIR"
 terraform init
 
+if ! command -v timeout >/dev/null 2>&1; then
+    echo "The 'timeout' command is required but not installed"
+    exit 1
+fi
+
+if [[ ${#SMALL_SERVER_TYPES[@]} -ne ${#MEDIUM_SERVER_TYPES[@]} ]]; then
+    echo "Small and medium server type retry lists must have the same length"
+    exit 1
+fi
+
+if [[ ${#LOCATIONS[@]} -eq 0 || ${#SMALL_SERVER_TYPES[@]} -eq 0 ]]; then
+    echo "No location or server type preferences configured in the retry matrix"
+    exit 1
+fi
+
+location_count=${#LOCATIONS[@]}
+server_type_count=${#SMALL_SERVER_TYPES[@]}
+MAX_RETRIES=$((location_count * server_type_count))
+
 # Retry loop for terraform apply
 echo "Starting deployment with automatic retry on resource unavailability..."
-for attempt in $(seq 1 $MAX_RETRIES); do
-    echo ""
-    echo "Deployment attempt $attempt of $MAX_RETRIES"
-    date
+echo "Retry plan: ${location_count} locations x ${server_type_count} server type pairs = ${MAX_RETRIES} attempts"
 
-    if terraform apply -auto-approve; then
-        echo "Infrastructure deployment successful on attempt $attempt!"
-        break
-    else
-        echo "Infrastructure deployment failed on attempt $attempt"
+attempt=1
+deployment_succeeded=false
+
+for server_type_index in $(seq 0 $((server_type_count - 1))); do
+    for location_index in $(seq 0 $((location_count - 1))); do
+        attempt_location="${LOCATIONS[$location_index]}"
+        attempt_small_server_type="${SMALL_SERVER_TYPES[$server_type_index]}"
+        attempt_medium_server_type="${MEDIUM_SERVER_TYPES[$server_type_index]}"
+
+        persist_terraform_vars "$attempt_location" "$attempt_small_server_type" "$attempt_medium_server_type"
+
+        echo ""
+        echo "Deployment attempt $attempt of $MAX_RETRIES"
+        echo "   -> location=${attempt_location}, small=${attempt_small_server_type}, medium=${attempt_medium_server_type}"
+        date
+
+        if timeout "${APPLY_TIMEOUT_SECONDS}s" terraform apply -auto-approve; then
+            echo "Infrastructure deployment successful on attempt $attempt!"
+            deployment_succeeded=true
+            break 2
+        fi
+
+        apply_exit_code=$?
+
+        if [[ $apply_exit_code -eq 124 ]]; then
+            echo "Infrastructure deployment timed out after ${APPLY_TIMEOUT_SECONDS}s on attempt $attempt"
+        else
+            echo "Infrastructure deployment failed on attempt $attempt"
+        fi
 
         if [[ $attempt -lt $MAX_RETRIES ]]; then
-            echo "Will retry with different configuration..."
+            echo "Will retry with the next location and server type combination..."
 
-            # Clean up partial deployment
             echo "Cleaning up partial deployment..."
             terraform destroy -auto-approve || true
 
-            # Wait for resources to potentially become available
             echo "Waiting ${RETRY_DELAY}s for resources to become available..."
             sleep $RETRY_DELAY
-
-            # Modify configuration for better availability
-            echo "Adjusting server type preferences for attempt $((attempt + 1))..."
-            case $attempt in
-                1)
-                    # Attempt 2: Prioritize cx22 and cx41
-                    sed -i.bak 's/"cx23", "cx33", "cpx22"/"cx33", "cpx22", "cx23"/' main.tf
-                    sed -i.bak 's/"cx33", "cx43", "cpx32"/"cx43", "cpx32", "cx33"/' main.tf
-                    echo "   -> Prioritizing cx33 and cx43 server types"
-                    ;;
-                2)
-                    # Attempt 3: Use smallest available types
-                    sed -i.bak 's/"cx33", "cpx22", "cx23"/"cpx22", "cx23", "cx33"/' main.tf
-                    sed -i.bak 's/"cx43", "cpx32", "cx33"/"cpx32", "cx33", "cx43"/' main.tf
-                    echo "   -> Using smallest available server types"
-                    ;;
-            esac
-
-            terraform init -reconfigure
-        else
-            echo "All deployment attempts failed after $MAX_RETRIES tries"
-            echo ""
-            echo "This usually means:"
-            echo "   1. High demand for Hetzner Cloud resources in EU regions"
-            echo "   2. Your account may have resource limits"
-            echo "   3. Try again later when resources become available"
-            echo ""
-            echo "Manual solutions:"
-            echo "   1. Check Hetzner Console for resource limits"
-            echo "   2. Try different server types manually"
-            echo "   3. Contact Hetzner support for resource availability"
-
-            # Restore original config
-            if [[ -f main.tf.bak ]]; then
-                mv main.tf.bak main.tf
-                terraform init -reconfigure
-            fi
-
-            exit 1
         fi
-    fi
+
+        attempt=$((attempt + 1))
+    done
 done
 
-# Restore original config after successful deployment
-if [[ -f main.tf.bak ]]; then
-    mv main.tf.bak main.tf
-    terraform init -reconfigure
+if [[ "$deployment_succeeded" != true ]]; then
+    echo "All deployment attempts failed after $MAX_RETRIES tries"
+    echo ""
+    echo "This usually means:"
+    echo "   1. High demand for Hetzner Cloud resources in EU regions"
+    echo "   2. Your account may have resource limits"
+    echo "   3. Try again later when resources become available"
+    echo ""
+    echo "Manual solutions:"
+    echo "   1. Check Hetzner Console for resource limits"
+    echo "   2. Try different server types manually"
+    echo "   3. Contact Hetzner support for resource availability"
+    exit 1
 fi
 
 echo ""
@@ -134,4 +161,3 @@ ssh $SSH_OPTS -A "root@$adminhost" ./bin/offline-deploy.sh
 
 echo ""
 echo "Wire offline deployment completed successfully!"
-cleanup
