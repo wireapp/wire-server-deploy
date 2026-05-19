@@ -9,8 +9,8 @@ locals {
 
   # Server type preferences with fallbacks (optimized for availability)
   preferred_server_types = {
-    small  = ["cx33", "cpx22", "cx43"] # For assethost and adminhost
-    medium = ["cx43", "cx53", "cpx42"] # For datanodes and k8s_nodes
+    small  = ["cpx22", "cpx32", "cpx42"] # For assethost and adminhost
+    medium = ["cpx42", "cpx52", "cpx62"] # For datanodes and k8s_nodes
   }
 }
 
