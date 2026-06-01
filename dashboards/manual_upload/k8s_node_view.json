@@ -3885,13 +3885,13 @@
           "type": "prometheus",
           "uid": "${datasource}"
         },
-        "definition": "label_values(node_uname_info{nodename=~\"(?i:($node)(\\.[a-z0-9.]+)?)\"}, instance)",
+        "definition": "label_values(node_uname_info, instance)",
         "hide": 2,
         "includeAll": false,
         "name": "instance",
         "options": [],
         "query": {
-          "query": "label_values(node_uname_info{nodename=~\"(?i:($node)(\\.[a-z0-9.]+)?)\"}, instance)",
+          "query": "label_values(node_uname_info, instance)",
           "refId": "StandardVariableQuery"
         },
         "refresh": 2,
