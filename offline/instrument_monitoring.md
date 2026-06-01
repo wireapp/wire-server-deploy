@@ -295,6 +295,98 @@ ssh -i ssh/id_ed25519 demo@kubenode3 "sudo mkdir -p /mnt/prometheus-data && sudo
 - sets the Ownership to UID 65534 (nobody). Prometheus runs as a non-root user inside the container for security reasons. In prometheusSpec.securityContext, unless overridden, it runs as 65534
 - sets the permissions of the directory so that Prometheus (running as a non-root user) can access and write to it.
 
+#### Exposing Prometheus via ingress (optional, not recommended)
+
+By default, `ingress` is disabled for Prometheus. The Prometheus NodePort (`30090`) is sufficient for Grafana to reach Prometheus **when Grafana can directly reach the Kubernetes node IP on port 30090** — for example when Grafana runs on the adminhost or on a VM in the same L2/L3 network as the cluster nodes.
+
+**When is ingress actually necessary?** If Grafana is on a separate machine or subnet that has no IP routing to the cluster node IPs (for example a different VLAN or a different network segment), then the NodePort is unreachable and you need to expose Prometheus via ingress. In that case, continue reading this section.
+
+**Preferred deployment model (if possible):** Deploy Grafana inside the Kubernetes cluster when persistent storage is available (using an existing StorageClass or a new one). In this model, keep Prometheus internal and connect Grafana to the Prometheus Kubernetes service in the `monitoring` namespace (typically a `ClusterIP` service). This keeps Prometheus private within the cluster while Grafana can be exposed through ingress as needed.
+
+We recommend keeping Prometheus ingress disabled whenever NodePort is reachable. Enabling ingress exposes Prometheus outside the cluster network boundary.
+
+> **Warning:** Exposing Prometheus via ingress makes it reachable outside the Kubernetes cluster. If you choose to enable ingress, configure authentication at the ingress layer here. Basic auth can also be configured for Prometheus itself if required, and you should still consider the TLS certificate implications described below.
+
+If you absolutely need to expose Prometheus via ingress, enable it by updating `kube-prometheus-stack.prometheus.ingress.enabled` to `true` in `charts/kube-prometheus-stack/values.yaml`.
+
+> **Recommended combination if ingress is required:** Use ingress only when Grafana cannot reach Prometheus on the NodePort from the same subnet. In that case, configure TLS and authentication together so the endpoint is encrypted and protected. The sections below cover each piece. Read all three before making changes — they should be configured together.
+
+##### Basic auth credentials
+
+Prometheus ingress is configured with `basic-auth` for authentication. Basic auth secrets are created by `offline-secrets.sh` and stored in `values/kube-prometheus-stack/prod-secrets.example.yaml` during the preparation phase. Verify that this file exists before proceeding.
+
+If `values/kube-prometheus-stack/prod-secrets.example.yaml` is missing, the bundle does not contain the necessary Prometheus configuration. Either obtain `offline-secrets.sh` from the latest bundle and regenerate the secrets, or create the file manually:
+
+```bash
+touch values/kube-prometheus-stack/prod-secrets.example.yaml
+nano values/kube-prometheus-stack/prod-secrets.example.yaml
+```
+
+Add the Prometheus auth credentials:
+
+```yaml
+prometheus:
+  auth:
+    username: <username>
+    password: <password>
+```
+
+##### DNS hostname for the Prometheus ingress
+
+When choosing a hostname for the Prometheus ingress, use the hostname that matches how Grafana and users will reach it in your environment. Set the hostname in the `hosts` and `tls.hosts` fields of the ingress block. The recommended subdomain is `prometheus.<your-domain>`.
+
+##### Certificate options for the Prometheus ingress
+
+**Default Kubernetes certificate**
+
+If you do not need a certificate issued by cert-manager, you can omit cert-manager annotations and let the ingress controller use its default certificate. No additional cert-manager configuration is required.
+
+> **Grafana datasource note:** When using a self-signed or private CA certificate, you must configure the Grafana Prometheus datasource to either skip TLS verification or supply the CA certificate. In the Grafana datasource settings, under **TLS settings**, either enable **Skip TLS certificate validation** or upload the CA certificate under **CA cert**.
+
+**Certificate issued by cert-manager (for public DNS or a trusted private CA)**
+
+Cert-manager can automatically issue and renew a TLS certificate for the Prometheus ingress via the ingress-shim annotation defined in `values.yaml`:
+
+```yaml
+annotations:
+  cert-manager.io/cluster-issuer: letsencrypt-http01
+```
+
+- `hosts`: set to `prometheus.<domain_name>`
+- `tls.hosts`: set to the same hostname
+- `tls.secretName`: choose a name for the TLS secret, for example `prometheus-tls-cert`. Cert-manager will create a `Certificate` resource with this name.
+
+ClusterIssuers are non-namespaced, so the namespace the ingress resides in does not matter.
+
+**Verify the cluster issuer**
+
+```bash
+d kubectl get clusterissuer
+```
+
+If the issuer name in the cluster does not match the one in `values.yaml`, update `values.yaml` to use the correct name.
+
+If no `ClusterIssuer` exists and you only have a namespaced `Issuer`, promote it by updating `values/nginx-ingress-services/values.yaml`:
+
+```yaml
+tls:
+  enabled: true
+  # NOTE: enable to automate certificate issuing with jetstack/cert-manager instead of
+  #       providing your own certs in secrets.yaml. Cert-manager is not installed automatically,
+  #       it needs to be installed beforehand (see ./../../charts/certificate-manager/README.md)
+  useCertManager: true
+  issuer:
+    kind: ClusterIssuer
+```
+
+Then upgrade the nginx-ingress-services chart:
+
+```bash
+d helm upgrade --install nginx-ingress-services ./charts/nginx-ingress-services --values ./values/nginx-ingress-services/values.yaml --values ./values/nginx-ingress-services/secrets.yaml
+```
+
+Verify the issuer again and confirm that existing certificates reference the `ClusterIssuer` as their `issuerRef`.
+
 #### Install the helm chart
 
 Before proceeding to this step, make sure the values.yaml file has been updated with the correct values. Now install the kube-prometheus-stack helm.
@@ -303,6 +395,7 @@ Before proceeding to this step, make sure the values.yaml file has been updated 
 d helm upgrade --install prometheus \
   ./charts/kube-prometheus-stack/ \
   -f charts/kube-prometheus-stack/values.yaml \
+  -f values/kube-prometheus-stack/prod-secrets.example.yaml \
   --namespace monitoring \
   --create-namespace
 ```
@@ -469,10 +562,30 @@ d helm upgrade --install sftd ./charts/sftd --set 'nodeSelector.wire\.com/role=s
 
 ### Set Up Prometheus as a Datasource for Grafana
 
-Open Grafana in a browser and click the Data sources tab.
-- Choose Prometheus as the data source and use the Prometheus endpoint as the connection parameter.
+1. Open Grafana in a browser.
+2. Go to **Connections** -> **Data sources**.
+3. Click **Add data source** and select **Prometheus**.
+4. In **Connection**, set the Prometheus URL based on how Prometheus is exposed:
+  - NodePort (default setup, no ingress): `http://<k8s-node-ip>:30090`
+  - Ingress with TLS enabled: `https://prometheus.<your-domain>`
+  - Ingress without TLS: `http://prometheus.<your-domain>`
 
-Test the data source by clicking Metrics in the Drilldown section. After choosing the configured data source, you should be able to see metrics.
+5. Configure authentication based on your Prometheus ingress setup:
+  - If ingress `basic-auth` is enabled, turn on **Basic auth** in Grafana datasource settings and set:
+    - **User**: `prometheus.auth.username`
+    - **Password**: `prometheus.auth.password`
+    (values from `values/kube-prometheus-stack/prod-secrets.example.yaml`)
+  - If basic auth is not enabled on Prometheus, keep **Basic auth** disabled.
+
+6. Configure TLS options when using `https://`:
+  - If certificate is publicly trusted, keep default TLS settings.
+  - If certificate is self-signed or signed by a private CA, under **TLS settings** either:
+    - enable **Skip TLS certificate validation**, or
+    - provide the CA certificate in **CA cert**.
+
+7. Click **Save & test**.
+8. Confirm success message in Grafana (for example: data source is working / HTTP 200).
+9. Optional validation: click **Explore**, select the Prometheus datasource, and run `up` to verify live metrics are returned.
 
 ### Verify Metrics in Grafana Explore
 
