@@ -127,10 +127,13 @@ images=(
   "quay.io/prometheus/prometheus:v3.4.2"
   "registry.k8s.io/ingress-nginx/kube-webhook-certgen:v1.5.4"
   "registry.k8s.io/kube-state-metrics/kube-state-metrics:v2.16.0"
+  "quay.io/prometheus-operator/prometheus-config-reloader:v0.83.0"
 )
 
 # logic to find the above images
 # d helm template test charts/kube-prometheus-stack | yq eval '.. | select(has("image")) | .image' | grep -i "/" | sort | uniq
+# https://github.com/prometheus-community/helm-charts/blob/main/charts/kube-prometheus-stack/templates/prometheus-operator/deployment.yaml#L97
+# prometheus-config-reloader image is passed as an arguement to operator and hence, not visible at the templating.
 
 for image in "${images[@]}"; do
   docker pull "$image"
@@ -140,7 +143,7 @@ for image in "${images[@]}"; do
 done
 ```
 
-Copy all the images to kubenode3:
+Copy all the images to all kubenodes, below step illustrates an example on kubenode3:
 ```bash
 scp -i ssh/id_ed25519 -r prometheus-images-tars demo@kubenode3:/home/demo/prometheus-images-tars
 ```
@@ -531,8 +534,10 @@ Then run the script
 
 ```bash
 chmod +x dashboards/grafana_sync.sh
-./dashboards/grafana_sync.sh
+d ./dashboards/grafana_sync.sh
 ```
+
+Note: GRAFANA_URL must be reachable from the `adminhost-wire-server-deploy` container i.e. `d`.
 
 #### Manual Upload
 
