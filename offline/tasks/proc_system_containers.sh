@@ -32,6 +32,7 @@ quay.io/calico/pod2daemon-flexvol:v3.27.4
 quay.io/calico/kube-controllers:v3.27.4
 quay.io/calico/typha:v3.27.4
 quay.io/calico/apiserver:v3.27.4
+docker.io/library/nginx:1.25.4-alpine
 EOF
 }
 
