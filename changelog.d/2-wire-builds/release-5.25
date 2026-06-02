@@ -1,2 +1,0 @@
-Fixed: update reference for 5.25 to 5.25.21 without any pinned component
-Added: logging in case of helm chart failure

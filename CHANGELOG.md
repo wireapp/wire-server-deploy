@@ -12,6 +12,30 @@
 
 -->
 
+# Relase 5.25 R1
+
+## Release notes
+
+* Changed: removing all old changelogs to cut a release for wire-server-deploy 5.25 for prod, wiab-staging and wiab-dev (#898)
+
+## Internal Dependencies
+
+* Removed: old images not in use anymore from proc_system_containers.sh (#909)
+* Fixed: update reference for 5.25 to 5.25.21 without any pinned component
+  Added: logging in case of helm chart failure (#900)
+* Fixed: values for smtp helm chart (#900)
+
+## External dependencies
+
+* Fixed: Enable MLS protocol in production and dev values for brig (#909)
+* Fixed: Refactored terraform logic for CD purposes for all solutions wiab-dev(demo), wiab-staging and default (equivalent). All logic to pick up the region and server type remains in the respective scripts, there will be an iteration over regions first, terraform would just validate the regions and server types  (#900)
+* Fixed: smtp helm chart values
+  Fixed: issue due to requirement of mls keys for webapp for wiab-dev when MLS is not required (#900)
+
+## Offline Documentation
+
+* Fixed: commands in wiab-stag documentation (#907)
+
 # Relase 5.25
 
 ## release-notes

@@ -1,1 +1,0 @@
-Fixed: Refactored terraform logic for CD purposes for all solutions wiab-dev(demo), wiab-staging and default (equivalent). All logic to pick up the region and server type remains in the respective scripts, there will be an iteration over regions first, terraform would just validate the regions and server types 
