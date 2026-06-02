@@ -32,14 +32,7 @@ quay.io/calico/pod2daemon-flexvol:v3.27.4
 quay.io/calico/kube-controllers:v3.27.4
 quay.io/calico/typha:v3.27.4
 quay.io/calico/apiserver:v3.27.4
-quay.io/jetstack/cert-manager-controller:v1.16.3
-quay.io/jetstack/cert-manager-cainjector:v1.16.3
-quay.io/jetstack/cert-manager-webhook:v1.16.3
-quay.io/jetstack/cert-manager-startupapicheck:v1.16.3
 docker.io/library/nginx:1.25.4-alpine
-bats/bats:1.11.1
-cr.step.sm/smallstep/step-ca:0.25.3-rc7
-registry.k8s.io/ingress-nginx/kube-webhook-certgen:v20231011-8b53cabe0
 EOF
 }
 
