@@ -1,2 +1,0 @@
-Fixed: smtp helm chart values 
-Fixed: issue due to requirement of mls keys for webapp for wiab-dev when MLS is not required

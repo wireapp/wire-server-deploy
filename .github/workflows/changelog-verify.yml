@@ -26,19 +26,28 @@ jobs:
             BASE_SHA=${{ github.event.pull_request.base.sha }}
             HEAD_SHA=${{ github.event.pull_request.head.sha }}
 
-          # Use 3-dot syntax so we only see changes introduced by this PR
-            CHANGED_FILES=$(git diff --name-only "$BASE_SHA...$HEAD_SHA" -- changelog.d/ | grep -vE "^$" || true)
+            # Use 3-dot syntax so we only see changes introduced by this PR
+            CHANGED_FILES=$(git diff --name-status "$BASE_SHA...$HEAD_SHA" -- changelog.d/ | awk '$1 ~ /^[AM]/ {print $2}' || true)
+            DELETED_FILES=$(git diff --name-status "$BASE_SHA...$HEAD_SHA" -- changelog.d/ | awk '$1 ~ /^D/ {print $2}' || true)
+            CHANGELOG_MODIFIED=$(git diff --name-only "$BASE_SHA...$HEAD_SHA" -- CHANGELOG.md | grep -vE "^$" || true)
           else
             # For push events, compare with the previous commit
             HEAD_SHA=${{ github.sha }}
             BASE_SHA=$(git rev-parse HEAD~1)
-            CHANGED_FILES=$(git diff --name-only "$BASE_SHA" "$HEAD_SHA" -- changelog.d/ | grep -vE "^$" || true)
+            CHANGED_FILES=$(git diff --name-status "$BASE_SHA" "$HEAD_SHA" -- changelog.d/ | awk '$1 ~ /^[AM]/ {print $2}' || true)
+            DELETED_FILES=$(git diff --name-status "$BASE_SHA" "$HEAD_SHA" -- changelog.d/ | awk '$1 ~ /^D/ {print $2}' || true)
+            CHANGELOG_MODIFIED=$(git diff --name-only "$BASE_SHA" "$HEAD_SHA" -- CHANGELOG.md | grep -vE "^$" || true)
           fi
           
           echo "BASE_SHA: $BASE_SHA"
           echo "HEAD_SHA: $HEAD_SHA"
+          echo "CHANGELOG_MODIFIED: ${CHANGELOG_MODIFIED:-false}"
           echo "CHANGED_FILES:"
           echo "$CHANGED_FILES"
+          if [ -n "$DELETED_FILES" ]; then
+            echo "DELETED_CHANGELOG_FILES:"
+            echo "$DELETED_FILES"
+          fi
 
           # Check if commit is by zebot with wire-build update message
           COMMIT_AUTHOR=$(git log --format="%an" -1 $HEAD_SHA)
@@ -51,16 +60,26 @@ jobs:
             exit 0
           fi
 
-          if [ -z "$CHANGED_FILES" ]; then
-            echo "No files changed in changelog.d/ for this ${GITHUB_EVENT_NAME:-event}."
-            echo "Every PR must add or modify at least one changelog.d/ entry."
-            exit 1
-          fi
-
           PATTERN='^(Added|Changed|Deprecated|Removed|Fixed|Security): .+'
           LINE_FOUND=false
+          ALLOW_RELEASE_CLEANUP=false
+
+          if [ -z "$CHANGED_FILES" ]; then
+            if [ -n "$DELETED_FILES" ] && [ -n "$CHANGELOG_MODIFIED" ]; then
+              echo "No new or modified changelog.d/ entries found, but CHANGELOG.md changed, so this release cleanup is allowed."
+              ALLOW_RELEASE_CLEANUP=true
+            else
+              echo "No files changed in changelog.d/ for this ${GITHUB_EVENT_NAME:-event}."
+              echo "Every PR must add or modify at least one changelog.d/ entry."
+              exit 1
+            fi
+          fi
 
           for file in $CHANGED_FILES; do
+            if [ ! -f "$file" ]; then
+              echo "Skipping missing changelog file: $file"
+              continue
+            fi
             while IFS= read -r line; do
               if [[ -z "$line" ]]; then
                 continue
@@ -75,7 +94,7 @@ jobs:
             done < "$file"
           done
 
-          if [ "$LINE_FOUND" = false ]; then
+          if [ "$LINE_FOUND" = false ] && [ "$ALLOW_RELEASE_CLEANUP" = false ]; then
             echo "No valid lines found in changelog.d/ files. Ensure there is a newline at the end of files."
             echo "Please read more policies about changelog at https://keepachangelog.com/en/1.1.0"
             exit 1
