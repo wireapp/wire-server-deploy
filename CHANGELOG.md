@@ -11,6 +11,11 @@
 ## Breaking changes
 
 -->
+# Relase 5.27
+
+## Release notes
+
+* Added: update prod and demo example values/secrets for wire-server 5.27, aligning PostgreSQL config, postgresMigration (conversation, teamFeatures), rabbitmq, and mlsPrivateKeys across all services
 
 # Relase 5.25 R1
 
