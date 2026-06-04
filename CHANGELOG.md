@@ -11,6 +11,12 @@
 ## Breaking changes
 
 -->
+# Relase 5.30
+
+## Release notes
+
+* Changed: the wire-builds reference with 5.30.18 commit
+
 # Relase 5.28
 
 ## Release notes
