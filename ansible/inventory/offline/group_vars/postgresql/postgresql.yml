@@ -53,20 +53,20 @@ postgresql_use_repository: false  # Set to true to use local packages from urls
 # When updating the packages, update the checksums too in wire-server-deploy/nix/pkgs/wire-binaries.nix
 postgresql_pkgs:
   - name: libpq5
-    url: "{{ binaries_url }}/libpq5_18.1-1.pgdg22.04+2_amd64.deb"
-    checksum: "sha256:4ae11bafcf5cb972e53457c01de30bd4119e8ed280bced0c383aceecb06b4be8"
+    url: "{{ binaries_url }}/libpq5_18.2-1.pgdg22.04+1_amd64.deb"
+    checksum: "sha256:54e4ab2606aea5525bfd1a99b6e1b143458caced07bd840ccb46a69cad61f341"
   - name: postgresql-client-common
-    url: "{{ binaries_url }}/postgresql-client-common_287.pgdg22.04+1_all.deb"
-    checksum: "sha256:7e96dbd09f546e819806d6897a6e8a08b0ffe544990d52a82f3e84cad1fac775"
+    url: "{{ binaries_url }}/postgresql-client-common_291.pgdg22.04+1_all.deb"
+    checksum: "sha256:a5349a75cae9ccb1c118e58e539e3e275394def728cb193b39bb36275a721254"
   - name: postgresql-common
-    url: "{{ binaries_url }}/postgresql-common_287.pgdg22.04+1_all.deb"
-    checksum: "sha256:f8909773a26c0d189db0331b4efa3909d31f1b6bcc9c663904f73efbcb48c642"
+    url: "{{ binaries_url }}/postgresql-common_291.pgdg22.04+1_all.deb"
+    checksum: "sha256:4c51fd323be440de831a55b1f06da77ba6e803fdf47a8b8e3e99b4f439256683"
   - name: postgresql-client-17
-    url: "{{ binaries_url }}/postgresql-client-17_17.7-3.pgdg22.04+1_amd64.deb"
-    checksum: "sha256:c6443fefb733632ee835a53b43a174244a009c62ac46bf01f032738b7ff18a8e"
+    url: "{{ binaries_url }}/postgresql-client-17_17.8-1.pgdg22.04+1_amd64.deb"
+    checksum: "sha256:a83a985f1e406c1914212de5dffdcce277d3d82ae5d542dd9d84001a97a427e4"
   - name: postgresql-17
-    url: "{{ binaries_url }}/postgresql-17_17.7-3.pgdg22.04+1_amd64.deb"
-    checksum: "sha256:8218af27440df4e1cd29eeb0fffdcf0702fb50840ccbefd19864355237a0cddf"
+    url: "{{ binaries_url }}/postgresql-17_17.8-1.pgdg22.04+1_amd64.deb"
+    checksum: "sha256:bddeaf93563ecf60df46b2000fd4d519d346d811579f89f30387de8d58f9b0dd"
   - name: python3-psycopg2
     url: "{{ binaries_url }}/python3-psycopg2_2.9.10-1.pgdg22.04+1_amd64.deb"
     checksum: "sha256:cc2f749e3af292a67e012edeb4aa5d284f57f2d66a9a09fe5b81e5ffda73cab4"
