@@ -12,6 +12,12 @@
 
 -->
 
+# Relase 5.25 R2
+
+## Release notes
+
+* Changed: disabled the MLS by default in 5.25-R1 and release it as 5.25R2
+
 # Relase 5.25 R1
 
 ## Release notes
