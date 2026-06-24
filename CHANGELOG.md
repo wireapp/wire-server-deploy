@@ -11,25 +11,34 @@
 ## Breaking changes
 
 -->
-# Relase 5.30
+# Release 5.32
+
+## Release notes
+
+* Changed: the wire-builds reference with 5.32 backend
+
+# Release 5.30
 
 ## Release notes
 
 * Changed: the wire-builds reference with 5.30 backend
 
-# Relase 5.28
+# Release 5.28
 
 ## Release notes
 
 * Changed: the wire-builds reference with 5.28 backend
 
-# Relase 5.27
+# Release 5.27
 
 ## Release notes
 
 * Added: update prod and demo example values/secrets for wire-server 5.27, aligning PostgreSQL config, postgresMigration (conversation, teamFeatures), rabbitmq, and mlsPrivateKeys across all services
 
-# Relase 5.25 R1
+## External dependencies
+Changed: Older pinned postgresql versions has been removed - updated them to next available ones
+
+# Release 5.25 R1
 
 ## Release notes
 
@@ -53,7 +62,7 @@
 
 * Fixed: commands in wiab-stag documentation (#907)
 
-# Relase 5.25
+# Release 5.25
 
 ## release-notes
 
@@ -104,7 +113,7 @@
 * Fixed: github workflow and PR template references for wiab-dev (#880)
 * Fixed: remove read function to operate .envrc and updated the README.md (#877)
 
-# Relase 5.23 
+# Release 5.23
 
 ## release-notes
 
