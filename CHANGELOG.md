@@ -11,6 +11,12 @@
 ## Breaking changes
 
 -->
+# Relase 5.32
+
+## Release notes
+
+* Changed: the wire-builds reference with 5.32 backend
+
 # Relase 5.30
 
 ## Release notes
@@ -28,6 +34,9 @@
 ## Release notes
 
 * Added: update prod and demo example values/secrets for wire-server 5.27, aligning PostgreSQL config, postgresMigration (conversation, teamFeatures), rabbitmq, and mlsPrivateKeys across all services
+
+## External dependencies
+Changed: Older pinned postgresql versions has been removed - updated them to next available ones
 
 # Relase 5.25 R1
 
