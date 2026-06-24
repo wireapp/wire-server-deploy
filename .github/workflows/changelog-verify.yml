@@ -65,8 +65,12 @@ jobs:
           ALLOW_RELEASE_CLEANUP=false
 
           if [ -z "$CHANGED_FILES" ]; then
-            if [ -n "$DELETED_FILES" ] && [ -n "$CHANGELOG_MODIFIED" ]; then
-              echo "No new or modified changelog.d/ entries found, but CHANGELOG.md changed, so this release cleanup is allowed."
+            if [ -n "$CHANGELOG_MODIFIED" ]; then
+              if [ -n "$DELETED_FILES" ]; then
+                echo "Release detected via CHANGELOG.md update; deleted changelog.d/ entries are allowed."
+              else
+                echo "Release detected via CHANGELOG.md update; no changelog.d/ deletions found in this compare range."
+              fi
               ALLOW_RELEASE_CLEANUP=true
             else
               echo "No files changed in changelog.d/ for this ${GITHUB_EVENT_NAME:-event}."
