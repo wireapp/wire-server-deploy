@@ -15,7 +15,7 @@
 
 ## Release notes
 
-* Changed: the wire-builds reference with 5.30.18 commit
+* Changed: the wire-builds reference with 5.30 backend
 
 # Relase 5.28
 
