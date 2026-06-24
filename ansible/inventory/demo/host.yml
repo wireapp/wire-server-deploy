@@ -18,7 +18,7 @@ wiab:
     wire_ip: ""
 
     # artifact_hash
-    artifact_hash: "7d84397730936f9c07b34f98290d688d651ef434"
+    artifact_hash: "ed21282f3cec780424ffa66323163839ff3516f0"
   
     # docker vars
     docker_ce_version: "5:28.1.1-1~ubuntu.24.04~noble"
