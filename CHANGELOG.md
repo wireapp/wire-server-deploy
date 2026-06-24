@@ -11,6 +11,12 @@
 ## Breaking changes
 
 -->
+# Relase 5.30
+
+## Release notes
+
+* Changed: the wire-builds reference with 5.30 backend
+
 # Relase 5.28
 
 ## Release notes
