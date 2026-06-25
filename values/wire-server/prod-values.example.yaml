@@ -3,7 +3,7 @@ tags:
   proxy: false # enable if you want/need giphy/youtube/etc proxying
   legalhold: false # Enable if you need legalhold
   federation: false # Enable to use federation
-  mlsstats: false
+  mlsstats: true
 
 cassandra-migrations:
 #  images:
