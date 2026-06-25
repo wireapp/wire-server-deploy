@@ -7,4 +7,5 @@ output "inventory" {
     local.sft_inventory,
     local.k8s_cluster_inventory
   )
+  sensitive = true
 }
