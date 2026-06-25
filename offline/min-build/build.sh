@@ -30,6 +30,7 @@ HELM_CHART_EXCLUDE_LIST="inbucket,wire-server-enterprise,k8ssandra-operator,k8ss
 
 "${TASKS_DIR}"/proc_pull_charts.sh OUTPUT_DIR="${OUTPUT_DIR}" HELM_CHART_EXCLUDE_LIST="${HELM_CHART_EXCLUDE_LIST}"
 
+exit 0
 # pulling the charts from helm-charts repo, charts to be included are passed as arguments HELM_CHART_INCLUDE_LIST
 # "${TASKS_DIR}"/proc_pull_ext_charts.sh OUTPUT_DIR="${OUTPUT_DIR}" HELM_CHART_INCLUDE_LIST="postgresql-external"
 
@@ -94,3 +95,10 @@ done
 
 # Create the tar archive with relative paths
 tar czf "$OUTPUT_TAR" "${ITEMS_TO_ARCHIVE[@]}"
+
+# Dumping details of versions for the build and packed
+echo "Dump of versions/helm_image_tree.json"
+cat "${OUTPUT_DIR}/versions/helm_image_tree.json"
+
+echo "Dump of wire-builds used"
+cat "${OUTPUT_DIR}/build.json"
