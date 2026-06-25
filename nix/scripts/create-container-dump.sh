@@ -52,13 +52,13 @@ while IFS= read -r image; do
         --retry-times 10 \
         "docker://$image_trimmed" \
         "docker-archive:${tmp_path}" \
-        --additional-tag "$image"
+        --additional-tag "$image" || rc=$?
     else
       skopeo copy --insecure-policy \
         --retry-times 10 \
         "docker://$image_trimmed" \
         "docker-archive:${tmp_path}" \
-        --additional-tag "$image"
+        --additional-tag "$image" || rc=$?
     fi
 
     rc=$?
