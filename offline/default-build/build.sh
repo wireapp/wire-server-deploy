@@ -125,7 +125,7 @@ echo "Dump of versions/containers_system_images.json"
 cat "${OUTPUT_DIR}/versions/containers_system_images.json"
 
 echo "Dump of versions/wire-binaries.json"
-cat "${OUTPUT_DIR}/versions/hwire-binaries.json"
+cat "${OUTPUT_DIR}/versions/wire-binaries.json"
 
 echo "Dump of wire-builds used"
 cat "${OUTPUT_DIR}/build.json"
