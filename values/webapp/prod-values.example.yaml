@@ -1,6 +1,6 @@
 replicaCount: 3
 image:
-  tag: 2026-06-08-production.0
+  tag: 2025-09-24-production.0
 config:
   externalUrls:
     backendRest: nginz-https.example.com
@@ -11,6 +11,8 @@ config:
 # See full list of available environment variables: https://github.com/wireapp/wire-web-config-default/blob/master/wire-webapp/.env.defaults
 envVars:
   APP_NAME: "Webapp"
+  FEATURE_USE_CORE_CRYPTO: "true"
+  MAX_API_VERSION: "12"
   ENFORCE_HTTPS: "true"
   FEATURE_CHECK_CONSENT: "false"
   # Note: disabling showing the user creation is not the same thing as user creation being disabled.
