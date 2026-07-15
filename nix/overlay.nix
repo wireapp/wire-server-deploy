@@ -39,7 +39,7 @@ super: {
       # or whenever this derivation is built again without having the result in the binary cache.
       # The public part of the key is shipped with the offline bundle
       # ($aptly_root/public/gpg).
-      # The private key (Github secret) was last replaced on 2024-07-12 and is valid for two years.
+      # The private key (Github secret) was last replaced on 2026-07-15 and is valid for two years.
 
       install -Dm755 ${./scripts/generate-gpg1-key.sh} $out/bin/generate-gpg1-key
       # we *--set* PATH here, to ensure we don't pick wrong gpgs
