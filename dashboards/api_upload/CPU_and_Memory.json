@@ -81,7 +81,7 @@
       {
         "datasource": {
           "type": "prometheus",
-          "uid": "cenv3r35m756oe"
+          "uid": "${PROMETHEUS_DS}"
         },
         "fieldConfig": {
           "defaults": {
@@ -357,7 +357,7 @@
           {
             "datasource": {
               "type": "prometheus",
-              "uid": "cenv3r35m756oe"
+              "uid": "${PROMETHEUS_DS}"
             },
             "editorMode": "code",
             "exemplar": false,
@@ -385,7 +385,7 @@
           {
             "datasource": {
               "type": "prometheus",
-              "uid": "cenv3r35m756oe"
+              "uid": "${PROMETHEUS_DS}"
             },
             "editorMode": "code",
             "exemplar": false,
@@ -495,7 +495,7 @@
       {
         "datasource": {
           "type": "prometheus",
-          "uid": "cenv3r35m756oe"
+          "uid": "${PROMETHEUS_DS}"
         },
         "description": "",
         "fieldConfig": {
@@ -611,7 +611,7 @@
       {
         "datasource": {
           "type": "prometheus",
-          "uid": "cenv3r35m756oe"
+          "uid": "${PROMETHEUS_DS}"
         },
         "description": "",
         "fieldConfig": {
@@ -727,7 +727,7 @@
       {
         "datasource": {
           "type": "prometheus",
-          "uid": "cenv3r35m756oe"
+          "uid": "${PROMETHEUS_DS}"
         },
         "fieldConfig": {
           "defaults": {
@@ -1000,7 +1000,7 @@
           {
             "datasource": {
               "type": "prometheus",
-              "uid": "cenv3r35m756oe"
+              "uid": "${PROMETHEUS_DS}"
             },
             "editorMode": "code",
             "exemplar": false,
@@ -1028,7 +1028,7 @@
           {
             "datasource": {
               "type": "prometheus",
-              "uid": "cenv3r35m756oe"
+              "uid": "${PROMETHEUS_DS}"
             },
             "editorMode": "code",
             "exemplar": false,
@@ -1138,7 +1138,7 @@
       {
         "datasource": {
           "type": "prometheus",
-          "uid": "cenv3r35m756oe"
+          "uid": "${PROMETHEUS_DS}"
         },
         "description": "",
         "fieldConfig": {
@@ -1254,7 +1254,7 @@
       {
         "datasource": {
           "type": "prometheus",
-          "uid": "cenv3r35m756oe"
+          "uid": "${PROMETHEUS_DS}"
         },
         "description": "",
         "fieldConfig": {
@@ -1383,7 +1383,7 @@
       {
         "datasource": {
           "type": "prometheus",
-          "uid": "cenv3r35m756oe"
+          "uid": "${PROMETHEUS_DS}"
         },
         "description": "",
         "fieldConfig": {
@@ -1565,7 +1565,7 @@
           {
             "datasource": {
               "type": "prometheus",
-              "uid": "cenv3r35m756oe"
+              "uid": "${PROMETHEUS_DS}"
             },
             "editorMode": "code",
             "exemplar": false,
@@ -1595,7 +1595,7 @@
           {
             "datasource": {
               "type": "prometheus",
-              "uid": "cenv3r35m756oe"
+              "uid": "${PROMETHEUS_DS}"
             },
             "editorMode": "code",
             "exemplar": false,
@@ -1705,7 +1705,7 @@
           {
             "datasource": {
               "type": "prometheus",
-              "uid": "cenv3r35m756oe"
+              "uid": "${PROMETHEUS_DS}"
             },
             "editorMode": "code",
             "expr": "sum(irate(container_cpu_usage_seconds_total{job=\"kubelet\"}[5m])) by (namespace)",
@@ -1805,7 +1805,7 @@
           {
             "datasource": {
               "type": "prometheus",
-              "uid": "cenv3r35m756oe"
+              "uid": "${PROMETHEUS_DS}"
             },
             "editorMode": "code",
             "expr": "sum(container_memory_working_set_bytes{job=\"kubelet\"}) by (namespace)",
@@ -1909,7 +1909,7 @@
           {
             "datasource": {
               "type": "prometheus",
-              "uid": "cenv3r35m756oe"
+              "uid": "${PROMETHEUS_DS}"
             },
             "editorMode": "code",
             "expr": "sum(increase(container_cpu_cfs_throttled_periods_total{job=\"cadvisor\", container!=\"\"}[$__rate_interval])) by (namespace, pod, container) /sum(increase(container_cpu_cfs_periods_total{job=\"cadvisor\", container!=\"\"}[$__rate_interval])) by (namespace, pod, container) > 0",
@@ -1933,7 +1933,7 @@
         {
           "current": {
             "text": "wire-cluster-prometheus-operator",
-            "value": "cenv3r35m756oe"
+            "value": "${PROMETHEUS_DS}"
           },
           "includeAll": false,
           "name": "PROMETHEUS_DS",
