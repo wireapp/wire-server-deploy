@@ -94,6 +94,7 @@ ITEMS_TO_ARCHIVE=(
   "containers-adminhost"
   "containers-helm.tar"
   "containers-system.tar"
+  "extra-images"
   "charts"
   "values"
   "../../../ansible"
