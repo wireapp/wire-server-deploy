@@ -59,6 +59,9 @@ cp -r "${ROOT_DIR}"/dashboards "${OUTPUT_DIR}"/
 # post_chart_process_1.sh
 # post_chart_process_2.sh
 
+# pulling one extra webapp image
+echo "quay.io/wire/webapp:2026-06-08-production.0" | create-container-dump "${OUTPUT_DIR}"/extra-images
+
 # --------------------------
 
 # Following tasks are independent from each other
