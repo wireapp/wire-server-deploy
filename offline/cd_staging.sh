@@ -231,7 +231,7 @@ scp $SSH_OPTS "$TARGET" "demo@$adminhost":./ansible/inventory/offline/inventory.
 
 ssh $SSH_OPTS "demo@$adminhost" cat ./ansible/inventory/offline/inventory.yml || true
 
-ssh $SSH_OPTS "demo@$adminhost" printf '\nmain\n\n' >> ./bin/helm-operations.sh || true
+ssh $SSH_OPTS "demo@$adminhost" 'printf "\nmain\n\n" >> ./bin/helm-operations.sh' || true
 
 ssh $SSH_OPTS "demo@$adminhost" cat ./bin/helm-operations.sh || true
 
