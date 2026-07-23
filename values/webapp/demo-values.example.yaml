@@ -1,6 +1,6 @@
 replicaCount: 1
-#  image:
-#    tag: some-tag (only override if you want a newer/different version than what is in the chart)
+image:
+  tag: 2026-06-08-production.0
 config:
   externalUrls:
     backendRest: nginz-https.example.com
@@ -10,6 +10,7 @@ config:
     appHost: webapp.example.com
 # See full list of available environment variables: https://github.com/wireapp/wire-web-config-default/blob/master/wire-webapp/.env.defaults
 envVars:
+  BRAND_NAME: "Wire"
   APP_NAME: "Webapp"
   ENFORCE_HTTPS: "true"
   FEATURE_CHECK_CONSENT: "false"
