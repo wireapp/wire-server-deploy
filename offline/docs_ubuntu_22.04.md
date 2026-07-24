@@ -6,7 +6,7 @@ install Wire.
 
 ## Demo / Testing installation
 
-To install a self-hosted instance of Wire deployed on one Server ("Wire in a box") for testing purposes, we recommend the [autodeploy.sh](../bin/autodeploy.sh) script. See also: [Automated full install](single_hetzner_machine_installation.md#automated-full-install) section in the Single Hetzner Machine installation readme.
+To install a self-hosted instance of Wire deployed on one Server ("Wire in a box") for testing purposes, we recommend the [WIAB Staging](wiab-staging.md) or [WIAB Dev](https://docs.wire.com/latest/how-to/install/demo-wiab.html) solution.
 
 ## Installing docker
 
@@ -57,8 +57,6 @@ If you see the curent docker version and no error, it means that Docker is now c
 
 
 ## Downloading and extracting the artifact
-
-Note: If you have followed the Ubuntu installation instructions (`single_hetzner_machine_installation.md`) before following this page, you already have a wire-server-deploy folder with an artifact extracted into it, and you can simply use that.
 
 Create a fresh workspace to download the artifacts:
 
@@ -146,7 +144,7 @@ The following artifacts are provided:
 
 ## Editing the inventory
 
-Copy `ansible/inventory/offline/99-static`  to `ansible/inventory/offline/hosts.ini`, and remove the original. 
+Copy `ansible/inventory/offline/99-static`  to `ansible/inventory/offline/hosts.ini`, and remove the original.
 
 ```
 cp ansible/inventory/offline/99-static ansible/inventory/offline/hosts.ini
@@ -248,7 +246,7 @@ Do this for all of the instances.
 ### Setting up Database network interfaces.
 * Make sure that `assethost` is present in the inventory file with the correct `ansible_host` (and `ip` values if required)
 * Make sure that `cassandra_network_interface` is set to the name of the network interface on which the kubenodes should talk to cassandra and on which the cassandra nodes
-  should communicate among each other. Run `ip addr` on one of the cassandra nodes to determine the network interface names, and which networks they correspond to. In Ubuntu 22.04 for example, interface names are predictable and individualized, eg. `enp41s0`. 
+  should communicate among each other. Run `ip addr` on one of the cassandra nodes to determine the network interface names, and which networks they correspond to. In Ubuntu 22.04 for example, interface names are predictable and individualized, eg. `enp41s0`.
 * Similarly `elasticsearch_network_interface` and `minio_network_interface` should be set to the network interface names you want elasticsearch and minio to communicate with kubernetes with, as well.
 
 
@@ -295,7 +293,7 @@ ansible_user = demo
 cassandra_network_interface = enp1s0
 cassandra_backup_enabled = False
 cassandra_incremental_backup_enabled = False
-# cassandra_backup_s3_bucket = 
+# cassandra_backup_s3_bucket =
 
 [elasticsearch:vars]
 elasticsearch_network_interface = enp1s0
@@ -364,7 +362,9 @@ Minio and coturn services have shared secrets with the `wire-server` helm chart.
 ./bin/offline-secrets.sh
 ```
 
-This should generate two files. `./ansible/inventory/group_vars/all/secrets.yaml` and `values/wire-server/secrets.yaml`.
+This should generate two secret files.
+- `./ansible/inventory/group_vars/all/secrets.yaml`
+- `values/wire-server/secrets.yaml`
 
 
 ### WORKAROUND: old debian key
@@ -494,21 +494,30 @@ cp values/databases-ephemeral/prod-values.example.yaml values/databases-ephemera
 d helm install databases-ephemeral ./charts/databases-ephemeral/ --values ./values/databases-ephemeral/values.yaml
 ```
 
-Next, three more services that need no additional configuration need to be deployed:
+Next, two more services will be deployed without additional configuration:
 ```
 d helm install fake-aws ./charts/fake-aws --values ./values/fake-aws/prod-values.example.yaml
 
-# ensure that the RELAY_NETWORKS value is set to the podCIDR
-SMTP_VALUES_FILE="./values/demo-smtp/prod-values.example.yaml"
+d helm install reaper ./charts/reaper
+```
+
+#### SMTP
+
+For onboarding users via e-mail, update the configuration for `brig.config.smtp` with your SMTP. We also ship a `smtp` package with our bundle for demo/testing purposes, which is also possible to be used outside that scope, as an actual SMTP relay. For a generic setup, please read [docs.md](smtp.md) for more details.
+
+For a temporary SMTP service:
+
+### ensure that the RELAY_NETWORKS value is set to the podCIDR
+
+```
+SMTP_VALUES_FILE="./values/smtp/prod-values.example.yaml"
 podCIDR=$(d kubectl get configmap -n kube-system kubeadm-config -o yaml | grep -i 'podSubnet' | awk '{print $2}' 2>/dev/null)
 if [[ $? -eq 0 && -n "$podCIDR" ]]; then
   sed -i "s|RELAY_NETWORKS: \".*\"|RELAY_NETWORKS: \":${podCIDR}\"|" $SMTP_VALUES_FILE
 else
     echo "Failed to fetch podSubnet. Attention using the default value: $(grep -i RELAY_NETWORKS $SMTP_VALUES_FILE)"
 fi
-d helm install demo-smtp ./charts/demo-smtp --values $SMTP_VALUES_FILE
-
-d helm install reaper ./charts/reaper
+d helm install smtp ./charts/smtp --values $SMTP_VALUES_FILE
 ```
 
 #### Preparing your values
@@ -543,7 +552,7 @@ sed -i 's/example.com/<your-domain>/g' ./values/wire-server/values.yaml
 ```
 
 #### [Optional] Using Kubernetes managed Cassandra (K8ssandra)
-You can deploy K8ssandra by following these docs - 
+You can deploy K8ssandra by following these docs -
 [offline/k8ssandra_setup.md](./k8ssandra_setup.md)
 
 Once K8ssandra is deployed, change the host address in `values/wire-server/values.yaml` to the K8ssandra service address, i.e.
@@ -551,6 +560,25 @@ Once K8ssandra is deployed, change the host address in `values/wire-server/value
 sed -i 's/cassandra-external/k8ssandra-cluster-datacenter-1-service.database/g' ./values/wire-server/values.yaml
 ```
 
+#### Update postgresql secret
+
+If postgresql is part of the deployment, you need to update the postgresql credential in the `values/wire-server/secrets.yaml` file like following as the secrets are stored in the k8s environment.
+
+```bash
+For manual deployments or troubleshooting, use the generic sync script:
+
+```bash
+d bash
+# Sync PostgreSQL password from K8s secret to secrets.yaml
+./bin/sync-k8s-secret-to-wire-secrets.sh \
+  wire-postgresql-external-secret \
+  password \
+  values/wire-server/secrets.yaml \
+  .brig.secrets.pgPassword \
+  .galley.secrets.pgPassword
+```
+
+Check the details in the [Postgresql Cluster setup documentation](postgresql-cluster.md#manual-password-synchronization)
 
 #### Deploying Wire-Server
 
@@ -713,7 +741,6 @@ ufw allow in on $OUTBOUNDINTERFACE proto tcp to any port 80;
 "
 ```
 
-For wire-in-a-box deployments based on single_hetzner_machine_installation.md, an nftables based firewall including a predefined ruleset should already exist.
 By default, the predefined ruleset forwards ingress traffic to kubenode1 (192.168.122.21). To check on which node the ingress controller has been deployed, get the node IP via kubectl:
 ```
 d kubectl get pods -l app.kubernetes.io/name=ingress-nginx -o=custom-columns=NAME:.metadata.name,NODE:.spec.nodeName,IP:.status.hostIP
@@ -773,6 +800,7 @@ cp ./values/nginx-ingress-services/prod-secrets.example.yaml ./values/nginx-ingr
 
 #### Bring your own certificates
 
+The `values/nginx-ingress-services/values.yaml` file should be patched for `.Values.tls.useCertManager=false`.
 if you generated your SSL certificates yourself, there are two ways to give these to wire:
 
 ##### From the command line
@@ -812,23 +840,13 @@ taint the node
 d kubectl cordon kubenode1
 ```
 
-first, download cert manager, and place it in the appropriate location:
-```
-wget https://charts.jetstack.io/charts/cert-manager-v1.13.2.tgz
-tar -C ./charts -xvzf cert-manager-v1.13.2.tgz
-```
+Next step is to install and configure the cert-manager using the cert-manager charts from the offline package.
 
-In case `values.yaml` and `secrets.yaml` doesn't exist yet in `./values/nginx-ingress-services` create them from templates
-```
-cp ./values/nginx-ingress-services/prod-secrets.example.yaml ./values/nginx-ingress-services/secrets.yaml
-cp ./values/nginx-ingress-services/prod-values.example.yaml ./values/nginx-ingress-services/values.yaml
-```
-and customize.
+To enable and configure automatic SSL/TLS certification management for nginx ingress resources, update the `values/nginx-ingress-services/values.yaml` with:
 
-Edit `values.yaml`:
+ * set `useCertManager: true` : to tell the nginx-ingress-service to use cert-manager for obtaining and managing SSL certificates, rather than expecting you to provide your own certificates manually.
+ * set `certmasterEmail: <your email address>` : is used by cert-manager when requesting certificates from certificate authorities like Let's Encrypt. This email address is important for receiving notifications about certificate expiration or issues.
 
- * set `useCertManager: true`
- * set `certmasterEmail: <your email address>`
 
 Set your domain name with sed:
 ```
@@ -849,7 +867,7 @@ d kubectl uncordon kubenode1
 Then run:
 
 ```
-d helm upgrade --install nginx-ingress-services charts/nginx-ingress-services -f values/nginx-ingress-services/values.yaml 
+d helm upgrade --install nginx-ingress-services charts/nginx-ingress-services -f values/nginx-ingress-services/values.yaml
 ```
 
 In order to acquire SSL certificates from letsencrypt, outgoing traffic needs from VMs needs to be enabled temporarily.
@@ -893,7 +911,7 @@ For full docs with details and explanations please see https://github.com/wireap
 First, make sure you have a certificate for `sftd.<yourdomain>`, or you are using letsencrypt certificate.
 for bring-your-own-certificate, this could be the same wildcard or SAN certificate you used at previous steps.
 
-Next, copy `values/sftd/prod-values.example.yaml` to `values/sftd/values.yaml`, and change the contents accordingly. 
+Next, copy `values/sftd/prod-values.example.yaml` to `values/sftd/values.yaml`, and change the contents accordingly.
 
  * If your turn servers can be reached on their public IP by the SFT service, Wire recommends you enable cooperation between turn and SFT. add a line reading `turnDiscoveryEnabled: true` to `values/sftd/values.yaml`.
 
@@ -964,6 +982,10 @@ d helm upgrade --install fluent-bit ./charts/fluent-bit --values values/fluent-b
 
 Make sure that traffic is allowed from your kubernetes nodes to your destination server (elasticsearch or syslog).
 
+## Configure Prometheus
+
+To scrape metrics from wire systems and export those to your desired Observability tool, preferably grafana, configure prometheus operator.
+Follow the [Instrument monitoring guidelines](./instrument_monitoring.md) to setup monitoring for wire.
 
 ## Appendixes
 

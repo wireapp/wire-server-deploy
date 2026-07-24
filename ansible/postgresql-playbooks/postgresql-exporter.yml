@@ -1,0 +1,155 @@
+---
+# PostgreSQL Exporter - Uses existing .pgpass file
+# Minimal changes from original, fixes key issues
+
+- name: Install and configure PostgreSQL Prometheus Exporter
+  hosts: postgresql_rw:postgresql_ro
+  become: yes
+  gather_facts: yes
+
+  vars:
+    exporter_version: "0.18.1"
+    exporter_user: "postgres"
+    exporter_port: 9187
+    exporter_install_dir: "/usr/local/bin"
+    exporter_service_file: "/etc/systemd/system/postgres_exporter.service"
+    # Use offline binaries URL (falls back to GitHub if binaries_url not set)
+    exporter_url: "{{ binaries_url | default('https://github.com/prometheus-community/postgres_exporter/releases/download/v' + exporter_version) }}/postgres_exporter-{{ exporter_version }}.linux-amd64.tar.gz"
+
+  tasks:
+    # ---------------------------------------------------
+    # 1. Check if already installed (idempotency)
+    # ---------------------------------------------------
+    - name: Check if postgres_exporter binary exists
+      ansible.builtin.stat:
+        path: "{{ exporter_install_dir }}/postgres_exporter"
+      register: exporter_binary
+
+    - name: Get installed version
+      ansible.builtin.command: "{{ exporter_install_dir }}/postgres_exporter --version"
+      register: installed_version
+      changed_when: false
+      failed_when: false
+      when: exporter_binary.stat.exists
+
+    - name: Set needs_install fact
+      ansible.builtin.set_fact:
+        needs_install: >-
+          {{ not exporter_binary.stat.exists or
+             exporter_version not in installed_version.stdout | default('') }}
+
+    # ---------------------------------------------------
+    # 2. Download and install (only if needed)
+    # ---------------------------------------------------
+    - name: Download postgres_exporter binary
+      ansible.builtin.get_url:
+        url: "{{ exporter_url }}"
+        dest: "/tmp/postgres_exporter.tar.gz"
+        mode: "0644"
+      when: needs_install
+
+    - name: Extract exporter archive
+      ansible.builtin.unarchive:
+        src: "/tmp/postgres_exporter.tar.gz"
+        dest: "/tmp/"
+        remote_src: yes
+      when: needs_install
+
+    - name: Copy exporter binary to install dir
+      ansible.builtin.copy:
+        src: "/tmp/postgres_exporter-{{ exporter_version }}.linux-amd64/postgres_exporter"
+        dest: "{{ exporter_install_dir }}/postgres_exporter"
+        owner: root
+        group: root
+        mode: "0755"
+        remote_src: yes
+      when: needs_install
+      notify: restart postgres_exporter
+
+    - name: Clean up temp files
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: absent
+      loop:
+        - "/tmp/postgres_exporter-{{ exporter_version }}.linux-amd64"
+        - "/tmp/postgres_exporter.tar.gz"
+      when: needs_install
+
+    # ---------------------------------------------------
+    # 3. Create systemd service unit
+    # ---------------------------------------------------
+    - name: Deploy postgres_exporter systemd unit
+      ansible.builtin.copy:
+        dest: "{{ exporter_service_file }}"
+        mode: "0644"
+        content: |
+          [Unit]
+          Description=Prometheus PostgreSQL Exporter
+          After=network-online.target postgresql@{{ postgresql_version }}-main.service
+          Wants=network-online.target
+          Documentation=https://github.com/prometheus-community/postgres_exporter
+
+          [Service]
+          Type=simple
+          User=postgres
+          Group=postgres
+          # Use existing .pgpass file created by postgresql deployment
+          Environment="DATA_SOURCE_NAME=postgresql://{{ repmgr_user }}@127.0.0.1:5432/postgres?sslmode=disable"
+          Environment="PGPASSFILE=/var/lib/postgresql/.pgpass"
+
+          ExecStart={{ exporter_install_dir }}/postgres_exporter \
+            --web.listen-address=":{{ exporter_port }}" \
+            --web.telemetry-path="/metrics" \
+            --log.level=info \
+            --collector.postmaster \
+            --collector.stat_statements \
+            --collector.stat_checkpointer
+
+          # Restart policy
+          Restart=always
+          RestartSec=5
+          StartLimitBurst=3
+          StartLimitInterval=60
+
+          [Install]
+          WantedBy=multi-user.target
+      notify: restart postgres_exporter
+
+    - name: Reload systemd daemon
+      ansible.builtin.systemd:
+        daemon_reload: yes
+
+    # ---------------------------------------------------
+    # 4. Start & enable exporter
+    # ---------------------------------------------------
+    - name: Enable & start postgres_exporter
+      ansible.builtin.systemd:
+        name: postgres_exporter
+        state: started
+        enabled: yes
+
+    # ---------------------------------------------------
+    # 5. Verify exporter is running
+    # ---------------------------------------------------
+    - name: Wait for exporter to be ready
+      ansible.builtin.wait_for:
+        port: "{{ exporter_port }}"
+        delay: 2
+        timeout: 30
+
+    - name: Check exporter is accessible locally
+      ansible.builtin.uri:
+        url: "http://127.0.0.1:{{ exporter_port }}/metrics"
+        return_content: yes
+      register: exporter_metrics
+      failed_when: "'pg_up' not in exporter_metrics.content"
+
+    - name: Show exporter metrics preview
+      ansible.builtin.debug:
+        msg: "{{ exporter_metrics.content.split('\n')[:20] }}"
+
+  handlers:
+    - name: restart postgres_exporter
+      ansible.builtin.systemd:
+        name: postgres_exporter
+        state: restarted

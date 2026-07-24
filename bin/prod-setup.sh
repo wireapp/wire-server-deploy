@@ -60,6 +60,6 @@ install_chart minio-external external
 install_chart elasticsearch-external external
 install_chart databases-ephemeral external
 install_chart fake-aws external
-install_chart demo-smtp external
+install_chart smtp external
 install_chart wire-server external
 install_chart nginx-lb-ingress external

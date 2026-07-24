@@ -1,0 +1,219 @@
+---
+- name: Setup adminhost with dnsmasq and Docker
+  hosts: adminhost_local
+  become: yes
+  tasks:
+
+    - name: Check if private interface exists
+      shell: ip addr show {{ private_interface }}
+      register: interface_check
+      retries: 60
+      delay: 2
+      until: interface_check.rc == 0
+      
+    - name: Get private IP address
+      shell: ip -o -4 addr show {{ private_interface }} | awk '{print $4}' | cut -d'/' -f1
+      register: private_ip_result
+      
+    - name: Set private IP fact
+      set_fact:
+        private_ip: "{{ private_ip_result.stdout }}"
+        
+    - name: Disable systemd-resolved
+      systemd:
+        name: systemd-resolved
+        enabled: no
+        state: stopped
+        
+    - name: Remove existing resolv.conf symlink
+      file:
+        path: /etc/resolv.conf
+        state: absent
+        
+    - name: Create new resolv.conf with Google DNS
+      copy:
+        content: "nameserver 8.8.8.8\n"
+        dest: /etc/resolv.conf
+        mode: '0644'
+        
+    - name: Update package cache
+      apt:
+        update_cache: yes
+        
+    - name: Install dnsmasq
+      apt:
+        name: dnsmasq
+        state: present
+                
+    - name: Configure dnsmasq
+      copy:
+        content: |
+          port=53
+          domain-needed
+          bogus-priv
+          bind-interfaces
+          listen-address={{ private_ip }}
+          listen-address=127.0.0.1
+        dest: /etc/dnsmasq.conf
+        mode: '0644'
+
+    - name: Restart dnsmasq
+      systemd:
+        name: dnsmasq
+        state: restarted
+
+    - name: Add Docker GPG key
+      apt_key:
+        url: https://download.docker.com/linux/ubuntu/gpg
+        keyring: /usr/share/keyrings/docker-archive-keyring.gpg
+        state: present
+        
+    - name: Add Docker repository
+      apt_repository:
+        repo: "deb [arch=amd64 signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu {{ ansible_distribution_release }} stable"
+        state: present
+        
+    - name: Install Docker packages
+      apt:
+        name:
+          - docker-ce
+          - docker-ce-cli
+          - containerd.io
+        state: present
+        update_cache: yes
+        
+    - name: Configure iptables for DNS
+      iptables:
+        chain: OUTPUT
+        protocol: udp
+        destination_port: "53"
+        jump: ACCEPT
+        state: present
+        
+    - name: Configure iptables for DNS input from private network
+      iptables:
+        chain: INPUT
+        protocol: udp
+        source: 10.0.0.0/8
+        destination_port: "53"
+        jump: ACCEPT
+        state: present
+        action: insert
+        rule_num: 1
+        
+    - name: Start and enable Docker
+      systemd:
+        name: docker
+        state: started
+        enabled: yes
+
+- name: Setup default routing for all k8s and datastore nodes
+  hosts: datanode:kube-node
+  become: yes
+  gather_facts: false
+
+  pre_tasks:
+    - name: Wait for SSH to become reachable
+      ansible.builtin.wait_for_connection:
+        timeout: 20
+      register: _wait
+      retries: 6
+      delay: 10
+      until: _wait is succeeded
+
+    - name: Gather facts after connection is stable
+      ansible.builtin.setup:
+
+  tasks:
+    - name: Check if private interface exists
+      shell: ip addr show {{ private_interface }}
+      register: interface_check
+      retries: 60
+      delay: 2
+      until: interface_check.rc == 0
+         
+    - name: Get existing gateway for private interface
+      shell: ip route show | grep "{{ private_interface }}" | grep "via" | head -1 | awk '{print $3}'
+      register: gateway_check
+      failed_when: false
+      changed_when: false
+          
+    - name: Check if default route already exists
+      shell: ip route show default
+      register: default_route_check
+      failed_when: false
+      changed_when: false
+          
+    - name: Add default route via existing gateway
+      shell: ip route add default via {{ gateway_check.stdout }}
+      register: route_result
+      failed_when: >
+        route_result.rc != 0 and 
+        "File exists" not in route_result.stderr and 
+        "RTNETLINK answers: File exists" not in route_result.stderr
+      changed_when: route_result.rc == 0
+      when: 
+      - default_route_check.stdout == ""
+      - gateway_check.stdout != ""
+
+- name: Configure DNS for all k8s and datastore nodes
+  hosts: datanode:kube-node
+  become: yes
+    
+  tasks:
+    - name: Disable systemd-resolved
+      systemd:
+        name: systemd-resolved
+        enabled: no
+        state: stopped
+        
+    - name: Remove existing resolv.conf symlink
+      file:
+        path: /etc/resolv.conf
+        state: absent
+        
+    - name: Create new resolv.conf with Adminhost dnsmasq service
+      copy:
+        content: "nameserver {{ adminhost_ip }}\n"
+        dest: /etc/resolv.conf
+        mode: '0644'
+
+- name: Add demo user on all nodes
+  hosts: all
+  tasks:
+    - name: Create demo user
+      ansible.builtin.user:
+        name: demo
+        shell: /bin/bash
+        create_home: yes
+        state: present
+
+    - name: Add demo user to sudo group
+      ansible.builtin.user:
+        name: demo
+        groups: sudo
+        append: yes
+
+    - name: Ensure .ssh directory exists for demo user
+      ansible.builtin.file:
+        path: /home/demo/.ssh
+        state: directory
+        owner: demo
+        group: demo
+        mode: '0700'
+
+    - name: Copy root's authorized_keys to demo user
+      ansible.builtin.copy:
+        remote_src: yes
+        src: /root/.ssh/authorized_keys
+        dest: /home/demo/.ssh/authorized_keys
+        owner: demo
+        group: demo
+        mode: '0600'
+
+    - name: Allow demo user to run sudo without password
+      ansible.builtin.lineinfile:
+        path: /etc/sudoers.d/demo
+        line: 'demo ALL=(ALL) NOPASSWD:ALL'
+        create: yes
+        validate: 'visudo -cf %s'

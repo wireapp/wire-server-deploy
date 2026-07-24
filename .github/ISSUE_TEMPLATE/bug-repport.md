@@ -17,7 +17,7 @@ assignees: ''
 * Helm version: <!-- run 'helm version' -->
 * Installed with Kubespray: <!-- no / yes (version?) --> 
 * (Helm) Charts version: <!-- run 'helm show chart wire/wire-server | grep -m 1 version' -->
-* List of installed top-level charts: <!-- e.g. database-ephemeral, demo-smtp --> 
+* List of installed top-level charts: <!-- e.g. database-ephemeral, smtp --> 
 * Other related technologies + version: <!-- Ansible, Helm, Terraform -->
 
 

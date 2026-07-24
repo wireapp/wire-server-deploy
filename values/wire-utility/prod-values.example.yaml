@@ -1,0 +1,7 @@
+# Minimal config to allow helm template to work for image extraction
+# wire-utility chart has fail() checks that require certain values
+
+cargohold:
+  config:
+    aws:
+      s3Endpoint: "http://fake-aws-s3:9000"

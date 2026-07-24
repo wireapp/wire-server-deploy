@@ -27,7 +27,8 @@ mapfile -t SHELL_FILES_TO_LINT < <(
         grep -v "examples/team-provisioning-qr-codes/generate-user-pdf.sh" |
         grep -v "nix/scripts/create-container-dump.sh" |
         grep -v "nix/scripts/list-helm-containers.sh" |
-        grep -v "offline/cd.sh"
+        grep -v "offline/cd.sh" |
+        grep -v "offline/cd_staging.sh"
 )
 
 shellcheck -x "${SHELL_FILES_TO_LINT[@]}"

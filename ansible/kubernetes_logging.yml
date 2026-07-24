@@ -11,9 +11,9 @@
         # options, ensure to also keep the documentation up-to-date, see the
         # documentation introduced in
         # https://github.com/wireapp/wire-docs/pull/79
-        - name: podlogs
-          path: "/var/lib/docker/containers/*/*.log"
-          options:
+         - name: podlogs
+           path: "/var/log/pods/*/*/*.log"
+           options:
             - daily
             - missingok
             - rotate 2

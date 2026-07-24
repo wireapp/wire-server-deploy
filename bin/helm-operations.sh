@@ -1,0 +1,283 @@
+#!/usr/bin/env bash
+# shellcheck disable=SC2087
+set -Eeo pipefail
+
+# Read values from environment variables with defaults
+BASE_DIR="${BASE_DIR:-/wire-server-deploy}"
+TARGET_SYSTEM="${TARGET_SYSTEM:-example.com}"
+CERT_MASTER_EMAIL="${CERT_MASTER_EMAIL:-certmaster@example.com}"
+
+# DEPLOY_CERT_MANAGER env variable is used to decide if cert_manager and nginx-ingress-services charts should get deployed
+# default is set to TRUE to deploy it unless changed
+DEPLOY_CERT_MANAGER="${DEPLOY_CERT_MANAGER:-TRUE}"
+
+# DEPLOY_CALLING_SERVICES env variable is used to decide if sftd and coturn should get deployed
+# default is set to TRUE to deploy them unless changed
+DEPLOY_CALLING_SERVICES="${DEPLOY_CALLING_SERVICES:-TRUE}"
+
+# DUMP_LOGS_ON_FAIL to dump logs on failure
+# it is false by default
+DUMP_LOGS_ON_FAIL="${DUMP_LOGS_ON_FAIL:-FALSE}"
+
+# this IP should match the DNS A record value for TARGET_SYSTEM
+# assuming it to be the public address used by clients to reach public Address 
+HOST_IP="${HOST_IP:-}"
+
+CALLING_NODE=""
+
+function dump_debug_logs {
+  local exit_code=$?
+  if [[ "$DUMP_LOGS_ON_FAIL" == "TRUE" ]]; then 
+    "$BASE_DIR"/bin/debug_logs.sh
+  fi
+  return $exit_code
+}
+trap dump_debug_logs ERR
+
+configure_calling_environment() {
+
+  if [[ "$DEPLOY_CALLING_SERVICES" != "TRUE" ]]; then
+    return 0
+  fi
+
+  if [[ -z "$HOST_IP" ]]; then
+    HOST_IP=$(wget -qO- https://api.ipify.org)
+  fi
+
+  if [[ -z "$HOST_IP" ]]; then
+    echo "Error: could not determine HOST_IP automatically"
+    exit 1
+  fi
+
+  # picking a node for calling traffic (3rd kube worker node)
+  CALLING_NODE=$(kubectl get nodes --no-headers | tail -n 1 | awk '{print $1}')
+  if [[ -z "$CALLING_NODE" ]]; then
+    echo "Error: could not determine the last kube worker node via kubectl"
+    exit 1
+  fi
+}
+
+sync_pg_secrets() {
+  echo "Retrieving PostgreSQL password from databases-ephemeral for wire-server deployment..."
+  if kubectl get secret wire-postgresql-external-secret &>/dev/null; then
+  # Usage: sync-k8s-secret-to-wire-secrets.sh <secret-name> <secret-key> <yaml-file> <yaml-path's>
+     "$BASE_DIR/bin/sync-k8s-secret-to-wire-secrets.sh" \
+      wire-postgresql-external-secret password \
+      "$BASE_DIR/values/wire-server/secrets.yaml" \
+      .brig.secrets.pgPassword .galley.secrets.pgPassword .background-worker.secrets.pgPassword
+  else
+    echo "⚠️  Warning: PostgreSQL secret 'wire-postgresql-secret' not found, skipping secret sync"
+    echo "    Make sure databases-ephemeral chart is deployed before wire-server"
+  fi
+  return $?
+}
+
+# Creates values.yaml from prod-values.example.yaml and secrets.yaml from prod-secrets.example.yaml
+# Works on all chart directories in $BASE_DIR/values/
+process_values() {
+
+  ENV=$1
+  TYPE=$2
+  charts=(fake-aws smtp rabbitmq databases-ephemeral reaper wire-server webapp account-pages team-settings ingress-nginx-controller)
+
+  if [[ "$DEPLOY_CERT_MANAGER" == "TRUE" ]]; then
+    charts+=(nginx-ingress-services cert-manager)
+  fi
+
+  if [[ "$DEPLOY_CALLING_SERVICES" == "TRUE" ]]; then
+    charts+=(coturn sftd)
+  fi
+
+  if [[ "$ENV" != "prod" ]] || [[ -z "$TYPE" ]] ; then
+    echo "Error: This function only supports prod deployments with TYPE as values or secrets. ENV must be 'prod', got: '$ENV' and '$TYPE'"
+    exit 1
+  fi
+  timestp=$(date +"%Y%m%d_%H%M%S")
+
+  for chart in "${charts[@]}"; do
+    chart_dir="$BASE_DIR/values/$chart"
+    if [[ -d "$chart_dir" ]]; then
+      if [[ -f "$chart_dir/${ENV}-${TYPE}.example.yaml" ]]; then
+        if [[ ! -f "$chart_dir/${TYPE}.yaml" ]]; then
+          cp "$chart_dir/${ENV}-${TYPE}.example.yaml" "$chart_dir/${TYPE}.yaml"
+          echo "Used template ${ENV}-${TYPE}.example.yaml to create $chart_dir/${TYPE}.yaml"
+        else
+          echo "$chart_dir/${TYPE}.yaml already exists, archiving it and creating a new one."
+          mv "$chart_dir/${TYPE}.yaml" "$chart_dir/${TYPE}.yaml.bak.$timestp"
+          cp "$chart_dir/${ENV}-${TYPE}.example.yaml" "$chart_dir/${TYPE}.yaml"
+        fi
+      fi
+    fi
+  done
+}
+
+# selectively setting values of following charts which requires additional values
+# wire-server, webapp, team-settings, account-pages, nginx-ingress-services, sftd and coturn
+configure_values() {
+
+  TEMP_DIR=$(mktemp -d)
+  trap 'rm -rf $TEMP_DIR' EXIT
+
+  # Fixing the hosts with TARGET_SYSTEM and setting the turn server
+  sed -e "s/example.com/$TARGET_SYSTEM/g" \
+      "$BASE_DIR/values/wire-server/values.yaml" > "$TEMP_DIR/wire-server-values.yaml"
+
+  # Fixing the hosts in webapp team-settings and account-pages charts
+  for chart in webapp team-settings account-pages; do
+    sed "s/example.com/$TARGET_SYSTEM/g" "$BASE_DIR/values/$chart/values.yaml" > "$TEMP_DIR/$chart-values.yaml"
+  done
+
+  files=(wire-server-values.yaml webapp-values.yaml team-settings-values.yaml account-pages-values.yaml)
+
+  if [[ "$DEPLOY_CERT_MANAGER" == "TRUE" ]]; then
+    # Setting certManager and DNS records for Let's Encrypt based certificate management
+    sed -e 's/useCertManager: false/useCertManager: true/g' \
+      -e "/certmasterEmail:$/s/certmasterEmail:/certmasterEmail: $CERT_MASTER_EMAIL/" \
+      -e "s/example.com/$TARGET_SYSTEM/" \
+      "$BASE_DIR/values/nginx-ingress-services/values.yaml" > "$TEMP_DIR/nginx-ingress-services-values.yaml"
+
+    files+=(nginx-ingress-services-values.yaml)
+  fi
+
+  if [[ "$DEPLOY_CALLING_SERVICES" == "TRUE" ]]; then
+    # to find IP address of calling NODE
+    CALLING_NODE_IP=$(kubectl get node "$CALLING_NODE" -o jsonpath='{.status.addresses[?(@.type=="InternalIP")].address}')
+
+    # fixing the turnStatic values
+    yq eval -i ".brig.turnStatic.v2 = [\"turn:$HOST_IP:3478\", \"turn:$HOST_IP:3478?transport=tcp\"]" "$TEMP_DIR/wire-server-values.yaml"
+
+    # Fix SFTD hostnames, and only enable Let's Encrypt specific issuer changes when cert-manager is enabled.
+    sed -e "s/webapp.example.com/webapp.$TARGET_SYSTEM/" \
+        -e "s/sftd.example.com/sftd.$TARGET_SYSTEM/" \
+        "$BASE_DIR/values/sftd/values.yaml" > "$TEMP_DIR/sftd-values.yaml"
+
+    cp "$BASE_DIR/values/coturn/values.yaml" "$TEMP_DIR/coturn-values.yaml"
+
+    if [[ "$DEPLOY_CERT_MANAGER" == "TRUE" ]]; then
+      yq eval -i '.tls.issuerRef.name = "letsencrypt-http01"' "$TEMP_DIR/sftd-values.yaml"
+    fi
+
+    # Setting coturn node IP values
+    yq eval -i ".coturnTurnListenIP = \"$CALLING_NODE_IP\"" "$TEMP_DIR/coturn-values.yaml"
+    yq eval -i ".coturnTurnRelayIP = \"$CALLING_NODE_IP\"" "$TEMP_DIR/coturn-values.yaml"
+    yq eval -i ".coturnTurnExternalIP = \"$HOST_IP\"" "$TEMP_DIR/coturn-values.yaml"
+
+    files+=(sftd-values.yaml coturn-values.yaml)
+  fi
+
+  # Compare and copy files if different
+  for file in "${files[@]}"; do
+    if ! cmp -s "$TEMP_DIR/$file" "$BASE_DIR/values/${file%-values.yaml}/values.yaml"; then
+      cp "$TEMP_DIR/$file" "$BASE_DIR/values/${file%-values.yaml}/values.yaml"
+      echo "Updating  $BASE_DIR/values/${file%-values.yaml}/values.yaml"
+    fi
+  done
+
+}
+
+deploy_charts() {
+
+  local charts=("$@")
+  echo "Following charts will be deployed: ${charts[*]}"
+
+  for chart in "${charts[@]}"; do
+    chart_dir="$BASE_DIR/charts/$chart"
+    values_file="$BASE_DIR/values/$chart/values.yaml"
+    secrets_file="$BASE_DIR/values/$chart/secrets.yaml"
+
+    if [[ ! -d "$chart_dir" ]]; then
+      echo "Error: Chart directory $chart_dir does not exist. Exiting fix the charts"
+      exit 1
+    fi
+
+    if [[ ! -f "$values_file" ]]; then
+      echo "Warning: Values file $values_file does not exist. Deploying without values."
+      values_file=""
+    fi
+
+    if [[ ! -f "$secrets_file" ]]; then
+      secrets_file=""
+    fi
+
+    helm_command="helm upgrade --install --wait --timeout=15m0s $chart $chart_dir"
+
+    if [[ -n "$values_file" ]]; then
+      helm_command+=" --values $values_file"
+    fi
+
+    if [[ -n "$secrets_file" ]]; then
+      helm_command+=" --values $secrets_file"
+    fi
+
+    echo "Deploying $chart as $helm_command"
+    eval "$helm_command"
+  done
+
+  # display running pods post deploying all helm charts in default namespace
+  kubectl get pods --sort-by=.metadata.creationTimestamp
+}
+
+deploy_cert_manager() {
+
+  kubectl get namespace cert-manager-ns || kubectl create namespace cert-manager-ns
+  helm upgrade --install --wait --timeout=5m0s -n cert-manager-ns cert-manager  "$BASE_DIR/charts/cert-manager" --values "$BASE_DIR/values/cert-manager/values.yaml"
+
+  # display running pods
+  kubectl get pods --sort-by=.metadata.creationTimestamp -n cert-manager-ns
+}
+
+deploy_calling_services() {
+
+  if [[ "$DEPLOY_CALLING_SERVICES" != "TRUE" ]]; then
+    echo "Skipping sftd and coturn deployment because DEPLOY_CALLING_SERVICES=$DEPLOY_CALLING_SERVICES"
+    return 0
+  fi
+
+  echo "Deploying sftd and coturn"
+  # select the node to deploy sftd
+  kubectl annotate node "$CALLING_NODE" wire.com/external-ip="$HOST_IP" --overwrite
+  helm upgrade --install --wait --timeout=5m0s sftd "$BASE_DIR/charts/sftd" --set "nodeSelector.kubernetes\\.io/hostname=$CALLING_NODE" --values  "$BASE_DIR/values/sftd/values.yaml"
+
+  kubectl annotate node "$CALLING_NODE" wire.com/external-ip="$HOST_IP" --overwrite
+  helm upgrade --install --wait --timeout=5m0s coturn "$BASE_DIR/charts/coturn" --set "nodeSelector.kubernetes\\.io/hostname=$CALLING_NODE" --values "$BASE_DIR/values/coturn/values.yaml" --values "$BASE_DIR/values/coturn/secrets.yaml"
+
+  # display running pods post deploying all helm charts in default namespace
+  kubectl get pods --sort-by=.metadata.creationTimestamp
+}
+
+main() {
+
+# initialize calling-service specific values only when enabled
+configure_calling_environment
+
+# Create prod-values.example.yaml to values.yaml and take backup
+process_values "prod" "values"
+# Create prod-secrets.example.yaml to secrets.yaml and take backup
+process_values "prod" "secrets"
+
+# Sync postgresql secret
+sync_pg_secrets
+
+# configure chart specific variables for each chart in values.yaml file
+configure_values
+
+# deploying with external datastores, useful for prod setup
+deploy_charts cassandra-external elasticsearch-external minio-external postgresql-external fake-aws smtp rabbitmq-external databases-ephemeral reaper wire-server webapp account-pages team-settings ingress-nginx-controller
+
+# deploying cert-manager only when the env var DEPLOY_CERT_MANAGER is set to TRUE 
+if [[ "$DEPLOY_CERT_MANAGER" == "TRUE" ]]; then 
+  # deploying cert manager to issue certs, by default letsencrypt-http01 issuer is configured
+  deploy_cert_manager
+
+  # nginx-ingress-services chart needs cert-manager to be deployed
+  deploy_charts nginx-ingress-services
+
+  # print status of certs
+  kubectl get certificate
+fi
+
+# deploying sft and coturn services when enabled
+deploy_calling_services
+}
+
+main

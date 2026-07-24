@@ -2,7 +2,6 @@
 
 set -euo pipefail
 
-
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
 # HACK: hack to stop ssh from idling the connection. Which it will do if there is no output. And ansible is not verbose enough
@@ -11,12 +10,38 @@ loop_pid=$!
 
 trap 'kill "$loop_pid"' EXIT
 
-ZAUTH_CONTAINER=$(sudo docker load -i $SCRIPT_DIR/../containers-adminhost/quay.io_wire_zauth_*.tar | awk '{print $3}')
+# Load ZAUTH container only if not already present
+if ! sudo docker images | grep -q "wire/zauth"; then
+    echo "Loading ZAUTH container..."
+    ZAUTH_CONTAINER=$(sudo docker load -i $SCRIPT_DIR/../containers-adminhost/quay.io_wire_zauth_*.tar | awk '{print $3}')
+else
+    echo "ZAUTH container already loaded, skipping..."
+    ZAUTH_CONTAINER=$(sudo docker images --format "{{.Repository}}:{{.Tag}}" | grep "wire/zauth" | head -1)
+fi
 export ZAUTH_CONTAINER
 
-WSD_CONTAINER=$(sudo docker load -i $SCRIPT_DIR/../containers-adminhost/container-wire-server-deploy.tgz | awk '{print $3}')
+# Load WSD container only if not already present
+if ! sudo docker images | grep -q "wire-server-deploy"; then
+    echo "Loading WSD container..."
+    WSD_CONTAINER=$(sudo docker load -i $SCRIPT_DIR/../containers-adminhost/container-wire-server-deploy.tgz | awk '{print $3}')
+else
+    echo "WSD container already loaded, skipping..."
+    WSD_CONTAINER=$(sudo docker images --format "{{.Repository}}:{{.Tag}}" | grep "wire-server-deploy" | head -1)
+fi
 
+#  Create wire secrets
 ./bin/offline-secrets.sh
 
-sudo docker run --network=host -v $SSH_AUTH_SOCK:/ssh-agent -e SSH_AUTH_SOCK=/ssh-agent -v $PWD:/wire-server-deploy $WSD_CONTAINER ./bin/offline-cluster.sh
-sudo docker run --network=host -v $PWD:/wire-server-deploy $WSD_CONTAINER ./bin/offline-helm.sh
+# Build docker run command with conditional SSH_AUTH_SOCK mounting
+DOCKER_RUN_BASE="sudo docker run --network=host -v $PWD:/wire-server-deploy"
+SSH_MOUNT=""
+if [ -n "${SSH_AUTH_SOCK:-}" ]; then
+    SSH_MOUNT="-v $SSH_AUTH_SOCK:/ssh-agent -e SSH_AUTH_SOCK=/ssh-agent"
+fi
+
+$DOCKER_RUN_BASE $SSH_MOUNT $WSD_CONTAINER ./bin/offline-cluster.sh
+
+# verify if all kube-system pods are running well
+sudo docker run --network=host -v $PWD:/wire-server-deploy $WSD_CONTAINER sh -c 'kubectl -n kube-system get pods'
+
+sudo docker run --network=host -v $PWD:/wire-server-deploy $WSD_CONTAINER sh -c 'TARGET_SYSTEM="example.dev" CERT_MASTER_EMAIL="certmaster@example.dev" DEPLOY_CERT_MANAGER=TRUE DUMP_LOGS_ON_FAIL=TRUE DEPLOY_CALLING_SERVICES=TRUE ./bin/helm-operations.sh'

@@ -21,12 +21,24 @@ brig:
 #  image:
 #    tag: some-tag (only override if you want a newer/different version than what is in the chart)
   config:
+    multiSFT:
+      enabled: false # enable to turn on SFT to SFT communication for federated calls
     cassandra:
       host: cassandra-external
     elasticsearch:
       host: elasticsearch-external
     rabbitmq:
-      host: rabbitmq # name of the rabbitmq service, either `rabbitmq-external` or `rabbitmq`
+      # Default: rabbitmq-external (for production external RabbitMQ VMs)
+      # CI/Demo: Change to rabbitmq when using rabbitmq chart from databases-ephemeral
+      host: rabbitmq-external
+    postgresql:
+      host: postgresql-external-rw # DNS name without protocol
+      port: "5432"
+      user: wire-server
+      dbname: wire-server
+    # See pool size calculation guide: https://docs.wire.com/latest/how-to/administrate/postgresql.html
+    postgresqlPool:
+      size: 10 # adjust pool size as needed based on expected load and available resources
     useSES: false
     # Set to false if you want to hand out DynamoDB to store prekeys
     randomPrekeys: true
@@ -44,12 +56,14 @@ brig:
       teamSettings: https://teams.example.com # change this (or unset if team settings are not used)
       teamCreatorWelcome: https://teams.example.com/login # change this
       teamMemberWelcome: https://wire.example.com/download # change this
-    enableFederation: false # Enable to use federation
+    enableFederation: false # Keep false unless federation is explicitly configured
     optSettings:
-      setFederationDomain: example.com # change this
+      setEnableMLS: true # Enable for MLS protocol use
+      setFederationDomain: example.com # change this per host deployment
       # Sync the domain with the 'host' variable in the sftd chart
       # Comment the next line (by adding '#' before it) if conference calling is not used
       setSftStaticUrl: "https://sftd.example.com:443"
+      # setSftListAllServers: "enabled" # Uncomment for Federation!
       # If set to true, creating new personal users or new teams on your instance from
       # outside your backend installation is disabled
       setRestrictUserCreation: false
@@ -81,7 +95,9 @@ brig:
         deletionUrl: https://account.example.com/d/?key=${key}&code=${code}
         invitationUrl: https://account.example.com/i/${code}
     smtp:
-      host: demo-smtp # change this if you want to use your own SMTP server
+      # Default: smtp (for CI/demo environments with demo-smtp chart)
+      # Production: Change to your actual SMTP server hostname
+      host: smtp
       port: 25        # change this
       connType: plain # change this. Possible values: plain|ssl|tls
 #    proxy:
@@ -97,7 +113,9 @@ brig:
       # - "turn:<IP of coturn2>:3478"
       # - "turn:<IP of coturn1>:3478?transport=tcp"
       # - "turn:<IP of coturn2>:3478?transport=tcp"
-
+  metrics:
+    serviceMonitor:
+      enabled: false
 
 proxy:
   replicaCount: 3
@@ -110,7 +128,9 @@ proxy:
 #      noProxyList:
 #        - "local.example.com"
 #        - "10.23.0.0/16"
-
+  metrics:
+    serviceMonitor:
+      enabled: false
 cannon:
   replicaCount: 3
 #  image:
@@ -118,9 +138,15 @@ cannon:
   # For demo mode only, we don't need to keep websocket connections open on chart upgrades
   drainTimeout: 10
   config:
-    cassandra: 
+    rabbitmq:
+      # Default: rabbitmq-external (for production external RabbitMQ VMs)
+      # CI/Demo: Change to rabbitmq when using rabbitmq chart from databases-ephemeral
+      host: rabbitmq-external
+    cassandra:
       host: cassandra-external
-
+  metrics:
+    serviceMonitor:
+      enabled: false
 cargohold:
   replicaCount: 3
 #  image:
@@ -141,7 +167,9 @@ cargohold:
 #      noProxyList:
 #        - "local.example.com"
 #        - "10.23.0.0/16"
-
+  metrics:
+    serviceMonitor:
+      enabled: false
 galley:
   replicaCount: 3
 #  image:
@@ -150,7 +178,23 @@ galley:
     cassandra:
       host: cassandra-external
     rabbitmq:
-      host: rabbitmq # name of the rabbitmq service, either `rabbitmq-external` or `rabbitmq`
+      # Default: rabbitmq-external (for production external RabbitMQ VMs)
+      # CI/Demo: Change to rabbitmq when using rabbitmq chart from databases-ephemeral
+      host: rabbitmq-external
+    postgresql:
+      host: postgresql-external-rw # DNS name without protocol
+      port: "5432"
+      user: wire-server
+      dbname: wire-server
+    # See pool size calculation guide: https://docs.wire.com/latest/how-to/administrate/postgresql.html
+    postgresqlPool:
+      size: 10 # adjust pool size as needed based on expected load and available resources
+    # Explicitly set postgresMigration to cassandra for fresh deployments.
+    # This controls whether galley reads conversations/teamFeatures from Cassandra or PostgreSQL.
+    postgresMigration:
+      conversation: cassandra
+      conversationCodes: cassandra
+      teamFeatures: cassandra
     enableFederation: false # Enable to use federation
     settings:
       # prefix URI used when inviting users to a conversation by link
@@ -158,7 +202,33 @@ galley:
       federationDomain: example.com # change this
       # see #RefConfigOptions in `/docs/reference` (https://github.com/wireapp/wire-server/)
       featureFlags:
-        sso: disabled-by-default
+        mls: # Keep disabled unless MLS is explicitly configured
+          defaults:
+            status: disabled
+            config:
+              protocolToggleUsers: []
+              defaultProtocol: mls
+              allowedCipherSuites: [2]
+              defaultCipherSuite: 2
+              supportedProtocols: [proteus, mls]
+            lockStatus: unlocked
+        mlsMigration: # Keep disabled unless MLS migration is explicitly configured
+          defaults:
+            status: disabled
+            config:
+              startTime: null
+              finalizeRegardlessAfter: null
+              usersThreshold: 100
+              clientsThreshold: 100
+            lockStatus: unlocked
+        sso: enabled-by-default
+        # channels: # Uncomment to enable channels by default for all newly created teams
+        #   defaults:
+        #     status: enabled
+        #     config:
+        #       allowed_to_create_channels: team-members
+        #       allowed_to_open_channels: team-members
+        #     lockStatus: unlocked
         # NOTE: Change this to "disabled-by-default" for legalhold support
         # legalhold: disabled-by-default
         legalhold: disabled-permanently
@@ -171,12 +241,20 @@ galley:
 #      noProxyList:
 #        - "local.example.com"
 #        - "10.23.0.0/16"
-
+  metrics:
+    serviceMonitor:
+      enabled: false
 gundeck:
   replicaCount: 3
 #  image:
 #    tag: some-tag (only override if you want a newer/different version than what is in the chart)
   config:
+    redis:
+      host: databases-ephemeral-redis-ephemeral # Updated hostname for redis-ephemeral chart
+    rabbitmq:
+      # Default: rabbitmq-external (for production external RabbitMQ VMs)
+      # CI/Demo: Change to rabbitmq when using rabbitmq chart from databases-ephemeral
+      host: rabbitmq-external
     cassandra:
       host: cassandra-external
     aws:
@@ -193,7 +271,9 @@ gundeck:
 #      noProxyList:
 #        - "local.example.com"
 #        - "10.23.0.0/16"
-
+  metrics:
+    serviceMonitor:
+      enabled: false
 nginz:
   replicaCount: 3
   config:
@@ -204,6 +284,7 @@ nginz:
 #      tag: some-tag (only override if you want a newer/different version than what is in the chart)
   nginx_conf:
     # using prod means mostly that some internal endpoints are not exposed
+    dns_resolver: coredns
     env: prod
     external_env_domain: example.com
     deeplink:
@@ -223,7 +304,9 @@ nginz:
   # For demo mode only, we don't need to keep websocket connections open on upgrade:
   drainTimeout: 10
   terminationGracePeriodSeconds: 30
-
+  metrics:
+    serviceMonitor:
+      enabled: false
 spar:
   replicaCount: 3
 #  image:
@@ -248,21 +331,61 @@ spar:
 #      noProxyList:
 #        - "local.example.com"
 #        - "10.23.0.0/16"
-
+  metrics:
+    serviceMonitor:
+      enabled: false
 
 # Only needed when legalhold is enabled
 legalhold:
   host: "legalhold.example.com"
   wireApiHost: "https://nginz-https.example.com"
-
+  metrics:
+    serviceMonitor:
+      enabled: false
 # Only needed when federation is enabled
 federator:
+  # config:
+  #   optSettings:
+  #     federationStrategy:
+  #       allowedDomains:
+  #         - example.com
   tls:
     useSharedFederatorSecret: true
-
+  # remoteCAContents: | # Uncomment and place the federating backends root CA certificates in chain (if there are multiple)
+  metrics:
+    serviceMonitor:
+      enabled: false
 background-worker:
   config:
+    federationDomain: example.com
+    # logLevel: Debug
+    rabbitmq:
+      # Default: rabbitmq-external (for production external RabbitMQ VMs)
+      # CI/Demo: Change to rabbitmq when using rabbitmq chart from databases-ephemeral
+      host: rabbitmq-external
     cassandra:
       host: cassandra-external
+    cassandraGalley:
+      host: cassandra-external
+    cassandraBrig:
+      host: cassandra-external
+    postgresql:
+      host: postgresql-external-rw # DNS name without protocol
+      port: "5432"
+      user: wire-server
+      dbname: wire-server
+    # See pool size calculation guide: https://docs.wire.com/latest/how-to/administrate/postgresql.html
+    postgresqlPool:
+      size: 5 # Background worker has fewer connections to DB, so smaller pool size is fine
+    postgresMigration:
+      conversation: cassandra
+      conversationCodes: cassandra
+      teamFeatures: cassandra
+    migrateConversations: false
+    migrateConversationCodes: false
+    migrateTeamFeatures: false
     # Enable for federation
     enableFederation: false
+  metrics:
+    serviceMonitor:
+      enabled: false

@@ -1,2 +1,15 @@
 secrets:
   zrestSecret: ""
+
+# Minimal config to allow helm template to work
+federate:
+  enabled: false
+  dtls:
+    enabled: false
+
+# Override kubectl image to use available version in bitnamilegacy
+# Using the last available version in 1.32.x series
+kubectlImage:
+  registry: docker.io
+  repository: bitnamilegacy/kubectl
+  tag: "1.32.4"

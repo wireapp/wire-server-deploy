@@ -1,0 +1,24 @@
+# detect-rogue-primary.timer.j2
+[Unit]
+Description=PostgreSQL Split-Brain Detection Timer
+Documentation=man:systemd.timer(5)
+Requires=detect-rogue-primary.service
+After=postgresql@{{ postgresql_version }}-main.service
+Wants=postgresql@{{ postgresql_version }}-main.service
+
+[Timer]
+# Run every 30 seconds when PostgreSQL is active
+OnCalendar=*:*:0/30
+AccuracySec=5s
+
+# Wait for PostgreSQL to be stable after boot
+OnBootSec=120s
+
+# Don't catch up on missed runs if system was down
+Persistent=false
+
+# Randomize execution to avoid simultaneous checks across nodes
+RandomizedDelaySec=10s
+
+[Install]
+WantedBy=timers.target

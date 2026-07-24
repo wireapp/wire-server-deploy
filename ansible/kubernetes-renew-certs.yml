@@ -2,8 +2,6 @@
 #
 # Run "make renew-certs" to execute this playbook.
 #
-# Beware! This script only works if there a single control plane node!
-#
 # Comments:
 #
 # > Step 6. Make kubelet aware of the new certificate
@@ -17,10 +15,6 @@
 - name: 'Renew certificates'
   hosts: kube-master
   tasks:
-    - name: fail if there is more than 1 master
-      fail:
-        msg: This playbook only works when there is one master node.
-      when: groups['kube-master'] | length > 1
     - name: create backup dir
       file:
         dest: "/etc/kubernetes/backup-before-cert-renew/"

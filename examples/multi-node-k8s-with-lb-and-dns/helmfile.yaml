@@ -22,12 +22,12 @@ releases:
     chart: 'wire/databases-ephemeral'
     version: 'CHANGE_ME'
 
-  - name: 'demo-smtp'
+  - name: 'smtp'
     namespace: 'wire'
-    chart: 'wire/demo-smtp'
+    chart: 'wire/smtp'
     version: 'CHANGE_ME'
     values:
-      - './helm_vars/demo-smtp/values.yaml'
+      - './helm_vars/smtp/values.yaml'
 
   - name: 'cert-manager'
     namespace: 'cert-manager'

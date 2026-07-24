@@ -1,0 +1,178 @@
+- name: Clean repmgr HA cluster configuration
+  hosts: "{{ target_nodes | default('postgresql_rw,postgresql_ro') }}"
+  become: yes
+  tasks:
+    # ===== DETECT INSTALLATION TYPE =====
+    - name: Check if PostgreSQL is installed
+      stat:
+        path: "/usr/bin/psql"
+      register: postgresql_installed
+
+    - name: Check if PostgreSQL data directory exists
+      stat:
+        path: "/var/lib/postgresql/{{ postgresql_version }}/main/PG_VERSION"
+      register: postgresql_data_exists
+
+    - name: Check if repmgr configuration exists
+      stat:
+        path: "/etc/repmgr/{{ postgresql_version }}-main/repmgr.conf"
+      register: repmgr_config_exists
+
+    - name: Determine if this is a fresh installation
+      set_fact:
+        is_fresh_install: >-
+          {{
+            not postgresql_installed.stat.exists or
+            not postgresql_data_exists.stat.exists
+          }}
+
+    - name: Display installation type
+      debug:
+        msg: |
+          {{ inventory_hostname }}: {{ 'Fresh installation detected - skipping HA cleanup' if is_fresh_install else 'Existing deployment detected - resetting HA cluster configuration' }}
+
+    # ===== FRESH INSTALLATION TASKS (MINIMAL) =====
+    - name: Handle fresh installation
+      block:
+        - name: Ensure basic directories exist for fresh install
+          file:
+            path: "{{ item }}"
+            state: directory
+            owner: postgres
+            group: postgres
+            mode: "0755"
+          loop:
+            - "/etc/repmgr/{{ postgresql_version }}-main"
+            - "/opt/repmgr/scripts"
+            - "/var/log/postgresql"
+          when: postgresql_installed.stat.exists
+
+        - name: Skip cleanup message for fresh install
+          debug:
+            msg: "Fresh installation - HA cleanup skipped"
+
+      when: is_fresh_install
+
+    # ===== EXISTING DEPLOYMENT CLEANUP =====
+    # NOTE: Backup is handled by postgresql-backup.yml, which is called first by postgresql-deploy.yml
+    # This playbook resets repmgr HA cluster configuration (does NOT delete PostgreSQL data)
+    - name: Handle existing deployment cleanup
+      block:
+        # ===== RESET HA CLUSTER CONFIGURATION =====
+        - name: Check if PostgreSQL service exists
+          systemd:
+            name: "postgresql@{{ postgresql_version }}-main.service"
+          register: postgresql_service_exists
+          failed_when: false
+
+        - name: Check if repmgr database exists
+          ansible.builtin.shell: |
+            sudo -u postgres psql -t -A -c "SELECT COUNT(*) FROM pg_database WHERE datname = '{{ repmgr_database }}'" postgres 2>/dev/null || echo "0"
+          register: repmgr_db_exists
+          changed_when: false
+          failed_when: false
+          when:
+            - postgresql_installed.stat.exists
+            - postgresql_service_exists.status is defined
+            - postgresql_service_exists.status.LoadState != "not-found"
+
+        - name: Drop repmgr database completely (if exists)
+          ansible.builtin.shell: |
+            sudo -u postgres psql -c "DROP DATABASE IF EXISTS {{ repmgr_database }};" postgres 2>/dev/null || true
+          failed_when: false
+          when:
+            - postgresql_installed.stat.exists
+            - repmgr_db_exists is defined
+            - repmgr_db_exists.stdout | default('0') | trim != '0'
+
+        - name: Stop any existing split-brain monitoring timer
+          systemd:
+            name: detect-rogue-primary.timer
+            state: stopped
+          failed_when: false
+
+        - name: Stop any existing split-brain monitoring service
+          systemd:
+            name: detect-rogue-primary.service
+            state: stopped
+          failed_when: false
+
+        - name: Stop any existing repmgrd service
+          systemd:
+            name: "repmgrd@{{ postgresql_version }}-main.service"
+            state: stopped
+          failed_when: false
+
+        - name: Unmask PostgreSQL services from previous deployments
+          systemd:
+            name: "postgresql@{{ postgresql_version }}-main.service"
+            masked: no
+          failed_when: false
+
+        - name: Stop PostgreSQL service for clean state
+          systemd:
+            name: "postgresql@{{ postgresql_version }}-main.service"
+            state: stopped
+          failed_when: false
+
+        - name: Remove repmgr configuration files, scripts, and systemd units
+          file:
+            path: "{{ item }}"
+            state: absent
+          failed_when: false
+          loop:
+            - "/etc/repmgr/{{ postgresql_version }}-main/repmgr.conf"
+            - "/etc/repmgr/{{ postgresql_version }}"
+            - "/etc/repmgr/{{ postgresql_version }}-main"
+            - "/var/lib/postgresql/{{ postgresql_version }}/main/recovery.conf"
+            - "/var/lib/postgresql/{{ postgresql_version }}/main/standby.signal"
+            - "/opt/repmgr/scripts"
+            - "/usr/local/bin/repmgr"
+            - "/usr/local/bin/repmgrd"
+            - "/usr/local/bin/detect_rogue_primary.sh"
+            - "/etc/systemd/system/detect-rogue-primary.service"
+            - "/etc/systemd/system/detect-rogue-primary.timer"
+            - "/etc/systemd/system/repmgrd@.service"
+            - "/etc/systemd/system/repmgrd@{{ postgresql_version }}-main.service"
+            - "/etc/systemd/system/repmgrd@{{ postgresql_version }}.service"
+            - "/etc/sudoers.d/postgres-postgresql-management"
+            - "/etc/sudoers.d/postgres-postgresql-service"
+
+        - name: Find rogue split-brain service files
+          find:
+            paths: /etc/systemd/system
+            patterns: "detect-rogue-primary.service*"
+          register: rogue_service_files
+
+        - name: Remove rogue split-brain service files
+          file:
+            path: "{{ item.path }}"
+            state: absent
+          loop: "{{ rogue_service_files.files }}"
+          when: rogue_service_files.matched > 0
+
+      when: not is_fresh_install
+
+    # ===== COMMON TASKS FOR ALL INSTALLATIONS =====
+    - name: Reload systemd daemon after cleanup
+      systemd:
+        daemon_reload: yes
+      failed_when: false
+
+    - name: Display cleanup status
+      debug:
+        msg: |
+          HA cluster reset completed for {{ inventory_hostname }}:
+          - Installation type: {{ 'Fresh' if is_fresh_install else 'Existing' }}
+          - PostgreSQL installed: {{ postgresql_installed.stat.exists }}
+          - PostgreSQL data exists: {{ postgresql_data_exists.stat.exists }}
+          - repmgr config exists: {{ repmgr_config_exists.stat.exists }}
+          {% if is_fresh_install %}
+          - Action taken: Minimal setup (directories created)
+          {% else %}
+          - Action taken: HA cluster reset (repmgr services stopped, configs removed)
+          - PostgreSQL data: PRESERVED (not deleted)
+          {% endif %}
+          - Ready for deployment: ✅
+
+          NOTE: Backup is handled separately by postgresql-backup.yml

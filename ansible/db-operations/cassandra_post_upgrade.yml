@@ -1,25 +1,29 @@
 #
 # Follow the guidelines from DataStax for upgrades.
 #
-  hosts: "cassandra"
+- hosts: "cassandra"
   any_errors_fatal: yes
   gather_facts: no
   serial: 1
   vars:
-    cluster_name: default
+    cassandra_cluster_name: default
   vars_files:
     - roles-external/ansible-cassandra/defaults/main.yml
   tasks:
     - action: ec2_metadata_facts
-    - include: tasks/cassandra_cluster_healthy.yml
+      when: not (offline | default(false))
+    - include_tasks: tasks/cassandra_cluster_healthy.yml
       vars:
-        cassandra_role: "cassandra_{{ cluster_name }}"
+        cassandra_role: cassandra
+        dry_run: true
         # TODO: Adjust this value accordingly!
         expected_num_schemas: 1
 
     - name: 'Cassandra: upgrade sstables'
       shell: nodetool upgradesstables
 
-    - include: roles-external/ansible-cassandra/tasks/repairs_backups.yml
-      vars:
-        cassandra_cluster_name: "{{ cluster_name }}"
+    # Skip repairs_backups setup in offline environments
+    # - include_tasks: ../roles-external/ansible-cassandra/tasks/repairs_backups.yml
+    #   vars:
+    #     cassandra_cluster_name: "{{ cassandra_cluster_name }}"
+    #   when: not (offline | default(false))

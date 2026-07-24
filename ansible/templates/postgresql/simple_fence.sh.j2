@@ -1,0 +1,85 @@
+#!/bin/bash
+# simple_fence.sh — basic event handler for repmgr
+
+set -euo pipefail
+
+# --- CONFIG (templated) ---
+PGUSER="{{ repmgr_user }}"
+PGDATABASE="{{ repmgr_database }}"
+LOGFILE="/var/log/postgresql/fence_events.log"
+SCRIPT_NAME="simple_fence"
+LOCAL_NODE_ID="{{ repmgr_node_config[inventory_hostname].node_id if repmgr_node_config is defined and repmgr_node_config.get(inventory_hostname) and repmgr_node_config[inventory_hostname].get('node_id') else '1' }}"
+
+# Node mappings (id → ip/name), generated from inventory if available
+declare -A NODE_HOSTS=({% set nodes = ((groups.postgresql_rw|default([])) + (groups.postgresql_ro|default([]))) -%}
+{%- for h in nodes -%}
+[{{ (repmgr_node_config[h].node_id if repmgr_node_config is defined and repmgr_node_config.get(h) and repmgr_node_config[h].get('node_id') else loop.index) }}]="{{ hostvars[h].ansible_default_ipv4.address | default(hostvars[h].ansible_host | default(h)) }}"{% if not loop.last %} {% endif %}
+{%- endfor -%})
+declare -A NODE_NAMES=({% for h in nodes -%}
+[{{ (repmgr_node_config[h].node_id if repmgr_node_config is defined and repmgr_node_config.get(h) and repmgr_node_config[h].get('node_id') else loop.index) }}]="{{ h }}"{% if not loop.last %} {% endif %}
+{%- endfor -%})
+
+# --- Logging ---
+mkdir -p "$(dirname "$LOGFILE")"
+log_event(){ printf '%s [%s] %s\n' "$(date '+%Y-%m-%d %H:%M:%S')" "$SCRIPT_NAME" "$1" >>"$LOGFILE" || true; }
+
+# --- DB helpers ---
+psql_q(){ psql -X -qAt -v ON_ERROR_STOP=1 -U "$PGUSER" -d "$PGDATABASE" "$@" 2>/dev/null; }
+update_node_status(){
+  local id="$1" status="$2" reason="$3" name="${NODE_NAMES[$id]}"
+  local q="update repmgr.nodes set active=${status} where node_id=${id};"
+  log_event "Set active=${status} for ${name} (ID:${id}) — ${reason}"
+  for h in "${NODE_HOSTS[@]}"; do
+    if psql_q -h "$h" -c "$q" >/dev/null; then log_event "Metadata updated via $h"; return 0; fi
+  done
+  log_event "ERROR: failed to update metadata on any host"; return 1
+}
+
+# --- Event args ---
+NODE_ID="${1:-}"; EVENT="${2:-}"; SUCCESS="${3:-}"
+[ -n "$NODE_ID" ] || exit 0
+[ -v NODE_NAMES["$NODE_ID"] ] || { log_event "ERROR: unknown node id $NODE_ID"; exit 1; }
+
+log_event "=== EVENT === id=$NODE_ID name=${NODE_NAMES[$NODE_ID]} event=$EVENT success=$SUCCESS"
+
+# --- Basic Event Handlers ---
+handle_failover_promote(){
+  log_event "Failover promote on ${NODE_NAMES[$NODE_ID]}"
+  [ "$SUCCESS" = "1" ] || { log_event "Promotion not successful; no action taken"; return; }
+  log_event "Promotion successful - cluster state updated by repmgr"
+}
+
+handle_standby_promote(){
+  if [ "$SUCCESS" = "1" ]; then
+    log_event "Standby promotion successful on node $NODE_ID"
+    handle_failover_promote
+  else
+    log_event "Standby promotion failed"
+  fi
+}
+
+handle_node_rejoin(){
+  if [ "$SUCCESS" = "1" ]; then
+     # Check if this node's PostgreSQL service is masked
+    if systemctl is-enabled postgresql@{{ postgresql_version }}-main.service | grep -q "masked"; then
+      log_event "PostgreSQL service is masked, unmasking for rejoin..."
+      sudo systemctl unmask postgresql@{{ postgresql_version }}-main.service
+      log_event "PostgreSQL service unmasked successfully"
+    fi
+
+    update_node_status "$NODE_ID" "true" "Rejoined cluster successfully"
+    log_event "Node ${NODE_NAMES[$NODE_ID]} successfully rejoined"
+  else
+    log_event "Node rejoin failed"
+  fi
+}
+
+case "$EVENT" in
+  standby_promote)            handle_standby_promote ;;
+  failover)                   handle_failover_promote ;;
+  node_rejoin)                handle_node_rejoin ;;
+  *)                          log_event "Event $EVENT logged (no specific action)" ;;
+esac
+
+log_event "Event handled"
+exit 0

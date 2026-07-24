@@ -1,0 +1,73 @@
+---
+- name: Configure networking for cert-manager HTTP access 
+  hosts: deploy_node
+  become: true
+  tasks:
+  - name: Test port connectivity from minikube node to its own public IP
+    shell: |
+      docker exec {{ minikube_profile }} sh -c "nc -zv {{ wire_ip }} 80"
+    register: nc_test
+    failed_when: false
+    changed_when: false
+
+  - name: Determine if hairpin NAT is required (netcat connects successfully if hairpin is working)
+    set_fact:
+      hairpin_required: "{{ nc_test.rc != 0 }}"
+
+  - name: Configure hairpin NAT rules for ingress
+    when: hairpin_required | bool
+    block:
+
+    - name: Configure DNAT hairpin rules to manage http/https traffic for the k8s ingress controller
+      iptables:
+        table: nat
+        chain: PREROUTING
+        protocol: "{{ item.protocol }}"
+        jump: DNAT
+        in_interface: "{{ matching_bridge_interface }}"
+        destination: "{{ default_interface_ip }}"
+        destination_port: "{{ item.port }}"
+        to_destination: "{{ k8s_ingress_controller_ip }}:{{ item.to_port }}"
+        state: present
+        action: insert
+        comment: "{{ iptables_rules_comment }}"
+      loop: "{{ http_dnat_rules }}"
+      loop_control:
+        label: "Setting DNAT rule for port {{ item.port }} -> {{ k8s_ingress_controller_ip | default('undefined') }}:{{ item.to_port }}"
+
+    - name: MASQUERADE for intra-bridge return path to avoid ("src==dst")
+      iptables:
+        table: nat
+        chain: POSTROUTING
+        protocol: "{{ item.protocol }}"
+        jump: MASQUERADE
+        out_interface: "{{ matching_bridge_interface }}"
+        source: "{{ minikube_node_subnet }}"
+        destination: "{{ k8s_ingress_controller_ip }}/32"
+        destination_port: "{{ item.to_port }}"
+        state: present
+        action: insert
+        comment: "{{ iptables_rules_comment }}"
+      loop: "{{ http_dnat_rules }}"
+      loop_control:
+        label: "Setting DNAT rule for port {{ item.port }} -> {{ k8s_ingress_controller_ip | default('undefined') }}:{{ item.to_port }}"
+
+    - name: Enable hairpin mode on all bridge ports
+      shell: |
+        changed=0
+        for f in /sys/class/net/{{ matching_bridge_interface }}/brif/*/hairpin_mode; do
+          [ -f "$f" ] || continue
+          cur="$(cat "$f" 2>/dev/null || echo 0)"
+          if [ "$cur" != "1" ]; then
+            echo 1 > "$f"
+            changed=1
+          fi
+        done
+        echo $changed
+      args:
+        executable: /bin/bash
+      register: hairpin_set
+      changed_when: hairpin_set.stdout | trim != "0"
+
+    - name: Preserve the Iptables rules
+      shell: iptables-save -f "{{ iptables_save_dir }}"/rules_post_wire.v4

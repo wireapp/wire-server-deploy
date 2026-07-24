@@ -1,0 +1,87 @@
+# repmgr.conf.j2 - with documentation references
+# {{ ansible_managed }}
+
+# ====================================================================
+# NODE IDENTIFICATION
+# Ref: https://www.repmgr.org/docs/current/configuration-file.html
+# ====================================================================
+{% set node_config = repmgr_node_config[inventory_hostname] | default({}) %}
+node_id={{ node_config.node_id | default(1) }}
+node_name='{{ inventory_hostname }}'
+{% if node_config.priority is defined %}
+priority={{ node_config.priority }}
+{% endif %}
+
+# ====================================================================
+# CONNECTION SETTINGS
+# Ref: https://www.repmgr.org/docs/current/configuration-file.html
+# ====================================================================
+conninfo='host={{ ansible_default_ipv4.address | default(ansible_host) }} user={{ repmgr_user }} dbname={{ repmgr_database }} password={{ repmgr_password }} connect_timeout=2'
+
+# ====================================================================
+# POSTGRESQL PATHS
+# ====================================================================
+data_directory='{{ postgresql_data_dir }}'
+config_directory='{{ postgresql_conf_dir }}'
+pg_bindir='/usr/lib/postgresql/{{ postgresql_version }}/bin'
+passfile='/var/lib/postgresql/.pgpass'
+
+# ====================================================================
+# REPLICATION
+# ====================================================================
+use_replication_slots=yes
+monitoring_history=true
+
+# ====================================================================
+# AUTOMATIC FAILOVER
+# Ref: https://www.repmgr.org/docs/current/repmgrd-basic-configuration.html
+# ====================================================================
+failover=automatic
+primary_visibility_consensus=true
+failover_validation_command='/opt/repmgr/scripts/failover_validation.sh %n %v %t'
+repmgrd_exit_on_inactive_node=true
+
+# Promotion and follow commands
+# Ref: https://github.com/EnterpriseDB/repmgr/blob/master/repmgr.conf.sample
+promote_command='/usr/bin/repmgr standby promote -f /etc/repmgr/{{ postgresql_version }}-main/repmgr.conf --log-to-file'
+follow_command='/usr/bin/repmgr standby follow -f /etc/repmgr/{{ postgresql_version }}-main/repmgr.conf --upstream-node-id=%n --log-to-file'
+
+# ====================================================================
+# SERVICE MANAGEMENT COMMANDS
+# Ref: https://www.repmgr.org/docs/current/configuration-file-service-commands.html
+# ====================================================================
+
+service_start_command='sudo systemctl start postgresql@{{ postgresql_version }}-main'
+service_stop_command='sudo systemctl stop postgresql@{{ postgresql_version }}-main'
+service_restart_command='sudo systemctl restart postgresql@{{ postgresql_version }}-main'
+service_reload_command='sudo systemctl reload postgresql@{{ postgresql_version }}-main'
+
+# ====================================================================
+# EVENT NOTIFICATION
+# ====================================================================
+event_notification_command='/opt/repmgr/scripts/simple_fence.sh %n %e %s'
+
+# ====================================================================
+# MONITORING
+# Ref: https://www.repmgr.org/docs/current/repmgrd-monitoring.html
+# ====================================================================
+monitor_interval_secs={{ monitor_interval_secs | default(2) }}
+reconnect_attempts={{ reconnect_attempts | default(6) }}
+reconnect_interval={{ reconnect_interval | default(5) }}
+standby_disconnect_on_failover=true
+
+# ====================================================================
+# REPMGRD SERVICE MANAGEMENT
+# Ref: https://github.com/EnterpriseDB/repmgr/blob/master/repmgr.conf.sample
+# ====================================================================
+repmgrd_service_start_command='sudo systemctl start repmgrd@{{ postgresql_version }}-main'
+repmgrd_service_stop_command='sudo systemctl stop repmgrd@{{ postgresql_version }}-main'
+repmgrd_pid_file='/tmp/repmgrd-{{ postgresql_version }}-main.pid'
+
+# ====================================================================
+# LOGGING (OPTIONAL BUT RECOMMENDED)
+# ====================================================================
+log_level='INFO'
+log_facility='LOCAL1'
+log_file='/var/log/postgresql/repmgr-{{ postgresql_version }}-main.log'
+log_status_interval=300

@@ -1,0 +1,126 @@
+---
+- name: Create PostgreSQL database and user for wire-server
+  hosts: postgresql_rw
+  become: yes
+  gather_facts: yes
+  vars:
+    pg_secret_name: "{{ wire_pg_secret_name }}"
+  tasks:
+    # ===== PREREQUISITE VALIDATION =====
+    - name: Validate required secrets are available
+      ansible.builtin.assert:
+        that:
+          - wire_pass is defined
+          - wire_pass | length > 0
+        fail_msg: |
+          ❌ PREREQUISITE FAILED: wire_pass is not available!
+
+          This playbook requires the wire-server database password to be set as an Ansible fact.
+
+          Solution:
+            Run the complete deployment pipeline:
+              ansible-playbook postgresql-deploy.yml
+
+            OR ensure secrets playbook runs first:
+              ansible-playbook postgresql-deploy.yml --tags postgresql,wire-setup
+
+            OR run secrets playbook manually:
+              ansible-playbook postgresql-playbooks/postgresql-secrets.yml
+              ansible-playbook postgresql-playbooks/postgresql-wire-setup.yml
+
+          The postgresql-secrets.yml playbook fetches/creates passwords from Kubernetes
+          and sets them as Ansible facts (wire_pass) for use by this playbook.
+        success_msg: "✅ Prerequisites validated: wire_pass is available"
+      run_once: true
+
+    - name: Check if PostgreSQL database exists
+      ansible.builtin.shell: |
+        sudo -u postgres psql -c "SELECT 1 FROM pg_database WHERE datname = '{{ wire_dbname }}'" | grep -q '1 row'
+      register: db_check_result
+      failed_when: false
+      changed_when: false
+
+    - name: Create PostgreSQL database
+      ansible.builtin.shell: |
+        sudo -u postgres createdb "{{ wire_dbname }}"
+      register: create_db_result
+      failed_when: create_db_result.rc != 0 and 'already exists' not in create_db_result.stderr
+      when: db_check_result.rc != 0
+
+    - name: Display message if database already exists
+      ansible.builtin.debug:
+        msg: "PostgreSQL database '{{ wire_dbname }}' already exists."
+      when: db_check_result.rc == 0
+
+    - name: Check if PostgreSQL user exists
+      ansible.builtin.shell: |
+        sudo -u postgres psql -c "SELECT 1 FROM pg_roles WHERE rolname = '{{ wire_user }}'" | grep -q '1 row'
+      register: user_check_result
+      failed_when: false
+      changed_when: false
+
+    - name: Display message if user already exists
+      ansible.builtin.debug:
+        msg: "PostgreSQL user '{{ wire_user }}' already exists."
+      when: user_check_result.rc == 0
+
+    - name: Create PostgreSQL user (if not exists)
+      ansible.builtin.shell: |
+        sudo -u postgres psql -c "CREATE USER \"{{ wire_user }}\" WITH PASSWORD '{{ wire_pass }}';"
+      register: user_creation_result
+      failed_when: user_creation_result.rc != 0 and 'already exists' not in user_creation_result.stderr
+      when: user_check_result.rc != 0
+
+    - name: Reset password for existing user
+      ansible.builtin.shell: |
+        sudo -u postgres psql -c "ALTER USER \"{{ wire_user }}\" WITH PASSWORD '{{ wire_pass }}';"
+      when: user_check_result.rc == 0
+
+    - name: Grant database privileges to the user
+      ansible.builtin.shell: |
+        sudo -u postgres psql -c "GRANT ALL PRIVILEGES ON DATABASE \"{{ wire_dbname }}\" TO \"{{ wire_user }}\";"
+
+    - name: Grant CREATE on public schema to the user
+      ansible.builtin.shell: |
+        sudo -u postgres psql -d "{{ wire_dbname }}" -c "GRANT CREATE ON SCHEMA public TO \"{{ wire_user }}\";"
+
+    - name: Grant USAGE on public schema to the user
+      ansible.builtin.shell: |
+        sudo -u postgres psql -d "{{ wire_dbname }}" -c "GRANT USAGE ON SCHEMA public TO \"{{ wire_user }}\";"
+
+    - name: Set default privileges for future tables
+      ansible.builtin.shell: |
+        sudo -u postgres psql -d "{{ wire_dbname }}" -c "ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO \"{{ wire_user }}\";"
+
+    - name: Set default privileges for future sequences
+      ansible.builtin.shell: |
+        sudo -u postgres psql -d "{{ wire_dbname }}" -c "ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON SEQUENCES TO \"{{ wire_user }}\";"
+
+    - name: Display PostgreSQL setup completion
+      ansible.builtin.debug:
+        msg: |
+          ===== WIRE-SERVER POSTGRESQL SETUP COMPLETE =====
+          Database: {{ wire_dbname }}
+          User: {{ wire_user }}
+          Status: {% if user_check_result.rc != 0 %}User created{% else %}Password updated for existing user{% endif %}
+
+          Kubernetes Secret: {{ pg_secret_name }}
+          Namespace: {{ wire_namespace | default('default') }}
+          Password: Managed by postgresql-secrets.yml playbook
+          Access: kubectl get secret {{ pg_secret_name }} -n {{ wire_namespace | default('default') }} -o jsonpath='{.data.password}' | base64 --decode
+
+    - name: Verify database and user setup
+      ansible.builtin.shell: |
+        PGPASSWORD='{{ wire_pass }}' psql -h {{ ansible_default_ipv4.address }} -U "{{ wire_user }}" -d "{{ wire_dbname }}" -c "SELECT 1"
+      register: verification_result
+      failed_when: false
+
+    - name: Display verification status
+      ansible.builtin.debug:
+        msg: "✅ Database connection verified successfully"
+      when: verification_result.rc == 0
+
+    - name: Display verification failure
+      ansible.builtin.debug:
+        msg: "❌ Database connection failed: {{ verification_result.stderr }}"
+      when: verification_result.rc != 0

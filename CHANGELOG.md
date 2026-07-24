@@ -11,7 +11,168 @@
 ## Breaking changes
 
 -->
+# Release 5.32
 
+## Release notes
+
+* Changed: the wire-builds reference with 5.32 backend
+
+# Release 5.30
+
+## Release notes
+
+* Changed: the wire-builds reference with 5.30 backend
+
+# Release 5.28
+
+## Release notes
+
+* Changed: the wire-builds reference with 5.28 backend
+
+# Release 5.27
+
+## Release notes
+
+* Added: update prod and demo example values/secrets for wire-server 5.27, aligning PostgreSQL config, postgresMigration (conversation, teamFeatures), rabbitmq, and mlsPrivateKeys across all services
+
+## External dependencies
+Changed: Older pinned postgresql versions has been removed - updated them to next available ones
+
+# Release 5.25 R1
+
+## Release notes
+
+* Changed: removing all old changelogs to cut a release for wire-server-deploy 5.25 for prod, wiab-staging and wiab-dev (#898)
+
+## Internal Dependencies
+
+* Removed: old images not in use anymore from proc_system_containers.sh (#909)
+* Fixed: update reference for 5.25 to 5.25.21 without any pinned component
+  Added: logging in case of helm chart failure (#900)
+* Fixed: values for smtp helm chart (#900)
+
+## External dependencies
+
+* Fixed: Enable MLS protocol in production and dev values for brig (#909)
+* Fixed: Refactored terraform logic for CD purposes for all solutions wiab-dev(demo), wiab-staging and default (equivalent). All logic to pick up the region and server type remains in the respective scripts, there will be an iteration over regions first, terraform would just validate the regions and server types  (#900)
+* Fixed: smtp helm chart values
+  Fixed: issue due to requirement of mls keys for webapp for wiab-dev when MLS is not required (#900)
+
+## Offline Documentation
+
+* Fixed: commands in wiab-stag documentation (#907)
+
+# Release 5.25
+
+## release-notes
+
+* Added: bump wire-server to 5.25.0 and update prod values defaults for federation/MLS and external dependencies (#867)
+* Removed: removing all old changelogs to cut a release for wire-server-deploy 5.23 for prod, wiab-staging and wiab-dev (#873)
+
+### Data stores (PostgreSQL, Cassandra)
+
+* Added: background-worker postgresql config and pgPassword secret sync, and explicit postgresMigration.conversation=cassandra for galley and background-worker (#867)
+* Fixed: sync_pg_secrets operation in helm_operations.sh, sync offline-secrets and prod-secrets.example.yaml, and sync wire-server helm chart values and secrets for wiab-dev from prod values for 5.25 (#875)
+* Added: enable postgresql secret for background-worker in wiab-dev (#875)
+
+### Features / configuration
+
+* Fixed: stop deploying smallstep in wiab-staging and wiab-dev environments (#875)
+
+## deploy-builds
+
+### WIAB demo / staging (high‑level)
+
+* Fixed: 99-static inventory to be up-to-date with current state of ansible
+  Added: added a sample inventory for dmz-k8s cluster (#885)
+* Added: variable private_deployment with default true to disable SNAT on adminhost
+  Fixed: made running wiab-staging-nftables.yaml playbook explicit (#875)
+
+### Offline / CI / deployment pipeline
+
+* Fixed: debug_logs.sh to log only the pods for default and cert-manager-ns namespace and limit log lines
+  Added: enabled debug_logs.sh on helm install failures (helm_operations.sh) with a flag DUMP_LOGS_ON_FAIL
+  Added: env vars to helm_operations.sh to improve UX while configuring variables
+  Added: wait and timeout on cert-manager and calling_services helm chart operations
+  Fixed: offline-cluster.sh to run helm-operations.sh using new env vars and with default DUMP_LOGS_ON_FAIL=TRUE
+  Fixed: sftd helm chart values for joinCall component which fails to find hashbased images (#875)
+* Removed: obsolete secrets from scripts and references for improved security and clarity. (#874)
+* Added: a flag DEPLOY_CALLING_SERVICES to control the calling services and improved the flow based on cert-manager and calling services requirement (#896)
+* Fixed: cert_master_email env var parsing in helm-operations.sh (#875)
+
+## docs
+
+* Fixed: documentation for wiab-staging.md based on a user feedback (#875)
+* Added: documentation around managing staging.yml inventory, how to verify, download artifact, and documentation around cert-manager and calling components (#896)
+* Added: instructions around verifying MTU management and calico kernel requirements (#896)
+* Added: wiab-staging.md documentation to add details about default SNAT access being denied and how to enable it
+* Added: wiab-staging.md network flow diagram (#875)
+
+## bug-fixes
+
+* Fixed: github workflow and PR template references for wiab-dev (#880)
+* Fixed: remove read function to operate .envrc and updated the README.md (#877)
+
+# Release 5.23
+
+## release-notes
+
+* Changed: wire-server updated to version 5.23.0 for prod, wiab-staging and wiab-dev/demo
+* Changed: cargohold service will use the scoped `cargohold` user with least privilege, with access limited to its `assets` bucket only (#814)
+* Changed: Enable Ansible-based RabbitMQ deployment and fix RabbitMQ host configuration for wire-server (#861)
+
+### Data stores (PostgreSQL, Cassandra)
+
+* Added: enable support for PostgreSQL deployment via Ansible (#797)
+* Added: PostgreSQL high availability cluster with repmgr (#807)
+* Changed: PostgreSQL password management is now centralized in Kubernetes Secrets (repmgr and wire-server credentials), eliminating hardcoded passwords from inventory (#819)
+* Changed: update Cassandra from 3.11.16 to 3.11.19 (#831)
+
+### Features / configuration
+* Added: config for MLS deployment into example files (#824)
+
+## wire-builds
+
+* Changed: pre_clean_values_0.sh to clean unnecessary files
+  * Removed: `patch-chart-images.sh` as it is not required anymore
+  * Fixed: default|demo|min-build definitions to have more precise values and chart definitions (#825)
+* Changed: Standardized all scripts to use `yq-go` (v4+) for YAML processing, replacing deprecated `python-yq`. Updated syntax in offline deployment scripts (`cd.sh`, `cd-with-retry.sh`), build scripts (`build_adminhost_containers.sh`), demo deployment (`offline_deploy_k8s.sh`), secret sync utilities, and chart image extraction to ensure reliable YAML manipulation and fix CI build errors (#820)
+
+## deploy-builds
+
+### WIAB demo / staging (high‑level)
+
+* Fixed: coturn and PostgreSQL secrets for demo-wiab
+  * Added: `kube-prometheus-stack` values and enabled monitoring support from wire-server for demo-wiab
+  * Added: values for wire-utility in demo-wiab (#826)
+* Added: enable `cd-demo.sh` to verify demo-wiab builds (#826)
+* Changed: add Ansible playbook for wiab-staging VM provisioning
+  * Added: Terraform resources for wiab-staging
+  * Added: `cd_staging` script to verify the default build bundle
+  * Changed: restructured `offline.yml` flow – introduced wiab-staging build and split bundle processing with default-build (#861)
+
+### Offline / CI / deployment pipeline
+
+* Added: `bin/helm-operations.sh` to replace `offline-helm` and more closely follow production instructions
+  * Changed: `bin/offline-secrets.sh` to support `helm-operations.sh` and add support for coturn secret (#858)
+* Changed: Optimize Wire offline deployment pipeline with parallel job execution and S3 direct downloads
+  * Added: retry logic with progressive server type fallbacks for Hetzner Cloud resource availability issues (#815)
+* Changed: offline workflow to require explicit labels for PR builds (`build-default`, `build-demo`, `build-min`, `build-all`); PRs without labels no longer trigger builds (#836)
+* Changed: remove hardcoded PostgreSQL passwords from `demo-secrets.example.yaml` and automatically inject passwords from `databases-ephemeral` chart during deployment (#817)
+
+## docs
+
+* Added: documentation on how to set up DKIM for SMTP in wire-server (#793)
+* Added: enable cert-manager Helm chart deployment with example values files (#805)
+* Added: wiab-staging documentation to wire-server-deploy and fixed coturn port ranges (#861)
+* Added: Enable changelog management in wire-server-deploy (#764)
+
+## bug-fixes
+* Fixed: Optimize the `offline-env` load and add pipe/redirect functionality with `d` (#812)
+* Fixed:  add localhost authentication for `postgres_exporter`, upgrade to v0.18.1, and enable `stat_checkpointer` collector for PostgreSQL 17 checkpoint metrics (#832)
+* Fixed: changelog-verify.yml workflow to allow Zebot pushes to master (#806)
+* Changed: offline-vm-setup.sh script now uses an Ubuntu cloud image and local seed ISO (#861) 
+* Fixed: Update kubernetes_logging.yml to use the standard kubelet log path instead of Docker-specific paths. (#864)
 
 # 2021-08-27
 
