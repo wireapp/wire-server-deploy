@@ -1,0 +1,1 @@
+Changed: stop pinning the ingress-nginx controller image tag in example values so the chart uses the upstream default

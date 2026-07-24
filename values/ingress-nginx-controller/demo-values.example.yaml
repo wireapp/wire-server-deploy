@@ -8,7 +8,6 @@ ingress-nginx:
     service:
       type: NodePort
     image:
-      tag: "v1.10.6"
       digest: ""
       digestChroot: ""
     admissionWebhooks:

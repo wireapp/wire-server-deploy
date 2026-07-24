@@ -4,7 +4,6 @@
 ingress-nginx:
   controller:
     image:
-      tag: "v1.10.6"
       digest: ""
       digestChroot: ""
     admissionWebhooks:
