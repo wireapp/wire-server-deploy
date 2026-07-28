@@ -35,7 +35,6 @@ function dump_debug_logs {
 trap dump_debug_logs ERR
 
 configure_calling_environment() {
-
   if [[ "$DEPLOY_CALLING_SERVICES" != "TRUE" ]]; then
     return 0
   fi
@@ -54,6 +53,14 @@ configure_calling_environment() {
   if [[ -z "$CALLING_NODE" ]]; then
     echo "Error: could not determine the last kube worker node via kubectl"
     exit 1
+  else
+    echo "Selecting calling node: $CALLING_NODE"
+    # export this, in the case that we are being sourced.  
+    if [[ ! "${BASH_SOURCE[0]}" == "$0" ]] ; then  
+	export CALLING_NODE
+    else
+	echo "export CALLING_NODE=\"$CALLING_NODE\""
+    fi
   fi
 }
 
@@ -117,7 +124,7 @@ configure_values() {
 
   TEMP_DIR=$(mktemp -d)
   trap 'rm -rf $TEMP_DIR' EXIT
-
+  
   # Fixing the hosts with TARGET_SYSTEM and setting the turn server
   sed -e "s/example.com/$TARGET_SYSTEM/g" \
       "$BASE_DIR/values/wire-server/values.yaml" > "$TEMP_DIR/wire-server-values.yaml"
@@ -140,6 +147,11 @@ configure_values() {
   fi
 
   if [[ "$DEPLOY_CALLING_SERVICES" == "TRUE" ]]; then
+
+    if [ ! -v $CALLING_NODE ] ; then
+        echo "Refusing to deploy calling services; CALLING_NODE is not set."
+        return 1
+    fi
     # to find IP address of calling NODE
     CALLING_NODE_IP=$(kubectl get node "$CALLING_NODE" -o jsonpath='{.status.addresses[?(@.type=="InternalIP")].address}')
 
@@ -169,7 +181,9 @@ configure_values() {
   for file in "${files[@]}"; do
     if ! cmp -s "$TEMP_DIR/$file" "$BASE_DIR/values/${file%-values.yaml}/values.yaml"; then
       cp "$TEMP_DIR/$file" "$BASE_DIR/values/${file%-values.yaml}/values.yaml"
-      echo "Updating  $BASE_DIR/values/${file%-values.yaml}/values.yaml"
+      echo "Updating $BASE_DIR/values/${file%-values.yaml}/values.yaml"
+    else
+      echo "no differences found; not updating $BASE_DIR/values/${file%-values.yaml}/values.yaml"
     fi
   done
 
@@ -250,8 +264,9 @@ main() {
 # initialize calling-service specific values only when enabled
 configure_calling_environment
 
-# Create prod-values.example.yaml to values.yaml and take backup
+# Create prod-values.example.yaml to values.yaml and take backup. Note: does not template anything.
 process_values "prod" "values"
+
 # Create prod-secrets.example.yaml to secrets.yaml and take backup
 process_values "prod" "secrets"
 
@@ -280,4 +295,5 @@ fi
 deploy_calling_services
 }
 
-main
+# only execute main when this script is executed, not when it is sourced.
+[[ "${BASH_SOURCE[0]}" == "$0" ]] && main "$@"
