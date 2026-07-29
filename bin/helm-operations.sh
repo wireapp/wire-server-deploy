@@ -101,6 +101,8 @@ process_values() {
   fi
   timestp=$(date +"%Y%m%d_%H%M%S")
 
+  echo "templating $ENV $TYPE with domain: $TARGET_SYSTEM, and cert manager email: $CERT_MANAGER_EMAIL"
+
   for chart in "${charts[@]}"; do
     chart_dir="$BASE_DIR/values/$chart"
     if [[ -d "$chart_dir" ]]; then
