@@ -1,3 +1,3 @@
 Added: bin/migrate_secrets.sh to migrate secrets from an old deploy directory to a new one.
-Modified: bin/helm-operations.sh to allow it's use during an upgrade.
-Modified: ansible/setup-offline-sources.yml to allow running it without touching APT configurations during an upgrade.
+Changed: bin/helm-operations.sh to allow it's use during an upgrade.
+Changed: ansible/setup-offline-sources.yml to allow running it without touching APT configurations during an upgrade.
