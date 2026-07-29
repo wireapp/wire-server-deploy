@@ -62,23 +62,22 @@ P384=$(yq -r '.galley.secrets.mlsPrivateKeys.removal.ecdsa_secp384r1_sha384' "$O
 P521=$(yq -r '.galley.secrets.mlsPrivateKeys.removal.ecdsa_secp521r1_sha512' "$OLD")
 
 # Use perl for writing into the new file. This is to prevent YQ from eating our empty lines, in the yaml.
-PUB="$PUB" perl -0pi -e 's{(brig:\n(?:.*\n)*?[ \t]+zAuth:\n(?:.*\n)*?^[ \t]+publicKeys:[ \t]*)[^\n]+}{$1.qq{"$ENV{PUB}"}}me' "$OUT"
-PRIV="$PRIV" perl -0pi -e 's{(brig:\n(?:.*\n)*?[ \t]+zAuth:\n(?:.*\n)*?^[ \t]+privateKeys:[ \t]*)[^\n]+}{$1.qq{"$ENV{PRIV}"}}me' "$OUT"
-TURN="$TURN" perl -0pi -e 's{(brig:\n(?:.*\n)*?[ \t]+turn:\n(?:.*\n)*?^[ \t]+secret:[ \t]*)[^\n]+}{$1.qq{"$ENV{TURN}"}}me' "$OUT"
+PUB="$PUB" perl -0pi -e 's{(brig:\n(?:.*\n)*?[ \t]+zAuth:\n(?:.*\n)*?^[ \t]+publicKeys:[ \t]+)[^\n]+}{$1.qq{"$ENV{PUB}"}}me' "$OUT"
+PRIV="$PRIV" perl -0pi -e 's{(brig:\n(?:.*\n)*?[ \t]+zAuth:\n(?:.*\n)*?^[ \t]+privateKeys:[ \t]+)[^\n]+}{$1.qq{"$ENV{PRIV}"}}me' "$OUT"
+TURN="$TURN" perl -0pi -e 's{(brig:\n(?:.*\n)*?[ \t]+turn:\n(?:.*\n)*?^[ \t]+secret:[ \t]+)[^\n]+}{$1.qq{"$ENV{TURN}"}}me' "$OUT"
 
-CH_AWS_ID="$CH_AWS_ID" perl -0pi -e 's{(cargohold:\n(?:.*\n)*?^[ \t]+awsKeyId:[ \t]*)[^ \n]+}{$1.qq{"$ENV{CH_AWS_ID}"}}me' "$OUT"
-CH_AWS_SECRET="$CH_AWS_SECRET" perl -0pi -e 's{(cargohold:\n(?:.*\n)*?^[ \t]+awsSecretKey:[ \t]*)[^ \n]+}{$1.qq{"$ENV{CH_AWS_SECRET}"}}me' "$OUT"
+CH_AWS_ID="$CH_AWS_ID" perl -0pi -e 's{(cargohold:\n(?:.*\n)*?^[ \t]+awsKeyId:[ \t]+)[^ \n]+}{$1.qq{"$ENV{CH_AWS_ID}"}}me' "$OUT"
+CH_AWS_SECRET="$CH_AWS_SECRET" perl -0pi -e 's{(cargohold:\n(?:.*\n)*?^[ \t]+awsSecretKey:[ \t]+)[^ \n]+}{$1.qq{"$ENV{CH_AWS_SECRET}"}}me' "$OUT"
 
-PG_PASSWORD="$PG_PASSWORD" perl -0pi -e 's{(brig:\n(?:.*\n)*?^[ \t]+secrets:\n(?:.*\n)*?^[ \t]+pgPassword:[ \t]*)[^\n]+}{$1.$ENV{PG_PASSWORD}}me' "$OUT"
-PG_PASSWORD="$PG_PASSWORD" perl -0pi -e 's{(galley:\n(?:.*\n)*?^[ \t]+secrets:\n(?:.*\n)*?^[ \t]+pgPassword:[ \t]*)[^\n]+}{$1.$ENV{PG_PASSWORD}}me' "$OUT"
-PG_PASSWORD="$PG_PASSWORD" perl -0pi -e 's{(background-worker:\n(?:.*\n)*?^[ \t]+secrets:\n(?:.*\n)*?^[ \t]+pgPassword:[ \t]*)[^\n]+}{$1.$ENV{PG_PASSWORD}}me' "$OUT"
+PG_PASSWORD="$PG_PASSWORD" perl -0pi -e 's{(brig:\n(?:.*\n)*?^[ \t]+secrets:\n(?:.*\n)*?^[ \t]+pgPassword:[ \t]+)[^\n]+}{$1.$ENV{PG_PASSWORD}}me' "$OUT"
+PG_PASSWORD="$PG_PASSWORD" perl -0pi -e 's{(galley:\n(?:.*\n)*?^[ \t]+secrets:\n(?:.*\n)*?^[ \t]+pgPassword:[ \t]+)[^\n]+}{$1.$ENV{PG_PASSWORD}}me' "$OUT"
+PG_PASSWORD="$PG_PASSWORD" perl -0pi -e 's{(background-worker:\n(?:.*\n)*?^[ \t]+secrets:\n(?:.*\n)*?^[ \t]+pgPassword:[ \t]+)[^\n]+}{$1.$ENV{PG_PASSWORD}}me' "$OUT"
 
-ED25519="$ED25519" perl -0pi -e 's{(^[ \t]*ed25519:[ \t]*\|\n)([ \t]*)-----BEGIN PRIVATE KEY-----.*?^\2-----END PRIVATE KEY-----}{$k=$1; $i=$2; $k.join("",map{"$i$_\n"}split(/\n/,$ENV{ED25519}))=~s/\n$//r}mse' "$OUT"
-P256="$P256" perl -0pi -e 's{(^[ \t]*ecdsa_secp256r1_sha256:[ \t]*\|\n)([ \t]*)-----BEGIN PRIVATE KEY-----.*?^\2-----END PRIVATE KEY-----}{$k=$1; $i=$2; $k.join("",map{"$i$_\n"}split(/\n/,$ENV{P256}))=~s/\n$//r}mse' "$OUT"
-P384="$P384" perl -0pi -e 's{(^[ \t]*ecdsa_secp384r1_sha384:[ \t]*\|\n)([ \t]*)-----BEGIN PRIVATE KEY-----.*?^\2-----END PRIVATE KEY-----}{$k=$1; $i=$2; $k.join("",map{"$i$_\n"}split(/\n/,$ENV{P384}))=~s/\n$//r}mse' "$OUT"
-P521="$P521" perl -0pi -e 's{(^[ \t]*ecdsa_secp521r1_sha512:[ \t]*\|\n)([ \t]*)-----BEGIN PRIVATE KEY-----.*?^\2-----END PRIVATE KEY-----}{$k=$1; $i=$2; $k.join("",map{"$i$_\n"}split(/\n/,$ENV{P521}))=~s/\n$//r}mse' "$OUT"
-
-PUB="$PUB" perl -0pi -e 's{(nginz:\n.*?zAuth:\n(?:.*\n)*?^[ \t]*publicKeys:[ \t]*)[^\n]+}{$1 . qq{"$ENV{PUB}"}}me' "$OUT"
+ED25519="$ED25519" perl -0pi -e 's{(^[ \t]+ed25519:[ \t]+\|\n)([ \t]+)-----BEGIN PRIVATE KEY-----.*?^\2-----END PRIVATE KEY-----}{$k=$1; $i=$2; $k.join("",map{"$i$_\n"}split(/\n/,$ENV{ED25519}))=~s/\n$//r}mse' "$OUT"
+P256="$P256" perl -0pi -e 's{(^[ \t]+ecdsa_secp256r1_sha256:[ \t]+\|\n)([ \t]+)-----BEGIN PRIVATE KEY-----.*?^\2-----END PRIVATE KEY-----}{$k=$1; $i=$2; $k.join("",map{"$i$_\n"}split(/\n/,$ENV{P256}))=~s/\n$//r}mse' "$OUT"
+P384="$P384" perl -0pi -e 's{(^[ \t]+ecdsa_secp384r1_sha384:[ \t]+\|\n)([ \t]+)-----BEGIN PRIVATE KEY-----.*?^\2-----END PRIVATE KEY-----}{$k=$1; $i=$2; $k.join("",map{"$i$_\n"}split(/\n/,$ENV{P384}))=~s/\n$//r}mse' "$OUT"
+P521="$P521" perl -0pi -e 's{(^[ \t]+ecdsa_secp521r1_sha512:[ \t]+\|\n)([ \t]+)-----BEGIN PRIVATE KEY-----.*?^\2-----END PRIVATE KEY-----}{$k=$1; $i=$2; $k.join("",map{"$i$_\n"}split(/\n/,$ENV{P521}))=~s/\n$//r}mse' "$OUT"
+PUB="$PUB" perl -0pi -e 's{(^nginz:\n*?[ \t]+secrets:\n*?[ \t]+zAuth:\n(?:[ \t]+\#[^\n]*\n)[ \t]+publicKeys:[ \t]+)[^\n]+}{$1 . qq{"$ENV{PUB}"}}mex' "$OUT"
 
 if diff -u "$NEW" "$OUT" ; then
     echo "no difference found in wire-server configuration."
@@ -88,7 +87,7 @@ else
     [[ "$answer" =~ ^[Yy]$ ]] && mv "$OUT" "$NEW" || echo "Kept: $OUT"
 fi
 
-TURN="$TURN" perl -0pi -e 's{(^[ \t]*zrestSecrets:\n[ \t]*-[ \t]*)"[^"]*"}{$1.qq{"$ENV{TURN}"}}me' "$OUTCOTURN"
+TURN="$TURN" perl -0pi -e 's{(^[ \t]+zrestSecrets:\n[ \t]+-[ \t]+)"[^"]*"}{$1.qq{"$ENV{TURN}"}}me' "$OUTCOTURN"
 
 if diff -u "$NEWCOTURN" "$OUTCOTURN"; then
     echo "no difference found in coturn configuration."
