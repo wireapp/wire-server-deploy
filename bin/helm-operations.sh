@@ -147,7 +147,7 @@ configure_values() {
   fi
 
   if [[ "$DEPLOY_CALLING_SERVICES" == "TRUE" ]]; then
-    if [ ! -v $CALLING_NODE ] ; then
+    if [ ! -v "$CALLING_NODE" ] ; then
         echo "Refusing to deploy calling services; CALLING_NODE is not set."
         return 1
     fi

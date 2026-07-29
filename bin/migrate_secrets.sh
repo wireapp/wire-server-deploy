@@ -14,7 +14,7 @@ OLD="${OLD:-../wire-server-deploy/values/wire-server/secrets.yaml}"
 NEW="${NEW:-values/wire-server/prod-secrets.example.yaml}"
 NEWCOTURN="${NEWCOTURN:-values/coturn/prod-secrets.example.yaml}"
 
-if [ ! -f $OLD ]; then
+if [ ! -f "$OLD" ]; then
     {
 	echo "could not find OLD YAML file: $OLD"
 	echo "please set OLD to point to your in-use wire-server secrets file manually (see usage at top of script)."
@@ -22,7 +22,7 @@ if [ ! -f $OLD ]; then
     }
 fi
 
-if [ ! -f $NEW ]; then
+if [ ! -f "$NEW" ]; then
     {
 	echo "could not find NEW YAML file: $NEW"
 	echo "please set NEW to point to your new wire-server secrets files manually (see usage at top of script)."
@@ -31,7 +31,7 @@ if [ ! -f $NEW ]; then
 fi
 OUT="${NEW}.migrated"
 
-if [ ! -f $NEWCOTURN ]; then
+if [ ! -f "$NEWCOTURN" ]; then
     {
 	echo "could not find NEWCOTURN YAML file: $NEW"
 	echo "please set NEWCOTURN to point to your new coturn secrets files manually (see usage at top of script)."
