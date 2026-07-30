@@ -3,15 +3,15 @@
 # `containerd`.
 ingress-nginx:
   controller:
-    #image:
-    #  tag: "v1.10.6"
-    #  digest: ""
-    #  digestChroot: ""
-    #admissionWebhooks:
-    #  patch:
-    #    image:
-    #      tag: "v20220916-gd32f8c343"
-    #      digest: ""
+    image:
+      tag: "v1.10.6"
+      digest: ""
+      digestChroot: ""
+    admissionWebhooks:
+      patch:
+        image:
+          tag: "v20220916-gd32f8c343"
+          digest: ""
     # Enable prometheus operator to scrape metrics from the ingress-nginx controller with servicemonitor.
     metrics:
       enabled: false
