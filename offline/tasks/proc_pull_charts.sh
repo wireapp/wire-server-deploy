@@ -3,7 +3,7 @@ set -euo pipefail
 
 OUTPUT_DIR=""
 # Default exclude lists
-HELM_CHART_EXCLUDE_LIST="inbucket,wire-server-enterprise"
+HELM_CHART_EXCLUDE_LIST="inbucket,wire-server-enterprise,demo-smtp"
 
 # Parse the arguments
 for arg in "$@"
@@ -36,13 +36,14 @@ echo "Excluding following charts from the release: $HELM_CHART_EXCLUDE_LIST"
 wire_build_chart_release () {
 
   wire_build="$1"
-  curl "$wire_build" | jq -r --argjson HELM_CHART_EXCLUDE_LIST "$HELM_CHART_EXCLUDE_LIST" '
+  curl "$wire_build" -o "${OUTPUT_DIR}/build.json"
+  jq -r --argjson HELM_CHART_EXCLUDE_LIST "$HELM_CHART_EXCLUDE_LIST" '
   .helmCharts
   | with_entries(select(.key as $k | $HELM_CHART_EXCLUDE_LIST | index($k) | not))
   | to_entries
   | map("\(.key) \(.value.repo) \(.value.version)")
   | join("\n")
-  '
+  ' "${OUTPUT_DIR}/build.json"
 }
 
 # pull_charts() accepts charts in format
@@ -81,6 +82,7 @@ pull_charts() {
     (cd "${OUTPUT_DIR}"/charts; helm pull --version "$version" --untar "$repo_short_name/$name")
   done
   echo "Pulling charts done."
+
 }
 
 wire_build="https://raw.githubusercontent.com/wireapp/wire-builds/ab2f729b10065d42fa2bf5adc9f97d545610c1e9/build.json"
