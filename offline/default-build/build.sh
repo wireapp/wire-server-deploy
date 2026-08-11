@@ -96,7 +96,6 @@ ITEMS_TO_ARCHIVE=(
   "../../../ansible"
   "../../../bin"
   "versions"
-  "dashboards"
 )
 
 # Function to check if an item exists

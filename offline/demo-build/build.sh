@@ -63,7 +63,6 @@ ITEMS_TO_ARCHIVE=(
   "values"
   "bin"
   "versions"
-  "dashboards"
 )
 
 # Function to check if an item exists
