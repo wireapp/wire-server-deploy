@@ -1,12 +1,8 @@
 locals {
-  rfc1918_cidr        = "10.0.0.0/8"
-  kubenode_count      = 3
-  minio_count         = 2
-  elasticsearch_count = 2
-  cassandra_count     = 3
-  postgresql_count    = 3
-  rabbitmq_count      = 3
-  ssh_keys            = [hcloud_ssh_key.adminhost.name]
+  rfc1918_cidr   = "10.0.0.0/8"
+  kubenode_count = 3
+  datanode_count = 3
+  ssh_keys       = [hcloud_ssh_key.adminhost.name]
 }
 
 variable "location" {
@@ -16,15 +12,15 @@ variable "location" {
 }
 
 variable "small_server_type" {
-  description = "Server type for cassandra, elasticsearch, minio, postgresql, and rabbitmq selected by the deployment script"
+  description = "Server type for assethost and adminhost selected by the deployment script"
   type        = string
-  default     = "cx23"
+  default     = "cx33"
 }
 
 variable "medium_server_type" {
-  description = "Server type for adminhost, assethost, and kubenode selected by the deployment script"
+  description = "Server type for datanodes and Kubernetes nodes selected by the deployment script"
   type        = string
-  default     = "cx33"
+  default     = "cx43"
 }
 
 # Get available server types and locations
@@ -56,7 +52,7 @@ resource "null_resource" "small_server_type_validation" {
 
   provisioner "local-exec" {
     command = <<-EOT
-      echo "DEPLOYMENT FAILED: No suitable database server types available"
+      echo "DEPLOYMENT FAILED: Requested small server type is currently unavailable"
       echo "Requested small server type: ${var.small_server_type}"
       echo "Available types: ${join(", ", local.available_server_type_names)}"
       echo "Please check server type availability"
@@ -70,7 +66,7 @@ resource "null_resource" "medium_server_type_validation" {
 
   provisioner "local-exec" {
     command = <<-EOT
-      echo "DEPLOYMENT FAILED: No suitable Kubernetes server types available"
+      echo "DEPLOYMENT FAILED: Requested medium server type is currently unavailable"
       echo "Requested medium server type: ${var.medium_server_type}"
       echo "Available types: ${join(", ", local.available_server_type_names)}"
       echo "Please check server type availability"
@@ -88,11 +84,11 @@ resource "null_resource" "deployment_info" {
 
   provisioner "local-exec" {
     command = <<-EOT
-      echo "VALIDATION PASSED: Deploying WSD default infrastructure"
+      echo "VALIDATION PASSED: Deploying WIAB staging infrastructure"
       echo "Location: ${var.location}"
-      echo "Database server type: ${var.small_server_type}"
-      echo "Kubernetes server type: ${var.medium_server_type}"
-      echo "Total instances: ${local.cassandra_count + local.postgresql_count + local.elasticsearch_count + local.minio_count + local.kubenode_count + 2}"
+      echo "Small server type: ${var.small_server_type}"
+      echo "Medium server type: ${var.medium_server_type}"
+      echo "Total instances: ${local.datanode_count + local.kubenode_count + 2}"
     EOT
   }
 }
@@ -137,7 +133,7 @@ resource "hcloud_server" "adminhost" {
   name        = "adminhost-${random_pet.adminhost.id}"
   image       = "ubuntu-22.04"
   ssh_keys    = local.ssh_keys
-  server_type = var.medium_server_type
+  server_type = var.small_server_type
   network {
     network_id = hcloud_network.main.id
     ip         = ""
@@ -157,7 +153,7 @@ resource "hcloud_server" "assethost" {
   name        = "assethost-${random_pet.assethost.id}"
   image       = "ubuntu-22.04"
   ssh_keys    = local.ssh_keys
-  server_type = var.medium_server_type
+  server_type = var.small_server_type
   public_net {
     ipv4_enabled = false
     ipv6_enabled = false
@@ -193,121 +189,21 @@ resource "hcloud_server" "kubenode" {
   }
 }
 
-resource "random_pet" "cassandra" {
-  count = local.cassandra_count
+resource "random_pet" "datanode" {
+  count = local.datanode_count
 }
 
-resource "hcloud_server" "cassandra" {
+resource "hcloud_server" "datanode" {
   depends_on = [
     null_resource.deployment_info,
     hcloud_network_subnet.main
   ]
-  count       = local.cassandra_count
+  count       = local.datanode_count
   location    = var.location
-  name        = "cassandra-${random_pet.cassandra[count.index].id}"
+  name        = "datanode-${random_pet.datanode[count.index].id}"
   image       = "ubuntu-22.04"
   ssh_keys    = local.ssh_keys
-  server_type = var.small_server_type
-  public_net {
-    ipv4_enabled = false
-    ipv6_enabled = false
-  }
-  network {
-    network_id = hcloud_network.main.id
-    ip         = ""
-  }
-}
-
-resource "random_pet" "elasticsearch" {
-  count = local.elasticsearch_count
-}
-
-resource "hcloud_server" "elasticsearch" {
-  depends_on = [
-    null_resource.deployment_info,
-    hcloud_network_subnet.main
-  ]
-  count       = local.elasticsearch_count
-  location    = var.location
-  name        = "elasticsearch-${random_pet.elasticsearch[count.index].id}"
-  image       = "ubuntu-22.04"
-  ssh_keys    = local.ssh_keys
-  server_type = var.small_server_type
-  public_net {
-    ipv4_enabled = false
-    ipv6_enabled = false
-  }
-  network {
-    network_id = hcloud_network.main.id
-    ip         = ""
-  }
-}
-
-resource "random_pet" "minio" {
-  count = local.minio_count
-}
-
-resource "hcloud_server" "minio" {
-  depends_on = [
-    null_resource.deployment_info,
-    hcloud_network_subnet.main
-  ]
-  count       = local.minio_count
-  location    = var.location
-  name        = "minio-${random_pet.minio[count.index].id}"
-  image       = "ubuntu-22.04"
-  ssh_keys    = local.ssh_keys
-  server_type = var.small_server_type
-  public_net {
-    ipv4_enabled = false
-    ipv6_enabled = false
-  }
-  network {
-    network_id = hcloud_network.main.id
-    ip         = ""
-  }
-}
-
-resource "random_pet" "postgresql" {
-  count = local.postgresql_count
-}
-
-resource "hcloud_server" "postgresql" {
-  depends_on = [
-    null_resource.deployment_info,
-    hcloud_network_subnet.main
-  ]
-  count       = local.postgresql_count
-  location    = var.location
-  name        = "postgresql-${random_pet.postgresql[count.index].id}"
-  image       = "ubuntu-22.04"
-  ssh_keys    = local.ssh_keys
-  server_type = var.small_server_type
-  public_net {
-    ipv4_enabled = false
-    ipv6_enabled = false
-  }
-  network {
-    network_id = hcloud_network.main.id
-    ip         = ""
-  }
-}
-
-resource "random_pet" "rabbitmq" {
-  count = local.rabbitmq_count
-}
-
-resource "hcloud_server" "rabbitmq" {
-  depends_on = [
-    null_resource.deployment_info,
-    hcloud_network_subnet.main
-  ]
-  count       = local.rabbitmq_count
-  location    = var.location
-  name        = "rabbitmq-${random_pet.rabbitmq[count.index].id}"
-  image       = "ubuntu-22.04"
-  ssh_keys    = local.ssh_keys
-  server_type = var.small_server_type
+  server_type = var.medium_server_type
   public_net {
     ipv4_enabled = false
     ipv6_enabled = false
