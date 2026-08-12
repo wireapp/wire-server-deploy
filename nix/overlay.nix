@@ -67,4 +67,14 @@ super: {
       install -Dm755 ${./scripts/list-helm-containers.sh} $out/bin/list-helm-containers
       wrapProgram $out/bin/list-helm-containers --prefix PATH : '${super.lib.makeBinPath [ self.kubernetes-helm ]}'
     '';
+
+  create-build-entry = super.runCommandNoCC "create-build-entry"
+    {
+      nativeBuildInputs = [ super.makeWrapper ];
+    }
+    ''
+      install -Dm755 ${./scripts/create-build-entry.sh} $out/bin/create-build-entry
+      wrapProgram $out/bin/create-build-entry --prefix PATH : '${super.lib.makeBinPath (with self; [ bash jq ])}'
+    '';
+
 }
