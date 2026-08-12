@@ -38,3 +38,5 @@ fingerprint=$(echo "$GPG_PRIVATE_KEY" | gpg --with-colons --import-options show-
 echo "$fingerprint"
 
 echo "docker_ubuntu_repo_repokey: '${fingerprint}'" > "${ROOT_DIR}"/ansible/inventory/offline/group_vars/all/key.yml
+echo "docker_ubuntu_repo_repokey: '${fingerprint}'" > "${ROOT_DIR}"/ansible/inventory/dmz-k8s/group_vars/all/key.yml
+
