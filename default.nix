@@ -45,9 +45,10 @@ rec {
       skopeo
       sops
       opentofu
-      yq
+      yq-go  # Use yq-go (v4+) explicitly instead of python-yq for consistent YAML processing
       create-container-dump
       list-helm-containers
+      create-build-entry
       mirror-apt-jammy
       generate-gpg1-key
       # Linting
@@ -57,6 +58,7 @@ rec {
       jq
       gnused
       curl
+      gawk
 
       niv
       nix-prefetch-docker
