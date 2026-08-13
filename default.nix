@@ -69,7 +69,7 @@ rec {
       list-helm-containers
       mirror-apt-jammy
       generate-gpg1-key
-      #create-build-entry
+      create-build-entry
       # Linting
       shellcheck
 
