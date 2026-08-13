@@ -1,6 +1,9 @@
 name: Package min bundle
 
 on:
+  push:
+    branches:
+      - wpb-27900
   workflow_dispatch: {}
     # inputs:
     #   repository:
