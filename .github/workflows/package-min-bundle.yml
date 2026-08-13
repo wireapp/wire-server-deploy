@@ -66,4 +66,7 @@ jobs:
           echo "$REPOSITORY:$TAG"
           oras pull "$REPOSITORY:$TAG" -o "$TEMP_DIR"
 
+          # Extract the bundle
+          tar -xzf "$TEMP_DIR"/*.tgz -C "$TEMP_DIR"
+
           ls "$TEMP_DIR"
