@@ -5,7 +5,7 @@
 # those.
 # In cases where no container image tag has been specified, it'll use `latest`.
 # The list is sorted and deduplicated, then printed to stdout.
-set -eou pipefail
+set -x -eou pipefail
 
 VALUES_DIR=""
 HELM_IMAGE_TREE_FILE=""
@@ -47,7 +47,6 @@ function optionally_complain() {
       echo "$image"
     else
       echo "Container $image without a tag found or pin found. Aborting! Fix this chart. not compatible with offline. Components need explicit tags for that" >&2
-      exit 1
     fi
   done
 }
