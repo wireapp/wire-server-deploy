@@ -44,6 +44,7 @@ jobs:
           RELEASE_STREAM: ${{ inputs.release_stream }}
           OCI_LINK: ${{ inputs.oci_link }}
         run: |
+          set -x
           echo "test"
 
           # TODO: REMOVE THIS AFTER FIXING INPUTS FOR PUSH EVENTS
