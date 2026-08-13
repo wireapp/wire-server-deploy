@@ -12,7 +12,7 @@ on:
         required: false
         default: dev-gov
       oci_link:
-        description: pull this specific link instead of release_stream
+        description: pull this specific link instead of release_stream, e.g. quay.io/...
         required: false
         type: string
 
@@ -53,6 +53,8 @@ jobs:
           oras pull "quay.io/wire/release-streams/bundles:$RELEASE_STREAM" -o "$TEMP_DIR"
 
           BUILD_JSON=$(cat "$TEMP_DIR/build.json")
+          echo "$BUILD_JSON"
+
           REPOSITORY=$(echo "$BUILD_JSON" | jq -r '.repository')
           TAG=$(echo "$BUILD_JSON" | jq -r '.tag')
 
