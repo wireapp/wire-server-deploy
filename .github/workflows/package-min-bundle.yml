@@ -34,7 +34,7 @@ jobs:
       - name: Set up Helm
         uses: azure/setup-helm@v3
         with:
-          version: '3.14.0'
+          version: '3.18.0'
 
       - name: Login to Quay
         run: |
@@ -79,3 +79,8 @@ jobs:
       - name: Process bundle
         run: |
           ls "${{ steps.download-bundle.outputs.TEMP_DIR }}"
+
+      - name: pull helm
+        run: |
+          helm pull oci://quay.io/wire/charts/stable/wire-server:5.14.0-pre.3
+
