@@ -36,4 +36,4 @@ jobs:
       - name: Login to Quay
         run: |
           echo "${{ secrets.QUAY_WIRE_CI_GOV_READONLY_PASSWORD }}" | oras login -u "${{ secrets.QUAY_WIRE_CI_GOV_READONLY_USERNAME }}" --password-stdin quay.io
-          echo "${{ secrets.QUAY_WIRE_CI_GOV_READONLY_USERNAME }}" | helm registry login -u "${{ secrets.QUAY_WIRE_CI_GOV_READONLY_USERNAME }}" --password-stdin quay.io
+          echo "${{ secrets.QUAY_WIRE_CI_GOV_READONLY_PASSWORD }}" | helm registry login -u "${{ secrets.QUAY_WIRE_CI_GOV_READONLY_USERNAME }}" --password-stdin quay.io
