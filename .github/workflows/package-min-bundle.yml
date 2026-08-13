@@ -25,6 +25,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          ref: wpb-27900
 
       - name: Set up ORAS
         uses: oras-project/setup-oras@v1
