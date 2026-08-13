@@ -40,33 +40,42 @@ jobs:
           echo "${{ secrets.QUAY_WIRE_CI_GOV_READONLY_PASSWORD }}" | helm registry login -u "${{ secrets.QUAY_WIRE_CI_GOV_READONLY_USERNAME }}" --password-stdin quay.io
 
       - name: Download online bundle
+        id: download-bundle
         env:
           RELEASE_STREAM: ${{ inputs.release_stream }}
           OCI_LINK: ${{ inputs.oci_link }}
         run: |
           set -x
-          echo "test"
 
           # TODO: REMOVE THIS AFTER FIXING INPUTS FOR PUSH EVENTS
           # This is a temporary default for local/push testing
           RELEASE_STREAM=${RELEASE_STREAM:-dev-gov}
+          OCI_LINK="quay.io/wire/bundles/dev/gov:2026.8.0-rc.20260731.113937"
 
           # TODO: only if RELEASE_STREAM is configured
 
           TEMP_DIR=$(mktemp -d)
-          trap "rm -rf $TEMP_DIR" EXIT
-          oras pull "quay.io/wire/release-streams/bundles:$RELEASE_STREAM" -o "$TEMP_DIR"
+          echo "TEMP_DIR=$TEMP_DIR" >> $GITHUB_OUTPUT
 
-          BUILD_JSON=$(cat "$TEMP_DIR/build.json")
-          echo "$BUILD_JSON"
+          if [ -n "$OCI_LINK" ]; then
+            # If OCI_LINK is provided, use it directly
+            oras pull "$OCI_LINK" -o "$TEMP_DIR"
+          else
+            # Otherwise, get the OCI link from the release stream's build.json
+            oras pull "quay.io/wire/release-streams/bundles:$RELEASE_STREAM" -o "$TEMP_DIR"
 
-          REPOSITORY=$(echo "$BUILD_JSON" | jq -r '.repository')
-          TAG=$(echo "$BUILD_JSON" | jq -r '.tag')
+            BUILD_JSON=$(cat "$TEMP_DIR/build.json")
+            echo "$BUILD_JSON"
 
-          echo "$REPOSITORY:$TAG"
-          oras pull "$REPOSITORY:$TAG" -o "$TEMP_DIR"
+            REPOSITORY=$(echo "$BUILD_JSON" | jq -r '.repository')
+            TAG=$(echo "$BUILD_JSON" | jq -r '.tag')
+
+            oras pull "$REPOSITORY:$TAG" -o "$TEMP_DIR"
+          fi
 
           # Extract the bundle
           tar -xzf "$TEMP_DIR"/*.tgz -C "$TEMP_DIR"
 
-          ls "$TEMP_DIR"
+      - name: Process bundle
+        run: |
+          ls "${{ steps.download-bundle.outputs.TEMP_DIR }}"
