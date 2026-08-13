@@ -1,0 +1,38 @@
+name: Package min bundle
+
+on:
+  workflow_dispatch: {}
+    # inputs:
+    #   repository:
+    #     description: 'OCI repository (e.g., quay.io/wire/charts/dev/webapp)'
+    #     required: true
+    #     type: string
+    #   tag:
+    #     description: 'Chart version/tag'
+    #     required: true
+    #     type: string
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          token: ${{ steps.app-token.outputs.token }}
+
+      - name: Set up ORAS
+        uses: oras-project/setup-oras@v1
+
+      - name: Set up Helm
+        uses: azure/setup-helm@v3
+        with:
+          version: '3.14.0'
+
+      - name: Login to Quay
+        run: |
+          echo "${{ secrets.QUAY_WIRE_CI_GOV_READONLY_PASSWORD }}" | oras login -u "${{ secrets.QUAY_WIRE_CI_GOV_READONLY_USERNAME }}" --password-stdin quay.io
+          echo "${{ secrets.QUAY_WIRE_CI_GOV_READONLY_USERNAME }}" | helm registry login -u "${{ secrets.QUAY_WIRE_CI_GOV_READONLY_USERNAME }}" --password-stdin quay.io
