@@ -24,8 +24,6 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-        with:
-          token: ${{ steps.app-token.outputs.token }}
 
       - name: Set up ORAS
         uses: oras-project/setup-oras@v1
