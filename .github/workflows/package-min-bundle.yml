@@ -4,16 +4,17 @@ on:
   push:
     branches:
       - wpb-27900
-  workflow_dispatch: {}
-    # inputs:
-    #   repository:
-    #     description: 'OCI repository (e.g., quay.io/wire/charts/dev/webapp)'
-    #     required: true
-    #     type: string
-    #   tag:
-    #     description: 'Chart version/tag'
-    #     required: true
-    #     type: string
+  workflow_dispatch:
+    inputs:
+      release_stream:
+        description: pull the latest bundle from this release stream
+        type: string
+        required: false
+        default: dev-gov
+      oci_link:
+        description: pull this specific link instead of release_stream
+        required: false
+        type: string
 
 jobs:
   update:
@@ -37,3 +38,25 @@ jobs:
         run: |
           echo "${{ secrets.QUAY_WIRE_CI_GOV_READONLY_PASSWORD }}" | oras login -u "${{ secrets.QUAY_WIRE_CI_GOV_READONLY_USERNAME }}" --password-stdin quay.io
           echo "${{ secrets.QUAY_WIRE_CI_GOV_READONLY_PASSWORD }}" | helm registry login -u "${{ secrets.QUAY_WIRE_CI_GOV_READONLY_USERNAME }}" --password-stdin quay.io
+
+      - name: Download online bundle
+        env:
+          RELEASE_STREAM: ${{ inputs.release_stream }}
+          OCI_LINK: ${{ inputs.oci_link }}
+        run: |
+          echo "test"
+
+          # TODO: only if RELEASE_STREAM is configured
+          
+          TEMP_DIR=$(mktemp -d)
+          trap "rm -rf $TEMP_DIR" EXIT
+          oras pull "quay.io/wire/release-streams/bundles:$RELEASE_STREAM" -o "$TEMP_DIR"
+
+          BUILD_JSON=$(cat "$TEMP_DIR/build.json")
+          REPOSITORY=$(echo "$BUILD_JSON" | jq -r '.repository')
+          TAG=$(echo "$BUILD_JSON" | jq -r '.tag')
+
+          echo "$REPOSITORY:$TAG"
+          oras pull "$REPOSITORY:$TAG" -o "$TEMP_DIR"
+
+          ls "$TEMP_DIR"
