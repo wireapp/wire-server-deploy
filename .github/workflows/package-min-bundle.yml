@@ -46,8 +46,12 @@ jobs:
         run: |
           echo "test"
 
+          # TODO: REMOVE THIS AFTER FIXING INPUTS FOR PUSH EVENTS
+          # This is a temporary default for local/push testing
+          RELEASE_STREAM=${RELEASE_STREAM:-dev-gov}
+
           # TODO: only if RELEASE_STREAM is configured
-          
+
           TEMP_DIR=$(mktemp -d)
           trap "rm -rf $TEMP_DIR" EXIT
           oras pull "quay.io/wire/release-streams/bundles:$RELEASE_STREAM" -o "$TEMP_DIR"
