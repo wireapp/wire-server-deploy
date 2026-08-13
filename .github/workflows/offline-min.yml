@@ -1,14 +1,40 @@
+# Offline Build Workflow
+#
+# This workflow builds offline deployment artifacts for different profiles:
+#   - default: Production deployment (includes external charts, ansible, terraform)
+#   - build-wiab-staging: Wire-in-a-box (wiab-stag) a production like deployment (includes external charts, ansible, terraform)
+#   - wiab-dev: Wire-in-a-box dev deployment (includes databases-ephemeral)
+#   - min: Minimal deployment
+#
+# Build Optimization via PR Labels:
+#   - No label: No builds run (must add label to trigger builds)
+#   - 'build-min': Builds only min profile
+#   - 'build-all': Explicitly builds all profiles (useful for workflow changes)
+#
+# Push to master/develop: Always builds all profiles regardless of labels
+#
 on:
   push:
-    branches: [5.14*]
+    branches: ["**"]
+    tags: [v*]
     paths-ignore:
-      - '*.md'
-      - '**/*.md'
+      - "*.md"
+      - "**/*.md"
+  pull_request:
+    types: [synchronize, reopened, labeled]
+    branches: ["**"]
+    paths-ignore:
+      - "*.md"
+      - "**/*.md"
 jobs:
-  offline:
-    name: Prepare min offline package
-    # Useful to skip expensive CI when writing docs
-    if: "!contains(github.event.head_commit.message, 'skip ci')"
+
+  # Build min profile
+  build-min:
+    name: Build min profile
+    if: |
+      (github.event_name == 'push' && github.ref == 'refs/heads/master') ||
+      contains(github.event.pull_request.labels.*.name, 'build-all') ||
+      contains(github.event.pull_request.labels.*.name, 'build-min')
     runs-on:
       group: wire-server-deploy
     steps:
@@ -24,28 +50,28 @@ jobs:
       - name: Install nix environment
         run: nix-env -f default.nix -iA env
 
+      - name: Login to Quay
+        run: |
+          echo "${{ secrets.QUAY_WIRE_CI_GOV_READONLY_PASSWORD }}" | oras login -u "${{ secrets.QUAY_WIRE_CI_GOV_READONLY_USERNAME }}" --password-stdin quay.io
+          echo "${{ secrets.QUAY_WIRE_CI_GOV_READONLY_PASSWORD }}" | helm registry login -u "${{ secrets.QUAY_WIRE_CI_GOV_READONLY_USERNAME }}" --password-stdin quay.io
+
       - name: Get upload name
         id: upload_name
-        run: |
-          # FIXME: Tag with a nice release name using the github tag...
-          # SOURCE_TAG=${GITHUB_REF#refs/tags/}
-          echo ::set-output name=UPLOAD_NAME::$GITHUB_SHA
-          # echo ::set-output name=UPLOAD_NAME::${SOURCE_TAG:-$GITHUB_SHA}
+        run: echo "UPLOAD_NAME=$GITHUB_SHA" >> $GITHUB_OUTPUT
 
       - name: Process the min profile build
-        run: ./offline/min-build/build.sh
+        run: ./offline/min-build/build_oci.sh
         env:
-          GPG_PRIVATE_KEY: '${{ secrets.GPG_PRIVATE_KEY }}'
-          DOCKER_LOGIN: '${{ secrets.DOCKER_LOGIN }}'
+          DOCKER_LOGIN: "${{ secrets.DOCKER_LOGIN }}"
 
       - name: Copy min build assets tarball to S3
         run: |
-          # Upload tarball for each profile by specifying their OUTPUT_TAR path
           aws s3 cp offline/min-build/output/assets.tgz s3://public.wire.com/artifacts/wire-server-deploy-static-min-${{ steps.upload_name.outputs.UPLOAD_NAME }}.tgz
           echo "Uploaded to: https://s3-$AWS_REGION.amazonaws.com/public.wire.com/artifacts/wire-server-deploy-static-min-${{ steps.upload_name.outputs.UPLOAD_NAME }}.tgz"
-          # remove the archives from the build to optimize the space on the server
-          rm -rf offline/min-build/output/*
         env:
-          AWS_ACCESS_KEY_ID: '${{ secrets.AWS_ACCESS_KEY_ID }}'
-          AWS_SECRET_ACCESS_KEY: '${{ secrets.AWS_SECRET_ACCESS_KEY }}'
+          AWS_ACCESS_KEY_ID: "${{ secrets.AWS_ACCESS_KEY_ID }}"
+          AWS_SECRET_ACCESS_KEY: "${{ secrets.AWS_SECRET_ACCESS_KEY }}"
           AWS_REGION: "eu-west-1"
+
+      - name: Cleanup min build assets
+        run: rm -rf offline/min-build/output/
