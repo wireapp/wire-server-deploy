@@ -45,7 +45,7 @@ rec {
       skopeo
       sops
       opentofu
-      yq
+      yq-go
       create-container-dump
       list-helm-containers
       mirror-apt-jammy
@@ -57,6 +57,7 @@ rec {
       jq
       gnused
       curl
+      oras
 
       niv
       nix-prefetch-docker
