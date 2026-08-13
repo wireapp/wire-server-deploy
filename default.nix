@@ -2,10 +2,29 @@
 
 let
   sources = import ./nix/sources.nix;
-  pkgs = import sources.nixpkgs {
+  # for injecting old gnupg dependancy
+  oldpkgs = import sources.oldpkgs {
     inherit system;
     config = { };
+  };
+  # extract the module for injecting
+  #gnupg1orig = oldpkgs.gnupg1orig;
+
+  pkgs = import sources.nixpkgs {
+    inherit system;
+    config = {
+      # there is a unfree package in current nixpkgs version that will refuse to evaluate
+      # so allowUnfree has to be set
+      # The package in question (vault-1.16.2) is not being used
+      allowUnfree = true;
+    };
+    # layering is important here, the lowest takes precedance in case of overlaps
     overlays = [
+      # custom overlay for injections 
+      # (self: super: {
+      #   gnupg1orig = gnupg1orig;
+      # })
+      # main overlay
       (import ./nix/overlay.nix)
     ];
   };
@@ -26,13 +45,13 @@ rec {
   env = pkgs.buildEnv {
     name = "wire-server-deploy";
     paths = with pkgs; [
-      ansible_2_15
-      pythonForAnsible
-      jmespath
+      customAnsible
       apacheHttpd
       awscli2
       gnumake
-      gnupg
+      gnupg1
+      # injected dependacy gnupg1orig
+      # gnupg1orig
 
       kubernetes-tools
 
@@ -45,11 +64,12 @@ rec {
       skopeo
       sops
       opentofu
-      yq-go
+      yq-go  # Use yq-go (v4+) explicitly instead of python-yq for consistent YAML processing
       create-container-dump
       list-helm-containers
       mirror-apt-jammy
       generate-gpg1-key
+      #create-build-entry
       # Linting
       shellcheck
 
@@ -57,6 +77,7 @@ rec {
       jq
       gnused
       curl
+      gawk
       oras
 
       niv
