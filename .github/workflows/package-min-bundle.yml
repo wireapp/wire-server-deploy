@@ -1,0 +1,86 @@
+name: Package min bundle
+
+on:
+  push:
+    branches:
+      - wpb-27900
+  workflow_dispatch:
+    inputs:
+      release_stream:
+        description: pull the latest bundle from this release stream
+        type: string
+        required: false
+        default: dev-gov
+      oci_link:
+        description: pull this specific link instead of release_stream, e.g. quay.io/...
+        required: false
+        type: string
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          ref: wpb-27900
+
+      - name: Set up ORAS
+        uses: oras-project/setup-oras@v1
+
+      - name: Set up Helm
+        uses: azure/setup-helm@v3
+        with:
+          version: '4.2.3'
+
+      - name: Login to Quay
+        run: |
+          echo "${{ secrets.QUAY_WIRE_CI_GOV_READONLY_PASSWORD }}" | oras login -u "${{ secrets.QUAY_WIRE_CI_GOV_READONLY_USERNAME }}" --password-stdin quay.io
+          echo "${{ secrets.QUAY_WIRE_CI_GOV_READONLY_PASSWORD }}" | helm registry login -u "${{ secrets.QUAY_WIRE_CI_GOV_READONLY_USERNAME }}" --password-stdin quay.io
+
+      - name: Download online bundle
+        id: download-bundle
+        env:
+          RELEASE_STREAM: ${{ inputs.release_stream }}
+          OCI_LINK: ${{ inputs.oci_link }}
+        run: |
+          # TODO: REMOVE THIS AFTER FIXING INPUTS FOR PUSH EVENTS
+          # This is a temporary default for local/push testing
+          RELEASE_STREAM=${RELEASE_STREAM:-dev-gov}
+          OCI_LINK="quay.io/wire/bundles/dev/gov:2026.8.0-rc.20260731.113937"
+
+          # TODO: only if RELEASE_STREAM is configured
+
+          TEMP_DIR=$(mktemp -d)
+          echo "TEMP_DIR=$TEMP_DIR" >> $GITHUB_OUTPUT
+
+          if [ -n "$OCI_LINK" ]; then
+            # If OCI_LINK is provided, use it directly
+            oras pull "$OCI_LINK" -o "$TEMP_DIR"
+          else
+            # Otherwise, get the OCI link from the release stream's build.json
+            oras pull "quay.io/wire/release-streams/bundles:$RELEASE_STREAM" -o "$TEMP_DIR"
+
+            BUILD_JSON=$(cat "$TEMP_DIR/build.json")
+            echo "$BUILD_JSON"
+
+            REPOSITORY=$(echo "$BUILD_JSON" | jq -r '.repository')
+            TAG=$(echo "$BUILD_JSON" | jq -r '.tag')
+
+            oras pull "$REPOSITORY:$TAG" -o "$TEMP_DIR"
+          fi
+
+          # Extract the bundle
+          tar -xzf "$TEMP_DIR"/*.tgz -C "$TEMP_DIR"
+
+      - name: Process bundle
+        run: |
+          ls "${{ steps.download-bundle.outputs.TEMP_DIR }}"
+
+      - name: pull helm
+        run: |
+          helm pull oci://quay.io/wire/charts/stable/wire-server:5.14.0-pre.3
+
