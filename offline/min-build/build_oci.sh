@@ -96,6 +96,6 @@ tar czf "$OUTPUT_TAR" "${ITEMS_TO_ARCHIVE[@]}"
 echo "Dump of versions/helm_image_tree.json"
 cat "${OUTPUT_DIR}/versions/helm_image_tree.json"
 
-echo "Dump of mainfest.yaml used"
-cat "${OUTPUT_DIR}/mainfest.yaml"
+echo "Dump of manifest.yaml used"
+cat "${OUTPUT_DIR}/manifest.yaml"
 
