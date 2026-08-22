@@ -25,6 +25,9 @@ TASKS_DIR="${SCRIPT_DIR}/../tasks"
 # Processing helm charts
 # --------------------------
 
+# build linux packages
+"${TASKS_DIR}"/build_linux_pkgs.sh "${OUTPUT_DIR}" "${ROOT_DIR}"
+
 # pulling the charts based on builds.json, charts to be skipped are passed as arguments HELM_CHART_EXCLUDE_LIST
 "${TASKS_DIR}"/proc_pull_charts.sh OUTPUT_DIR="${OUTPUT_DIR}" HELM_CHART_EXCLUDE_LIST="inbucket,wire-server-enterprise,postgresql,rust-sft,fluent-bit"
 
@@ -66,9 +69,6 @@ cp -r "${ROOT_DIR}"/dashboards "${OUTPUT_DIR}"/
 
 # building admin host containers, has dependenct on the helm charts
 "${TASKS_DIR}"/build_adminhost_containers.sh "${OUTPUT_DIR}" --adminhost --zauth
-
-# build linux packages
-"${TASKS_DIR}"/build_linux_pkgs.sh "${OUTPUT_DIR}" "${ROOT_DIR}"
 
 # Creating system containers tarball
 "${TASKS_DIR}"/proc_system_containers.sh "${OUTPUT_DIR}"
