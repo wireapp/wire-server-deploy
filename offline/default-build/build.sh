@@ -25,6 +25,8 @@ TASKS_DIR="${SCRIPT_DIR}/../tasks"
 # Processing helm charts
 # --------------------------
 
+ansible --version
+
 # build linux packages
 "${TASKS_DIR}"/build_linux_pkgs.sh "${OUTPUT_DIR}" "${ROOT_DIR}"
 
