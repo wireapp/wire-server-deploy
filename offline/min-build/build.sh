@@ -94,3 +94,10 @@ done
 
 # Create the tar archive with relative paths
 tar czf "$OUTPUT_TAR" "${ITEMS_TO_ARCHIVE[@]}"
+
+# Dumping details of versions for the build and packed
+echo "Dump of versions/helm_image_tree.json"
+cat "${OUTPUT_DIR}/versions/helm_image_tree.json"
+
+echo "Dump of wire-builds used"
+cat "${OUTPUT_DIR}/build.json"
