@@ -1,4 +1,20 @@
 ---
+- name: Wait for adminhost private SSH
+  hosts: adminhost
+  gather_facts: no
+  tasks:
+    - name: Wait for SSH on public adminhost
+      wait_for_connection:
+        timeout: 300
+        delay: 5
+
+    - name: Wait until adminhost private IP is reachable from public adminhost
+      wait_for:
+        host: "{{ hostvars['adminhost_local'].ansible_host }}"
+        port: 22
+        timeout: 300
+        delay: 5
+
 - name: Setup adminhost with dnsmasq and Docker
   hosts: adminhost_local
   become: yes
