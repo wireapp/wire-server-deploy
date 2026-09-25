@@ -1,8 +1,18 @@
+# Variables to set locaL PVC Oon kubenode for Prometheus storage
+# If this values get modified, please adjust the `nodeName` storageSize and `storageClassName` in the prometheusSpec:
+nodeName: kubenode3
+storageSize: 50Gi
+storageClassName: local-prometheus-storage
+volumeMountPath: /mnt/prometheus-data
+
 # This is the custom values.yaml file for the Prometheus stack Helm chart.
 kube-prometheus-stack:
   prometheus:
     ingress:
       enabled: false
+    service:
+      type: NodePort
+      nodePort: 30090
     
     prometheusSpec:
       serviceMonitorSelector: {}
@@ -20,11 +30,11 @@ kube-prometheus-stack:
                   - key: kubernetes.io/hostname
                     operator: In
                     values:
-                      - k8s-wire
+                      - kubenode3 
       storageSpec:
         volumeClaimTemplate:
           spec:
-            storageClassName: standard
+            storageClassName: local-prometheus-storage
             accessModes: ["ReadWriteOnce"]
             resources:
               requests:
@@ -68,8 +78,6 @@ kube-prometheus-stack:
           target_label: pod
   # Both Grafana and Alertmanager is disabled in this configuration.
   grafana:
-    enabled: true
+    enabled: false
   alertmanager:
     enabled: false
-
-
