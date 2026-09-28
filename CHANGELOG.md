@@ -11,6 +11,12 @@
 ## Breaking changes
 
 -->
+# Release 5.34
+
+## Release notes
+
+* Changed: the wire-builds reference with 5.34 backend
+
 # Release 5.33
 
 ## Release notes
