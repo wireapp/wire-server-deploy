@@ -85,5 +85,5 @@ pull_charts() {
 
 }
 
-wire_build="https://raw.githubusercontent.com/wireapp/wire-builds/1b0aeb1ded49c3f196dfc22480229b8ecb5b95f7/build.json"
+wire_build="https://raw.githubusercontent.com/wireapp/wire-builds/41496b2de8f99c66241646dae0df0e1ec7249532/build.json"
 wire_build_chart_release "$wire_build" | pull_charts
