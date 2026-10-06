@@ -1,22 +1,27 @@
 self:
 let helm-mapkubeapis = self.callPackage ./pkgs/helm-mapkubeapis.nix { };
+  sources = import ./sources.nix;
+  # for injecting old gnupg dependancy
+  oldpkgs = import sources.oldpkgs {
+    config = { };
+  };
 in
 super: {
-  customAnsible = (self.python3.withPackages (_: self.ansible.requiredPythonModules ++ [
-    # due to ansible package from nixpkgs missing some dependancies to run kubespray playbook
-    # we are making our own custom ansible package and python interpreter, current ansible-core is 2.16.5
-    super.python3Packages.ansible-core
 
-    # DEPENDENCIES
-    super.python3Packages.jmespath
-    super.python3Packages.botocore
-    super.python3Packages.boto3
-    super.python3Packages.cryptography
-    super.python3Packages.six
-    # for packet debugging and reporting.
-    super.python3Packages.pyshark
-    super.python3Packages.matplotlib
-  ]));
+  # due to ansible package from nixpkgs missing some dependancies to run kubespray playbook
+  # we are making our own custom ansible package and python interpreter, current ansible-core is 2.16.5
+  customAnsible = oldpkgs.python3.withPackages (_:
+    oldpkgs.ansible.requiredPythonModules ++ [
+      oldpkgs.python3Packages.ansible-core
+
+      oldpkgs.python3Packages.jmespath
+      oldpkgs.python3Packages.botocore
+      oldpkgs.python3Packages.boto3
+      oldpkgs.python3Packages.cryptography
+      oldpkgs.python3Packages.six
+      oldpkgs.python3Packages.pyshark
+      oldpkgs.python3Packages.matplotlib
+    ]);
 
   # kubeadm and kubectl
   kubernetes-tools = self.callPackage ./pkgs/kubernetes-tools.nix { };
@@ -43,7 +48,7 @@ super: {
 
       install -Dm755 ${./scripts/generate-gpg1-key.sh} $out/bin/generate-gpg1-key
       # we *--set* PATH here, to ensure we don't pick wrong gpgs
-      wrapProgram $out/bin/generate-gpg1-key --set PATH '${super.lib.makeBinPath (with self; [ bash coreutils gnupg1orig ])}'
+      wrapProgram $out/bin/generate-gpg1-key --set PATH '${super.lib.makeBinPath (with self; [ bash coreutils ])}'
     '';
   mirror-apt-jammy = super.runCommandNoCC "mirror-apt-jammy"
     {
@@ -52,7 +57,7 @@ super: {
     ''
       install -Dm755 ${./scripts/mirror-apt-jammy.sh} $out/bin/mirror-apt-jammy
       # we need to *--set* PATH here, otherwise aptly will pick the wrong gpg
-      wrapProgram $out/bin/mirror-apt-jammy --set PATH '${super.lib.makeBinPath (with self; [ aptly bash coreutils curl gnupg1orig gnused gnutar ])}'
+      wrapProgram $out/bin/mirror-apt-jammy --set PATH '${super.lib.makeBinPath (with self; [ aptly bash coreutils curl gnupg gnused gnutar ])}'
     '';
 
   create-container-dump = super.runCommandNoCC "create-container-dump"
