@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# shellcheck disable=SC2190
 set -euo pipefail
 
 OUTPUT_DIR=""
