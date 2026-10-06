@@ -2,96 +2,262 @@
 
 This document explains how to instrument the Wire server Kubernetes deployment with Prometheus and Grafana monitoring.
 
-Follow these guidelines to instrument your deployed wire cluster for monitoring. These instructions bring you through setting up the prometheus operator (with the kube-prometheus-helm stack) to scrape metrics, exposing those metrics as a datasource for Grafana. Additionally, if you are using our wire-in-a-box setup, we setup a grafana VM, with dashboards.
+Follow these guidelines to instrument your deployed Wire cluster for monitoring. These instructions walk you through setting up the Prometheus Operator with the kube-prometheus-stack Helm chart to scrape metrics and exposing those metrics as a data source for Grafana. The steps below assume that the user has already deployed the Wire Backend using our instructions at [Wire in a Box (WIAB) Staging](./wiab-staging.md) or [How to install wire (offline cluster)](./docs_ubuntu_22.04.md).
 
 ## Instrumentation Overview
 
-- Setup Grafana (optional as the section describes how to setup grafana on a VM for test purpose)
-- Configure Prometheus with customized kube-prometheus-stack helm chart
-- Configure Prometheus scrape job for wire services
-- Importing dashboards into Grafana
+- Verify prerequisites on the adminhost and cluster nodes
+- Set up Grafana (optional for test environments)
+- Configure Prometheus with the customized kube-prometheus-stack Helm chart
+- Enable ServiceMonitors for ingress-nginx, wire services, and SFTD
+- Verify that Prometheus is scraping targets and Grafana can query them
+- Import dashboards into Grafana
+
+## Prerequisites
+
+Run the commands in this document from the root of the extracted `wire-server-deploy` bundle on the adminhost unless the section explicitly says to run a command on another machine.
+
+Before you start, make sure the following are available:
+
+- A deployed offline Wire cluster as described in [Wire in a Box (WIAB) Staging](./wiab-staging.md) or [How to install wire (offline cluster)](./docs_ubuntu_22.04.md)
+- Access to the adminhost with the `d` helper loaded, so `d helm ...`, `d kubectl ...`, `d yq ...`, and `d bash` work
+- A reachable Kubernetes node that will host the Prometheus local PV, for example `kubenode3`
+- A Grafana instance, or a dedicated VM if you want to install Grafana for test purposes
+- The values files that will be updated in this guide:
+  - `charts/kube-prometheus-stack/values.yaml`
+  - `values/ingress-nginx-controller/values.yaml`
+  - `values/wire-server/values.yaml`
+  - `charts/sftd/values.yaml` if SFTD monitoring is required
+
+If the bundle does not already contain the required Prometheus chart or container images, prepare them before continuing:
+
+- If `charts/kube-prometheus-stack` is missing, follow [Getting the helm chart](#getting-the-helm-chart).
+- If the Prometheus-related container images are not already present on the target node, follow [Download and load the dependent images](#download-and-load-the-dependent-images).
+
+### Back up the values files before editing
+
+Take a backup of each values file that you will modify so you can revert individual changes if needed.
+
+```bash
+timestamp="$(date +%F-%H%M%S)"
+
+[ -f charts/kube-prometheus-stack/values.yaml ] && cp charts/kube-prometheus-stack/values.yaml "charts/kube-prometheus-stack/values.yaml.bak.${timestamp}"
+[ -f values/ingress-nginx-controller/values.yaml ] && cp values/ingress-nginx-controller/values.yaml "values/ingress-nginx-controller/values.yaml.bak.${timestamp}"
+[ -f values/wire-server/values.yaml ] && cp values/wire-server/values.yaml "values/wire-server/values.yaml.bak.${timestamp}"
+
+# Only if you enable SFTD metrics later in this guide.
+[ -f charts/sftd/values.yaml ] && cp charts/sftd/values.yaml "charts/sftd/values.yaml.bak.${timestamp}"
+```
 
 
-## Setup Grafana:
-We do not provide grafana instrumentation for the production environment. We expect the customers/clients will bring their own grafana instance and can connect the prometheus datasource which will get shipped to the production environment.
+## Set Up Grafana
+We do not provide Grafana instrumentation for the production environment. We expect customers to bring their own Grafana instance and connect it to the Prometheus data source that will be shipped to the production environment.
 
-If there is an exiting grafana instance or a new instance needs to be configured for the production environment, we encourage to follow the upstream [grafana installation document](https://grafana.com/docs/grafana/latest/setup-grafana/installation/).
+If there is an existing Grafana instance, or if a new instance needs to be configured for the production environment, follow the upstream [Grafana installation document](https://grafana.com/docs/grafana/latest/setup-grafana/installation/). If you already have Grafana set up, continue with the [Prometheus instructions](#configure-prometheus).
 
-In a test environment if there is no existing grafana then configuring a grafana instance on a VM will be good enough. Here is how to do it by running couple of scripts, in a virsh (wire-in-a-box) environment:
+In a test environment, if there is no existing Grafana instance, configuring Grafana on a VM is sufficient.
 
-### Configure a VM for grafana
+### Configure a VM for Grafana
 
-Make sure the `/bin` directory contains both `grafana-vm.sh` and `install-grafana.sh` scripts.
+Note: Skip this section if you have your own hypervisor to set up VMs and continue with [installing Grafana](#install-grafana-on-the-grafananode-vm).
+
+Make sure the `wire-server-deploy/bin` directory on your adminhost contains the `grafana-vm.sh` script, if not copy/download it at [grafana-vm.sh](../bin/grafana-vm.sh). It would require `sudo` privileges inside the script, so make sure the user running it has `sudo` access.
 
 Run `grafana-vm.sh`
 
 ```bash
-$ chmod +x  .bin/grafana-vm.sh
-$ .bin/grafana-vm.sh
+$ chmod +x bin/grafana-vm.sh
+$ bin/grafana-vm.sh
 ```
 
-This script will setup a VM with ip address `192.168.122.100` and name `grafananode`. This may take up to 30 minutes depending on your hardware. When it's done the VM state will be `Shut Off` and then it's need to started manually.
+This script will set up a VM with a dynamic IP from `192.168.122.0/24`, user `demo`, and hostname `grafananode`. Expect the IP address to be displayed in the output and the SSH key to be present at `wire-server-deploy/ssh`.
 
-#### Check VM state and restart
+### Install Grafana on the grafananode VM
+
+Make sure the `wire-server-deploy/bin` directory on your adminhost contains the `install-grafana.sh` script, if not copy/download it at [install-grafana.sh](../bin/install-grafana.sh). Run `install-grafana.sh` on the `grafananode` VM. The script needs internet access to download the Grafana packages.
+
+You can copy the file from the `bin/` directory to `grafananode` and run it from the adminhost as follows:
 
 ```bash
-sudo virsh list --all
-sudo virsh start grafananode
+scp -i ssh/id_ed25519 bin/install-grafana.sh demo@grafananode:install-grafana.sh
+ssh -i ssh/id_ed25519 demo@grafananode 'bash install-grafana.sh'
 ```
-When the VM is ready, you will be able to `ssh` to the VM. Now we can start installing Grafana.
 
-#### Install Grafana on the grafananode VM
-
-Run `install-grafana.sh` on grafananode VM. You can copy the file from `/bin` directory to the grafananode and can run from the host machine as following:
+This script installs Grafana on the VM and starts the service. However, Grafana is only accessible on the VM network. To make it accessible on the adminhost network, add `nft` rules on the `adminhost` machine as follows:
 
 ```bash
-scp -i ~/.ssh/id_ed25519 ./bin/install-grafana.sh demo@192.168.122.100:/tmp/
-ssh demo@192.168.122.100 'bash /tmp/install-grafana.sh'
-```
-This script will install grafana on the VM, however that VM is not accessible outside of the host machine. To make it accessible, we need to update the `iptables` rule of the host machine:
-
-```bash
-sudo iptables -t nat -A PREROUTING -p tcp --dport 3000 -j DNAT --to-destination 192.168.122.100:3000
-sudo iptables -A FORWARD -p tcp -d 192.168.122.100 --dport 3000 -j ACCEPT
+# Host WAN interface name
+INF_WAN=enp9s0
+sudo nft insert rule ip nat PREROUTING position 0 iifname $INF_WAN  tcp dport 3000 dnat to grafananode:3000
 ```
 
-Now the grafana can be accessed via a Web browser with the address: `http://<host-machine-ip>:3000`.
+Grafana can now be accessed from a web browser at `http://<adminhost>:3000`.
 Note: exposing Grafana to the network may have security implications and users should secure their instance (change default password, use firewalls, etc.)
 
 To log in to Grafana for the first time, use the default credentials provided by Grafana. After logging in, immediately change the credentials as recommended in [the grafana document](https://grafana.com/docs/grafana/latest/setup-grafana/sign-in-to-grafana/).
 
 ## Configure Prometheus
 
-Prometheus operator will be configured to scrape metrics from k8s cluster and wire services by installing the [kube-prometheus-stack](https://github.com/prometheus-community/helm-charts/blob/main/charts/kube-prometheus-stack/README.md) helm chart. We have configured this chart with overridden values which will setup the following:
+The Prometheus Operator will be configured to scrape metrics from the Kubernetes cluster and Wire services by installing the [kube-prometheus-stack](https://github.com/prometheus-community/helm-charts/blob/main/charts/kube-prometheus-stack/README.md) Helm chart. We have configured this chart with overridden values that set up the following:
 
-- An `ingress` to expose the prometheus endpoint if enabled
-- Basic authentication to the endpoint
-- Automatic certificate creation with cert-manager (Assuming cert-manager is already present in the k8s cluster)
 - Setup a local persistent volume to use as prometheus data storage on a certain node
-- Disable both Alertmanager and grafana operator which is part of the helm stack.
+- Disable both Alertmanager and the Grafana component that is part of the Helm stack
 
-Before we can install the helm chart, there are some items we need to take care of. First make sure the `wire-server-deploy` bundle has the `kube-prometheus-stack` chart. If the chart is not there, get it from one of the latest bundle and copy it to the current `charts` directory of your `wire-server-deploy` bundle. In case the `kube-prometheus-stack` chart needs to be copied in the running `wire-server-deploy` bundle there are some extra configurations needs to be made to have a successful deployment. The following sections cover both cases.
+Before we proceed with installation, make sure the `wire-server-deploy` bundle has the `kube-prometheus-stack` chart and helm chart values are configured.
+
+### Getting the helm chart
+If the chart is not present, then download it in this step. If the directory `charts/kube-prometheus-stack` already exists then please continue with [Instrument prometheus to scrape metrics](#instrument-prometheus-to-scrape-metrics).
+
+```bash
+mkdir -p charts
+curl -O https://s3-eu-west-1.amazonaws.com/public.wire.com/charts/kube-prometheus-stack-0.1.5.tgz
+tar -xf kube-prometheus-stack-0.1.5.tgz -C charts
+```
+
+If the chart was missing from the `charts/` directory, also download all dependent images for the Helm chart as follows.
+
+### Download and load the dependent images
+
+```bash
+mkdir -p prometheus-images-tars
+
+images=(
+  "quay.io/prometheus/node-exporter:v1.9.1"
+  "quay.io/prometheus-operator/prometheus-operator:v0.83.0"
+  "quay.io/prometheus/prometheus:v3.4.2"
+  "registry.k8s.io/ingress-nginx/kube-webhook-certgen:v1.5.4"
+  "registry.k8s.io/kube-state-metrics/kube-state-metrics:v2.16.0"
+  "quay.io/prometheus-operator/prometheus-config-reloader:v0.83.0"
+)
+
+# logic to find the above images
+# d helm template test charts/kube-prometheus-stack | yq eval '.. | select(has("image")) | .image' | grep -i "/" | sort | uniq
+# https://github.com/prometheus-community/helm-charts/blob/main/charts/kube-prometheus-stack/templates/prometheus-operator/deployment.yaml#L97
+# prometheus-config-reloader image is passed as an arguement to operator and hence, not visible at the templating.
+
+for image in "${images[@]}"; do
+  docker pull "$image"
+
+  tar_name="$(echo "$image" | sed 's#[/:]#_#g').tar"
+  docker save -o "prometheus-images-tars/$tar_name" "$image"
+done
+```
+
+Copy all the images to all kubenodes, below step illustrates an example on kubenode3:
+```bash
+scp -i ssh/id_ed25519 -r prometheus-images-tars demo@kubenode3:/home/demo/prometheus-images-tars
+```
+
+Load all images to ctr:
+```bash
+ssh -i ssh/id_ed25519 demo@kubenode3 '
+  for tar_file in /home/demo/prometheus-images-tars/*.tar; do
+    sudo ctr -n k8s.io images import "$tar_file"
+  done
+
+  sudo ctr -n k8s.io images list | grep -E "node-exporter|prometheus-operator|prometheus|kube-webhook-certgen|kube-state-metrics"
+'
+```
 
 ### Instrument prometheus to scrape metrics
 
-All the configuration values are defined in the `values.yaml` file in the chart. Before running install/upgrade of the helm chart, please carefully check those values by following the comments in the file.
+All the configuration values are defined in the `charts/kube-prometheus-stack/values.yaml` file in the chart. Before running install or upgrade of the Helm chart, carefully review those values by following the comments in the file.
 
-Get the `kube-prometheus-stack` helm charts in the `/charts` directory, then modify the `kube-prometheus-stack/values.yaml`. Here is the step by step guidelines:
+```yaml
+# Variables to set locaL PVC Oon kubenode for Prometheus storage
+# If this values get modified, please adjust the `nodeName` storageSize and `storageClassName` in the prometheusSpec:
+nodeName: kubenode3
+storageSize: 50Gi
+storageClassName: local-prometheus-storage
+volumeMountPath: /mnt/prometheus-data
 
-Open the `values.yaml` file and read the configurations.
+# This is the custom values.yaml file for the Prometheus stack Helm chart.
+kube-prometheus-stack:
+  prometheus:
+    ingress:
+      enabled: false
+    service:
+      type: NodePort
+      nodePort: 30090
+    
+    prometheusSpec:
+      serviceMonitorSelector: {}
+      serviceMonitorNamespaceSelector: {}
+      serviceMonitorSelectorNilUsesHelmValues: false
+      podMonitorSelector: {}
+      podMonitorNamespaceSelector: {}
+      podMonitorSelectorNilUsesHelmValues: false
 
-```bash
-cat charts/kube-prometheus-stack/values.yaml
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: kubernetes.io/hostname
+                    operator: In
+                    values:
+                      - kubenode3 
+      storageSpec:
+        volumeClaimTemplate:
+          spec:
+            storageClassName: local-prometheus-storage
+            accessModes: ["ReadWriteOnce"]
+            resources:
+              requests:
+                storage: 50Gi
+
+      retention: 15d
+      retentionSize: 45GiB
+      # Enable the Prometheus Operator to use the fallback scrape protocol only for the coturn service.
+      # This is useful for services that do not expose Prometheus metrics in the standard format.
+      additionalScrapeConfigs:
+      - job_name: 'coturn-with-fallback'
+        fallback_scrape_protocol: "PrometheusText0.0.4"
+        scrape_interval: 30s
+        scrape_timeout: 10s
+        metrics_path: /metrics
+        kubernetes_sd_configs:
+        - role: endpoints
+          namespaces:
+            names:
+            - default
+        relabel_configs:
+        # Keep only coturn service endpoints
+        - source_labels: [__meta_kubernetes_service_name]
+          action: keep
+          regex: coturn
+        # Keep only the status-http port
+        - source_labels: [__meta_kubernetes_endpoint_port_name]
+          action: keep
+          regex: status-http
+        # Set the target address
+        - source_labels: [__address__]
+          target_label: __address__
+        # Add service name as a label
+        - source_labels: [__meta_kubernetes_service_name]
+          target_label: service
+        # Add namespace as a label
+        - source_labels: [__meta_kubernetes_namespace]
+          target_label: namespace
+        # Add pod name as instance
+        - source_labels: [__meta_kubernetes_pod_name]
+          target_label: pod
+  # Both Grafana and Alertmanager is disabled in this configuration.
+  grafana:
+    enabled: false
+  alertmanager:
+    enabled: false
 ```
-There are several configurable parts in values file
 
-- The global part where we define the values to create a local persistent volume in a fixed k8s node.
-- Then in the `prometheus:` field we set up the ingress (default value is `false`), certification and basic-auth
+There are several configurable parts in the values file:
+
+- The global part where we define the values to create a local persistent volume on a fixed k8s node i.e. `kubenode3`. If you have your own storage class then skip configuring the `storageClassName`, `.storageSize`, `.volumeMountPath` and `.nodeName`.
+- Then in the `prometheus:` field we keep ingress disabled and configure the service as a `NodePort`
 - In the `prometheusSpec:` field we first configure the operator to scrape metrics from all the service and pod monitors from any namespace
-- In the `prometheusSpec.affinity:` field we configure the prometheus to be pinned on the node where the PV got created.
+- In the `prometheusSpec.affinity:` field we configure the prometheus to be pinned on the node where the PV got created and where we have loaded our docker images.
 - In the `storageSpec:` field we configure the storage for prometheus data.
 
-All the sections below described how and what to modify to have a successful prometheus instrumentation.
+The sections below describe what to modify to complete the Prometheus instrumentation successfully.
 
 #### Define values to create a Local PV
 
@@ -109,7 +275,7 @@ volumeMountPath: /mnt/prometheus-data
 ```
 - nodeName: The specific node where the PV will be created, if the nodeName gets changed please update the nodeName in the `nodeAffinity` field too
 - storageSize: Give a volume size to the PV
-- storageClassName: This class will be used by prometheus to claim the the volume
+- storageClassName: This class will be used by Prometheus to claim the volume
 - volumeMountPath: Node local disk directory where prometheus will store the data
 
 If any of the values get changed, please adjust the corresponding values in the `kube-prometheus-stack.prometheusSpec:` fields and `kube-prometheus-stack.storageSpec:` fields.
@@ -121,10 +287,7 @@ With the default values, the chart will create a persistent volume in the `kuben
 Create the volume mount path in the kubenode3 VM and provide necessary permissions for prometheus to access it. Here is how you do it.
 
 ```bash
-ssh kubenode3
-sudo mkdir -p /mnt/prometheus-data
-sudo chown -R 65534:65534 /mnt/prometheus-data
-sudo chmod 755 /mnt/prometheus-data
+ssh -i ssh/id_ed25519 demo@kubenode3 "sudo mkdir -p /mnt/prometheus-data && sudo chown -R 65534:65534 /mnt/prometheus-data && sudo chmod 755 /mnt/prometheus-data"
 ```
 
 - ssh to kubenode3
@@ -132,19 +295,34 @@ sudo chmod 755 /mnt/prometheus-data
 - sets the Ownership to UID 65534 (nobody). Prometheus runs as a non-root user inside the container for security reasons. In prometheusSpec.securityContext, unless overridden, it runs as 65534
 - sets the permissions of the directory so that Prometheus (running as a non-root user) can access and write to it.
 
-#### Ingress and Basic auth credentials
+#### Exposing Prometheus via ingress (optional, not recommended)
 
-By default the `ingress` is disabled for prometheus, Ingress needs to be enabled for prometheus to use as datasource outside the k8s cluster. To enable the `ingress` update the `kube-prometheus-stack.prometheus.ingress:` field.
+By default, `ingress` is disabled for Prometheus. The Prometheus NodePort (`30090`) is sufficient for Grafana to reach Prometheus **when Grafana can directly reach the Kubernetes node IP on port 30090** — for example when Grafana runs on the adminhost or on a VM in the same L2/L3 network as the cluster nodes.
 
-Prometheus ingress is configured with `basic-auth` for authetication. Basic auth secrets got created with `offline-secrets.sh` in the `values/kube-prometheus-stack/secrets.yaml` file during the preparation phase of the deployment. Please check the existence of the `values/kube-prometheus-stack/secrets.yaml` file
+**When is ingress actually necessary?** If Grafana is on a separate machine or subnet that has no IP routing to the cluster node IPs (for example a different VLAN or a different network segment), then the NodePort is unreachable and you need to expose Prometheus via ingress. In that case, continue reading this section.
 
-If there is no `values/kube-prometheus-stack/secrets.yaml` file that means wire-server-deploy bundle does not have the necessary prometheus configuration components in it. To resolve it, either get the `offline-secrets.sh` from the latest bundle and create the secrets or create a `values/kube-prometheus-stack/secrets.yaml` file manually and add the basic auth credentials there as following:
+**Preferred deployment model (if possible):** Deploy Grafana inside the Kubernetes cluster when persistent storage is available (using an existing StorageClass or a new one). In this model, keep Prometheus internal and connect Grafana to the Prometheus Kubernetes service in the `monitoring` namespace (typically a `ClusterIP` service). This keeps Prometheus private within the cluster while Grafana can be exposed through ingress as needed.
+
+We recommend keeping Prometheus ingress disabled whenever NodePort is reachable. Enabling ingress exposes Prometheus outside the cluster network boundary.
+
+> **Warning:** Exposing Prometheus via ingress makes it reachable outside the Kubernetes cluster. If you choose to enable ingress, configure authentication at the ingress layer here. Basic auth can also be configured for Prometheus itself if required, and you should still consider the TLS certificate implications described below.
+
+If you absolutely need to expose Prometheus via ingress, enable it by updating `kube-prometheus-stack.prometheus.ingress.enabled` to `true` in `charts/kube-prometheus-stack/values.yaml`.
+
+> **Recommended combination if ingress is required:** Use ingress only when Grafana cannot reach Prometheus on the NodePort from the same subnet. In that case, configure TLS and authentication together so the endpoint is encrypted and protected. The sections below cover each piece. Read all three before making changes — they should be configured together.
+
+##### Basic auth credentials
+
+Prometheus ingress is configured with `basic-auth` for authentication. Basic auth secrets are created by `offline-secrets.sh` and stored in `values/kube-prometheus-stack/prod-secrets.example.yaml` during the preparation phase. Verify that this file exists before proceeding.
+
+If `values/kube-prometheus-stack/prod-secrets.example.yaml` is missing, the bundle does not contain the necessary Prometheus configuration. Either obtain `offline-secrets.sh` from the latest bundle and regenerate the secrets, or create the file manually:
 
 ```bash
-touch values/kube-prometheus-stack/secrets.yaml
-nano values/kube-prometheus-stack/secrets.yaml
+touch values/kube-prometheus-stack/prod-secrets.example.yaml
+nano values/kube-prometheus-stack/prod-secrets.example.yaml
 ```
-Add prometheus auth credentials in the secrets.yaml
+
+Add the Prometheus auth credentials:
 
 ```yaml
 prometheus:
@@ -153,29 +331,42 @@ prometheus:
     password: <password>
 ```
 
-#### Get the domain name and certificate for the prometheus ingress
+##### DNS hostname for the Prometheus ingress
 
-- hosts: Assuming that the sub domain name for prometheus starts with `prometheus`. So the sub domain would be `prometheus.<domain_name>`. Put the right domain in the `hosts` and `tls.hosts` field.
+When choosing a hostname for the Prometheus ingress, use the hostname that matches how Grafana and users will reach it in your environment. Set the hostname in the `hosts` and `tls.hosts` fields of the ingress block. The recommended subdomain is `prometheus.<your-domain>`.
 
-- secretName: pick a secretName for certificate, for example it could be `prometheus-tls-cert`. After applying this chart cert-manager will create a certificate named `prometheus-tls-cert` and the issuer will be `clusterIssuer`
+##### Certificate options for the Prometheus ingress
 
-Cert-manager will facilitate creating managing the TLS signed Certificate resource for the prometheus ingress automatically as we are annotating cert-manager with the ingress-shim for prometheus ingress. It is defined in the `values.yaml` as following:
+**Default Kubernetes certificate**
+
+If you do not need a certificate issued by cert-manager, you can omit cert-manager annotations and let the ingress controller use its default certificate. No additional cert-manager configuration is required.
+
+> **Grafana datasource note:** When using a self-signed or private CA certificate, you must configure the Grafana Prometheus datasource to either skip TLS verification or supply the CA certificate. In the Grafana datasource settings, under **TLS settings**, either enable **Skip TLS certificate validation** or upload the CA certificate under **CA cert**.
+
+**Certificate issued by cert-manager (for public DNS or a trusted private CA)**
+
+Cert-manager can automatically issue and renew a TLS certificate for the Prometheus ingress via the ingress-shim annotation defined in `values.yaml`:
 
 ```yaml
-...
 annotations:
   cert-manager.io/cluster-issuer: letsencrypt-http01
 ```
-We are using cluster-issuer to acquire the certificate required for this Ingress. It does not matter which namespace your Ingress resides, as ClusterIssuers are non-namespaced resources.
 
-**Get the issuer from k8s env**
+- `hosts`: set to `prometheus.<domain_name>`
+- `tls.hosts`: set to the same hostname
+- `tls.secretName`: choose a name for the TLS secret, for example `prometheus-tls-cert`. Cert-manager will create a `Certificate` resource with this name.
+
+ClusterIssuers are non-namespaced, so the namespace the ingress resides in does not matter.
+
+**Verify the cluster issuer**
 
 ```bash
 d kubectl get clusterissuer
 ```
-Make sure the `clusterIssuer` present in the k8s environment and if it does not match what we have in the `values.yaml`, replace it with the right one.
 
-If the clusterIssuer does not exist and you only have namespaced scoped `issuer` then convert the `issuer` to `clusterIssuer` by updating the `issuer` `kind` in the `values/nginx-ingress-services/values.yaml`
+If the issuer name in the cluster does not match the one in `values.yaml`, update `values.yaml` to use the correct name.
+
+If no `ClusterIssuer` exists and you only have a namespaced `Issuer`, promote it by updating `values/nginx-ingress-services/values.yaml`:
 
 ```yaml
 tls:
@@ -187,13 +378,14 @@ tls:
   issuer:
     kind: ClusterIssuer
 ```
-Save the file and upgrade the nginx-ingress-service helm chart with:
+
+Then upgrade the nginx-ingress-services chart:
 
 ```bash
 d helm upgrade --install nginx-ingress-services ./charts/nginx-ingress-services --values ./values/nginx-ingress-services/values.yaml --values ./values/nginx-ingress-services/secrets.yaml
 ```
 
-Now the check the issuer again to make sure there is a clusterIssuer in the environment. Also check existing certificates are no have `clusterIssuer` as `issueRef`.
+Verify the issuer again and confirm that existing certificates reference the `ClusterIssuer` as their `issuerRef`.
 
 #### Install the helm chart
 
@@ -203,85 +395,58 @@ Before proceeding to this step, make sure the values.yaml file has been updated 
 d helm upgrade --install prometheus \
   ./charts/kube-prometheus-stack/ \
   -f charts/kube-prometheus-stack/values.yaml \
-  -f values/kube-prometheus-stack/secrets.yaml \
+  -f values/kube-prometheus-stack/prod-secrets.example.yaml \
   --namespace monitoring \
   --create-namespace
 ```
 
 - This command installs (or upgrades) the kube-prometheus-stack Helm chart with the release name `prometheus` in the `monitoring` namespace, using custom values.yaml.
 - Overrides the values of the upstream chart `kube-prometheus-stack` with custom values defined in the `charts/kube-prometheus-stack/values.yaml`
-- Sets the auth secret for basic auth defined in the `values/kube-prometheus-stack/secrets.yaml`.
 - The `--create-namespace` flag will create the namespace if it does not exist.
 
-After a successful deployment of the Chart, the output will show all the configured resources including basic auth info.
-You should be able to browse the prometheus endpoint with `https://prometheus.<domain>`. Check the targets health once prometheus is ready: `https://prometheus.<domain_name>/targets`.
+After a successful deployment of the chart, the output will show all configured resources and some useful commands that can be issued inside `d`.
+You should be able to reach the Prometheus endpoint locally at `http://<kubenode3-ip>:30090`.
 
-Check the output with helm status command `$ helm status prometheus -n monitoring`
+## Configure Wire services Helm charts to enable metrics
 
-**Test the issuer after applying the chart**
+### Scrape Metrics from ingress-nginx-controller
+
+To scrape ingress-nginx-controller metrics, `metrics.enabled` and `metrics.serviceMonitor.enabled` must be enabled in `values/ingress-nginx-controller/values.yaml`.
+
+Run the following command to configure ingress-nginx metrics scraping. It works both when the block already exists and when it is missing.
 
 ```bash
-d kubectl get certificate prometheus-tls-cert -n <namespace> -o yaml
+d yq eval -i '."ingress-nginx".controller.metrics.enabled = true | ."ingress-nginx".controller.metrics.serviceMonitor.enabled = true' values/ingress-nginx-controller/values.yaml
 ```
 
-The spec of the certificate will look like the following:
+Verify that the values were set:
+
+```bash
+d yq eval '{"metricsEnabled": ."ingress-nginx".controller.metrics.enabled, "serviceMonitorEnabled": ."ingress-nginx".controller.metrics.serviceMonitor.enabled}' values/ingress-nginx-controller/values.yaml
+```
+
+The output should look like this:
 
 ```yaml
-...
-spec:
-  dnsNames:
-  - prometheus.<domain_name>
-  issuerRef:
-    group: cert-manager.io
-    kind: ClusterIssuer
-    name: letsencrypt-http01
-  secretName: prometheus-tls-cert
-  ....
-```
-The certificate should also be in the `Ready` state.
-
-#### Scrape the metric from ingress-nginx
-
-To scrape ingress-nginx metrics, `serviceMonitor` needs to be enabled in the `values/ingress-nginx-controller/values.yaml` file. If the `metrics.serviceMonitor` enablement block is not present in the file, it needs to be manually added in the file.
-
-First take a look if the values have the `metrics.serviceMonitor` enablement block. If the block is present then ingress-nginx is ready to get scraped.
-
-```bash
-cat values/ingress-nginx-controller/values.yaml
+metricsEnabled: true
+serviceMonitorEnabled: true
 ```
 
-If the metrics block is not in the values file then add the following block to the end of the file within `ingress-nginx.controller:` field
-
-```yaml
-ingress-nginx:
-  controller:
-  .....
-    # Enable prometheus operator to scrape metrics from the ingress-nginx controller with servicemonitor.
-    metrics:
-      enabled: true
-      serviceMonitor:
-        enabled: true
-```
-Save the file and upgrade the ingress-nginx helm chart.
-
-Before and after running the helm upgrade, find out on which node the ingress-nginx-controller pod is running.
-
-```bash
-d kubectl get pods -l app.kubernetes.io/name=ingress-nginx -o=custom-columns=NAME:.metadata.name,NODE:.spec.nodeName,IP:.status.hostIP
-```
+Then upgrade the ingress-nginx helm chart.
 
 ```bash
 d helm upgrade --install ingress-nginx-controller ./charts/ingress-nginx-controller --values ./values/ingress-nginx-controller/values.yaml
 ```
-Note: After the helm upgrade it might happen that the ingress is scheduled to a different node which may cause the drop of the outbound traffic and you will get a 503 error. To resolve that please follow the [Incoming SSL Traffic section](./docs_ubuntu_22.04.md#incoming-ssl-traffic).
 
-#### Scrape the metrics from the wire services
+### Scrape the metrics from the wire services
 
-After the kube-prometheus-stack helm install, the k8s metrics will be scraped by the prometheus operator but not the wire service metrics. To scrape wire service metrics with prometheus, `ServiceMonitor` CRD needs to be enabled for wire services.
+After the kube-prometheus-stack Helm installation, Kubernetes metrics will be scraped by the Prometheus Operator, but Wire service metrics will not. To scrape Wire service metrics with Prometheus, `ServiceMonitor` resources must be enabled for the Wire services.
 
-If the wire server was configured with the bundle which has kube-prometheus-stack helm chart in the `charts` directory, then enable `ServiceMonitor` for all the wire services in the `values/wire-server/values.yaml` file. 
+If the Wire server was configured with a bundle that contains the kube-prometheus-stack Helm chart in the `charts` directory, enable `ServiceMonitor` for the Wire services in `values/wire-server/values.yaml`.
 
-If the `values/wire-server/values.yaml` contains metrics value like:
+Run the following command to configure `metrics.serviceMonitor.enabled: true` for all required services. It works both when the `serviceMonitor` block already exists and when it is missing.
+
+A service entry in `values/wire-server/values.yaml` may already contain values like:
 
 ```yaml
 brig: # as like brig all the services will have the serviceMonitor value in the file.
@@ -291,26 +456,39 @@ brig: # as like brig all the services will have the serviceMonitor value in the 
       enabled: false
 ```
 
-You can run the following command to enable serviceMonitor for all the services
+```bash
+d yq eval -i '
+  .brig.metrics.serviceMonitor.enabled = true |
+  .proxy.metrics.serviceMonitor.enabled = true |
+  .cannon.metrics.serviceMonitor.enabled = true |
+  .cargohold.metrics.serviceMonitor.enabled = true |
+  .galley.metrics.serviceMonitor.enabled = true |
+  .gundeck.metrics.serviceMonitor.enabled = true |
+  .nginz.metrics.serviceMonitor.enabled = true |
+  .spar.metrics.serviceMonitor.enabled = true 
+' values/wire-server/values.yaml
+```
+
+Verify that the values were set:
 
 ```bash
-sed -i '/serviceMonitor:/ {n; s/enabled: .*/enabled: true/;}' values/wire-server/values.yaml
+d yq eval '{"brig": .brig.metrics.serviceMonitor.enabled, "proxy": .proxy.metrics.serviceMonitor.enabled, "cannon": .cannon.metrics.serviceMonitor.enabled, "cargohold": .cargohold.metrics.serviceMonitor.enabled, "galley": .galley.metrics.serviceMonitor.enabled, "gundeck": .gundeck.metrics.serviceMonitor.enabled, "nginz": .nginz.metrics.serviceMonitor.enabled, "spar": .spar.metrics.serviceMonitor.enabled}' values/wire-server/values.yaml
 ```
 
-Incase the `values/wire-server/values.yaml` file does not contain the  `serviceMonitor` enablement block then it needs to be manually added. As shown above, add the `serviceMonitor` enablement block with `metrics.serviceMonitor.enabled: true` setting for each wire services: `brig, proxy, cannon, cargohold, galley, gundeck, nginz, spar, legalhold, federator, background-worker`. As an example it will look like:
+The output should look like this:
 
 ```yaml
-background-worker:
-  config:
-    cassandra:
-      host: cassandra-external
-    # Enable for federation
-    enableFederation: false
-  metrics:
-    serviceMonitor:
-      enabled: true
+brig: true
+proxy: true
+cannon: true
+cargohold: true
+galley: true
+gundeck: true
+nginz: true
+spar: true
 ```
-Add the metrics block to all the above-mentioned services.
+
+If your deployment requirements also include `federator` or `background-worker`, enable their `metrics.serviceMonitor.enabled` values separately and include them in your verification output only when those components are part of the deployment.
 
 When `serviceMonitor` enablement block is enabled, please upgrade the wire-server helm chart like:
 
@@ -319,27 +497,28 @@ d helm upgrade --install wire-server ./charts/wire-server --timeout=15m0s --valu
 ```
 
 After a successful run, it will create `ServiceMonitor` CRD for each wire service which will get scraped by the prometheus operator.
-Now the prometheus targets `https://prometheus.<domain_name>/targets` will find the ServiceMonitors of wire services for scraping. Also check any particular metric with labels in the within prometheus query window by providing a metric name, such as: `http_request_duration_seconds_bucket` and run execute.
 
-### Troubleshoot
-
-If the prometheus datasource/query endpoint does not return 200 rather a 503 which means there is something wrong with the configurations. Check the prometheus pod status first.
+Verify that the ServiceMonitors were created in the `default` namespace:
 
 ```bash
-d kubectl get pods -n monitoring -owide
+d kubectl get servicemonitors -n default
 ```
-if the pod `prometheus-prometheus-kube-prometheus-prometheus-*` is not in the `Running` state and still in the initializing phase then take a look at the k8s events
+
+If you want to verify only the core Wire service monitors, you can filter them:
 
 ```bash
-d kubectl describe pod prometheus-prometheus-kube-prometheus-prometheus-o -n monitoring -oyaml
+d kubectl get servicemonitors -n default | grep -E "brig|proxy|cannon|cargohold|galley|gundeck|nginz|spar"
 ```
 
-The k8s events will provide enough hints to figure out whats the real issue, if it could not find/attach the storageclass and the volume, just got created via the helm chart. In that case check if the PVC is bound to the right storageclass
+If you also enabled optional services such as `background-worker` or `federator`, extend the filter accordingly.
+
+Query the Prometheus HTTP API from a machine that can reach `http://<kubenode3-ip>:30090`:
 
 ```bash
-d kubectl get pvc -n monitoring
+curl -s "http://<kubenode3-ip>:30090/api/v1/targets?state=active" | jq '.data.activeTargets[] | select(.labels.namespace == "default") | {job: .labels.job, service: .labels.service, pod: .labels.pod, health: .health}'
 ```
-If the status is not `Bound` then it might require to remove the stale PV and create a new one by rerunning the helm.
+
+This returns the active targets being scraped from the `default` namespace, including the targets discovered through ServiceMonitors. If the Wire service targets appear here with `health` set to `up`, Prometheus is scraping them.
 
 ### Metrics Collection via Prometheus Operator
 
@@ -359,13 +538,13 @@ These metrics are discovered and scraped based on label selectors defined in the
 
 **COTURN Metrics**
 
-Coturn metrics are scraped by prometheus operator with a `scrapeConfig` job defined in the charts values.yaml file. So, when the chart is installed it will automatically configure the `coturn-with-fallback` job. It's defined this way to add `fallback_scrape_protocol: "PrometheusText0.0.4"` content-type for prometheus operator to scrape metrics. By default the content-type is blank and prometheus rejects to scrape.
+Coturn metrics are scraped by the Prometheus Operator with a `scrapeConfig` job defined in the chart values file. When the chart is installed, it automatically configures the `coturn-with-fallback` job. It is defined this way to add `fallback_scrape_protocol: "PrometheusText0.0.4"` so the Prometheus Operator can scrape the metrics. By default, the content type is blank and Prometheus rejects the scrape.
 
-**SFTD metrics*
+**SFTD metrics**
 
 To enable SFTD metrics, you need to enable the SFTD `serviceMonitor` in the `charts/sftd/values.yaml` file.
 
-Open the values.yaml in the edit mode and update to `metrics.serviceMonitor.enabled` field to `true`.
+Open `values.yaml` and update `metrics.serviceMonitor.enabled` to `true`.
 
 ```bash
 nano charts/sftd/values.yaml
@@ -381,24 +560,75 @@ Then run the `sftd` helm upgrade command
 d helm upgrade --install sftd ./charts/sftd --set 'nodeSelector.wire\.com/role=sftd' --values values/sftd/values.yaml
 ```
 
-### Setup prometheus as datasource for grafana
+### Set Up Prometheus as a Datasource for Grafana
 
-Now open the grafana with the browser and click the Data sources tab. 
-- Choose Prometheus as data source and put the prometheus ingress endpoint as connection parameter.
-- Select Basic Authentication in the Authentication part and provide the prometheus credentials
-- Skip TLS Client Authentication or choose it if you have all the certificate info at hand.
+1. Open Grafana in a browser.
+2. Go to **Connections** -> **Data sources**.
+3. Click **Add data source** and select **Prometheus**.
+4. In **Connection**, set the Prometheus URL based on how Prometheus is exposed:
+  - NodePort (default setup, no ingress): `http://<k8s-node-ip>:30090`
+  - Ingress with TLS enabled: `https://prometheus.<your-domain>`
+  - Ingress without TLS: `http://prometheus.<your-domain>`
 
-Test your datasource by clicking the Metrics in the Drilldown section. By choosing the configured datasource you should be able to see the metrics.
+5. Configure authentication based on your Prometheus ingress setup:
+  - If ingress `basic-auth` is enabled, turn on **Basic auth** in Grafana datasource settings and set:
+    - **User**: `prometheus.auth.username`
+    - **Password**: `prometheus.auth.password`
+    (values from `values/kube-prometheus-stack/prod-secrets.example.yaml`)
+  - If basic auth is not enabled on Prometheus, keep **Basic auth** disabled.
 
+6. Configure TLS options when using `https://`:
+  - If certificate is publicly trusted, keep default TLS settings.
+  - If certificate is self-signed or signed by a private CA, under **TLS settings** either:
+    - enable **Skip TLS certificate validation**, or
+    - provide the CA certificate in **CA cert**.
 
-### Importing dashboards into Grafana 
+7. Click **Save & test**.
+8. Confirm success message in Grafana (for example: data source is working / HTTP 200).
+9. Optional validation: click **Explore**, select the Prometheus datasource, and run `up` to verify live metrics are returned.
 
-In the artifacts dashboards directory, there is a script `dashboards/grafana_sync.sh` which will take care of the uploading all the dashboards from `dashboards/api_upload` directory. This directory contains the JSON formatted dashboards which are tailored to upload via API. Dashboards JSON's comes with two different flavour, one for manual upload and one for api upload. The following sections describe both options:
+### Verify Metrics in Grafana Explore
+
+After the Prometheus data source is configured, verify the scrape status in Grafana:
+
+1. Open Grafana and go to **Explore**.
+2. Select the Prometheus datasource.
+3. Run a simple query such as `up` to confirm that Prometheus is returning time series.
+4. Run `prometheus_target_scrape_pool_targets` to see the number of targets in each scrape pool.
+5. Run `sum(prometheus_target_scrape_pool_targets)` to plot the total number of endpoints currently configured for scraping.
+
+If `prometheus_target_scrape_pool_targets` does not return data, check Prometheus itself in `http://<kubenode3-ip>:30090/targets` and confirm the Prometheus server is healthy and scraping its own internal metrics.
+
+### Troubleshoot
+
+If the Prometheus data source or query endpoint returns `503` instead of `200`, there is likely a configuration issue. Check the Prometheus pod status first.
+
+```bash
+d kubectl get pods -n monitoring -owide
+```
+
+If the pod `prometheus-prometheus-kube-prometheus-prometheus-*` is not in the `Running` state and is still initializing, inspect the Kubernetes events.
+
+```bash
+d kubectl describe pod prometheus-prometheus-kube-prometheus-prometheus-o -n monitoring -oyaml
+```
+
+The Kubernetes events usually provide enough detail to identify the issue. If Prometheus cannot find or attach the storage class or volume that was created by the Helm chart, check whether the PVC is bound to the correct storage class.
+
+```bash
+d kubectl get pvc -n monitoring
+```
+
+If the status is not `Bound`, you may need to remove the stale PV and create a new one by rerunning the Helm chart.
+
+### Import Dashboards into Grafana
+
+In the artifacts dashboards directory, there is a script `dashboards/grafana_sync.sh` that uploads all dashboards from the `dashboards/api_upload` directory. This directory contains JSON dashboards tailored for API upload. The dashboards come in two variants, one for manual upload and one for API upload. The following sections describe both options.
 
 
 #### Upload via API
 
-Before proceeding to run the script, it requires an API token and Grafana url where the dashboards will be uploaded.
+Before running the script, make sure you have an API token and the Grafana URL where the dashboards will be uploaded.
 
 **How to get the API token**
 
@@ -408,7 +638,7 @@ On the left side panel of Grafana, find the `Administration` link, then extend t
 - Add a new service account (provide a display name and Role as either `Editor` or `Admin`)
 - Proceed to create the account and then create the token (do not forget to copy the token to a safe place)
 
-Replace the `<GRAFANA_URL>` and `<API_TOKEN>`  with the granafa instance URL where the dashboards will be uploaded and the token you just created. Make sure you can ping the grafana url from the machine where with script will run.
+Replace `<GRAFANA_URL>` and `<API_TOKEN>` with the Grafana instance URL and the token you just created. Make sure you can reach the Grafana URL from the machine where the script will run.
 
 ```bash
 cat dashboards/grafana_sync.sh
@@ -417,8 +647,10 @@ Then run the script
 
 ```bash
 chmod +x dashboards/grafana_sync.sh
-./dashboards/grafana_sync.sh
+d ./dashboards/grafana_sync.sh
 ```
+
+Note: GRAFANA_URL must be reachable from the `adminhost-wire-server-deploy` container i.e. `d`.
 
 #### Manual Upload
 
