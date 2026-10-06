@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# shellcheck disable=SC2190
 set -euo pipefail
 
 OUTPUT_DIR=""
@@ -69,20 +70,25 @@ pull_charts() {
     repo=${parts[1]}
     version=${parts[2]}
 
-    # we add and update the repo only the first time we see it to speed up the process
-    repo_short_name=${repos[$repo]}
-    if [ "$repo_short_name" == "" ]; then
-      n=${#repos[@]}
-      repo_short_name="repo_$((n+1))"
-      repos[$repo]=$repo_short_name
-      helm repo add "$repo_short_name" "$repo"
-      helm repo update "$repo_short_name"
+    if [[ "$repo" == oci://* ]]; then
+      # OCI repos are pulled directly, no helm repo add needed
+      (cd "${OUTPUT_DIR}"/charts; helm pull --version "$version" --untar "$repo/$name")
+    else
+      # For traditional repos, add and update only on first encounter
+      repo_short_name=${repos[$repo]}
+      if [ "$repo_short_name" == "" ]; then
+        n=${#repos[@]}
+        repo_short_name="repo_$((n+1))"
+        repos[$repo]=$repo_short_name
+        helm repo add "$repo_short_name" "$repo"
+        helm repo update "$repo_short_name"
+      fi
+      (cd "${OUTPUT_DIR}"/charts; helm pull --version "$version" --untar "$repo_short_name/$name")
     fi
-    (cd "${OUTPUT_DIR}"/charts; helm pull --version "$version" --untar "$repo_short_name/$name")
   done
   echo "Pulling charts done."
 
 }
 
-wire_build="https://raw.githubusercontent.com/wireapp/wire-builds/818524e35d2894f5486c50b9ed9ed967ac099561/build.json"
+wire_build="https://raw.githubusercontent.com/wireapp/wire-builds/49150536aa00a5f23b3d1a44f0f461c41b4d8834/build.json"
 wire_build_chart_release "$wire_build" | pull_charts
