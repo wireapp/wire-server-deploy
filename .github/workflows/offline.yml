@@ -245,6 +245,7 @@ jobs:
     name: Build min profile
     if: |
       (github.event_name == 'push' && github.ref == 'refs/heads/master') ||
+      (github.event_name == 'push' && github.ref == 'refs/heads/WPB-29193-build-json-with-oci') ||
       contains(github.event.pull_request.labels.*.name, 'build-all') ||
       contains(github.event.pull_request.labels.*.name, 'build-min')
     runs-on:
