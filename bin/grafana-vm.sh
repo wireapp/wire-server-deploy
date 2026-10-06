@@ -50,7 +50,7 @@ mkdir -p "$NOCLOUD_DIR"
 mkdir -p "$BASE_IMAGE_DIR"
 
 # Download base Ubuntu cloud image if not present
-if [ ! -f "$BASE_IMAGE" ]; then
+if [[ ! -f "$BASE_IMAGE" ]]; then
   msg "Downloading Ubuntu 22.04 cloud image to $BASE_IMAGE ..."
   curl -fL -o "$BASE_IMAGE" "$IMAGE_URL" || die "Failed to download Ubuntu cloud image"
   msg "Base image downloaded successfully"
@@ -64,16 +64,16 @@ SSH_PRIVKEY="$SSH_DIR/id_ed25519"
 SSH_PUBKEY="$SSH_DIR/id_ed25519.pub"
 
 # Create SSH keypair if it doesn't exist
-if [ ! -f "$SSH_PRIVKEY" ]; then
+if [[ ! -f "$SSH_PRIVKEY" ]]; then
   msg "Generating SSH keypair in $SSH_DIR..."
   ssh-keygen -t ed25519 -q -N '' -f "$SSH_PRIVKEY"
   msg "SSH keypair generated successfully"
 fi
 
 # Check and fix SSH private key permissions
-if [ -f "$SSH_PRIVKEY" ]; then
+if [[ -f "$SSH_PRIVKEY" ]]; then
   current_perms=$(stat -c %a "$SSH_PRIVKEY" 2>/dev/null || stat -f %A "$SSH_PRIVKEY" 2>/dev/null)
-  if [ "$current_perms" != "400" ]; then
+  if [[ "$current_perms" != "400" ]]; then
     msg "Fixing SSH private key permissions from $current_perms to 400"
     chmod 400 "$SSH_PRIVKEY"
   fi
@@ -142,17 +142,17 @@ get_vm_ip() {
   local max_wait=${2:-300}
   local elapsed=0
   
-  while [ "$elapsed" -lt "$max_wait" ]; do
+  while [[ "$elapsed" -lt "$max_wait" ]]; do
     # Get MAC address of VM
     local mac
     mac=$(sudo virsh domiflist "$vm_name" 2>/dev/null | grep -oP '(?<=  )[0-9a-f:]{17}' | head -1)
     
-    if [ -n "$mac" ]; then
+    if [[ -n "$mac" ]]; then
       # Query DHCP leases for this MAC address
       local ip
       ip=$(sudo virsh net-dhcp-leases "$VM_NETWORK" 2>/dev/null | grep "$mac" | awk '{print $5}' | cut -d'/' -f1)
       
-      if [ -n "$ip" ]; then
+      if [[ -n "$ip" ]]; then
         echo "$ip"
         return 0
       fi
@@ -256,7 +256,7 @@ for (( i=0; i<${#VM_NAME[@]}; i++ )); do
       while ! ssh -i "$SSH_PRIVKEY" -o ConnectTimeout=2 -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null \
               "demo@$vm_ip" "exit" 2>/dev/null; do
         attempt=$((attempt + 1))
-        if [ $attempt -gt $max_attempts ]; then
+        if [[ $attempt -gt $max_attempts ]]; then
           msg "WARNING: ${VM_NAME[i]} ($vm_ip) did not become reachable after $max_attempts attempts"
           break
         fi
@@ -264,7 +264,7 @@ for (( i=0; i<${#VM_NAME[@]}; i++ )); do
       done
       
       # Wait for cloud-init to complete
-      if [ $attempt -le $max_attempts ]; then
+      if [[ $attempt -le $max_attempts ]]; then
         msg "Waiting for cloud-init to complete on ${VM_NAME[i]}..."
         ssh -i "$SSH_PRIVKEY" -o ConnectTimeout=2 -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null \
             "demo@$vm_ip" "cloud-init status --wait" 2>/dev/null || true
