@@ -74,10 +74,14 @@
         file:
           path: /etc/apt/sources.list
           state: absent
+        tags:
+          - aptconfig
       - name: Remove /etc/apt/sources.list.d/ to remove all online debian package repos
         file:
           path: /etc/apt/sources.list.d/
           state: absent
+        tags:
+          - aptconfig
 
 #######################################################################
 # If your offline repo's debian key has expired, uncomment this block.
@@ -103,11 +107,15 @@
         apt_key:
           url: "{{ ubuntu_repo_gpgkey }}"
           state: present
+        tags:
+          - aptconfig
 
       - name: Register offline repo
         apt_repository:
           repo: "deb {{ ubuntu_repo_base_url }} {{ ansible_distribution_release }} main"
           state: present
+        tags:
+          - aptconfig
       - name: Apt update
         apt:
           update_cache: yes
