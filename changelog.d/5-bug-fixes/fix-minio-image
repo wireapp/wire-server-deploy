@@ -1,1 +1,1 @@
-Fix unavailable Minio images by using mirror
+Fixed: use mirror for fetching unavailable Minio images
