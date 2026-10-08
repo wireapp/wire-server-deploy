@@ -55,7 +55,7 @@ output "static-inventory" {
         }
       }
       vars = {
-        ansible_ssh_common_args = "-o StrictHostKeyChecking=accept-new -o UserKnownHostsFile=/dev/null -o ControlMaster=auto -o ControlPersist=60s -o BatchMode=yes -o ConnectionAttempts=10 -o ServerAliveInterval=60 -o ServerAliveCountMax=3"
+        ansible_ssh_common_args = "-o StrictHostKeyChecking=accept-new -o UserKnownHostsFile=/dev/null -o ControlMaster=auto -o ControlPersist=60s -o BatchMode=yes -o ConnectionAttempts=10 -o ServerAliveInterval=60 -o ServerAliveCountMax=3 -o ConnectTimeout=10"
       }
     }
     private = {
@@ -66,7 +66,7 @@ output "static-inventory" {
         adminhost_local = {}
       }
       vars = {
-        ansible_ssh_common_args = "-o ProxyCommand=\"ssh -i ssh_private_key -o StrictHostKeyChecking=accept-new -o UserKnownHostsFile=/dev/null -W %h:%p -q root@${hcloud_server.adminhost.ipv4_address}\" -o StrictHostKeyChecking=accept-new -o UserKnownHostsFile=/dev/null -o ControlMaster=auto -o ControlPersist=60s -o BatchMode=yes -o ConnectionAttempts=10 -o ServerAliveInterval=60 -o ServerAliveCountMax=3"
+        ansible_ssh_common_args = "-o ProxyCommand=\"ssh -i ssh_private_key -o StrictHostKeyChecking=accept-new -o UserKnownHostsFile=/dev/null -W %h:%p -q root@${hcloud_server.adminhost.ipv4_address}\" -o StrictHostKeyChecking=accept-new -o UserKnownHostsFile=/dev/null -o ControlMaster=auto -o ControlPersist=60s -o BatchMode=yes -o ConnectionAttempts=10 -o ServerAliveInterval=60 -o ServerAliveCountMax=3 -o ConnectTimeout=10"
       }
     }
     adminhost_local = {

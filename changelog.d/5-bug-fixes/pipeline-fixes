@@ -1,0 +1,1 @@
+Fixed: Update the docker pull logic to retry if initial pull fails and wait when connecting to fresh VMs in hetzner for cd
