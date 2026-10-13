@@ -1,3 +1,8 @@
 # Disable since prod should use an externally provided minio
 fake-aws-s3:
   enabled: false
+  minio:
+    image:
+      repository: quay.io/wire/mirror-images/minio/minio
+    mcImage:
+      repository: quay.io/wire/mirror-images/minio/mc
