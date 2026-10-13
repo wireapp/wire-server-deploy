@@ -1,0 +1,5 @@
+minio:
+  image:
+    repository: quay.io/wire/mirror-images/minio/minio
+  mcImage:
+    repository: quay.io/wire/mirror-images/minio/mc
