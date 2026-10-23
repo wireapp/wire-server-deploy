@@ -1,6 +1,10 @@
-# See https://docs.wire.com/how-to/administrate/kubernetes/certificate-renewal/scenario-1_k8s-v1.14-kubespray.html
+# Requirements:
+# - kubernetes: 1.28, 1.29
 #
-# Run "make renew-certs" to execute this playbook.
+# You can run in in the `d bash` environment.
+#
+# export ANSIBLE_DIR=ansible
+# ansible-playbook $ANSIBLE_DIR/kubernetes-renew-certs.yml -i $ANSIBLE_DIR/inventory/offline/hosts.ini
 #
 # Comments:
 #
