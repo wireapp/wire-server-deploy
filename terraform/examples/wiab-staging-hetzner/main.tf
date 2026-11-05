@@ -25,12 +25,12 @@ variable "medium_server_type" {
 
 # Get available server types and locations
 data "hcloud_server_types" "available" {}
-data "hcloud_datacenters" "available" {}
+data "hcloud_locations" "available" {}
 
 # Validate the exact combination requested by the deployment script.
 locals {
   available_server_type_names = [for st in data.hcloud_server_types.available.server_types : st.name]
-  available_location_names    = [for dc in data.hcloud_datacenters.available.datacenters : dc.location.name]
+  available_location_names    = [for l in data.hcloud_locations.available.locations : l.name]
 }
 
 resource "null_resource" "location_validation" {
