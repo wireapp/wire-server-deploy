@@ -11,6 +11,8 @@ COMMIT_HASH="${GITHUB_SHA}"
 ARTIFACT="wire-server-deploy-static-${COMMIT_HASH}"
 
 # Retry matrix
+# Locations are tried in order and exhaust all server types before moving on.
+# Prefer hel1: German locations rarely have capacity.
 LOCATIONS=("hel1" "fsn1" "nbg1")
 SMALL_SERVER_TYPES=("cx23" "cx33" "cpx22")
 MEDIUM_SERVER_TYPES=("cx33" "cx43" "cpx32")
@@ -68,8 +70,8 @@ echo "Retry plan: ${location_count} locations x ${server_type_count} server type
 attempt=1
 deployment_succeeded=false
 
-for server_type_index in $(seq 0 $((server_type_count - 1))); do
-    for location_index in $(seq 0 $((location_count - 1))); do
+for location_index in $(seq 0 $((location_count - 1))); do
+    for server_type_index in $(seq 0 $((server_type_count - 1))); do
         attempt_location="${LOCATIONS[$location_index]}"
         attempt_small_server_type="${SMALL_SERVER_TYPES[$server_type_index]}"
         attempt_medium_server_type="${MEDIUM_SERVER_TYPES[$server_type_index]}"
