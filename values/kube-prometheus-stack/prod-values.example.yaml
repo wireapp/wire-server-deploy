@@ -1,0 +1,83 @@
+# Variables to set locaL PVC Oon kubenode for Prometheus storage
+# If this values get modified, please adjust the `nodeName` storageSize and `storageClassName` in the prometheusSpec:
+nodeName: kubenode3
+storageSize: 50Gi
+storageClassName: local-prometheus-storage
+volumeMountPath: /mnt/prometheus-data
+
+# This is the custom values.yaml file for the Prometheus stack Helm chart.
+kube-prometheus-stack:
+  prometheus:
+    ingress:
+      enabled: false
+    service:
+      type: NodePort
+      nodePort: 30090
+    
+    prometheusSpec:
+      serviceMonitorSelector: {}
+      serviceMonitorNamespaceSelector: {}
+      serviceMonitorSelectorNilUsesHelmValues: false
+      podMonitorSelector: {}
+      podMonitorNamespaceSelector: {}
+      podMonitorSelectorNilUsesHelmValues: false
+
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: kubernetes.io/hostname
+                    operator: In
+                    values:
+                      - kubenode3 
+      storageSpec:
+        volumeClaimTemplate:
+          spec:
+            storageClassName: local-prometheus-storage
+            accessModes: ["ReadWriteOnce"]
+            resources:
+              requests:
+                storage: 50Gi
+
+      retention: 15d
+      retentionSize: 45GiB
+      # Enable the Prometheus Operator to use the fallback scrape protocol only for the coturn service.
+      # This is useful for services that do not expose Prometheus metrics in the standard format.
+      additionalScrapeConfigs:
+      - job_name: 'coturn-with-fallback'
+        fallback_scrape_protocol: "PrometheusText0.0.4"
+        scrape_interval: 30s
+        scrape_timeout: 10s
+        metrics_path: /metrics
+        kubernetes_sd_configs:
+        - role: endpoints
+          namespaces:
+            names:
+            - default
+        relabel_configs:
+        # Keep only coturn service endpoints
+        - source_labels: [__meta_kubernetes_service_name]
+          action: keep
+          regex: coturn
+        # Keep only the status-http port
+        - source_labels: [__meta_kubernetes_endpoint_port_name]
+          action: keep
+          regex: status-http
+        # Set the target address
+        - source_labels: [__address__]
+          target_label: __address__
+        # Add service name as a label
+        - source_labels: [__meta_kubernetes_service_name]
+          target_label: service
+        # Add namespace as a label
+        - source_labels: [__meta_kubernetes_namespace]
+          target_label: namespace
+        # Add pod name as instance
+        - source_labels: [__meta_kubernetes_pod_name]
+          target_label: pod
+  # Both Grafana and Alertmanager is disabled in this configuration.
+  grafana:
+    enabled: false
+  alertmanager:
+    enabled: false

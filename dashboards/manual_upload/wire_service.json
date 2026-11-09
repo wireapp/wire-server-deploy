@@ -241,7 +241,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "cenv3r35m756oe"
+            "uid": "${datasource}"
           },
           "editorMode": "code",
           "expr": "sum(rate(container_cpu_usage_seconds_total{namespace=\"$namespace\", pod=~\"$service.*\"}[$__rate_interval])) by (pod)",
@@ -269,7 +269,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "cenv3r35m756oe"
+            "uid": "${datasource}"
           },
           "editorMode": "code",
           "expr": "sum(kube_pod_container_resource_limits{namespace=\"$namespace\", pod=~\"$service.*\", resource=\"cpu\"}) by (pod)\n",
@@ -421,7 +421,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "cenv3r35m756oe"
+            "uid": "${datasource}"
           },
           "editorMode": "code",
           "exemplar": false,
@@ -456,7 +456,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "cenv3r35m756oe"
+            "uid": "${datasource}"
           },
           "editorMode": "code",
           "exemplar": false,
@@ -589,7 +589,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "cenv3r35m756oe"
+            "uid": "${datasource}"
           },
           "editorMode": "code",
           "expr": "sum(increase(http_request_duration_seconds_count{status_code=~\"5..\", namespace=\"$namespace\"}[5m])) by (service)",
@@ -663,7 +663,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "cenv3r35m756oe"
+            "uid": "${datasource}"
           },
           "editorMode": "code",
           "expr": "sum(increase(http_request_duration_seconds_count{status_code=~\"5..\", namespace=\"$namespace\"}[$__range])) by (service, method, handler)",
@@ -762,7 +762,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "cenv3r35m756oe"
+            "uid": "${datasource}"
           },
           "editorMode": "builder",
           "expr": "sum by(service) (increase(kube_deployment_metadata_generation{namespace=~\"$namespace\", deployment=\"$service\"}[$__rate_interval]))",
@@ -883,7 +883,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "cenv3r35m756oe"
+            "uid": "${datasource}"
           },
           "editorMode": "code",
           "expr": "sum(increase(http_request_duration_seconds_count{status_code=~\"2..\", service=\"$service\", namespace=\"$namespace\"}[1m]))",
@@ -911,7 +911,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "cenv3r35m756oe"
+            "uid": "${datasource}"
           },
           "editorMode": "code",
           "expr": "sum(increase(http_request_duration_seconds_count{status_code=~\"5..\", service=\"$service\", namespace=\"$namespace\"}[1m]))",
@@ -1010,7 +1010,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "cenv3r35m756oe"
+            "uid": "${datasource}"
           },
           "editorMode": "code",
           "expr": "net_connections{service=\"$service\", namespace=\"$namespace\"}",
@@ -1118,7 +1118,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "cenv3r35m756oe"
+            "uid": "${datasource}"
           },
           "editorMode": "code",
           "expr": "sum(rate(http_request_duration_seconds_count{service=\"$service\", handler!=\"/i/status\", namespace=\"$namespace\"}[1m])) by (method, handler)",
@@ -1221,7 +1221,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "cenv3r35m756oe"
+            "uid": "${datasource}"
           },
           "editorMode": "code",
           "expr": "sum(increase(http_request_duration_seconds_count{status_code=~\"4..\", service=\"$service\", namespace=\"$namespace\"}[$__range])) by (handler, status_code)",
@@ -1333,7 +1333,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "cenv3r35m756oe"
+            "uid": "${datasource}"
           },
           "editorMode": "code",
           "expr": "sum(increase(http_request_duration_seconds_count{status_code=~\"5..\", service=\"$service\", namespace=\"$namespace\"}[$__range])) by (handler)",
@@ -1439,7 +1439,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "cenv3r35m756oe"
+            "uid": "${datasource}"
           },
           "editorMode": "code",
           "expr": "topk(5, avg(rate(http_request_duration_seconds_sum{service=\"$service\", handler!~\"/i/status|prometheus\", namespace=\"$namespace\"}[5m])) by (handler))",
@@ -1537,7 +1537,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "cenv3r35m756oe"
+            "uid": "${datasource}"
           },
           "editorMode": "code",
           "expr": "sum(irate(container_network_receive_bytes_total{namespace=\"$namespace\", pod=~\"$service.*\"}[$__rate_interval])) by (pod)",
@@ -1565,7 +1565,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "cenv3r35m756oe"
+        "uid": "${datasource}"
       },
       "fieldConfig": {
         "defaults": {
@@ -1659,7 +1659,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "cenv3r35m756oe"
+            "uid": "${datasource}"
           },
           "editorMode": "code",
           "expr": "-sum(irate(container_fs_writes_bytes_total{namespace=\"$namespace\",pod=~\"$service.*\"}[1m])) by (pod)",
@@ -1684,7 +1684,7 @@
       {
         "current": {
           "text": "wire-cluster-prometheus-operator",
-          "value": "cenv3r35m756oe"
+          "value": "${datasource}"
         },
         "includeAll": false,
         "name": "datasource",
@@ -1749,7 +1749,7 @@
         },
         "datasource": {
           "type": "prometheus",
-          "uid": "cenv3r35m756oe"
+          "uid": "${datasource}"
         },
         "definition": "label_values(namespace)",
         "includeAll": false,

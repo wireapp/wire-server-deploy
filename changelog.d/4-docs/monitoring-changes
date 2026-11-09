@@ -1,0 +1,4 @@
+Fixed: Updated bin/grafana-vm.sh and instrument_monitoring documentation. Prometheus is not configured to have ingress but uses nodePort service.
+Fixed: the Grafana dashboard source and query related errors
+Added: prod values for kube-prometheus-stack and disabled ingress for prometheus by default 
+Added: demo/wiab values fix for kube-prometheus-stack, disabled ingress

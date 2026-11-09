@@ -26,7 +26,7 @@ TASKS_DIR="${SCRIPT_DIR}/../tasks"
 # --------------------------
 
 # pulling the charts based on builds.json, charts to be skipped are passed as arguments HELM_CHART_EXCLUDE_LIST
-"${TASKS_DIR}"/proc_pull_charts.sh OUTPUT_DIR="${OUTPUT_DIR}" HELM_CHART_EXCLUDE_LIST="inbucket,wire-server-enterprise,postgresql,rust-sft,fluent-bit"
+"${TASKS_DIR}"/proc_pull_charts.sh OUTPUT_DIR="${OUTPUT_DIR}" HELM_CHART_EXCLUDE_LIST="inbucket,wire-server-enterprise,postgresql,rust-sft,fluent-bit,fake-aws-s3"
 
 # pulling the charts from helm-charts repo, charts to be included are passed as arguments HELM_CHART_INCLUDE_LIST
 # "${TASKS_DIR}"/proc_pull_ext_charts.sh OUTPUT_DIR="${OUTPUT_DIR}" HELM_CHART_INCLUDE_LIST="postgresql-external"
@@ -116,3 +116,16 @@ done
 
 # Create the tar archive with relative paths
 tar czf "$OUTPUT_TAR" "${ITEMS_TO_ARCHIVE[@]}"
+
+# Dumping details of versions for the build and packed
+echo "Dump of versions/helm_image_tree.json"
+cat "${OUTPUT_DIR}/versions/helm_image_tree.json"
+
+echo "Dump of versions/containers_system_images.json"
+cat "${OUTPUT_DIR}/versions/containers_system_images.json"
+
+echo "Dump of versions/wire-binaries.json"
+cat "${OUTPUT_DIR}/versions/wire-binaries.json"
+
+echo "Dump of wire-builds used"
+cat "${OUTPUT_DIR}/build.json"
