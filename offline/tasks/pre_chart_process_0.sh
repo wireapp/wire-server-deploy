@@ -40,3 +40,23 @@ sed -i -Ee 's/useSharedFederatorSecret: false/useSharedFederatorSecret: true/' "
 # drop step-certificates/.../test-connection.yaml because it lacks an image tag
 # cf. https://github.com/smallstep/helm-charts/pull/196/files
 rm -v "${OUTPUT_DIR}"/charts/step-certificates/charts/step-certificates/templates/tests/*
+
+# Replace the ingress-nginx subchart of ingress-nginx-controller (WPB-26631).
+# The ingress-nginx-controller chart from wire-builds bundles ingress-nginx
+# 4.11.5, whose controller images have known CVEs. 4.13.9 is the latest
+# release that supports the Kubernetes version installed by this bundle
+# (kube_version v1.29.10, see ansible/inventory/offline/group_vars/all/offline.yml).
+# Controller >= 1.12 needs `annotations-risk-level: Critical`, see
+# values/ingress-nginx-controller/*.example.yaml.
+INGRESS_NGINX_CHART_VERSION="4.13.9"
+ingress_controller_chart="${OUTPUT_DIR}/charts/ingress-nginx-controller"
+if [[ -d "$ingress_controller_chart" ]]; then
+  rm -rf "$ingress_controller_chart/charts/ingress-nginx"
+  helm pull ingress-nginx \
+    --repo https://kubernetes.github.io/ingress-nginx \
+    --version "$INGRESS_NGINX_CHART_VERSION" \
+    --untar --untardir "$ingress_controller_chart/charts"
+  # only the indented dependency version, not the chart's own version
+  sed -i -Ee "s/^(  version: )[0-9.]+$/\1${INGRESS_NGINX_CHART_VERSION}/" "$ingress_controller_chart/Chart.yaml"
+  rm -f "$ingress_controller_chart/Chart.lock"
+fi
