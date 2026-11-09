@@ -194,7 +194,7 @@ create_vm () {
   sudo virt-install \
     --name "${VM_NAME[i]}" \
     --ram "${VM_RAM[i]}" \
-    --disk "path=$VM_DISK_PATH,format=qcow2,bus=virtio" \
+    --disk "path=$VM_DISK_PATH,format=qcow2,bus=virtio,discard=unmap,detect_zeroes=unmap" \
     --disk "path=$SEED_ISO,device=cdrom" \
     --vcpus "${VM_VCPU[i]}" \
     --network "bridge=virbr0,model=virtio" \
