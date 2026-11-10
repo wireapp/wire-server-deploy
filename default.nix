@@ -3,12 +3,12 @@
 let
   sources = import ./nix/sources.nix;
   # for injecting old gnupg dependancy
-  oldpkgs = import sources.oldpkgs {
-    inherit system;
-    config = { };
-  };
+  #oldpkgs = import sources.oldpkgs {
+  #  inherit system;
+  #  config = { };
+  #};
   # extract the module for injecting
-  gnupg1orig = oldpkgs.gnupg1orig;
+  #gnupg1orig = oldpkgs.gnupg1orig;
 
   pkgs = import sources.nixpkgs {
     inherit system;
@@ -21,9 +21,9 @@ let
     # layering is important here, the lowest takes precedance in case of overlaps
     overlays = [
       # custom overlay for injections 
-      (self: super: {
-        gnupg1orig = gnupg1orig;
-      })
+      # (self: super: {
+      #   gnupg1orig = gnupg1orig;
+      # })
       # main overlay
       (import ./nix/overlay.nix)
     ];
@@ -49,9 +49,9 @@ rec {
       apacheHttpd
       awscli2
       gnumake
-      gnupg1
+      gnupg
       # injected dependacy gnupg1orig
-      gnupg1orig
+      # gnupg1orig
 
       kubernetes-tools
 
@@ -78,6 +78,7 @@ rec {
       gnused
       curl
       gawk
+      oras
 
       niv
       nix-prefetch-docker

@@ -113,7 +113,7 @@ aptly_config=$(mktemp)
 trap 'rm -Rf -- "$aptly_config $GNUPGHOME"' EXIT
 
 cat > "$aptly_config" <<FOO
-{ "rootDir": "$aptly_root", "downloadConcurrency": 10, "gpgProvider": "internal" }
+{ "rootDir": "$aptly_root", "downloadConcurrency": 10, "gpgProvider": "gpg" }
 FOO
 
 aptly="aptly -config=${aptly_config} "
@@ -162,6 +162,6 @@ $aptly snapshot create docker-ce from mirror docker-ce
 
 $aptly snapshot merge wire jammy jammy-security jammy-updates docker-ce
 
-$aptly publish snapshot -gpg-key="gpg@wire.com" -secret-keyring="$GNUPGHOME/secring.gpg" -distribution jammy wire
+$aptly publish snapshot -gpg-key="gpg@wire.com" -distribution jammy wire
 
 gpg --export gpg@wire.com -a > "$aptly_root/public/gpg"
