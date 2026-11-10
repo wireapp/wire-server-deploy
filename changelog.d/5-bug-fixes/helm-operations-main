@@ -1,0 +1,1 @@
+Fixed: re-enable `main` in `bin/helm-operations.sh` (commented out for 5.25-R2), so the default CD verify deploys the charts again; `offline/cd_staging.sh` no longer appends it (WPB-26631)

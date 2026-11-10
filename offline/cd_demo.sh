@@ -16,6 +16,8 @@ TEST_USER="demo"
 COMMIT_HASH="${GITHUB_SHA}"
 
 # Retry matrix
+# Locations are tried in order and exhaust all server types before moving on.
+# Prefer hel1: German locations rarely have capacity.
 LOCATIONS=("hel1" "fsn1" "nbg1")
 SERVER_TYPES=("cx53" "cpx62")
 
@@ -62,8 +64,8 @@ echo "Retry plan: ${location_count} locations x ${server_type_count} server type
 attempt=1
 deployment_succeeded=false
 
-for server_type_index in $(seq 0 $((server_type_count - 1))); do
-	for location_index in $(seq 0 $((location_count - 1))); do
+for location_index in $(seq 0 $((location_count - 1))); do
+	for server_type_index in $(seq 0 $((server_type_count - 1))); do
 		attempt_location="${LOCATIONS[$location_index]}"
 		attempt_server_type="${SERVER_TYPES[$server_type_index]}"
 
