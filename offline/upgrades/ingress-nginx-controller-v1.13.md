@@ -35,6 +35,12 @@ Fixes known CVEs in the ingress-nginx controller image shipped with wire-server-
 | Current revisions | `d helm history ingress-nginx-controller -n <NS>` and `d helm history nginx-ingress-services -n <NS>` | Note last `deployed` revision of each (for rollback). |
 | Admin host workspace with current values | `ls <OLD_PACKAGE_DIR>/values/ingress-nginx-controller/values.yaml` | File exists |
 
+## Warning
+
+- Do **not** run `bin/offline-deploy.sh` or `bin/helm-operations.sh` on an existing installation.
+- Both run a full fresh-install flow: existing `values.yaml` / `secrets.yaml` are moved to `*.bak.<timestamp>`, replaced with the `prod-*.example.yaml` files, and all charts are re-deployed with them.
+- Use only the commands in this document.
+
 ## 1. Prepare the new bundle
 
 ```bash
