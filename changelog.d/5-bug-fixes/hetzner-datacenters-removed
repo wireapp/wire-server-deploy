@@ -1,0 +1,1 @@
+Fixed: Replace removed Hetzner `hcloud_datacenters` data source (HTTP 410 since 2026-10-01) with `hcloud_locations` in the CD terraform modules and pin the hcloud provider to `~> 1.70`
