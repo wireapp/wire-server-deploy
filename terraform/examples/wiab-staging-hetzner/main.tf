@@ -138,6 +138,9 @@ resource "hcloud_server" "adminhost" {
     network_id = hcloud_network.main.id
     ip         = ""
   }
+  lifecycle {
+    ignore_changes = [server_type]
+  }
 }
 
 # The server hosting all the bootstrap assets
@@ -161,6 +164,9 @@ resource "hcloud_server" "assethost" {
   network {
     network_id = hcloud_network.main.id
     ip         = ""
+  }
+  lifecycle {
+    ignore_changes = [server_type]
   }
 }
 
@@ -186,6 +192,9 @@ resource "hcloud_server" "kubenode" {
   network {
     network_id = hcloud_network.main.id
     ip         = ""
+  }
+  lifecycle {
+    ignore_changes = [server_type]
   }
 }
 
