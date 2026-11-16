@@ -98,6 +98,7 @@ jobs:
         run: nix-env -f default.nix -iA env
 
       - name: Install terraform
+        id: install-terraform
         uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: "^1.3.7"
@@ -109,7 +110,8 @@ jobs:
           HCLOUD_TOKEN: '${{ secrets.HCLOUD_TOKEN }}'
 
       - name: Clean up hetzner environment; just in case
-        if: always()
+        # Skip when terraform was never installed (earlier step failed): nothing was deployed.
+        if: always() && steps.install-terraform.outcome == 'success'
         run: (cd terraform/examples/wire-server-deploy-offline-hetzner ; terraform init && terraform destroy -auto-approve)
         env:
           HCLOUD_TOKEN: '${{ secrets.HCLOUD_TOKEN }}'
@@ -138,6 +140,7 @@ jobs:
         run: nix-env -f default.nix -iA env
 
       - name: Install terraform
+        id: install-terraform
         uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: "^1.3.7"
@@ -149,7 +152,8 @@ jobs:
           HCLOUD_TOKEN: '${{ secrets.HCLOUD_TOKEN }}'
 
       - name: Clean up hetzner wiab-staging environment; just in case
-        if: always()
+        # Skip when terraform was never installed (earlier step failed): nothing was deployed.
+        if: always() && steps.install-terraform.outcome == 'success'
         run: (cd terraform/examples/wiab-staging-hetzner ; terraform init && terraform destroy -auto-approve)
         env:
           HCLOUD_TOKEN: '${{ secrets.HCLOUD_TOKEN }}'
@@ -221,6 +225,7 @@ jobs:
           AWS_REGION: "eu-west-1"
 
       - name: Install terraform
+        id: install-terraform
         uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: "^1.3.7"
@@ -232,7 +237,8 @@ jobs:
           HCLOUD_TOKEN: '${{ secrets.HCLOUD_TOKEN }}'
 
       - name: Clean up hetzner wiab environment; just in case
-        if: always()
+        # Skip when terraform was never installed (earlier step failed): nothing was deployed.
+        if: always() && steps.install-terraform.outcome == 'success'
         run: (cd terraform/examples/wiab-demo-hetzner ; terraform init && terraform destroy -auto-approve)
         env:
           HCLOUD_TOKEN: '${{ secrets.HCLOUD_TOKEN }}'
