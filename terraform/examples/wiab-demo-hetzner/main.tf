@@ -85,5 +85,9 @@ resource "hcloud_server" "host" {
   image       = "ubuntu-24.04"
   ssh_keys    = [hcloud_ssh_key.host.name]
   server_type = var.server_type
-
+  lifecycle {
+    ignore_changes = [
+      server_type,
+    ]
+  }
 }
