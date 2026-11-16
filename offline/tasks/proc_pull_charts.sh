@@ -85,5 +85,5 @@ pull_charts() {
 
 }
 
-wire_build="https://raw.githubusercontent.com/wireapp/wire-builds/refs/heads/pinned-offline-5.34.0/build.json"
+wire_build="https://raw.githubusercontent.com/wireapp/wire-builds/223f0cad2211287f9ebaed38ae4df4c5fdc01eb9/build.json"
 wire_build_chart_release "$wire_build" | pull_charts
