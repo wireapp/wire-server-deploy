@@ -65,6 +65,8 @@ jobs:
         env:
           GPG_PRIVATE_KEY: '${{ secrets.GPG_PRIVATE_KEY }}'
           DOCKER_LOGIN: '${{ secrets.DOCKER_LOGIN }}'
+          OCI_REGISTRY_USERNAME: '${{ secrets.QUAY_WIRE_CI_GOV_READONLY_USERNAME }}'
+          OCI_REGISTRY_PASSWORD: '${{ secrets.QUAY_WIRE_CI_GOV_READONLY_PASSWORD }}'
 
       - name: Copy default build assets tarball to S3
         run: |
@@ -214,6 +216,8 @@ jobs:
         env:
           GPG_PRIVATE_KEY: "${{ secrets.GPG_PRIVATE_KEY }}"
           DOCKER_LOGIN: "${{ secrets.DOCKER_LOGIN }}"
+          OCI_REGISTRY_USERNAME: "${{ secrets.QUAY_WIRE_CI_GOV_READONLY_USERNAME }}"
+          OCI_REGISTRY_PASSWORD: "${{ secrets.QUAY_WIRE_CI_GOV_READONLY_PASSWORD }}"
 
       - name: Copy dev build assets tarball to S3
         run: |
@@ -277,6 +281,8 @@ jobs:
         env:
           GPG_PRIVATE_KEY: "${{ secrets.GPG_PRIVATE_KEY }}"
           DOCKER_LOGIN: "${{ secrets.DOCKER_LOGIN }}"
+          OCI_REGISTRY_USERNAME: "${{ secrets.QUAY_WIRE_CI_GOV_READONLY_USERNAME }}"
+          OCI_REGISTRY_PASSWORD: "${{ secrets.QUAY_WIRE_CI_GOV_READONLY_PASSWORD }}"
 
       - name: Copy min build assets tarball to S3
         run: |

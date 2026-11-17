@@ -1,0 +1,1 @@
+Added: support oci:// helm chart references in build.json (pulled by full reference, authenticated via OCI_REGISTRY_USERNAME/OCI_REGISTRY_PASSWORD), extract every chart to charts/<build.json key>, and allow overriding the build.json source via WIRE_BUILD
