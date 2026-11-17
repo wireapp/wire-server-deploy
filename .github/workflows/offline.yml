@@ -64,9 +64,10 @@ jobs:
         run: ./offline/default-build/build.sh
         env:
           GPG_PRIVATE_KEY: '${{ secrets.GPG_PRIVATE_KEY }}'
-          DOCKER_LOGIN: '${{ secrets.DOCKER_LOGIN }}'
-          OCI_REGISTRY_USERNAME: '${{ secrets.QUAY_WIRE_CI_GOV_READONLY_USERNAME }}'
-          OCI_REGISTRY_PASSWORD: '${{ secrets.QUAY_WIRE_CI_GOV_READONLY_PASSWORD }}'
+          # read-only robot for pulling helm charts (OCI) and container images from quay.io
+          DOCKER_LOGIN: '${{ secrets.QUAY_WIRE_ALL_REPOS_READONLY_USERNAME }}:${{ secrets.QUAY_WIRE_ALL_REPOS_READONLY_PASSWORD }}'
+          OCI_REGISTRY_USERNAME: '${{ secrets.QUAY_WIRE_ALL_REPOS_READONLY_USERNAME }}'
+          OCI_REGISTRY_PASSWORD: '${{ secrets.QUAY_WIRE_ALL_REPOS_READONLY_PASSWORD }}'
 
       - name: Copy default build assets tarball to S3
         run: |
@@ -215,9 +216,10 @@ jobs:
         run: ./offline/demo-build/build.sh
         env:
           GPG_PRIVATE_KEY: "${{ secrets.GPG_PRIVATE_KEY }}"
-          DOCKER_LOGIN: "${{ secrets.DOCKER_LOGIN }}"
-          OCI_REGISTRY_USERNAME: "${{ secrets.QUAY_WIRE_CI_GOV_READONLY_USERNAME }}"
-          OCI_REGISTRY_PASSWORD: "${{ secrets.QUAY_WIRE_CI_GOV_READONLY_PASSWORD }}"
+          # read-only robot for pulling helm charts (OCI) and container images from quay.io
+          DOCKER_LOGIN: "${{ secrets.QUAY_WIRE_ALL_REPOS_READONLY_USERNAME }}:${{ secrets.QUAY_WIRE_ALL_REPOS_READONLY_PASSWORD }}"
+          OCI_REGISTRY_USERNAME: "${{ secrets.QUAY_WIRE_ALL_REPOS_READONLY_USERNAME }}"
+          OCI_REGISTRY_PASSWORD: "${{ secrets.QUAY_WIRE_ALL_REPOS_READONLY_PASSWORD }}"
 
       - name: Copy dev build assets tarball to S3
         run: |
@@ -280,9 +282,10 @@ jobs:
         run: ./offline/min-build/build.sh
         env:
           GPG_PRIVATE_KEY: "${{ secrets.GPG_PRIVATE_KEY }}"
-          DOCKER_LOGIN: "${{ secrets.DOCKER_LOGIN }}"
-          OCI_REGISTRY_USERNAME: "${{ secrets.QUAY_WIRE_CI_GOV_READONLY_USERNAME }}"
-          OCI_REGISTRY_PASSWORD: "${{ secrets.QUAY_WIRE_CI_GOV_READONLY_PASSWORD }}"
+          # read-only robot for pulling helm charts (OCI) and container images from quay.io
+          DOCKER_LOGIN: "${{ secrets.QUAY_WIRE_ALL_REPOS_READONLY_USERNAME }}:${{ secrets.QUAY_WIRE_ALL_REPOS_READONLY_PASSWORD }}"
+          OCI_REGISTRY_USERNAME: "${{ secrets.QUAY_WIRE_ALL_REPOS_READONLY_USERNAME }}"
+          OCI_REGISTRY_PASSWORD: "${{ secrets.QUAY_WIRE_ALL_REPOS_READONLY_PASSWORD }}"
 
       - name: Copy min build assets tarball to S3
         run: |
