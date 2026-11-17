@@ -4,7 +4,7 @@ set -euo pipefail
 
 OUTPUT_DIR=""
 # build.json to source chart versions from; override with WIRE_BUILD=<url>
-WIRE_BUILD="https://raw.githubusercontent.com/wireapp/wire-builds/refs/heads/pinned-offline-5.34.0/build.json"
+WIRE_BUILD="https://raw.githubusercontent.com/wireapp/wire-builds/refs/heads/2026-q4-from-rm/build.json"
 # Default exclude lists
 HELM_CHART_EXCLUDE_LIST="inbucket,wire-server-enterprise,demo-smtp"
 
