@@ -18,8 +18,10 @@ COMMIT_HASH="${GITHUB_SHA}"
 # Retry matrix
 # Locations are tried in order and exhaust all server types before moving on.
 # Prefer hel1: German locations rarely have capacity.
-LOCATIONS=("hel1" "fsn1" "nbg1")
-SERVER_TYPES=("cx53" "cpx62")
+# cx* types are currently not offered in any EU location and hel1 lacks cpx62,
+# so the dedicated ccx43 (16 vCPU) serves as fallback.
+LOCATIONS=("hel1" "nbg1" "fsn1")
+SERVER_TYPES=("cpx62" "ccx43")
 
 # Retry configuration
 RETRY_DELAY=30
@@ -89,8 +91,12 @@ for location_index in $(seq 0 $((location_count - 1))); do
 		fi
 
 		if [[ $attempt -lt $MAX_RETRIES ]]; then
-			echo "Cleaning up partial deployment..."
-			terraform destroy -auto-approve || true
+			# Keep already provisioned resources while retrying within a location;
+			# only tear down when moving on to the next location.
+			if [[ $server_type_index -eq $((server_type_count - 1)) ]]; then
+				echo "Location ${attempt_location} exhausted, cleaning up partial deployment..."
+				terraform destroy -auto-approve || true
+			fi
 
 			echo "Waiting ${RETRY_DELAY}s for resources to become available..."
 			sleep $RETRY_DELAY

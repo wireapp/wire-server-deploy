@@ -10,11 +10,15 @@ COMMIT_HASH="${GITHUB_SHA}"
 ARTIFACT="wire-server-deploy-static-${COMMIT_HASH}"
 
 # Retry matrix
-# Locations are tried in order and exhaust all server types before moving on.
+# Locations are tried in order and exhaust all server type pairs before moving on.
 # Prefer hel1: German locations rarely have capacity.
+# Pairs (small/medium) are matched by index. cx* types are currently not offered
+# in any EU location, so dedicated ccx types serve as fallback.
+# Servers use lifecycle.ignore_changes = [server_type], so on retry only servers
+# that failed to be created pick up the next pair; existing ones are kept.
 LOCATIONS=("hel1" "nbg1" "fsn1")
-SMALL_SERVER_TYPES=("cpx22" "cpx32" "cpx42")
-MEDIUM_SERVER_TYPES=("cpx42" "cpx52" "cpx62")
+SMALL_SERVER_TYPES=("cpx22" "cpx32" "ccx13" "ccx23")
+MEDIUM_SERVER_TYPES=("cpx42" "cpx42" "ccx23" "ccx33")
 
 # Retry configuration
 RETRY_DELAY=30
@@ -100,8 +104,12 @@ for location_index in $(seq 0 $((location_count - 1))); do
         if [[ $attempt -lt $MAX_RETRIES ]]; then
             echo "Will retry with the next location and server type combination..."
 
-            echo "Cleaning up partial deployment..."
-            terraform destroy -auto-approve || true
+            # Keep already provisioned servers while retrying within a location;
+            # only tear down when moving on to the next location.
+            if [[ $server_type_index -eq $((server_type_count - 1)) ]]; then
+                echo "Location ${attempt_location} exhausted, cleaning up partial deployment..."
+                terraform destroy -auto-approve || true
+            fi
 
             echo "Waiting ${RETRY_DELAY}s for resources to become available..."
             sleep $RETRY_DELAY

@@ -1,0 +1,1 @@
+Fixed: Hetzner CD retry matrix only uses server types offered in EU locations (ccx as fallback) and only tears down provisioned machines when moving on to the next location

@@ -221,4 +221,7 @@ resource "hcloud_server" "datanode" {
     network_id = hcloud_network.main.id
     ip         = ""
   }
+  lifecycle {
+    ignore_changes = [server_type]
+  }
 }

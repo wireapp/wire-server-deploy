@@ -1,1 +1,1 @@
-Fixed: subsequent provisioning retries to change server_type will not automatically tear down already deployed machines
+Fixed: subsequent provisioning retries with changed server_type will not automatically tear down already deployed machines
