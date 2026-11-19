@@ -9,7 +9,11 @@ ingress-nginx:
       # federator ingresses of nginx-ingress-services.
       annotations-risk-level: Critical
     image:
-      tag: "v1.13.9"
+      # Patched build of https://github.com/chainguard-forks/ingress-nginx controller-v1.15.16
+      # (NGINX fixes for CVE-2026-123007 / CVE-2026-123633), see CO-79.
+      # Timestamped tag = sha256:ceab4e092799cb93beb3dae20bd06c5902022ead7e6c51b3c8fc554332ebecd5
+      repository: quay.io/wire/ingress-nginx-chainguard/controller
+      tag: "v1.15.16-20261119135009.gb3cf87b"
       digest: ""
       digestChroot: ""
     admissionWebhooks:

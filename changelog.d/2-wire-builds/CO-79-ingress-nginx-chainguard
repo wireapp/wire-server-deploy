@@ -1,0 +1,1 @@
+Changed: ship the patched Chainguard-fork ingress-nginx controller image (v1.15.16, NGINX fixes for CVE-2026-123007 / CVE-2026-123633) instead of upstream `registry.k8s.io/ingress-nginx/controller:v1.13.9`; the ingress-nginx chart stays at 4.13.9 (CO-79)
