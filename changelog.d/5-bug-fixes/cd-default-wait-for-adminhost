@@ -1,0 +1,1 @@
+Fixed: wait for SSH on the adminhost private IP before running setup_nodes.yml in the default Hetzner CD environment (same as wiab-staging, #919)

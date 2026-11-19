@@ -3,14 +3,19 @@
 # `containerd`.
 ingress-nginx:
   controller:
+    config:
+      # Controller >= 1.12 defaults to "High" and rejects ingresses with
+      # *-snippet annotations (risk "Critical"), e.g. the minio, nginz and
+      # federator ingresses of nginx-ingress-services.
+      annotations-risk-level: Critical
     image:
-      tag: "v1.10.6"
+      tag: "v1.13.9"
       digest: ""
       digestChroot: ""
     admissionWebhooks:
       patch:
         image:
-          tag: "v20220916-gd32f8c343"
+          tag: "v1.6.9"
           digest: ""
     # Enable prometheus operator to scrape metrics from the ingress-nginx controller with servicemonitor.
     metrics:
