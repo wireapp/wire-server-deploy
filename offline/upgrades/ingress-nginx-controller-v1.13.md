@@ -1,18 +1,19 @@
-# Upgrade ingress-nginx controller to v1.13.9 (wire-server 5.25)
+# Upgrade ingress-nginx controller (wire-server 5.25)
 
-Fixes known CVEs in the ingress-nginx controller image shipped with wire-server-deploy 5.25 (WPB-26631).
+Fixes known CVEs in the ingress-nginx controller image shipped with wire-server-deploy 5.25 (WPB-26631) and patches the NGINX HTTP/2 vulnerabilities CVE-2026-123007 and CVE-2026-123633 (CO-79).
 
 ## Scope
 
 | Component | Before | After |
 |---|---|---|
 | `ingress-nginx` subchart of `charts/ingress-nginx-controller` | `4.11.5` | `4.13.9` |
-| Controller image (`registry.k8s.io/ingress-nginx/controller`) | `v1.10.6` (values) | `v1.13.9` |
+| Controller image | `registry.k8s.io/ingress-nginx/controller:v1.10.6` (values) | `quay.io/wire/ingress-nginx-chainguard/controller:v1.15.16-20261119135009.gb3cf87b` |
 | Admission webhook image (`registry.k8s.io/ingress-nginx/kube-webhook-certgen`) | `v20220916-gd32f8c343` | `v1.6.9` |
 | `controller.config.annotations-risk-level` | not set (controller default) | `Critical` |
 
 - No other chart or image changes. wire-server stays on 5.25.0.
-- Supported Kubernetes versions: 1.29 – 1.33. The 5.25 bundle installs Kubernetes v1.29.10.
+- Controller image: Wire build of the [Chainguard ingress-nginx fork](https://github.com/chainguard-forks/ingress-nginx) release [`controller-v1.15.16`](https://github.com/chainguard-forks/ingress-nginx/releases/tag/controller-v1.15.16). It backports the NGINX 1.30.7 fixes for CVE-2026-123007 and CVE-2026-123633 to its bundled NGINX 1.27.1; the binary still reports `nginx/1.27.1`. Multi-arch (linux/amd64, linux/arm64). The tag `v1.15.16-20261119135009.gb3cf87b` is digest `sha256:ceab4e092799cb93beb3dae20bd06c5902022ead7e6c51b3c8fc554332ebecd5`. See also the Wire security response for these CVEs on docs.wire.com.
+- Kubernetes: ingress-nginx 1.15 is officially tested on Kubernetes 1.31 – 1.35. The 5.25 bundle installs Kubernetes v1.29.10; the controller runs there but outside upstream's tested range.
 - Expected impact: rolling restart of the ingress controller pods. Ingress service, node ports and DNS do not change.
 
 ## Background
@@ -71,10 +72,10 @@ d ansible-playbook -i ./ansible/inventory/offline/hosts.ini ansible/seed-offline
 Verify on one Kubernetes node:
 
 ```bash
-sudo crictl images | grep -E 'ingress-nginx/(controller|kube-webhook-certgen)'
+sudo crictl images | grep -E 'ingress-nginx(-chainguard)?/(controller|kube-webhook-certgen)'
 ```
 
-Expected: `controller` tag `v1.13.9`, `kube-webhook-certgen` tag `v1.6.9`.
+Expected: `quay.io/wire/ingress-nginx-chainguard/controller` tag `v1.15.16-20261119135009.gb3cf87b`, `registry.k8s.io/ingress-nginx/kube-webhook-certgen` tag `v1.6.9`.
 
 ## 3. Update ingress-nginx-controller values
 
@@ -86,7 +87,8 @@ ingress-nginx:
     config:
       annotations-risk-level: Critical
     image:
-      tag: "v1.13.9"
+      repository: quay.io/wire/ingress-nginx-chainguard/controller
+      tag: "v1.15.16-20261119135009.gb3cf87b"
       digest: ""
       digestChroot: ""
     admissionWebhooks:
@@ -97,7 +99,9 @@ ingress-nginx:
 ```
 
 - Keep all other existing keys (`kind`, `service`, `metrics`, ...).
+- `repository` replaces the chart's `registry` + `image`; remove any `controller.image.registry` / `controller.image.image` overrides you set before.
 - Remove any other `annotations-risk-level` setting (e.g. `Warning`).
+- Metrics: with this bundle's chart (4.13.9), `controller.metrics.enabled: true` also passes `--enable-metrics=true` to the controller. A `controller.extraArgs.enable-metrics` override (needed with chart 4.11.5) is not required.
 - Reference: `values/ingress-nginx-controller/prod-values.example.yaml`.
 
 Compare:
@@ -121,7 +125,7 @@ Expected:
 ```
   allow-snippet-annotations: "true"
   annotations-risk-level: "Critical"
-          image: registry.k8s.io/ingress-nginx/controller:v1.13.9
+          image: quay.io/wire/ingress-nginx-chainguard/controller:v1.15.16-20261119135009.gb3cf87b
           image: registry.k8s.io/ingress-nginx/kube-webhook-certgen:v1.6.9
           image: registry.k8s.io/ingress-nginx/kube-webhook-certgen:v1.6.9
 ```
@@ -150,7 +154,7 @@ SEL="app.kubernetes.io/instance=ingress-nginx-controller,app.kubernetes.io/compo
 | # | Check | Command | Expected |
 |---|---|---|---|
 | 1 | Pods ready | `d kubectl get pods -n <NS> -l "$SEL"` | All `Running`, `READY` 1/1 |
-| 2 | Controller version | `d kubectl exec -n <NS> $(d kubectl get pod -n <NS> -l "$SEL" -o name \| head -1) -- /nginx-ingress-controller --version` | `Release: v1.13.9` |
+| 2 | Controller version | `d kubectl exec -n <NS> $(d kubectl get pod -n <NS> -l "$SEL" -o name \| head -1) -- /nginx-ingress-controller --version` | `Release: v1.15.16`, `Repository: https://github.com/chainguard-forks/ingress-nginx.git` |
 | 3 | Risk level active | `d kubectl get cm -n <NS> ingress-nginx-controller-controller -o jsonpath='{.data.annotations-risk-level}'` | `Critical` |
 | 4 | No rejected ingresses | `d kubectl logs -n <NS> -l "$SEL" --tail=-1 \| grep -Ei 'risky\|too risky\|cannot be used'` | No output |
 | 5 | Ingresses | `d kubectl get ingress -n <NS>` | `ADDRESS` populated for all ingresses |
