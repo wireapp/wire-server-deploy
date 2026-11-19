@@ -1,6 +1,6 @@
 # Upgrade ingress-nginx controller to v1.13.9 (wire-server 5.25)
 
-Fixes known CVEs in the ingress-nginx controller image shipped with wire-server-deploy 5.25 (WPB-26631).
+Fixes known CVEs in the ingress-nginx controller image shipped with wire-server-deploy 5.25 (WPB-26631) and mitigates CVE-2026-123007 by disabling HTTP/2.
 
 ## Scope
 
@@ -10,6 +10,7 @@ Fixes known CVEs in the ingress-nginx controller image shipped with wire-server-
 | Controller image (`registry.k8s.io/ingress-nginx/controller`) | `v1.10.6` (values) | `v1.13.9` |
 | Admission webhook image (`registry.k8s.io/ingress-nginx/kube-webhook-certgen`) | `v20220916-gd32f8c343` | `v1.6.9` |
 | `controller.config.annotations-risk-level` | not set (controller default) | `Critical` |
+| `controller.config.use-http2` | not set (HTTP/2 enabled) | `false` (mitigates CVE-2026-123007) |
 
 - No other chart or image changes. wire-server stays on 5.25.0.
 - Supported Kubernetes versions: 1.29 – 1.33. The 5.25 bundle installs Kubernetes v1.29.10.
@@ -25,6 +26,7 @@ Fixes known CVEs in the ingress-nginx controller image shipped with wire-server-
   - with admission webhook: `helm upgrade nginx-ingress-services` fails with `admission webhook "validate.nginx.ingress.kubernetes.io" denied the request: annotation group ServerSnippet contains risky annotation based on ingress configuration`.
   - without admission webhook: the controller ignores these ingresses and serves its fake default certificate.
 - `annotations-risk-level` is a setting of the **ingress-nginx-controller** release (`ingress-nginx.controller.config`). Setting it on the `nginx-ingress-services` release (e.g. `--set controller.config.annotations-risk-level=...`) has no effect.
+- `use-http2: false` disables HTTP/2 on the ingress to mitigate CVE-2026-123007. Clients fall back to HTTP/1.1. Same release and key path as `annotations-risk-level`.
 
 ## Prerequisites
 
@@ -85,6 +87,7 @@ ingress-nginx:
   controller:
     config:
       annotations-risk-level: Critical
+      use-http2: false
     image:
       tag: "v1.13.9"
       digest: ""
@@ -113,7 +116,7 @@ Expected: only your environment-specific differences.
 ```bash
 d helm template ingress-nginx-controller ./charts/ingress-nginx-controller -n <NS> \
   -f values/ingress-nginx-controller/values.yaml \
-  | grep -E 'image: |annotations-risk-level|allow-snippet-annotations'
+  | grep -E 'image: |annotations-risk-level|allow-snippet-annotations|use-http2'
 ```
 
 Expected:
@@ -121,6 +124,7 @@ Expected:
 ```
   allow-snippet-annotations: "true"
   annotations-risk-level: "Critical"
+  use-http2: "false"
           image: registry.k8s.io/ingress-nginx/controller:v1.13.9
           image: registry.k8s.io/ingress-nginx/kube-webhook-certgen:v1.6.9
           image: registry.k8s.io/ingress-nginx/kube-webhook-certgen:v1.6.9
@@ -152,6 +156,8 @@ SEL="app.kubernetes.io/instance=ingress-nginx-controller,app.kubernetes.io/compo
 | 1 | Pods ready | `d kubectl get pods -n <NS> -l "$SEL"` | All `Running`, `READY` 1/1 |
 | 2 | Controller version | `d kubectl exec -n <NS> $(d kubectl get pod -n <NS> -l "$SEL" -o name \| head -1) -- /nginx-ingress-controller --version` | `Release: v1.13.9` |
 | 3 | Risk level active | `d kubectl get cm -n <NS> ingress-nginx-controller-controller -o jsonpath='{.data.annotations-risk-level}'` | `Critical` |
+| 3a | HTTP/2 disabled (config) | `d kubectl get cm -n <NS> ingress-nginx-controller-controller -o jsonpath='{.data.use-http2}'` | `false` |
+| 3b | HTTP/2 disabled (client) | `curl -s -o /dev/null --http2 -w '%{http_version}\n' https://nginz-https.<DOMAIN>/api-version` | `1.1` (not `2`) |
 | 4 | No rejected ingresses | `d kubectl logs -n <NS> -l "$SEL" --tail=-1 \| grep -Ei 'risky\|too risky\|cannot be used'` | No output |
 | 5 | Ingresses | `d kubectl get ingress -n <NS>` | `ADDRESS` populated for all ingresses |
 | 6 | API | `curl -s https://nginz-https.<DOMAIN>/api-version` | JSON with `supported` versions |
