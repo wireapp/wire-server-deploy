@@ -1,0 +1,1 @@
+Added: the offline workflow can be started manually (workflow_dispatch) with a profile and a wire-builds ref, to build bundles for any build.json without committing to wire-server-deploy; manual builds also attach the bundle to the run (kept 14 days)

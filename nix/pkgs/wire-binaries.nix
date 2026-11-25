@@ -110,18 +110,18 @@ let
     # when updating the packages, update the checksums too in wire-server-deploy/ansible/inventory/offline/group_vars/all/offline.yml
     postgresql = fetchurl rec {
       passthru.url = url;
-      url = "https://apt.postgresql.org/pub/repos/apt/pool/main/p/postgresql-17/postgresql-17_17.8-1.pgdg22.04+1_amd64.deb";
-      sha256 = "sha256:bddeaf93563ecf60df46b2000fd4d519d346d811579f89f30387de8d58f9b0dd";
+      url = "https://apt.postgresql.org/pub/repos/apt/pool/main/p/postgresql-17/postgresql-17_17.9-1.pgdg22.04+1_amd64.deb";
+      sha256 = "sha256:69a65391f4ec1eac6a64b6f9c4bd31406f5ce5250cb669a5d00bd59f2d1e9e79";
     };
     postgresql-client = fetchurl rec {
       passthru.url = url;
-      url = "https://apt.postgresql.org/pub/repos/apt/pool/main/p/postgresql-17/postgresql-client-17_17.8-1.pgdg22.04+1_amd64.deb";
-      sha256 = "sha256:a83a985f1e406c1914212de5dffdcce277d3d82ae5d542dd9d84001a97a427e4";
+      url = "https://apt.postgresql.org/pub/repos/apt/pool/main/p/postgresql-17/postgresql-client-17_17.9-1.pgdg22.04+1_amd64.deb";
+      sha256 = "sha256:941afbc8e2a3396281cc4877ceb35c767f4638bd731b66ec8edf1fd56d30a538";
     };
     libpq5 = fetchurl rec {
       passthru.url = url;
-      url = "https://apt.postgresql.org/pub/repos/apt/pool/main/p/postgresql-18/libpq5_18.2-1.pgdg22.04+1_amd64.deb";
-      sha256 = "sha256:54e4ab2606aea5525bfd1a99b6e1b143458caced07bd840ccb46a69cad61f341";
+      url = "https://apt.postgresql.org/pub/repos/apt/pool/main/p/postgresql-18/libpq5_18.3-1.pgdg22.04+1_amd64.deb";
+      sha256 = "sha256:06dbcee7e5430a50e71aee28aa83b6aad0325756b67390831f7dbfa5839c9630";
     };
     postgresql-client-common = fetchurl rec {
       passthru.url = url;

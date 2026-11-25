@@ -6,7 +6,8 @@ CD_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 TF_DIR="${CD_DIR}/../terraform/examples/wiab-staging-hetzner"
 VALUES_DIR="${CD_DIR}/../values"
 TF_VARS_FILE="${TF_DIR}/retry-selection.auto.tfvars.json"
-COMMIT_HASH="${GITHUB_SHA}"
+# name of the uploaded bundle; overridden by workflow_dispatch builds
+COMMIT_HASH="${COMMIT_HASH:-$GITHUB_SHA}"
 ARTIFACT="wire-server-deploy-static-${COMMIT_HASH}"
 
 # Retry matrix

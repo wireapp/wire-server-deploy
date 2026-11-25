@@ -16,6 +16,13 @@
 #
 # Push to master/develop: Always builds all profiles regardless of labels
 #
+# Manual builds (workflow_dispatch), e.g. for a release candidate in wire-builds:
+#   gh workflow run offline.yml --ref <branch> -f profile=min -f wire_build_ref=<wire-builds commit/branch/tag>
+#   - 'profile' selects the profiles like the labels above
+#   - 'wire_build_ref' selects the build.json from wireapp/wire-builds (empty: script default)
+#   - bundles are uploaded to S3 as wire-server-deploy-static[-<profile>]-<sha>-wire-builds-<ref>.tgz
+#     and attached to the run (kept 14 days)
+#
 on:
   push:
     branches: ["**"]
@@ -29,12 +36,31 @@ on:
     paths-ignore:
       - "*.md"
       - "**/*.md"
+  workflow_dispatch:
+    inputs:
+      profile:
+        description: "Profile(s) to build (same meaning as the build-* PR labels)"
+        type: choice
+        options: [min, default, dev, wiab-staging, all]
+        default: min
+      wire_build_ref:
+        description: "wireapp/wire-builds commit, branch or tag to take build.json from (empty: default of proc_pull_charts.sh)"
+        type: string
+        required: false
+        default: ""
+
+env:
+  # build.json URL for workflow_dispatch builds; empty otherwise (the scripts then use their default)
+  WIRE_BUILD: ${{ inputs.wire_build_ref != '' && format('https://raw.githubusercontent.com/wireapp/wire-builds/{0}/build.json', inputs.wire_build_ref) || '' }}
+  WIRE_BUILD_REF: ${{ inputs.wire_build_ref }}
+
 jobs:
   # Build default profile and create local assets
   build-default:
     name: Build default profile
     if: |
       (github.event_name == 'push' && github.ref == 'refs/heads/master') ||
+      (github.event_name == 'workflow_dispatch' && (inputs.profile == 'all' || inputs.profile == 'default' || inputs.profile == 'wiab-staging')) ||
       contains(github.event.pull_request.labels.*.name, 'build-all') ||
       contains(github.event.pull_request.labels.*.name, 'build-default') ||
       contains(github.event.pull_request.labels.*.name, 'build-wiab-staging')
@@ -57,14 +83,22 @@ jobs:
 
       - name: Get upload name
         id: upload_name
-        run: echo "UPLOAD_NAME=$GITHUB_SHA" >> $GITHUB_OUTPUT
+        run: |
+          name="$GITHUB_SHA"
+          if [[ -n "$WIRE_BUILD_REF" ]]; then
+            name="${name}-wire-builds-$(printf '%s' "$WIRE_BUILD_REF" | tr -c 'A-Za-z0-9._-' '-' | cut -c1-64)"
+          fi
+          echo "UPLOAD_NAME=$name" >> "$GITHUB_OUTPUT"
 
       # default profile build
       - name: Process the default profile build
         run: ./offline/default-build/build.sh
         env:
           GPG_PRIVATE_KEY: '${{ secrets.GPG_PRIVATE_KEY }}'
-          DOCKER_LOGIN: '${{ secrets.DOCKER_LOGIN }}'
+          # read-only robot for pulling helm charts (OCI) and container images from quay.io
+          DOCKER_LOGIN: '${{ secrets.QUAY_WIRE_ALL_REPOS_READONLY_USERNAME }}:${{ secrets.QUAY_WIRE_ALL_REPOS_READONLY_PASSWORD }}'
+          OCI_REGISTRY_USERNAME: '${{ secrets.QUAY_WIRE_ALL_REPOS_READONLY_USERNAME }}'
+          OCI_REGISTRY_PASSWORD: '${{ secrets.QUAY_WIRE_ALL_REPOS_READONLY_PASSWORD }}'
 
       - name: Copy default build assets tarball to S3
         run: |
@@ -75,11 +109,29 @@ jobs:
           AWS_SECRET_ACCESS_KEY: '${{ secrets.AWS_SECRET_ACCESS_KEY }}'
           AWS_REGION: "eu-west-1"
 
+      # Manual builds are handed out to people: also attach the bundle to the run
+      # (as a plain .tgz, not zipped). S3 stays the permanent copy.
+      - name: Name default bundle for attaching to the run
+        if: github.event_name == 'workflow_dispatch'
+        run: ln -f "offline/default-build/output/assets.tgz" "offline/default-build/output/wire-server-deploy-static-${UPLOAD_NAME}.tgz"
+        env:
+          UPLOAD_NAME: ${{ steps.upload_name.outputs.UPLOAD_NAME }}
+
+      - name: Attach default bundle to the run
+        if: github.event_name == 'workflow_dispatch'
+        uses: actions/upload-artifact@v7
+        with:
+          path: offline/default-build/output/wire-server-deploy-static-${{ steps.upload_name.outputs.UPLOAD_NAME }}.tgz
+          archive: false
+          retention-days: 14
+          if-no-files-found: error
+
   verify-default:
     name: Verify default profile
     needs: build-default
     if: |
       (github.event_name == 'push' && github.ref == 'refs/heads/master') ||
+      (github.event_name == 'workflow_dispatch' && (inputs.profile == 'all' || inputs.profile == 'default')) ||
       contains(github.event.pull_request.labels.*.name, 'build-all') ||
       contains(github.event.pull_request.labels.*.name, 'build-default')
     runs-on:
@@ -108,6 +160,7 @@ jobs:
         run: ./offline/cd.sh
         env:
           HCLOUD_TOKEN: '${{ secrets.HCLOUD_TOKEN }}'
+          COMMIT_HASH: ${{ needs.build-default.outputs.upload_name }}
 
       - name: Clean up hetzner environment; just in case
         # Skip when terraform was never installed (earlier step failed): nothing was deployed.
@@ -122,6 +175,7 @@ jobs:
     needs: build-default
     if: |
       (github.event_name == 'push' && github.ref == 'refs/heads/master') ||
+      (github.event_name == 'workflow_dispatch' && (inputs.profile == 'all' || inputs.profile == 'wiab-staging')) ||
       contains(github.event.pull_request.labels.*.name, 'build-all') ||
       contains(github.event.pull_request.labels.*.name, 'build-wiab-staging')
     runs-on:
@@ -150,6 +204,7 @@ jobs:
         run: ./offline/cd_staging.sh
         env:
           HCLOUD_TOKEN: '${{ secrets.HCLOUD_TOKEN }}'
+          COMMIT_HASH: ${{ needs.build-default.outputs.upload_name }}
 
       - name: Clean up hetzner wiab-staging environment; just in case
         # Skip when terraform was never installed (earlier step failed): nothing was deployed.
@@ -188,6 +243,7 @@ jobs:
     name: Build dev profile
     if: |
       (github.event_name == 'push' && github.ref == 'refs/heads/master') ||
+      (github.event_name == 'workflow_dispatch' && (inputs.profile == 'all' || inputs.profile == 'dev')) ||
       contains(github.event.pull_request.labels.*.name, 'build-all') ||
       contains(github.event.pull_request.labels.*.name, 'build-dev')
     runs-on:
@@ -207,13 +263,21 @@ jobs:
 
       - name: Get upload name
         id: upload_name
-        run: echo "UPLOAD_NAME=$GITHUB_SHA" >> $GITHUB_OUTPUT
+        run: |
+          name="$GITHUB_SHA"
+          if [[ -n "$WIRE_BUILD_REF" ]]; then
+            name="${name}-wire-builds-$(printf '%s' "$WIRE_BUILD_REF" | tr -c 'A-Za-z0-9._-' '-' | cut -c1-64)"
+          fi
+          echo "UPLOAD_NAME=$name" >> "$GITHUB_OUTPUT"
 
       - name: Process the dev profile build
         run: ./offline/demo-build/build.sh
         env:
           GPG_PRIVATE_KEY: "${{ secrets.GPG_PRIVATE_KEY }}"
-          DOCKER_LOGIN: "${{ secrets.DOCKER_LOGIN }}"
+          # read-only robot for pulling helm charts (OCI) and container images from quay.io
+          DOCKER_LOGIN: "${{ secrets.QUAY_WIRE_ALL_REPOS_READONLY_USERNAME }}:${{ secrets.QUAY_WIRE_ALL_REPOS_READONLY_PASSWORD }}"
+          OCI_REGISTRY_USERNAME: "${{ secrets.QUAY_WIRE_ALL_REPOS_READONLY_USERNAME }}"
+          OCI_REGISTRY_PASSWORD: "${{ secrets.QUAY_WIRE_ALL_REPOS_READONLY_PASSWORD }}"
 
       - name: Copy dev build assets tarball to S3
         run: |
@@ -223,6 +287,23 @@ jobs:
           AWS_ACCESS_KEY_ID: "${{ secrets.AWS_ACCESS_KEY_ID }}"
           AWS_SECRET_ACCESS_KEY: "${{ secrets.AWS_SECRET_ACCESS_KEY }}"
           AWS_REGION: "eu-west-1"
+
+      # Manual builds are handed out to people: also attach the bundle to the run
+      # (as a plain .tgz, not zipped). S3 stays the permanent copy.
+      - name: Name dev bundle for attaching to the run
+        if: github.event_name == 'workflow_dispatch'
+        run: ln -f "offline/demo-build/output/assets.tgz" "offline/demo-build/output/wire-server-deploy-static-demo-${UPLOAD_NAME}.tgz"
+        env:
+          UPLOAD_NAME: ${{ steps.upload_name.outputs.UPLOAD_NAME }}
+
+      - name: Attach dev bundle to the run
+        if: github.event_name == 'workflow_dispatch'
+        uses: actions/upload-artifact@v7
+        with:
+          path: offline/demo-build/output/wire-server-deploy-static-demo-${{ steps.upload_name.outputs.UPLOAD_NAME }}.tgz
+          archive: false
+          retention-days: 14
+          if-no-files-found: error
 
       - name: Install terraform
         id: install-terraform
@@ -235,6 +316,7 @@ jobs:
         run: ./offline/cd_demo.sh
         env:
           HCLOUD_TOKEN: '${{ secrets.HCLOUD_TOKEN }}'
+          COMMIT_HASH: ${{ steps.upload_name.outputs.UPLOAD_NAME }}
 
       - name: Clean up hetzner wiab environment; just in case
         # Skip when terraform was never installed (earlier step failed): nothing was deployed.
@@ -251,6 +333,7 @@ jobs:
     name: Build min profile
     if: |
       (github.event_name == 'push' && github.ref == 'refs/heads/master') ||
+      (github.event_name == 'workflow_dispatch' && (inputs.profile == 'all' || inputs.profile == 'min')) ||
       contains(github.event.pull_request.labels.*.name, 'build-all') ||
       contains(github.event.pull_request.labels.*.name, 'build-min')
     runs-on:
@@ -270,13 +353,21 @@ jobs:
 
       - name: Get upload name
         id: upload_name
-        run: echo "UPLOAD_NAME=$GITHUB_SHA" >> $GITHUB_OUTPUT
+        run: |
+          name="$GITHUB_SHA"
+          if [[ -n "$WIRE_BUILD_REF" ]]; then
+            name="${name}-wire-builds-$(printf '%s' "$WIRE_BUILD_REF" | tr -c 'A-Za-z0-9._-' '-' | cut -c1-64)"
+          fi
+          echo "UPLOAD_NAME=$name" >> "$GITHUB_OUTPUT"
 
       - name: Process the min profile build
         run: ./offline/min-build/build.sh
         env:
           GPG_PRIVATE_KEY: "${{ secrets.GPG_PRIVATE_KEY }}"
-          DOCKER_LOGIN: "${{ secrets.DOCKER_LOGIN }}"
+          # read-only robot for pulling helm charts (OCI) and container images from quay.io
+          DOCKER_LOGIN: "${{ secrets.QUAY_WIRE_ALL_REPOS_READONLY_USERNAME }}:${{ secrets.QUAY_WIRE_ALL_REPOS_READONLY_PASSWORD }}"
+          OCI_REGISTRY_USERNAME: "${{ secrets.QUAY_WIRE_ALL_REPOS_READONLY_USERNAME }}"
+          OCI_REGISTRY_PASSWORD: "${{ secrets.QUAY_WIRE_ALL_REPOS_READONLY_PASSWORD }}"
 
       - name: Copy min build assets tarball to S3
         run: |
@@ -286,6 +377,23 @@ jobs:
           AWS_ACCESS_KEY_ID: "${{ secrets.AWS_ACCESS_KEY_ID }}"
           AWS_SECRET_ACCESS_KEY: "${{ secrets.AWS_SECRET_ACCESS_KEY }}"
           AWS_REGION: "eu-west-1"
+
+      # Manual builds are handed out to people: also attach the bundle to the run
+      # (as a plain .tgz, not zipped). S3 stays the permanent copy.
+      - name: Name min bundle for attaching to the run
+        if: github.event_name == 'workflow_dispatch'
+        run: ln -f "offline/min-build/output/assets.tgz" "offline/min-build/output/wire-server-deploy-static-min-${UPLOAD_NAME}.tgz"
+        env:
+          UPLOAD_NAME: ${{ steps.upload_name.outputs.UPLOAD_NAME }}
+
+      - name: Attach min bundle to the run
+        if: github.event_name == 'workflow_dispatch'
+        uses: actions/upload-artifact@v7
+        with:
+          path: offline/min-build/output/wire-server-deploy-static-min-${{ steps.upload_name.outputs.UPLOAD_NAME }}.tgz
+          archive: false
+          retention-days: 14
+          if-no-files-found: error
 
       - name: Cleanup min build assets
         run: rm -rf offline/min-build/output/
