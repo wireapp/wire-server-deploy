@@ -79,6 +79,8 @@ rec {
       curl
       gawk
       oras
+      # Hetzner Cloud CLI, for debugging the offline CD environment (offline/cd.sh)
+      hcloud
 
       niv
       nix-prefetch-docker
