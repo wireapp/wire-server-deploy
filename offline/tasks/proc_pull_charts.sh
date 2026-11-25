@@ -3,8 +3,9 @@
 set -euo pipefail
 
 OUTPUT_DIR=""
-# build.json to source chart versions from; override with WIRE_BUILD=<url>
-WIRE_BUILD="https://raw.githubusercontent.com/wireapp/wire-builds/refs/heads/2026-q4-from-rm/build.json"
+# build.json to source chart versions from; override with the WIRE_BUILD=<url>
+# argument or the WIRE_BUILD environment variable
+WIRE_BUILD="${WIRE_BUILD:-https://raw.githubusercontent.com/wireapp/wire-builds/refs/heads/2026-q4-from-rm/build.json}"
 # Default exclude lists
 HELM_CHART_EXCLUDE_LIST="inbucket,wire-server-enterprise,demo-smtp"
 

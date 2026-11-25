@@ -13,7 +13,8 @@ INVENTORY_DIR="${ANSIBLE_DIR}/inventory/demo"
 INVENTORY_FILE="${INVENTORY_DIR}/host.yml"
 TF_VARS_FILE="${TF_DIR}/retry-selection.auto.tfvars.json"
 TEST_USER="demo"
-COMMIT_HASH="${GITHUB_SHA}"
+# name of the uploaded bundle; overridden by workflow_dispatch builds
+COMMIT_HASH="${COMMIT_HASH:-$GITHUB_SHA}"
 
 # Retry matrix
 # Locations are tried in order and exhaust all server types before moving on.
