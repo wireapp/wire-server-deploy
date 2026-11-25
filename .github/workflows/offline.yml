@@ -20,7 +20,8 @@
 #   gh workflow run offline.yml --ref <branch> -f profile=min -f wire_build_ref=<wire-builds commit/branch/tag>
 #   - 'profile' selects the profiles like the labels above
 #   - 'wire_build_ref' selects the build.json from wireapp/wire-builds (empty: script default)
-#   - bundles are uploaded as wire-server-deploy-static[-<profile>]-<sha>-wire-builds-<ref>.tgz
+#   - bundles are uploaded to S3 as wire-server-deploy-static[-<profile>]-<sha>-wire-builds-<ref>.tgz
+#     and attached to the run (kept 14 days)
 #
 on:
   push:
@@ -107,6 +108,23 @@ jobs:
           AWS_ACCESS_KEY_ID: '${{ secrets.AWS_ACCESS_KEY_ID }}'
           AWS_SECRET_ACCESS_KEY: '${{ secrets.AWS_SECRET_ACCESS_KEY }}'
           AWS_REGION: "eu-west-1"
+
+      # Manual builds are handed out to people: also attach the bundle to the run
+      # (as a plain .tgz, not zipped). S3 stays the permanent copy.
+      - name: Name default bundle for attaching to the run
+        if: github.event_name == 'workflow_dispatch'
+        run: ln -f "offline/default-build/output/assets.tgz" "offline/default-build/output/wire-server-deploy-static-${UPLOAD_NAME}.tgz"
+        env:
+          UPLOAD_NAME: ${{ steps.upload_name.outputs.UPLOAD_NAME }}
+
+      - name: Attach default bundle to the run
+        if: github.event_name == 'workflow_dispatch'
+        uses: actions/upload-artifact@v7
+        with:
+          path: offline/default-build/output/wire-server-deploy-static-${{ steps.upload_name.outputs.UPLOAD_NAME }}.tgz
+          archive: false
+          retention-days: 14
+          if-no-files-found: error
 
   verify-default:
     name: Verify default profile
@@ -270,6 +288,23 @@ jobs:
           AWS_SECRET_ACCESS_KEY: "${{ secrets.AWS_SECRET_ACCESS_KEY }}"
           AWS_REGION: "eu-west-1"
 
+      # Manual builds are handed out to people: also attach the bundle to the run
+      # (as a plain .tgz, not zipped). S3 stays the permanent copy.
+      - name: Name dev bundle for attaching to the run
+        if: github.event_name == 'workflow_dispatch'
+        run: ln -f "offline/demo-build/output/assets.tgz" "offline/demo-build/output/wire-server-deploy-static-demo-${UPLOAD_NAME}.tgz"
+        env:
+          UPLOAD_NAME: ${{ steps.upload_name.outputs.UPLOAD_NAME }}
+
+      - name: Attach dev bundle to the run
+        if: github.event_name == 'workflow_dispatch'
+        uses: actions/upload-artifact@v7
+        with:
+          path: offline/demo-build/output/wire-server-deploy-static-demo-${{ steps.upload_name.outputs.UPLOAD_NAME }}.tgz
+          archive: false
+          retention-days: 14
+          if-no-files-found: error
+
       - name: Install terraform
         id: install-terraform
         uses: hashicorp/setup-terraform@v3
@@ -342,6 +377,23 @@ jobs:
           AWS_ACCESS_KEY_ID: "${{ secrets.AWS_ACCESS_KEY_ID }}"
           AWS_SECRET_ACCESS_KEY: "${{ secrets.AWS_SECRET_ACCESS_KEY }}"
           AWS_REGION: "eu-west-1"
+
+      # Manual builds are handed out to people: also attach the bundle to the run
+      # (as a plain .tgz, not zipped). S3 stays the permanent copy.
+      - name: Name min bundle for attaching to the run
+        if: github.event_name == 'workflow_dispatch'
+        run: ln -f "offline/min-build/output/assets.tgz" "offline/min-build/output/wire-server-deploy-static-min-${UPLOAD_NAME}.tgz"
+        env:
+          UPLOAD_NAME: ${{ steps.upload_name.outputs.UPLOAD_NAME }}
+
+      - name: Attach min bundle to the run
+        if: github.event_name == 'workflow_dispatch'
+        uses: actions/upload-artifact@v7
+        with:
+          path: offline/min-build/output/wire-server-deploy-static-min-${{ steps.upload_name.outputs.UPLOAD_NAME }}.tgz
+          archive: false
+          retention-days: 14
+          if-no-files-found: error
 
       - name: Cleanup min build assets
         run: rm -rf offline/min-build/output/
