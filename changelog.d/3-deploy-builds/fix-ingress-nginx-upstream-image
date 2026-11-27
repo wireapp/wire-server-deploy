@@ -1,0 +1,1 @@
+Changed: stop pinning the ingress-nginx controller and webhook image tags in example values so the chart uses the upstream defaults
