@@ -35,7 +35,6 @@ function dump_debug_logs {
 trap dump_debug_logs ERR
 
 configure_calling_environment() {
-
   if [[ "$DEPLOY_CALLING_SERVICES" != "TRUE" ]]; then
     return 0
   fi
@@ -54,6 +53,14 @@ configure_calling_environment() {
   if [[ -z "$CALLING_NODE" ]]; then
     echo "Error: could not determine the last kube worker node via kubectl"
     exit 1
+  else
+    echo "Selecting calling node: $CALLING_NODE"
+    # export this, in the case that we are being sourced.  
+    if [[ ! "${BASH_SOURCE[0]}" == "$0" ]] ; then  
+        export CALLING_NODE
+    else
+        echo "export CALLING_NODE=\"$CALLING_NODE\""
+    fi
   fi
 }
 
@@ -75,7 +82,6 @@ sync_pg_secrets() {
 # Creates values.yaml from prod-values.example.yaml and secrets.yaml from prod-secrets.example.yaml
 # Works on all chart directories in $BASE_DIR/values/
 process_values() {
-
   ENV=$1
   TYPE=$2
   charts=(fake-aws smtp rabbitmq databases-ephemeral reaper wire-server webapp account-pages team-settings ingress-nginx-controller)
@@ -93,6 +99,8 @@ process_values() {
     exit 1
   fi
   timestp=$(date +"%Y%m%d_%H%M%S")
+
+  echo "templating $ENV $TYPE with domain: $TARGET_SYSTEM, and cert manager email: $CERT_MANAGER_EMAIL"
 
   for chart in "${charts[@]}"; do
     chart_dir="$BASE_DIR/values/$chart"
@@ -114,7 +122,6 @@ process_values() {
 # selectively setting values of following charts which requires additional values
 # wire-server, webapp, team-settings, account-pages, nginx-ingress-services, sftd and coturn
 configure_values() {
-
   TEMP_DIR=$(mktemp -d)
   trap 'rm -rf $TEMP_DIR' EXIT
 
@@ -140,6 +147,10 @@ configure_values() {
   fi
 
   if [[ "$DEPLOY_CALLING_SERVICES" == "TRUE" ]]; then
+    if [ ! -v "$CALLING_NODE" ] ; then
+        echo "Refusing to deploy calling services; CALLING_NODE is not set."
+        return 1
+    fi
     # to find IP address of calling NODE
     CALLING_NODE_IP=$(kubectl get node "$CALLING_NODE" -o jsonpath='{.status.addresses[?(@.type=="InternalIP")].address}')
 
@@ -169,14 +180,14 @@ configure_values() {
   for file in "${files[@]}"; do
     if ! cmp -s "$TEMP_DIR/$file" "$BASE_DIR/values/${file%-values.yaml}/values.yaml"; then
       cp "$TEMP_DIR/$file" "$BASE_DIR/values/${file%-values.yaml}/values.yaml"
-      echo "Updating  $BASE_DIR/values/${file%-values.yaml}/values.yaml"
+      echo "Updating $BASE_DIR/values/${file%-values.yaml}/values.yaml"
+    else
+      echo "no differences found; not updating $BASE_DIR/values/${file%-values.yaml}/values.yaml"
     fi
   done
-
 }
 
 deploy_charts() {
-
   local charts=("$@")
   echo "Following charts will be deployed: ${charts[*]}"
 
@@ -218,7 +229,6 @@ deploy_charts() {
 }
 
 deploy_cert_manager() {
-
   kubectl get namespace cert-manager-ns || kubectl create namespace cert-manager-ns
   helm upgrade --install --wait --timeout=5m0s -n cert-manager-ns cert-manager  "$BASE_DIR/charts/cert-manager" --values "$BASE_DIR/values/cert-manager/values.yaml"
 
@@ -227,7 +237,6 @@ deploy_cert_manager() {
 }
 
 deploy_calling_services() {
-
   if [[ "$DEPLOY_CALLING_SERVICES" != "TRUE" ]]; then
     echo "Skipping sftd and coturn deployment because DEPLOY_CALLING_SERVICES=$DEPLOY_CALLING_SERVICES"
     return 0
@@ -250,15 +259,16 @@ main() {
 # initialize calling-service specific values only when enabled
 configure_calling_environment
 
-# Create prod-values.example.yaml to values.yaml and take backup
+# Create prod-values.example.yaml to values.yaml and take backup. Note: does not template anything.
 process_values "prod" "values"
-# Create prod-secrets.example.yaml to secrets.yaml and take backup
+
+# Create prod-secrets.example.yaml to secrets.yaml and take backup.
 process_values "prod" "secrets"
 
-# Sync postgresql secret
+# Sync postgresql secret.
 sync_pg_secrets
 
-# configure chart specific variables for each chart in values.yaml file
+# configure the chart specific variables for each chart in values.yaml file. This is where templating happens.
 configure_values
 
 # deploying with external datastores, useful for prod setup
@@ -280,4 +290,5 @@ fi
 deploy_calling_services
 }
 
-main
+# only execute main when this script is executed, not when it is sourced.
+[[ "${BASH_SOURCE[0]}" == "$0" ]] && main "$@"
